@@ -91,6 +91,8 @@
 
 		.timeline-header {
 			flex: 1;
+			overflow: hidden;
+			padding: 0 15px;
 		}
 	}
 
@@ -326,7 +328,7 @@
 		height: 54px;
 		position: relative;
 		width: 100%;
-		padding-left: 15px;
+		padding: 0 15px;
 		cursor: pointer;
 
 		.span-line {

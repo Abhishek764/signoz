@@ -12,6 +12,11 @@ const HIGHLIGHTED_SPAN_CLASS = 'highlighted-span';
 const DIMMED_SPAN_CLASS = 'dimmed-span';
 const SELECTED_NON_MATCHING_SPAN_CLASS = 'selected-non-matching-span';
 
+jest.mock('components/TimelineV3/TimelineV3', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
+
 // Mock the hooks
 jest.mock('hooks/useUrlQuery');
 jest.mock('@signozhq/badge', () => ({

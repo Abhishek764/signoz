@@ -18,6 +18,7 @@ import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
+import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -598,7 +599,14 @@ function Success(props: ISuccessProps): JSX.Element {
 						style={{ width: sidebarWidth, flexShrink: 0 }}
 					/>
 					<div className="resize-handle-header" />
-					<div className="timeline-header" />
+					<div className="timeline-header">
+						<TimelineV3
+							startTimestamp={traceMetadata.startTime}
+							endTimestamp={traceMetadata.endTime}
+							timelineHeight={6}
+							offsetTimestamp={0}
+						/>
+					</div>
 				</div>
 
 				{/* Split body */}

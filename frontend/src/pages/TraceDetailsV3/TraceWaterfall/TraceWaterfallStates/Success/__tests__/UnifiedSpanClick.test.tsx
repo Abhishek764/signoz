@@ -72,6 +72,14 @@ jest.mock('components/HttpStatusBadge/HttpStatusBadge', () => {
 	return HttpStatusBadge;
 });
 
+jest.mock('components/TimelineV3/TimelineV3', () => {
+	function TimelineV3(): null {
+		return null;
+	}
+	TimelineV3.displayName = 'TimelineV3';
+	return { __esModule: true, default: TimelineV3 };
+});
+
 // Mock other utilities that might cause issues
 jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: (): string => '#1890ff',

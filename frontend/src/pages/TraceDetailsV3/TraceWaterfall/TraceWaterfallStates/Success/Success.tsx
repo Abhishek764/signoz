@@ -7,13 +7,17 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
-import { Virtualizer } from '@tanstack/react-virtual';
+import {
+	createColumnHelper,
+	flexRender,
+	getCoreRowModel,
+	useReactTable,
+} from '@tanstack/react-table';
+import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
-import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -82,7 +86,7 @@ function SpanOverview({
 	const isRootSpan = span.level === 0;
 	const { hasEditPermission } = useAppContext();
 
-	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
+	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
 	}
@@ -227,7 +231,7 @@ export function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
 
-	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
+	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
 
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
@@ -331,73 +335,11 @@ export function SpanDuration({
 // table config
 const columnDefHelper = createColumnHelper<Span>();
 
-function getWaterfallColumns({
-	handleCollapseUncollapse,
-	uncollapsedNodes,
-	traceMetadata,
-	selectedSpan,
-	handleSpanClick,
-	handleAddSpanToFunnel,
-	filteredSpanIds,
-	isFilterActive,
-}: {
-	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
-	uncollapsedNodes: string[];
-	traceMetadata: ITraceMetadata;
-	selectedSpan: Span | undefined;
-	handleSpanClick: (span: Span) => void;
-	handleAddSpanToFunnel: (span: Span) => void;
-	filteredSpanIds: string[];
-	isFilterActive: boolean;
-}): ColumnDef<Span, any>[] {
-	const waterfallColumns: ColumnDef<Span, any>[] = [
-		columnDefHelper.display({
-			id: 'span-name',
-			header: '',
-			cell: (props): JSX.Element => (
-				<SpanOverview
-					span={props.row.original}
-					handleCollapseUncollapse={handleCollapseUncollapse}
-					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
-					selectedSpan={selectedSpan}
-					handleSpanClick={handleSpanClick}
-					handleAddSpanToFunnel={handleAddSpanToFunnel}
-					traceMetadata={traceMetadata}
-					filteredSpanIds={filteredSpanIds}
-					isFilterActive={isFilterActive}
-				/>
-			),
-			size: 450,
-			/**
-			 * Note: The TanStack table currently does not support percentage-based column sizing.
-			 * Therefore, we specify both `minSize` and `maxSize` for the "span-name" column to ensure
-			 * that its width remains between 240px and 900px. Setting a `maxSize` here is important
-			 * because the "span-duration" column has column resizing disabled, making it difficult
-			 * to enforce a minimum width for that column. By constraining the "span-name" column,
-			 * we indirectly control the minimum width available for the "span-duration" column.
-			 */
-			minSize: 240,
-			maxSize: 900,
-		}),
-		columnDefHelper.display({
-			id: 'span-duration',
-			header: () => <div />,
-			enableResizing: false,
-			cell: (props): JSX.Element => (
-				<SpanDuration
-					span={props.row.original}
-					traceMetadata={traceMetadata}
-					selectedSpan={selectedSpan}
-					handleSpanClick={handleSpanClick}
-					filteredSpanIds={filteredSpanIds}
-					isFilterActive={isFilterActive}
-				/>
-			),
-		}),
-	];
-
-	return waterfallColumns;
-}
+const ROW_HEIGHT = 54;
+const DEFAULT_SIDEBAR_WIDTH = 450;
+const MIN_SIDEBAR_WIDTH = 240;
+const MAX_SIDEBAR_WIDTH = 900;
+const BASE_CONTENT_WIDTH = 400;
 
 function Success(props: ISuccessProps): JSX.Element {
 	const {
@@ -413,6 +355,8 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [isFilterActive, setIsFilterActive] = useState<boolean>(false);
+	const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 
 	const handleFilteredSpansChange = useCallback(
@@ -430,31 +374,35 @@ function Success(props: ISuccessProps): JSX.Element {
 		[setInterestedSpanId],
 	);
 
-	const handleVirtualizerInstanceChanged = (
-		instance: Virtualizer<HTMLDivElement, Element>,
-	): void => {
-		const { range } = instance;
-		// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so
-		// do not trigger the API call
-		if (spans.length < 500) {
-			return;
-		}
-
-		if (range?.startIndex === 0 && instance.isScrolling) {
-			// do not trigger for trace root as nothing to fetch above
-			if (spans[0].level !== 0) {
-				setInterestedSpanId({ spanId: spans[0].spanId, isUncollapsed: false });
+	const handleVirtualizerInstanceChanged = useCallback(
+		(instance: Virtualizer<HTMLDivElement, Element>): void => {
+			const { range } = instance;
+			// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so
+			// do not trigger the API call
+			if (spans.length < 500) {
+				return;
 			}
-			return;
-		}
 
-		if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
-			setInterestedSpanId({
-				spanId: spans[spans.length - 1].spanId,
-				isUncollapsed: false,
-			});
-		}
-	};
+			if (range?.startIndex === 0 && instance.isScrolling) {
+				// do not trigger for trace root as nothing to fetch above
+				if (spans[0].level !== 0) {
+					setInterestedSpanId({
+						spanId: spans[0].spanId,
+						isUncollapsed: false,
+					});
+				}
+				return;
+			}
+
+			if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
+				setInterestedSpanId({
+					spanId: spans[spans.length - 1].spanId,
+					isUncollapsed: false,
+				});
+			}
+		},
+		[spans, setInterestedSpanId],
+	);
 
 	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] = useState(
 		false,
@@ -482,18 +430,29 @@ function Success(props: ISuccessProps): JSX.Element {
 		[setSelectedSpan, urlQuery, safeNavigate],
 	);
 
-	const columns = useMemo(
-		() =>
-			getWaterfallColumns({
-				handleCollapseUncollapse,
-				uncollapsedNodes,
-				traceMetadata,
-				selectedSpan,
-				handleSpanClick,
-				handleAddSpanToFunnel,
-				filteredSpanIds,
-				isFilterActive,
+	// Left side columns using TanStack React Table (extensible for future columns)
+	const leftColumns = useMemo(
+		() => [
+			columnDefHelper.display({
+				id: 'span-name',
+				header: '',
+				cell: (cellProps): JSX.Element => (
+					<SpanOverview
+						span={cellProps.row.original}
+						handleCollapseUncollapse={handleCollapseUncollapse}
+						isSpanCollapsed={
+							!uncollapsedNodes.includes(cellProps.row.original.spanId)
+						}
+						selectedSpan={selectedSpan}
+						handleSpanClick={handleSpanClick}
+						handleAddSpanToFunnel={handleAddSpanToFunnel}
+						traceMetadata={traceMetadata}
+						filteredSpanIds={filteredSpanIds}
+						isFilterActive={isFilterActive}
+					/>
+				),
 			}),
+		],
 		[
 			handleCollapseUncollapse,
 			uncollapsedNodes,
@@ -506,6 +465,66 @@ function Success(props: ISuccessProps): JSX.Element {
 		],
 	);
 
+	const leftTable = useReactTable({
+		data: spans,
+		columns: leftColumns,
+		getCoreRowModel: getCoreRowModel(),
+	});
+
+	// Shared virtualizer - one instance drives both panels
+	const virtualizer = useVirtualizer({
+		count: spans.length,
+		getScrollElement: (): HTMLDivElement | null => scrollContainerRef.current,
+		estimateSize: (): number => ROW_HEIGHT,
+		overscan: 20,
+		onChange: handleVirtualizerInstanceChanged,
+	});
+
+	useEffect(() => {
+		virtualizerRef.current = virtualizer;
+	}, [virtualizer]);
+
+	// Sync sidebar width with flamegraph stats panel
+	useEffect(() => {
+		setTraceFlamegraphStatsWidth(sidebarWidth);
+	}, [sidebarWidth, setTraceFlamegraphStatsWidth]);
+
+	// Resize handle drag logic
+	const handleResizeMouseDown = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			const startX = e.clientX;
+			const startWidth = sidebarWidth;
+			const onMouseMove = (moveEvent: MouseEvent): void => {
+				const newWidth = Math.max(
+					MIN_SIDEBAR_WIDTH,
+					Math.min(MAX_SIDEBAR_WIDTH, startWidth + (moveEvent.clientX - startX)),
+				);
+				setSidebarWidth(newWidth);
+			};
+			const onMouseUp = (): void => {
+				document.removeEventListener('mousemove', onMouseMove);
+				document.removeEventListener('mouseup', onMouseUp);
+			};
+			document.addEventListener('mousemove', onMouseMove);
+			document.addEventListener('mouseup', onMouseUp);
+		},
+		[sidebarWidth],
+	);
+
+	// Compute max content width for sidebar horizontal scroll
+	const maxContentWidth = useMemo(() => {
+		if (spans.length === 0) {
+			return sidebarWidth;
+		}
+		const maxLevel = spans.reduce((max, span) => Math.max(max, span.level), 0);
+		return Math.max(
+			sidebarWidth,
+			maxLevel * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH) + BASE_CONTENT_WIDTH,
+		);
+	}, [spans, sidebarWidth]);
+
+	// Scroll to interested span
 	useEffect(() => {
 		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
 			const idx = spans.findIndex(
@@ -530,6 +549,9 @@ function Success(props: ISuccessProps): JSX.Element {
 			});
 		}
 	}, [interestedSpanId, setSelectedSpan, spans]);
+
+	const virtualItems = virtualizer.getVirtualItems();
+	const leftRows = leftTable.getRowModel().rows;
 
 	return (
 		<div className="success-content">
@@ -562,19 +584,106 @@ function Success(props: ISuccessProps): JSX.Element {
 				traceID={traceMetadata.traceId}
 				onFilteredSpansChange={handleFilteredSpansChange}
 			/>
-			<TableV3
-				columns={columns}
-				data={spans}
-				config={{
-					handleVirtualizerInstanceChanged,
-				}}
-				customClassName={cx(
-					'waterfall-table',
-					traceMetadata.hasMissingSpans ? 'missing-spans-waterfall-table' : '',
+			<div
+				className={cx(
+					'waterfall-split-panel',
+					traceMetadata.hasMissingSpans ? 'missing-spans-waterfall' : '',
 				)}
-				virtualiserRef={virtualizerRef}
-				setColumnWidths={setTraceFlamegraphStatsWidth}
-			/>
+				ref={scrollContainerRef}
+			>
+				{/* Sticky header row */}
+				<div className="waterfall-split-header">
+					<div
+						className="sidebar-header"
+						style={{ width: sidebarWidth, flexShrink: 0 }}
+					/>
+					<div className="resize-handle-header" />
+					<div className="timeline-header" />
+				</div>
+
+				{/* Split body */}
+				<div
+					className="waterfall-split-body"
+					style={{
+						height: virtualizer.getTotalSize(),
+					}}
+				>
+					{/* Left panel - table with horizontal scroll */}
+					<div
+						className="waterfall-sidebar"
+						style={{ width: sidebarWidth, flexShrink: 0 }}
+					>
+						<table className="span-tree-table" style={{ width: maxContentWidth }}>
+							<tbody>
+								{virtualItems.map((virtualRow) => {
+									const row = leftRows[virtualRow.index];
+									const span = spans[virtualRow.index];
+									return (
+										<tr
+											key={String(virtualRow.key)}
+											data-testid={`cell-0-${span.spanId}`}
+											className="span-tree-row"
+											style={{
+												position: 'absolute',
+												top: 0,
+												left: 0,
+												width: '100%',
+												height: ROW_HEIGHT,
+												transform: `translateY(${virtualRow.start}px)`,
+											}}
+										>
+											{row.getVisibleCells().map((cell) => (
+												<td key={cell.id} className="span-tree-cell">
+													{flexRender(cell.column.columnDef.cell, cell.getContext())}
+												</td>
+											))}
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
+					</div>
+
+					{/* Resize handle */}
+					<div
+						className="sidebar-resize-handle"
+						onMouseDown={handleResizeMouseDown}
+						role="separator"
+						aria-orientation="vertical"
+					/>
+
+					{/* Right panel - timeline bars */}
+					<div className="waterfall-timeline">
+						{virtualItems.map((virtualRow) => {
+							const span = spans[virtualRow.index];
+							return (
+								<div
+									key={String(virtualRow.key)}
+									data-testid={`cell-1-${span.spanId}`}
+									className="timeline-row"
+									style={{
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										width: '100%',
+										height: ROW_HEIGHT,
+										transform: `translateY(${virtualRow.start}px)`,
+									}}
+								>
+									<SpanDuration
+										span={span}
+										traceMetadata={traceMetadata}
+										selectedSpan={selectedSpan}
+										handleSpanClick={handleSpanClick}
+										filteredSpanIds={filteredSpanIds}
+										isFilterActive={isFilterActive}
+									/>
+								</div>
+							);
+						})}
+					</div>
+				</div>
+			</div>
 			{selectedSpanToAddToFunnel && (
 				<AddSpanToFunnelModal
 					span={selectedSpanToAddToFunnel}

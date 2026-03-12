@@ -90,71 +90,38 @@ jest.mock('utils/toFixed', () => ({
 	toFixed: (value: number, decimals: number): string => value.toFixed(decimals),
 }));
 
-// Create a simplified mock TableV3 that renders the actual column components
-jest.mock('components/TableV3/TableV3', () => ({
-	TableV3: ({
-		columns,
-		data,
+// Mock useVirtualizer to render all items without actual virtualization
+jest.mock('@tanstack/react-virtual', () => ({
+	useVirtualizer: ({
+		count,
 	}: {
-		columns: unknown[];
-		data: Span[];
-	}): JSX.Element => {
-		// Get the current props from the columns (which contain the current state)
-		const spanOverviewColumn = columns[0] as {
-			cell?: (props: any) => JSX.Element;
-		};
-		const spanDurationColumn = columns[1] as {
-			cell?: (props: any) => JSX.Element;
-		};
-
-		return (
-			<div data-testid="trace-table">
-				{data.map((row: Span) => {
-					// Create proper cell props that match what TanStack Table expects
-					const cellProps = {
-						row: {
-							original: row,
-							getValue: (): Span => row,
-							getAllCells: (): any[] => [],
-							getVisibleCells: (): any[] => [],
-							getUniqueValues: (): any[] => [],
-							getIsSelected: (): boolean => false,
-							getIsSomeSelected: (): boolean => false,
-							getIsAllSelected: (): boolean => false,
-							getCanSelect: (): boolean => true,
-							getCanSelectSubRows: (): boolean => true,
-							getCanSelectAll: (): boolean => true,
-							toggleSelected: (): void => {},
-							getToggleSelectedHandler: (): (() => void) => (): void => {},
-						},
-						column: { id: 'span-name' },
-						table: {},
-						cell: {},
-						renderValue: (): Span => row,
-						getValue: (): Span => row,
-					};
-
-					const durationCellProps = {
-						...cellProps,
-						column: { id: 'span-duration' },
-					};
-
-					return (
-						<div key={row.spanId} data-testid={`table-row-${row.spanId}`}>
-							{/* Render span overview column */}
-							<div data-testid={`cell-0-${row.spanId}`}>
-								{spanOverviewColumn?.cell?.(cellProps)}
-							</div>
-							{/* Render span duration column */}
-							<div data-testid={`cell-1-${row.spanId}`}>
-								{spanDurationColumn?.cell?.(durationCellProps)}
-							</div>
-						</div>
-					);
-				})}
-			</div>
-		);
-	},
+		count: number;
+	}): {
+		getVirtualItems: () => Array<{
+			index: number;
+			key: number;
+			start: number;
+			size: number;
+		}>;
+		getTotalSize: () => number;
+		scrollToIndex: jest.Mock;
+	} => ({
+		getVirtualItems: (): Array<{
+			index: number;
+			key: number;
+			start: number;
+			size: number;
+		}> =>
+			Array.from({ length: count }, (_, i) => ({
+				index: i,
+				key: i,
+				start: i * 54,
+				size: 54,
+			})),
+		getTotalSize: (): number => count * 54,
+		scrollToIndex: jest.fn(),
+	}),
+	Virtualizer: jest.fn(),
 }));
 
 const mockTraceMetadata = {

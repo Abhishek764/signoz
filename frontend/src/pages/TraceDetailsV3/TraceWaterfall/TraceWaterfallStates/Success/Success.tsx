@@ -16,7 +16,6 @@ import {
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { themeColors } from 'constants/theme';
@@ -29,9 +28,7 @@ import {
 	ArrowUpRight,
 	ChevronDown,
 	ChevronRight,
-	Leaf,
 } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
@@ -68,7 +65,6 @@ function SpanOverview({
 	isSpanCollapsed,
 	handleCollapseUncollapse,
 	handleSpanClick,
-	handleAddSpanToFunnel,
 	selectedSpan,
 	filteredSpanIds,
 	isFilterActive,
@@ -79,13 +75,11 @@ function SpanOverview({
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
 	handleSpanClick: (span: Span) => void;
-	handleAddSpanToFunnel: (span: Span) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	traceMetadata: ITraceMetadata;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
-	const { hasEditPermission } = useAppContext();
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
 	if (span.hasError) {
@@ -100,6 +94,8 @@ function SpanOverview({
 	const isHighlighted = isFilterActive && isMatching && !isSelected;
 	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
 
+	const indentWidth = isRootSpan ? 0 : span.level * CONNECTOR_WIDTH;
+
 	return (
 		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
 			<div
@@ -109,101 +105,62 @@ function SpanOverview({
 					'selected-non-matching-span': isSelectedNonMatching,
 					'dimmed-span': isDimmed,
 				})}
-				style={{
-					paddingLeft: `${
-						isRootSpan
-							? span.level * CONNECTOR_WIDTH
-							: (span.level - 1) * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
-					}px`,
-					backgroundImage: `url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="54"><line x1="0" y1="0" x2="0" y2="54" stroke="rgb(29 33 45)" stroke-width="1" /></svg>')`,
-					backgroundRepeat: 'repeat',
-					backgroundSize: `${CONNECTOR_WIDTH + 1}px 54px`,
-				}}
 				onClick={(): void => handleSpanClick(span)}
 			>
-				{!isRootSpan && (
-					<div className="connector-lines">
-						<div
-							style={{
-								width: `${CONNECTOR_WIDTH}px`,
-								height: '1px',
-								borderTop: '1px solid var(--bg-slate-400)',
-								display: 'flex',
-								flexShrink: 0,
-								position: 'relative',
-								top: '-10px',
-							}}
-						/>
-					</div>
-				)}
-				<div className="span-overview-content">
-					<section className="first-row">
-						<div className="span-det">
-							{span.hasChildren ? (
-								<Button
-									onClick={(event): void => {
-										event.stopPropagation();
-										event.preventDefault();
-										handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
-									}}
-									className="collapse-uncollapse-button"
-								>
-									{isSpanCollapsed ? (
-										<ChevronRight size={14} />
-									) : (
-										<ChevronDown size={14} />
-									)}
-									<Typography.Text className="children-count">
-										{span.subTreeNodeCount}
-									</Typography.Text>
-								</Button>
-							) : (
-								<Button className="collapse-uncollapse-button">
-									<Leaf size={14} />
-								</Button>
-							)}
-							<Typography.Text className="span-name">{span.name}</Typography.Text>
-						</div>
-						<HttpStatusBadge statusCode={span.tagMap?.['http.status_code']} />
-					</section>
-					<section className="second-row">
-						<div style={{ width: '2px', background: color, height: '100%' }} />
-						<Typography.Text className="service-name">
-							{span.serviceName}
-						</Typography.Text>
-						{!!span.serviceName && !!span.name && (
-							<div className="add-funnel-button">
-								<span className="add-funnel-button__separator">·</span>
-								<Tooltip
-									title={
-										!hasEditPermission
-											? 'You need editor or admin access to add spans to funnels'
-											: ''
-									}
-								>
-									<Button
-										type="text"
-										size="small"
-										className="add-funnel-button__button"
-										onClick={(e): void => {
-											e.preventDefault();
-											e.stopPropagation();
-											handleAddSpanToFunnel(span);
-										}}
-										disabled={!hasEditPermission}
-										icon={
-											<img
-												className="add-funnel-button__icon"
-												src="/Icons/funnel-add.svg"
-												alt="funnel-icon"
-											/>
-										}
-									/>
-								</Tooltip>
+				{/* Tree connector lines — always draw vertical lines at all ancestor levels + L-connector */}
+				{!isRootSpan &&
+					Array.from({ length: span.level }, (_, i) => {
+						const lvl = i + 1;
+						const xPos = (lvl - 1) * CONNECTOR_WIDTH + 9;
+						if (lvl < span.level) {
+							return (
+								<div
+									key={lvl}
+									className="tree-line"
+									style={{ left: xPos, top: 0, width: 1, height: '100%' }}
+								/>
+							);
+						}
+						return (
+							<div key={lvl}>
+								<div
+									className="tree-line"
+									style={{ left: xPos, top: 0, width: 1, height: '50%' }}
+								/>
+								<div className="tree-connector" style={{ left: xPos, top: 0 }} />
 							</div>
-						)}
-					</section>
-				</div>
+						);
+					})}
+
+				{/* Indent spacer */}
+				<span className="tree-indent" style={{ width: `${indentWidth}px` }} />
+
+				{/* Expand/collapse arrow or leaf bullet */}
+				{span.hasChildren ? (
+					<span
+						className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
+						onClick={(event): void => {
+							event.stopPropagation();
+							event.preventDefault();
+							handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
+						}}
+					>
+						{isSpanCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+					</span>
+				) : (
+					<span className="tree-arrow no-children" />
+				)}
+
+				{/* Colored service dot */}
+				<span
+					className={cx('tree-icon', { 'is-error': span.hasError })}
+					style={{ backgroundColor: color }}
+				/>
+
+				{/* Span name */}
+				<Typography.Text className="tree-label" ellipsis title={span.name}>
+					{span.name}
+				</Typography.Text>
 			</div>
 		</SpanHoverCard>
 	);
@@ -336,11 +293,11 @@ export function SpanDuration({
 // table config
 const columnDefHelper = createColumnHelper<Span>();
 
-const ROW_HEIGHT = 54;
+const ROW_HEIGHT = 28;
 const DEFAULT_SIDEBAR_WIDTH = 450;
 const MIN_SIDEBAR_WIDTH = 240;
 const MAX_SIDEBAR_WIDTH = 900;
-const BASE_CONTENT_WIDTH = 400;
+const BASE_CONTENT_WIDTH = 300;
 
 function Success(props: ISuccessProps): JSX.Element {
 	const {
@@ -411,7 +368,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
 		Span | undefined
 	>(undefined);
-	const handleAddSpanToFunnel = useCallback((span: Span): void => {
+	const _handleAddSpanToFunnel = useCallback((span: Span): void => {
 		setIsAddSpanToFunnelModalOpen(true);
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
@@ -446,7 +403,6 @@ function Success(props: ISuccessProps): JSX.Element {
 						}
 						selectedSpan={selectedSpan}
 						handleSpanClick={handleSpanClick}
-						handleAddSpanToFunnel={handleAddSpanToFunnel}
 						traceMetadata={traceMetadata}
 						filteredSpanIds={filteredSpanIds}
 						isFilterActive={isFilterActive}
@@ -460,7 +416,6 @@ function Success(props: ISuccessProps): JSX.Element {
 			traceMetadata,
 			selectedSpan,
 			handleSpanClick,
-			handleAddSpanToFunnel,
 			filteredSpanIds,
 			isFilterActive,
 		],

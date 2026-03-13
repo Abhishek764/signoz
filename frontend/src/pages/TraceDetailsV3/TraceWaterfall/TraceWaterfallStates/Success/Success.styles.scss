@@ -129,7 +129,7 @@
 		.span-tree-cell {
 			display: flex;
 			width: 100%;
-			height: 54px;
+			height: 28px;
 			align-items: center;
 			overflow: hidden;
 			padding: 0;
@@ -139,16 +139,8 @@
 			border-radius: 4px;
 			background: rgba(171, 189, 255, 0.06) !important;
 
-			.span-overview .second-row .add-funnel-button {
-				opacity: 1;
-			}
-
 			.span-overview {
 				background: unset !important;
-
-				.span-overview-content {
-					background: unset !important;
-				}
 			}
 		}
 	}
@@ -193,157 +185,97 @@
 		height: 100%;
 		width: 100%;
 		cursor: pointer;
+		position: relative;
+		white-space: nowrap;
 
-		.connector-lines {
-			display: flex;
+		.tree-indent {
+			display: inline-block;
+			flex-shrink: 0;
 		}
 
-		.span-overview-content {
-			display: flex;
-			flex-shrink: 0;
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 5px;
-			width: 100%;
-			background-color: #0b0c0e;
-			height: 100%;
+		.tree-line {
+			position: absolute;
+			background-color: var(--bg-slate-400);
+			pointer-events: none;
+		}
+
+		.tree-connector {
+			position: absolute;
+			width: 19px;
+			height: 50%;
+			border-left: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--bg-slate-400);
+			border-bottom-left-radius: 6px;
+			pointer-events: none;
+		}
+
+		.tree-arrow {
+			display: inline-flex;
+			align-items: center;
 			justify-content: center;
-			&:not(:first-child) {
-				.first-row {
-					width: calc(100% - 28px);
-				}
-			}
+			width: 18px;
+			height: 18px;
+			flex-shrink: 0;
+			cursor: pointer;
+			color: var(--bg-vanilla-400);
 
-			.first-row {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				height: 20px;
-				width: 100%;
-
-				.span-det {
-					display: flex;
-					gap: 6px;
-					flex-shrink: 0;
-					align-items: center;
-
-					.collapse-uncollapse-button {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						padding: 4px 4px;
-						gap: 4px;
-						border-radius: 2px;
-						border: 1px solid var(--bg-slate-400);
-						background: var(--bg-slate-500);
-						box-shadow: none;
-						height: 20px;
-
-						.children-count {
-							color: var(--bg-vanilla-400);
-							font-family: 'Space Mono';
-							font-size: 14px;
-							font-style: normal;
-							font-weight: 400;
-							line-height: 20px; /* 142.857% */
-							letter-spacing: 0.28px;
-						}
-					}
-
-					.span-name {
-						color: #fff;
-						font-family: 'Inter';
-						font-size: 14px;
-						font-style: normal;
-						font-weight: 400;
-						line-height: 20px; /* 142.857% */
-						letter-spacing: 0.28px;
-					}
-				}
-
-				.status-code-container {
-					display: flex;
-					padding-right: 10px;
-
-					.status-code {
-						display: flex;
-						height: 20px;
-						padding: 3px;
-						align-items: center;
-						border-radius: 3px;
-					}
-
-					.success {
-						border: 1px solid var(--bg-robin-500);
-						background: var(--bg-robin-500);
-					}
-
-					.error {
-						border: 1px solid var(--bg-cherry-500);
-						background: var(--bg-cherry-500);
-					}
-				}
-			}
-
-			.second-row {
-				display: flex;
-				align-items: center;
-				gap: 8px;
+			&.no-children {
+				cursor: default;
+				width: 18px;
 				height: 18px;
-				width: 100%;
-				.service-name {
-					color: var(--bg-vanilla-400);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 18px; /* 128.571% */
-					letter-spacing: -0.07px;
-				}
-				.add-funnel-button {
-					position: relative;
-					z-index: 1;
-					opacity: 0;
-					display: flex;
-					align-items: center;
-					gap: 6px;
-					transition: opacity 0.1s ease-in-out;
-
-					&__separator {
-						color: var(--bg-vanilla-400);
-					}
-					&__button {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-					}
-				}
 			}
+		}
+
+		.tree-icon {
+			display: inline-block;
+			width: 7px;
+			height: 7px;
+			border-radius: 50%;
+			flex-shrink: 0;
+			margin: 0 6px;
+
+			&.is-error {
+				box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
+			}
+		}
+
+		.tree-label {
+			color: #fff;
+			font-family: 'Inter';
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 28px;
+			letter-spacing: 0.01em;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			flex: 1;
+			min-width: 0;
 		}
 	}
 
 	.span-duration {
 		display: flex;
 		flex-direction: column;
-		height: 54px;
+		height: 28px;
 		position: relative;
 		width: 100%;
 		padding: 0 15px;
 		cursor: pointer;
+		justify-content: center;
 
 		.span-line {
 			position: relative;
-			height: 12px;
-			top: 35%;
-			border-radius: 6px;
+			height: 8px;
+			border-radius: 4px;
 		}
 
 		.event-dot {
 			position: absolute;
 			top: 50%;
 			transform: translate(-50%, -50%) rotate(45deg);
-			width: 6px;
-			height: 6px;
+			width: 5px;
+			height: 5px;
 			background-color: var(--bg-robin-500);
 			border: 1px solid var(--bg-robin-600);
 			cursor: pointer;
@@ -361,15 +293,15 @@
 
 		.span-line-text {
 			position: relative;
-			top: 40%;
+			top: 0;
 			font-variant-numeric: lining-nums tabular-nums stacked-fractions
 				slashed-zero;
 			font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
 			font-family: Inter;
-			font-size: 14px;
+			font-size: 12px;
 			font-style: normal;
 			font-weight: 400;
-			line-height: 18px; /* 128.571% */
+			line-height: 16px;
 			letter-spacing: -0.07px;
 		}
 	}
@@ -379,10 +311,6 @@
 	.selected-non-matching-span {
 		border-radius: 4px;
 		background: rgba(171, 189, 255, 0.06) !important;
-
-		.span-overview-content {
-			background: unset;
-		}
 	}
 
 	.dimmed-span {
@@ -393,7 +321,7 @@
 	}
 
 	.selected-non-matching-span {
-		.span-overview-content,
+		.tree-label,
 		.span-line-text {
 			opacity: 0.5;
 		}
@@ -418,28 +346,20 @@
 .lightMode {
 	.success-content {
 		.span-overview {
-			.span-overview-content {
-				background-color: var(--bg-vanilla-200);
-				.first-row {
-					.collapse-uncollapse-button {
-						border: 1px solid var(--bg-vanilla-400);
-						background: var(--bg-vanilla-400);
+			.tree-arrow {
+				color: var(--bg-ink-400);
+			}
 
-						.children-count {
-							color: var(--bg-ink-400);
-						}
-					}
+			.tree-label {
+				color: var(--bg-ink-400);
+			}
 
-					.span-name {
-						color: var(--bg-ink-400);
-					}
-				}
+			.tree-line {
+				background-color: var(--bg-vanilla-400);
+			}
 
-				.second-row {
-					.service-name {
-						color: var(--bg-ink-400);
-					}
-				}
+			.tree-connector {
+				border-color: var(--bg-vanilla-400);
 			}
 		}
 

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -86,7 +87,7 @@ func (at *alertManagerTemplater) expandTitle(
 		}
 		result, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
 		if err != nil {
-			return "", nil, err
+			return "", nil, errors.NewInternalf(errors.CodeInvalidInput, "failed to execute template: %s", err.Error())
 		}
 		if strings.TrimSpace(result) != "" {
 			return result, processRes.UnknownVars, nil
@@ -123,7 +124,7 @@ func (at *alertManagerTemplater) expandBody(
 			}
 			part, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
 			if err != nil {
-				return "", nil, err
+				return "", nil, errors.NewInternalf(errors.CodeInvalidInput, "failed to execute template: %s", err.Error())
 			}
 			parts = append(parts, part)
 		}

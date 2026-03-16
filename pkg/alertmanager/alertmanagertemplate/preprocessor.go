@@ -180,8 +180,11 @@ func buildVariableDefinitions(tmpl string, data any) (string, map[string]bool, e
 		}
 	}
 
-	// Add the remaining variables to the definitions with missing values
-	// as "<no value>" indicating that the variable is not available in the data
+	// Add missing variables to the definitions with "<no value>"
+	// missingkey=zero is used to replace the missing value with "<no value>"
+	// but it only works when getting map values like {{ .keyfrommap }} from map and in struct this breaks
+	// with missing variable errors, we add missing variables in map so when directly variables
+	// are accessed directly in template block like {{ $variable }} it's handled and doesn't throw errors.
 	for name := range probableUnknownVars {
 		variables[name] = `"<no value>"`
 	}

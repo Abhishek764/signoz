@@ -80,6 +80,7 @@ func TestExpandTemplates(t *testing.T) {
 		wantTitle       string
 		wantBody        string
 		wantMissingVars []string
+		errorContains   string
 	}{
 		{
 			// High request throughput on a service — service is a custom label.
@@ -232,12 +233,12 @@ Description: Request rate exceeded 10k/s`,
 				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighMemory", ruletypes.LabelSeverityName: "critical"}, nil),
 			},
 			input: TemplateInput{
-				TitleTemplate: "[$environment] $rule_name",
+				TitleTemplate: "[$environment] $rule_name and [{{ $service }}]",
 				BodyTemplate:  "$rule_name: see runbook at $runbook_url",
 			},
-			wantTitle:       "[<no value>] HighMemory",
+			wantTitle:       "[<no value>] HighMemory and [<no value>]",
 			wantBody:        "HighMemory: see runbook at <no value>",
-			wantMissingVars: []string{"environment", "runbook_url"},
+			wantMissingVars: []string{"environment", "runbook_url", "service"},
 		},
 		{
 			// Custom title template that expands to only whitespace triggers the fallback,
@@ -254,11 +255,25 @@ Description: Request rate exceeded 10k/s`,
 			wantTitle: "HighCPU",
 			wantBody:  "HighCPU (critical) for HighCPU",
 		},
+		{
+			name: "using non-existing function in template",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+			},
+			input: TemplateInput{
+				TitleTemplate: "$rule_name ({{$severity | toUpperAndTrim}}) for $alertname",
+			},
+			errorContains: "function \"toUpperAndTrim\" not defined",
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := at.ProcessTemplates(ctx, tc.input, tc.alerts)
+			if tc.errorContains != "" {
+				require.ErrorContains(t, err, tc.errorContains)
+				return
+			}
 			require.NoError(t, err)
 
 			if tc.wantTitle != "" {

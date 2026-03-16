@@ -38,18 +38,18 @@ import type {
 	ListUsers200,
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
-	TypesChangePasswordRequestDTO,
-	TypesPostableAcceptInviteDTO,
-	TypesPostableAPIKeyDTO,
-	TypesPostableBulkInviteRequestDTO,
-	TypesPostableForgotPasswordDTO,
-	TypesPostableInviteDTO,
-	TypesPostableResetPasswordDTO,
-	TypesStorableAPIKeyDTO,
-	TypesUserDTO,
 	UpdateAPIKeyPathParameters,
 	UpdateUser200,
 	UpdateUserPathParameters,
+	UsertypesChangePasswordRequestDTO,
+	UsertypesPostableAcceptInviteDTO,
+	UsertypesPostableAPIKeyDTO,
+	UsertypesPostableBulkInviteRequestDTO,
+	UsertypesPostableForgotPasswordDTO,
+	UsertypesPostableInviteDTO,
+	UsertypesPostableResetPasswordDTO,
+	UsertypesStorableAPIKeyDTO,
+	UsertypesUserDTO,
 } from '../sigNoz.schemas';
 
 /**
@@ -58,14 +58,14 @@ import type {
  */
 export const changePassword = (
 	{ id }: ChangePasswordPathParameters,
-	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
+	usertypesChangePasswordRequestDTO: BodyType<UsertypesChangePasswordRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/changePassword/${id}`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesChangePasswordRequestDTO,
+		data: usertypesChangePasswordRequestDTO,
 		signal,
 	});
 };
@@ -79,7 +79,7 @@ export const getChangePasswordMutationOptions = <
 		TError,
 		{
 			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
+			data: BodyType<UsertypesChangePasswordRequestDTO>;
 		},
 		TContext
 	>;
@@ -88,7 +88,7 @@ export const getChangePasswordMutationOptions = <
 	TError,
 	{
 		pathParams: ChangePasswordPathParameters;
-		data: BodyType<TypesChangePasswordRequestDTO>;
+		data: BodyType<UsertypesChangePasswordRequestDTO>;
 	},
 	TContext
 > => {
@@ -105,7 +105,7 @@ export const getChangePasswordMutationOptions = <
 		Awaited<ReturnType<typeof changePassword>>,
 		{
 			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
+			data: BodyType<UsertypesChangePasswordRequestDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -119,7 +119,7 @@ export const getChangePasswordMutationOptions = <
 export type ChangePasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof changePassword>>
 >;
-export type ChangePasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
+export type ChangePasswordMutationBody = BodyType<UsertypesChangePasswordRequestDTO>;
 export type ChangePasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -134,7 +134,7 @@ export const useChangePassword = <
 		TError,
 		{
 			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
+			data: BodyType<UsertypesChangePasswordRequestDTO>;
 		},
 		TContext
 	>;
@@ -143,7 +143,7 @@ export const useChangePassword = <
 	TError,
 	{
 		pathParams: ChangePasswordPathParameters;
-		data: BodyType<TypesChangePasswordRequestDTO>;
+		data: BodyType<UsertypesChangePasswordRequestDTO>;
 	},
 	TContext
 > => {
@@ -338,14 +338,14 @@ export const invalidateListInvite = async (
  * @summary Create invite
  */
 export const createInvite = (
-	typesPostableInviteDTO: BodyType<TypesPostableInviteDTO>,
+	usertypesPostableInviteDTO: BodyType<UsertypesPostableInviteDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateInvite201>({
 		url: `/api/v1/invite`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableInviteDTO,
+		data: usertypesPostableInviteDTO,
 		signal,
 	});
 };
@@ -357,13 +357,13 @@ export const getCreateInviteMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableInviteDTO> },
+		{ data: BodyType<UsertypesPostableInviteDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableInviteDTO> },
+	{ data: BodyType<UsertypesPostableInviteDTO> },
 	TContext
 > => {
 	const mutationKey = ['createInvite'];
@@ -377,7 +377,7 @@ export const getCreateInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createInvite>>,
-		{ data: BodyType<TypesPostableInviteDTO> }
+		{ data: BodyType<UsertypesPostableInviteDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -390,7 +390,7 @@ export const getCreateInviteMutationOptions = <
 export type CreateInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createInvite>>
 >;
-export type CreateInviteMutationBody = BodyType<TypesPostableInviteDTO>;
+export type CreateInviteMutationBody = BodyType<UsertypesPostableInviteDTO>;
 export type CreateInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -403,13 +403,13 @@ export const useCreateInvite = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableInviteDTO> },
+		{ data: BodyType<UsertypesPostableInviteDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableInviteDTO> },
+	{ data: BodyType<UsertypesPostableInviteDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateInviteMutationOptions(options);
@@ -589,14 +589,14 @@ export const invalidateGetInvite = async (
  * @summary Accept invite
  */
 export const acceptInvite = (
-	typesPostableAcceptInviteDTO: BodyType<TypesPostableAcceptInviteDTO>,
+	usertypesPostableAcceptInviteDTO: BodyType<UsertypesPostableAcceptInviteDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AcceptInvite201>({
 		url: `/api/v1/invite/accept`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableAcceptInviteDTO,
+		data: usertypesPostableAcceptInviteDTO,
 		signal,
 	});
 };
@@ -608,13 +608,13 @@ export const getAcceptInviteMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof acceptInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableAcceptInviteDTO> },
+		{ data: BodyType<UsertypesPostableAcceptInviteDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof acceptInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableAcceptInviteDTO> },
+	{ data: BodyType<UsertypesPostableAcceptInviteDTO> },
 	TContext
 > => {
 	const mutationKey = ['acceptInvite'];
@@ -628,7 +628,7 @@ export const getAcceptInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof acceptInvite>>,
-		{ data: BodyType<TypesPostableAcceptInviteDTO> }
+		{ data: BodyType<UsertypesPostableAcceptInviteDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -641,7 +641,7 @@ export const getAcceptInviteMutationOptions = <
 export type AcceptInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof acceptInvite>>
 >;
-export type AcceptInviteMutationBody = BodyType<TypesPostableAcceptInviteDTO>;
+export type AcceptInviteMutationBody = BodyType<UsertypesPostableAcceptInviteDTO>;
 export type AcceptInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -654,13 +654,13 @@ export const useAcceptInvite = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof acceptInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableAcceptInviteDTO> },
+		{ data: BodyType<UsertypesPostableAcceptInviteDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof acceptInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableAcceptInviteDTO> },
+	{ data: BodyType<UsertypesPostableAcceptInviteDTO> },
 	TContext
 > => {
 	const mutationOptions = getAcceptInviteMutationOptions(options);
@@ -672,14 +672,14 @@ export const useAcceptInvite = <
  * @summary Create bulk invite
  */
 export const createBulkInvite = (
-	typesPostableBulkInviteRequestDTO: BodyType<TypesPostableBulkInviteRequestDTO>,
+	usertypesPostableBulkInviteRequestDTO: BodyType<UsertypesPostableBulkInviteRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/invite/bulk`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableBulkInviteRequestDTO,
+		data: usertypesPostableBulkInviteRequestDTO,
 		signal,
 	});
 };
@@ -691,13 +691,13 @@ export const getCreateBulkInviteMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
+		{ data: BodyType<UsertypesPostableBulkInviteRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createBulkInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
+	{ data: BodyType<UsertypesPostableBulkInviteRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['createBulkInvite'];
@@ -711,7 +711,7 @@ export const getCreateBulkInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createBulkInvite>>,
-		{ data: BodyType<TypesPostableBulkInviteRequestDTO> }
+		{ data: BodyType<UsertypesPostableBulkInviteRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -724,7 +724,7 @@ export const getCreateBulkInviteMutationOptions = <
 export type CreateBulkInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createBulkInvite>>
 >;
-export type CreateBulkInviteMutationBody = BodyType<TypesPostableBulkInviteRequestDTO>;
+export type CreateBulkInviteMutationBody = BodyType<UsertypesPostableBulkInviteRequestDTO>;
 export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -737,13 +737,13 @@ export const useCreateBulkInvite = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
+		{ data: BodyType<UsertypesPostableBulkInviteRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createBulkInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
+	{ data: BodyType<UsertypesPostableBulkInviteRequestDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateBulkInviteMutationOptions(options);
@@ -841,14 +841,14 @@ export const invalidateListAPIKeys = async (
  * @summary Create api key
  */
 export const createAPIKey = (
-	typesPostableAPIKeyDTO: BodyType<TypesPostableAPIKeyDTO>,
+	usertypesPostableAPIKeyDTO: BodyType<UsertypesPostableAPIKeyDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateAPIKey201>({
 		url: `/api/v1/pats`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableAPIKeyDTO,
+		data: usertypesPostableAPIKeyDTO,
 		signal,
 	});
 };
@@ -860,13 +860,13 @@ export const getCreateAPIKeyMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAPIKey>>,
 		TError,
-		{ data: BodyType<TypesPostableAPIKeyDTO> },
+		{ data: BodyType<UsertypesPostableAPIKeyDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createAPIKey>>,
 	TError,
-	{ data: BodyType<TypesPostableAPIKeyDTO> },
+	{ data: BodyType<UsertypesPostableAPIKeyDTO> },
 	TContext
 > => {
 	const mutationKey = ['createAPIKey'];
@@ -880,7 +880,7 @@ export const getCreateAPIKeyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createAPIKey>>,
-		{ data: BodyType<TypesPostableAPIKeyDTO> }
+		{ data: BodyType<UsertypesPostableAPIKeyDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -893,7 +893,7 @@ export const getCreateAPIKeyMutationOptions = <
 export type CreateAPIKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAPIKey>>
 >;
-export type CreateAPIKeyMutationBody = BodyType<TypesPostableAPIKeyDTO>;
+export type CreateAPIKeyMutationBody = BodyType<UsertypesPostableAPIKeyDTO>;
 export type CreateAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -906,13 +906,13 @@ export const useCreateAPIKey = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAPIKey>>,
 		TError,
-		{ data: BodyType<TypesPostableAPIKeyDTO> },
+		{ data: BodyType<UsertypesPostableAPIKeyDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createAPIKey>>,
 	TError,
-	{ data: BodyType<TypesPostableAPIKeyDTO> },
+	{ data: BodyType<UsertypesPostableAPIKeyDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateAPIKeyMutationOptions(options);
@@ -1002,13 +1002,13 @@ export const useRevokeAPIKey = <
  */
 export const updateAPIKey = (
 	{ id }: UpdateAPIKeyPathParameters,
-	typesStorableAPIKeyDTO: BodyType<TypesStorableAPIKeyDTO>,
+	usertypesStorableAPIKeyDTO: BodyType<UsertypesStorableAPIKeyDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/pats/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesStorableAPIKeyDTO,
+		data: usertypesStorableAPIKeyDTO,
 	});
 };
 
@@ -1021,7 +1021,7 @@ export const getUpdateAPIKeyMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateAPIKeyPathParameters;
-			data: BodyType<TypesStorableAPIKeyDTO>;
+			data: BodyType<UsertypesStorableAPIKeyDTO>;
 		},
 		TContext
 	>;
@@ -1030,7 +1030,7 @@ export const getUpdateAPIKeyMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateAPIKeyPathParameters;
-		data: BodyType<TypesStorableAPIKeyDTO>;
+		data: BodyType<UsertypesStorableAPIKeyDTO>;
 	},
 	TContext
 > => {
@@ -1047,7 +1047,7 @@ export const getUpdateAPIKeyMutationOptions = <
 		Awaited<ReturnType<typeof updateAPIKey>>,
 		{
 			pathParams: UpdateAPIKeyPathParameters;
-			data: BodyType<TypesStorableAPIKeyDTO>;
+			data: BodyType<UsertypesStorableAPIKeyDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -1061,7 +1061,7 @@ export const getUpdateAPIKeyMutationOptions = <
 export type UpdateAPIKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAPIKey>>
 >;
-export type UpdateAPIKeyMutationBody = BodyType<TypesStorableAPIKeyDTO>;
+export type UpdateAPIKeyMutationBody = BodyType<UsertypesStorableAPIKeyDTO>;
 export type UpdateAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1076,7 +1076,7 @@ export const useUpdateAPIKey = <
 		TError,
 		{
 			pathParams: UpdateAPIKeyPathParameters;
-			data: BodyType<TypesStorableAPIKeyDTO>;
+			data: BodyType<UsertypesStorableAPIKeyDTO>;
 		},
 		TContext
 	>;
@@ -1085,7 +1085,7 @@ export const useUpdateAPIKey = <
 	TError,
 	{
 		pathParams: UpdateAPIKeyPathParameters;
-		data: BodyType<TypesStorableAPIKeyDTO>;
+		data: BodyType<UsertypesStorableAPIKeyDTO>;
 	},
 	TContext
 > => {
@@ -1098,14 +1098,14 @@ export const useUpdateAPIKey = <
  * @summary Reset password
  */
 export const resetPassword = (
-	typesPostableResetPasswordDTO: BodyType<TypesPostableResetPasswordDTO>,
+	usertypesPostableResetPasswordDTO: BodyType<UsertypesPostableResetPasswordDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/resetPassword`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableResetPasswordDTO,
+		data: usertypesPostableResetPasswordDTO,
 		signal,
 	});
 };
@@ -1117,13 +1117,13 @@ export const getResetPasswordMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
 		TError,
-		{ data: BodyType<TypesPostableResetPasswordDTO> },
+		{ data: BodyType<UsertypesPostableResetPasswordDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof resetPassword>>,
 	TError,
-	{ data: BodyType<TypesPostableResetPasswordDTO> },
+	{ data: BodyType<UsertypesPostableResetPasswordDTO> },
 	TContext
 > => {
 	const mutationKey = ['resetPassword'];
@@ -1137,7 +1137,7 @@ export const getResetPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof resetPassword>>,
-		{ data: BodyType<TypesPostableResetPasswordDTO> }
+		{ data: BodyType<UsertypesPostableResetPasswordDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1150,7 +1150,7 @@ export const getResetPasswordMutationOptions = <
 export type ResetPasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof resetPassword>>
 >;
-export type ResetPasswordMutationBody = BodyType<TypesPostableResetPasswordDTO>;
+export type ResetPasswordMutationBody = BodyType<UsertypesPostableResetPasswordDTO>;
 export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1163,13 +1163,13 @@ export const useResetPassword = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
 		TError,
-		{ data: BodyType<TypesPostableResetPasswordDTO> },
+		{ data: BodyType<UsertypesPostableResetPasswordDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof resetPassword>>,
 	TError,
-	{ data: BodyType<TypesPostableResetPasswordDTO> },
+	{ data: BodyType<UsertypesPostableResetPasswordDTO> },
 	TContext
 > => {
 	const mutationOptions = getResetPasswordMutationOptions(options);
@@ -1428,13 +1428,13 @@ export const invalidateGetUser = async (
  */
 export const updateUser = (
 	{ id }: UpdateUserPathParameters,
-	typesUserDTO: BodyType<TypesUserDTO>,
+	usertypesUserDTO: BodyType<UsertypesUserDTO>,
 ) => {
 	return GeneratedAPIInstance<UpdateUser200>({
 		url: `/api/v1/user/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesUserDTO,
+		data: usertypesUserDTO,
 	});
 };
 
@@ -1445,13 +1445,13 @@ export const getUpdateUserMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+		{ pathParams: UpdateUserPathParameters; data: BodyType<UsertypesUserDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+	{ pathParams: UpdateUserPathParameters; data: BodyType<UsertypesUserDTO> },
 	TContext
 > => {
 	const mutationKey = ['updateUser'];
@@ -1465,7 +1465,7 @@ export const getUpdateUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateUser>>,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> }
+		{ pathParams: UpdateUserPathParameters; data: BodyType<UsertypesUserDTO> }
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1478,7 +1478,7 @@ export const getUpdateUserMutationOptions = <
 export type UpdateUserMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateUser>>
 >;
-export type UpdateUserMutationBody = BodyType<TypesUserDTO>;
+export type UpdateUserMutationBody = BodyType<UsertypesUserDTO>;
 export type UpdateUserMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1491,13 +1491,13 @@ export const useUpdateUser = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+		{ pathParams: UpdateUserPathParameters; data: BodyType<UsertypesUserDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+	{ pathParams: UpdateUserPathParameters; data: BodyType<UsertypesUserDTO> },
 	TContext
 > => {
 	const mutationOptions = getUpdateUserMutationOptions(options);
@@ -1587,14 +1587,14 @@ export const invalidateGetMyUser = async (
  * @summary Forgot password
  */
 export const forgotPassword = (
-	typesPostableForgotPasswordDTO: BodyType<TypesPostableForgotPasswordDTO>,
+	usertypesPostableForgotPasswordDTO: BodyType<UsertypesPostableForgotPasswordDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/factor_password/forgot`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableForgotPasswordDTO,
+		data: usertypesPostableForgotPasswordDTO,
 		signal,
 	});
 };
@@ -1606,13 +1606,13 @@ export const getForgotPasswordMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
 		TError,
-		{ data: BodyType<TypesPostableForgotPasswordDTO> },
+		{ data: BodyType<UsertypesPostableForgotPasswordDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof forgotPassword>>,
 	TError,
-	{ data: BodyType<TypesPostableForgotPasswordDTO> },
+	{ data: BodyType<UsertypesPostableForgotPasswordDTO> },
 	TContext
 > => {
 	const mutationKey = ['forgotPassword'];
@@ -1626,7 +1626,7 @@ export const getForgotPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof forgotPassword>>,
-		{ data: BodyType<TypesPostableForgotPasswordDTO> }
+		{ data: BodyType<UsertypesPostableForgotPasswordDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1639,7 +1639,7 @@ export const getForgotPasswordMutationOptions = <
 export type ForgotPasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof forgotPassword>>
 >;
-export type ForgotPasswordMutationBody = BodyType<TypesPostableForgotPasswordDTO>;
+export type ForgotPasswordMutationBody = BodyType<UsertypesPostableForgotPasswordDTO>;
 export type ForgotPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1652,13 +1652,13 @@ export const useForgotPassword = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
 		TError,
-		{ data: BodyType<TypesPostableForgotPasswordDTO> },
+		{ data: BodyType<UsertypesPostableForgotPasswordDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof forgotPassword>>,
 	TError,
-	{ data: BodyType<TypesPostableForgotPasswordDTO> },
+	{ data: BodyType<UsertypesPostableForgotPasswordDTO> },
 	TContext
 > => {
 	const mutationOptions = getForgotPasswordMutationOptions(options);

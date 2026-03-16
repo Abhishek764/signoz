@@ -278,6 +278,13 @@ export interface AuthtypesPatchableObjectsDTO {
 	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
+export interface AuthtypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -301,6 +308,17 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface AuthtypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface AuthtypesPostableRotateTokenDTO {
 	/**
 	 * @type string
@@ -317,6 +335,39 @@ export interface AuthtypesResourceDTO {
 	 * @type string
 	 */
 	type: string;
+}
+
+export interface AuthtypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 /**
@@ -2039,57 +2090,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export interface RoletypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
-export interface RoletypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface RoletypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -2330,7 +2330,59 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 	stringValues?: string[];
 }
 
-export interface TypesChangePasswordRequestDTO {
+export interface TypesGettableGlobalConfigDTO {
+	/**
+	 * @type string
+	 */
+	external_url?: string;
+	/**
+	 * @type string
+	 */
+	ingestion_url?: string;
+}
+
+export interface TypesIdentifiableDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface TypesOrganizationDTO {
+	/**
+	 * @type string
+	 */
+	alias?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	key?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface UsertypesChangePasswordRequestDTO {
 	/**
 	 * @type string
 	 */
@@ -2345,7 +2397,7 @@ export interface TypesChangePasswordRequestDTO {
 	userId?: string;
 }
 
-export interface TypesGettableAPIKeyDTO {
+export interface UsertypesGettableAPIKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2355,7 +2407,7 @@ export interface TypesGettableAPIKeyDTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	createdByUser?: TypesUserDTO;
+	createdByUser?: UsertypesUserDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -2395,32 +2447,14 @@ export interface TypesGettableAPIKeyDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
-	updatedByUser?: TypesUserDTO;
+	updatedByUser?: UsertypesUserDTO;
 	/**
 	 * @type string
 	 */
 	userId?: string;
 }
 
-export interface TypesGettableGlobalConfigDTO {
-	/**
-	 * @type string
-	 */
-	external_url?: string;
-	/**
-	 * @type string
-	 */
-	ingestion_url?: string;
-}
-
-export interface TypesIdentifiableDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
-}
-
-export interface TypesInviteDTO {
+export interface UsertypesInviteDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2461,41 +2495,7 @@ export interface TypesInviteDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesOrganizationDTO {
-	/**
-	 * @type string
-	 */
-	alias?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	key?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface TypesPostableAPIKeyDTO {
+export interface UsertypesPostableAPIKeyDTO {
 	/**
 	 * @type integer
 	 * @format int64
@@ -2511,7 +2511,7 @@ export interface TypesPostableAPIKeyDTO {
 	role?: string;
 }
 
-export interface TypesPostableAcceptInviteDTO {
+export interface UsertypesPostableAcceptInviteDTO {
 	/**
 	 * @type string
 	 */
@@ -2530,14 +2530,14 @@ export interface TypesPostableAcceptInviteDTO {
 	token?: string;
 }
 
-export interface TypesPostableBulkInviteRequestDTO {
+export interface UsertypesPostableBulkInviteRequestDTO {
 	/**
 	 * @type array
 	 */
-	invites: TypesPostableInviteDTO[];
+	invites: UsertypesPostableInviteDTO[];
 }
 
-export interface TypesPostableForgotPasswordDTO {
+export interface UsertypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
 	 */
@@ -2552,7 +2552,7 @@ export interface TypesPostableForgotPasswordDTO {
 	orgId: string;
 }
 
-export interface TypesPostableInviteDTO {
+export interface UsertypesPostableInviteDTO {
 	/**
 	 * @type string
 	 */
@@ -2571,7 +2571,7 @@ export interface TypesPostableInviteDTO {
 	role?: string;
 }
 
-export interface TypesPostableResetPasswordDTO {
+export interface UsertypesPostableResetPasswordDTO {
 	/**
 	 * @type string
 	 */
@@ -2582,7 +2582,7 @@ export interface TypesPostableResetPasswordDTO {
 	token?: string;
 }
 
-export interface TypesResetPasswordTokenDTO {
+export interface UsertypesResetPasswordTokenDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2602,7 +2602,7 @@ export interface TypesResetPasswordTokenDTO {
 	token?: string;
 }
 
-export interface TypesStorableAPIKeyDTO {
+export interface UsertypesStorableAPIKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2647,7 +2647,7 @@ export interface TypesStorableAPIKeyDTO {
 	userId?: string;
 }
 
-export interface TypesUserDTO {
+export interface UsertypesUserDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -3018,7 +3018,7 @@ export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };
 export type GetResetPasswordToken200 = {
-	data: TypesResetPasswordTokenDTO;
+	data: UsertypesResetPasswordTokenDTO;
 	/**
 	 * @type string
 	 */
@@ -3037,7 +3037,7 @@ export type ListInvite200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesInviteDTO[];
+	data: UsertypesInviteDTO[];
 	/**
 	 * @type string
 	 */
@@ -3045,7 +3045,7 @@ export type ListInvite200 = {
 };
 
 export type CreateInvite201 = {
-	data: TypesInviteDTO;
+	data: UsertypesInviteDTO;
 	/**
 	 * @type string
 	 */
@@ -3059,7 +3059,7 @@ export type GetInvitePathParameters = {
 	token: string;
 };
 export type GetInvite200 = {
-	data: TypesInviteDTO;
+	data: UsertypesInviteDTO;
 	/**
 	 * @type string
 	 */
@@ -3067,7 +3067,7 @@ export type GetInvite200 = {
 };
 
 export type AcceptInvite201 = {
-	data: TypesUserDTO;
+	data: UsertypesUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3115,7 +3115,7 @@ export type ListAPIKeys200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesGettableAPIKeyDTO[];
+	data: UsertypesGettableAPIKeyDTO[];
 	/**
 	 * @type string
 	 */
@@ -3123,7 +3123,7 @@ export type ListAPIKeys200 = {
 };
 
 export type CreateAPIKey201 = {
-	data: TypesGettableAPIKeyDTO;
+	data: UsertypesGettableAPIKeyDTO;
 	/**
 	 * @type string
 	 */
@@ -3163,7 +3163,7 @@ export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data: RoletypesRoleDTO[];
+	data: AuthtypesRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -3185,7 +3185,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: RoletypesRoleDTO;
+	data: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */
@@ -3290,7 +3290,7 @@ export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesUserDTO[];
+	data: UsertypesUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -3304,7 +3304,7 @@ export type GetUserPathParameters = {
 	id: string;
 };
 export type GetUser200 = {
-	data: TypesUserDTO;
+	data: UsertypesUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3315,7 +3315,7 @@ export type UpdateUserPathParameters = {
 	id: string;
 };
 export type UpdateUser200 = {
-	data: TypesUserDTO;
+	data: UsertypesUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3323,7 +3323,7 @@ export type UpdateUser200 = {
 };
 
 export type GetMyUser200 = {
-	data: TypesUserDTO;
+	data: UsertypesUserDTO;
 	/**
 	 * @type string
 	 */

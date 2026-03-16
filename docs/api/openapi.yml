@@ -220,6 +220,13 @@ components:
       - additions
       - deletions
       type: object
+    AuthtypesPatchableRole:
+      properties:
+        description:
+          type: string
+      required:
+      - description
+      type: object
     AuthtypesPostableAuthDomain:
       properties:
         config:
@@ -236,6 +243,15 @@ components:
         password:
           type: string
       type: object
+    AuthtypesPostableRole:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      type: object
     AuthtypesPostableRotateToken:
       properties:
         refreshToken:
@@ -250,6 +266,31 @@ components:
       required:
       - name
       - type
+      type: object
+    AuthtypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
       type: object
     AuthtypesRoleMapping:
       properties:
@@ -1722,47 +1763,6 @@ components:
       - status
       - error
       type: object
-    RoletypesPatchableRole:
-      properties:
-        description:
-          type: string
-      required:
-      - description
-      type: object
-    RoletypesPostableRole:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      required:
-      - name
-      type: object
-    RoletypesRole:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
-      type: object
     ServiceaccounttypesFactorAPIKey:
       properties:
         createdAt:
@@ -1984,52 +1984,6 @@ components:
             type: string
           type: array
       type: object
-    TypesChangePasswordRequest:
-      properties:
-        newPassword:
-          type: string
-        oldPassword:
-          type: string
-        userId:
-          type: string
-      type: object
-    TypesGettableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        createdByUser:
-          $ref: '#/components/schemas/TypesUser'
-        expiresAt:
-          format: int64
-          type: integer
-        id:
-          type: string
-        lastUsed:
-          format: int64
-          type: integer
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        updatedByUser:
-          $ref: '#/components/schemas/TypesUser'
-        userId:
-          type: string
-      required:
-      - id
-      type: object
     TypesGettableGlobalConfig:
       properties:
         external_url:
@@ -2040,31 +1994,6 @@ components:
     TypesIdentifiable:
       properties:
         id:
-          type: string
-      required:
-      - id
-      type: object
-    TypesInvite:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        inviteLink:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
           type: string
       required:
       - id
@@ -2091,7 +2020,78 @@ components:
       required:
       - id
       type: object
-    TypesPostableAPIKey:
+    UsertypesChangePasswordRequest:
+      properties:
+        newPassword:
+          type: string
+        oldPassword:
+          type: string
+        userId:
+          type: string
+      type: object
+    UsertypesGettableAPIKey:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        createdByUser:
+          $ref: '#/components/schemas/UsertypesUser'
+        expiresAt:
+          format: int64
+          type: integer
+        id:
+          type: string
+        lastUsed:
+          format: int64
+          type: integer
+        name:
+          type: string
+        revoked:
+          type: boolean
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+        updatedByUser:
+          $ref: '#/components/schemas/UsertypesUser'
+        userId:
+          type: string
+      required:
+      - id
+      type: object
+    UsertypesInvite:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        inviteLink:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        role:
+          type: string
+        token:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
+    UsertypesPostableAPIKey:
       properties:
         expiresInDays:
           format: int64
@@ -2101,7 +2101,7 @@ components:
         role:
           type: string
       type: object
-    TypesPostableAcceptInvite:
+    UsertypesPostableAcceptInvite:
       properties:
         displayName:
           type: string
@@ -2112,16 +2112,16 @@ components:
         token:
           type: string
       type: object
-    TypesPostableBulkInviteRequest:
+    UsertypesPostableBulkInviteRequest:
       properties:
         invites:
           items:
-            $ref: '#/components/schemas/TypesPostableInvite'
+            $ref: '#/components/schemas/UsertypesPostableInvite'
           type: array
       required:
       - invites
       type: object
-    TypesPostableForgotPassword:
+    UsertypesPostableForgotPassword:
       properties:
         email:
           type: string
@@ -2133,7 +2133,7 @@ components:
       - orgId
       - email
       type: object
-    TypesPostableInvite:
+    UsertypesPostableInvite:
       properties:
         email:
           type: string
@@ -2144,14 +2144,14 @@ components:
         role:
           type: string
       type: object
-    TypesPostableResetPassword:
+    UsertypesPostableResetPassword:
       properties:
         password:
           type: string
         token:
           type: string
       type: object
-    TypesResetPasswordToken:
+    UsertypesResetPasswordToken:
       properties:
         expiresAt:
           format: date-time
@@ -2165,7 +2165,7 @@ components:
       required:
       - id
       type: object
-    TypesStorableAPIKey:
+    UsertypesStorableAPIKey:
       properties:
         createdAt:
           format: date-time
@@ -2192,7 +2192,7 @@ components:
       required:
       - id
       type: object
-    TypesUser:
+    UsertypesUser:
       properties:
         createdAt:
           format: date-time
@@ -2392,7 +2392,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesChangePasswordRequest'
+              $ref: '#/components/schemas/UsertypesChangePasswordRequest'
       responses:
         "204":
           description: No Content
@@ -3197,7 +3197,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesResetPasswordToken'
+                    $ref: '#/components/schemas/UsertypesResetPasswordToken'
                   status:
                     type: string
                 required:
@@ -3302,7 +3302,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/TypesInvite'
+                      $ref: '#/components/schemas/UsertypesInvite'
                     type: array
                   status:
                     type: string
@@ -3345,7 +3345,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesPostableInvite'
+              $ref: '#/components/schemas/UsertypesPostableInvite'
       responses:
         "201":
           content:
@@ -3353,7 +3353,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesInvite'
+                    $ref: '#/components/schemas/UsertypesInvite'
                   status:
                     type: string
                 required:
@@ -3469,7 +3469,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesInvite'
+                    $ref: '#/components/schemas/UsertypesInvite'
                   status:
                     type: string
                 required:
@@ -3507,7 +3507,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesPostableAcceptInvite'
+              $ref: '#/components/schemas/UsertypesPostableAcceptInvite'
       responses:
         "201":
           content:
@@ -3515,7 +3515,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/UsertypesUser'
                   status:
                     type: string
                 required:
@@ -3553,7 +3553,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesPostableBulkInviteRequest'
+              $ref: '#/components/schemas/UsertypesPostableBulkInviteRequest'
       responses:
         "201":
           description: Created
@@ -3878,7 +3878,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/TypesGettableAPIKey'
+                      $ref: '#/components/schemas/UsertypesGettableAPIKey'
                     type: array
                   status:
                     type: string
@@ -3921,7 +3921,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesPostableAPIKey'
+              $ref: '#/components/schemas/UsertypesPostableAPIKey'
       responses:
         "201":
           content:
@@ -3929,7 +3929,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesGettableAPIKey'
+                    $ref: '#/components/schemas/UsertypesGettableAPIKey'
                   status:
                     type: string
                 required:
@@ -4035,7 +4035,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesStorableAPIKey'
+              $ref: '#/components/schemas/UsertypesStorableAPIKey'
       responses:
         "204":
           content:
@@ -4196,7 +4196,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesPostableResetPassword'
+              $ref: '#/components/schemas/UsertypesPostableResetPassword'
       responses:
         "204":
           description: No Content
@@ -4234,7 +4234,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RoletypesRole'
+                      $ref: '#/components/schemas/AuthtypesRole'
                     type: array
                   status:
                     type: string
@@ -4277,7 +4277,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPostableRole'
+              $ref: '#/components/schemas/AuthtypesPostableRole'
       responses:
         "201":
           content:
@@ -4422,7 +4422,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RoletypesRole'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -4470,7 +4470,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPatchableRole'
+              $ref: '#/components/schemas/AuthtypesPatchableRole'
       responses:
         "204":
           content:
@@ -5271,7 +5271,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/TypesUser'
+                      $ref: '#/components/schemas/UsertypesUser'
                     type: array
                   status:
                     type: string
@@ -5369,7 +5369,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/UsertypesUser'
                   status:
                     type: string
                 required:
@@ -5423,7 +5423,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesUser'
+              $ref: '#/components/schemas/UsertypesUser'
       responses:
         "200":
           content:
@@ -5431,7 +5431,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/UsertypesUser'
                   status:
                     type: string
                 required:
@@ -5489,7 +5489,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/UsertypesUser'
                   status:
                     type: string
                 required:
@@ -5692,7 +5692,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesPostableForgotPassword'
+              $ref: '#/components/schemas/UsertypesPostableForgotPassword'
       responses:
         "204":
           description: No Content

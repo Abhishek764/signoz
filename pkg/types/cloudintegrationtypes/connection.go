@@ -2,7 +2,7 @@ package cloudintegrationtypes
 
 import "github.com/SigNoz/signoz/pkg/types/integrationtypes"
 
-// request for creating connection artifact
+// request for creating connection artifact.
 type (
 	PostableConnectionArtifact = ConnectionArtifactRequest
 

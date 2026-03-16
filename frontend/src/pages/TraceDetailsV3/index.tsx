@@ -30,6 +30,7 @@ function TraceDetailsV3(): JSX.Element {
 	] = useState<number>(450);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
+	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
 
 	useEffect(() => {
 		setInterestedSpanId({
@@ -85,6 +86,8 @@ function TraceDetailsV3(): JSX.Element {
 						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
+						hoveredSpanId={hoveredSpanId}
+						setHoveredSpanId={setHoveredSpanId}
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>

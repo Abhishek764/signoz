@@ -185,6 +185,8 @@ function TestComponent(): JSX.Element {
 			setTraceFlamegraphStatsWidth={jest.fn()}
 			selectedSpan={selectedSpan}
 			setSelectedSpan={setSelectedSpan}
+			hoveredSpanId={null}
+			setHoveredSpanId={jest.fn()}
 		/>
 	);
 }
@@ -217,6 +219,8 @@ describe('Span Click User Flows', () => {
 				setTraceFlamegraphStatsWidth={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
+				hoveredSpanId={null}
+				setHoveredSpanId={jest.fn()}
 			/>,
 			undefined,
 			{ initialRoute: '/trace' },
@@ -395,6 +399,8 @@ describe('Span Click User Flows', () => {
 				setTraceFlamegraphStatsWidth={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
+				hoveredSpanId={null}
+				setHoveredSpanId={jest.fn()}
 			/>,
 			undefined,
 			{ initialRoute: '/trace' },

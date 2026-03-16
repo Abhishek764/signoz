@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
+import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
@@ -11,7 +12,6 @@ import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { FlamegraphCanvasProps, SpanRect } from './types';
-import { formatDuration } from './utils';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const { spans, traceMetadata, firstSpanAtFetchLevel, onSpanClick } = props;
@@ -153,37 +153,30 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		handleHoverMouseLeave();
 	}, [isOverFlamegraphRef, handleDragMouseLeave, handleHoverMouseLeave]);
 
-	// todo: move to a separate component/utils file
 	const tooltipElement = tooltipContent
 		? createPortal(
 				<div
+					className="span-hover-card-popover"
 					style={{
 						position: 'fixed',
 						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
 						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),
 						zIndex: 1000,
 						backgroundColor: 'rgba(30, 30, 30, 0.95)',
-						color: '#fff',
 						padding: '8px 12px',
 						borderRadius: 4,
-						fontSize: 12,
-						fontFamily: 'Inter, sans-serif',
 						boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
 						pointerEvents: 'none',
 					}}
 				>
-					<div
-						style={{
-							fontWeight: 600,
-							marginBottom: 4,
-							color: tooltipContent.spanColor,
-						}}
-					>
-						{tooltipContent.spanName}
-					</div>
-					<div>Status: {tooltipContent.status}</div>
-					<div>Start: {tooltipContent.startMs.toFixed(2)} ms</div>
-					<div>Duration: {formatDuration(tooltipContent.durationMs * 1e6)}</div>
+					{/* TODO: passing each content is too much, we should use the tooltipContent object directly */}
+					<SpanTooltipContent
+						spanName={tooltipContent.spanName}
+						color={tooltipContent.spanColor}
+						hasError={tooltipContent.status === 'error'}
+						relativeStartMs={tooltipContent.startMs}
+						durationMs={tooltipContent.durationMs}
+					/>
 				</div>,
 				document.body,
 		  )

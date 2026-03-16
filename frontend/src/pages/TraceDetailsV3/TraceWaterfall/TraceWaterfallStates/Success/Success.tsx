@@ -16,7 +16,6 @@ import {
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
@@ -35,6 +34,7 @@ import {
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
+import SpanHoverCard from '../../../SpanHoverCard/SpanHoverCard';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../TraceWaterfall';
 import Filters from './Filters/Filters';
@@ -60,6 +60,8 @@ interface ISuccessProps {
 	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	hoveredSpanId: string | null;
+	setHoveredSpanId: Dispatch<SetStateAction<string | null>>;
 }
 
 function SpanOverview({
@@ -310,6 +312,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
 		selectedSpan,
+		hoveredSpanId,
+		setHoveredSpanId,
 	} = props;
 
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
@@ -317,6 +321,43 @@ function Success(props: ISuccessProps): JSX.Element {
 	const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
+	const prevHoveredSpanIdRef = useRef<string | null>(null);
+
+	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
+	const applyHoverClass = useCallback((spanId: string | null): void => {
+		const prev = prevHoveredSpanIdRef.current;
+		if (prev === spanId) {
+			return;
+		}
+
+		if (prev) {
+			const prevElements = document.querySelectorAll(`[data-span-id="${prev}"]`);
+			prevElements.forEach((el) => el.classList.remove('hovered-span'));
+		}
+		if (spanId) {
+			const nextElements = document.querySelectorAll(`[data-span-id="${spanId}"]`);
+			nextElements.forEach((el) => el.classList.add('hovered-span'));
+		}
+		prevHoveredSpanIdRef.current = spanId;
+	}, []);
+
+	// Handle incoming hover from flamegraph (cross-view sync)
+	useEffect(() => {
+		applyHoverClass(hoveredSpanId);
+	}, [hoveredSpanId, applyHoverClass]);
+
+	const handleRowMouseEnter = useCallback(
+		(spanId: string): void => {
+			setHoveredSpanId(spanId);
+			applyHoverClass(spanId);
+		},
+		[setHoveredSpanId, applyHoverClass],
+	);
+
+	const handleRowMouseLeave = useCallback((): void => {
+		setHoveredSpanId(null);
+		applyHoverClass(null);
+	}, [setHoveredSpanId, applyHoverClass]);
 
 	const handleFilteredSpansChange = useCallback(
 		(spanIds: string[], isActive: boolean) => {
@@ -561,7 +602,7 @@ function Success(props: ISuccessProps): JSX.Element {
 						<TimelineV3
 							startTimestamp={traceMetadata.startTime}
 							endTimestamp={traceMetadata.endTime}
-							timelineHeight={6}
+							timelineHeight={10}
 							offsetTimestamp={0}
 						/>
 					</div>
@@ -588,6 +629,7 @@ function Success(props: ISuccessProps): JSX.Element {
 										<tr
 											key={String(virtualRow.key)}
 											data-testid={`cell-0-${span.spanId}`}
+											data-span-id={span.spanId}
 											className="span-tree-row"
 											style={{
 												position: 'absolute',
@@ -597,6 +639,8 @@ function Success(props: ISuccessProps): JSX.Element {
 												height: ROW_HEIGHT,
 												transform: `translateY(${virtualRow.start}px)`,
 											}}
+											onMouseEnter={(): void => handleRowMouseEnter(span.spanId)}
+											onMouseLeave={handleRowMouseLeave}
 										>
 											{row.getVisibleCells().map((cell) => (
 												<td key={cell.id} className="span-tree-cell">
@@ -626,6 +670,7 @@ function Success(props: ISuccessProps): JSX.Element {
 								<div
 									key={String(virtualRow.key)}
 									data-testid={`cell-1-${span.spanId}`}
+									data-span-id={span.spanId}
 									className="timeline-row"
 									style={{
 										position: 'absolute',
@@ -635,6 +680,8 @@ function Success(props: ISuccessProps): JSX.Element {
 										height: ROW_HEIGHT,
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
+									onMouseEnter={(): void => handleRowMouseEnter(span.spanId)}
+									onMouseLeave={handleRowMouseLeave}
 								>
 									<SpanDuration
 										span={span}

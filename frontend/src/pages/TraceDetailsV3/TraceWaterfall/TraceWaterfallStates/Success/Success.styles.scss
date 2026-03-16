@@ -77,7 +77,7 @@
 		top: 0;
 		z-index: 2;
 		display: flex;
-		height: 16px;
+		height: 25px;
 		background-color: var(--bg-ink-500);
 
 		.sidebar-header {
@@ -135,7 +135,8 @@
 			padding: 0;
 		}
 
-		.span-tree-row:hover {
+		.span-tree-row:hover,
+		.span-tree-row.hovered-span {
 			border-radius: 4px;
 			background: rgba(171, 189, 255, 0.06) !important;
 
@@ -171,7 +172,8 @@
 			align-items: center;
 		}
 
-		.timeline-row:hover {
+		.timeline-row:hover,
+		.timeline-row.hovered-span {
 			border-radius: 4px;
 			background: rgba(171, 189, 255, 0.06) !important;
 		}
@@ -295,7 +297,8 @@
 	}
 
 	// Also show action buttons when hovering the tree row (parent of span-overview)
-	.span-tree-row:hover .span-row-actions {
+	.span-tree-row:hover .span-row-actions,
+	.span-tree-row.hovered-span .span-row-actions {
 		opacity: 1;
 		pointer-events: auto;
 	}
@@ -375,7 +378,8 @@
 	}
 
 	// Hover state: static stripe pattern + border
-	.timeline-row:hover .span-bar {
+	.timeline-row:hover .span-bar,
+	.timeline-row.hovered-span .span-bar {
 		color: var(--span-color);
 		background-color: rgba(var(--span-color-rgb), 0.1);
 		border: 1px solid rgba(var(--span-color-rgb), 0.2);
@@ -481,7 +485,8 @@
 		}
 
 		// Light mode hover/selected: span color must override the white default above
-		.timeline-row:hover .span-bar {
+		.timeline-row:hover .span-bar,
+		.timeline-row.hovered-span .span-bar {
 			color: var(--span-color);
 		}
 

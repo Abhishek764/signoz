@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -160,8 +159,8 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		if oldRole != authtypes.RoleAdmin {
 			if err := s.authz.ModifyGrant(ctx,
 				orgID,
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(authtypes.RoleAdmin)},
+				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
+				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(authtypes.RoleAdmin)},
 				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
 			); err != nil {
 				return err

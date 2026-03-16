@@ -20,20 +20,22 @@ import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { colorToRgb, generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
 	ArrowUpRight,
 	ChevronDown,
 	ChevronRight,
+	Link,
+	ListPlus,
 } from 'lucide-react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
-import SpanLineActionButtons from '../../SpanLineActionButtons';
 import { IInterestedSpan } from '../../TraceWaterfall';
 import Filters from './Filters/Filters';
 
@@ -69,6 +71,7 @@ function SpanOverview({
 	filteredSpanIds,
 	isFilterActive,
 	traceMetadata,
+	onAddSpanToFunnel,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
@@ -78,8 +81,10 @@ function SpanOverview({
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	traceMetadata: ITraceMetadata;
+	onAddSpanToFunnel: (span: Span) => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
+	const { onSpanCopy } = useCopySpanLink(span);
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
 	if (span.hasError) {
@@ -95,6 +100,11 @@ function SpanOverview({
 	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
 
 	const indentWidth = isRootSpan ? 0 : span.level * CONNECTOR_WIDTH;
+
+	const handleFunnelClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
+		e.stopPropagation();
+		onAddSpanToFunnel(span);
+	};
 
 	return (
 		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
@@ -161,6 +171,24 @@ function SpanOverview({
 				<Typography.Text className="tree-label" ellipsis title={span.name}>
 					{span.name}
 				</Typography.Text>
+
+				{/* Action buttons — shown on hover via CSS, right-aligned */}
+				<span className="span-row-actions">
+					<Tooltip title="Copy Span Link">
+						<button type="button" className="span-action-btn" onClick={onSpanCopy}>
+							<Link size={12} />
+						</button>
+					</Tooltip>
+					<Tooltip title="Add to Trace Funnel">
+						<button
+							type="button"
+							className="span-action-btn"
+							onClick={handleFunnelClick}
+						>
+							<ListPlus size={12} />
+						</button>
+					</Tooltip>
+				</span>
 			</div>
 		</SpanHoverCard>
 	);
@@ -190,12 +218,12 @@ export function SpanDuration({
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
+	let rgbColor = colorToRgb(color);
 
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
+		rgbColor = '239, 68, 68';
 	}
-
-	const [hasActionButtons, setHasActionButtons] = useState(false);
 
 	const isMatching =
 		isFilterActive && (filteredSpanIds || []).includes(span.spanId);
@@ -203,35 +231,6 @@ export function SpanDuration({
 	const isDimmed = isFilterActive && !isMatching && !isSelected;
 	const isHighlighted = isFilterActive && isMatching && !isSelected;
 	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
-
-	const handleMouseEnter = (): void => {
-		setHasActionButtons(true);
-	};
-
-	const handleMouseLeave = (): void => {
-		setHasActionButtons(false);
-	};
-
-	// Calculate text positioning to handle overflow cases
-	const textStyle = useMemo(() => {
-		const spanRightEdge = leftOffset + width;
-		const textWidthApprox = 8; // Approximate text width in percentage
-
-		// If span would cause text overflow, right-align text to span end
-		if (leftOffset > 100 - textWidthApprox) {
-			return {
-				right: `${100 - spanRightEdge}%`,
-				color,
-				textAlign: 'right' as const,
-			};
-		}
-
-		// Default: left-align text to span start
-		return {
-			left: `${leftOffset}%`,
-			color,
-		};
-	}, [leftOffset, width, color]);
 
 	return (
 		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
@@ -242,32 +241,40 @@ export function SpanDuration({
 					'selected-non-matching-span': isSelectedNonMatching,
 					'dimmed-span': isDimmed,
 				})}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
 				onClick={(): void => handleSpanClick(span)}
 			>
 				<div
-					className="span-line"
-					style={{
-						left: `${leftOffset}%`,
-						width: `${width}%`,
-						backgroundColor: color,
-						position: 'relative',
-					}}
+					className="span-bar"
+					style={
+						{
+							left: `${leftOffset}%`,
+							width: `${width}%`,
+							'--span-color': color,
+							'--span-color-rgb': rgbColor,
+						} as React.CSSProperties
+					}
 				>
+					<span className="span-info">
+						<span className="span-name">{span.name}</span>
+						<span className="span-duration-text">{`${toFixed(
+							time,
+							2,
+						)} ${timeUnitName}`}</span>
+					</span>
 					{span.event?.map((event) => {
 						const eventTimeMs = event.timeUnixNano / 1e6;
 						const eventOffsetPercent =
 							((eventTimeMs - span.timestamp) / (span.durationNano / 1e6)) * 100;
 						const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
 						const { isError } = event;
-						const { time, timeUnitName } = convertTimeToRelevantUnit(
-							eventTimeMs - span.timestamp,
-						);
+						const {
+							time: evtTime,
+							timeUnitName: evtUnit,
+						} = convertTimeToRelevantUnit(eventTimeMs - span.timestamp);
 						return (
 							<Tooltip
 								key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
-								title={`${event.name} @ ${toFixed(time, 2)} ${timeUnitName}`}
+								title={`${event.name} @ ${toFixed(evtTime, 2)} ${evtUnit}`}
 							>
 								<div
 									className={`event-dot ${isError ? 'error' : ''}`}
@@ -279,12 +286,6 @@ export function SpanDuration({
 						);
 					})}
 				</div>
-				{hasActionButtons && <SpanLineActionButtons span={span} />}
-				<Typography.Text
-					className="span-line-text"
-					ellipsis
-					style={textStyle}
-				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</div>
 		</SpanHoverCard>
 	);
@@ -368,7 +369,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
 		Span | undefined
 	>(undefined);
-	const _handleAddSpanToFunnel = useCallback((span: Span): void => {
+	const handleAddSpanToFunnel = useCallback((span: Span): void => {
 		setIsAddSpanToFunnelModalOpen(true);
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
@@ -406,6 +407,7 @@ function Success(props: ISuccessProps): JSX.Element {
 						traceMetadata={traceMetadata}
 						filteredSpanIds={filteredSpanIds}
 						isFilterActive={isFilterActive}
+						onAddSpanToFunnel={handleAddSpanToFunnel}
 					/>
 				),
 			}),
@@ -418,6 +420,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			handleSpanClick,
 			filteredSpanIds,
 			isFilterActive,
+			handleAddSpanToFunnel,
 		],
 	);
 

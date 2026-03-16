@@ -131,7 +131,7 @@
 			width: 100%;
 			height: 28px;
 			align-items: center;
-			overflow: hidden;
+			overflow: visible;
 			padding: 0;
 		}
 
@@ -252,22 +252,104 @@
 			flex: 1;
 			min-width: 0;
 		}
+
+		.span-row-actions {
+			position: sticky;
+			right: 0;
+			display: flex;
+			align-items: center;
+			gap: 2px;
+			margin-left: auto;
+			padding-right: 4px;
+			padding-left: 8px;
+			flex-shrink: 0;
+			height: 100%;
+			background: linear-gradient(to left, var(--bg-ink-500) 60%, transparent);
+			z-index: 2;
+			opacity: 0;
+			pointer-events: none;
+
+			.span-action-btn {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 22px;
+				height: 22px;
+				border-radius: 2px;
+				cursor: pointer;
+				color: var(--bg-vanilla-400);
+				background: transparent;
+				border: none;
+				padding: 0;
+
+				&:hover {
+					background: var(--bg-slate-400);
+				}
+			}
+		}
+
+		&:hover .span-row-actions {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+
+	// Also show action buttons when hovering the tree row (parent of span-overview)
+	.span-tree-row:hover .span-row-actions {
+		opacity: 1;
+		pointer-events: auto;
 	}
 
 	.span-duration {
 		display: flex;
-		flex-direction: column;
+		align-items: center;
 		height: 28px;
 		position: relative;
 		width: 100%;
 		padding: 0 15px;
 		cursor: pointer;
-		justify-content: center;
 
-		.span-line {
-			position: relative;
-			height: 8px;
-			border-radius: 4px;
+		.span-bar {
+			position: absolute;
+			height: 18px;
+			top: 5px;
+			border-radius: 2px;
+			display: flex;
+			align-items: center;
+			padding: 0 8px;
+			overflow: hidden;
+			cursor: pointer;
+			white-space: nowrap;
+			color: rgba(0, 0, 0, 0.9);
+			background-color: var(--span-color);
+			border: 1px solid transparent;
+
+			.span-info {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				width: 100%;
+				overflow: hidden;
+				z-index: 1;
+
+				.span-name {
+					font-weight: 500;
+					font-size: 11px;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					flex-grow: 1;
+					min-width: 0;
+				}
+
+				.span-duration-text {
+					color: inherit;
+					opacity: 0.8;
+					font-size: 10px;
+					margin-left: 8px;
+					flex-shrink: 0;
+				}
+			}
 		}
 
 		.event-dot {
@@ -290,20 +372,35 @@
 				transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
 			}
 		}
+	}
 
-		.span-line-text {
-			position: relative;
-			top: 0;
-			font-variant-numeric: lining-nums tabular-nums stacked-fractions
-				slashed-zero;
-			font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
-			font-family: Inter;
-			font-size: 12px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 16px;
-			letter-spacing: -0.07px;
-		}
+	// Hover state: static stripe pattern + border
+	.timeline-row:hover .span-bar {
+		color: var(--span-color);
+		background-color: rgba(var(--span-color-rgb), 0.1);
+		border: 1px solid rgba(var(--span-color-rgb), 0.2);
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 10px,
+			rgba(var(--span-color-rgb), 0.04) 10px,
+			rgba(var(--span-color-rgb), 0.04) 20px
+		);
+	}
+
+	// Selected state: stripe pattern + dashed border
+	.interested-span .span-bar,
+	.selected-non-matching-span .span-bar {
+		color: var(--span-color);
+		background-color: rgba(var(--span-color-rgb), 0.1);
+		border: 1px dashed var(--span-color);
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 10px,
+			rgba(var(--span-color-rgb), 0.04) 10px,
+			rgba(var(--span-color-rgb), 0.04) 20px
+		);
 	}
 
 	// Shared state classes for both panels
@@ -321,8 +418,7 @@
 	}
 
 	.selected-non-matching-span {
-		.tree-label,
-		.span-line-text {
+		.tree-label {
 			opacity: 0.5;
 		}
 	}
@@ -361,11 +457,37 @@
 			.tree-connector {
 				border-color: var(--bg-vanilla-400);
 			}
+
+			.span-row-actions {
+				background: linear-gradient(to left, var(--bg-vanilla-100) 60%, transparent);
+
+				.span-action-btn {
+					color: var(--bg-ink-400);
+
+					&:hover {
+						background: var(--bg-vanilla-300);
+					}
+				}
+			}
 		}
 
 		.interested-span {
 			border-radius: 4px;
 			background: var(--bg-vanilla-300);
+		}
+
+		.span-duration .span-bar {
+			color: rgba(255, 255, 255, 0.9);
+		}
+
+		// Light mode hover/selected: span color must override the white default above
+		.timeline-row:hover .span-bar {
+			color: var(--span-color);
+		}
+
+		.interested-span .span-bar,
+		.selected-non-matching-span .span-bar {
+			color: var(--span-color);
 		}
 
 		.waterfall-sidebar {

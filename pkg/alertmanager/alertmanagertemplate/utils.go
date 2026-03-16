@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/template/parse"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/template"
@@ -154,7 +155,7 @@ func ExtractUsedVariables(src string) (map[string]bool, error) {
 	tree := parse.New("template")
 	tree.Mode = parse.SkipFuncCheck
 	if _, err := tree.Parse(preamble.String()+src, "{{", "}}", make(map[string]*parse.Tree), funcMap); err != nil {
-		return nil, err
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInternal, "failed to extract used variables")
 	}
 
 	return used, nil

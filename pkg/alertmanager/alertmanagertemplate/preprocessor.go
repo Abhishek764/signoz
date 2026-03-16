@@ -74,7 +74,8 @@ func extractFieldMappings(data any) []fieldMapping {
 	return mappings
 }
 
-// extractNestedFieldsDefinitions extracts the labels, annotations map and adds their keys to template variable definitions
+// extractNestedFieldsDefinitions adds the labels and annotations keys from the data struct to the template variable definitions
+// it takes the known data struct and extracts the labels and annotations maps and adds their keys to template variable definitions to be used in the template
 func extractNestedFieldsDefinitions(data any) map[string]string {
 	variables := make(map[string]string)
 
@@ -100,7 +101,8 @@ func extractNestedFieldsDefinitions(data any) map[string]string {
 }
 
 // prepareDataForTemplating prepares the data for templating by adding the labels and annotations values to the resulting map
-// so they can be accessed directly from root level, the default values takes precedence over the labels and annotations values
+// so they can be accessed directly from root level, the predefined values takes precedence over the labels and annotations values
+// for example, if labels has a value called rule_name, which collides with the rule_name field in the data struct, the value from the data struct will take precedence
 func prepareDataForTemplating(data any) (map[string]interface{}, error) {
 	var result map[string]interface{}
 	if err := mapstructure.Decode(data, &result); err != nil {
@@ -152,13 +154,13 @@ func buildVariableDefinitions(tmpl string, data any) (string, map[string]bool, e
 	// Extract the initial fields from the data struct and add to the definitions
 	mappings := extractFieldMappings(data)
 
+	// Add variables from struct root level fields to the definitions
 	variables := make(map[string]string)
 	for _, m := range mappings {
 		variables[m.VarName] = fmt.Sprintf(".%s", m.FieldName)
 	}
 
-	// Extract the nested fields definitions from the data struct
-	// nested fields are all maps that are present in data like labels, annotations, etc.
+	// Extract the nested fields definitions from the data struct, like labels, annotations, etc.
 	// once extracted we add them to the variables map along with the field address
 	nestedVariables := extractNestedFieldsDefinitions(data)
 	for k, v := range nestedVariables {

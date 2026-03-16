@@ -11,15 +11,15 @@ import (
 func TestExtractFieldMappings(t *testing.T) {
 	// Struct with various field types to test extraction logic
 	type TestStruct struct {
-		Name       string    `json:"name"`
-		Status     string    `json:"status"`
-		Count      int       `json:"count"`
-		IsActive   bool      `json:"is_active"`
-		CreatedAt  time.Time `json:"created_at"` // time.Time allowed
-		Items      []string  `json:"items"`      // slice skipped
-		unexported string    // unexported skipped (no tag needed)
-		NoTag      string    // no json tag skipped
-		SkippedTag string    `json:"-"` // json:"-" skipped
+		Name            string    `json:"name"`
+		Status          string    `json:"status"`
+		ActiveUserCount int       `json:"user_count" mapstructure:"active_user_count"`
+		IsActive        bool      `json:"is_active"`
+		CreatedAt       time.Time `json:"created_at"` // time.Time allowed
+		Items           []string  `json:"items"`      // slice skipped
+		unexported      string    // unexported skipped (no tag needed)
+		NoTag           string    // no json tag skipped
+		SkippedTag      string    `json:"-"` // json:"-" skipped
 	}
 
 	testCases := []struct {
@@ -29,11 +29,11 @@ func TestExtractFieldMappings(t *testing.T) {
 	}{
 		{
 			name: "struct with mixed field types",
-			data: TestStruct{Name: "test", Count: 5, unexported: ""},
+			data: TestStruct{Name: "test", ActiveUserCount: 5, unexported: ""},
 			expected: []fieldMapping{
 				{VarName: "name", FieldName: "Name"},
 				{VarName: "status", FieldName: "Status"},
-				{VarName: "count", FieldName: "Count"},
+				{VarName: "user_count", FieldName: "active_user_count"},
 				{VarName: "is_active", FieldName: "IsActive"},
 				{VarName: "created_at", FieldName: "CreatedAt"},
 			},

@@ -20,7 +20,6 @@ var (
 	minPasswordLength                      int    = 12
 	ErrInvalidPassword                            = errors.Newf(errors.TypeInvalidInput, errors.MustNewCode("invalid_password"), "password must be at least %d characters long, should contain at least one uppercase letter [A-Z], one lowercase letter [a-z], one number [0-9], and one symbol [%c].", minPasswordLength, symbols)
 	ErrCodeResetPasswordTokenAlreadyExists        = errors.MustNewCode("reset_password_token_already_exists")
-	ErrCodePasswordNotFound                       = errors.MustNewCode("password_not_found")
 	ErrCodeResetPasswordTokenNotFound             = errors.MustNewCode("reset_password_token_not_found")
 	ErrCodePasswordAlreadyExists                  = errors.MustNewCode("password_already_exists")
 	ErrCodeIncorrectPassword                      = errors.MustNewCode("incorrect_password")

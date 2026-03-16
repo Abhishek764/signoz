@@ -376,7 +376,7 @@ func (store *store) GetPassword(ctx context.Context, id valuer.UUID) (*usertypes
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrPasswordNotFound, "password with id: %s does not exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodePasswordNotFound, "password with id: %s does not exist", id)
 	}
 
 	return password, nil
@@ -393,7 +393,7 @@ func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID)
 		Where("user_id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrPasswordNotFound, "password for user %s does not exist", userID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodePasswordNotFound, "password for user %s does not exist", userID)
 	}
 	return password, nil
 }
@@ -451,7 +451,7 @@ func (store *store) UpdatePassword(ctx context.Context, factorPassword *usertype
 		Where("user_id = ?", factorPassword.UserID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrPasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
+		return store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodePasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
 	}
 
 	return nil

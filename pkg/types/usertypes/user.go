@@ -19,7 +19,7 @@ var (
 	ErrUserAlreadyExists                = errors.MustNewCode("user_already_exists")
 	ErrPasswordAlreadyExists            = errors.MustNewCode("password_already_exists")
 	ErrResetPasswordTokenAlreadyExists  = errors.MustNewCode("reset_password_token_already_exists")
-	ErrPasswordNotFound                 = errors.MustNewCode("password_not_found")
+	ErrCodePasswordNotFound             = errors.MustNewCode("password_not_found")
 	ErrResetPasswordTokenNotFound       = errors.MustNewCode("reset_password_token_not_found")
 	ErrAPIKeyAlreadyExists              = errors.MustNewCode("api_key_already_exists")
 	ErrAPIKeyNotFound                   = errors.MustNewCode("api_key_not_found")

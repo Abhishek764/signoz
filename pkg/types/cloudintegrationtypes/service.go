@@ -154,13 +154,15 @@ type AWSLogsStrategy struct {
 }
 
 // Dashboard represents a dashboard definition for cloud integration.
+// This is used to show available pre-made dashboards for a service,
+// hence has additional fields like name and description and url for redirection to the right dashboard on click.
 type Dashboard struct {
-	Id          string                                `json:"id"`
-	Url         string                                `json:"url"`
-	Title       string                                `json:"title"`
-	Description string                                `json:"description"`
-	Image       string                                `json:"image"`
-	Definition  *dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
+	Id          string                               `json:"id"`
+	Url         string                               `json:"url"`
+	Title       string                               `json:"title"`
+	Description string                               `json:"description"`
+	Image       string                               `json:"image"`
+	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
 // UTILS
@@ -187,7 +189,7 @@ func GetDashboardsFromAssets(
 			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcId, d.Id),
 			Locked: true,
 			OrgID:  orgID,
-			Data:   *d.Definition,
+			Data:   d.Definition,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: *createdAt,
 				UpdatedAt: *createdAt,

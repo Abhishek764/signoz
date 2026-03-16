@@ -204,10 +204,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	// While we expect user not to send the mixed data types, it inevitably happens
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
-	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString, telemetrytypes.FieldDataTypeJSON:
-		if key.FieldDataType == telemetrytypes.FieldDataTypeJSON {
-			tblFieldName = fmt.Sprintf("toString(%s)", tblFieldName)
-		}
+	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString:
 		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
@@ -224,8 +221,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		}
 	case telemetrytypes.FieldDataTypeJSON:
 		// for JSON fields, we need to convert the value to a string
-		// 
-		// Note: though the conversion ahead won't lead to any results because 
+		//
+		// Note: though the conversion ahead won't lead to any results because
 		// toString() results in a stringified JSON
 		tblFieldName = fmt.Sprintf("toString(%s)", tblFieldName)
 		switch v := value.(type) {

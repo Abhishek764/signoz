@@ -1,4 +1,4 @@
-package types
+package usertypes
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -19,11 +21,10 @@ var (
 	ErrResetPasswordTokenAlreadyExists  = errors.MustNewCode("reset_password_token_already_exists")
 	ErrPasswordNotFound                 = errors.MustNewCode("password_not_found")
 	ErrResetPasswordTokenNotFound       = errors.MustNewCode("reset_password_token_not_found")
-	ErrAPIKeyAlreadyExists              = errors.MustNewCode("api_key_already_exists")
-	ErrAPIKeyNotFound                   = errors.MustNewCode("api_key_not_found")
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
 	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
 	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
+	ErrCodeUserRoleAlreadyExists        = errors.MustNewCode("user_role_already_exists")
 )
 
 var (
@@ -33,20 +34,29 @@ var (
 	ValidUserStatus         = []valuer.String{UserStatusPendingInvite, UserStatusActive, UserStatusDeleted}
 )
 
-type GettableUser = User
+type StorableUser struct {
+	bun.BaseModel `bun:"table:users,alias:users"`
 
-type User struct {
-	bun.BaseModel `bun:"table:users"`
-
-	Identifiable
+	types.Identifiable
 	DisplayName string        `bun:"display_name" json:"displayName"`
-	Email       valuer.Email  `bun:"email" json:"email"`
-	Role        Role          `bun:"role" json:"role"`
-	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
+	Email       string        `bun:"email" json:"email"`
+	OrgID       string        `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
 	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
-	TimeAuditable
+	types.TimeAuditable
+}
+
+type User struct {
+	types.Identifiable
+	DisplayName string        `json:"displayName"`
+	Email       valuer.Email  `json:"email"`
+	Roles       []string      `json:"roles"`
+	OrgID       valuer.UUID   `json:"orgId"`
+	IsRoot      bool          `json:"isRoot"`
+	Status      valuer.String `json:"status"`
+	DeletedAt   time.Time     `json:"-"`
+	types.TimeAuditable
 }
 
 type PostableRegisterOrgAndAdmin struct {
@@ -57,13 +67,14 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
+type UpdatableUser struct {
+	DisplayName string   `json:"displayName" required:"true"`
+	Roles       []string `json:"roles" required:"true" nullable:"false"`
+}
+
+func NewUser(displayName string, email valuer.Email, roles []string, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
-	}
-
-	if role == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
 	}
 
 	if orgID.IsZero() {
@@ -75,16 +86,16 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 	}
 
 	return &User{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        role,
+		Roles:       roles,
 		OrgID:       orgID,
 		IsRoot:      false,
 		Status:      status,
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -101,38 +112,90 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 	}
 
 	return &User{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        RoleAdmin,
+		Roles:       []string{authtypes.SigNozAdminRoleName},
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
 	}, nil
 }
 
+func NewStorableUser(user *User) *StorableUser {
+	return &StorableUser{
+		Identifiable:  user.Identifiable,
+		TimeAuditable: user.TimeAuditable,
+		DisplayName:   user.DisplayName,
+		Email:         user.Email.String(),
+		Status:        user.Status,
+		OrgID:         user.OrgID.String(),
+		IsRoot:        user.IsRoot,
+	}
+}
+
+func NewUserFromStorables(storableUser *StorableUser, roles []string) *User {
+	return &User{
+		Identifiable:  storableUser.Identifiable,
+		DisplayName:   storableUser.DisplayName,
+		Email:         valuer.MustNewEmail(storableUser.Email),
+		Roles:         roles,
+		Status:        storableUser.Status,
+		OrgID:         valuer.MustNewUUID(storableUser.OrgID),
+		TimeAuditable: storableUser.TimeAuditable,
+		IsRoot:        storableUser.IsRoot,
+	}
+}
+
+func NewUsersFromRolesMaps(storableUsers []*StorableUser, roles []*authtypes.Role, userIDToRoleIDsMap map[valuer.UUID][]valuer.UUID) []*User {
+	users := make([]*User, 0, len(storableUsers))
+
+	roleIDToRole := make(map[string]*authtypes.Role, len(roles))
+	for _, role := range roles {
+		roleIDToRole[role.ID.String()] = role
+	}
+
+	for _, user := range storableUsers {
+		roleIDs := userIDToRoleIDsMap[user.ID]
+
+		roleNames := make([]string, len(roleIDs))
+		for idx, rid := range roleIDs {
+			if role, ok := roleIDToRole[rid.String()]; ok {
+				roleNames[idx] = role.Name
+			}
+		}
+
+		account := NewUserFromStorables(user, roleNames)
+		users = append(users, account)
+	}
+
+	return users
+}
+
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string, role Role) {
-	if displayName != "" {
-		u.DisplayName = displayName
+func (u *User) Update(displayName string, roles []string) error {
+	// no updates allowed if user is in delete state
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot update status of a deleted user")
 	}
-	if role != "" {
-		u.Role = role
-	}
+
+	u.DisplayName = displayName
+	u.Roles = roles
 	u.UpdatedAt = time.Now()
+	return nil
 }
 
 func (u *User) UpdateStatus(status valuer.String) error {
 	// no updates allowed if user is in delete state
-	if err := u.ErrIfDeleted(); err != nil {
-		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot update status of a deleted user")
 	}
 
 	// not udpates allowed from active to pending state
@@ -149,7 +212,7 @@ func (u *User) UpdateStatus(status valuer.String) error {
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
-	u.Role = RoleAdmin
+	u.Roles = []string{authtypes.SigNozAdminRoleName}
 	u.UpdatedAt = time.Now()
 }
 
@@ -168,9 +231,27 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
+// ErrIfRoot returns an error if the user is a root user. The caller should
+// enrich the error with the specific operation using errors.WithAdditionalf.
+func (u *StorableUser) ErrIfRoot() error {
+	if u.IsRoot {
+		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
+	}
+	return nil
+}
+
 // ErrIfDeleted returns an error if the user is in deleted state.
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf
 func (u *User) ErrIfDeleted() error {
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
+	}
+	return nil
+}
+
+// ErrIfDeleted returns an error if the user is in deleted state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *StorableUser) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
 	}
@@ -186,11 +267,51 @@ func (u *User) ErrIfPending() error {
 	return nil
 }
 
+func (u *User) PatchRoles(targetRoles []string) ([]string, []string) {
+	currentRolesSet := make(map[string]struct{}, len(u.Roles))
+	inputRolesSet := make(map[string]struct{}, len(targetRoles))
+
+	for _, role := range u.Roles {
+		currentRolesSet[role] = struct{}{}
+	}
+	for _, role := range targetRoles {
+		inputRolesSet[role] = struct{}{}
+	}
+
+	// additions: roles present in input but not in current
+	additions := []string{}
+	for _, role := range targetRoles {
+		if _, exists := currentRolesSet[role]; !exists {
+			additions = append(additions, role)
+		}
+	}
+
+	// deletions: roles present in current but not in input
+	deletions := []string{}
+	for _, role := range u.Roles {
+		if _, exists := inputRolesSet[role]; !exists {
+			deletions = append(deletions, role)
+		}
+	}
+
+	return additions, deletions
+}
+
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
-		"role":         user.Role,
+		"roles":        user.Roles,
 		"email":        user.Email.String(),
+		"display_name": user.DisplayName,
+		"status":       user.Status,
+		"created_at":   user.CreatedAt,
+	}
+}
+
+func NewTraitsFromStorableUser(user *StorableUser) map[string]any {
+	return map[string]any{
+		"name":         user.DisplayName,
+		"email":        user.Email,
 		"display_name": user.DisplayName,
 		"status":       user.Status,
 		"created_at":   user.CreatedAt,
@@ -215,33 +336,33 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 
 type UserStore interface {
 	// Creates a user.
-	CreateUser(ctx context.Context, user *User) error
+	CreateUser(ctx context.Context, user *StorableUser) error
 
 	// Get user by id.
-	GetUser(context.Context, valuer.UUID) (*User, error)
+	GetUser(context.Context, valuer.UUID) (*StorableUser, error)
 
 	// Get user by orgID and id.
-	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*User, error)
+	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*StorableUser, error)
 
 	// Get user by email and orgID.
-	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*User, error)
+	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// Get users by email.
-	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
+	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*StorableUser, error)
 
 	// Get users by role and org.
-	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+	GetActiveUsersByRoleNameAndOrgID(ctx context.Context, roleName string, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by org.
-	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by email and org ids.
-	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
+	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*StorableUser, error)
 
 	// Get users for an org id using emails and statuses
-	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*User, error)
+	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*StorableUser, error)
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
+	UpdateUser(ctx context.Context, orgID valuer.UUID, user *StorableUser) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 	SoftDeleteUser(ctx context.Context, orgID string, id string) error
 
@@ -259,11 +380,22 @@ type UserStore interface {
 	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
 	// Get root user by org.
-	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
+	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*StorableUser, error)
 
 	// Get user by reset password token
-	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
+	GetUserByResetPasswordToken(ctx context.Context, token string) (*StorableUser, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
+
+	// AuthN Related
+	// Get user and factor password by email and orgID.
+	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*StorableUser, *FactorPassword, error)
+
+	// User x Role (user_role table)
+	CreateUserRoles(context.Context, []*StorableUserRole) error
+	GetUserRoles(context.Context, valuer.UUID) ([]*StorableUserRole, error)
+	ListUserRolesByOrgID(context.Context, valuer.UUID) ([]*StorableUserRole, error)
+	ListUserRolesByOrgIDAndUserIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*StorableUserRole, error)
+	DeleteUserRoles(context.Context, valuer.UUID) error
 }

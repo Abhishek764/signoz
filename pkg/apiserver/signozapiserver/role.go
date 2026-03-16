@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/gorilla/mux"
 )
 
@@ -16,14 +15,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		Tags:                []string{"role"},
 		Summary:             "Create role",
 		Description:         "This endpoint creates a role",
-		Request:             new(roletypes.PostableRole),
+		Request:             new(authtypes.PostableRole),
 		RequestContentType:  "",
 		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -35,12 +34,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists all roles",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*roletypes.Role, 0),
+		Response:            make([]*authtypes.Role, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -52,12 +51,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets a role",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(roletypes.Role),
+		Response:            new(authtypes.Role),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -74,7 +73,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -84,14 +83,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		Tags:                []string{"role"},
 		Summary:             "Patch role",
 		Description:         "This endpoint patches a role",
-		Request:             new(roletypes.PatchableRole),
+		Request:             new(authtypes.PatchableRole),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -108,7 +107,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusBadRequest, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -125,7 +124,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -127,8 +126,6 @@ func (typ *Identity) ToClaims() Claims {
 }
 
 type AuthNStore interface {
-	// Get user and factor password by email and orgID.
-	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error)
 
 	// Get org domain from id.
 	GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*AuthDomain, error)

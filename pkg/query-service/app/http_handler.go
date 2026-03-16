@@ -72,6 +72,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 
 	"go.uber.org/zap"
 
@@ -2033,7 +2034,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.PostableRegisterOrgAndAdmin
+	var req usertypes.PostableRegisterOrgAndAdmin
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, err)
 		return

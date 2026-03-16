@@ -177,6 +177,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddServiceAccountFactory(sqlstore, sqlschema),
 		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
+		sqlmigration.NewAddUserRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserRoleAuthzFactory(sqlstore),
 	)
 }
 

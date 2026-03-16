@@ -13,9 +13,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"go.opentelemetry.io/otel/attribute"
@@ -175,7 +175,7 @@ func (provider *provider) Report(ctx context.Context) error {
 		}
 
 		for _, user := range users {
-			traits := types.NewTraitsFromUser(user)
+			traits := usertypes.NewTraitsFromStorableUser(user)
 			if maxLastObservedAt, ok := maxLastObservedAtPerUserID[user.ID]; ok {
 				traits["auth_token.last_observed_at.max.time"] = maxLastObservedAt.UTC()
 				traits["auth_token.last_observed_at.max.time_unix"] = maxLastObservedAt.Unix()

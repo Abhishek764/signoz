@@ -11,8 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -30,7 +30,7 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableAcceptInvite)
+	req := new(usertypes.PostableAcceptInvite)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
@@ -55,14 +55,14 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.PostableInvite
+	var req usertypes.PostableInvite
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
-		Invites: []types.PostableInvite{req},
+	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &usertypes.PostableBulkInviteRequest{
+		Invites: []usertypes.PostableInvite{req},
 	})
 	if err != nil {
 		render.Error(rw, err)
@@ -82,7 +82,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.PostableBulkInviteRequest
+	var req usertypes.PostableBulkInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
@@ -168,7 +168,7 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := h.module.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -187,7 +187,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	user, err := h.module.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -206,14 +206,14 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	users, err := h.module.GetUsersByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	// temp code - show only active users
-	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusActive })
+	users = slices.DeleteFunc(users, func(user *usertypes.User) bool { return user.Status != usertypes.UserStatusActive })
 
 	render.Success(w, http.StatusOK, users)
 }
@@ -230,7 +230,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user types.User
+	var user usertypes.UpdatableUser
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		render.Error(w, err)
 		return
@@ -277,13 +277,13 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	user, err := handler.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := handler.module.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, valuer.MustNewUUID(claims.OrgID), user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -296,7 +296,7 @@ func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableResetPassword)
+	req := new(usertypes.PostableResetPassword)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(w, err)
 		return
@@ -315,7 +315,7 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	var req types.ChangePasswordRequest
+	var req usertypes.ChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, err)
 		return
@@ -334,7 +334,7 @@ func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableForgotPassword)
+	req := new(usertypes.PostableForgotPassword)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return

@@ -1,12 +1,12 @@
-package types
+package usertypes
 
 import (
 	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 )
 
 var (
@@ -17,17 +17,14 @@ var (
 type GettableInvite = Invite
 
 type Invite struct {
-	bun.BaseModel `bun:"table:user_invite"`
-
-	Identifiable
-	TimeAuditable
-	Name  string       `bun:"name,type:text" json:"name"`
-	Email valuer.Email `bun:"email,type:text" json:"email"`
-	Token string       `bun:"token,type:text" json:"token"`
-	Role  Role         `bun:"role,type:text" json:"role"`
-	OrgID valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
-
-	InviteLink string `bun:"-" json:"inviteLink"`
+	types.Identifiable
+	types.TimeAuditable
+	Name       string       `json:"name"`
+	Email      valuer.Email `json:"email"`
+	Token      string       `json:"token"`
+	Roles      []string     `json:"roles"`
+	OrgID      valuer.UUID  `json:"orgId"`
+	InviteLink string       `json:"inviteLink"`
 }
 
 type InviteEmailData struct {
@@ -49,7 +46,7 @@ type PostableAcceptInvite struct {
 type PostableInvite struct {
 	Name            string       `json:"name"`
 	Email           valuer.Email `json:"email"`
-	Role            Role         `json:"role"`
+	Roles           []string     `json:"roles"`
 	FrontendBaseUrl string       `json:"frontendBaseUrl"`
 }
 
@@ -83,17 +80,17 @@ type GettableCreateInviteResponse struct {
 	InviteToken string `json:"token"`
 }
 
-func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
+func NewInvite(name string, roles []string, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
 	invite := &Invite{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		Name:  name,
 		Email: email,
 		Token: valuer.GenerateUUID().String(),
-		Role:  role,
+		Roles: roles,
 		OrgID: orgID,
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},

@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -158,7 +157,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(
 	serviceAccountName := fmt.Sprintf("%s-integration", cloudProvider)
 	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", serviceAccountName))
 
-	serviceAccount := serviceaccounttypes.NewServiceAccount(serviceAccountName, email, []string{roletypes.SigNozViewerRoleName}, serviceaccounttypes.StatusActive, valuer.MustNewUUID(orgId))
+	serviceAccount := serviceaccounttypes.NewServiceAccount(serviceAccountName, email, []string{authtypes.SigNozViewerRoleName}, serviceaccounttypes.StatusActive, valuer.MustNewUUID(orgId))
 	serviceAccount, err := ah.Signoz.Modules.ServiceAccount.GetOrCreate(ctx, serviceAccount)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't look for integration service account: %w", err))

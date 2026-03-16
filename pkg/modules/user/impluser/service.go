@@ -2,6 +2,7 @@ package impluser
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -11,13 +12,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type service struct {
 	settings  factory.ScopedProviderSettings
-	store     types.UserStore
+	store     usertypes.UserStore
 	module    user.Module
 	orgGetter organization.Getter
 	authz     authz.AuthZ
@@ -27,7 +28,7 @@ type service struct {
 
 func NewService(
 	providerSettings factory.ProviderSettings,
-	store types.UserStore,
+	store usertypes.UserStore,
 	module user.Module,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
@@ -130,7 +131,7 @@ func (s *service) reconcileByName(ctx context.Context) error {
 }
 
 func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingRoot, err := s.store.GetRootUserByOrgID(ctx, orgID)
+	existingRoot, err := s.getRootUserByOrgID(ctx, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
@@ -149,18 +150,18 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		oldRole := existingUser.Role
+		oldRoles := existingUser.Roles
 
 		existingUser.PromoteToRoot()
 		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return err
 		}
 
-		if oldRole != types.RoleAdmin {
+		if !slices.Contains(oldRoles, authtypes.SigNozAdminRoleName) {
 			if err := s.authz.ModifyGrant(ctx,
 				orgID,
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
+				oldRoles,
+				existingUser.Roles,
 				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
 			); err != nil {
 				return err
@@ -171,12 +172,12 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	// Create new root user
-	newUser, err := types.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
+	newUser, err := usertypes.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
 	if err != nil {
 		return err
 	}
 
-	factorPassword, err := types.NewFactorPassword(s.config.Password, newUser.ID.StringValue())
+	factorPassword, err := usertypes.NewFactorPassword(s.config.Password, newUser.ID.StringValue())
 	if err != nil {
 		return err
 	}
@@ -184,7 +185,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
 }
 
-func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
+func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *usertypes.User) error {
 	existingRoot.PromoteToRoot()
 
 	if existingRoot.Email != s.config.Email {
@@ -204,7 +205,7 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 			return err
 		}
 
-		factorPassword, err := types.NewFactorPassword(s.config.Password, userID.StringValue())
+		factorPassword, err := usertypes.NewFactorPassword(s.config.Password, userID.StringValue())
 		if err != nil {
 			return err
 		}
@@ -221,4 +222,35 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 	}
 
 	return nil
+}
+
+func (s *service) getRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*usertypes.User, error) {
+	existingStorableRootUser, err := s.store.GetRootUserByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err // caller must handle the type not found error
+	}
+
+	storableRootUserRoles, err := s.store.GetUserRoles(ctx, existingStorableRootUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	roleIDs := make([]valuer.UUID, len(storableRootUserRoles))
+	for idx, storableUserRole := range storableRootUserRoles {
+		roleIDs[idx] = valuer.MustNewUUID(storableUserRole.RoleID)
+	}
+
+	roles, err := s.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	roleNames, err := usertypes.NewRolesFromStorableUserRoles(storableRootUserRoles, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	rootUser := usertypes.NewUserFromStorables(existingStorableRootUser, roleNames)
+
+	return rootUser, nil
 }

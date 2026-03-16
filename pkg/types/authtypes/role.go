@@ -1,13 +1,13 @@
-package roletypes
+package authtypes
 
 import (
+	"context"
 	"encoding/json"
 	"regexp"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/uptrace/bun"
@@ -43,15 +43,11 @@ var (
 )
 
 var (
-	ExistingRoleToSigNozManagedRoleMap = map[types.Role]string{
-		types.RoleAdmin:  SigNozAdminRoleName,
-		types.RoleEditor: SigNozEditorRoleName,
-		types.RoleViewer: SigNozViewerRoleName,
+	ExistingRoleToSigNozManagedRoleMap = map[LegacyRole]string{
+		RoleAdmin:  SigNozAdminRoleName,
+		RoleEditor: SigNozEditorRoleName,
+		RoleViewer: SigNozViewerRoleName,
 	}
-)
-
-var (
-	TypeableResourcesRoles = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("roles"))
 )
 
 type StorableRole struct {
@@ -194,20 +190,20 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAdditionTuples(name string, orgID valuer.UUID, relation authtypes.Relation, additions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
-		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
+		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
-			authtypes.MustNewSubject(
-				authtypes.TypeableRole,
+			MustNewSubject(
+				TypeableRole,
 				name,
 				orgID,
-				&authtypes.RelationAssignee,
+				&RelationAssignee,
 			),
 			relation,
-			[]authtypes.Selector{object.Selector},
+			[]Selector{object.Selector},
 			orgID,
 		)
 		if err != nil {
@@ -220,20 +216,20 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation authtypes.Relati
 	return tuples, nil
 }
 
-func GetDeletionTuples(name string, orgID valuer.UUID, relation authtypes.Relation, deletions []*authtypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {
-		typeable := authtypes.MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
+		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
 		transactionTuples, err := typeable.Tuples(
-			authtypes.MustNewSubject(
-				authtypes.TypeableRole,
+			MustNewSubject(
+				TypeableRole,
 				name,
 				orgID,
-				&authtypes.RelationAssignee,
+				&RelationAssignee,
 			),
 			relation,
-			[]authtypes.Selector{object.Selector},
+			[]Selector{object.Selector},
 			orgID,
 		)
 		if err != nil {
@@ -246,11 +242,23 @@ func GetDeletionTuples(name string, orgID valuer.UUID, relation authtypes.Relati
 	return tuples, nil
 }
 
-func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
+func MustGetSigNozManagedRoleFromExistingRole(role LegacyRole) string {
 	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
 	if !ok {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))
 	}
 
 	return managedRole
+}
+
+type RoleStore interface {
+	Create(context.Context, *StorableRole) error
+	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableRole, error)
+	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableRole, error)
+	List(context.Context, valuer.UUID) ([]*StorableRole, error)
+	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*StorableRole, error)
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*StorableRole, error)
+	Update(context.Context, valuer.UUID, *StorableRole) error
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
+	RunInTx(context.Context, func(ctx context.Context) error) error
 }

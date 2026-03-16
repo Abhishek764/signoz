@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -34,7 +34,7 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 }
 
 func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
-	user := new(types.User)
+	user := new(usertypes.StorableUser)
 
 	err := store.
 		sqlstore.
@@ -44,10 +44,10 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
-	return authtypes.NewIdentity(userID, valuer.UUID{}, authtypes.PrincipalUser, user.OrgID, user.Email), nil
+	return authtypes.NewIdentity(userID, valuer.UUID{}, authtypes.PrincipalUser, valuer.MustNewUUID(user.OrgID), valuer.MustNewEmail(user.Email)), nil
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {

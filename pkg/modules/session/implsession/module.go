@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -28,6 +29,7 @@ type module struct {
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
 	orgGetter  organization.Getter
+	roleStore  authtypes.RoleStore
 }
 
 func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
@@ -66,7 +68,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	}
 
 	// filter out deleted users
-	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
+	users = slices.DeleteFunc(users, func(user *usertypes.StorableUser) bool { return user.ErrIfDeleted() != nil })
 
 	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
 	name := strings.Split(email.String(), "@")[1]
@@ -90,7 +92,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	context.Exists = true
 	for _, user := range users {
 		idx := slices.IndexFunc(orgs, func(org *types.Organization) bool {
-			return org.ID == user.OrgID
+			return org.ID == valuer.MustNewUUID(user.OrgID)
 		})
 
 		if idx == -1 {
@@ -142,9 +144,12 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
+	managedRoles := roleMapping.ManagedRolesFromCallbackIdentity(callbackIdentity)
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID, types.UserStatusActive)
+	// pass only valid or fallback to viewer
+	validRoles, err := module.resolveValidRoles(ctx, callbackIdentity.OrgID, managedRoles, callbackIdentity.Email)
+
+	user, err := usertypes.NewUser(callbackIdentity.Name, callbackIdentity.Email, validRoles, callbackIdentity.OrgID, usertypes.UserStatusActive)
 	if err != nil {
 		return "", err
 	}
@@ -221,4 +226,40 @@ func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs ma
 	}
 
 	return provider, nil
+}
+
+// resolveValidRoles validates role names against the database
+// returns only roles that exist. If none are valid, falls back to signoz-viewer role
+func (module *module) resolveValidRoles(ctx context.Context, orgID valuer.UUID, roles []string, email valuer.Email) ([]string, error) {
+	storableRoles, err := module.roleStore.ListByOrgIDAndNames(ctx, orgID, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	validRoles := make([]string, 0, len(storableRoles))
+	validSet := make(map[string]struct{})
+	for _, sr := range storableRoles {
+		validRoles = append(validRoles, sr.Name)
+		validSet[sr.Name] = struct{}{}
+	}
+
+	// log ignored roles
+	if len(validRoles) < len(roles) {
+		var ignored []string
+		for _, r := range roles {
+			if _, ok := validSet[r]; !ok {
+				ignored = append(ignored, r)
+			}
+		}
+		module.settings.Logger().WarnContext(ctx, "ignoring non-existent roles from SSO mapping", "ignored_roles", ignored, "email", email)
+	}
+
+	// fallback to viewer if no valid roles
+	if len(validRoles) == 0 {
+		module.settings.Logger().WarnContext(ctx, "no valid roles from SSO mapping, falling back to viewer",
+			"email", email)
+		validRoles = []string{authtypes.SigNozViewerRoleName}
+	}
+
+	return validRoles, nil
 }

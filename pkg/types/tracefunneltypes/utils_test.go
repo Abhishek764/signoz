@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
@@ -443,7 +444,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 				},
 				Name:  "test-funnel",
 				OrgID: orgID,
-				CreatedByUser: &types.User{
+				CreatedByUser: &usertypes.User{
 					Identifiable: types.Identifiable{
 						ID: userID,
 					},

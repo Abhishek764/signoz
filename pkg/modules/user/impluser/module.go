@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
@@ -18,14 +19,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
 )
 
 type Module struct {
-	store     types.UserStore
+	store     usertypes.UserStore
 	tokenizer tokenizer.Tokenizer
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
@@ -33,10 +35,11 @@ type Module struct {
 	authz     authz.AuthZ
 	analytics analytics.Analytics
 	config    user.Config
+	flagger   flagger.Flagger
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
+func NewModule(store usertypes.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, flagger flagger.Flagger) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -47,12 +50,13 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		analytics: analytics,
 		authz:     authz,
 		config:    config,
+		flagger:   flagger,
 	}
 }
 
-func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
+func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*usertypes.User, error) {
 	// get the user by reset password token
-	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
+	storableUser, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +68,7 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 	}
 
 	// query the user again
-	user, err = m.store.GetByOrgIDAndID(ctx, user.OrgID, user.ID)
+	user, err := m.GetByOrgIDAndID(ctx, valuer.MustNewUUID(storableUser.OrgID), storableUser.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,22 +76,27 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 	return user, nil
 }
 
-func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+func (m *Module) GetInviteByToken(ctx context.Context, token string) (*usertypes.Invite, error) {
 	// get the user
-	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
+	storableUser, err := m.store.GetUserByResetPasswordToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := m.GetByOrgIDAndID(ctx, valuer.MustNewUUID(storableUser.OrgID), storableUser.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// create a dummy invite obj for backward compatibility
-	invite := &types.Invite{
+	invite := &usertypes.Invite{
 		Identifiable: types.Identifiable{
 			ID: user.ID,
 		},
 		Name:  user.DisplayName,
 		Email: user.Email,
 		Token: token,
-		Role:  user.Role,
+		Roles: user.Roles,
 		OrgID: user.OrgID,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: user.CreatedAt,
@@ -99,18 +108,27 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *usertypes.PostableBulkInviteRequest) ([]*usertypes.Invite, error) {
 	creator, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// validate all emails to be invited
+	// validate all emails & roles to be invited
 	emails := make([]string, len(bulkInvites.Invites))
+	var allRolesFromRequest []string
+	seenRolesFromRequest := make(map[string]struct{})
 	for idx, invite := range bulkInvites.Invites {
 		emails[idx] = invite.Email.StringValue()
+		// for role name validation
+		for _, role := range invite.Roles {
+			if _, ok := seenRolesFromRequest[role]; !ok {
+				seenRolesFromRequest[role] = struct{}{}
+				allRolesFromRequest = append(allRolesFromRequest, role)
+			}
+		}
 	}
-	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{usertypes.UserStatusActive.StringValue(), usertypes.UserStatusPendingInvite.StringValue()})
 	if err != nil {
 		return nil, err
 	}
@@ -120,41 +138,47 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
 		}
 
-		if users[0].Status == types.UserStatusPendingInvite {
-			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", users[0].Email.StringValue())
+		if users[0].Status == usertypes.UserStatusPendingInvite {
+			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", users[0].Email)
 		}
 
-		return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with this email: %s", users[0].Email.StringValue())
+		return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with this email: %s", users[0].Email)
+	}
+
+	roles, err := m.authz.ListByOrgIDAndNames(ctx, orgID, allRolesFromRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a map of (role name -> role)
+	roleNameToRoleMap := make(map[string]*authtypes.Role)
+	for _, role := range roles {
+		roleNameToRoleMap[role.Name] = role
 	}
 
 	type userWithResetToken struct {
-		User               *types.User
-		ResetPasswordToken *types.ResetPasswordToken
+		User               *usertypes.User
+		ResetPasswordToken *usertypes.ResetPasswordToken
 	}
 
 	newUsersWithResetToken := make([]*userWithResetToken, len(bulkInvites.Invites))
 
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		for idx, invite := range bulkInvites.Invites {
-			role, err := types.NewRole(invite.Role.String())
-			if err != nil {
-				return err
-			}
-
 			// create a new user with pending invite status
-			newUser, err := types.NewUser(invite.Name, invite.Email, role, orgID, types.UserStatusPendingInvite)
+			newUser, err := usertypes.NewUser(invite.Name, invite.Email, invite.Roles, orgID, usertypes.UserStatusPendingInvite)
 			if err != nil {
 				return err
 			}
 
-			// store the user and password in db
+			// store the user and user_role entries in db
 			err = m.createUserWithoutGrant(ctx, newUser)
 			if err != nil {
 				return err
 			}
 
 			// generate reset password token
-			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.ID)
+			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, orgID, newUser.ID)
 			if err != nil {
 				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
 				return err
@@ -170,23 +194,23 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		return nil, err
 	}
 
-	invites := make([]*types.Invite, len(bulkInvites.Invites))
+	invites := make([]*usertypes.Invite, len(bulkInvites.Invites))
 
 	// send password reset emails to all the invited users
 	for idx, userWithToken := range newUsersWithResetToken {
 		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{
 			"invitee_email": userWithToken.User.Email,
-			"invitee_role":  userWithToken.User.Role,
+			"invitee_roles": userWithToken.User.Roles,
 		})
 
-		invite := &types.Invite{
+		invite := &usertypes.Invite{
 			Identifiable: types.Identifiable{
 				ID: userWithToken.User.ID,
 			},
 			Name:  userWithToken.User.DisplayName,
 			Email: userWithToken.User.Email,
 			Token: userWithToken.ResetPasswordToken.Token,
-			Role:  userWithToken.User.Role,
+			Roles: userWithToken.User.Roles,
 			OrgID: userWithToken.User.OrgID,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: userWithToken.User.CreatedAt,
@@ -219,37 +243,36 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	return invites, nil
 }
 
-func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	// find all the users with pending_invite status
-	users, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
+func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*usertypes.Invite, error) {
+	users, err := m.GetUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
 	if err != nil {
 		return nil, err
 	}
 
-	pendingUsers := slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusPendingInvite })
+	pendingUsers := slices.DeleteFunc(users, func(user *usertypes.User) bool { return user.Status != usertypes.UserStatusPendingInvite })
 
-	var invites []*types.Invite
+	var invites []*usertypes.Invite
 
 	for _, pUser := range pendingUsers {
 		// get the reset password token
-		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.ID)
+		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.OrgID, pUser.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		// create a dummy invite obj for backward compatibility
-		invite := &types.Invite{
+		invite := &usertypes.Invite{
 			Identifiable: types.Identifiable{
 				ID: pUser.ID,
 			},
 			Name:  pUser.DisplayName,
 			Email: pUser.Email,
 			Token: resetPasswordToken.Token,
-			Role:  pUser.Role,
+			Roles: pUser.Roles,
 			OrgID: pUser.OrgID,
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: pUser.CreatedAt,
-				UpdatedAt: pUser.UpdatedAt, // dummy
+				UpdatedAt: pUser.UpdatedAt,
 			},
 		}
 
@@ -259,17 +282,28 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 	return invites, nil
 }
 
-func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
-	createUserOpts := root.NewCreateUserOptions(opts...)
-
-	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
-	err := module.authz.Grant(ctx, input.OrgID, []string{roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role)}, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+func (module *Module) CreateUser(ctx context.Context, input *usertypes.User, opts ...root.CreateUserOption) error {
+	// validate the roles are valid
+	_, err := module.authz.ListByOrgIDAndNames(ctx, input.OrgID, input.Roles)
 	if err != nil {
 		return err
 	}
 
+	// since assign is idempotant multiple calls to assign won't cause issues in case of retries, also we cannot run this in a transaction for now
+	err = module.authz.Grant(ctx, input.OrgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
+	createUserOpts := root.NewCreateUserOptions(opts...)
+	storableUser := usertypes.NewStorableUser(input)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.CreateUser(ctx, input); err != nil {
+		if err := module.store.CreateUser(ctx, storableUser); err != nil {
+			return err
+		}
+
+		// create user_role junction entries
+		if err := module.createUserRoleEntries(ctx, input); err != nil {
 			return err
 		}
 
@@ -284,15 +318,46 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 		return err
 	}
 
-	traitsOrProperties := types.NewTraitsFromUser(input)
+	traitsOrProperties := usertypes.NewTraitsFromUser(input)
 	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
 
-func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error) {
-	existingUser, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
+func (m *Module) GetByOrgIDAndID(ctx context.Context, orgID, id valuer.UUID) (*usertypes.User, error) {
+	storableUser, err := m.store.GetUser(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	storableUserRoles, err := m.store.GetUserRoles(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	roleIDs := make([]valuer.UUID, len(storableUserRoles))
+	for idx, storableUserRole := range storableUserRoles {
+		roleIDs[idx] = valuer.MustNewUUID(storableUserRole.RoleID)
+	}
+
+	roles, err := m.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	roleNames, err := usertypes.NewRolesFromStorableUserRoles(storableUserRoles, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	user := usertypes.NewUserFromStorables(storableUser, roleNames)
+
+	return user, nil
+}
+
+func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *usertypes.UpdatableUser, updatedBy string) (*usertypes.User, error) {
+	existingUser, err := m.GetByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
 	}
@@ -309,18 +374,21 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, errors.WithAdditionalf(err, "cannot update pending user")
 	}
 
-	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
+	requestor, err := m.GetByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err
 	}
 
-	if user.Role != "" && user.Role != existingUser.Role && requestor.Role != types.RoleAdmin {
+	grants, revokes := existingUser.PatchRoles(user.Roles)
+	rolesChanged := (len(grants) > 0) || (len(revokes) > 0)
+
+	if rolesChanged && !slices.Contains(requestor.Roles, authtypes.SigNozAdminRoleName) {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if user.Role != "" && user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin {
-		adminUsers, err := m.store.GetActiveUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	if rolesChanged && slices.Contains(existingUser.Roles, authtypes.SigNozAdminRoleName) && !slices.Contains(user.Roles, authtypes.SigNozAdminRoleName) {
+		adminUsers, err := m.store.GetActiveUsersByRoleNameAndOrgID(ctx, authtypes.SigNozAdminRoleName, orgID)
 		if err != nil {
 			return nil, err
 		}
@@ -330,32 +398,48 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	if user.Role != "" && user.Role != existingUser.Role {
-		err = m.authz.ModifyGrant(ctx,
-			orgID,
-			[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
-			[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
-			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
-		)
+	if rolesChanged {
+		// can't run in txn
+		err = m.authz.ModifyGrant(ctx, orgID, revokes, grants, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	existingUser.Update(user.DisplayName, user.Role)
-	if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
-		return nil, err
+	existingUser.Update(user.DisplayName, user.Roles)
+
+	if rolesChanged {
+		err = m.store.RunInTx(ctx, func(ctx context.Context) error {
+			// update the user
+			if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
+				return err
+			}
+
+			// delete old role entries and create new ones
+			if err := m.store.DeleteUserRoles(ctx, existingUser.ID); err != nil {
+				return err
+			}
+
+			// create new ones
+			if err := m.createUserRoleEntries(ctx, existingUser); err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return existingUser, nil
 }
 
-func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
-	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *usertypes.User) error {
+	if err := module.store.UpdateUser(ctx, orgID, usertypes.NewStorableUser(user)); err != nil {
 		return err
 	}
 
-	traits := types.NewTraitsFromUser(user)
+	traits := usertypes.NewTraitsFromUser(user)
 	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
 
@@ -367,7 +451,7 @@ func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user
 }
 
 func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
+	user, err := module.GetByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -385,17 +469,17 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := module.store.GetActiveUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	adminUsers, err := module.store.GetActiveUsersByRoleNameAndOrgID(ctx, authtypes.SigNozAdminRoleName, orgID)
 	if err != nil {
 		return err
 	}
 
-	if len(adminUsers) == 1 && user.Role == types.RoleAdmin {
+	if len(adminUsers) == 1 && slices.Contains(user.Roles, authtypes.SigNozAdminRoleName) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 
 	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
-	err = module.authz.Revoke(ctx, orgID, []string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, user.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -412,8 +496,8 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	return nil
 }
 
-func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
-	user, err := module.store.GetUser(ctx, userID)
+func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, orgID, userID valuer.UUID) (*usertypes.ResetPasswordToken, error) {
+	user, err := module.GetByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -435,7 +519,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 	if password == nil {
 		// if the user does not have a password, we need to create a new one (common for SSO/SAML users)
-		password = types.MustGenerateFactorPassword(userID.String())
+		password = usertypes.MustGenerateFactorPassword(userID.String())
 
 		if err := module.store.CreatePassword(ctx, password); err != nil {
 			return nil, err
@@ -461,7 +545,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	}
 
 	// create a new token
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
+	resetPasswordToken, err := usertypes.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +576,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
-	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	token, err := module.GetOrCreateResetPasswordToken(ctx, orgID, user.ID)
 	if err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
 		return err
@@ -535,17 +619,17 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
+	storableUser, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
 	if err != nil {
 		return err
 	}
 
 	// handle deleted user
-	if err := user.ErrIfDeleted(); err != nil {
+	if err := storableUser.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "deleted users cannot reset their password")
 	}
 
-	if err := user.ErrIfRoot(); err != nil {
+	if err := storableUser.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
@@ -553,12 +637,34 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
+	storableUserRoles, err := module.store.GetUserRoles(ctx, storableUser.ID)
+	if err != nil {
+		return err
+	}
+
+	roleIDs := make([]valuer.UUID, len(storableUserRoles))
+	for idx, storableUserRole := range storableUserRoles {
+		roleIDs[idx] = valuer.MustNewUUID(storableUserRole.RoleID)
+	}
+
+	roles, err := module.authz.ListByOrgIDAndIDs(ctx, valuer.MustNewUUID(storableUser.OrgID), roleIDs)
+	if err != nil {
+		return err
+	}
+
+	roleNames, err := usertypes.NewRolesFromStorableUserRoles(storableUserRoles, roles)
+	if err != nil {
+		return err
+	}
+
+	user := usertypes.NewUserFromStorables(storableUser, roleNames)
+
 	// since grant is idempotent, multiple calls won't cause issues in case of retries
-	if user.Status == types.UserStatusPendingInvite {
+	if user.Status == usertypes.UserStatusPendingInvite {
 		if err = module.authz.Grant(
 			ctx,
 			user.OrgID,
-			[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
+			user.Roles,
 			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
 		); err != nil {
 			return err
@@ -566,11 +672,11 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if user.Status == types.UserStatusPendingInvite {
-			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+		if user.Status == usertypes.UserStatusPendingInvite {
+			if err := user.UpdateStatus(usertypes.UserStatusActive); err != nil {
 				return err
 			}
-			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
+			if err := module.UpdateAnyUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
 		}
@@ -607,7 +713,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	}
 
 	if !password.Equals(oldpasswd) {
-		return errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "old password is incorrect")
+		return errors.New(errors.TypeInvalidInput, usertypes.ErrCodeIncorrectPassword, "old password is incorrect")
 	}
 
 	if err := password.Update(passwd); err != nil {
@@ -631,7 +737,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	return module.tokenizer.DeleteTokensByUserID(ctx, userID)
 }
 
-func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
+func (module *Module) GetOrCreateUser(ctx context.Context, user *usertypes.User, opts ...root.CreateUserOption) (*usertypes.User, error) {
 	existingUser, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
@@ -641,9 +747,9 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 
 	if existingUser != nil {
 		// for users logging through SSO flow but are having status as pending_invite
-		if existingUser.Status == types.UserStatusPendingInvite {
+		if existingUser.Status == usertypes.UserStatusPendingInvite {
 			// respect the role coming from the SSO
-			existingUser.Update("", user.Role)
+			existingUser.Update("", user.Roles)
 			// activate the user
 			if err = module.activatePendingUser(ctx, existingUser); err != nil {
 				return nil, err
@@ -661,18 +767,18 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	return user, nil
 }
 
-func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
-	user, err := types.NewRootUser(name, email, organization.ID)
+func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*usertypes.User, error) {
+	user, err := usertypes.NewRootUser(name, email, organization.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := types.NewFactorPassword(passwd, user.ID.StringValue())
+	password, err := usertypes.NewFactorPassword(passwd, user.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
 
-	managedRoles := roletypes.NewManagedRoles(organization.ID)
+	managedRoles := authtypes.NewManagedRoles(organization.ID)
 	err = module.authz.CreateManagedUserRoleTransactions(ctx, organization.ID, user.ID)
 	if err != nil {
 		return nil, err
@@ -704,45 +810,91 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	return user, nil
 }
 
+func (module *Module) GetUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*usertypes.User, error) {
+	storableUsers, err := module.store.ListUsersByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs := make([]valuer.UUID, len(storableUsers))
+	for idx, storableUser := range storableUsers {
+		userIDs[idx] = storableUser.ID
+	}
+
+	storableUserRoles, err := module.store.ListUserRolesByOrgIDAndUserIDs(ctx, orgID, userIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDToRoleIDs, roleIDs := usertypes.GetUniqueRolesAndUserMapping(storableUserRoles)
+	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// fill in the role fetched data back to service account
+	users := usertypes.NewUsersFromRolesMaps(storableUsers, roles, userIDToRoleIDs)
+
+	// filter root users if feature flag `hide_root_users` is true
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
+
+	if hideRootUsers {
+		users = slices.DeleteFunc(users, func(user *usertypes.User) bool { return user.IsRoot })
+	}
+
+	return users, nil
+}
+
 func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
-	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, []string{types.UserStatusActive.StringValue(), types.UserStatusDeleted.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, []string{usertypes.UserStatusActive.StringValue(), usertypes.UserStatusDeleted.StringValue(), usertypes.UserStatusPendingInvite.StringValue()})
 	if err == nil {
-		stats["user.count"] = counts[types.UserStatusActive] + counts[types.UserStatusDeleted] + counts[types.UserStatusPendingInvite]
-		stats["user.count.active"] = counts[types.UserStatusActive]
-		stats["user.count.deleted"] = counts[types.UserStatusDeleted]
-		stats["user.count.pending_invite"] = counts[types.UserStatusPendingInvite]
+		stats["user.count"] = counts[usertypes.UserStatusActive] + counts[usertypes.UserStatusDeleted] + counts[usertypes.UserStatusPendingInvite]
+		stats["user.count.active"] = counts[usertypes.UserStatusActive]
+		stats["user.count.deleted"] = counts[usertypes.UserStatusDeleted]
+		stats["user.count.pending_invite"] = counts[usertypes.UserStatusPendingInvite]
 	}
 
 	return stats, nil
 }
 
 // this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
-func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
+func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*usertypes.User, error) {
 	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	// filter out the deleted users
-	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *usertypes.StorableUser) bool { return user.ErrIfDeleted() != nil })
 
 	if len(existingUsers) > 1 {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
 	}
 
 	if len(existingUsers) == 1 {
-		return existingUsers[0], nil
+		existingUser, err := module.GetByOrgIDAndID(ctx, orgID, existingUsers[0].ID)
+		if err != nil {
+			return nil, err
+		}
+		return existingUser, nil
 	}
 
 	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
 
 }
 
-func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+func (module *Module) createUserWithoutGrant(ctx context.Context, input *usertypes.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
+	storableUser := usertypes.NewStorableUser(input)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.CreateUser(ctx, input); err != nil {
+		if err := module.store.CreateUser(ctx, storableUser); err != nil {
+			return err
+		}
+
+		// create user_role junction entries
+		if err := module.createUserRoleEntries(ctx, input); err != nil {
 			return err
 		}
 
@@ -757,31 +909,46 @@ func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.U
 		return err
 	}
 
-	traitsOrProperties := types.NewTraitsFromUser(input)
+	traitsOrProperties := usertypes.NewTraitsFromUser(input)
 	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
 
-func (module *Module) activatePendingUser(ctx context.Context, user *types.User) error {
+func (module *Module) activatePendingUser(ctx context.Context, user *usertypes.User) error {
 	err := module.authz.Grant(
 		ctx,
 		user.OrgID,
-		[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
+		user.Roles,
 		authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
 	)
 	if err != nil {
 		return err
 	}
 
-	if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+	if err := user.UpdateStatus(usertypes.UserStatusActive); err != nil {
 		return err
 	}
-	err = module.store.UpdateUser(ctx, user.OrgID, user)
+
+	err = module.UpdateAnyUser(ctx, user.OrgID, user)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (module *Module) createUserRoleEntries(ctx context.Context, user *usertypes.User) error {
+	if len(user.Roles) == 0 {
+		return nil
+	}
+
+	storableRoles, err := module.authz.ListByOrgIDAndNames(ctx, user.OrgID, user.Roles)
+	if err != nil {
+		return err
+	}
+
+	userRoles := usertypes.NewStorableUserRoles(user.ID, storableRoles)
+	return module.store.CreateUserRoles(ctx, userRoles)
 }

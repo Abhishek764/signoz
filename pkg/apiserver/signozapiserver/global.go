@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 )
 
@@ -21,7 +22,7 @@ func (provider *provider) addGlobalRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleEditor),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

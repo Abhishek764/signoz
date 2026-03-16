@@ -1,4 +1,4 @@
-name: Notify on Dequeue from Merge Queue
+name: mergequeueci
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Slack alert
+      - name: alert
         uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook: ${{ secrets.SLACK_MERGE_QUEUE_WEBHOOK }}
@@ -46,7 +46,7 @@ jobs:
                 }
               ]
             }
-      - name: Post PR comment
+      - name: comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

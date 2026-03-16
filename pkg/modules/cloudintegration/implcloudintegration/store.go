@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -30,15 +31,29 @@ func (s *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provi
 	return account, nil
 }
 
-func (s *store) UpsertAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
+func (s *store) CreateAccount(ctx context.Context, orgID valuer.UUID, account *cloudintegrationtypes.StorableCloudIntegration) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+	now := time.Now()
+	if account.ID.IsZero() {
+		account.ID = valuer.GenerateUUID()
+	}
+	account.OrgID = orgID
+	account.CreatedAt = now
+	account.UpdatedAt = now
+
+	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(account).Exec(ctx)
+	if err != nil {
+		return nil, s.store.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cloud integration account with id %s already exists", account.ID)
+	}
+
+	return account, nil
+}
+
+func (s *store) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
 	account.UpdatedAt = time.Now()
-	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(account).
-		On("CONFLICT (id, provider, org_id) DO UPDATE").
-		Set("config = EXCLUDED.config").
-		Set("account_id = EXCLUDED.account_id").
-		Set("last_agent_report = EXCLUDED.last_agent_report").
-		Set("removed_at = EXCLUDED.removed_at").
-		Set("updated_at = EXCLUDED.updated_at").
+	_, err := s.store.BunDBCtx(ctx).NewUpdate().Model(account).
+		Where("id = ?", account.ID).
+		Where("org_id = ?", account.OrgID).
+		Where("provider = ?", account.Provider).
 		Exec(ctx)
 	return err
 }
@@ -96,12 +111,31 @@ func (s *store) GetServiceByType(ctx context.Context, cloudIntegrationID valuer.
 	return service, nil
 }
 
-func (s *store) UpsertService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
+func (s *store) CreateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *cloudintegrationtypes.StorableCloudIntegrationService) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+	now := time.Now()
+	if service.ID.IsZero() {
+		service.ID = valuer.GenerateUUID()
+	}
+	service.CloudIntegrationID = cloudIntegrationID
+	if service.CreatedAt.IsZero() {
+		service.CreatedAt = now
+	}
+	service.UpdatedAt = now
+
+	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(service).Exec(ctx)
+	if err != nil {
+		return nil, s.store.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cloud integration service with type %s already exists", service.Type)
+	}
+
+	return service, nil
+}
+
+func (s *store) UpdateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
+	service.CloudIntegrationID = cloudIntegrationID
 	service.UpdatedAt = time.Now()
-	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(service).
-		On("CONFLICT (cloud_integration_id, type) DO UPDATE").
-		Set("config = EXCLUDED.config").
-		Set("updated_at = EXCLUDED.updated_at").
+	_, err := s.store.BunDBCtx(ctx).NewUpdate().Model(service).
+		Where("cloud_integration_id = ?", cloudIntegrationID).
+		Where("type = ?", service.Type).
 		Exec(ctx)
 	return err
 }

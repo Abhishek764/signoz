@@ -8,6 +8,7 @@ import (
 	"text/template/parse"
 
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -23,6 +24,17 @@ var bareVariableRegex = regexp.MustCompile(`\$(\w+(?:\.\w+)*)`)
 // bareVariableRegexFirstSeg matches only the base $variable name, stopping before any dotted path.
 // e.g. "$labels.severity" matches "$labels", "$name" matches "$name".
 var bareVariableRegexFirstSeg = regexp.MustCompile(`\$\w+`)
+
+// ExtractTemplatesFromAnnotations computes the common annotations across all alerts
+// and returns the values for the title_template and body_template annotation keys as title and body templates.
+func ExtractTemplatesFromAnnotations(alerts []*types.Alert) (titleTemplate, bodyTemplate string) {
+	if len(alerts) == 0 {
+		return "", ""
+	}
+
+	commonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
+	return commonAnnotations[ruletypes.AnnotationTitleTemplate], commonAnnotations[ruletypes.AnnotationBodyTemplate]
+}
 
 // WrapDollarVariables wraps bare $variable references in Go template syntax.
 // Example transformations:
@@ -148,10 +160,10 @@ func ExtractUsedVariables(src string) (map[string]bool, error) {
 	return used, nil
 }
 
-// AggregateKV aggregates key-value pairs (labels or annotations) from all alerts into a single template.KV
+// aggregateKV aggregates key-value pairs (labels or annotations) from all alerts into a single template.KV
 // the result is used to populate the labels and annotations in the notification template data.
 // this is done to avoid blank values in the template when labels and annotations used are not common throughout the alerts
-func AggregateKV(alerts []*types.Alert, extractFn func(*types.Alert) model.LabelSet) template.KV {
+func aggregateKV(alerts []*types.Alert, extractFn func(*types.Alert) model.LabelSet) template.KV {
 	// track unique values per key in order of first appearance
 	valuesPerKey := make(map[string][]string)
 	// track which values have been seen for deduplication

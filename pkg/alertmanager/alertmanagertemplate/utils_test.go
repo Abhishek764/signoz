@@ -271,7 +271,7 @@ func TestAggregateKV(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := AggregateKV(tc.alerts, tc.extractFn)
+			result := aggregateKV(tc.alerts, tc.extractFn)
 			require.Equal(t, tc.expected, result)
 		})
 	}

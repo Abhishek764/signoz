@@ -20,26 +20,13 @@ type AlertManagerTemplater interface {
 	ProcessTemplates(ctx context.Context, input TemplateInput, alerts []*types.Alert) (*ExpandedTemplates, error)
 }
 
-// alertManagerTemplater is the private implementation of AlertTemplater.
 type alertManagerTemplater struct {
 	tmpl   *template.Template
 	logger *slog.Logger
 }
 
-// New returns a new AlertTemplater with the given template and logger.
 func New(tmpl *template.Template, logger *slog.Logger) AlertManagerTemplater {
 	return &alertManagerTemplater{tmpl: tmpl, logger: logger}
-}
-
-// ExtractTemplatesFromAnnotations computes the common annotations across all alerts
-// and returns the values for the title_template and body_template annotation keys.
-func ExtractTemplatesFromAnnotations(alerts []*types.Alert) (titleTemplate, bodyTemplate string) {
-	if len(alerts) == 0 {
-		return "", ""
-	}
-
-	commonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
-	return commonAnnotations[ruletypes.AnnotationTitleTemplate], commonAnnotations[ruletypes.AnnotationBodyTemplate]
 }
 
 // ProcessTemplates expands the title and body templates from input
@@ -94,17 +81,17 @@ func (at *alertManagerTemplater) expandTitle(
 		}
 	}
 
-	// Fall back to the notifier's default title template using standard template.Data.
 	if input.DefaultTitleTemplate == "" {
 		return "", nil, nil
 	}
+	// Fall back to the default title template if present in the input
 	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
 	result, err := at.tmpl.ExecuteTextString(input.DefaultTitleTemplate, data)
 	return result, nil, err
 }
 
-// expandBody expands the body template once per alert, concatenates the results
-// and falls back to the default if the custom template result in empty string.
+// expandBody expands the body template once per alert and concatenates the results to return resulting body template
+// it falls back to the default templates if body template is empty or result in empty string.
 func (at *alertManagerTemplater) expandBody(
 	ctx context.Context,
 	input TemplateInput,
@@ -112,7 +99,7 @@ func (at *alertManagerTemplater) expandBody(
 	ntd *NotificationTemplateData,
 ) (string, map[string]bool, error) {
 	if input.BodyTemplate != "" {
-		var parts []string
+		var sb strings.Builder
 		missingVars := make(map[string]bool)
 		for i := range ntd.Alerts {
 			processRes, err := PreProcessTemplateAndData(input.BodyTemplate, &ntd.Alerts[i])
@@ -126,25 +113,29 @@ func (at *alertManagerTemplater) expandBody(
 			if err != nil {
 				return "", nil, errors.NewInternalf(errors.CodeInvalidInput, "failed to execute template: %s", err.Error())
 			}
-			parts = append(parts, part)
+			sb.WriteString(part)
+			// Add separator if not last alert
+			if i < len(ntd.Alerts)-1 {
+				sb.WriteString("<br><br>")
+			}
 		}
-		result := strings.Join(parts, "<br><br>") // markdown uses html for line breaks
+		result := sb.String()
 		if strings.TrimSpace(result) != "" {
 			return result, missingVars, nil
 		}
 	}
 
-	// Fall back to the notifier's default body template using standard template.Data.
 	if input.DefaultBodyTemplate == "" {
 		return "", nil, nil
 	}
+	// Fall back to the default body template if present in the input
 	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
 	result, err := at.tmpl.ExecuteTextString(input.DefaultBodyTemplate, data)
 	return result, nil, err
 }
 
-// buildNotificationTemplateData derives a NotificationTemplateData from
-// the context, template, and the raw alerts.
+// buildNotificationTemplateData creates the NotificationTemplateData using
+// info from context and the raw alerts.
 func (at *alertManagerTemplater) buildNotificationTemplateData(
 	ctx context.Context,
 	alerts []*types.Alert,
@@ -170,8 +161,8 @@ func (at *alertManagerTemplater) buildNotificationTemplateData(
 	commonLabels := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
 
 	// aggregate labels and annotations from all alerts
-	labels := AggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
-	annotations := AggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
+	labels := aggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
+	annotations := aggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
 
 	// build the alert data slice
 	alertDataSlice := make([]AlertData, 0, len(alerts))

@@ -28,8 +28,7 @@ func testSetup(t *testing.T) (AlertManagerTemplater, context.Context) {
 	return New(tmpl, logger), ctx
 }
 
-// firingAlert returns a firing alert with the given labels/annotations.
-func firingAlert(labels, annotations map[string]string) *types.Alert {
+func createAlert(labels, annotations map[string]string, isFiring bool) *types.Alert {
 	ls := model.LabelSet{}
 	for k, v := range labels {
 		ls[model.LabelName(k)] = model.LabelValue(v)
@@ -38,36 +37,15 @@ func firingAlert(labels, annotations map[string]string) *types.Alert {
 	for k, v := range annotations {
 		ann[model.LabelName(k)] = model.LabelValue(v)
 	}
-	now := time.Now()
-	return &types.Alert{
-		Alert: model.Alert{
-			Labels:      ls,
-			Annotations: ann,
-			StartsAt:    now,
-			EndsAt:      now.Add(time.Hour),
-		},
+	startsAt := time.Now()
+	endsAt := startsAt.Add(time.Hour)
+	if isFiring {
+		endsAt = startsAt.Add(time.Hour)
+	} else {
+		startsAt = startsAt.Add(-2 * time.Hour)
+		endsAt = startsAt.Add(-time.Hour)
 	}
-}
-
-// resolvedAlert returns a resolved alert (EndsAt in the past) with the given labels/annotations.
-func resolvedAlert(labels, annotations map[string]string) *types.Alert {
-	ls := model.LabelSet{}
-	for k, v := range labels {
-		ls[model.LabelName(k)] = model.LabelValue(v)
-	}
-	ann := model.LabelSet{}
-	for k, v := range annotations {
-		ann[model.LabelName(k)] = model.LabelValue(v)
-	}
-	now := time.Now()
-	return &types.Alert{
-		Alert: model.Alert{
-			Labels:      ls,
-			Annotations: ann,
-			StartsAt:    now.Add(-2 * time.Hour),
-			EndsAt:      now.Add(-time.Hour),
-		},
-	}
+	return &types.Alert{Alert: model.Alert{Labels: ls, Annotations: ann, StartsAt: startsAt, EndsAt: endsAt}}
 }
 
 func TestExpandTemplates(t *testing.T) {
@@ -87,13 +65,14 @@ func TestExpandTemplates(t *testing.T) {
 			// $labels.service extracts the label value; $annotations.description pulls the annotation.
 			name: "new template: high request throughput for a service",
 			alerts: []*types.Alert{
-				firingAlert(
+				createAlert(
 					map[string]string{
 						ruletypes.LabelAlertName:    "HighRequestThroughput",
 						ruletypes.LabelSeverityName: "warning",
 						"service":                   "payment-service",
 					},
 					map[string]string{"description": "Request rate exceeded 10k/s"},
+					true,
 				),
 			},
 			input: TemplateInput{
@@ -116,7 +95,7 @@ Description: Request rate exceeded 10k/s`,
 			// No custom templates — both title and body use the default fallback path.
 			name: "old template: disk usage high on database host",
 			alerts: []*types.Alert{
-				firingAlert(
+				createAlert(
 					map[string]string{ruletypes.LabelAlertName: "DiskUsageHigh",
 						ruletypes.LabelSeverityName: "critical",
 						"instance":                  "db-primary-01",
@@ -127,6 +106,7 @@ Description: Request rate exceeded 10k/s`,
 						"related_logs":   "https://logs.example.com/search?q=DiskUsageHigh",
 						"related_traces": "https://traces.example.com/search?q=DiskUsageHigh",
 					},
+					true,
 				),
 			},
 			input: TemplateInput{
@@ -174,9 +154,9 @@ Description: Request rate exceeded 10k/s`,
 			// and joined with "<br><br>", with the pod name pulled from labels.
 			name: "new template: pod crash loop on multiple pods, body per-alert",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-1"}, nil),
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-2"}, nil),
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-3"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-1"}, nil, true),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-2"}, nil, true),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-3"}, nil, true),
 			},
 			input: TemplateInput{
 				TitleTemplate: "$rule_name: $total_firing pods affected",
@@ -190,8 +170,8 @@ Description: Request rate exceeded 10k/s`,
 			// Title shows the aggregate counts; body shows per-service status.
 			name: "new template: service degradation with mixed firing and resolved alerts",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "auth-service"}, nil),
-				resolvedAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "payment-service"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "auth-service"}, nil, true),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "payment-service"}, nil, false),
 			},
 			input: TemplateInput{
 				TitleTemplate: "$total_firing firing, $total_resolved resolved",
@@ -205,7 +185,7 @@ Description: Request rate exceeded 10k/s`,
 			// so it lands in MissingVars and renders as "<no value>" in the output.
 			name: "missing vars: unknown $environment variable in title",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
 			input: TemplateInput{
 				TitleTemplate: "[$environment] $rule_name",
@@ -218,7 +198,7 @@ Description: Request rate exceeded 10k/s`,
 			// directly as a variable instead of via annotations.
 			name: "missing vars: unknown $runbook_url variable in body",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodOOMKilled", ruletypes.LabelSeverityName: "warning"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodOOMKilled", ruletypes.LabelSeverityName: "warning"}, nil, true),
 			},
 			input: TemplateInput{
 				BodyTemplate: "$rule_name: see runbook at $runbook_url",
@@ -230,7 +210,7 @@ Description: Request rate exceeded 10k/s`,
 			// Both title and body use unknown variables; MissingVars is the union of both.
 			name: "missing vars: unknown variables in both title and body",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighMemory", ruletypes.LabelSeverityName: "critical"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighMemory", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
 			input: TemplateInput{
 				TitleTemplate: "[$environment] $rule_name and [{{ $service }}]",
@@ -245,20 +225,20 @@ Description: Request rate exceeded 10k/s`,
 			// so the default title template is used instead.
 			name: "fallback: whitespace-only custom title falls back to default",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, false),
 			},
 			input: TemplateInput{
 				TitleTemplate:        "   ",
-				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})",
 				BodyTemplate:         "$rule_name ($severity) for $alertname",
 			},
-			wantTitle: "HighCPU",
+			wantTitle: "HighCPU (RESOLVED)",
 			wantBody:  "HighCPU (critical) for HighCPU",
 		},
 		{
 			name: "using non-existing function in template",
 			alerts: []*types.Alert{
-				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
 			input: TemplateInput{
 				TitleTemplate: "$rule_name ({{$severity | toUpperAndTrim}}) for $alertname",

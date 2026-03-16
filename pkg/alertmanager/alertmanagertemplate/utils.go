@@ -68,13 +68,16 @@ func WrapDollarVariables(src string) (string, error) {
 	return tree.Root.String(), nil
 }
 
-// walkAndWrapTextNodes recursively walks the parse tree and wraps bare $variable
+// walkAndWrapTextNodes recursively walks the parse tree trying to find a text node
+// once text node is found it wraps the bare $variable and changes it to index based
+// element access form datamap like .key or .key.subkey
 func walkAndWrapTextNodes(node parse.Node) {
 	if reflect.ValueOf(node).IsNil() {
 		return
 	}
 
 	switch n := node.(type) {
+	// `$name is {{.Status}}` is a list node with one text and one action node
 	case *parse.ListNode:
 		// Recurse into all child nodes
 		if n.Nodes != nil {
@@ -83,6 +86,10 @@ func walkAndWrapTextNodes(node parse.Node) {
 			}
 		}
 
+	// `$name is ` is a text node with plain text in root
+	// we try to find the $name variable and wrap it with template block
+	// like `{{ .name }}`, for labels and annotations we use the index to access the value
+	// so `$labels.service` becomes `{{ index .labels "service" }}`
 	case *parse.TextNode:
 		// Transform $variable based on its pattern
 		n.Text = bareVariableRegex.ReplaceAllFunc(n.Text, func(match []byte) []byte {
@@ -109,11 +116,13 @@ func walkAndWrapTextNodes(node parse.Node) {
 			return []byte(fmt.Sprintf("{{ .%s }}", varName))
 		})
 
+	// `{{if pipeline}} T1 {{else}} T0 {{end}}` is a if node with T1 part of List and T0 part of ElseList
 	case *parse.IfNode:
 		// Recurse into both branches
 		walkAndWrapTextNodes(n.List)
 		walkAndWrapTextNodes(n.ElseList)
 
+	// `{{range pipeline}} T1 {{else}} T0 {{end}}` is a range node with T1 part of List and T0 part of ElseList
 	case *parse.RangeNode:
 		// Recurse into both branches
 		walkAndWrapTextNodes(n.List)

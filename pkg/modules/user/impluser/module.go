@@ -137,7 +137,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		for idx, invite := range bulkInvites.Invites {
-			role, err := types.NewRole(invite.Role.String())
+			role, err := authtypes.NewLegacyRole(invite.Role.String())
 			if err != nil {
 				return err
 			}
@@ -315,13 +315,13 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, err
 	}
 
-	if user.Role != "" && user.Role != existingUser.Role && requestor.Role != types.RoleAdmin {
+	if user.Role != "" && user.Role != existingUser.Role && requestor.Role != authtypes.RoleAdmin {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if user.Role != "" && user.Role != existingUser.Role && existingUser.Role == types.RoleAdmin {
-		adminUsers, err := m.store.GetActiveUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	if user.Role != "" && user.Role != existingUser.Role && existingUser.Role == authtypes.RoleAdmin {
+		adminUsers, err := m.store.GetActiveUsersByRoleAndOrgID(ctx, authtypes.RoleAdmin, orgID)
 		if err != nil {
 			return nil, err
 		}
@@ -386,12 +386,12 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// don't allow to delete the last admin user
-	adminUsers, err := module.store.GetActiveUsersByRoleAndOrgID(ctx, types.RoleAdmin, orgID)
+	adminUsers, err := module.store.GetActiveUsersByRoleAndOrgID(ctx, authtypes.RoleAdmin, orgID)
 	if err != nil {
 		return err
 	}
 
-	if len(adminUsers) == 1 && user.Role == types.RoleAdmin {
+	if len(adminUsers) == 1 && user.Role == authtypes.RoleAdmin {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot delete the last admin")
 	}
 

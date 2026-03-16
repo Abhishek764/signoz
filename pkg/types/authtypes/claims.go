@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type claimsKey struct{}
@@ -15,7 +14,7 @@ type accessTokenKey struct{}
 type Claims struct {
 	UserID         string
 	Email          string
-	Role           types.LegacyRole
+	Role           LegacyRole
 	OrgID          string
 	IdentNProvider string
 }
@@ -59,7 +58,7 @@ func (c *Claims) LogValue() slog.Value {
 }
 
 func (c *Claims) IsViewer() error {
-	if slices.Contains([]types.LegacyRole{types.RoleViewer, types.RoleEditor, types.RoleAdmin}, c.Role) {
+	if slices.Contains([]LegacyRole{RoleViewer, RoleEditor, RoleAdmin}, c.Role) {
 		return nil
 	}
 
@@ -67,7 +66,7 @@ func (c *Claims) IsViewer() error {
 }
 
 func (c *Claims) IsEditor() error {
-	if slices.Contains([]types.LegacyRole{types.RoleEditor, types.RoleAdmin}, c.Role) {
+	if slices.Contains([]LegacyRole{RoleEditor, RoleAdmin}, c.Role) {
 		return nil
 	}
 
@@ -75,7 +74,7 @@ func (c *Claims) IsEditor() error {
 }
 
 func (c *Claims) IsAdmin() error {
-	if c.Role == types.RoleAdmin {
+	if c.Role == RoleAdmin {
 		return nil
 	}
 
@@ -87,7 +86,7 @@ func (c *Claims) IsSelfAccess(id string) error {
 		return nil
 	}
 
-	if c.Role == types.RoleAdmin {
+	if c.Role == RoleAdmin {
 		return nil
 	}
 

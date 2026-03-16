@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -48,7 +47,7 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		return nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
-	return authtypes.NewIdentity(userID, user.OrgID, user.Email, types.LegacyRole(user.Role), authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewIdentity(userID, user.OrgID, user.Email, authtypes.LegacyRole(user.Role), authtypes.IdentNProviderTokenizer), nil
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {

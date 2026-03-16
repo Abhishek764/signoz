@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -40,13 +41,13 @@ type User struct {
 	bun.BaseModel `bun:"table:users"`
 
 	types.Identifiable
-	DisplayName string           `bun:"display_name" json:"displayName"`
-	Email       valuer.Email     `bun:"email" json:"email"`
-	Role        types.LegacyRole `bun:"role" json:"role"`
-	OrgID       valuer.UUID      `bun:"org_id" json:"orgId"`
-	IsRoot      bool             `bun:"is_root" json:"isRoot"`
-	Status      valuer.String    `bun:"status" json:"status"`
-	DeletedAt   time.Time        `bun:"deleted_at" json:"-"`
+	DisplayName string               `bun:"display_name" json:"displayName"`
+	Email       valuer.Email         `bun:"email" json:"email"`
+	Role        authtypes.LegacyRole `bun:"role" json:"role"`
+	OrgID       valuer.UUID          `bun:"org_id" json:"orgId"`
+	IsRoot      bool                 `bun:"is_root" json:"isRoot"`
+	Status      valuer.String        `bun:"status" json:"status"`
+	DeletedAt   time.Time            `bun:"deleted_at" json:"-"`
 	types.TimeAuditable
 }
 
@@ -58,7 +59,7 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, role types.LegacyRole, orgID valuer.UUID, status valuer.String) (*User, error) {
+func NewUser(displayName string, email valuer.Email, role authtypes.LegacyRole, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
@@ -107,7 +108,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        types.RoleAdmin,
+		Role:        authtypes.RoleAdmin,
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,
@@ -120,7 +121,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string, role types.LegacyRole) {
+func (u *User) Update(displayName string, role authtypes.LegacyRole) {
 	if displayName != "" {
 		u.DisplayName = displayName
 	}
@@ -150,7 +151,7 @@ func (u *User) UpdateStatus(status valuer.String) error {
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
-	u.Role = types.RoleAdmin
+	u.Role = authtypes.RoleAdmin
 	u.UpdatedAt = time.Now()
 }
 
@@ -231,7 +232,7 @@ type UserStore interface {
 	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
 
 	// Get users by role and org.
-	GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.LegacyRole, orgID valuer.UUID) ([]*User, error)
+	GetActiveUsersByRoleAndOrgID(ctx context.Context, role authtypes.LegacyRole, orgID valuer.UUID) ([]*User, error)
 
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
@@ -272,6 +273,9 @@ type UserStore interface {
 
 	// Get user by reset password token
 	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
+
+	// For AuthN - Get user and factor password by email and orgID.
+	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*User, *FactorPassword, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

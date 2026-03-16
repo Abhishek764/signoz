@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/types/usertypes"
@@ -123,7 +122,7 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 	return users, nil
 }
 
-func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.LegacyRole, orgID valuer.UUID) ([]*usertypes.User, error) {
+func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role authtypes.LegacyRole, orgID valuer.UUID) ([]*usertypes.User, error) {
 	var users []*usertypes.User
 
 	err := store.
@@ -703,4 +702,35 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 	}
 
 	return users, nil
+}
+
+func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error) {
+	user := new(usertypes.User)
+	factorPassword := new(usertypes.FactorPassword)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		Where("email = ?", email).
+		Where("org_id = ?", orgID).
+		Where("status = ?", usertypes.UserStatusActive.StringValue()).
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
+	}
+
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(factorPassword).
+		Where("user_id = ?", user.ID).
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodePasswordNotFound, "user with email %s in org %s does not have password", email, orgID)
+	}
+
+	return user, factorPassword, nil
 }

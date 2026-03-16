@@ -85,6 +85,9 @@ type Getter interface {
 
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*usertypes.FactorPassword, error)
+
+	// Get Active User and FactorPassword by email and org id.
+	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error)
 }
 
 type Handler interface {

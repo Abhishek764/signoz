@@ -103,3 +103,12 @@ func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valu
 
 	return factorPassword, nil
 }
+
+func (module *getter) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error) {
+	user, factorPassword, err := module.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return user, factorPassword, nil
+}

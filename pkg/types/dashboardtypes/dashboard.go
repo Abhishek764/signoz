@@ -284,14 +284,14 @@ func (dashboard *Dashboard) Update(ctx context.Context, updatableDashboard Updat
 	return nil
 }
 
-func (dashboard *Dashboard) CanLockUnlock(role types.LegacyRole, updatedBy string) error {
-	if dashboard.CreatedBy != updatedBy && role != types.RoleAdmin {
+func (dashboard *Dashboard) CanLockUnlock(role authtypes.LegacyRole, updatedBy string) error {
+	if dashboard.CreatedBy != updatedBy && role != authtypes.RoleAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
 	return nil
 }
 
-func (dashboard *Dashboard) LockUnlock(lock bool, role types.LegacyRole, updatedBy string) error {
+func (dashboard *Dashboard) LockUnlock(lock bool, role authtypes.LegacyRole, updatedBy string) error {
 	err := dashboard.CanLockUnlock(role, updatedBy)
 	if err != nil {
 		return err

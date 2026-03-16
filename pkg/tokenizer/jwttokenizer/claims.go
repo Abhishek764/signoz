@@ -2,7 +2,7 @@ package jwttokenizer
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -10,10 +10,10 @@ var _ jwt.ClaimsValidator = (*Claims)(nil)
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID string           `json:"id"`
-	Email  string           `json:"email"`
-	Role   types.LegacyRole `json:"role"`
-	OrgID  string           `json:"orgId"`
+	UserID string               `json:"id"`
+	Email  string               `json:"email"`
+	Role   authtypes.LegacyRole `json:"role"`
+	OrgID  string               `json:"orgId"`
 }
 
 func (c *Claims) Validate() error {

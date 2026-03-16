@@ -9,12 +9,12 @@ import (
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
-	eequerier "github.com/SigNoz/signoz/ee/querier"
 	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
+	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -95,7 +96,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		sqlstoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
-		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
+		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing, userGetter user.Getter) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 			samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, licensing)
 			if err != nil {
 				return nil, err
@@ -106,7 +107,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 
-			authNs, err := signoz.NewAuthNs(ctx, providerSettings, store, licensing)
+			authNs, err := signoz.NewAuthNs(ctx, providerSettings, store, licensing, userGetter)
 			if err != nil {
 				return nil, err
 			}

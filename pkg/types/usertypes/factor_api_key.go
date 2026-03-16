@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -14,24 +15,24 @@ import (
 var NEVER_EXPIRES = time.Unix(0, 0)
 
 type PostableAPIKey struct {
-	Name          string           `json:"name"`
-	Role          types.LegacyRole `json:"role"`
-	ExpiresInDays int64            `json:"expiresInDays"`
+	Name          string               `json:"name"`
+	Role          authtypes.LegacyRole `json:"role"`
+	ExpiresInDays int64                `json:"expiresInDays"`
 }
 
 type GettableAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Token         string           `json:"token"`
-	Role          types.LegacyRole `json:"role"`
-	Name          string           `json:"name"`
-	ExpiresAt     int64            `json:"expiresAt"`
-	LastUsed      int64            `json:"lastUsed"`
-	Revoked       bool             `json:"revoked"`
-	UserID        string           `json:"userId"`
-	CreatedByUser *User            `json:"createdByUser"`
-	UpdatedByUser *User            `json:"updatedByUser"`
+	Token         string               `json:"token"`
+	Role          authtypes.LegacyRole `json:"role"`
+	Name          string               `json:"name"`
+	ExpiresAt     int64                `json:"expiresAt"`
+	LastUsed      int64                `json:"lastUsed"`
+	Revoked       bool                 `json:"revoked"`
+	UserID        string               `json:"userId"`
+	CreatedByUser *User                `json:"createdByUser"`
+	UpdatedByUser *User                `json:"updatedByUser"`
 }
 
 type OrgUserAPIKey struct {
@@ -57,16 +58,16 @@ type StorableAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Token     string           `json:"token" bun:"token,type:text,notnull,unique"`
-	Role      types.LegacyRole `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
-	Name      string           `json:"name" bun:"name,type:text,notnull"`
-	ExpiresAt time.Time        `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
-	LastUsed  time.Time        `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
-	Revoked   bool             `json:"revoked" bun:"revoked,notnull,default:false"`
-	UserID    valuer.UUID      `json:"userId" bun:"user_id,type:text,notnull"`
+	Token     string               `json:"token" bun:"token,type:text,notnull,unique"`
+	Role      authtypes.LegacyRole `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
+	Name      string               `json:"name" bun:"name,type:text,notnull"`
+	ExpiresAt time.Time            `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
+	LastUsed  time.Time            `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
+	Revoked   bool                 `json:"revoked" bun:"revoked,notnull,default:false"`
+	UserID    valuer.UUID          `json:"userId" bun:"user_id,type:text,notnull"`
 }
 
-func NewStorableAPIKey(name string, userID valuer.UUID, role types.LegacyRole, expiresAt int64) (*StorableAPIKey, error) {
+func NewStorableAPIKey(name string, userID valuer.UUID, role authtypes.LegacyRole, expiresAt int64) (*StorableAPIKey, error) {
 	// validate
 
 	// we allow the APIKey if expiresAt is not set, which means it never expires

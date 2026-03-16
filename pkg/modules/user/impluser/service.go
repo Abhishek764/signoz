@@ -157,11 +157,11 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			return err
 		}
 
-		if oldRole != types.RoleAdmin {
+		if oldRole != authtypes.RoleAdmin {
 			if err := s.authz.ModifyGrant(ctx,
 				orgID,
 				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
+				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(authtypes.RoleAdmin)},
 				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
 			); err != nil {
 				return err

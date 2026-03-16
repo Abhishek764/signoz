@@ -22,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/gorilla/mux"
@@ -236,7 +235,7 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	return nil
 }
 
-func newSecuritySchemes(role types.LegacyRole) []handler.OpenAPISecurityScheme {
+func newSecuritySchemes(role authtypes.LegacyRole) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: authtypes.IdentNProviderAPIkey.StringValue(), Scopes: []string{role.String()}},
 		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},

@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -15,37 +14,6 @@ type store struct {
 
 func NewStore(sqlstore sqlstore.SQLStore) authtypes.AuthNStore {
 	return &store{sqlstore: sqlstore}
-}
-
-func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error) {
-	user := new(usertypes.User)
-	factorPassword := new(usertypes.FactorPassword)
-
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(user).
-		Where("email = ?", email).
-		Where("org_id = ?", orgID).
-		Where("status = ?", usertypes.UserStatusActive.StringValue()).
-		Scan(ctx)
-	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
-	}
-
-	err = store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(factorPassword).
-		Where("user_id = ?", user.ID).
-		Scan(ctx)
-	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodePasswordNotFound, "user with email %s in org %s does not have password", email, orgID)
-	}
-
-	return user, factorPassword, nil
 }
 
 func (store *store) GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*authtypes.AuthDomain, error) {

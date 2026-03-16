@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/gorilla/mux"
@@ -23,7 +22,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -39,7 +38,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:  http.StatusCreated,
 		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:         false,
-		SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:    newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -73,7 +72,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -90,7 +89,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -124,7 +123,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -141,7 +140,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -158,7 +157,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -175,7 +174,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -192,7 +191,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -226,7 +225,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -243,7 +242,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -260,7 +259,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -277,7 +276,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -311,7 +310,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

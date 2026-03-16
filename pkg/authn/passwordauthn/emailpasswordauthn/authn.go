@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -13,15 +14,15 @@ import (
 var _ authn.PasswordAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	store authtypes.AuthNStore
+	userGetter user.Getter
 }
 
-func New(store authtypes.AuthNStore) *AuthN {
-	return &AuthN{store: store}
+func New(userGetter user.Getter) *AuthN {
+	return &AuthN{userGetter: userGetter}
 }
 
 func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (*authtypes.Identity, error) {
-	user, factorPassword, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
+	user, factorPassword, err := a.userGetter.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}

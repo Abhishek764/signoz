@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/gorilla/mux"
 )
@@ -21,7 +21,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(authtypes.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

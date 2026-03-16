@@ -1,4 +1,4 @@
-package types
+package authtypes
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ const (
 	RoleViewer LegacyRole = "VIEWER"
 )
 
-func NewRole(role string) (LegacyRole, error) {
+func NewLegacyRole(role string) (LegacyRole, error) {
 	switch role {
 	case "ADMIN":
 		return RoleAdmin, nil
@@ -38,7 +38,7 @@ func (r *LegacyRole) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	role, err := NewRole(s)
+	role, err := NewLegacyRole(s)
 	if err != nil {
 		return err
 	}

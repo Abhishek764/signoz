@@ -8,11 +8,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn/passwordauthn/emailpasswordauthn"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
-func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
-	emailPasswordAuthN := emailpasswordauthn.New(store)
+func NewAuthNs(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing, userGetter user.Getter) (map[authtypes.AuthNProvider]authn.AuthN, error) {
+	emailPasswordAuthN := emailpasswordauthn.New(userGetter)
 
 	googleCallbackAuthN, err := googlecallbackauthn.New(ctx, store, providerSettings)
 	if err != nil {

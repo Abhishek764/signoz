@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -22,11 +23,11 @@ type Invite struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name  string           `bun:"name,type:text" json:"name"`
-	Email valuer.Email     `bun:"email,type:text" json:"email"`
-	Token string           `bun:"token,type:text" json:"token"`
-	Role  types.LegacyRole `bun:"role,type:text" json:"role"`
-	OrgID valuer.UUID      `bun:"org_id,type:text" json:"orgId"`
+	Name  string               `bun:"name,type:text" json:"name"`
+	Email valuer.Email         `bun:"email,type:text" json:"email"`
+	Token string               `bun:"token,type:text" json:"token"`
+	Role  authtypes.LegacyRole `bun:"role,type:text" json:"role"`
+	OrgID valuer.UUID          `bun:"org_id,type:text" json:"orgId"`
 
 	InviteLink string `bun:"-" json:"inviteLink"`
 }
@@ -48,10 +49,10 @@ type PostableAcceptInvite struct {
 }
 
 type PostableInvite struct {
-	Name            string           `json:"name"`
-	Email           valuer.Email     `json:"email"`
-	Role            types.LegacyRole `json:"role"`
-	FrontendBaseUrl string           `json:"frontendBaseUrl"`
+	Name            string               `json:"name"`
+	Email           valuer.Email         `json:"email"`
+	Role            authtypes.LegacyRole `json:"role"`
+	FrontendBaseUrl string               `json:"frontendBaseUrl"`
 }
 
 type PostableBulkInviteRequest struct {
@@ -84,7 +85,7 @@ type GettableCreateInviteResponse struct {
 	InviteToken string `json:"token"`
 }
 
-func NewInvite(name string, role types.LegacyRole, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
+func NewInvite(name string, role authtypes.LegacyRole, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
 	invite := &Invite{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),

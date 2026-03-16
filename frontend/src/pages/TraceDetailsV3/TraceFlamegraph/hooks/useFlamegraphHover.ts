@@ -47,6 +47,7 @@ function findSpanAtPosition(
 }
 
 export interface TooltipContent {
+	serviceName: string;
 	spanName: string;
 	status: 'ok' | 'warning' | 'error';
 	startMs: number;
@@ -139,6 +140,7 @@ export function useFlamegraphHover(
 			if (span) {
 				setHoveredSpanId(span.spanId);
 				setTooltipContent({
+					serviceName: span.serviceName || '',
 					spanName: span.name || 'unknown',
 					status: span.hasError ? 'error' : 'ok',
 					startMs: span.timestamp - traceMetadata.startTime,

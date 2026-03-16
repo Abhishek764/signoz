@@ -1,9 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
+import { computeVisualLayout } from './computeVisualLayout';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
@@ -58,7 +65,9 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		viewEndRef.current = traceMetadata.endTime;
 	}, [traceMetadata.startTime, traceMetadata.endTime]);
 
-	const totalHeight = spans.length * rowHeight;
+	const layout = useMemo(() => computeVisualLayout(spans), [spans]);
+
+	const totalHeight = layout.totalVisualRows * rowHeight;
 
 	const { isOverFlamegraphRef } = useFlamegraphZoom({
 		canvasRef,
@@ -112,7 +121,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const { drawFlamegraph } = useFlamegraphDraw({
 		canvasRef,
 		containerRef,
-		spans,
+		spans: layout.visualRows,
 		viewStartTs,
 		viewEndTs,
 		scrollTop,
@@ -125,7 +134,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 
 	useScrollToSpan({
 		firstSpanAtFetchLevel,
-		spans,
+		spans: layout.visualRows,
 		traceMetadata,
 		containerRef,
 		viewStartRef,
@@ -171,6 +180,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				>
 					{/* TODO: passing each content is too much, we should use the tooltipContent object directly */}
 					<SpanTooltipContent
+						serviceName={tooltipContent.serviceName}
 						spanName={tooltipContent.spanName}
 						color={tooltipContent.spanColor}
 						hasError={tooltipContent.status === 'error'}

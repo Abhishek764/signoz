@@ -38,7 +38,7 @@ func createAlert(labels, annotations map[string]string, isFiring bool) *types.Al
 		ann[model.LabelName(k)] = model.LabelValue(v)
 	}
 	startsAt := time.Now()
-	endsAt := startsAt.Add(time.Hour)
+	var endsAt time.Time
 	if isFiring {
 		endsAt = startsAt.Add(time.Hour)
 	} else {

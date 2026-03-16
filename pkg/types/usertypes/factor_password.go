@@ -1,4 +1,4 @@
-package types
+package usertypes
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/sethvargo/go-password/password"
 	"github.com/uptrace/bun"
@@ -45,7 +46,7 @@ type PostableForgotPassword struct {
 type ResetPasswordToken struct {
 	bun.BaseModel `bun:"table:reset_password_token"`
 
-	Identifiable
+	types.Identifiable
 	Token      string      `bun:"token,type:text,notnull" json:"token"`
 	PasswordID valuer.UUID `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
 	ExpiresAt  time.Time   `bun:"expires_at,type:timestamptz,nullzero" json:"expiresAt"`
@@ -54,11 +55,11 @@ type ResetPasswordToken struct {
 type FactorPassword struct {
 	bun.BaseModel `bun:"table:factor_password"`
 
-	Identifiable
+	types.Identifiable
 	Password  string `bun:"password,type:text,notnull" json:"password"`
 	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
 	UserID    string `bun:"user_id,type:text,notnull,unique" json:"userId"`
-	TimeAuditable
+	types.TimeAuditable
 }
 
 func (request *ChangePasswordRequest) UnmarshalJSON(data []byte) error {
@@ -104,13 +105,13 @@ func NewFactorPassword(password string, userID string) (*FactorPassword, error) 
 	}
 
 	return &FactorPassword{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		Password:  string(hashedPassword),
 		Temporary: false,
 		UserID:    userID,
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -146,7 +147,7 @@ func NewHashedPassword(password string) (string, error) {
 
 func NewResetPasswordToken(passwordID valuer.UUID, expiresAt time.Time) (*ResetPasswordToken, error) {
 	return &ResetPasswordToken{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		Token:      valuer.GenerateUUID().String(),

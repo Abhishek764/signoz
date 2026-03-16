@@ -43,7 +43,7 @@ var (
 )
 
 var (
-	ExistingRoleToSigNozManagedRoleMap = map[types.Role]string{
+	ExistingRoleToSigNozManagedRoleMap = map[types.LegacyRole]string{
 		types.RoleAdmin:  SigNozAdminRoleName,
 		types.RoleEditor: SigNozEditorRoleName,
 		types.RoleViewer: SigNozViewerRoleName,
@@ -246,7 +246,7 @@ func GetDeletionTuples(name string, orgID valuer.UUID, relation authtypes.Relati
 	return tuples, nil
 }
 
-func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
+func MustGetSigNozManagedRoleFromExistingRole(role types.LegacyRole) string {
 	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
 	if !ok {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))

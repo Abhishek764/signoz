@@ -6,22 +6,23 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
 	// Creates the organization and the first user of that organization.
-	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*types.User, error)
+	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*usertypes.User, error)
 
 	// Creates a user and sends an analytics event.
-	CreateUser(ctx context.Context, user *types.User, opts ...CreateUserOption) error
+	CreateUser(ctx context.Context, user *usertypes.User, opts ...CreateUserOption) error
 
 	// Get or create a user. If a user with the same email and orgID already exists, it returns the existing user.
-	GetOrCreateUser(ctx context.Context, user *types.User, opts ...CreateUserOption) (*types.User, error)
+	GetOrCreateUser(ctx context.Context, user *usertypes.User, opts ...CreateUserOption) (*usertypes.User, error)
 
 	// Get or Create a reset password token for a user. If the password does not exist, a new one is randomly generated and inserted. The function
 	// is idempotent and can be called multiple times.
-	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error)
+	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*usertypes.ResetPasswordToken, error)
 
 	// Updates password of a user using a reset password token. It also deletes all reset password tokens for the user.
 	// This is used to reset the password of a user when they forget their password.
@@ -33,48 +34,48 @@ type Module interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *usertypes.User, updatedBy string) (*usertypes.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
-	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
+	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *usertypes.User) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
-	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
-	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
-	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
-	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)
+	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *usertypes.PostableBulkInviteRequest) ([]*usertypes.Invite, error)
+	ListInvite(ctx context.Context, orgID string) ([]*usertypes.Invite, error)
+	AcceptInvite(ctx context.Context, token string, password string) (*usertypes.User, error)
+	GetInviteByToken(ctx context.Context, token string) (*usertypes.Invite, error)
 
 	// API KEY
-	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error
-	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
+	CreateAPIKey(ctx context.Context, apiKey *usertypes.StorableAPIKey) error
+	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *usertypes.StorableAPIKey, updaterID valuer.UUID) error
+	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*usertypes.StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
-	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
+	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*usertypes.StorableAPIKeyUser, error)
 
-	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
+	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*usertypes.User, error)
 
 	statsreporter.StatsCollector
 }
 
 type Getter interface {
 	// Get root user by org id.
-	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, error)
+	GetRootUserByOrgID(context.Context, valuer.UUID) (*usertypes.User, error)
 
 	// Get gets the users based on the given id
-	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
+	ListByOrgID(context.Context, valuer.UUID) ([]*usertypes.User, error)
 
 	// Get users by email.
-	GetUsersByEmail(context.Context, valuer.Email) ([]*types.User, error)
+	GetUsersByEmail(context.Context, valuer.Email) ([]*usertypes.User, error)
 
 	// Get user by orgID and id.
-	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.User, error)
+	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*usertypes.User, error)
 
 	// Get user by id.
-	Get(context.Context, valuer.UUID) (*types.User, error)
+	Get(context.Context, valuer.UUID) (*usertypes.User, error)
 
 	// List users by email and org ids.
-	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
+	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*usertypes.User, error)
 
 	// Count users by org id.
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
@@ -83,7 +84,7 @@ type Getter interface {
 	CountByOrgIDAndStatuses(context.Context, valuer.UUID, []string) (map[valuer.String]int64, error)
 
 	// Get factor password by user id.
-	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
+	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*usertypes.FactorPassword, error)
 }
 
 type Handler interface {

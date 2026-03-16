@@ -83,7 +83,7 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.Role {
+func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.LegacyRole {
 	if roleMapping == nil {
 		return types.RoleViewer
 	}
@@ -123,8 +123,8 @@ func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *Ca
 	return types.RoleViewer
 }
 
-func compareRoles(a, b types.Role) int {
-	order := map[types.Role]int{
+func compareRoles(a, b types.LegacyRole) int {
+	order := map[types.LegacyRole]int{
 		types.RoleViewer: 0,
 		types.RoleEditor: 1,
 		types.RoleAdmin:  2,

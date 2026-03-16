@@ -16,6 +16,7 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"log/slog"
@@ -142,7 +143,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		"cloud_provider", cloudProvider,
 	)
 
-	newPAT, err := types.NewStorableAPIKey(
+	newPAT, err := usertypes.NewStorableAPIKey(
 		integrationPATName,
 		integrationUser.ID,
 		types.RoleViewer,
@@ -165,16 +166,16 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
-) (*types.User, *basemodel.ApiError) {
+) (*usertypes.User, *basemodel.ApiError) {
 	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
 	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
-	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId), types.UserStatusActive)
+	cloudIntegrationUser, err := usertypes.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId), usertypes.UserStatusActive)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
-	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
+	password := usertypes.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
 
 	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(ctx, cloudIntegrationUser, user.WithFactorPassword(password))
 	if err != nil {

@@ -20,12 +20,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
 )
 
 type Module struct {
-	store     types.UserStore
+	store     usertypes.UserStore
 	tokenizer tokenizer.Tokenizer
 	emailing  emailing.Emailing
 	settings  factory.ScopedProviderSettings
@@ -36,7 +37,7 @@ type Module struct {
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
+func NewModule(store usertypes.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -50,7 +51,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 	}
 }
 
-func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
+func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*usertypes.User, error) {
 	// get the user by reset password token
 	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
@@ -72,7 +73,7 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 	return user, nil
 }
 
-func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+func (m *Module) GetInviteByToken(ctx context.Context, token string) (*usertypes.Invite, error) {
 	// get the user
 	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
@@ -80,7 +81,7 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 	}
 
 	// create a dummy invite obj for backward compatibility
-	invite := &types.Invite{
+	invite := &usertypes.Invite{
 		Identifiable: types.Identifiable{
 			ID: user.ID,
 		},
@@ -99,7 +100,7 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *usertypes.PostableBulkInviteRequest) ([]*usertypes.Invite, error) {
 	creator, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -110,7 +111,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	for idx, invite := range bulkInvites.Invites {
 		emails[idx] = invite.Email.StringValue()
 	}
-	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{usertypes.UserStatusActive.StringValue(), usertypes.UserStatusPendingInvite.StringValue()})
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +121,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
 		}
 
-		if users[0].Status == types.UserStatusPendingInvite {
+		if users[0].Status == usertypes.UserStatusPendingInvite {
 			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", users[0].Email.StringValue())
 		}
 
@@ -128,8 +129,8 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	}
 
 	type userWithResetToken struct {
-		User               *types.User
-		ResetPasswordToken *types.ResetPasswordToken
+		User               *usertypes.User
+		ResetPasswordToken *usertypes.ResetPasswordToken
 	}
 
 	newUsersWithResetToken := make([]*userWithResetToken, len(bulkInvites.Invites))
@@ -142,7 +143,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			}
 
 			// create a new user with pending invite status
-			newUser, err := types.NewUser(invite.Name, invite.Email, role, orgID, types.UserStatusPendingInvite)
+			newUser, err := usertypes.NewUser(invite.Name, invite.Email, role, orgID, usertypes.UserStatusPendingInvite)
 			if err != nil {
 				return err
 			}
@@ -170,7 +171,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		return nil, err
 	}
 
-	invites := make([]*types.Invite, len(bulkInvites.Invites))
+	invites := make([]*usertypes.Invite, len(bulkInvites.Invites))
 
 	// send password reset emails to all the invited users
 	for idx, userWithToken := range newUsersWithResetToken {
@@ -179,7 +180,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			"invitee_role":  userWithToken.User.Role,
 		})
 
-		invite := &types.Invite{
+		invite := &usertypes.Invite{
 			Identifiable: types.Identifiable{
 				ID: userWithToken.User.ID,
 			},
@@ -219,16 +220,16 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	return invites, nil
 }
 
-func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
+func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*usertypes.Invite, error) {
 	// find all the users with pending_invite status
 	users, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
 	if err != nil {
 		return nil, err
 	}
 
-	pendingUsers := slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusPendingInvite })
+	pendingUsers := slices.DeleteFunc(users, func(user *usertypes.User) bool { return user.Status != usertypes.UserStatusPendingInvite })
 
-	var invites []*types.Invite
+	var invites []*usertypes.Invite
 
 	for _, pUser := range pendingUsers {
 		// get the reset password token
@@ -238,7 +239,7 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 		}
 
 		// create a dummy invite obj for backward compatibility
-		invite := &types.Invite{
+		invite := &usertypes.Invite{
 			Identifiable: types.Identifiable{
 				ID: pUser.ID,
 			},
@@ -259,7 +260,7 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 	return invites, nil
 }
 
-func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+func (module *Module) CreateUser(ctx context.Context, input *usertypes.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
@@ -284,14 +285,14 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 		return err
 	}
 
-	traitsOrProperties := types.NewTraitsFromUser(input)
+	traitsOrProperties := usertypes.NewTraitsFromUser(input)
 	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
 
-func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error) {
+func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *usertypes.User, updatedBy string) (*usertypes.User, error) {
 	existingUser, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
@@ -350,12 +351,12 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return existingUser, nil
 }
 
-func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *usertypes.User) error {
 	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
 		return err
 	}
 
-	traits := types.NewTraitsFromUser(user)
+	traits := usertypes.NewTraitsFromUser(user)
 	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
 
@@ -412,7 +413,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	return nil
 }
 
-func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*usertypes.ResetPasswordToken, error) {
 	user, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -435,7 +436,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 	if password == nil {
 		// if the user does not have a password, we need to create a new one (common for SSO/SAML users)
-		password = types.MustGenerateFactorPassword(userID.String())
+		password = usertypes.MustGenerateFactorPassword(userID.String())
 
 		if err := module.store.CreatePassword(ctx, password); err != nil {
 			return nil, err
@@ -461,7 +462,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	}
 
 	// create a new token
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
+	resetPasswordToken, err := usertypes.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +555,7 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	// since grant is idempotent, multiple calls won't cause issues in case of retries
-	if user.Status == types.UserStatusPendingInvite {
+	if user.Status == usertypes.UserStatusPendingInvite {
 		if err = module.authz.Grant(
 			ctx,
 			user.OrgID,
@@ -566,8 +567,8 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if user.Status == types.UserStatusPendingInvite {
-			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+		if user.Status == usertypes.UserStatusPendingInvite {
+			if err := user.UpdateStatus(usertypes.UserStatusActive); err != nil {
 				return err
 			}
 			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
@@ -607,7 +608,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	}
 
 	if !password.Equals(oldpasswd) {
-		return errors.New(errors.TypeInvalidInput, types.ErrCodeIncorrectPassword, "old password is incorrect")
+		return errors.New(errors.TypeInvalidInput, usertypes.ErrCodeIncorrectPassword, "old password is incorrect")
 	}
 
 	if err := password.Update(passwd); err != nil {
@@ -631,7 +632,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	return module.tokenizer.DeleteTokensByUserID(ctx, userID)
 }
 
-func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
+func (module *Module) GetOrCreateUser(ctx context.Context, user *usertypes.User, opts ...root.CreateUserOption) (*usertypes.User, error) {
 	existingUser, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
@@ -641,7 +642,7 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 
 	if existingUser != nil {
 		// for users logging through SSO flow but are having status as pending_invite
-		if existingUser.Status == types.UserStatusPendingInvite {
+		if existingUser.Status == usertypes.UserStatusPendingInvite {
 			// respect the role coming from the SSO
 			existingUser.Update("", user.Role)
 			// activate the user
@@ -661,19 +662,19 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	return user, nil
 }
 
-func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+func (m *Module) CreateAPIKey(ctx context.Context, apiKey *usertypes.StorableAPIKey) error {
 	return m.store.CreateAPIKey(ctx, apiKey)
 }
 
-func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *usertypes.StorableAPIKey, updaterID valuer.UUID) error {
 	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
 }
 
-func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
+func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*usertypes.StorableAPIKeyUser, error) {
 	return m.store.ListAPIKeys(ctx, orgID)
 }
 
-func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
+func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*usertypes.StorableAPIKeyUser, error) {
 	return m.store.GetAPIKey(ctx, orgID, id)
 }
 
@@ -681,13 +682,13 @@ func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UU
 	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
 }
 
-func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
-	user, err := types.NewRootUser(name, email, organization.ID)
+func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*usertypes.User, error) {
+	user, err := usertypes.NewRootUser(name, email, organization.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := types.NewFactorPassword(passwd, user.ID.StringValue())
+	password, err := usertypes.NewFactorPassword(passwd, user.ID.StringValue())
 	if err != nil {
 		return nil, err
 	}
@@ -726,12 +727,12 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 
 func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
-	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, []string{types.UserStatusActive.StringValue(), types.UserStatusDeleted.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, []string{usertypes.UserStatusActive.StringValue(), usertypes.UserStatusDeleted.StringValue(), usertypes.UserStatusPendingInvite.StringValue()})
 	if err == nil {
-		stats["user.count"] = counts[types.UserStatusActive] + counts[types.UserStatusDeleted] + counts[types.UserStatusPendingInvite]
-		stats["user.count.active"] = counts[types.UserStatusActive]
-		stats["user.count.deleted"] = counts[types.UserStatusDeleted]
-		stats["user.count.pending_invite"] = counts[types.UserStatusPendingInvite]
+		stats["user.count"] = counts[usertypes.UserStatusActive] + counts[usertypes.UserStatusDeleted] + counts[usertypes.UserStatusPendingInvite]
+		stats["user.count.active"] = counts[usertypes.UserStatusActive]
+		stats["user.count.deleted"] = counts[usertypes.UserStatusDeleted]
+		stats["user.count.pending_invite"] = counts[usertypes.UserStatusPendingInvite]
 	}
 
 	count, err := module.store.CountAPIKeyByOrgID(ctx, orgID)
@@ -743,14 +744,14 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 }
 
 // this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
-func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
+func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*usertypes.User, error) {
 	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	// filter out the deleted users
-	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *usertypes.User) bool { return user.ErrIfDeleted() != nil })
 
 	if len(existingUsers) > 1 {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
@@ -764,7 +765,7 @@ func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, emai
 
 }
 
-func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
+func (module *Module) createUserWithoutGrant(ctx context.Context, input *usertypes.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := module.store.CreateUser(ctx, input); err != nil {
@@ -782,14 +783,14 @@ func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.U
 		return err
 	}
 
-	traitsOrProperties := types.NewTraitsFromUser(input)
+	traitsOrProperties := usertypes.NewTraitsFromUser(input)
 	module.analytics.IdentifyUser(ctx, input.OrgID.String(), input.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
 }
 
-func (module *Module) activatePendingUser(ctx context.Context, user *types.User) error {
+func (module *Module) activatePendingUser(ctx context.Context, user *usertypes.User) error {
 	err := module.authz.Grant(
 		ctx,
 		user.OrgID,
@@ -800,7 +801,7 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 		return err
 	}
 
-	if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+	if err := user.UpdateStatus(usertypes.UserStatusActive); err != nil {
 		return err
 	}
 	err = module.store.UpdateUser(ctx, user.OrgID, user)

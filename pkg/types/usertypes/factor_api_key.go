@@ -1,4 +1,4 @@
-package types
+package usertypes
 
 import (
 	"crypto/rand"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -13,29 +14,29 @@ import (
 var NEVER_EXPIRES = time.Unix(0, 0)
 
 type PostableAPIKey struct {
-	Name          string `json:"name"`
-	Role          Role   `json:"role"`
-	ExpiresInDays int64  `json:"expiresInDays"`
+	Name          string           `json:"name"`
+	Role          types.LegacyRole `json:"role"`
+	ExpiresInDays int64            `json:"expiresInDays"`
 }
 
 type GettableAPIKey struct {
-	Identifiable
-	TimeAuditable
-	UserAuditable
-	Token         string `json:"token"`
-	Role          Role   `json:"role"`
-	Name          string `json:"name"`
-	ExpiresAt     int64  `json:"expiresAt"`
-	LastUsed      int64  `json:"lastUsed"`
-	Revoked       bool   `json:"revoked"`
-	UserID        string `json:"userId"`
-	CreatedByUser *User  `json:"createdByUser"`
-	UpdatedByUser *User  `json:"updatedByUser"`
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	Token         string           `json:"token"`
+	Role          types.LegacyRole `json:"role"`
+	Name          string           `json:"name"`
+	ExpiresAt     int64            `json:"expiresAt"`
+	LastUsed      int64            `json:"lastUsed"`
+	Revoked       bool             `json:"revoked"`
+	UserID        string           `json:"userId"`
+	CreatedByUser *User            `json:"createdByUser"`
+	UpdatedByUser *User            `json:"updatedByUser"`
 }
 
 type OrgUserAPIKey struct {
-	*Organization `bun:",extend"`
-	Users         []*UserWithAPIKey `bun:"rel:has-many,join:id=org_id"`
+	*types.Organization `bun:",extend"`
+	Users               []*UserWithAPIKey `bun:"rel:has-many,join:id=org_id"`
 }
 
 type UserWithAPIKey struct {
@@ -53,19 +54,19 @@ type StorableAPIKeyUser struct {
 type StorableAPIKey struct {
 	bun.BaseModel `bun:"table:factor_api_key"`
 
-	Identifiable
-	TimeAuditable
-	UserAuditable
-	Token     string      `json:"token" bun:"token,type:text,notnull,unique"`
-	Role      Role        `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
-	Name      string      `json:"name" bun:"name,type:text,notnull"`
-	ExpiresAt time.Time   `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
-	LastUsed  time.Time   `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
-	Revoked   bool        `json:"revoked" bun:"revoked,notnull,default:false"`
-	UserID    valuer.UUID `json:"userId" bun:"user_id,type:text,notnull"`
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	Token     string           `json:"token" bun:"token,type:text,notnull,unique"`
+	Role      types.LegacyRole `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
+	Name      string           `json:"name" bun:"name,type:text,notnull"`
+	ExpiresAt time.Time        `json:"-" bun:"expires_at,notnull,nullzero,type:timestamptz"`
+	LastUsed  time.Time        `json:"-" bun:"last_used,notnull,nullzero,type:timestamptz"`
+	Revoked   bool             `json:"revoked" bun:"revoked,notnull,default:false"`
+	UserID    valuer.UUID      `json:"userId" bun:"user_id,type:text,notnull"`
 }
 
-func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int64) (*StorableAPIKey, error) {
+func NewStorableAPIKey(name string, userID valuer.UUID, role types.LegacyRole, expiresAt int64) (*StorableAPIKey, error) {
 	// validate
 
 	// we allow the APIKey if expiresAt is not set, which means it never expires
@@ -101,14 +102,14 @@ func NewStorableAPIKey(name string, userID valuer.UUID, role Role, expiresAt int
 	encodedToken := base64.StdEncoding.EncodeToString(token)
 
 	return &StorableAPIKey{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
 			UpdatedAt: now,
 		},
-		UserAuditable: UserAuditable{
+		UserAuditable: types.UserAuditable{
 			CreatedBy: userID.String(),
 			UpdatedBy: userID.String(),
 		},

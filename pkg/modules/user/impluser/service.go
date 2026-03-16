@@ -12,12 +12,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type service struct {
 	settings  factory.ScopedProviderSettings
-	store     types.UserStore
+	store     usertypes.UserStore
 	module    user.Module
 	orgGetter organization.Getter
 	authz     authz.AuthZ
@@ -27,7 +28,7 @@ type service struct {
 
 func NewService(
 	providerSettings factory.ProviderSettings,
-	store types.UserStore,
+	store usertypes.UserStore,
 	module user.Module,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
@@ -171,12 +172,12 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	// Create new root user
-	newUser, err := types.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
+	newUser, err := usertypes.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
 	if err != nil {
 		return err
 	}
 
-	factorPassword, err := types.NewFactorPassword(s.config.Password, newUser.ID.StringValue())
+	factorPassword, err := usertypes.NewFactorPassword(s.config.Password, newUser.ID.StringValue())
 	if err != nil {
 		return err
 	}
@@ -184,7 +185,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
 }
 
-func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
+func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *usertypes.User) error {
 	existingRoot.PromoteToRoot()
 
 	if existingRoot.Email != s.config.Email {
@@ -204,7 +205,7 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 			return err
 		}
 
-		factorPassword, err := types.NewFactorPassword(s.config.Password, userID.StringValue())
+		factorPassword, err := usertypes.NewFactorPassword(s.config.Password, userID.StringValue())
 		if err != nil {
 			return err
 		}

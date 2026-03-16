@@ -7,15 +7,15 @@ import (
 )
 
 // Do not take inspiration from this. This is a hack to avoid using valuer.String and use upper case strings.
-type Role string
+type LegacyRole string
 
 const (
-	RoleAdmin  Role = "ADMIN"
-	RoleEditor Role = "EDITOR"
-	RoleViewer Role = "VIEWER"
+	RoleAdmin  LegacyRole = "ADMIN"
+	RoleEditor LegacyRole = "EDITOR"
+	RoleViewer LegacyRole = "VIEWER"
 )
 
-func NewRole(role string) (Role, error) {
+func NewRole(role string) (LegacyRole, error) {
 	switch role {
 	case "ADMIN":
 		return RoleAdmin, nil
@@ -28,11 +28,11 @@ func NewRole(role string) (Role, error) {
 	return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid role: %s", role)
 }
 
-func (r Role) String() string {
+func (r LegacyRole) String() string {
 	return string(r)
 }
 
-func (r *Role) UnmarshalJSON(data []byte) error {
+func (r *LegacyRole) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
@@ -47,6 +47,6 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r Role) MarshalJSON() ([]byte, error) {
+func (r LegacyRole) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.String())
 }

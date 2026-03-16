@@ -15,7 +15,7 @@ type accessTokenKey struct{}
 type Claims struct {
 	UserID         string
 	Email          string
-	Role           types.Role
+	Role           types.LegacyRole
 	OrgID          string
 	IdentNProvider string
 }
@@ -59,7 +59,7 @@ func (c *Claims) LogValue() slog.Value {
 }
 
 func (c *Claims) IsViewer() error {
-	if slices.Contains([]types.Role{types.RoleViewer, types.RoleEditor, types.RoleAdmin}, c.Role) {
+	if slices.Contains([]types.LegacyRole{types.RoleViewer, types.RoleEditor, types.RoleAdmin}, c.Role) {
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func (c *Claims) IsViewer() error {
 }
 
 func (c *Claims) IsEditor() error {
-	if slices.Contains([]types.Role{types.RoleEditor, types.RoleAdmin}, c.Role) {
+	if slices.Contains([]types.LegacyRole{types.RoleEditor, types.RoleAdmin}, c.Role) {
 		return nil
 	}
 

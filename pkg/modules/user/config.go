@@ -5,7 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -68,7 +68,7 @@ func (c Config) Validate() error {
 		if c.Root.Password == "" {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::root::password is required when root user is enabled")
 		}
-		if !types.IsPasswordValid(c.Root.Password) {
+		if !usertypes.IsPasswordValid(c.Root.Password) {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::root::password does not meet password requirements")
 		}
 	}

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -17,9 +17,9 @@ func NewStore(sqlstore sqlstore.SQLStore) authtypes.AuthNStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error) {
-	user := new(types.User)
-	factorPassword := new(types.FactorPassword)
+func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error) {
+	user := new(usertypes.User)
+	factorPassword := new(usertypes.FactorPassword)
 
 	err := store.
 		sqlstore.
@@ -28,10 +28,10 @@ func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Co
 		Model(user).
 		Where("email = ?", email).
 		Where("org_id = ?", orgID).
-		Where("status = ?", types.UserStatusActive.StringValue()).
+		Where("status = ?", usertypes.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
+		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
 	}
 
 	err = store.
@@ -42,7 +42,7 @@ func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Co
 		Where("user_id = ?", user.ID).
 		Scan(ctx)
 	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodePasswordNotFound, "user with email %s in org %s does not have password", email, orgID)
+		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, usertypes.ErrCodePasswordNotFound, "user with email %s in org %s does not have password", email, orgID)
 	}
 
 	return user, factorPassword, nil

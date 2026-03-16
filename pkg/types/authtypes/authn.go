@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -25,11 +26,11 @@ var (
 type AuthNProvider struct{ valuer.String }
 
 type Identity struct {
-	UserID        valuer.UUID    `json:"userId"`
-	OrgID         valuer.UUID    `json:"orgId"`
-	IdenNProvider IdentNProvider `json:"identNProvider"`
-	Email         valuer.Email   `json:"email"`
-	Role          types.Role     `json:"role"`
+	UserID        valuer.UUID      `json:"userId"`
+	OrgID         valuer.UUID      `json:"orgId"`
+	IdenNProvider IdentNProvider   `json:"identNProvider"`
+	Email         valuer.Email     `json:"email"`
+	Role          types.LegacyRole `json:"role"`
 }
 
 type CallbackIdentity struct {
@@ -79,7 +80,7 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
-func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.Role, identNProvider IdentNProvider) *Identity {
+func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.LegacyRole, identNProvider IdentNProvider) *Identity {
 	return &Identity{
 		UserID:        userID,
 		OrgID:         orgID,
@@ -128,7 +129,7 @@ func (typ *Identity) ToClaims() Claims {
 
 type AuthNStore interface {
 	// Get user and factor password by email and orgID.
-	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error)
+	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error)
 
 	// Get org domain from id.
 	GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*AuthDomain, error)

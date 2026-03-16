@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -66,7 +67,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	}
 
 	// filter out deleted users
-	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
+	users = slices.DeleteFunc(users, func(user *usertypes.User) bool { return user.ErrIfDeleted() != nil })
 
 	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
 	name := strings.Split(email.String(), "@")[1]
@@ -144,7 +145,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
 	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID, types.UserStatusActive)
+	user, err := usertypes.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID, usertypes.UserStatusActive)
 	if err != nil {
 		return "", err
 	}

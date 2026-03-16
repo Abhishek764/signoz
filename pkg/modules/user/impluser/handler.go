@@ -11,9 +11,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -31,7 +31,7 @@ func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableAcceptInvite)
+	req := new(usertypes.PostableAcceptInvite)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
@@ -56,14 +56,14 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.PostableInvite
+	var req usertypes.PostableInvite
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
-		Invites: []types.PostableInvite{req},
+	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &usertypes.PostableBulkInviteRequest{
+		Invites: []usertypes.PostableInvite{req},
 	})
 	if err != nil {
 		render.Error(rw, err)
@@ -83,7 +83,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.PostableBulkInviteRequest
+	var req usertypes.PostableBulkInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
@@ -214,7 +214,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// temp code - show only active users
-	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusActive })
+	users = slices.DeleteFunc(users, func(user *usertypes.User) bool { return user.Status != usertypes.UserStatusActive })
 
 	render.Success(w, http.StatusOK, users)
 }
@@ -231,7 +231,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user types.User
+	var user usertypes.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		render.Error(w, err)
 		return
@@ -297,7 +297,7 @@ func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableResetPassword)
+	req := new(usertypes.PostableResetPassword)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(w, err)
 		return
@@ -316,7 +316,7 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	var req types.ChangePasswordRequest
+	var req usertypes.ChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, err)
 		return
@@ -335,7 +335,7 @@ func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableForgotPassword)
+	req := new(usertypes.PostableForgotPassword)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
@@ -360,13 +360,13 @@ func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(types.PostableAPIKey)
+	req := new(usertypes.PostableAPIKey)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
 		return
 	}
 
-	apiKey, err := types.NewStorableAPIKey(
+	apiKey, err := usertypes.NewStorableAPIKey(
 		req.Name,
 		valuer.MustNewUUID(claims.UserID),
 		req.Role,
@@ -411,13 +411,13 @@ func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 
 	// for backward compatibility
 	if len(apiKeys) == 0 {
-		render.Success(w, http.StatusOK, []types.GettableAPIKey{})
+		render.Success(w, http.StatusOK, []usertypes.GettableAPIKey{})
 		return
 	}
 
-	result := make([]*types.GettableAPIKey, len(apiKeys))
+	result := make([]*usertypes.GettableAPIKey, len(apiKeys))
 	for i, apiKey := range apiKeys {
-		result[i] = types.NewGettableAPIKeyFromStorableAPIKey(apiKey)
+		result[i] = usertypes.NewGettableAPIKeyFromStorableAPIKey(apiKey)
 	}
 
 	render.Success(w, http.StatusOK, result)
@@ -434,7 +434,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := types.StorableAPIKey{}
+	req := usertypes.StorableAPIKey{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
 		return

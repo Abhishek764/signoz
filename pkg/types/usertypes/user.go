@@ -1,4 +1,4 @@
-package types
+package usertypes
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -38,15 +39,15 @@ type GettableUser = User
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
-	Identifiable
-	DisplayName string        `bun:"display_name" json:"displayName"`
-	Email       valuer.Email  `bun:"email" json:"email"`
-	Role        Role          `bun:"role" json:"role"`
-	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
-	IsRoot      bool          `bun:"is_root" json:"isRoot"`
-	Status      valuer.String `bun:"status" json:"status"`
-	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
-	TimeAuditable
+	types.Identifiable
+	DisplayName string           `bun:"display_name" json:"displayName"`
+	Email       valuer.Email     `bun:"email" json:"email"`
+	Role        types.LegacyRole `bun:"role" json:"role"`
+	OrgID       valuer.UUID      `bun:"org_id" json:"orgId"`
+	IsRoot      bool             `bun:"is_root" json:"isRoot"`
+	Status      valuer.String    `bun:"status" json:"status"`
+	DeletedAt   time.Time        `bun:"deleted_at" json:"-"`
+	types.TimeAuditable
 }
 
 type PostableRegisterOrgAndAdmin struct {
@@ -57,7 +58,7 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
+func NewUser(displayName string, email valuer.Email, role types.LegacyRole, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
@@ -75,7 +76,7 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 	}
 
 	return &User{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		DisplayName: displayName,
@@ -84,7 +85,7 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		OrgID:       orgID,
 		IsRoot:      false,
 		Status:      status,
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -101,16 +102,16 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 	}
 
 	return &User{
-		Identifiable: Identifiable{
+		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        RoleAdmin,
+		Role:        types.RoleAdmin,
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -119,7 +120,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string, role Role) {
+func (u *User) Update(displayName string, role types.LegacyRole) {
 	if displayName != "" {
 		u.DisplayName = displayName
 	}
@@ -149,7 +150,7 @@ func (u *User) UpdateStatus(status valuer.String) error {
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
-	u.Role = RoleAdmin
+	u.Role = types.RoleAdmin
 	u.UpdatedAt = time.Now()
 }
 
@@ -230,7 +231,7 @@ type UserStore interface {
 	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
 
 	// Get users by role and org.
-	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+	GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.LegacyRole, orgID valuer.UUID) ([]*User, error)
 
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)

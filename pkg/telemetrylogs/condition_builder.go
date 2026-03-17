@@ -59,7 +59,7 @@ func (c *conditionBuilder) conditionFor(
 	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 
 	// make use of case insensitive index for body
-	if tblFieldName == "body" {
+	if tblFieldName == "body" || tblFieldName == "body_v2.message" {
 		switch operator {
 		case qbtypes.FilterOperatorLike:
 			return sb.ILike(tblFieldName, value), nil

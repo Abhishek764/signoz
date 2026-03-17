@@ -490,25 +490,24 @@ def test_traces_list(
                     "name": "A",
                     "signal": "traces",
                     "disabled": False,
+                    "selectFields": [
+                        {"name": "span_id"},
+                        {"name": "span.timestamp"},
+                        {"name": "trace_id"},
+                    ],
                     "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
                     "limit": 1,
                 },
             },
             HTTPStatus.OK,
             lambda x: [
-                x[3].duration_nano,
-                x[3].name,
-                x[3].response_status_code,
-                x[3].service_name,
                 x[3].span_id,
                 format_timestamp(x[3].timestamp),
                 x[3].trace_id,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 2: order by attribute timestamp field which is there in attributes as well
-        # This should break but it doesn't because attribute.timestamp gets adjusted to timestamp
-        # because of default trace.timestamp gets added by default and bug in field mapper picks
-        # instrinsic field
+        # This breaks as (timestamp >= '1773738262411000000') AND (timestamp < '1773738562411000000') order by attributes_string['timestamp'] as timestamp is invalid query
         pytest.param(
             {
                 "type": "builder_query",
@@ -523,15 +522,7 @@ def test_traces_list(
                 },
             },
             HTTPStatus.OK,
-            lambda x: [
-                x[3].duration_nano,
-                x[3].name,
-                x[3].response_status_code,
-                x[3].service_name,
-                x[3].span_id,
-                format_timestamp(x[3].timestamp),
-                x[3].trace_id,
-            ],  # type: Callable[[List[Traces]], List[Any]]
+            lambda x: [],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 3: select timestamp with empty order by
         pytest.param(
@@ -553,7 +544,7 @@ def test_traces_list(
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 4: select attribute.timestamp with empty order by
-        # This doesn't return any data because of where_clause using aliased timestamp
+        # This returns the one span which has attribute.timestamp
         pytest.param(
             {
                 "type": "builder_query",
@@ -567,7 +558,11 @@ def test_traces_list(
                 },
             },
             HTTPStatus.OK,
-            lambda x: [],  # type: Callable[[List[Traces]], List[Any]]
+            lambda x: [
+                x[0].span_id,
+                format_timestamp(x[0].timestamp),
+                x[0].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 5: select timestamp with timestamp order by
         pytest.param(
@@ -696,7 +691,6 @@ def test_traces_list_with_corrupt_data(
     assert response.status_code == status_code
 
     if response.status_code == HTTPStatus.OK:
-
         if not results(traces):
             # No results expected
             assert response.json()["data"]["data"]["results"][0]["rows"] is None
@@ -705,6 +699,108 @@ def test_traces_list_with_corrupt_data(
             # Cannot compare values as they are randomly generated
             for key, value in zip(list(data.keys()), results(traces)):
                 assert data[key] == value
+
+
+def test_traces_list_with_select_fields(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+) -> None:
+    """
+    Setup:
+    Insert 4 traces with different attributes.
+
+    Tests:
+    1. Empty select fields should return all the fields.
+    2. Non empty select field should return the select field along with timestamp, trace_id and span_id.
+    """
+    traces = (
+        generate_traces_with_corrupt_metadata()
+    )  # using this as the data doesn't matter
+
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    payload = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "traces",
+            "selectFields": [],
+            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
+            "limit": 1,
+        },
+    }
+
+    tests = [
+        {
+            "selectFields": [],
+            "expectedKeys": [
+                # all intrinsic column
+                "timestamp",
+                "trace_id",
+                "span_id",
+                "trace_state",
+                "parent_span_id",
+                "flags",
+                "name",
+                "kind",
+                "kind_string",
+                "duration_nano",
+                "status_code",
+                "status_message",
+                "status_code_string",
+                "events",
+                "links",
+                # all calculated columns
+                "response_status_code",
+                "external_http_url",
+                "http_url",
+                "external_http_method",
+                "http_method",
+                "http_host",
+                "db_name",
+                "db_operation",
+                "has_error",
+                "is_remote",
+                # all contextual columns
+                "attributes_number",
+                "attributes_string",
+                "attributes_bool",
+                "resources_string",
+            ],
+        },
+        {
+            "selectFields": [{"name": "service.name"}],
+            "expectedKeys": ["timestamp", "trace_id", "span_id", "service.name"],
+        },
+    ]
+
+    for test in tests:
+        payload["spec"]["selectFields"] = test["selectFields"]
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int(
+                (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
+                * 1000
+            ),
+            end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            request_type="raw",
+            queries=[payload],
+        )
+        assert response.status_code == HTTPStatus.OK
+        data = response.json()
+        print(response.json())
+        print(data["data"]["data"]["results"][0]["rows"][0]["data"].keys())
+        assert len(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == len(
+            test["expectedKeys"]
+        )
+        assert set(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == set(
+            test["expectedKeys"]
+        )
 
 
 @pytest.mark.parametrize(

@@ -425,4 +425,51 @@ describe('computeVisualLayout', () => {
 		expect(layout.spanToVisualRow.get('ga1')).toBe(3);
 		expect(layout.totalVisualRows).toBe(4);
 	});
+
+	it('should not place a span where it covers an existing connector point (Check 2)', () => {
+		// Scenario: root has 3 leaf children. Sorted latest-first: C(200), B(100), A(80).
+		//
+		// C placed at row 1 [200, 400].
+		// B overlaps C → placed at row 2 [100, 300]. Connector from row 0→2 at x=100
+		//   passes through row 1, recording connector point at (row 1, x=100).
+		// A [80, 110] does NOT overlap C's span [200, 400] at row 1 (110 < 200),
+		//   so without connector reservation A would fit at row 1.
+		//   But A's span [80, 110) contains the connector point x=100 at row 1.
+		//   Check 2 prevents this placement, pushing A further down.
+		const root = makeSpan({
+			spanId: 'root',
+			timestamp: 0,
+			durationNano: 500e6,
+		});
+		const c = makeSpan({
+			spanId: 'c',
+			parentSpanId: 'root',
+			timestamp: 200,
+			durationNano: 200e6, // [200, 400]
+		});
+		const b = makeSpan({
+			spanId: 'b',
+			parentSpanId: 'root',
+			timestamp: 100,
+			durationNano: 200e6, // [100, 300]
+		});
+		const a = makeSpan({
+			spanId: 'a',
+			parentSpanId: 'root',
+			timestamp: 80,
+			durationNano: 30e6, // [80, 110]
+		});
+
+		const layout = computeVisualLayout([[root], [a, b, c]]);
+
+		expect(layout.spanToVisualRow.get('root')).toBe(0);
+		expect(layout.spanToVisualRow.get('c')).toBe(1); // latest, placed first
+		expect(layout.spanToVisualRow.get('b')).toBe(2); // overlaps C → row 2
+
+		// A would fit at row 1 by span overlap alone, but connector point at
+		// (row 1, x=100) falls within A's span [80, 110). Check 2 pushes A down.
+		const aRow = layout.spanToVisualRow.get('a')!;
+		expect(aRow).toBeGreaterThan(1); // must NOT be at row 1
+		expect(aRow).toBe(3); // next free row after B at row 2 (A overlaps B)
+	});
 });

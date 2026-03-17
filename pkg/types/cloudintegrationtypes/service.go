@@ -11,13 +11,13 @@ import (
 
 var S3Sync = valuer.NewString("s3sync")
 
-type ServiceType struct{ valuer.String }
+type ServiceID struct{ valuer.String }
 
 type (
 	CloudIntegrationService struct {
 		types.Identifiable
 		types.TimeAuditable
-		Type               ServiceType    `json:"type"`
+		Type               ServiceID      `json:"type"`
 		Config             *ServiceConfig `json:"config"`
 		CloudIntegrationID valuer.UUID    `json:"cloudIntegrationID"`
 	}

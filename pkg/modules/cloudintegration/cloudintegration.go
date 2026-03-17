@@ -32,9 +32,9 @@ type Module interface {
 	// This just returns a summary of the service and not the whole service definition
 	GetServicesMetadata(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID) ([]*citypes.ServiceMetadata, error)
 
-	// GetService returns service definition details for a serviceType. This returns config and
+	// GetService returns service definition details for a serviceID. This returns config and
 	// other details required to show in service details page on web client.
-	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceType string) (*citypes.Service, error)
+	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID string) (*citypes.Service, error)
 
 	// UpdateService updates cloud integration service
 	UpdateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService) error

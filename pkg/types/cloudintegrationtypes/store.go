@@ -27,8 +27,8 @@ type Store interface {
 
 	// cloud_integration_service related methods
 
-	// GetServiceByType returns the cloud integration service for the given cloud integration id and service type
-	GetServiceByType(ctx context.Context, cloudIntegrationID valuer.UUID, serviceType string) (*StorableCloudIntegrationService, error)
+	// GetServiceByServiceID returns the cloud integration service for the given cloud integration id and service id
+	GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID string) (*StorableCloudIntegrationService, error)
 
 	// CreateService creates a new cloud integration service for the given cloud integration id and service type
 	CreateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *StorableCloudIntegrationService) (*StorableCloudIntegrationService, error)

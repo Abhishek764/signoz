@@ -45,7 +45,8 @@ type StorableCloudIntegrationService struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Type ServiceType `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
+	// Keeping Type field name as is, but it is a service id
+	Type ServiceID `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	// Config is cloud provider's service specific data in JSON string format
 	Config             string      `bun:"config,type:text"`
 	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,on_delete:cascade"`

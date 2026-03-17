@@ -1,0 +1,9 @@
+{
+  "id": "signoz",
+  "name": "signoz",
+  "metaData": {
+    "buildInfo": {
+      "buildVersion": "0.0.1"
+    }
+  }
+}

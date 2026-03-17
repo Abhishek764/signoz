@@ -1,0 +1,8 @@
+{
+    "kind": "SigNozFormula",
+    "spec": {
+        "name": "F1",
+        "expression": "A / B * 100",
+        "legend": "Hit rate %"
+    }
+}

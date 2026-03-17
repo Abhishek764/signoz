@@ -1,0 +1,185 @@
+{
+    "description": "This dashboard shows the Redis instance overview. It includes latency, hit/miss rate, connections, and memory information.\n",
+    "id": "redis-overview",
+    "layout": [
+        {
+            "h": 3,
+            "i": "a77227c7-16f5-4353-952e-b183c715a61c",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "h": 3,
+            "i": "bf0deeeb-e926-4234-944c-82bacd96af47",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 0
+        }
+    ],
+    "tags": [
+        "redis",
+        "database"
+    ],
+    "title": "Redis overview",
+    "variables": {
+        "94f19b3c-ad9f-4b47-a9b2-f312c09fa965": {
+            "allSelected": true,
+            "customValue": "",
+            "description": "List of hosts sending Redis metrics",
+            "id": "94f19b3c-ad9f-4b47-a9b2-f312c09fa965",
+            "key": "94f19b3c-ad9f-4b47-a9b2-f312c09fa965",
+            "modificationUUID": "4c5b0c03-9cbc-425b-8d8e-7152e5c39ba8",
+            "multiSelect": true,
+            "name": "host_name",
+            "order": 0,
+            "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'redis_cpu_time'\nGROUP BY host_name",
+            "selectedValue": [
+                "Srikanths-MacBook-Pro.local"
+            ],
+            "showALLOption": true,
+            "sort": "ASC",
+            "textboxValue": "",
+            "type": "QUERY"
+        }
+    },
+    "version": "v5",
+    "widgets": [
+        {
+            "description": "Rate successful lookup of keys in the main dictionary",
+            "fillSpans": false,
+            "id": "a77227c7-16f5-4353-952e-b183c715a61c",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "redis_keyspace_hits",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "rate"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "host_name IN $host_name"
+                            },
+                            "groupBy": [],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "Hit/s across all hosts",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "42c9c117-bfaf-49f7-b528-aad099392295",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Hits/s",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "Number of clients pending on a blocking call",
+            "fillSpans": false,
+            "id": "bf0deeeb-e926-4234-944c-82bacd96af47",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "redis_clients_blocked",
+                                    "reduceTo": "sum",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "sum"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "host_name IN $host_name"
+                            },
+                            "groupBy": [],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "Blocked clients across all hosts",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "6b48fc1c-014a-45e6-a4ce-2c0e06a23302",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "softMax": null,
+            "softMin": null,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Blocked clients",
+            "yAxisUnit": "none"
+        }
+    ]
+}

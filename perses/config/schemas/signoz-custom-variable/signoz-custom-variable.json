@@ -1,0 +1,8 @@
+{
+    "kind": "SigNozCustomVariable",
+    "spec": {
+        "customValue": "production,staging,development",
+        "sort": "DISABLED",
+        "multiSelect": false
+    }
+}

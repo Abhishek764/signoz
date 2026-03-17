@@ -22,7 +22,7 @@ type Store interface {
 	// GetConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
 	GetConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
 
-	// GetConnectedAccount for given provider
+	// GetConnectedAccount for a given provider
 	GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, providerAccountID string) (*StorableCloudIntegration, error)
 
 	// cloud_integration_service related methods
@@ -30,11 +30,11 @@ type Store interface {
 	// GetServiceByServiceID returns the cloud integration service for the given cloud integration id and service id
 	GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID ServiceID) (*StorableCloudIntegrationService, error)
 
-	// CreateService creates a new cloud integration service for the given cloud integration id and service type
-	CreateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *StorableCloudIntegrationService) (*StorableCloudIntegrationService, error)
+	// CreateService creates a new cloud integration service
+	CreateService(ctx context.Context, service *StorableCloudIntegrationService) (*StorableCloudIntegrationService, error)
 
-	// UpdateService updates an existing cloud integration service for the given cloud integration id and service type
-	UpdateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *StorableCloudIntegrationService) error
+	// UpdateService updates an existing cloud integration service
+	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
 	// GetServices returns all the cloud integration services for the given cloud integration id
 	GetServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)

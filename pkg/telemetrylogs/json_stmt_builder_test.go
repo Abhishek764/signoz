@@ -5,7 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/chdbtelemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/require"
@@ -810,4 +813,45 @@ func enableBodyJSONQuery(_ *testing.T) {
 
 func disableBodyJSONQuery(_ *testing.T) {
 	querybuilder.BodyJSONQueryEnabled = false
+}
+
+func buildJSONTestStatementBuilder(t *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
+	t.Helper()
+	provider, cleanup, err := chdbtelemetrystore.New()
+	require.NoError(t, err)
+	t.Cleanup(cleanup)
+
+	ctx := context.Background()
+	types, _ := telemetrytypes.TestJSONTypeSet()
+	require.NoError(t, provider.SeedBodyJSONPaths(ctx, types))
+
+	// "message" is always promoted in these tests.
+	allPromoted := append([]string{"message"}, promotedPaths...)
+	require.NoError(t, provider.SeedPromotedPaths(ctx, allPromoted...))
+
+	metadataStore := chdbtelemetrystore.NewChdbMetadataStore(provider)
+
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	resourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		fm,
+		cb,
+		metadataStore,
+		DefaultFullTextColumn,
+		GetBodyJSONKey,
+	)
+
+	return NewLogQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		metadataStore,
+		fm,
+		cb,
+		resourceFilterStmtBuilder,
+		aggExprRewriter,
+		DefaultFullTextColumn,
+		GetBodyJSONKey,
+	)
 }

@@ -1,3 +1,5 @@
+//go:build chdb
+
 package chdbtelemetrystore
 
 import (
@@ -60,44 +62,22 @@ func toChdbSQL(op schemamigrator.Operation) (sql string, skip bool) {
 		// Idempotent; safe to run even if the table never existed.
 		return o.ToSQL(), false
 
-	case schemamigrator.AlterTableAddColumn:
+	case schemamigrator.AlterTableAddColumn,
+		schemamigrator.AlterTableAddIndex,
+		schemamigrator.AlterTableDropColumn,
+		schemamigrator.AlterTableDropIndex:
 		return o.ToSQL(), false
 
-	case schemamigrator.AlterTableAddIndex:
-		return o.ToSQL(), false
-
-	case schemamigrator.AlterTableDropColumn:
-		return o.ToSQL(), false
-
-	case schemamigrator.AlterTableDropIndex:
-		return o.ToSQL(), false
-
-	case schemamigrator.InsertIntoTable:
-		return o.ToSQL(), false
-
-	case schemamigrator.AlterTableModifyTTL:
-		// TTL is a production data-retention concern; irrelevant for test sessions.
-		_ = o
-		return "", true
-
-	case schemamigrator.AlterTableDropTTL:
-		_ = o
-		return "", true
-
-	case schemamigrator.AlterTableMaterializeColumn:
+	// TTL is a production data-retention concern; irrelevant for test sessions.
+	case schemamigrator.AlterTableModifyTTL,
+		schemamigrator.AlterTableDropTTL,
 		// Background mutation; not needed in ephemeral test tables.
-		_ = o
-		return "", true
-
-	case schemamigrator.AlterTableModifySettings:
+		schemamigrator.AlterTableMaterializeColumn,
 		// Includes serialisation settings (object_serialization_version, …) that
 		// may not be recognised by the embedded chdb build.
-		_ = o
-		return "", true
-
-	case schemamigrator.CreateMaterializedViewOperation:
+		schemamigrator.AlterTableModifySettings,
 		// Materialized views are not required for query-generation tests.
-		_ = o
+		schemamigrator.CreateMaterializedViewOperation:
 		return "", true
 
 	default:

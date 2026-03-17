@@ -140,7 +140,7 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query, args := buildListLogsJSONIndexesQuery(tc.cluster, tc.filters...)
+			query, args := buildListLogsJSONIndexesQuery(tc.cluster, telemetrylogs.DBName, telemetrylogs.LogsV2LocalTableName, tc.filters...)
 
 			require.Equal(t, tc.expectedSQL, query)
 			require.Equal(t, tc.expectedArgs, args)

@@ -12,6 +12,14 @@
 		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "golang.go"
 	},
+	"go.buildTags": "chdb",
+	"go.testFlags": ["-tags=chdb"],
+	"go.toolsEnvVars": {
+		"GOFLAGS": "-tags=chdb"
+	},
+	"gopls": {
+		"build.buildFlags": ["-tags=chdb"]
+	},
 	"[sql]": {
 		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
 	},

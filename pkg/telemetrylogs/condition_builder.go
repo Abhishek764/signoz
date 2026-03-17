@@ -33,7 +33,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && !key.Materialized {
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled {
 		valueType, value := InferDataType(value, operator, key)
 		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 		if err != nil {

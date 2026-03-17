@@ -30,6 +30,7 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		messageSubColumn:     {Name: messageSubColumn, Type: schema.ColumnTypeString},
 		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{
 			MaxDynamicTypes: utils.ToPointer(uint(32)),
 			MaxDynamicPaths: utils.ToPointer(uint(0)),
@@ -90,18 +91,14 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
 		if querybuilder.BodyJSONQueryEnabled {
-			// (Materialized=true) have a direct physical sub-column in body_v2.
-			// No lambda expressions (which expects a JSONPlan).
-			if key.Materialized {
-				// return direct physical sub-column in body_v2 (e.g. body_v2.message).
-				return logsV2Columns[fmt.Sprintf("%s.%s", LogsV2BodyV2Column, key.Name)], nil
-			}
-
 			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
 		// Fall back to legacy body column
 		return logsV2Columns["body"], nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
+		if key.Name == LogsV2BodyColumn && querybuilder.BodyJSONQueryEnabled {
+			return logsV2Columns[messageSubColumn], nil
+		}
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
 			// check if the key has body JSON search

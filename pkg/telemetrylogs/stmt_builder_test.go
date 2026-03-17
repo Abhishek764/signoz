@@ -1006,7 +1006,10 @@ func TestStmtBuilderBodyField(t *testing.T) {
 			}
 			// build the key map after enabling/disabling body JSON query
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-			mockMetadataStore.SetStaticFields(IntrinsicFields)
+			for _, field := range IntrinsicFields {
+				f := field
+				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
+			}
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 			resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 			statementBuilder := NewLogQueryStatementBuilder(

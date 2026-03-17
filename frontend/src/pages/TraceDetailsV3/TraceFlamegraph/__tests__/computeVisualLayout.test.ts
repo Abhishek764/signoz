@@ -103,12 +103,12 @@ describe('computeVisualLayout', () => {
 
 		const layout = computeVisualLayout([[root], [a, b, c]]);
 
-		// root on row 0, A and C share lane 0 (row 1), B on lane 1 (row 2)
+		// root on row 0, C placed first (latest) → row 1, B doesn't overlap C → row 1, A overlaps B → row 2
 		expect(layout.totalVisualRows).toBe(3);
 		expect(layout.spanToVisualRow.get('root')).toBe(0);
-		expect(layout.spanToVisualRow.get('a')).toBe(1);
-		expect(layout.spanToVisualRow.get('b')).toBe(2);
-		expect(layout.spanToVisualRow.get('c')).toBe(1); // shares row with A
+		expect(layout.spanToVisualRow.get('c')).toBe(1);
+		expect(layout.spanToVisualRow.get('b')).toBe(1);
+		expect(layout.spanToVisualRow.get('a')).toBe(2);
 	});
 
 	it('should handle full overlap — all siblings get own row', () => {
@@ -172,17 +172,17 @@ describe('computeVisualLayout', () => {
 
 		const layout = computeVisualLayout([[root], [a, b], [childA, childB]]);
 
-		// DFS processes a's subtree first:
+		// DFS processes b's subtree first (latest):
 		// root → row 0
-		// a → row 1 (parentRow 0 + 1)
-		// childA → row 2 (parentRow 1 + 1)
-		// b → try row 1 (parentRow 0 + 1), overlaps a → try row 2, overlaps childA → row 3
-		// childB → row 4 (parentRow 3 + 1)
+		// b → row 1 (parentRow 0 + 1)
+		// childB → row 2 (parentRow 1 + 1)
+		// a → try row 1 (parentRow 0 + 1), overlaps b → try row 2, overlaps childB → row 3
+		// childA → row 4 (parentRow 3 + 1)
 		expect(layout.spanToVisualRow.get('root')).toBe(0);
-		expect(layout.spanToVisualRow.get('a')).toBe(1);
-		expect(layout.spanToVisualRow.get('childA')).toBe(2);
-		expect(layout.spanToVisualRow.get('b')).toBe(3);
-		expect(layout.spanToVisualRow.get('childB')).toBe(4);
+		expect(layout.spanToVisualRow.get('b')).toBe(1);
+		expect(layout.spanToVisualRow.get('childB')).toBe(2);
+		expect(layout.spanToVisualRow.get('a')).toBe(3);
+		expect(layout.spanToVisualRow.get('childA')).toBe(4);
 		expect(layout.totalVisualRows).toBe(5);
 	});
 
@@ -421,8 +421,8 @@ describe('computeVisualLayout', () => {
 		expect(layout.spanToVisualRow.get('root')).toBe(0);
 		expect(layout.spanToVisualRow.get('a')).toBe(1);
 		expect(layout.spanToVisualRow.get('b')).toBe(1);
-		expect(layout.spanToVisualRow.get('ga1')).toBe(2);
-		expect(layout.spanToVisualRow.get('ga2')).toBe(3);
+		expect(layout.spanToVisualRow.get('ga2')).toBe(2);
+		expect(layout.spanToVisualRow.get('ga1')).toBe(3);
 		expect(layout.totalVisualRows).toBe(4);
 	});
 });

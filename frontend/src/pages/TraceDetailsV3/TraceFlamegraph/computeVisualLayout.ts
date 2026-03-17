@@ -111,7 +111,7 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 
 	// Sort children by timestamp for deterministic ordering
 	for (const [, children] of childrenMap) {
-		children.sort((a, b) => a.timestamp - b.timestamp);
+		children.sort((a, b) => b.timestamp - a.timestamp);
 	}
 
 	// --- Subtree-unit placement ---

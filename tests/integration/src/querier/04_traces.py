@@ -1,3 +1,4 @@
+from asyncio.unix_events import SelectorEventLoop
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List
@@ -701,43 +702,13 @@ def test_traces_list_with_corrupt_data(
                 assert data[key] == value
 
 
-def test_traces_list_with_select_fields(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
-) -> None:
-    """
-    Setup:
-    Insert 4 traces with different attributes.
-
-    Tests:
-    1. Empty select fields should return all the fields.
-    2. Non empty select field should return the select field along with timestamp, trace_id and span_id.
-    """
-    traces = (
-        generate_traces_with_corrupt_metadata()
-    )  # using this as the data doesn't matter
-
-    insert_traces(traces)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    payload = {
-        "type": "builder_query",
-        "spec": {
-            "name": "A",
-            "signal": "traces",
-            "selectFields": [],
-            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-            "limit": 1,
-        },
-    }
-
-    tests = [
-        {
-            "selectFields": [],
-            "expectedKeys": [
+@pytest.mark.parametrize(
+    "select_fields,status_code,expected_keys",
+    [
+        pytest.param(
+            [],
+            HTTPStatus.OK,
+            [
                 # all intrinsic column
                 "timestamp",
                 "trace_id",
@@ -771,35 +742,71 @@ def test_traces_list_with_select_fields(
                 "attributes_bool",
                 "resources_string",
             ],
-        },
-        {
-            "selectFields": [{"name": "service.name"}],
-            "expectedKeys": ["timestamp", "trace_id", "span_id", "service.name"],
-        },
-    ]
+        ),
+        pytest.param(
+            [
+                {"name": "service.name"},
+            ],
+            HTTPStatus.OK,
+            ["timestamp", "trace_id", "span_id", "service.name"],
+        ),
+    ],
+)
+def test_traces_list_with_select_fields(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+    select_fields: List[dict],
+    status_code: HTTPStatus,
+    expected_keys: List[str],
+) -> None:
+    """
+    Setup:
+    Insert 4 traces with different attributes.
 
-    for test in tests:
-        payload["spec"]["selectFields"] = test["selectFields"]
-        response = make_query_request(
-            signoz,
-            token,
-            start_ms=int(
-                (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
-                * 1000
-            ),
-            end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
-            request_type="raw",
-            queries=[payload],
-        )
-        assert response.status_code == HTTPStatus.OK
+    Tests:
+    1. Empty select fields should return all the fields.
+    2. Non empty select field should return the select field along with timestamp, trace_id and span_id.
+    """
+    traces = (
+        generate_traces_with_corrupt_metadata()
+    )  # using this as the data doesn't matter
+
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    payload = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "traces",
+            "selectFields": select_fields,
+            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
+            "limit": 1,
+        },
+    }
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int(
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
+        ),
+        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        request_type="raw",
+        queries=[payload],
+    )
+    assert response.status_code == status_code
+
+    if response.status_code == HTTPStatus.OK:
         data = response.json()
-        print(response.json())
-        print(data["data"]["data"]["results"][0]["rows"][0]["data"].keys())
         assert len(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == len(
-            test["expectedKeys"]
+            expected_keys
         )
         assert set(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == set(
-            test["expectedKeys"]
+            expected_keys
         )
 
 

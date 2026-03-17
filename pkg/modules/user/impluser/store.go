@@ -39,7 +39,7 @@ func (store *store) CreatePassword(ctx context.Context, password *usertypes.Fact
 	return nil
 }
 
-func (store *store) CreateUser(ctx context.Context, user *usertypes.User) error {
+func (store *store) CreateUser(ctx context.Context, user *usertypes.StorableUser) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -52,8 +52,8 @@ func (store *store) CreateUser(ctx context.Context, user *usertypes.User) error 
 	return nil
 }
 
-func (store *store) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*usertypes.User, error) {
-	var users []*usertypes.User
+func (store *store) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*usertypes.StorableUser, error) {
+	var users []*usertypes.StorableUser
 
 	err := store.
 		sqlstore.
@@ -69,8 +69,8 @@ func (store *store) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]
 	return users, nil
 }
 
-func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*usertypes.User, error) {
-	user := new(usertypes.User)
+func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*usertypes.StorableUser, error) {
+	user := new(usertypes.StorableUser)
 
 	err := store.
 		sqlstore.
@@ -86,8 +86,8 @@ func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*usertypes.Use
 	return user, nil
 }
 
-func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*usertypes.User, error) {
-	user := new(usertypes.User)
+func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*usertypes.StorableUser, error) {
+	user := new(usertypes.StorableUser)
 
 	err := store.
 		sqlstore.
@@ -104,8 +104,8 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 	return user, nil
 }
 
-func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*usertypes.User, error) {
-	var users []*usertypes.User
+func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*usertypes.StorableUser, error) {
+	var users []*usertypes.StorableUser
 
 	err := store.
 		sqlstore.
@@ -122,8 +122,8 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 	return users, nil
 }
 
-func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role authtypes.LegacyRole, orgID valuer.UUID) ([]*usertypes.User, error) {
-	var users []*usertypes.User
+func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role authtypes.LegacyRole, orgID valuer.UUID) ([]*usertypes.StorableUser, error) {
+	var users []*usertypes.StorableUser
 
 	err := store.
 		sqlstore.
@@ -141,7 +141,7 @@ func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role autht
 	return users, nil
 }
 
-func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *usertypes.User) error {
+func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *usertypes.StorableUser) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -162,8 +162,8 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *use
 	return nil
 }
 
-func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*usertypes.GettableUser, error) {
-	users := []*usertypes.User{}
+func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*usertypes.StorableUser, error) {
+	users := []*usertypes.StorableUser{}
 
 	err := store.
 		sqlstore.
@@ -247,7 +247,7 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 
 	// delete user
 	_, err = tx.NewDelete().
-		Model(new(usertypes.User)).
+		Model(new(usertypes.StorableUser)).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Exec(ctx)
@@ -332,7 +332,7 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	// soft delete user
 	now := time.Now()
 	_, err = tx.NewUpdate().
-		Model(new(usertypes.User)).
+		Model(new(usertypes.StorableUser)).
 		Set("status = ?", usertypes.UserStatusDeleted).
 		Set("deleted_at = ?", now).
 		Set("updated_at = ?", now).
@@ -563,7 +563,7 @@ func (store *store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*user
 }
 
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	user := new(usertypes.User)
+	user := new(usertypes.StorableUser)
 
 	count, err := store.
 		sqlstore.
@@ -580,7 +580,7 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 }
 
 func (store *store) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error) {
-	user := new(usertypes.User)
+	user := new(usertypes.StorableUser)
 	var results []struct {
 		Status valuer.String `bun:"status"`
 		Count  int64         `bun:"count"`
@@ -633,8 +633,8 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 	})
 }
 
-func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*usertypes.User, error) {
-	user := new(usertypes.User)
+func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*usertypes.StorableUser, error) {
+	user := new(usertypes.StorableUser)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -649,8 +649,8 @@ func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (
 	return user, nil
 }
 
-func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*usertypes.User, error) {
-	users := []*usertypes.User{}
+func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*usertypes.StorableUser, error) {
+	users := []*usertypes.StorableUser{}
 	err := store.
 		sqlstore.
 		BunDB().
@@ -666,8 +666,8 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 	return users, nil
 }
 
-func (store *store) GetUserByResetPasswordToken(ctx context.Context, token string) (*usertypes.User, error) {
-	user := new(usertypes.User)
+func (store *store) GetUserByResetPasswordToken(ctx context.Context, token string) (*usertypes.StorableUser, error) {
+	user := new(usertypes.StorableUser)
 
 	err := store.
 		sqlstore.
@@ -685,8 +685,8 @@ func (store *store) GetUserByResetPasswordToken(ctx context.Context, token strin
 	return user, nil
 }
 
-func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, emails []string, statuses []string) ([]*usertypes.User, error) {
-	users := []*usertypes.User{}
+func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, emails []string, statuses []string) ([]*usertypes.StorableUser, error) {
+	users := []*usertypes.StorableUser{}
 
 	err := store.
 		sqlstore.
@@ -704,8 +704,8 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 	return users, nil
 }
 
-func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.User, *usertypes.FactorPassword, error) {
-	user := new(usertypes.User)
+func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*usertypes.StorableUser, *usertypes.FactorPassword, error) {
+	user := new(usertypes.StorableUser)
 	factorPassword := new(usertypes.FactorPassword)
 
 	err := store.

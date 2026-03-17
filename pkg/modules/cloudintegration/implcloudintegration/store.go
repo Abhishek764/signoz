@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,7 +19,7 @@ func NewStore(sqlStore sqlstore.SQLStore) cloudintegrationtypes.Store {
 
 func (s *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	account := new(cloudintegrationtypes.StorableCloudIntegration)
-	err := s.store.BunDB().NewSelect().Model(account).
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(account).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Where("provider = ?", provider).
@@ -31,35 +30,29 @@ func (s *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provi
 	return account, nil
 }
 
-func (s *store) CreateAccount(ctx context.Context, orgID valuer.UUID, account *cloudintegrationtypes.StorableCloudIntegration) (*cloudintegrationtypes.StorableCloudIntegration, error) {
-	now := time.Now()
-	if account.ID.IsZero() {
-		account.ID = valuer.GenerateUUID()
-	}
-	account.OrgID = orgID
-	account.CreatedAt = now
-	account.UpdatedAt = now
-
+func (s *store) CreateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(account).Exec(ctx)
 	if err != nil {
-		return nil, s.store.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cloud integration account with id %s already exists", account.ID)
+		return nil, s.store.WrapAlreadyExistsErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyExists, "cloud integration account with id %s already exists", account.ID)
 	}
 
 	return account, nil
 }
 
 func (s *store) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
-	account.UpdatedAt = time.Now()
-	_, err := s.store.BunDBCtx(ctx).NewUpdate().Model(account).
-		Where("id = ?", account.ID).
+	_, err := s.store.BunDBCtx(ctx).
+		NewUpdate().
+		Model(account).
+		WherePK().
 		Where("org_id = ?", account.OrgID).
 		Where("provider = ?", account.Provider).
 		Exec(ctx)
+
 	return err
 }
 
 func (s *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
-	_, err := s.store.BunDBCtx(ctx).NewUpdate().Model((*cloudintegrationtypes.StorableCloudIntegration)(nil)).
+	_, err := s.store.BunDBCtx(ctx).NewUpdate().Model(new(cloudintegrationtypes.StorableCloudIntegration)).
 		Set("removed_at = ?", time.Now()).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
@@ -70,7 +63,7 @@ func (s *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provid
 
 func (s *store) GetConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
 	var accounts []*cloudintegrationtypes.StorableCloudIntegration
-	err := s.store.BunDB().NewSelect().Model(&accounts).
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(&accounts).
 		Where("org_id = ?", orgID).
 		Where("provider = ?", provider).
 		Where("removed_at IS NULL").
@@ -86,7 +79,7 @@ func (s *store) GetConnectedAccounts(ctx context.Context, orgID valuer.UUID, pro
 
 func (s *store) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, providerAccountID string) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	account := new(cloudintegrationtypes.StorableCloudIntegration)
-	err := s.store.BunDB().NewSelect().Model(account).
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(account).
 		Where("org_id = ?", orgID).
 		Where("provider = ?", provider).
 		Where("account_id = ?", providerAccountID).
@@ -99,42 +92,31 @@ func (s *store) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, prov
 	return account, nil
 }
 
-func (s *store) GetServiceByType(ctx context.Context, cloudIntegrationID valuer.UUID, serviceType string) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+func (s *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
 	service := new(cloudintegrationtypes.StorableCloudIntegrationService)
-	err := s.store.BunDB().NewSelect().Model(service).
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(service).
 		Where("cloud_integration_id = ?", cloudIntegrationID).
-		Where("type = ?", serviceType).
+		Where("type = ?", serviceID).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration service with type %s not found", serviceType)
+		return nil, s.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration service with id %s not found", serviceID)
 	}
 	return service, nil
 }
 
-func (s *store) CreateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *cloudintegrationtypes.StorableCloudIntegrationService) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
-	now := time.Now()
-	if service.ID.IsZero() {
-		service.ID = valuer.GenerateUUID()
-	}
-	service.CloudIntegrationID = cloudIntegrationID
-	if service.CreatedAt.IsZero() {
-		service.CreatedAt = now
-	}
-	service.UpdatedAt = now
-
+func (s *store) CreateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
 	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(service).Exec(ctx)
 	if err != nil {
-		return nil, s.store.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cloud integration service with type %s already exists", service.Type)
+		return nil, s.store.WrapAlreadyExistsErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationServiceAlreadyExists, "cloud integration service with id %s already exists for integration account", service.Type)
 	}
 
 	return service, nil
 }
 
-func (s *store) UpdateService(ctx context.Context, cloudIntegrationID valuer.UUID, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
-	service.CloudIntegrationID = cloudIntegrationID
-	service.UpdatedAt = time.Now()
+func (s *store) UpdateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
 	_, err := s.store.BunDBCtx(ctx).NewUpdate().Model(service).
-		Where("cloud_integration_id = ?", cloudIntegrationID).
+		WherePK().
+		Where("cloud_integration_id = ?", service.CloudIntegrationID).
 		Where("type = ?", service.Type).
 		Exec(ctx)
 	return err
@@ -142,7 +124,7 @@ func (s *store) UpdateService(ctx context.Context, cloudIntegrationID valuer.UUI
 
 func (s *store) GetServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*cloudintegrationtypes.StorableCloudIntegrationService, error) {
 	var services []*cloudintegrationtypes.StorableCloudIntegrationService
-	err := s.store.BunDB().NewSelect().Model(&services).
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(&services).
 		Where("cloud_integration_id = ?", cloudIntegrationID).
 		Scan(ctx)
 	if err != nil {

@@ -11,9 +11,15 @@ import (
 
 var S3Sync = valuer.NewString("s3sync")
 
+type ServiceID struct{ valuer.String }
+
 type (
-	ServicesMetadata struct {
-		Services []*ServiceMetadata `json:"services"`
+	CloudIntegrationService struct {
+		types.Identifiable
+		types.TimeAuditable
+		Type               ServiceID      `json:"type"`
+		Config             *ServiceConfig `json:"config"`
+		CloudIntegrationID valuer.UUID    `json:"cloudIntegrationID"`
 	}
 
 	// ServiceMetadata helps to quickly list available services and whether it is enabled or not.
@@ -25,7 +31,9 @@ type (
 		Enabled bool `json:"enabled"`
 	}
 
-	GettableServicesMetadata = ServicesMetadata
+	GettableServicesMetadata struct {
+		Services []*ServiceMetadata `json:"services"`
+	}
 
 	Service struct {
 		ServiceDefinition
@@ -34,15 +42,8 @@ type (
 
 	GettableService = Service
 
-	UpdateServiceConfigRequest struct {
-		CloudIntegrationId valuer.UUID    `json:"cloudIntegrationId"`
-		ServiceConfig      *ServiceConfig `json:"serviceConfig"`
-	}
-
-	UpdateServiceConfigResponse struct {
-		Id                 string         `json:"id"` // service id
-		CloudIntegrationId valuer.UUID    `json:"cloudIntegrationId"`
-		ServiceConfig      *ServiceConfig `json:"serviceConfig"`
+	UpdatableService struct {
+		Config *ServiceConfig `json:"config"`
 	}
 )
 
@@ -66,7 +67,7 @@ type AWSServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-// DefinitionMetadata represents service definition metadata. This is useful for showing service overview.
+// ServiceDefinitionMetadata represents service definition metadata. This is useful for showing service tab in frontend.
 type ServiceDefinitionMetadata struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`

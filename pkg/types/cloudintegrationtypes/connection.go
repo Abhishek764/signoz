@@ -62,6 +62,7 @@ type (
 	GettableAgentCheckInResponse struct {
 		AgentCheckInResponse
 
+		// For backward compatibility
 		CloudIntegrationId string `json:"cloud_integration_id"`
 		AccountId          string `json:"account_id"`
 	}

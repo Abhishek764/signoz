@@ -26,10 +26,10 @@ type StorableCloudIntegration struct {
 	Provider CloudProviderType `json:"provider" bun:"provider,type:text"`
 	// Config is provider specific data in JSON string format
 	Config          string               `json:"config" bun:"config,type:text"`
-	AccountID       *string              `json:"account_id" bun:"account_id,type:text"`
-	LastAgentReport *StorableAgentReport `json:"last_agent_report" bun:"last_agent_report,type:text"`
-	RemovedAt       *time.Time           `json:"removed_at" bun:"removed_at,type:timestamp,nullzero"`
-	OrgID           valuer.UUID          `bun:"org_id,type:text"`
+	AccountID       *string              `json:"accountID" bun:"account_id,type:text"`
+	LastAgentReport *StorableAgentReport `json:"lastAgentReport" bun:"last_agent_report,type:text"`
+	RemovedAt       *time.Time           `json:"removedAt" bun:"removed_at,type:timestamp,nullzero"`
+	OrgID           valuer.UUID          `json:"orgID" bun:"org_id,type:text"`
 }
 
 // StorableAgentReport represents the last heartbeat and arbitrary data sent by the agent
@@ -45,10 +45,11 @@ type StorableCloudIntegrationService struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Type valuer.String `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
+	// Keeping Type field name as is, but it is a service id
+	Type ServiceID `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	// Config is cloud provider's service specific data in JSON string format
 	Config             string      `bun:"config,type:text"`
-	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integration(id),on_delete:cascade"`
+	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,on_delete:cascade"`
 }
 
 // Scan scans value from DB.

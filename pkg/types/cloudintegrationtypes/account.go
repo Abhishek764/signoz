@@ -3,35 +3,31 @@ package cloudintegrationtypes
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type (
-	ConnectedAccounts struct {
-		Accounts []*Account `json:"accounts"`
-	}
-
-	GettableConnectedAccounts = ConnectedAccounts
-
-	UpdateAccountConfigRequest struct {
-		AWS *AWSAccountConfig `json:"aws"`
-	}
-
-	UpdatableAccountConfig = UpdateAccountConfigRequest
-)
-
-type (
 	Account struct {
-		Id                string            `json:"id"`
+		types.Identifiable
+		types.TimeAuditable
 		ProviderAccountId *string           `json:"providerAccountID,omitempty"`
 		Provider          CloudProviderType `json:"provider"`
 		RemovedAt         *time.Time        `json:"removedAt,omitempty"`
 		AgentReport       *AgentReport      `json:"agentReport,omitempty"`
 		OrgID             valuer.UUID       `json:"orgID"`
-		Config            *AccountConfig    `json:"accountConfig,omitempty"`
+		Config            *AccountConfig    `json:"config,omitempty"`
+	}
+
+	GettableConnectedAccounts struct {
+		Accounts []*Account `json:"accounts"`
 	}
 
 	GettableAccount = Account
+
+	UpdatableAccount struct {
+		Config *AccountConfig `json:"config"`
+	}
 )
 
 // AgentReport represents heartbeats sent by the agent.

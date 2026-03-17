@@ -4,60 +4,43 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
-	// CreateConnectionArtifact generates cloud provider specific connection information,
-	// client side handles how this information is shown
-	CreateConnectionArtifact(
-		ctx context.Context,
-		orgID valuer.UUID,
-		provider cloudintegrationtypes.CloudProviderType,
-		request *cloudintegrationtypes.ConnectionArtifactRequest,
-	) (*cloudintegrationtypes.ConnectionArtifact, error)
+	CreateAccount(ctx context.Context, account *citypes.Account) error
 
-	// GetAccountStatus returns agent connection status for a cloud integration account
-	GetAccountStatus(ctx context.Context, orgID, accountID valuer.UUID) (*cloudintegrationtypes.AccountStatus, error)
+	// GetAccount returns cloud integration account
+	GetAccount(ctx context.Context, orgID, accountID valuer.UUID) (*citypes.Account, error)
 
-	// ListConnectedAccounts lists accounts where agent is connected
-	ListConnectedAccounts(ctx context.Context, orgID valuer.UUID) (*cloudintegrationtypes.ConnectedAccounts, error)
+	// GetAccounts lists accounts where agent is connected
+	GetAccounts(ctx context.Context, orgID valuer.UUID) ([]*citypes.Account, error)
+
+	// UpdateAccount updates the cloud integration account for a specific organization.
+	UpdateAccount(ctx context.Context, account *citypes.Account) error
 
 	// DisconnectAccount soft deletes/removes a cloud integration account.
 	DisconnectAccount(ctx context.Context, orgID, accountID valuer.UUID) error
 
-	// UpdateAccountConfig updates the configuration of an existing cloud account for a specific organization.
-	UpdateAccountConfig(
-		ctx context.Context,
-		orgID,
-		accountID valuer.UUID,
-		config *cloudintegrationtypes.UpdateAccountConfigRequest,
-	) (*cloudintegrationtypes.Account, error)
+	// GetConnectionArtifact returns cloud provider specific connection information,
+	// client side handles how this information is shown
+	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 
-	// ListServicesMetadata returns list of services metadata for a cloud provider attached with the integrationID.
+	// GetServicesMetadata returns list of services metadata for a cloud provider attached with the integrationID.
 	// This just returns a summary of the service and not the whole service definition
-	ListServicesMetadata(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID) (*cloudintegrationtypes.ServicesMetadata, error)
+	GetServicesMetadata(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID) ([]*citypes.ServiceMetadata, error)
 
-	// GetService returns service definition details for a serviceID. This returns config and
+	// GetService returns service definition details for a serviceType. This returns config and
 	// other details required to show in service details page on web client.
-	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID string) (*cloudintegrationtypes.Service, error)
+	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceType string) (*citypes.Service, error)
 
-	// UpdateServiceConfig updates cloud integration service config
-	UpdateServiceConfig(
-		ctx context.Context,
-		orgID valuer.UUID,
-		serviceID string,
-		config *cloudintegrationtypes.UpdateServiceConfigRequest,
-	) (*cloudintegrationtypes.UpdateServiceConfigResponse, error)
+	// UpdateService updates cloud integration service
+	UpdateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService) error
 
 	// AgentCheckIn is called by agent to heartbeat and get latest config in response.
-	AgentCheckIn(
-		ctx context.Context,
-		orgID valuer.UUID,
-		req *cloudintegrationtypes.AgentCheckInRequest,
-	) (*cloudintegrationtypes.AgentCheckInResponse, error)
+	AgentCheckIn(ctx context.Context, orgID valuer.UUID, req *citypes.AgentCheckInRequest) (*citypes.AgentCheckInResponse, error)
 
 	// GetDashboardByID returns dashboard JSON for a given dashboard id.
 	// this only returns the dashboard when the service (embedded in dashboard id) is enabled
@@ -70,13 +53,13 @@ type Module interface {
 }
 
 type Handler interface {
-	AgentCheckIn(http.ResponseWriter, *http.Request)
-	GenerateConnectionArtifact(http.ResponseWriter, *http.Request)
-	ListConnectedAccounts(http.ResponseWriter, *http.Request)
-	GetAccountStatus(http.ResponseWriter, *http.Request)
-	ListServices(http.ResponseWriter, *http.Request)
-	GetServiceDetails(http.ResponseWriter, *http.Request)
-	UpdateAccountConfig(http.ResponseWriter, *http.Request)
-	UpdateServiceConfig(http.ResponseWriter, *http.Request)
+	GetConnectionArtifact(http.ResponseWriter, *http.Request)
+	GetAccounts(http.ResponseWriter, *http.Request)
+	GetAccount(http.ResponseWriter, *http.Request)
+	UpdateAccount(http.ResponseWriter, *http.Request)
 	DisconnectAccount(http.ResponseWriter, *http.Request)
+	GetServicesMetadata(http.ResponseWriter, *http.Request)
+	GetService(http.ResponseWriter, *http.Request)
+	UpdateService(http.ResponseWriter, *http.Request)
+	AgentCheckIn(http.ResponseWriter, *http.Request)
 }

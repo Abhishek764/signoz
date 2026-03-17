@@ -11,7 +11,7 @@ type Store interface {
 	GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) (*StorableCloudIntegration, error)
 
 	// CreateAccount creates a new cloud integration account
-	CreateAccount(ctx context.Context, orgID valuer.UUID, account *StorableCloudIntegration) (*StorableCloudIntegration, error)
+	CreateAccount(ctx context.Context, account *StorableCloudIntegration) (*StorableCloudIntegration, error)
 
 	// UpdateAccount updates an existing cloud integration account
 	UpdateAccount(ctx context.Context, account *StorableCloudIntegration) error

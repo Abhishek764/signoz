@@ -3,7 +3,7 @@ import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 export interface VisualLayout {
 	visualRows: FlamegraphSpan[][];
-	spanToVisualRow: Map<string, number>;
+	spanToVisualRow: Record<string, number>;
 	totalVisualRows: number;
 }
 
@@ -334,7 +334,7 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 
 	return {
 		visualRows,
-		spanToVisualRow,
+		spanToVisualRow: Object.fromEntries(spanToVisualRow),
 		totalVisualRows,
 	};
 }

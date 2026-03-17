@@ -2,17 +2,12 @@ package telemetrylogs
 
 import (
 	"context"
-	"slices"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -806,84 +801,6 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 				require.Equal(t, c.expected.Warnings, q.Warnings)
 			}
 		})
-	}
-}
-
-func buildTestTelemetryMetadataStore(t *testing.T, promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-
-	types, _ := telemetrytypes.TestJSONTypeSet()
-	for path, jsonTypes := range types {
-		promoted := false
-
-		split := strings.Split(path, telemetrytypes.ArraySep)
-		if path == "message" {
-			promoted = true
-		} else if slices.Contains(promotedPaths, split[0]) {
-			promoted = true
-		}
-		// Create a TelemetryFieldKey for each JSONDataType for this path
-		// Since a path can have multiple types, we create one key per type
-		for _, jsonType := range jsonTypes {
-			key := &telemetrytypes.TelemetryFieldKey{
-				Name:          path,
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonType],
-				JSONDataType:  &jsonType,
-				Materialized:  promoted,
-			}
-			err := key.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
-				BaseColumn:     LogsV2BodyJSONColumn,
-				PromotedColumn: LogsV2BodyPromotedColumn,
-			}, types)
-			require.NoError(t, err)
-			mockMetadataStore.SetKey(key)
-		}
-	}
-
-	return mockMetadataStore
-}
-
-func buildJSONTestStatementBuilder(t *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
-	mockMetadataStore := buildTestTelemetryMetadataStore(t, promotedPaths...)
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
-	resourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		fm,
-		cb,
-		mockMetadataStore,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-	)
-
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-	)
-
-	return statementBuilder
-}
-
-func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilder, telemetryFieldKeys ...*telemetrytypes.TelemetryFieldKey) {
-	mockMetadataStore := statementBuilder.metadataStore.(*telemetrytypestest.MockMetadataStore)
-	for _, key := range telemetryFieldKeys {
-		if strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex) {
-			t.Fatalf("array paths are not supported: %s", key.Name)
-		}
-
-		for _, storedKey := range mockMetadataStore.KeysMap[key.Name] {
-			storedKey.Indexes = append(storedKey.Indexes, key.Indexes...)
-		}
 	}
 }
 

@@ -107,6 +107,8 @@ require (
 	github.com/aws/smithy-go v1.24.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
+	github.com/c-bata/go-prompt v0.2.6 // indirect
+	github.com/chdb-io/chdb-go v1.11.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-openapi/swag/cmdutils v0.25.4 // indirect
@@ -126,11 +128,16 @@ require (
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mattn/go-tty v0.0.5 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/prometheus/client_golang/exp v0.0.0-20260108101519-fb0838f53562 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/swaggest/refl v1.4.0 // indirect
 	github.com/swaggest/usecase v1.3.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

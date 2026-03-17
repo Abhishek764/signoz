@@ -9,8 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/usertypes"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -64,7 +64,7 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing api key")
 	}
 
-	var apiKey types.StorableAPIKey
+	var apiKey usertypes.StorableAPIKey
 	err := r.store.
 		BunDB().
 		NewSelect().
@@ -75,11 +75,11 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 		return nil, err
 	}
 
-	if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(types.NEVER_EXPIRES) {
+	if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(usertypes.NEVER_EXPIRES) {
 		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
 	}
 
-	var user types.User
+	var user usertypes.User
 	err = r.store.
 		BunDB().
 		NewSelect().
@@ -109,7 +109,7 @@ func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims
 		_, err := r.store.
 			BunDB().
 			NewUpdate().
-			Model(new(types.StorableAPIKey)).
+			Model(new(usertypes.StorableAPIKey)).
 			Set("last_used = ?", time.Now()).
 			Where("token = ?", apiKeyToken).
 			Where("revoked = false").

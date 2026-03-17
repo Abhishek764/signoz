@@ -314,6 +314,71 @@ describe('computeVisualLayout', () => {
 		expect(layout.totalVisualRows).toBe(2);
 	});
 
+	it('should keep parent-child pairs adjacent when sibling subtrees overlap', () => {
+		// Multiple overlapping parents each with a child — the subtree-unit
+		// guarantee means every parent→child gap should be exactly 1.
+		const root = makeSpan({
+			spanId: 'root',
+			timestamp: 0,
+			durationNano: 500e6,
+		});
+		// Three overlapping HTTP GET children of root, each with its own /route child
+		const get1 = makeSpan({
+			spanId: 'get1',
+			parentSpanId: 'root',
+			timestamp: 0,
+			durationNano: 200e6,
+		});
+		const route1 = makeSpan({
+			spanId: 'route1',
+			parentSpanId: 'get1',
+			timestamp: 10,
+			durationNano: 180e6,
+		});
+		const get2 = makeSpan({
+			spanId: 'get2',
+			parentSpanId: 'root',
+			timestamp: 50,
+			durationNano: 200e6,
+		});
+		const route2 = makeSpan({
+			spanId: 'route2',
+			parentSpanId: 'get2',
+			timestamp: 60,
+			durationNano: 180e6,
+		});
+		const get3 = makeSpan({
+			spanId: 'get3',
+			parentSpanId: 'root',
+			timestamp: 100,
+			durationNano: 200e6,
+		});
+		const route3 = makeSpan({
+			spanId: 'route3',
+			parentSpanId: 'get3',
+			timestamp: 110,
+			durationNano: 180e6,
+		});
+
+		const layout = computeVisualLayout([
+			[root],
+			[get1, get2, get3],
+			[route1, route2, route3],
+		]);
+
+		// Each parent-child pair should have a gap of exactly 1
+		const get1Row = layout.spanToVisualRow.get('get1')!;
+		const route1Row = layout.spanToVisualRow.get('route1')!;
+		const get2Row = layout.spanToVisualRow.get('get2')!;
+		const route2Row = layout.spanToVisualRow.get('route2')!;
+		const get3Row = layout.spanToVisualRow.get('get3')!;
+		const route3Row = layout.spanToVisualRow.get('route3')!;
+
+		expect(route1Row - get1Row).toBe(1);
+		expect(route2Row - get2Row).toBe(1);
+		expect(route3Row - get3Row).toBe(1);
+	});
+
 	it('should handle mixed levels — overlap at level 2 but not level 1', () => {
 		const root = makeSpan({
 			spanId: 'root',

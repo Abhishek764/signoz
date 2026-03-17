@@ -43,7 +43,7 @@ function TraceFlamegraph(): JSX.Element {
 
 	const { data, isFetching, error } = useGetTraceFlamegraph({
 		traceId,
-		selectedSpanId: firstSpanAtFetchLevel,
+		// selectedSpanId: firstSpanAtFetchLevel,
 	});
 
 	const flamegraphState = useMemo(() => {

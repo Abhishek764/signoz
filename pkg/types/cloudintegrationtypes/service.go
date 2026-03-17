@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var S3Sync = valuer.NewString("s3sync")
-
-type ServiceID struct{ valuer.String }
+var (
+	S3Sync = valuer.NewString("s3sync")
+	// ErrCodeInvalidServiceID is the error code for invalid service id.
+	ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
+)
 
 type (
+	ServiceID struct{ valuer.String }
+
 	CloudIntegrationService struct {
 		types.Identifiable
 		types.TimeAuditable
@@ -170,6 +175,39 @@ type Dashboard struct {
 	Title       string                               `json:"title"`
 	Description string                               `json:"description"`
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
+}
+
+// SupportedServices is the map of supported services for each cloud provider.
+var SupportedServices = map[CloudProviderType][]ServiceID{
+	CloudProviderTypeAWS: {
+		{valuer.NewString("alb")},
+		{valuer.NewString("api-gateway")},
+		{valuer.NewString("dynamodb")},
+		{valuer.NewString("ec2")},
+		{valuer.NewString("ecs")},
+		{valuer.NewString("eks")},
+		{valuer.NewString("elasticache")},
+		{valuer.NewString("lambda")},
+		{valuer.NewString("msk")},
+		{valuer.NewString("rds")},
+		{valuer.NewString("s3sync")},
+		{valuer.NewString("sns")},
+		{valuer.NewString("sqs")},
+	},
+}
+
+// NewServiceID returns a new ServiceID from a string, validated against the supported services for the given cloud provider.
+func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
+	services, ok := SupportedServices[provider]
+	if !ok {
+		return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "no services defined for cloud provider: %s", provider)
+	}
+	for _, s := range services {
+		if s.StringValue() == service {
+			return s, nil
+		}
+	}
+	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for cloud provider %s", service, provider)
 }
 
 // UTILS

@@ -18,12 +18,12 @@ type funnel struct {
 	types.Identifiable // funnel id
 	types.TimeAuditable
 	types.UserAuditable
-	Name          string          `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
-	Description   string          `json:"description" bun:"description,type:text"`  // funnel description
-	OrgID         valuer.UUID     `json:"org_id" bun:"org_id,type:varchar,notnull"`
-	Steps         []funnelStep    `json:"steps" bun:"steps,type:text,notnull"`
-	Tags          string          `json:"tags" bun:"tags,type:text"`
-	CreatedByUser *usertypes.User `json:"user" bun:"rel:belongs-to,join:created_by=id"`
+	Name          string                  `json:"funnel_name" bun:"name,type:text,notnull"` // funnel name
+	Description   string                  `json:"description" bun:"description,type:text"`  // funnel description
+	OrgID         valuer.UUID             `json:"org_id" bun:"org_id,type:varchar,notnull"`
+	Steps         []funnelStep            `json:"steps" bun:"steps,type:text,notnull"`
+	Tags          string                  `json:"tags" bun:"tags,type:text"`
+	CreatedByUser *usertypes.StorableUser `json:"user" bun:"rel:belongs-to,join:created_by=id"`
 }
 
 type funnelStep struct {

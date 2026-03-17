@@ -1,9 +1,17 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
+export interface ConnectorLine {
+	parentRow: number;
+	childRow: number;
+	timestampMs: number;
+	serviceName: string;
+}
+
 export interface VisualLayout {
 	visualRows: FlamegraphSpan[][];
 	spanToVisualRow: Record<string, number>;
+	connectors: ConnectorLine[];
 	totalVisualRows: number;
 }
 
@@ -332,9 +340,31 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 		visualRows.push(visualRowsMap.get(i) || []);
 	}
 
+	// Build connector lines for parent-child pairs with row gap > 1
+	const connectors: ConnectorLine[] = [];
+	for (const [parentId, children] of childrenMap) {
+		const parentRow = spanToVisualRow.get(parentId);
+		if (parentRow === undefined) {
+			continue;
+		}
+		for (const child of children) {
+			const childRow = spanToVisualRow.get(child.spanId);
+			if (childRow === undefined || childRow - parentRow <= 1) {
+				continue;
+			}
+			connectors.push({
+				parentRow,
+				childRow,
+				timestampMs: child.timestamp,
+				serviceName: child.serviceName,
+			});
+		}
+	}
+
 	return {
 		visualRows,
 		spanToVisualRow: Object.fromEntries(spanToVisualRow),
+		connectors,
 		totalVisualRows,
 	};
 }

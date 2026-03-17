@@ -16,7 +16,7 @@ const useGetTraceFlamegraph = (
 		queryKey: [
 			REACT_QUERY_KEY.GET_TRACE_V2_FLAMEGRAPH,
 			props.traceId,
-			props.selectedSpanId,
+			// props.selectedSpanId,
 		],
 		enabled: !!props.traceId,
 		keepPreviousData: true,

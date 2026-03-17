@@ -1,16 +1,9 @@
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
-import { computeVisualLayout } from './computeVisualLayout';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
@@ -18,6 +11,7 @@ import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
 import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
+import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
 import { FlamegraphCanvasProps, SpanRect } from './types';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
@@ -65,7 +59,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		viewEndRef.current = traceMetadata.endTime;
 	}, [traceMetadata.startTime, traceMetadata.endTime]);
 
-	const layout = useMemo(() => computeVisualLayout(spans), [spans]);
+	const { layout, isComputing: _isComputing } = useVisualLayoutWorker(spans);
 
 	const totalHeight = layout.totalVisualRows * rowHeight;
 
@@ -122,6 +116,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		canvasRef,
 		containerRef,
 		spans: layout.visualRows,
+		connectors: layout.connectors,
 		viewStartTs,
 		viewEndTs,
 		scrollTop,
@@ -180,7 +175,6 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				>
 					{/* TODO: passing each content is too much, we should use the tooltipContent object directly */}
 					<SpanTooltipContent
-						serviceName={tooltipContent.serviceName}
 						spanName={tooltipContent.spanName}
 						color={tooltipContent.spanColor}
 						hasError={tooltipContent.status === 'error'}

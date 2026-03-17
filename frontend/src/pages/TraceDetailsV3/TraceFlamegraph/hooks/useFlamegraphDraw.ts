@@ -1,6 +1,9 @@
 import React, { RefObject, useCallback, useRef } from 'react';
+import { themeColors } from 'constants/theme';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
+import { ConnectorLine } from '../computeVisualLayout';
 import { SpanRect } from '../types';
 import {
 	clamp,
@@ -14,6 +17,7 @@ interface UseFlamegraphDrawArgs {
 	canvasRef: RefObject<HTMLCanvasElement>;
 	containerRef: RefObject<HTMLDivElement>;
 	spans: FlamegraphSpan[][];
+	connectors: ConnectorLine[];
 	viewStartTs: number;
 	viewEndTs: number;
 	scrollTop: number;
@@ -114,6 +118,68 @@ function drawLevel(args: DrawLevelArgs): void {
 	}
 }
 
+interface DrawConnectorLinesArgs {
+	ctx: CanvasRenderingContext2D;
+	connectors: ConnectorLine[];
+	scrollTop: number;
+	viewStartTs: number;
+	timeSpan: number;
+	cssWidth: number;
+	viewportHeight: number;
+	metrics: FlamegraphRowMetrics;
+}
+
+function drawConnectorLines(args: DrawConnectorLinesArgs): void {
+	const {
+		ctx,
+		connectors,
+		scrollTop,
+		viewStartTs,
+		timeSpan,
+		cssWidth,
+		viewportHeight,
+		metrics,
+	} = args;
+
+	ctx.save();
+	ctx.lineWidth = 1;
+	ctx.globalAlpha = 0.6;
+
+	for (const conn of connectors) {
+		const xFrac = (conn.timestampMs - viewStartTs) / timeSpan;
+		if (xFrac < -0.01 || xFrac > 1.01) {
+			continue;
+		}
+
+		const parentY =
+			conn.parentRow * metrics.ROW_HEIGHT -
+			scrollTop +
+			metrics.SPAN_BAR_Y_OFFSET +
+			metrics.SPAN_BAR_HEIGHT;
+		const childY =
+			conn.childRow * metrics.ROW_HEIGHT - scrollTop + metrics.SPAN_BAR_Y_OFFSET;
+
+		// Skip if entirely outside viewport
+		if (parentY > viewportHeight || childY < 0) {
+			continue;
+		}
+
+		const color = generateColor(
+			conn.serviceName,
+			themeColors.traceDetailColorsV3,
+		);
+		ctx.strokeStyle = color;
+
+		const x = clamp(xFrac * cssWidth, 0, cssWidth);
+		ctx.beginPath();
+		ctx.moveTo(x, parentY);
+		ctx.lineTo(x, childY);
+		ctx.stroke();
+	}
+
+	ctx.restore();
+}
+
 export function useFlamegraphDraw(
 	args: UseFlamegraphDrawArgs,
 ): UseFlamegraphDrawResult {
@@ -121,6 +187,7 @@ export function useFlamegraphDraw(
 		canvasRef,
 		containerRef,
 		spans,
+		connectors,
 		viewStartTs,
 		viewEndTs,
 		scrollTop,
@@ -173,6 +240,18 @@ export function useFlamegraphDraw(
 
 		ctx.clearRect(0, 0, cssWidth, viewportHeight);
 
+		// ---- Draw connector lines (behind span bars) ----
+		drawConnectorLines({
+			ctx,
+			connectors,
+			scrollTop,
+			viewStartTs,
+			timeSpan,
+			cssWidth,
+			viewportHeight,
+			metrics,
+		});
+
 		const spanRectsArray: SpanRect[] = [];
 
 		// ---- Draw only visible levels ----
@@ -204,6 +283,7 @@ export function useFlamegraphDraw(
 		containerRef,
 		spanRectsRef,
 		spans,
+		connectors,
 		viewStartTs,
 		viewEndTs,
 		scrollTop,

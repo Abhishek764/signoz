@@ -7,6 +7,7 @@ import { LayoutWorkerResponse } from '../visualLayoutWorkerTypes';
 const EMPTY_LAYOUT: VisualLayout = {
 	visualRows: [],
 	spanToVisualRow: {},
+	connectors: [],
 	totalVisualRows: 0,
 };
 

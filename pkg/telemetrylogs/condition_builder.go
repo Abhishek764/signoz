@@ -33,7 +33,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled {
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && key.Name != messageSubField {
 		valueType, value := InferDataType(value, operator, key)
 		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 		if err != nil {
@@ -59,7 +59,7 @@ func (c *conditionBuilder) conditionFor(
 	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
 
 	// make use of case insensitive index for body
-	if tblFieldName == "body" || tblFieldName == "body_v2.message" {
+	if tblFieldName == "body" || tblFieldName == messageSubColumn {
 		switch operator {
 		case qbtypes.FilterOperatorLike:
 			return sb.ILike(tblFieldName, value), nil

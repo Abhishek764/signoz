@@ -91,6 +91,9 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
 		if querybuilder.BodyJSONQueryEnabled {
+			if key.Name == messageSubField {
+				return logsV2Columns[messageSubColumn], nil
+			}
 			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
 		// Fall back to legacy body column
@@ -141,6 +144,10 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			}
 			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 		case telemetrytypes.FieldContextBody:
+			if key.Name == messageSubField {
+				return messageSubColumn, nil
+			}
+
 			if key.JSONDataType == nil {
 				return "", qbtypes.ErrColumnNotFound
 			}

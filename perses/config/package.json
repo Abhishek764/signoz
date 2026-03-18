@@ -5,15 +5,6 @@
   "perses": {
     "plugins": [
       {
-        "kind": "Panel",
-        "spec": {
-          "name": "TimeSeriesChart",
-          "display": {
-            "name": "Time Series Chart"
-          }
-        }
-      },
-      {
         "kind": "TimeSeriesQuery",
         "spec": {
           "name": "SigNozBuilderQuery",

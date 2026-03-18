@@ -157,35 +157,35 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	it('shows Cancel Invite and Generate Password Reset Link for invited members; hides Last Modified', () => {
+	it('shows revoke invite and copy invite link for invited members; hides Last Modified', () => {
 		renderDrawer({ member: invitedMember });
 
 		expect(
-			screen.getByRole('button', { name: /cancel invite/i }),
+			screen.getByRole('button', { name: /revoke invite/i }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: /generate password reset link/i }),
+			screen.getByRole('button', { name: /copy invite link/i }),
 		).toBeInTheDocument();
 		expect(
-			screen.queryByRole('button', { name: /copy invite link/i }),
+			screen.queryByRole('button', { name: /generate password reset link/i }),
 		).not.toBeInTheDocument();
 		expect(screen.getByText('Invited On')).toBeInTheDocument();
 		expect(screen.queryByText('Last Modified')).not.toBeInTheDocument();
 	});
 
-	it('calls deleteUser after confirming Cancel Invite for invited members', async () => {
+	it('calls deleteUser after confirming revoke invite for invited members', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		renderDrawer({ member: invitedMember, onComplete });
 
-		await user.click(screen.getByRole('button', { name: /cancel invite/i }));
+		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
 
 		expect(
-			await screen.findByText(/are you sure you want to cancel the invitation/i),
+			await screen.findByText(/Are you sure you want to revoke the invite/i),
 		).toBeInTheDocument();
 
-		const confirmBtns = screen.getAllByRole('button', { name: /cancel invite/i });
+		const confirmBtns = screen.getAllByRole('button', { name: /revoke invite/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
 
 		await waitFor(() => {

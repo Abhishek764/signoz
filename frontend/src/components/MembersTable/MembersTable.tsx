@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Badge } from '@signozhq/badge';
-import { Pagination, Table, Tooltip } from 'antd';
+import { Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
@@ -210,7 +210,16 @@ function MembersTable({
 				dataSource={data}
 				rowKey="id"
 				loading={loading}
-				pagination={false}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total,
+					showTotal: showPaginationTotal,
+					showSizeChanger: false,
+					onChange: onPageChange,
+					className: 'members-table-pagination',
+					hideOnSinglePage: true,
+				}}
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
@@ -238,17 +247,6 @@ function MembersTable({
 				}}
 				className="members-table"
 			/>
-			{total > pageSize && (
-				<Pagination
-					current={currentPage}
-					pageSize={pageSize}
-					total={total}
-					showTotal={showPaginationTotal}
-					showSizeChanger={false}
-					onChange={onPageChange}
-					className="members-table-pagination"
-				/>
-			)}
 		</div>
 	);
 }

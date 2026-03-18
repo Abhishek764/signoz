@@ -84,11 +84,6 @@ function MembersSettings(): JSX.Element {
 		return result;
 	}, [allMembers, filterMode, searchQuery]);
 
-	const paginatedMembers = useMemo((): MemberRow[] => {
-		const start = (currentPage - 1) * PAGE_SIZE;
-		return filteredMembers.slice(start, start + PAGE_SIZE);
-	}, [filteredMembers, currentPage]);
-
 	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done
 	const setPage = useCallback(
 		(page: number): void => {
@@ -216,7 +211,7 @@ function MembersSettings(): JSX.Element {
 				</div>
 			</div>
 			<MembersTable
-				data={paginatedMembers}
+				data={filteredMembers}
 				loading={isLoading}
 				total={filteredMembers.length}
 				currentPage={currentPage}

@@ -1,0 +1,2 @@
+python3 generate_manifests.py --org signoz --name signoz --version 0.0.1
+docker run -d -p 8080:8080 --name perses -v $(pwd)/signoz-0.0.1.tar.gz:/etc/perses/plugins-archive/signoz-plugin.tar.gz persesdev/perses:latest-debug

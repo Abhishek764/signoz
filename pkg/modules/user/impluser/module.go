@@ -216,10 +216,6 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
-	if err := existingUser.ErrIfPending(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot update pending user")
-	}
-
 	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err

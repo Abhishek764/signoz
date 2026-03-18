@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
+import { EventTooltipContent } from '../SpanHoverCard/EventTooltipContent';
 import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
@@ -12,7 +13,7 @@ import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
-import { FlamegraphCanvasProps, SpanRect } from './types';
+import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const { spans, traceMetadata, firstSpanAtFetchLevel, onSpanClick } = props;
@@ -21,6 +22,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const spanRectsRef = useRef<SpanRect[]>([]);
+	const eventRectsRef = useRef<EventRect[]>([]);
 
 	const [viewStartTs, setViewStartTs] = useState<number>(
 		traceMetadata.startTime,
@@ -96,6 +98,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 
 	const {
 		hoveredSpanId,
+		hoveredEventKey,
 		handleHoverMouseMove,
 		handleHoverMouseLeave,
 		handleClick,
@@ -103,6 +106,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	} = useFlamegraphHover({
 		canvasRef,
 		spanRectsRef,
+		eventRectsRef,
 		traceMetadata,
 		viewStartTs,
 		viewEndTs,
@@ -125,6 +129,8 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		hoveredSpanId: hoveredSpanId ?? '',
 		isDarkMode,
 		spanRectsRef,
+		eventRectsRef,
+		hoveredEventKey,
 	});
 
 	useScrollToSpan({
@@ -173,14 +179,22 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 						pointerEvents: 'none',
 					}}
 				>
-					{/* TODO: passing each content is too much, we should use the tooltipContent object directly */}
-					<SpanTooltipContent
-						spanName={tooltipContent.spanName}
-						color={tooltipContent.spanColor}
-						hasError={tooltipContent.status === 'error'}
-						relativeStartMs={tooltipContent.startMs}
-						durationMs={tooltipContent.durationMs}
-					/>
+					{tooltipContent.event ? (
+						<EventTooltipContent
+							eventName={tooltipContent.event.name}
+							timeOffsetMs={tooltipContent.event.timeOffsetMs}
+							isError={tooltipContent.event.isError}
+							attributeMap={tooltipContent.event.attributeMap}
+						/>
+					) : (
+						<SpanTooltipContent
+							spanName={tooltipContent.spanName}
+							color={tooltipContent.spanColor}
+							hasError={tooltipContent.status === 'error'}
+							relativeStartMs={tooltipContent.startMs}
+							durationMs={tooltipContent.durationMs}
+						/>
+					)}
 				</div>,
 				document.body,
 		  )

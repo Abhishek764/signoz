@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { Event, FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 export interface ITraceMetadata {
 	startTime: number;
@@ -21,4 +21,12 @@ export interface SpanRect {
 	width: number;
 	height: number;
 	level: number;
+}
+
+export interface EventRect {
+	event: Event;
+	span: FlamegraphSpan;
+	cx: number;
+	cy: number;
+	halfSize: number;
 }

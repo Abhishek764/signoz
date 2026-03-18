@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
-import { SpanRect } from '../types';
+import { EventRect, SpanRect } from '../types';
 import { ITraceMetadata } from '../types';
 import { getSpanColor } from '../utils';
 
@@ -46,6 +46,28 @@ function findSpanAtPosition(
 	return null;
 }
 
+function findEventAtPosition(
+	cssX: number,
+	cssY: number,
+	eventRects: EventRect[],
+): EventRect | null {
+	for (let i = eventRects.length - 1; i >= 0; i--) {
+		const r = eventRects[i];
+		// Manhattan distance check for diamond shape with padding
+		if (Math.abs(r.cx - cssX) + Math.abs(r.cy - cssY) <= r.halfSize * 1.5) {
+			return r;
+		}
+	}
+	return null;
+}
+
+export interface EventTooltipData {
+	name: string;
+	timeOffsetMs: number;
+	isError: boolean;
+	attributeMap: Record<string, string>;
+}
+
 export interface TooltipContent {
 	serviceName: string;
 	spanName: string;
@@ -55,11 +77,13 @@ export interface TooltipContent {
 	clientX: number;
 	clientY: number;
 	spanColor: string;
+	event?: EventTooltipData;
 }
 
 interface UseFlamegraphHoverArgs {
 	canvasRef: RefObject<HTMLCanvasElement>;
 	spanRectsRef: MutableRefObject<SpanRect[]>;
+	eventRectsRef: MutableRefObject<EventRect[]>;
 	traceMetadata: ITraceMetadata;
 	viewStartTs: number;
 	viewEndTs: number;
@@ -72,6 +96,7 @@ interface UseFlamegraphHoverArgs {
 interface UseFlamegraphHoverResult {
 	hoveredSpanId: string | null;
 	setHoveredSpanId: Dispatch<SetStateAction<string | null>>;
+	hoveredEventKey: string | null;
 	handleHoverMouseMove: (e: ReactMouseEvent) => void;
 	handleHoverMouseLeave: () => void;
 	handleClick: (e: ReactMouseEvent) => void;
@@ -84,6 +109,7 @@ export function useFlamegraphHover(
 	const {
 		canvasRef,
 		spanRectsRef,
+		eventRectsRef,
 		traceMetadata,
 		viewStartTs,
 		viewEndTs,
@@ -94,6 +120,7 @@ export function useFlamegraphHover(
 	} = args;
 
 	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
+	const [hoveredEventKey, setHoveredEventKey] = useState<string | null>(null);
 	const [tooltipContent, setTooltipContent] = useState<TooltipContent | null>(
 		null,
 	);
@@ -131,6 +158,38 @@ export function useFlamegraphHover(
 				return;
 			}
 
+			// Check event dots first — they're drawn on top of spans
+			const eventRect = findEventAtPosition(
+				pointer.cssX,
+				pointer.cssY,
+				eventRectsRef.current,
+			);
+
+			if (eventRect) {
+				const { event, span } = eventRect;
+				const eventTimeMs = event.timeUnixNano / 1e6;
+				setHoveredEventKey(`${span.spanId}-${event.name}-${event.timeUnixNano}`);
+				setHoveredSpanId(span.spanId);
+				setTooltipContent({
+					serviceName: span.serviceName || '',
+					spanName: span.name || 'unknown',
+					status: span.hasError ? 'error' : 'ok',
+					startMs: span.timestamp - traceMetadata.startTime,
+					durationMs: span.durationNano / 1e6,
+					clientX: e.clientX,
+					clientY: e.clientY,
+					spanColor: getSpanColor({ span, isDarkMode }),
+					event: {
+						name: event.name,
+						timeOffsetMs: eventTimeMs - span.timestamp,
+						isError: event.isError,
+						attributeMap: event.attributeMap || {},
+					},
+				});
+				updateCursor(canvas, eventRect.span);
+				return;
+			}
+
 			const span = findSpanAtPosition(
 				pointer.cssX,
 				pointer.cssY,
@@ -138,6 +197,7 @@ export function useFlamegraphHover(
 			);
 
 			if (span) {
+				setHoveredEventKey(null);
 				setHoveredSpanId(span.spanId);
 				setTooltipContent({
 					serviceName: span.serviceName || '',
@@ -151,6 +211,7 @@ export function useFlamegraphHover(
 				});
 				updateCursor(canvas, span);
 			} else {
+				setHoveredEventKey(null);
 				setHoveredSpanId(null);
 				setTooltipContent(null);
 				updateCursor(canvas, null);
@@ -159,6 +220,7 @@ export function useFlamegraphHover(
 		[
 			canvasRef,
 			spanRectsRef,
+			eventRectsRef,
 			traceMetadata.startTime,
 			isDraggingRef,
 			updateCursor,
@@ -167,6 +229,7 @@ export function useFlamegraphHover(
 	);
 
 	const handleHoverMouseLeave = useCallback((): void => {
+		setHoveredEventKey(null);
 		setHoveredSpanId(null);
 		setTooltipContent(null);
 
@@ -208,6 +271,7 @@ export function useFlamegraphHover(
 	return {
 		hoveredSpanId,
 		setHoveredSpanId,
+		hoveredEventKey,
 		handleHoverMouseMove,
 		handleHoverMouseLeave,
 		handleClick,

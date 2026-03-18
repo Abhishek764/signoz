@@ -1,7 +1,7 @@
 import { DASHED_BORDER_LINE_DASH, MIN_WIDTH_FOR_NAME } from '../constants';
 import type { FlamegraphRowMetrics } from '../utils';
 import { getFlamegraphRowMetrics } from '../utils';
-import { drawEventDot, drawSpanBar } from '../utils';
+import { drawEventDot, drawSpanBar, getEventDotColor } from '../utils';
 import { MOCK_SPAN } from './testUtils';
 
 jest.mock('container/TraceDetail/utils', () => ({
@@ -85,6 +85,7 @@ describe('Canvas Draw Utils', () => {
 				width: 100,
 				levelIndex: 0,
 				spanRectsArray,
+				eventRectsArray: [],
 				color: '#1890ff',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -123,6 +124,7 @@ describe('Canvas Draw Utils', () => {
 				width: 80,
 				levelIndex: 1,
 				spanRectsArray,
+				eventRectsArray: [],
 				color: '#2F80ED',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -156,6 +158,7 @@ describe('Canvas Draw Utils', () => {
 				width: 60,
 				levelIndex: 0,
 				spanRectsArray,
+				eventRectsArray: [],
 				color: '#2F80ED',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -187,6 +190,7 @@ describe('Canvas Draw Utils', () => {
 				width: 200,
 				levelIndex: 2,
 				spanRectsArray,
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -223,6 +227,7 @@ describe('Canvas Draw Utils', () => {
 				width: MIN_WIDTH_FOR_NAME - 1,
 				levelIndex: 0,
 				spanRectsArray,
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -246,6 +251,7 @@ describe('Canvas Draw Utils', () => {
 				width: 50,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -270,6 +276,7 @@ describe('Canvas Draw Utils', () => {
 				width: 100,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -304,6 +311,7 @@ describe('Canvas Draw Utils', () => {
 				width: 100,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -333,6 +341,7 @@ describe('Canvas Draw Utils', () => {
 				width: 50,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -348,13 +357,13 @@ describe('Canvas Draw Utils', () => {
 	describe('drawEventDot', () => {
 		it('uses error styling when isError is true', () => {
 			const ctx = createMockCtx();
+			const color = getEventDotColor('#000', true, false);
 
 			drawEventDot({
 				ctx,
 				x: 50,
 				y: 11,
-				isError: true,
-				isDarkMode: false,
+				color,
 				eventDotSize: 6,
 			});
 
@@ -368,31 +377,33 @@ describe('Canvas Draw Utils', () => {
 			expect(ctx.restore).toHaveBeenCalled();
 		});
 
-		it('uses normal styling when isError is false', () => {
+		it('derives color from span color when isError is false', () => {
 			const ctx = createMockCtx();
+			const color = getEventDotColor('rgb(100, 200, 150)', false, false);
 
 			drawEventDot({
 				ctx,
 				x: 0,
 				y: 0,
-				isError: false,
-				isDarkMode: false,
+				color,
 				eventDotSize: 6,
 			});
 
-			expect(ctx.fillStyle).toBe('rgb(6, 182, 212)');
-			expect(ctx.strokeStyle).toBe('rgb(8, 145, 178)');
+			// Darkened by 20% for fill
+			expect(ctx.fillStyle).toBe('rgb(80, 160, 120)');
+			// Darkened by 40% for stroke
+			expect(ctx.strokeStyle).toBe('rgb(60, 120, 90)');
 		});
 
 		it('uses dark mode colors for error', () => {
 			const ctx = createMockCtx();
+			const color = getEventDotColor('#000', true, true);
 
 			drawEventDot({
 				ctx,
 				x: 0,
 				y: 0,
-				isError: true,
-				isDarkMode: true,
+				color,
 				eventDotSize: 6,
 			});
 
@@ -400,31 +411,31 @@ describe('Canvas Draw Utils', () => {
 			expect(ctx.strokeStyle).toBe('rgb(185, 28, 28)');
 		});
 
-		it('uses dark mode colors for non-error', () => {
+		it('falls back to cyan/blue for unparseable span colors', () => {
 			const ctx = createMockCtx();
+			const color = getEventDotColor('hsl(200, 50%, 50%)', false, false);
 
 			drawEventDot({
 				ctx,
 				x: 0,
 				y: 0,
-				isError: false,
-				isDarkMode: true,
+				color,
 				eventDotSize: 6,
 			});
 
-			expect(ctx.fillStyle).toBe('rgb(14, 165, 233)');
-			expect(ctx.strokeStyle).toBe('rgb(2, 132, 199)');
+			expect(ctx.fillStyle).toBe('rgb(6, 182, 212)');
+			expect(ctx.strokeStyle).toBe('rgb(8, 145, 178)');
 		});
 
 		it('calls save, translate, rotate, restore', () => {
 			const ctx = createMockCtx();
+			const color = getEventDotColor('#000', false, false);
 
 			drawEventDot({
 				ctx,
 				x: 10,
 				y: 20,
-				isError: false,
-				isDarkMode: false,
+				color,
 				eventDotSize: 4,
 			});
 
@@ -449,6 +460,7 @@ describe('Canvas Draw Utils', () => {
 				width: MIN_WIDTH_FOR_NAME - 1,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -472,6 +484,7 @@ describe('Canvas Draw Utils', () => {
 				width: MIN_WIDTH_FOR_NAME - 1,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
@@ -512,6 +525,7 @@ describe('Canvas Draw Utils', () => {
 				width: 100,
 				levelIndex: 0,
 				spanRectsArray: [],
+				eventRectsArray: [],
 				color: '#000',
 				isDarkMode: false,
 				metrics: METRICS,

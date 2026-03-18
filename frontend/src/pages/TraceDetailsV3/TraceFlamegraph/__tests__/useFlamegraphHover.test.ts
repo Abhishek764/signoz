@@ -38,6 +38,7 @@ const spanRect: SpanRect = {
 const defaultArgs = {
 	canvasRef: { current: createMockCanvas() },
 	spanRectsRef: { current: [spanRect] },
+	eventRectsRef: { current: [] as any[] },
 	traceMetadata: MOCK_TRACE_METADATA,
 	viewStartTs: MOCK_TRACE_METADATA.startTime,
 	viewEndTs: MOCK_TRACE_METADATA.endTime,

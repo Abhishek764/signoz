@@ -361,8 +361,8 @@
 			transform: translate(-50%, -50%) rotate(45deg);
 			width: 5px;
 			height: 5px;
-			background-color: var(--bg-robin-500);
-			border: 1px solid var(--bg-robin-600);
+			background-color: var(--event-dot-bg, var(--bg-robin-500));
+			border: 1px solid var(--event-dot-border, var(--bg-robin-600));
 			cursor: pointer;
 			z-index: 1;
 

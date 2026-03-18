@@ -4,7 +4,7 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import { ConnectorLine } from '../computeVisualLayout';
-import { SpanRect } from '../types';
+import { EventRect, SpanRect } from '../types';
 import {
 	clamp,
 	drawSpanBar,
@@ -26,11 +26,14 @@ interface UseFlamegraphDrawArgs {
 	hoveredSpanId: string;
 	isDarkMode: boolean;
 	spanRectsRef?: React.MutableRefObject<SpanRect[]>;
+	eventRectsRef?: React.MutableRefObject<EventRect[]>;
+	hoveredEventKey?: string | null;
 }
 
 interface UseFlamegraphDrawResult {
 	drawFlamegraph: () => void;
 	spanRectsRef: RefObject<SpanRect[]>;
+	eventRectsRef: RefObject<EventRect[]>;
 }
 
 const OVERSCAN_ROWS = 4;
@@ -47,7 +50,9 @@ interface DrawLevelArgs {
 	hoveredSpanId: string;
 	isDarkMode: boolean;
 	spanRectsArray: SpanRect[];
+	eventRectsArray: EventRect[];
 	metrics: FlamegraphRowMetrics;
+	hoveredEventKey?: string | null;
 }
 
 function drawLevel(args: DrawLevelArgs): void {
@@ -63,7 +68,9 @@ function drawLevel(args: DrawLevelArgs): void {
 		hoveredSpanId,
 		isDarkMode,
 		spanRectsArray,
+		eventRectsArray,
 		metrics,
+		hoveredEventKey,
 	} = args;
 
 	const viewEndTs = viewStartTs + timeSpan;
@@ -109,11 +116,13 @@ function drawLevel(args: DrawLevelArgs): void {
 			width,
 			levelIndex,
 			spanRectsArray,
+			eventRectsArray,
 			color,
 			isDarkMode,
 			metrics,
 			selectedSpanId,
 			hoveredSpanId,
+			hoveredEventKey,
 		});
 	}
 }
@@ -196,10 +205,14 @@ export function useFlamegraphDraw(
 		hoveredSpanId,
 		isDarkMode,
 		spanRectsRef: spanRectsRefProp,
+		eventRectsRef: eventRectsRefProp,
+		hoveredEventKey,
 	} = args;
 
 	const spanRectsRefInternal = useRef<SpanRect[]>([]);
 	const spanRectsRef = spanRectsRefProp ?? spanRectsRefInternal;
+	const eventRectsRefInternal = useRef<EventRect[]>([]);
+	const eventRectsRef = eventRectsRefProp ?? eventRectsRefInternal;
 
 	const drawFlamegraph = useCallback(() => {
 		const canvas = canvasRef.current;
@@ -253,6 +266,8 @@ export function useFlamegraphDraw(
 		});
 
 		const spanRectsArray: SpanRect[] = [];
+		const eventRectsArray: EventRect[] = [];
+		const currentHoveredEventKey = hoveredEventKey ?? null;
 
 		// ---- Draw only visible levels ----
 		for (let levelIndex = firstLevel; levelIndex <= lastLevel; levelIndex++) {
@@ -273,15 +288,19 @@ export function useFlamegraphDraw(
 				hoveredSpanId,
 				isDarkMode,
 				spanRectsArray,
+				eventRectsArray,
 				metrics,
+				hoveredEventKey: currentHoveredEventKey,
 			});
 		}
 
 		spanRectsRef.current = spanRectsArray;
+		eventRectsRef.current = eventRectsArray;
 	}, [
 		canvasRef,
 		containerRef,
 		spanRectsRef,
+		eventRectsRef,
 		spans,
 		connectors,
 		viewStartTs,
@@ -290,13 +309,9 @@ export function useFlamegraphDraw(
 		rowHeight,
 		selectedSpanId,
 		hoveredSpanId,
+		hoveredEventKey,
 		isDarkMode,
 	]);
 
-	// TODO: spanRectsRef is a flat array — hover scans all visible rects O(N).
-	// Upgrade to per-level buckets: spanRects[levelIndex] = [...] so hover can
-	// compute level from mouseY / ROW_HEIGHT and scan only that row.
-	// Further: binary search within a level by x (spans are sorted by start time)
-	// to reduce hover cost from O(N) to O(log N).
-	return { drawFlamegraph, spanRectsRef };
+	return { drawFlamegraph, spanRectsRef, eventRectsRef };
 }

@@ -14,7 +14,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { themeColors } from 'constants/theme';
@@ -34,6 +34,7 @@ import {
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
+import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
 import SpanHoverCard from '../../../SpanHoverCard/SpanHoverCard';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../TraceWaterfall';
@@ -235,16 +236,16 @@ export function SpanDuration({
 	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
 
 	return (
-		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
-			<div
-				className={cx('span-duration', {
-					'interested-span': isSelected && (!isFilterActive || isMatching),
-					'highlighted-span': isHighlighted,
-					'selected-non-matching-span': isSelectedNonMatching,
-					'dimmed-span': isDimmed,
-				})}
-				onClick={(): void => handleSpanClick(span)}
-			>
+		<div
+			className={cx('span-duration', {
+				'interested-span': isSelected && (!isFilterActive || isMatching),
+				'highlighted-span': isHighlighted,
+				'selected-non-matching-span': isSelectedNonMatching,
+				'dimmed-span': isDimmed,
+			})}
+			onClick={(): void => handleSpanClick(span)}
+		>
+			<SpanHoverCard span={span} traceMetadata={traceMetadata}>
 				<div
 					className="span-bar"
 					style={
@@ -263,33 +264,54 @@ export function SpanDuration({
 							2,
 						)} ${timeUnitName}`}</span>
 					</span>
-					{span.event?.map((event) => {
-						const eventTimeMs = event.timeUnixNano / 1e6;
-						const eventOffsetPercent =
-							((eventTimeMs - span.timestamp) / (span.durationNano / 1e6)) * 100;
-						const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
-						const { isError } = event;
-						const {
-							time: evtTime,
-							timeUnitName: evtUnit,
-						} = convertTimeToRelevantUnit(eventTimeMs - span.timestamp);
-						return (
-							<Tooltip
-								key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
-								title={`${event.name} @ ${toFixed(evtTime, 2)} ${evtUnit}`}
-							>
-								<div
-									className={`event-dot ${isError ? 'error' : ''}`}
-									style={{
-										left: `${clampedOffset}%`,
-									}}
-								/>
-							</Tooltip>
-						);
-					})}
 				</div>
-			</div>
-		</SpanHoverCard>
+			</SpanHoverCard>
+			{span.event?.map((event) => {
+				const eventTimeMs = event.timeUnixNano / 1e6;
+				const spanDurationMs = span.durationNano / 1e6;
+				const eventOffsetPercent =
+					((eventTimeMs - span.timestamp) / spanDurationMs) * 100;
+				const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
+				const { isError } = event;
+				// Position relative to the span bar: leftOffset% + clampedOffset% of width%
+				const dotLeft = leftOffset + (clampedOffset / 100) * width;
+				const parts = rgbColor.split(', ');
+				const dotBg = `rgb(${parts
+					.map((c) => Math.round(Number(c) * 0.7))
+					.join(', ')})`;
+				const dotBorder = `rgb(${parts
+					.map((c) => Math.round(Number(c) * 0.5))
+					.join(', ')})`;
+				return (
+					<Popover
+						key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
+						content={
+							<EventTooltipContent
+								eventName={event.name}
+								timeOffsetMs={eventTimeMs - span.timestamp}
+								isError={isError}
+								attributeMap={event.attributeMap || {}}
+							/>
+						}
+						trigger="hover"
+						rootClassName="span-hover-card-popover"
+						autoAdjustOverflow
+						arrow={false}
+					>
+						<div
+							className={`event-dot ${isError ? 'error' : ''}`}
+							style={
+								{
+									left: `${dotLeft}%`,
+									'--event-dot-bg': isError ? undefined : dotBg,
+									'--event-dot-border': isError ? undefined : dotBorder,
+								} as React.CSSProperties
+							}
+						/>
+					</Popover>
+				);
+			})}
+		</div>
 	);
 }
 

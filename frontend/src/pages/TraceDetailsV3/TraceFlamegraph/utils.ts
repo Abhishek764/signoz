@@ -16,7 +16,7 @@ import {
 	MIN_WIDTH_FOR_NAME_AND_DURATION,
 	SPAN_BAR_HEIGHT_RATIO,
 } from './constants';
-import { SpanRect } from './types';
+import { EventRect, SpanRect } from './types';
 
 export function clamp(v: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, v));
@@ -111,29 +111,80 @@ export function getSpanColor(args: GetSpanColorArgs): string {
 	return color;
 }
 
+export interface EventDotColor {
+	fill: string;
+	stroke: string;
+}
+
+/** Derive event dot colors from parent span color. Error events always use red. */
+export function getEventDotColor(
+	spanColor: string,
+	isError: boolean,
+	isDarkMode: boolean,
+): EventDotColor {
+	if (isError) {
+		return {
+			fill: isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)',
+			stroke: isDarkMode ? 'rgb(185, 28, 28)' : 'rgb(153, 27, 27)',
+		};
+	}
+
+	// Parse the span color (hex or rgb) to darken it for the event dot
+	let r: number | undefined;
+	let g: number | undefined;
+	let b: number | undefined;
+
+	const rgbMatch = spanColor.match(
+		/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*[\d.]+)?\s*\)/,
+	);
+	const hexMatch = spanColor.match(
+		/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i,
+	);
+
+	if (rgbMatch) {
+		r = parseInt(rgbMatch[1], 10);
+		g = parseInt(rgbMatch[2], 10);
+		b = parseInt(rgbMatch[3], 10);
+	} else if (hexMatch) {
+		r = parseInt(hexMatch[1], 16);
+		g = parseInt(hexMatch[2], 16);
+		b = parseInt(hexMatch[3], 16);
+	}
+
+	if (r !== undefined && g !== undefined && b !== undefined) {
+		// Darken by 20% for fill, 40% for stroke
+		const darken = (v: number, factor: number): number =>
+			Math.round(v * (1 - factor));
+		return {
+			fill: `rgb(${darken(r, 0.2)}, ${darken(g, 0.2)}, ${darken(b, 0.2)})`,
+			stroke: `rgb(${darken(r, 0.4)}, ${darken(g, 0.4)}, ${darken(b, 0.4)})`,
+		};
+	}
+
+	// Fallback to original cyan/blue
+	return {
+		fill: isDarkMode ? 'rgb(14, 165, 233)' : 'rgb(6, 182, 212)',
+		stroke: isDarkMode ? 'rgb(2, 132, 199)' : 'rgb(8, 145, 178)',
+	};
+}
+
 interface DrawEventDotArgs {
 	ctx: CanvasRenderingContext2D;
 	x: number;
 	y: number;
-	isError: boolean;
-	isDarkMode: boolean;
+	color: EventDotColor;
 	eventDotSize: number;
 }
 
 export function drawEventDot(args: DrawEventDotArgs): void {
-	const { ctx, x, y, isError, isDarkMode, eventDotSize } = args;
+	const { ctx, x, y, color, eventDotSize } = args;
 
 	ctx.save();
 	ctx.translate(x, y);
 	ctx.rotate(Math.PI / 4);
 
-	if (isError) {
-		ctx.fillStyle = isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)';
-		ctx.strokeStyle = isDarkMode ? 'rgb(185, 28, 28)' : 'rgb(153, 27, 27)';
-	} else {
-		ctx.fillStyle = isDarkMode ? 'rgb(14, 165, 233)' : 'rgb(6, 182, 212)';
-		ctx.strokeStyle = isDarkMode ? 'rgb(2, 132, 199)' : 'rgb(8, 145, 178)';
-	}
+	ctx.fillStyle = color.fill;
+	ctx.strokeStyle = color.stroke;
 
 	ctx.lineWidth = 1;
 	const half = eventDotSize / 2;
@@ -150,11 +201,13 @@ interface DrawSpanBarArgs {
 	width: number;
 	levelIndex: number;
 	spanRectsArray: SpanRect[];
+	eventRectsArray: EventRect[];
 	color: string;
 	isDarkMode: boolean;
 	metrics: FlamegraphRowMetrics;
 	selectedSpanId?: string | null;
 	hoveredSpanId?: string | null;
+	hoveredEventKey?: string | null;
 }
 
 export function drawSpanBar(args: DrawSpanBarArgs): void {
@@ -166,11 +219,13 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		width,
 		levelIndex,
 		spanRectsArray,
+		eventRectsArray,
 		color,
 		isDarkMode,
 		metrics,
 		selectedSpanId,
 		hoveredSpanId,
+		hoveredEventKey,
 	} = args;
 
 	const spanY = y + metrics.SPAN_BAR_Y_OFFSET;
@@ -224,13 +279,27 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		const eventX = x + (clampedOffset / 100) * width;
 		const eventY = spanY + metrics.SPAN_BAR_HEIGHT / 2;
 
+		const dotColor = getEventDotColor(color, event.isError, isDarkMode);
+		const eventKey = `${span.spanId}-${event.name}-${event.timeUnixNano}`;
+		const isEventHovered = hoveredEventKey === eventKey;
+		const dotSize = isEventHovered
+			? Math.round(metrics.EVENT_DOT_SIZE * 1.5)
+			: metrics.EVENT_DOT_SIZE;
+
 		drawEventDot({
 			ctx,
 			x: eventX,
 			y: eventY,
-			isError: event.isError,
-			isDarkMode,
-			eventDotSize: metrics.EVENT_DOT_SIZE,
+			color: dotColor,
+			eventDotSize: dotSize,
+		});
+
+		eventRectsArray.push({
+			event,
+			span,
+			cx: eventX,
+			cy: eventY,
+			halfSize: metrics.EVENT_DOT_SIZE / 2,
 		});
 	});
 

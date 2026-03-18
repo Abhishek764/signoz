@@ -1,9 +1,0 @@
-{
-    "kind": "SigNozQueryVariable",
-    "spec": {
-        "queryValue": "SELECT DISTINCT host_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'redis_cpu_time'",
-        "sort": "ASC",
-        "multiSelect": true,
-        "showALLOption": true
-    }
-}

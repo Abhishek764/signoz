@@ -9,9 +9,7 @@ export type WidgetColumnWidths = {
 };
 
 export interface IDashboardContext {
-	isDashboardSliderOpen: boolean;
 	isDashboardLocked: boolean;
-	handleToggleDashboardSlider: (value: boolean) => void;
 	handleDashboardLockToggle: (value: boolean) => void;
 	dashboardResponse: UseQueryResult<SuccessResponseV2<Dashboard>, unknown>;
 	selectedDashboard: Dashboard | undefined;
@@ -23,8 +21,6 @@ export interface IDashboardContext {
 		React.SetStateAction<Dashboard | undefined>
 	>;
 	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
-	toScrollWidgetId: string;
-	setToScrollWidgetId: React.Dispatch<React.SetStateAction<string>>;
 	updateLocalStorageDashboardVariables: (
 		id: string,
 		selectedValue:

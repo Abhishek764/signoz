@@ -278,6 +278,13 @@ export interface AuthtypesPatchableObjectsDTO {
 	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
+export interface AuthtypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -301,6 +308,17 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface AuthtypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface AuthtypesPostableRotateTokenDTO {
 	/**
 	 * @type string
@@ -317,6 +335,39 @@ export interface AuthtypesResourceDTO {
 	 * @type string
 	 */
 	type: string;
+}
+
+export interface AuthtypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 /**
@@ -2039,57 +2090,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export interface RoletypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
-export interface RoletypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface RoletypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -2100,7 +2100,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2113,7 +2113,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	last_used: Date;
+	lastObservedAt: Date;
 	/**
 	 * @type string
 	 */
@@ -2121,7 +2121,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	service_account_id: string;
+	serviceAccountId: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2145,7 +2145,7 @@ export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2175,6 +2175,11 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	createdAt?: Date;
 	/**
 	 * @type string
+	 * @format date-time
+	 */
+	deletedAt: Date;
+	/**
+	 * @type string
 	 */
 	email: string;
 	/**
@@ -2188,7 +2193,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	orgID: string;
+	orgId: string;
 	/**
 	 * @type array
 	 */
@@ -2209,7 +2214,7 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -3158,7 +3163,7 @@ export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data: RoletypesRoleDTO[];
+	data: AuthtypesRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -3180,7 +3185,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: RoletypesRoleDTO;
+	data: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */

@@ -3,8 +3,6 @@
     "spec": {
         "dynamicVariablesAttribute": "host_name",
         "dynamicVariablesSource": "metrics",
-        "sort": "ASC",
-        "multiSelect": true,
-        "showALLOption": true
+        "sort": "ASC"
     }
 }

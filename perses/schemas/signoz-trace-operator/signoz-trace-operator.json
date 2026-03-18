@@ -1,0 +1,19 @@
+{
+    "kind": "SigNozTraceOperator",
+    "spec": {
+        "name": "T1",
+        "expression": "A => B",
+        "returnSpansFrom": "A",
+        "aggregations": [
+            {
+                "expression": "count()",
+                "alias": "request_count"
+            }
+        ],
+        "filter": {
+            "expression": "service.name = 'frontend'"
+        },
+        "groupBy": [],
+        "order": []
+    }
+}

@@ -1,0 +1,27 @@
+Panel Plugins
+
+All SigNoz panels use Perses built-in panel kinds directly. No custom CUE
+schemas exist yet because Perses does not publish CUE schemas for its panel
+plugins (only Go SDK + TypeScript). Once it does, each panel can embed the
+upstream spec and add the SigNoz-specific fields listed below.
+
+SigNoz-specific fields by panel type:
+
+  TimeSeriesChart    timePreference
+  StatChart          timePreference, contextLinks
+  BarChart           timePreference, contextLinks
+  PieChart           timePreference, contextLinks
+  Table              timePreference, contextLinks
+  LogsTable (List)   timePreference, selectedLogFields, selectedTracesFields, columnWidths
+  TraceTable         timePreference, selectedTracesFields, columnWidths
+  HistogramChart     timePreference, contextLinks, bucketCount, bucketWidth, mergeAllActiveQueries
+
+Common fields:
+  timePreference  — panel-local vs dashboard-global time range
+  contextLinks    — clickable drill-down links on data points
+
+Panel-specific fields:
+  selectedLogFields / selectedTracesFields — which fields to display as columns in list views
+  columnWidths              — saved column width overrides
+  bucketCount / bucketWidth — histogram bucket configuration
+  mergeAllActiveQueries     — combine multiple queries into one histogram

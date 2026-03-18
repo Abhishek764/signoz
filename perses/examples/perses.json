@@ -1,0 +1,699 @@
+{
+    "kind": "Dashboard",
+    "metadata": {
+        "name": "the-everything-dashboard",
+        "project": "signoz"
+    },
+    "spec": {
+        "display": {
+            "name": "The everything dashboard",
+            "description": "Trying to cover as many concepts here as possible"
+        },
+        "duration": "1h",
+        "variables": [
+            {
+                "kind": "ListVariable",
+                "spec": {
+                    "name": "serviceName",
+                    "display": {
+                        "name": "serviceName"
+                    },
+                    "allowAllValue": true,
+                    "allowMultiple": false,
+                    "plugin": {
+                        "kind": "SigNozDynamicVariable",
+                        "spec": {
+                            "dynamicVariablesAttribute": "service.name",
+                            "dynamicVariablesSource": "Metrics",
+                            "sort": "DISABLED"
+                        }
+                    }
+                }
+            },
+            {
+                "kind": "ListVariable",
+                "spec": {
+                    "name": "statusCodesFromQuery",
+                    "display": {
+                        "name": "statusCodesFromQuery"
+                    },
+                    "allowAllValue": true,
+                    "allowMultiple": true,
+                    "plugin": {
+                        "kind": "SigNozQueryVariable",
+                        "spec": {
+                            "queryValue": "SELECT JSONExtractString(labels, 'http.status_code') AS status_code FROM signoz_metrics.distributed_time_series_v4_1day WHERE status_code != '' GROUP BY status_code",
+                            "sort": "ASC"
+                        }
+                    }
+                }
+            },
+            {
+                "kind": "ListVariable",
+                "spec": {
+                    "name": "limit",
+                    "display": {
+                        "name": "limit"
+                    },
+                    "allowAllValue": false,
+                    "allowMultiple": false,
+                    "plugin": {
+                        "kind": "SigNozCustomVariable",
+                        "spec": {
+                            "customValue": "1,10,20,40,80,160,200",
+                            "sort": "DISABLED"
+                        }
+                    }
+                }
+            }
+        ],
+        "panels": {
+            "24e2697b": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "total resp size"
+                    },
+                    "plugin": {
+                        "kind": "TimeSeriesChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "metrics",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "metricName": "http.server.response.body.size.sum",
+                                                "reduceTo": "sum",
+                                                "spaceAggregation": "sum",
+                                                "timeAggregation": "rate"
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "http.response.status_code IN $statusCodesFromQuery"
+                                        },
+                                        "groupBy": [
+                                            {
+                                                "dataType": "string",
+                                                "id": "service.name--string--tag",
+                                                "isColumn": false,
+                                                "isJSON": false,
+                                                "key": "service.name",
+                                                "type": "tag"
+                                            }
+                                        ],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "ff2f72f1": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "fraction of calls"
+                    },
+                    "plugin": {
+                        "kind": "TimeSeriesChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozCompositeQuery",
+                                    "spec": {
+                                        "queries": [
+                                            {
+                                                "type": "builder_query",
+                                                "spec": {
+                                                    "name": "A",
+                                                    "signal": "metrics",
+                                                    "expression": "A",
+                                                    "aggregations": [
+                                                        {
+                                                            "metricName": "signoz_calls_total",
+                                                            "reduceTo": "sum",
+                                                            "spaceAggregation": "sum",
+                                                            "timeAggregation": "rate"
+                                                        }
+                                                    ],
+                                                    "filter": {
+                                                        "expression": "service.name IN $serviceName  AND http.status_code IN $statusCodesFromQuery"
+                                                    },
+                                                    "groupBy": [],
+                                                    "order": [],
+                                                    "disabled": true,
+                                                    "legend": "",
+                                                    "having": {
+                                                        "expression": ""
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "builder_query",
+                                                "spec": {
+                                                    "name": "B",
+                                                    "signal": "metrics",
+                                                    "expression": "B",
+                                                    "aggregations": [
+                                                        {
+                                                            "metricName": "signoz_calls_total",
+                                                            "reduceTo": "sum",
+                                                            "spaceAggregation": "sum",
+                                                            "timeAggregation": "rate"
+                                                        }
+                                                    ],
+                                                    "filter": {
+                                                        "expression": "service.name in $serviceName"
+                                                    },
+                                                    "groupBy": [],
+                                                    "order": [],
+                                                    "disabled": true,
+                                                    "legend": "",
+                                                    "having": {
+                                                        "expression": ""
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "type": "builder_formula",
+                                                "spec": {
+                                                    "name": "F1",
+                                                    "expression": "A / B",
+                                                    "legend": ""
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "011605e7": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "total resp size"
+                    },
+                    "plugin": {
+                        "kind": "BarChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "metrics",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "metricName": "http.server.response.body.size.sum",
+                                                "reduceTo": "sum",
+                                                "spaceAggregation": "sum",
+                                                "timeAggregation": "rate"
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "http.response.status_code IN $statusCodesFromQuery"
+                                        },
+                                        "groupBy": [
+                                            {
+                                                "dataType": "string",
+                                                "id": "service.name--string--tag",
+                                                "isColumn": false,
+                                                "isJSON": false,
+                                                "key": "service.name",
+                                                "type": "tag"
+                                            }
+                                        ],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "e23516fc": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "num traces for service"
+                    },
+                    "plugin": {
+                        "kind": "StatChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "traces",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName "
+                                        },
+                                        "groupBy": [],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "130c8d6b": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "num logs for service"
+                    },
+                    "plugin": {
+                        "kind": "StatChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "logs",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName "
+                                        },
+                                        "groupBy": [],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "246f7c6d": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "num traces for service per resp code"
+                    },
+                    "plugin": {
+                        "kind": "PieChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "traces",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName isEntryPoint = 'true'"
+                                        },
+                                        "groupBy": [
+                                            {
+                                                "dataType": "float64",
+                                                "id": "http.response.status_code--float64--tag",
+                                                "isColumn": false,
+                                                "isJSON": false,
+                                                "key": "http.response.status_code",
+                                                "type": "tag"
+                                            }
+                                        ],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "\"{{http.response.status_code}}\"",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "21f7d4d0": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "average latency per service"
+                    },
+                    "plugin": {
+                        "kind": "Table",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozClickHouseSQL",
+                                    "spec": {
+                                        "name": "A",
+                                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS avgLatency\nFROM __histogramCTE\nGROUP BY `service.name`",
+                                        "disabled": false,
+                                        "legend": ""
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "ad5fd556": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "logs from service"
+                    },
+                    "plugin": {
+                        "kind": "LogsTable",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "logs",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName"
+                                        },
+                                        "groupBy": [],
+                                        "order": [
+                                            {
+                                                "columnName": "timestamp",
+                                                "order": "desc"
+                                            },
+                                            {
+                                                "columnName": "id",
+                                                "order": "desc"
+                                            }
+                                        ],
+                                        "disabled": false,
+                                        "legend": "",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "f07b59ee": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "response size buckets"
+                    },
+                    "plugin": {
+                        "kind": "HistogramChart",
+                        "spec": {
+                            "bucketCount": 60,
+                            "bucketWidth": 0,
+                            "mergeAllActiveQueries": false
+                        }
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "metrics",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "metricName": "http.server.response.body.size.bucket",
+                                                "reduceTo": "avg",
+                                                "spaceAggregation": "p90",
+                                                "timeAggregation": "rate"
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": ""
+                                        },
+                                        "groupBy": [],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "e1a41831": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "trace operator"
+                    },
+                    "plugin": {
+                        "kind": "TimeSeriesChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "signal": "traces",
+                                        "expression": "A",
+                                        "aggregations": [
+                                            {
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = 'sampleapp-gateway' "
+                                        },
+                                        "groupBy": [],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "Gateway",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozBuilderQuery",
+                                    "spec": {
+                                        "name": "B",
+                                        "signal": "traces",
+                                        "expression": "B",
+                                        "aggregations": [
+                                            {
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "http.response.status_code = 200"
+                                        },
+                                        "groupBy": [],
+                                        "order": [],
+                                        "disabled": false,
+                                        "legend": "$serviceName",
+                                        "having": {
+                                            "expression": ""
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "layouts": [
+            {
+                "kind": "Grid",
+                "spec": {
+                    "items": [
+                        {
+                            "x": 0,
+                            "y": 0,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/24e2697b"
+                            }
+                        },
+                        {
+                            "x": 6,
+                            "y": 0,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/ff2f72f1"
+                            }
+                        },
+                        {
+                            "x": 0,
+                            "y": 6,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/011605e7"
+                            }
+                        },
+                        {
+                            "x": 6,
+                            "y": 6,
+                            "width": 6,
+                            "height": 3,
+                            "content": {
+                                "$ref": "#/spec/panels/e23516fc"
+                            }
+                        },
+                        {
+                            "x": 6,
+                            "y": 9,
+                            "width": 6,
+                            "height": 3,
+                            "content": {
+                                "$ref": "#/spec/panels/130c8d6b"
+                            }
+                        },
+                        {
+                            "x": 0,
+                            "y": 12,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/246f7c6d"
+                            }
+                        },
+                        {
+                            "x": 6,
+                            "y": 12,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/21f7d4d0"
+                            }
+                        },
+                        {
+                            "x": 0,
+                            "y": 18,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/ad5fd556"
+                            }
+                        },
+                        {
+                            "x": 6,
+                            "y": 18,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/f07b59ee"
+                            }
+                        },
+                        {
+                            "x": 0,
+                            "y": 24,
+                            "width": 12,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/e1a41831"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

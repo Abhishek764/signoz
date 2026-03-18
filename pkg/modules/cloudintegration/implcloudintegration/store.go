@@ -30,6 +30,22 @@ func (s *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provi
 	return account, nil
 }
 
+func (s *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
+	var accounts []*cloudintegrationtypes.StorableCloudIntegration
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(&accounts).
+		Where("org_id = ?", orgID).
+		Where("provider = ?", provider).
+		Where("removed_at IS NULL").
+		Where("account_id IS NOT NULL").
+		Where("last_agent_report IS NOT NULL").
+		Order("created_at ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return accounts, nil
+}
+
 func (s *store) CreateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(account).Exec(ctx)
 	if err != nil {
@@ -61,22 +77,6 @@ func (s *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provid
 	return err
 }
 
-func (s *store) GetConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
-	var accounts []*cloudintegrationtypes.StorableCloudIntegration
-	err := s.store.BunDBCtx(ctx).NewSelect().Model(&accounts).
-		Where("org_id = ?", orgID).
-		Where("provider = ?", provider).
-		Where("removed_at IS NULL").
-		Where("account_id IS NOT NULL").
-		Where("last_agent_report IS NOT NULL").
-		Order("created_at ASC").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return accounts, nil
-}
-
 func (s *store) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, providerAccountID string) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	account := new(cloudintegrationtypes.StorableCloudIntegration)
 	err := s.store.BunDBCtx(ctx).NewSelect().Model(account).
@@ -104,6 +104,17 @@ func (s *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID va
 	return service, nil
 }
 
+func (s *store) ListServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+	var services []*cloudintegrationtypes.StorableCloudIntegrationService
+	err := s.store.BunDBCtx(ctx).NewSelect().Model(&services).
+		Where("cloud_integration_id = ?", cloudIntegrationID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return services, nil
+}
+
 func (s *store) CreateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
 	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(service).Exec(ctx)
 	if err != nil {
@@ -120,15 +131,4 @@ func (s *store) UpdateService(ctx context.Context, service *cloudintegrationtype
 		Where("type = ?", service.Type).
 		Exec(ctx)
 	return err
-}
-
-func (s *store) GetServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*cloudintegrationtypes.StorableCloudIntegrationService, error) {
-	var services []*cloudintegrationtypes.StorableCloudIntegrationService
-	err := s.store.BunDBCtx(ctx).NewSelect().Model(&services).
-		Where("cloud_integration_id = ?", cloudIntegrationID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return services, nil
 }

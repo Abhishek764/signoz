@@ -311,8 +311,8 @@ function EditMemberDrawer({
 	) : (
 		<>
 			Are you sure you want to delete{' '}
-			<strong>{member?.name || member?.email}</strong>? This will permanently
-			remove their access to the workspace.
+			<strong>{member?.name || member?.email}</strong>? This will remove their
+			access to the workspace.
 		</>
 	);
 	const deleteConfirmLabel = isInvited ? 'Revoke Invite' : 'Delete Member';

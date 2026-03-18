@@ -22,7 +22,6 @@ import { MemberRow } from 'components/MembersTable/MembersTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
 import { capitalize } from 'lodash-es';
-import { useQueryState } from 'nuqs';
 import { useTimezone } from 'providers/Timezone';
 import { ROLES } from 'types/roles';
 
@@ -33,7 +32,6 @@ export interface EditMemberDrawerProps {
 	open: boolean;
 	onClose: () => void;
 	onComplete: () => void;
-	onRefetch?: () => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -54,7 +52,7 @@ function EditMemberDrawer({
 	const [resetLink, setResetLink] = useState<string | null>(null);
 	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
-	const [linkType, setLinkType] = useQueryState('linkType');
+	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
 
 	const isInvited = member?.status === MemberStatus.Invited;
 
@@ -67,7 +65,7 @@ function EditMemberDrawer({
 
 	const isDirty =
 		member !== null &&
-		(displayName !== member.name || selectedRole !== member.role);
+		(displayName !== (member.name ?? '') || selectedRole !== member.role);
 
 	const formatTimestamp = useCallback(
 		(ts: string | null | undefined): string => {
@@ -135,7 +133,7 @@ function EditMemberDrawer({
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
 				setHasCopiedResetLink(false);
-				await setLinkType(isInvited ? 'invite' : 'reset');
+				setLinkType(isInvited ? 'invite' : 'reset');
 				setShowResetLinkDialog(true);
 				onClose();
 			} else {

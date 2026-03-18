@@ -175,7 +175,13 @@ export const handlers = [
 	),
 
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json({ status: 'success' })),
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: 'invite sent successfully',
+			}),
+		),
 	),
 	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
 		res(

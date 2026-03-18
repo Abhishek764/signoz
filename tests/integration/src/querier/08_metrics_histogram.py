@@ -2,12 +2,9 @@
 Look at the histogram_data_1h.jsonl file for the relevant data
 """
 
-import logging
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List, Optional, Union
-
-logger = logging.getLogger(__name__)
 
 import pytest
 
@@ -22,6 +19,7 @@ from fixtures.querier import (
     make_query_request,
 )
 from fixtures.utils import get_testdata_file_path
+
 
 FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 FILE_WITH_MANY_GROUPS = get_testdata_file_path("histogram_data_1h_many_groups.jsonl")
@@ -1028,9 +1026,6 @@ def test_histogram_percentile_group_by_endpoint_and_status_code(
     for series in p75_series:
         endpoint = series.get("labels", [{}])[0].get("value", "unknown")
         status_code = series.get("labels", [{}])[1].get("value", "unknown")
-        values = series.get("values", [])
-        avg = sum(v["value"] for v in values) / len(values) if values else 0
-        logger.warning("endpoint=%s status_code=%s average_p75=%.3f", endpoint, status_code, avg)
 
     assert (
         len(p75_series) == expected_count

@@ -18,7 +18,6 @@ export interface MemberRow {
 	status: MemberStatus;
 	joinedOn: string | null;
 	updatedAt?: string | null;
-	token?: string | null;
 }
 
 interface MembersTableProps {
@@ -64,11 +63,23 @@ function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
 			</Badge>
 		);
 	}
-	return (
-		<Badge color="amber" variant="outline">
-			INVITED
-		</Badge>
-	);
+	if (status === MemberStatus.Deleted) {
+		return (
+			<Badge color="cherry" variant="outline">
+				DELETED
+			</Badge>
+		);
+	}
+
+	if (status === MemberStatus.Invited) {
+		return (
+			<Badge color="amber" variant="outline">
+				INVITED
+			</Badge>
+		);
+	}
+
+	return <Badge color="vanilla">⎯</Badge>;
 }
 
 function MembersEmptyState({
@@ -203,10 +214,17 @@ function MembersTable({
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
-				onRow={(record): React.HTMLAttributes<HTMLElement> => ({
-					onClick: (): void => onRowClick?.(record),
-					style: onRowClick ? { cursor: 'pointer' } : undefined,
-				})}
+				onRow={(record): React.HTMLAttributes<HTMLElement> => {
+					const isClickable = onRowClick && record.status !== MemberStatus.Deleted;
+					return {
+						onClick: (): void => {
+							if (isClickable) {
+								onRowClick(record);
+							}
+						},
+						style: isClickable ? { cursor: 'pointer' } : undefined,
+					};
+				}}
 				onChange={(_, __, sorter): void => {
 					if (onSortChange) {
 						onSortChange(

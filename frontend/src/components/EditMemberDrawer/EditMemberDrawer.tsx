@@ -7,7 +7,6 @@ import {
 	Check,
 	ChevronDown,
 	Copy,
-	Link,
 	LockKeyhole,
 	RefreshCw,
 	Trash2,
@@ -17,14 +16,11 @@ import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
 import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
-import sendInvite from 'api/v1/invite/create';
-import cancelInvite from 'api/v1/invite/id/delete';
 import deleteUser from 'api/v1/user/id/delete';
 import update from 'api/v1/user/id/update';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import ROUTES from 'constants/routes';
-import { INVITE_PREFIX, MemberStatus } from 'container/MembersSettings/utils';
+import { MemberStatus } from 'container/MembersSettings/utils';
 import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { ROLES } from 'types/roles';
@@ -45,7 +41,6 @@ function EditMemberDrawer({
 	open,
 	onClose,
 	onComplete,
-	onRefetch,
 }: EditMemberDrawerProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -60,9 +55,6 @@ function EditMemberDrawer({
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
 
 	const isInvited = member?.status === MemberStatus.Invited;
-	// Invited member IDs are prefixed with 'invite-'; strip it to get the real invite ID
-	const inviteId =
-		isInvited && member ? member.id.slice(INVITE_PREFIX.length) : null;
 
 	useEffect(() => {
 		if (member) {
@@ -89,80 +81,22 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
-	const saveInvitedMember = useCallback(async (): Promise<void> => {
-		if (!member || !inviteId) {
-			return;
-		}
-		await cancelInvite({ id: inviteId });
-		try {
-			await sendInvite({
-				email: member.email,
-				name: displayName,
-				role: selectedRole,
-				frontendBaseUrl: window.location.origin,
-			});
-			toast.success('Invite updated successfully', { richColors: true });
-			onComplete();
-			onClose();
-		} catch {
-			onRefetch?.();
-			onClose();
-			toast.error(
-				'Failed to send the updated invite. Please re-invite this member.',
-				{ richColors: true },
-			);
-		}
-	}, [
-		member,
-		inviteId,
-		displayName,
-		selectedRole,
-		onComplete,
-		onClose,
-		onRefetch,
-	]);
-
-	const saveActiveMember = useCallback(async (): Promise<void> => {
-		if (!member) {
-			return;
-		}
-		await update({
-			userId: member.id,
-			displayName,
-			role: selectedRole,
-		});
-		toast.success('Member details updated successfully', { richColors: true });
-		onComplete();
-		onClose();
-	}, [member, displayName, selectedRole, onComplete, onClose]);
-
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!member || !isDirty) {
 			return;
 		}
 		setIsSaving(true);
 		try {
-			if (isInvited && inviteId) {
-				await saveInvitedMember();
-			} else {
-				await saveActiveMember();
-			}
+			await update({ userId: member.id, displayName, role: selectedRole });
+			toast.success('Member details updated successfully', { richColors: true });
+			onComplete();
+			onClose();
 		} catch {
-			toast.error(
-				isInvited ? 'Failed to update invite' : 'Failed to update member details',
-				{ richColors: true },
-			);
+			toast.error('Failed to update member details', { richColors: true });
 		} finally {
 			setIsSaving(false);
 		}
-	}, [
-		member,
-		isDirty,
-		isInvited,
-		inviteId,
-		saveInvitedMember,
-		saveActiveMember,
-	]);
+	}, [member, isDirty, displayName, selectedRole, onComplete, onClose]);
 
 	const handleDelete = useCallback(async (): Promise<void> => {
 		if (!member) {
@@ -170,13 +104,13 @@ function EditMemberDrawer({
 		}
 		setIsDeleting(true);
 		try {
-			if (isInvited && inviteId) {
-				await cancelInvite({ id: inviteId });
-				toast.success('Invitation cancelled successfully', { richColors: true });
-			} else {
-				await deleteUser({ userId: member.id });
-				toast.success('Member deleted successfully', { richColors: true });
-			}
+			await deleteUser({ userId: member.id });
+			toast.success(
+				isInvited
+					? 'Invitation cancelled successfully'
+					: 'Member deleted successfully',
+				{ richColors: true },
+			);
 			setShowDeleteConfirm(false);
 			onComplete();
 			onClose();
@@ -188,7 +122,7 @@ function EditMemberDrawer({
 		} finally {
 			setIsDeleting(false);
 		}
-	}, [member, isInvited, inviteId, onComplete, onClose]);
+	}, [member, isInvited, onComplete, onClose]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
 		if (!member) {
@@ -234,29 +168,6 @@ function EditMemberDrawer({
 			});
 		}
 	}, [resetLink]);
-
-	const handleCopyInviteLink = useCallback(async (): Promise<void> => {
-		if (!member?.token) {
-			toast.error('Invite link is not available', {
-				richColors: true,
-				position: 'top-right',
-			});
-			return;
-		}
-		const inviteLink = `${window.location.origin}${ROUTES.SIGN_UP}?token=${member.token}`;
-		try {
-			await navigator.clipboard.writeText(inviteLink);
-			toast.success('Invite link copied to clipboard', {
-				richColors: true,
-				position: 'top-right',
-			});
-		} catch {
-			toast.error('Failed to copy invite link', {
-				richColors: true,
-				position: 'top-right',
-			});
-		}
-	}, [member]);
 
 	const handleClose = useCallback((): void => {
 		setShowDeleteConfirm(false);
@@ -352,26 +263,14 @@ function EditMemberDrawer({
 					</Button>
 
 					<div className="edit-member-drawer__footer-divider" />
-
-					{isInvited ? (
-						<Button
-							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-							onClick={handleCopyInviteLink}
-							disabled={!member?.token}
-						>
-							<Link size={12} />
-							Copy Invite Link
-						</Button>
-					) : (
-						<Button
-							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-							onClick={handleGenerateResetLink}
-							disabled={isGeneratingLink}
-						>
-							<RefreshCw size={12} />
-							{isGeneratingLink ? 'Generating...' : 'Generate Password Reset Link'}
-						</Button>
-					)}
+					<Button
+						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+						onClick={handleGenerateResetLink}
+						disabled={isGeneratingLink}
+					>
+						<RefreshCw size={12} />
+						{isGeneratingLink ? 'Generating...' : 'Generate Password Reset Link'}
+					</Button>
 				</div>
 
 				<div className="edit-member-drawer__footer-right">

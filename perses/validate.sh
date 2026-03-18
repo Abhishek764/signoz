@@ -1,1 +1,1 @@
-percli lint -f ./examples/redis-overview-perses.json --online
+percli lint -f ./examples/perses.json --online

@@ -1,7 +1,6 @@
 {
   "name": "@signoz/perses-plugin",
   "version": "0.0.1",
-  "_comment_panels": "TimeSeriesChart is the only panel type used currently. Other Perses built-in panels like StatChart, GaugeChart, BarChart, PieChart, Table, etc. can be added as needed.",
   "_comment_queries": "Only TimeSeriesQuery is used currently since the example dashboard only has time series queries. LogQuery, TraceQuery, and ProfileQuery kinds will also be needed.",
   "perses": {
     "plugins": [

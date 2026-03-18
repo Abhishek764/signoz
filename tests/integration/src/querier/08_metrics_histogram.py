@@ -822,7 +822,6 @@ def test_histogram_percentile_group_by_endpoint(
 
     for series in p75_series:
         endpoint = series.get("labels", [{}])[0].get("value", "unknown")
-        values = series.get("values", [])
 
     assert (
         len(p75_series) == expected_count

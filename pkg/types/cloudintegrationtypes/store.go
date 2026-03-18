@@ -19,8 +19,8 @@ type Store interface {
 	// RemoveAccount marks a cloud integration account as removed by setting the RemovedAt field
 	RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) error
 
-	// GetConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
-	GetConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
+	// ListConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
+	ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
 
 	// GetConnectedAccount for a given provider
 	GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, providerAccountID string) (*StorableCloudIntegration, error)
@@ -36,6 +36,6 @@ type Store interface {
 	// UpdateService updates an existing cloud integration service
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
-	// GetServices returns all the cloud integration services for the given cloud integration id
-	GetServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
+	// ListServices returns all the cloud integration services for the given cloud integration id
+	ListServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
 }

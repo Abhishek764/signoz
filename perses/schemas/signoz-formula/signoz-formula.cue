@@ -1,16 +1,27 @@
 package model
 
-import "github.com/signoz/signoz/schemas/common"
-
 // Source: pkg/types/querybuildertypes/querybuildertypesv5/formula.go — QueryBuilderFormula
 kind: "SigNozFormula"
 spec: close({
-	name:          common.#QueryName
+	name:          #QueryName
 	expression:    string
 	disabled?:     bool | *false
 	legend?:       string
-	limit?:        common.#Limit
-	having?:       common.#HavingExpression
+	limit?:        #Limit
+	having?:       #HavingExpression
 	stepInterval?: number
-	order?:        [...common.#OrderByItem]
+	order?:        [...#OrderByItem]
+})
+
+#QueryName: =~"^[A-Za-z][A-Za-z0-9_]*$"
+
+#Limit: int & >=0 & <=10000
+
+#HavingExpression: close({
+	expression: string
+})
+
+#OrderByItem: close({
+	columnName: string & !=""
+	order:      "asc" | "desc"
 })

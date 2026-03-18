@@ -6,6 +6,30 @@
     "schemasPath": "schemas",
     "plugins": [
       {
+        "kind": "Datasource",
+        "spec": {
+          "name": "SigNozDatasource"
+        }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozCustomVariable"
+        }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozDynamicVariable"
+        }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozQueryVariable"
+        }
+      },
+      {
         "kind": "TimeSeriesQuery",
         "spec": {
           "name": "SigNozBuilderQuery"
@@ -30,21 +54,9 @@
         }
       },
       {
-        "kind": "Variable",
+        "kind": "TimeSeriesQuery",
         "spec": {
-          "name": "SigNozCustomVariable"
-        }
-      },
-      {
-        "kind": "Datasource",
-        "spec": {
-          "name": "SigNozDatasource"
-        }
-      },
-      {
-        "kind": "Variable",
-        "spec": {
-          "name": "SigNozDynamicVariable"
+          "name": "SigNozTraceOperator"
         }
       },
       {
@@ -60,15 +72,15 @@
         }
       },
       {
-        "kind": "Variable",
+        "kind": "LogQuery",
         "spec": {
-          "name": "SigNozQueryVariable"
+          "name": "SigNozBuilderQuery"
         }
       },
       {
         "kind": "TraceQuery",
         "spec": {
-          "name": "SigNozTraceOperator"
+          "name": "SigNozBuilderQuery"
         }
       }
     ]

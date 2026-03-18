@@ -101,20 +101,11 @@
                                         },
                                         "groupBy": [
                                             {
-                                                "dataType": "string",
-                                                "id": "service.name--string--tag",
-                                                "isColumn": false,
-                                                "isJSON": false,
-                                                "key": "service.name",
-                                                "type": "tag"
+                                                "name": "service.name",
+                                                "fieldDataType": "string",
+                                                "fieldContext": "tag"
                                             }
-                                        ],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "",
-                                        "having": {
-                                            "expression": ""
-                                        }
+                                        ]
                                     }
                                 }
                             }
@@ -156,13 +147,6 @@
                                                     ],
                                                     "filter": {
                                                         "expression": "service.name IN $serviceName  AND http.status_code IN $statusCodesFromQuery"
-                                                    },
-                                                    "groupBy": [],
-                                                    "order": [],
-                                                    "disabled": true,
-                                                    "legend": "",
-                                                    "having": {
-                                                        "expression": ""
                                                     }
                                                 }
                                             },
@@ -182,13 +166,6 @@
                                                     ],
                                                     "filter": {
                                                         "expression": "service.name in $serviceName"
-                                                    },
-                                                    "groupBy": [],
-                                                    "order": [],
-                                                    "disabled": true,
-                                                    "legend": "",
-                                                    "having": {
-                                                        "expression": ""
                                                     }
                                                 }
                                             },
@@ -196,8 +173,7 @@
                                                 "type": "builder_formula",
                                                 "spec": {
                                                     "name": "F1",
-                                                    "expression": "A / B",
-                                                    "legend": ""
+                                                    "expression": "A / B"
                                                 }
                                             }
                                         ]
@@ -241,20 +217,11 @@
                                         },
                                         "groupBy": [
                                             {
-                                                "dataType": "string",
-                                                "id": "service.name--string--tag",
-                                                "isColumn": false,
-                                                "isJSON": false,
-                                                "key": "service.name",
-                                                "type": "tag"
+                                                "name": "service.name",
+                                                "fieldDataType": "string",
+                                                "fieldContext": "tag"
                                             }
-                                        ],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "",
-                                        "having": {
-                                            "expression": ""
-                                        }
+                                        ]
                                     }
                                 }
                             }
@@ -282,20 +249,13 @@
                                         "name": "A",
                                         "signal": "traces",
                                         "expression": "A",
-                                        "aggregations": [
+                                        "expressionAggregations": [
                                             {
                                                 "expression": "count() "
                                             }
                                         ],
                                         "filter": {
                                             "expression": "service.name = $serviceName "
-                                        },
-                                        "groupBy": [],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "",
-                                        "having": {
-                                            "expression": ""
                                         }
                                     }
                                 }
@@ -324,20 +284,13 @@
                                         "name": "A",
                                         "signal": "logs",
                                         "expression": "A",
-                                        "aggregations": [
+                                        "expressionAggregations": [
                                             {
                                                 "expression": "count() "
                                             }
                                         ],
                                         "filter": {
                                             "expression": "service.name = $serviceName "
-                                        },
-                                        "groupBy": [],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "",
-                                        "having": {
-                                            "expression": ""
                                         }
                                     }
                                 }
@@ -354,7 +307,9 @@
                     },
                     "plugin": {
                         "kind": "PieChart",
-                        "spec": {}
+                        "spec": {
+                            "radius": 4892398421894629486193
+                        }
                     },
                     "queries": [
                         {
@@ -366,7 +321,7 @@
                                         "name": "A",
                                         "signal": "traces",
                                         "expression": "A",
-                                        "aggregations": [
+                                        "expressionAggregations": [
                                             {
                                                 "expression": "count() "
                                             }
@@ -376,20 +331,12 @@
                                         },
                                         "groupBy": [
                                             {
-                                                "dataType": "float64",
-                                                "id": "http.response.status_code--float64--tag",
-                                                "isColumn": false,
-                                                "isJSON": false,
-                                                "key": "http.response.status_code",
-                                                "type": "tag"
+                                                "name": "http.response.status_code",
+                                                "fieldDataType": "float64",
+                                                "fieldContext": "tag"
                                             }
                                         ],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "\"{{http.response.status_code}}\"",
-                                        "having": {
-                                            "expression": ""
-                                        }
+                                        "legend": "\"{{http.response.status_code}}\""
                                     }
                                 }
                             }
@@ -415,9 +362,7 @@
                                     "kind": "SigNozClickHouseSQL",
                                     "spec": {
                                         "name": "A",
-                                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS avgLatency\nFROM __histogramCTE\nGROUP BY `service.name`",
-                                        "disabled": false,
-                                        "legend": ""
+                                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS avgLatency\nFROM __histogramCTE\nGROUP BY `service.name`"
                                     }
                                 }
                             }
@@ -437,7 +382,7 @@
                     },
                     "queries": [
                         {
-                            "kind": "TimeSeriesQuery",
+                            "kind": "LogQuery",
                             "spec": {
                                 "plugin": {
                                     "kind": "SigNozBuilderQuery",
@@ -445,7 +390,7 @@
                                         "name": "A",
                                         "signal": "logs",
                                         "expression": "A",
-                                        "aggregations": [
+                                        "expressionAggregations": [
                                             {
                                                 "expression": "count() "
                                             }
@@ -463,12 +408,7 @@
                                                 "columnName": "id",
                                                 "order": "desc"
                                             }
-                                        ],
-                                        "disabled": false,
-                                        "legend": "",
-                                        "having": {
-                                            "expression": ""
-                                        }
+                                        ]
                                     }
                                 }
                             }
@@ -484,11 +424,7 @@
                     },
                     "plugin": {
                         "kind": "HistogramChart",
-                        "spec": {
-                            "bucketCount": 60,
-                            "bucketWidth": 0,
-                            "mergeAllActiveQueries": false
-                        }
+                        "spec": {}
                     },
                     "queries": [
                         {
@@ -507,17 +443,7 @@
                                                 "spaceAggregation": "p90",
                                                 "timeAggregation": "rate"
                                             }
-                                        ],
-                                        "filter": {
-                                            "expression": ""
-                                        },
-                                        "groupBy": [],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "",
-                                        "having": {
-                                            "expression": ""
-                                        }
+                                        ]
                                     }
                                 }
                             }
@@ -540,54 +466,57 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozBuilderQuery",
-                                    "spec": {
-                                        "name": "A",
-                                        "signal": "traces",
-                                        "expression": "A",
-                                        "aggregations": [
+                                    "kind": "SigNozCompositeQuery",
+                                    "spec": {      
+                                        "queries": [
                                             {
-                                                "expression": "count() "
-                                            }
-                                        ],
-                                        "filter": {
-                                            "expression": "service.name = 'sampleapp-gateway' "
-                                        },
-                                        "groupBy": [],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "Gateway",
-                                        "having": {
-                                            "expression": ""
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "kind": "TimeSeriesQuery",
-                            "spec": {
-                                "plugin": {
-                                    "kind": "SigNozBuilderQuery",
-                                    "spec": {
-                                        "name": "B",
-                                        "signal": "traces",
-                                        "expression": "B",
-                                        "aggregations": [
+                                                "type": "builder_query",
+                                                "spec": {
+                                                    "name": "A",
+                                                    "signal": "traces",
+                                                    "expression": "A",
+                                                    "expressionAggregations": [
+                                                        {
+                                                            "expression": "count() "
+                                                        }
+                                                    ],
+                                                    "filter": {
+                                                        "expression": "service.name = 'sampleapp-gateway' "
+                                                    },
+                                                    "legend": "Gateway"
+                                                }
+                                            },
                                             {
-                                                "expression": "count() "
+                                                "type": "builder_query",
+                                                "spec": {
+                                                    "name": "B",
+                                                    "signal": "traces",
+                                                    "expression": "B",
+                                                    "expressionAggregations": [
+                                                        {
+                                                            "expression": "count() "
+                                                        }
+                                                    ],
+                                                    "filter": {
+                                                        "expression": "http.response.status_code = 200"
+                                                    },
+                                                    "legend": "$serviceName"
+                                                }
+                                            },
+                                            {
+                                                "type": "builder_trace_operator",
+                                                "spec": {
+                                                    "name": "T1",
+                                                    "expression": "A -> B ",
+                                                    "aggregations": [
+                                                        {
+                                                            "expression": "count()",
+                                                            "alias": "request_count"
+                                                        }
+                                                    ]
+                                                }
                                             }
-                                        ],
-                                        "filter": {
-                                            "expression": "http.response.status_code = 200"
-                                        },
-                                        "groupBy": [],
-                                        "order": [],
-                                        "disabled": false,
-                                        "legend": "$serviceName",
-                                        "having": {
-                                            "expression": ""
-                                        }
+                                        ]
                                     }
                                 }
                             }

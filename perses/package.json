@@ -1,0 +1,76 @@
+{
+  "name": "@signoz/signoz",
+  "version": "0.0.1",
+  "description": "signoz plugin module for Perses",
+  "perses": {
+    "schemasPath": "schemas",
+    "plugins": [
+      {
+        "kind": "TimeSeriesQuery",
+        "spec": {
+          "name": "SigNozBuilderQuery"
+        }
+      },
+      {
+        "kind": "TimeSeriesQuery",
+        "spec": {
+          "name": "SigNozClickHouseSQL"
+        }
+      },
+      {
+        "kind": "TimeSeriesQuery",
+        "spec": {
+          "name": "SigNozPromQL"
+        }
+      },
+      {
+        "kind": "TimeSeriesQuery",
+        "spec": {
+          "name": "SigNozCompositeQuery"
+        }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozCustomVariable"
+        }
+      },
+      {
+        "kind": "Datasource",
+        "spec": {
+          "name": "SigNozDatasource"
+        }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozDynamicVariable"
+        }
+      },
+      {
+        "kind": "TimeSeriesQuery",
+        "spec": {
+          "name": "SigNozFormula"
+        }
+      },
+      {
+        "kind": "TimeSeriesQuery",
+        "spec": {
+          "name": "SigNozJoin"
+        }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozQueryVariable"
+        }
+      },
+      {
+        "kind": "TraceQuery",
+        "spec": {
+          "name": "SigNozTraceOperator"
+        }
+      }
+    ]
+  }
+}

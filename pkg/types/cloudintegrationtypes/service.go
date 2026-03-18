@@ -16,41 +16,39 @@ var (
 	ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
 )
 
-type (
-	ServiceID struct{ valuer.String }
+type ServiceID struct{ valuer.String }
 
-	CloudIntegrationService struct {
-		types.Identifiable
-		types.TimeAuditable
-		Type               ServiceID      `json:"type"`
-		Config             *ServiceConfig `json:"config"`
-		CloudIntegrationID valuer.UUID    `json:"cloudIntegrationID"`
-	}
+type CloudIntegrationService struct {
+	types.Identifiable
+	types.TimeAuditable
+	Type               ServiceID      `json:"type"`
+	Config             *ServiceConfig `json:"config"`
+	CloudIntegrationID valuer.UUID    `json:"cloudIntegrationID"`
+}
 
-	// ServiceMetadata helps to quickly list available services and whether it is enabled or not.
-	// As getting complete service definition is a heavy operation and the response is also large,
-	// initial integration page load can be very slow.
-	ServiceMetadata struct {
-		ServiceDefinitionMetadata
-		// if the service is enabled for the account
-		Enabled bool `json:"enabled"`
-	}
+// ServiceMetadata helps to quickly list available services and whether it is enabled or not.
+// As getting complete service definition is a heavy operation and the response is also large,
+// initial integration page load can be very slow.
+type ServiceMetadata struct {
+	ServiceDefinitionMetadata
+	// if the service is enabled for the account
+	Enabled bool `json:"enabled"`
+}
 
-	GettableServicesMetadata struct {
-		Services []*ServiceMetadata `json:"services"`
-	}
+type GettableServicesMetadata struct {
+	Services []*ServiceMetadata `json:"services"`
+}
 
-	Service struct {
-		ServiceDefinition
-		ServiceConfig *ServiceConfig `json:"serviceConfig"`
-	}
+type Service struct {
+	ServiceDefinition
+	ServiceConfig *ServiceConfig `json:"serviceConfig"`
+}
 
-	GettableService = Service
+type GettableService = Service
 
-	UpdatableService struct {
-		Config *ServiceConfig `json:"config"`
-	}
-)
+type UpdatableService struct {
+	Config *ServiceConfig `json:"config"`
+}
 
 type ServiceConfig struct {
 	AWS *AWSServiceConfig `json:"aws,omitempty"`

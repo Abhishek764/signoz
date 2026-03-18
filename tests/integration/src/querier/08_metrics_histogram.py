@@ -843,28 +843,28 @@ def test_histogram_percentile_group_by_endpoint(
     # /health (cumulative, service=api)
     if "/health" in p75_values:
         vals = p75_values["/health"]
-        assert vals[0]["value"] == 6000, f"Expected /health p75 first=8000, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 6000, f"Expected /health p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 6000, f"Expected /health p75 first=6000, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /health p75 last=6000, got {vals[-1]['value']}"
 
     # /orders (cumulative, service=api): same distribution as /health
     if "/orders" in p75_values:
         vals = p75_values["/orders"]
-        assert vals[0]["value"] == 4500, f"Expected /orders p75 first=6400, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 4500, f"Expected /orders p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 4500, f"Expected /orders p75 first=4500, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 4500, f"Expected /orders p75 last=4500, got {vals[-1]['value']}"
 
     # /checkout (delta, service=web): 60 points
     if "/checkout" in p75_values:
         vals = p75_values["/checkout"]
-        assert vals[0]["value"] == 6000, f"Expected /checkout p75 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 6000, f"Expected /checkout p75 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 6000, f"Expected /checkout p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 6000, f"Expected /checkout p75 zeroth=6000, got {vals[0]['value']}"
+        assert vals[1]["value"] == 6000, f"Expected /checkout p75 first=6000, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /checkout p75 last=6000, got {vals[-1]['value']}"
 
     # /coupon (delta, service=web): 60 points
     if "/coupon" in p75_values:
         vals = p75_values["/coupon"]
-        assert vals[0]["value"] == 1125, f"Expected /coupon p75 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 1125, f"Expected /coupon p75 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 1125, f"Expected /coupon p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 1125, f"Expected /coupon p75 zeroth=1125, got {vals[0]['value']}"
+        assert vals[1]["value"] == 1125, f"Expected /coupon p75 first=1125, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 1125, f"Expected /coupon p75 last=1125, got {vals[-1]['value']}"
 
 
 @pytest.mark.parametrize(
@@ -1062,31 +1062,31 @@ def test_histogram_percentile_group_by_endpoint_and_status_code(
     # /health (cumulative, service=api)
     if "/health200" in p75_values:
         vals = p75_values["/health200"]
-        assert vals[0]["value"] == 6000, f"Expected /health p75 first=8000, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 6000, f"Expected /health p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 6000, f"Expected /health p75 first=6000, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /health p75 last=6000, got {vals[-1]['value']}"
 
     # /orders (cumulative, service=api): same distribution as /health
     if "/orders200" in p75_values:
         vals = p75_values["/orders200"]
-        assert vals[0]["value"] == 4500, f"Expected /orders p75 first=6400, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 4500, f"Expected /orders p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 4500, f"Expected /orders p75 first=4500, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 4500, f"Expected /orders p75 last=4500, got {vals[-1]['value']}"
 
     # /checkout (delta, service=web): 60 points
     if "/checkout200" in p75_values:
         vals = p75_values["/checkout200"]
-        assert vals[0]["value"] == 6000, f"Expected /checkout p75 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 6000, f"Expected /checkout p75 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 6000, f"Expected /checkout p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 6000, f"Expected /checkout p75 zeroth=6000, got {vals[0]['value']}"
+        assert vals[1]["value"] == 6000, f"Expected /checkout p75 first=6000, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /checkout p75 last=6000, got {vals[-1]['value']}"
 
     # /coupon (delta, service=web): 60 points
     if "/coupon200" in p75_values:
         vals = p75_values["/coupon200"]
-        assert vals[0]["value"] == 1250, f"Expected /coupon200 p75 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 1250, f"Expected /coupon200 p75 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 1250, f"Expected /coupon200 p75 last=991.304, got {vals[-1]['value']}"
-    
+        assert vals[0]["value"] == 1250, f"Expected /coupon200 p75 zeroth=1250, got {vals[0]['value']}"
+        assert vals[1]["value"] == 1250, f"Expected /coupon200 p75 first=1250, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 1250, f"Expected /coupon200 p75 last=1250, got {vals[-1]['value']}"
+
     if "/coupon500" in p75_values:
         vals = p75_values["/coupon500"]
-        assert vals[0]["value"] == 750, f"Expected /coupon500 p75 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 750, f"Expected /coupon500 p75 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 750, f"Expected /coupon500 p75 last=991.304, got {vals[-1]['value']}"
+        assert vals[0]["value"] == 750, f"Expected /coupon500 p75 zeroth=750, got {vals[0]['value']}"
+        assert vals[1]["value"] == 750, f"Expected /coupon500 p75 first=750, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 750, f"Expected /coupon500 p75 last=750, got {vals[-1]['value']}"

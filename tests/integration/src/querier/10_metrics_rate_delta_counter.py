@@ -244,7 +244,7 @@ def test_rate_group_by_endpoint(
         orders_values = endpoint_values["/orders"]
         assert (
             len(orders_values) == 60
-        ), f"Expected 59 values for /orders, got {len(orders_values)}"
+        ), f"Expected 60 values for /orders, got {len(orders_values)}"
         count_steady_orders = sum(1 for v in orders_values if v["value"] == 0.0833)
         assert (
             count_steady_orders == 58

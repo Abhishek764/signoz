@@ -27,7 +27,7 @@ spec: close({
 	legend?:         string
 	stepInterval?:   number
 	reduceTo?:       common.#ReduceTo
-	pageSize?:       common.#PageSize
+	pageSize?:       int & >=1
 	source?:         string
 })
 

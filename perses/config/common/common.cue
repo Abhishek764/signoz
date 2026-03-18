@@ -9,9 +9,6 @@ package common
 // Limit constrains the maximum number of result rows.
 #Limit: int & >=0 & <=10000
 
-// PageSize constrains the number of rows per page.
-#PageSize: int & >=1
-
 // Offset is a non-negative row offset for pagination.
 #Offset: int & >=0
 

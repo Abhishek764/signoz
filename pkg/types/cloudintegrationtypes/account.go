@@ -19,7 +19,7 @@ type (
 		Config            *AccountConfig    `json:"config,omitempty"`
 	}
 
-	GettableConnectedAccounts struct {
+	GettableAccounts struct {
 		Accounts []*Account `json:"accounts"`
 	}
 

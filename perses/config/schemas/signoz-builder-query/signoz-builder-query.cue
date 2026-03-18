@@ -6,7 +6,7 @@ import "github.com/signoz/signoz/schemas/common"
 kind: "SigNozBuilderQuery"
 spec: close({
 	name:       common.#QueryName
-	signal:     common.#Signal
+	signal:     "metrics" | "logs" | "traces"
 	expression: string
 	disabled?:  bool | *false
 

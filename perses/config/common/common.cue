@@ -1,8 +1,5 @@
 package common
 
-// Signal is the telemetry signal type for a builder query.
-#Signal: "metrics" | "logs" | "traces"
-
 // QueryName is a valid identifier for a query (e.g., "A", "B1", "my_query").
 #QueryName: =~"^[A-Za-z][A-Za-z0-9_]*$"
 

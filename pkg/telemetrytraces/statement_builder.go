@@ -312,6 +312,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(SpanResourcesStringColumn)
 	} else {
 		for _, field := range query.SelectFields {
+            // TODO(tvats): If a user specifies attribute.timestamp in the select fields, this loop will basically ignore it, as we already added a field by default. This can be fixed once we close https://github.com/SigNoz/engineering-pod/issues/3693
 			if field.Name == SpanTimestampColumn || field.Name == SpanTraceIDColumn || field.Name == SpanSpanIDColumn {
 				continue
 			}

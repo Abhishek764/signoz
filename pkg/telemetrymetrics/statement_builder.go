@@ -579,6 +579,13 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	hasLimit := query.Limit > 0
 	hasGroupBy := len(groupByKeys) > 0
 
+	isMetricAggOrderByKey := func(key string, config qbtypes.MetricAggregation) bool {
+		spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
+		timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
+		timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
+		return key == spaceAggOrderBy || key == timeAggOrderBy || key == timeSpaceAggOrderBy
+	}
+
 	if !hasGroupBy {
 		// do nothing, limits and orders don't mean anything
 	} else if hasOrder && hasLimit {
@@ -590,7 +597,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		for _, o := range query.Order {
 			key := o.Key.Name
 			var clause string
-			if strings.Contains(key, query.Aggregations[0].MetricName) {
+			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
 				clause = fmt.Sprintf("avg(value) %s", o.Direction.StringValue())
 			} else {
 				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
@@ -612,7 +619,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		for _, o := range query.Order {
 			key := o.Key.Name
 			var clause string
-			if strings.Contains(key, query.Aggregations[0].MetricName) {
+			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
 				clause = fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue())
 			} else {
 				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
@@ -623,7 +630,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		// order by without limit: apply order by clauses directly
 		for _, o := range query.Order {
 			key := o.Key.Name
-			if strings.Contains(key, query.Aggregations[0].MetricName) {
+			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
 				sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue()))
 				continue
 			}

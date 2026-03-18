@@ -2,96 +2,87 @@ package cloudintegrationtypes
 
 import "github.com/SigNoz/signoz/pkg/types/integrationtypes"
 
-// request for creating connection artifact.
-type (
-	PostableConnectionArtifact = ConnectionArtifactRequest
+type ConnectionArtifactRequest struct {
+	Aws *AWSConnectionArtifactRequest `json:"aws"`
+}
 
-	ConnectionArtifactRequest struct {
-		Aws *AWSConnectionArtifactRequest `json:"aws"`
-	}
+type AWSConnectionArtifactRequest struct {
+	DeploymentRegion string   `json:"deploymentRegion"`
+	Regions          []string `json:"regions"`
+}
 
-	AWSConnectionArtifactRequest struct {
-		DeploymentRegion string   `json:"deploymentRegion"`
-		Regions          []string `json:"regions"`
-	}
-)
+type PostableConnectionArtifact = ConnectionArtifactRequest
 
-type (
-	ConnectionArtifact struct {
-		Aws *AWSConnectionArtifact `json:"aws"`
-	}
+type ConnectionArtifact struct {
+	Aws *AWSConnectionArtifact `json:"aws"`
+}
 
-	AWSConnectionArtifact struct {
-		ConnectionUrl string `json:"connectionURL"`
-	}
+type AWSConnectionArtifact struct {
+	ConnectionUrl string `json:"connectionURL"`
+}
 
-	GettableConnectionArtifact = ConnectionArtifact
-)
+type GettableConnectionArtifact = ConnectionArtifact
 
-type (
-	AccountStatus struct {
-		Id                string                         `json:"id"`
-		ProviderAccountId *string                        `json:"providerAccountID,omitempty"`
-		Status            integrationtypes.AccountStatus `json:"status"`
-	}
+type AccountStatus struct {
+	Id                string                         `json:"id"`
+	ProviderAccountId *string                        `json:"providerAccountID,omitempty"`
+	Status            integrationtypes.AccountStatus `json:"status"`
+}
 
-	GettableAccountStatus = AccountStatus
-)
+type GettableAccountStatus = AccountStatus
 
-type (
-	AgentCheckInRequest struct {
-		// older backward compatible fields are mapped to new fields
-		// CloudIntegrationId string `json:"cloudIntegrationId"`
-		// AccountId          string `json:"accountId"`
+type AgentCheckInRequest struct {
+	// older backward compatible fields are mapped to new fields
+	// CloudIntegrationId string `json:"cloudIntegrationId"`
+	// AccountId          string `json:"accountId"`
 
-		// New fields
-		ProviderAccountId string `json:"providerAccountId"`
-		CloudAccountId    string `json:"cloudAccountId"`
+	// New fields
+	ProviderAccountId string `json:"providerAccountId"`
+	CloudAccountId    string `json:"cloudAccountId"`
 
-		Data map[string]any `json:"data,omitempty"`
-	}
+	Data map[string]any `json:"data,omitempty"`
+}
 
-	PostableAgentCheckInRequest struct {
-		AgentCheckInRequest
-		// following are backward compatible fields for older running agents
-		// which gets mapped to new fields in AgentCheckInRequest
-		CloudIntegrationId string `json:"cloud_integration_id"`
-		CloudAccountId     string `json:"cloud_account_id"`
-	}
+type PostableAgentCheckInRequest struct {
+	AgentCheckInRequest
+	// following are backward compatible fields for older running agents
+	// which gets mapped to new fields in AgentCheckInRequest
+	CloudIntegrationId string `json:"cloud_integration_id"`
+	CloudAccountId     string `json:"cloud_account_id"`
+}
 
-	GettableAgentCheckInResponse struct {
-		AgentCheckInResponse
+type GettableAgentCheckInResponse struct {
+	AgentCheckInResponse
 
-		// For backward compatibility
-		CloudIntegrationId string `json:"cloud_integration_id"`
-		AccountId          string `json:"account_id"`
-	}
+	// For backward compatibility
+	CloudIntegrationId string `json:"cloud_integration_id"`
+	AccountId          string `json:"account_id"`
+}
 
-	AgentCheckInResponse struct {
-		// Older fields for backward compatibility are mapped to new fields below
-		// CloudIntegrationId string `json:"cloud_integration_id"`
-		// AccountId          string `json:"account_id"`
+type AgentCheckInResponse struct {
+	// Older fields for backward compatibility are mapped to new fields below
+	// CloudIntegrationId string `json:"cloud_integration_id"`
+	// AccountId          string `json:"account_id"`
 
-		// New fields
-		ProviderAccountId string `json:"providerAccountId"`
-		CloudAccountId    string `json:"cloudAccountId"`
+	// New fields
+	ProviderAccountId string `json:"providerAccountId"`
+	CloudAccountId    string `json:"cloudAccountId"`
 
-		// IntegrationConfig populates data related to integration that is required for an agent
-		// to start collecting telemetry data
-		// keeping JSON key snake_case for backward compatibility
-		IntegrationConfig *IntegrationConfig `json:"integration_config,omitempty"`
-	}
+	// IntegrationConfig populates data related to integration that is required for an agent
+	// to start collecting telemetry data
+	// keeping JSON key snake_case for backward compatibility
+	IntegrationConfig *IntegrationConfig `json:"integration_config,omitempty"`
+}
 
-	IntegrationConfig struct {
-		EnabledRegions []string               `json:"enabledRegions"`      // backward compatible
-		Telemetry      *AWSCollectionStrategy `json:"telemetry,omitempty"` // backward compatible
+type IntegrationConfig struct {
+	EnabledRegions []string               `json:"enabledRegions"`      // backward compatible
+	Telemetry      *AWSCollectionStrategy `json:"telemetry,omitempty"` // backward compatible
 
-		// new fields
-		AWS *AWSIntegrationConfig `json:"aws,omitempty"`
-	}
+	// new fields
+	AWS *AWSIntegrationConfig `json:"aws,omitempty"`
+}
 
-	AWSIntegrationConfig struct {
-		EnabledRegions []string               `json:"enabledRegions"`
-		Telemetry      *AWSCollectionStrategy `json:"telemetry,omitempty"`
-	}
-)
+type AWSIntegrationConfig struct {
+	EnabledRegions []string               `json:"enabledRegions"`
+	Telemetry      *AWSCollectionStrategy `json:"telemetry,omitempty"`
+}

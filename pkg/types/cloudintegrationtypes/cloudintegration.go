@@ -22,36 +22,33 @@ var (
 // This is also referred as "Account" in the context of cloud integrations.
 type StorableCloudIntegration struct {
 	bun.BaseModel `bun:"table:cloud_integration"`
-
 	types.Identifiable
 	types.TimeAuditable
-	Provider CloudProviderType `json:"provider" bun:"provider,type:text"`
-	// Config is provider specific data in JSON string format
-	Config          string               `json:"config" bun:"config,type:text"`
-	AccountID       *string              `json:"accountID" bun:"account_id,type:text"`
-	LastAgentReport *StorableAgentReport `json:"lastAgentReport" bun:"last_agent_report,type:text"`
-	RemovedAt       *time.Time           `json:"removedAt" bun:"removed_at,type:timestamp,nullzero"`
-	OrgID           valuer.UUID          `json:"orgID" bun:"org_id,type:text"`
+
+	Provider        CloudProviderType    `bun:"provider,type:text"`
+	Config          string               `bun:"config,type:text"` // Config is provider-specific data in JSON string format
+	AccountID       *string              `bun:"account_id,type:text"`
+	LastAgentReport *StorableAgentReport `bun:"last_agent_report,type:text"`
+	RemovedAt       *time.Time           `bun:"removed_at,type:timestamp,nullzero"`
+	OrgID           valuer.UUID          `bun:"org_id,type:text"`
 }
 
 // StorableAgentReport represents the last heartbeat and arbitrary data sent by the agent
 // as of now there is no use case for Data field, but keeping it for backwards compatibility with older structure.
 type StorableAgentReport struct {
-	TimestampMillis int64          `json:"timestamp_millis"`
+	TimestampMillis int64          `json:"timestamp_millis"` // backward compatibility
 	Data            map[string]any `json:"data"`
 }
 
 // StorableCloudIntegrationService is to store service config for a cloud integration, which is a cloud provider specific configuration.
 type StorableCloudIntegrationService struct {
 	bun.BaseModel `bun:"table:cloud_integration_service,alias:cis"`
-
 	types.Identifiable
 	types.TimeAuditable
-	// Keeping Type field name as is, but it is a service id
-	Type ServiceID `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
-	// Config is cloud provider's service specific data in JSON string format
-	Config             string      `bun:"config,type:text"`
-	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,on_delete:cascade"`
+
+	Type               ServiceID   `bun:"type,type:text,notnull"` // Keeping Type field name as is, but it is a service id
+	Config             string      `bun:"config,type:text"`       // Config is cloud provider's service specific data in JSON string format
+	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text"`
 }
 
 // Scan scans value from DB.

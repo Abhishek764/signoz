@@ -606,13 +606,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				traceID={traceMetadata.traceId}
 				onFilteredSpansChange={handleFilteredSpansChange}
 			/>
-			<div
-				className={cx(
-					'waterfall-split-panel',
-					traceMetadata.hasMissingSpans ? 'missing-spans-waterfall' : '',
-				)}
-				ref={scrollContainerRef}
-			>
+			<div className="waterfall-split-panel" ref={scrollContainerRef}>
 				{/* Sticky header row */}
 				<div className="waterfall-split-header">
 					<div

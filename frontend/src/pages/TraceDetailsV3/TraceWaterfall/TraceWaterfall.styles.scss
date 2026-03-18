@@ -1,5 +1,7 @@
 .trace-waterfall {
-	height: calc(70vh - 236px);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 
 	.loading-skeleton {
 		justify-content: center;

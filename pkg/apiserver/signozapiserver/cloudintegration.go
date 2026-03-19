@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+//nolint:unused
 func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/connection_artifact", handler.New(
 		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetConnectionArtifact),

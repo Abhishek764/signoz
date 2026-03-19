@@ -74,7 +74,6 @@ func NewFactory(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
-	cloudIntegrationHandler cloudintegration.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -100,7 +99,6 @@ func NewFactory(
 			zeusHandler,
 			querierHandler,
 			serviceAccountHandler,
-			cloudIntegrationHandler,
 		)
 	})
 }
@@ -128,33 +126,31 @@ func newProvider(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
-	cloudIntegrationHandler cloudintegration.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
-		config:                  config,
-		settings:                settings,
-		router:                  router,
-		orgHandler:              orgHandler,
-		userHandler:             userHandler,
-		sessionHandler:          sessionHandler,
-		authDomainHandler:       authDomainHandler,
-		preferenceHandler:       preferenceHandler,
-		globalHandler:           globalHandler,
-		promoteHandler:          promoteHandler,
-		flaggerHandler:          flaggerHandler,
-		dashboardModule:         dashboardModule,
-		dashboardHandler:        dashboardHandler,
-		metricsExplorerHandler:  metricsExplorerHandler,
-		gatewayHandler:          gatewayHandler,
-		fieldsHandler:           fieldsHandler,
-		authzHandler:            authzHandler,
-		zeusHandler:             zeusHandler,
-		querierHandler:          querierHandler,
-		serviceAccountHandler:   serviceAccountHandler,
-		cloudIntegrationHandler: cloudIntegrationHandler,
+		config:                 config,
+		settings:               settings,
+		router:                 router,
+		orgHandler:             orgHandler,
+		userHandler:            userHandler,
+		sessionHandler:         sessionHandler,
+		authDomainHandler:      authDomainHandler,
+		preferenceHandler:      preferenceHandler,
+		globalHandler:          globalHandler,
+		promoteHandler:         promoteHandler,
+		flaggerHandler:         flaggerHandler,
+		dashboardModule:        dashboardModule,
+		dashboardHandler:       dashboardHandler,
+		metricsExplorerHandler: metricsExplorerHandler,
+		gatewayHandler:         gatewayHandler,
+		fieldsHandler:          fieldsHandler,
+		authzHandler:           authzHandler,
+		zeusHandler:            zeusHandler,
+		querierHandler:         querierHandler,
+		serviceAccountHandler:  serviceAccountHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)

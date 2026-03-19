@@ -32,7 +32,7 @@ type AgentCheckInRequest struct {
 
 	// New fields
 	ProviderAccountId string `json:"providerAccountId" required:"false"`
-	CloudAccountId    string `json:"cloudAccountId" false:"false"`
+	CloudAccountId    string `json:"cloudAccountId" required:"false"`
 
 	Data map[string]any `json:"data,omitempty" required:"true" nullable:"true"`
 }

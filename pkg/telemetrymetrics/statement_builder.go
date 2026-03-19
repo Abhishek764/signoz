@@ -571,7 +571,6 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	if hasGroupBy {
 		cteWithAvgColumn := b.buildCTEWithAvgColumn(query, finalCTE)
 		cteFragments = append(cteFragments, cteWithAvgColumn)
-		finalCTE = "__with_avg_cte"
 
 		cteWithGroupRankColumn := b.buildCTEWithGroupRank(query)
 		cteFragments = append(cteFragments, cteWithGroupRankColumn)

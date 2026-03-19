@@ -540,6 +540,13 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
+func isMetricAggOrderByKey(key string, config qbtypes.MetricAggregation) bool {
+	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
+	timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
+	timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
+	return key == spaceAggOrderBy || key == timeAggOrderBy || key == timeSpaceAggOrderBy
+}
+
 func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	cteFragments []string,
 	cteArgs [][]any,
@@ -558,15 +565,32 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		finalCTE = "__histogram_cte"
 	}
 
-	combined := querybuilder.CombineCTEs(cteFragments)
+	groupByKeys := querybuilder.GroupByKeys(query.GroupBy)
+	hasGroupBy := len(groupByKeys) > 0
 
+	if hasGroupBy {
+		cteWithAvgColumn := b.buildCTEWithAvgColumn(query, finalCTE)
+		cteFragments = append(cteFragments, cteWithAvgColumn)
+		finalCTE = "__with_avg_cte"
+
+		cteWithGroupRankColumn := b.buildCTEWithGroupRank(query)
+		cteFragments = append(cteFragments, cteWithGroupRankColumn)
+		finalCTE = "__with_group_rank_cte"
+	}
+
+	combined := querybuilder.CombineCTEs(cteFragments)
 	var args []any
 	for _, a := range cteArgs {
 		args = append(args, a...)
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("*")
+	sb.Select("ts")
+	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
+		sb.SelectMore("le")
+	}
+	sb.SelectMore(groupByKeys...)
+	sb.SelectMore("value")
 	sb.From(finalCTE)
 	if query.Having != nil && query.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
@@ -574,99 +598,16 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		sb.Where(rewrittenExpr)
 	}
 
-	groupByKeys := querybuilder.GroupByKeys(query.GroupBy)
-	hasOrder := len(query.Order) > 0
-	hasLimit := query.Limit > 0
-	hasGroupBy := len(groupByKeys) > 0
-
-	isMetricAggOrderByKey := func(key string, config qbtypes.MetricAggregation) bool {
-		spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
-		timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
-		timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
-		return key == spaceAggOrderBy || key == timeAggOrderBy || key == timeSpaceAggOrderBy
-	}
-
-	if !hasGroupBy {
-		// do nothing, limits and orders don't mean anything
-	} else if hasOrder && hasLimit {
-		labelSelectorSubQueryBuilder := sqlbuilder.NewSelectBuilder()
-		labelSelectorSubQueryBuilder.Select(groupByKeys...)
-		labelSelectorSubQueryBuilder.From(finalCTE)
-		labelSelectorOrderClauses := []string{}
-		orderedKeys := map[string]struct{}{} // this will be used to add the remaining keys as tie breakers in the end
-		for _, o := range query.Order {
-			key := o.Key.Name
-			var clause string
-			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
-				clause = fmt.Sprintf("avg(value) %s", o.Direction.StringValue())
-			} else {
-				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
-				orderedKeys[fmt.Sprintf("`%s`", key)] = struct{}{}
-			}
-			labelSelectorOrderClauses = append(labelSelectorOrderClauses, clause)
-		}
-		for _, gk := range groupByKeys { // keys that haven't been added via order by keys will be added at the end as tie breakers
-			if _, ok := orderedKeys[gk]; !ok {
-				labelSelectorOrderClauses = append(labelSelectorOrderClauses, fmt.Sprintf("%s ASC", gk))
-			}
-		}
-		labelSelectorSubQueryBuilder.GroupBy(groupByKeys...)
-		labelSelectorSubQueryBuilder.OrderBy(labelSelectorOrderClauses...)
-		labelSelectorSubQuery, _ := labelSelectorSubQueryBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
-		labelSelectorSubQuery = fmt.Sprintf("%s LIMIT %d", labelSelectorSubQuery, query.Limit)
-
-		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), labelSelectorSubQuery))
-		for _, o := range query.Order {
-			key := o.Key.Name
-			var clause string
-			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
-				clause = fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue())
-			} else {
-				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
-			}
-			sb.OrderBy(clause)
-		}
-	} else if hasOrder {
-		// order by without limit: apply order by clauses directly
-		for _, o := range query.Order {
-			key := o.Key.Name
-			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
-				sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue()))
-				continue
-			}
-			sb.OrderBy(fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
-		}
-	} else if hasLimit {
-		labelSelectorSubQueryBuilder := sqlbuilder.NewSelectBuilder()
-		labelSelectorSubQueryBuilder.Select(groupByKeys...)
-		labelSelectorSubQueryBuilder.From(finalCTE)
-		labelSelectorSubQueryBuilder.GroupBy(groupByKeys...)
-		labelSelectorSubQueryBuilder.OrderBy("avg(value) DESC")
-		labelSelectorSubQuery, _ := labelSelectorSubQueryBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
-		labelSelectorSubQuery = fmt.Sprintf("%s LIMIT %d", labelSelectorSubQuery, query.Limit)
-
-		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), labelSelectorSubQuery))
-		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
-	} else {
-		// grouping without order by or limit: sort by avg(value) DESC with labels as tiebreakers
-		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
-	}
-
-	// add any group-by keys not already in the order-by as tiebreakers
-	orderKeySet := make(map[string]struct{})
-	for _, o := range query.Order {
-		orderKeySet[fmt.Sprintf("`%s`", o.Key.Name)] = struct{}{}
-	}
-	for _, g := range groupByKeys {
-		if _, exists := orderKeySet[g]; !exists {
-			sb.OrderBy(g)
+	if hasGroupBy {
+		sb.OrderBy("group_rank")
+		if query.Limit > 0 {
+			sb.Where(fmt.Sprintf("group_rank <= %d", query.Limit))
 		}
 	}
-
-	sb.OrderBy("ts ASC")
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
 	}
+	sb.OrderBy("ts ASC")
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
@@ -712,4 +653,61 @@ func (b *MetricQueryStatementBuilder) buildHistogramCTE(
 	histogramCTE := fmt.Sprintf("__histogram_cte AS (%s)", histogramQueryCTE)
 
 	return histogramCTE, histogramQueryCTEArgs, nil
+}
+
+/*
+this receives a CTE (__spatial_aggregation_cte or __histogram_cte) that has columns ts, value, and a column each for all the group by keys
+it creates a CTE (__with_avg_cte) that adds a column avg_val which has the avg value for the group the row belongs in
+*/
+func (b *MetricQueryStatementBuilder) buildCTEWithAvgColumn(
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+	latestCTE string,
+) string {
+	withAvgCTEBuilder := sqlbuilder.NewSelectBuilder()
+	withAvgCTEBuilder.Select("*")
+	groupByKeys := querybuilder.GroupByKeys(query.GroupBy)
+	withAvgCTEBuilder.SelectMore(fmt.Sprintf("avgIf(value, isNaN(value) = 0) OVER (PARTITION BY %s) AS avg_val", strings.Join(groupByKeys, ",")))
+	withAvgCTEBuilder.From(latestCTE)
+	withAvgCTEQuery, _ := withAvgCTEBuilder.BuildWithFlavor(sqlbuilder.ClickHouse) // no args so second return param is ignored
+	withAvgCTE := fmt.Sprintf("__with_avg_cte AS (%s)", withAvgCTEQuery)
+	return withAvgCTE
+}
+
+/*
+this receives the __with_avg_cte that has columns ts, value, a column each for all the group by keys, and avg_val which has the avg value for the group the row belongs in
+it creates a CTE (__with_group_rank_cte) that adds a column group_rank that ranks each group based on the order by keys (or by avg val if there are none)
+*/
+func (b *MetricQueryStatementBuilder) buildCTEWithGroupRank(
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+) string {
+	withGroupByCTEBuilder := sqlbuilder.NewSelectBuilder()
+	withGroupByCTEBuilder.Select("*")
+
+	windowOrder := []string{}
+	orderedKeys := map[string]struct{}{} // this will be used to add the remaining keys as tie breakers in the end
+	if len(query.Order) > 0 {
+		for _, o := range query.Order {
+			key := o.Key.Name
+			if isMetricAggOrderByKey(key, query.Aggregations[0]) {
+				windowOrder = append(windowOrder, fmt.Sprintf("avg_val %s", o.Direction.StringValue()))
+			} else {
+				windowOrder = append(windowOrder, fmt.Sprintf("`%s` %s", key, o.Direction.StringValue()))
+				orderedKeys[fmt.Sprintf("`%s`", key)] = struct{}{}
+			}
+		}
+	} else {
+		windowOrder = append(windowOrder, "avg_val DESC")
+	}
+	groupByKeys := querybuilder.GroupByKeys(query.GroupBy)
+	for _, gk := range groupByKeys { // keys that haven't been added via order by keys will be added at the end as tie breakers
+		if _, ok := orderedKeys[gk]; !ok {
+			windowOrder = append(windowOrder, fmt.Sprintf("%s ASC", gk))
+		}
+	}
+	withGroupByCTEBuilder.SelectMore(fmt.Sprintf("dense_rank() OVER (ORDER BY %s) AS group_rank", strings.Join(windowOrder, ",")))
+
+	withGroupByCTEBuilder.From("__with_avg_cte")
+	withGroupRankCTEQuery, _ := withGroupByCTEBuilder.BuildWithFlavor(sqlbuilder.ClickHouse) // no args so second return param is ignored
+	withGroupRankCTE := fmt.Sprintf("__with_group_rank_cte AS (%s)", withGroupRankCTEQuery)
+	return withGroupRankCTE
 }

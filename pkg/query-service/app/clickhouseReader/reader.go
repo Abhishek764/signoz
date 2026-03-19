@@ -3945,53 +3945,67 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "GetLogAttributeKeys",
 	})
-	var query string
-	var err error
-	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	tagTypeFilter := `tag_type != 'logfield'`
-	if req.TagType != "" {
-		tagTypeFilter = fmt.Sprintf(`tag_type != 'logfield' and tag_type = '%s'`, req.TagType)
-	}
+	attributeKeysTable := r.logsDB + "." + r.logsAttributeKeys
+	resourceAttrKeysTable := r.logsDB + "." + r.logsResourceKeys
 
-	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where %s and tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2, tagTypeFilter)
-		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
-	} else {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from %s.%s where %s limit $1", r.logsDB, r.logsTagAttributeTableV2, tagTypeFilter)
-		rows, err = r.db.Query(ctx, query, req.Limit)
+	var tagTypes []string
+	var tables []string
+	switch req.TagType {
+	case v3.TagTypeTag:
+		tables, tagTypes = []string{attributeKeysTable}, []string{"tag"}
+	case v3.TagTypeResource:
+		tables, tagTypes = []string{resourceAttrKeysTable}, []string{"resource"}
+	case "":
+		tables, tagTypes = []string{attributeKeysTable, resourceAttrKeysTable}, []string{"tag", "resource"}
+	default:
+		return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "unsupported tag type: %s", req.TagType)
 	}
-
-	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	}
-	defer rows.Close()
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
-	err = r.db.Select(ctx, &statements, query)
-	if err != nil {
-		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+	stmtQuery := fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
+	if err := r.db.Select(ctx, &statements, stmtQuery); err != nil {
+		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error while fetching logs schema")
 	}
 
-	var attributeKey string
-	var attributeDataType string
-	var tagType string
-	for rows.Next() {
-		if err := rows.Scan(&attributeKey, &tagType, &attributeDataType); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+	for i, table := range tables {
+		tagType := tagTypes[i]
+		var query string
+		if len(req.SearchText) != 0 {
+			query = fmt.Sprintf("select distinct name, lower(datatype) from %s where name ILIKE $1 limit $2", table)
+		} else {
+			query = fmt.Sprintf("select distinct name, lower(datatype) from %s limit $1", table)
 		}
 
-		key := v3.AttributeKey{
-			Key:      attributeKey,
-			DataType: v3.AttributeKeyDataType(attributeDataType),
-			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(statements[0].Statement, tagType, attributeKey, attributeDataType),
+		var rows driver.Rows
+		var err error
+		if len(req.SearchText) != 0 {
+			rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
+		} else {
+			rows, err = r.db.Query(ctx, query, req.Limit)
+		}
+		if err != nil {
+			return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error while executing query")
 		}
 
-		response.AttributeKeys = append(response.AttributeKeys, key)
+		for rows.Next() {
+			var keyName string
+			var datatype string
+			if err := rows.Scan(&keyName, &datatype); err != nil {
+				rows.Close()
+				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error while scanning rows")
+			}
+
+			key := v3.AttributeKey{
+				Key:      keyName,
+				DataType: v3.AttributeKeyDataType(datatype),
+				Type:     v3.AttributeKeyType(tagType),
+				IsColumn: isColumn(statements[0].Statement, tagType, keyName, datatype),
+			}
+			response.AttributeKeys = append(response.AttributeKeys, key)
+		}
+		rows.Close()
 	}
 
 	// add other attributes only when the tagType is not specified

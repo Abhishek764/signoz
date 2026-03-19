@@ -1,8 +1,0 @@
-{
-    "kind": "SigNozDynamicVariable",
-    "spec": {
-        "dynamicVariablesAttribute": "host_name",
-        "dynamicVariablesSource": "metrics",
-        "sort": "ASC"
-    }
-}

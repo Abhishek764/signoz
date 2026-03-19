@@ -1,9 +1,0 @@
-{
-    "kind": "SigNozPromQL",
-    "spec": {
-        "name": "A",
-        "query": "rate(http_requests_total{status=\"200\"}[5m])",
-        "disabled": false,
-        "legend": "{{method}} {{path}}"
-    }
-}

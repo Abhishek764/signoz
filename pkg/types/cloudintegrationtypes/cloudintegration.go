@@ -13,7 +13,9 @@ import (
 )
 
 var (
-	ErrCodeCloudIntegrationNotFound = errors.MustNewCode("cloud_integration_not_found")
+	ErrCodeCloudIntegrationNotFound             = errors.MustNewCode("cloud_integration_not_found")
+	ErrCodeCloudIntegrationAlreadyExists        = errors.MustNewCode("cloud_integration_already_exists")
+	ErrCodeCloudIntegrationServiceAlreadyExists = errors.MustNewCode("cloud_integration_service_already_exists")
 )
 
 // StorableCloudIntegration represents a cloud integration stored in the database.

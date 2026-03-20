@@ -99,7 +99,7 @@ func (s *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID va
 		Where("type = ?", serviceID).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration service with id %s not found", serviceID)
+		return nil, s.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationServiceNotFound, "cloud integration service with id %s not found", serviceID)
 	}
 	return service, nil
 }

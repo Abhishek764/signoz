@@ -82,6 +82,12 @@
         "spec": {
           "name": "SigNozBuilderQuery"
         }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozTimeSeriesChart"
+        }
       }
     ]
   }

@@ -72,11 +72,73 @@
                 "kind": "Panel",
                 "spec": {
                     "display": {
-                        "name": "total resp size"
+                        "name": "total resp size",
+                        "description": ""
                     },
                     "plugin": {
-                        "kind": "TimeSeriesChart",
-                        "spec": {}
+                        "kind": "SigNozTimeSeriesChart",
+                        "spec": {
+                            "upstream": {
+                                "legend": {
+                                    "position": "right"
+                                },
+                                "visual": {
+                                    "display": "line",
+                                    "lineWidth": 1.5,
+                                    "lineStyle": "solid",
+                                    "areaOpacity": 0,
+                                    "showPoints": "auto",
+                                    "connectNulls": true
+                                },
+                                "yAxis": {
+                                    "show": true,
+                                    "label": "",
+                                    "format": {
+                                        "unit": "bytes"
+                                    },
+                                    "logBase": 10
+                                }
+                            },
+                            "timePreference": "GLOBAL_TIME",
+                            "lineInterpolation": "spline",
+                            "nullZeroValues": "zero",
+                            "showPoints": false,
+                            "fillMode": "none",
+                            "fillSpans": true,
+                            "decimalPrecision": 3,
+                            "mergeAllActiveQueries": false,
+                            "softMin": 0,
+                            "softMax": 800,
+                            "thresholds": [
+                                {
+                                    "value": 100,
+                                    "label": "kinda bad",
+                                    "color": "orange",
+                                    "operator": ">",
+                                    "format": "Text",
+                                    "unit": "By"
+                                },
+                                {
+                                    "value": 1024,
+                                    "label": "upper limit",
+                                    "color": "red",
+                                    "operator": ">",
+                                    "format": "Text",
+                                    "unit": "By"
+                                }
+                            ],
+                            "contextLinks": {
+                                "linksData": [
+                                    {
+                                        "label": "View service details",
+                                        "url": "http://localhost:8080/{{_service.name}}?dfddf=%7B%7Blimit%7D%7D"
+                                    }
+                                ]
+                            },
+                            "customLegendColors": {
+                                "{service.name=\"sampleapp-gateway\"}": "#9ea5f7"
+                            }
+                        }
                     },
                     "queries": [
                         {
@@ -117,11 +179,49 @@
                 "kind": "Panel",
                 "spec": {
                     "display": {
-                        "name": "fraction of calls"
+                        "name": "fraction of calls",
+                        "description": ""
                     },
                     "plugin": {
-                        "kind": "TimeSeriesChart",
-                        "spec": {}
+                        "kind": "SigNozTimeSeriesChart",
+                        "spec": {
+                            "upstream": {
+                                "visual": {
+                                    "display": "line",
+                                    "lineStyle": "solid",
+                                    "areaOpacity": 0,
+                                    "showPoints": "auto",
+                                    "connectNulls": true
+                                },
+                                "yAxis": {
+                                    "show": true,
+                                    "label": ""
+                                }
+                            },
+                            "timePreference": "GLOBAL_TIME",
+                            "lineInterpolation": "spline",
+                            "nullZeroValues": "zero",
+                            "showPoints": false,
+                            "fillMode": "none",
+                            "fillSpans": true,
+                            "decimalPrecision": 1,
+                            "mergeAllActiveQueries": false,
+                            "softMin": 0,
+                            "softMax": 0,
+                            "thresholds": [
+                                {
+                                    "value": 1,
+                                    "label": "max possible",
+                                    "color": "blue",
+                                    "operator": ">",
+                                    "format": "Background"
+                                }
+                            ],
+                            "contextLinks": {
+                                "linksData": []
+                            },
+                            "customLegendColors": {}
+                        }
                     },
                     "queries": [
                         {
@@ -455,11 +555,40 @@
                 "kind": "Panel",
                 "spec": {
                     "display": {
-                        "name": "trace operator"
+                        "name": "trace operator",
+                        "description": ""
                     },
                     "plugin": {
-                        "kind": "TimeSeriesChart",
-                        "spec": {}
+                        "kind": "SigNozTimeSeriesChart",
+                        "spec": {
+                            "upstream": {
+                                "visual": {
+                                    "display": "line",
+                                    "lineStyle": "solid",
+                                    "areaOpacity": 0,
+                                    "showPoints": "auto",
+                                    "connectNulls": false
+                                },
+                                "yAxis": {
+                                    "show": true,
+                                    "label": ""
+                                }
+                            },
+                            "timePreference": "GLOBAL_TIME",
+                            "lineInterpolation": "spline",
+                            "nullZeroValues": "zero",
+                            "showPoints": false,
+                            "fillMode": "none",
+                            "fillSpans": false,
+                            "decimalPrecision": 2,
+                            "mergeAllActiveQueries": false,
+                            "softMin": 0,
+                            "softMax": 0,
+                            "contextLinks": {
+                                "linksData": []
+                            },
+                            "customLegendColors": {}
+                        }
                     },
                     "queries": [
                         {

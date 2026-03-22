@@ -171,16 +171,24 @@
             "bucketWidth": 0,
             "columnUnits": {},
             "contextLinks": {
-                "linksData": []
+                "linksData": [
+                    {
+                        "id": "f29d44fc-8390-4995-8aff-910b80abe786",
+                        "label": "View service details",
+                        "url": "http://localhost:8080/{{_service.name}}?dfddf=%7B%7Blimit%7D%7D"
+                    }
+                ]
             },
-            "customLegendColors": {},
-            "decimalPrecision": 2,
+            "customLegendColors": {
+                "{service.name=\"sampleapp-gateway\"}": "#9ea5f7"
+            },
+            "decimalPrecision": 3,
             "description": "",
             "fillMode": "none",
-            "fillSpans": false,
+            "fillSpans": true,
             "id": "24e2697b-820a-46b1-a876-03ed3f52600d",
-            "isLogScale": false,
-            "legendPosition": "bottom",
+            "isLogScale": true,
+            "legendPosition": "right",
             "lineInterpolation": "spline",
             "lineStyle": "solid",
             "mergeAllActiveQueries": false,
@@ -304,10 +312,37 @@
                 }
             ],
             "showPoints": false,
-            "softMax": 0,
+            "softMax": 800,
             "softMin": 0,
             "stackedBarChart": false,
-            "thresholds": [],
+            "thresholds": [
+                {
+                    "index": "0bf14122-e814-41fb-9288-936b1822b42f",
+                    "isEditEnabled": false,
+                    "keyIndex": 1,
+                    "selectedGraph": "graph",
+                    "thresholdColor": "Orange",
+                    "thresholdFormat": "Text",
+                    "thresholdLabel": "kinda bad",
+                    "thresholdOperator": ">",
+                    "thresholdTableOptions": "A",
+                    "thresholdUnit": "By",
+                    "thresholdValue": 100
+                },
+                {
+                    "index": "58400f6d-3a8b-4d4c-b177-84666cc9c8c0",
+                    "isEditEnabled": false,
+                    "keyIndex": 0,
+                    "selectedGraph": "graph",
+                    "thresholdColor": "Red",
+                    "thresholdFormat": "Text",
+                    "thresholdLabel": "upper limit",
+                    "thresholdOperator": ">",
+                    "thresholdTableOptions": "A",
+                    "thresholdUnit": "By",
+                    "thresholdValue": 1024
+                }
+            ],
             "timePreferance": "GLOBAL_TIME",
             "title": "total resp size",
             "yAxisUnit": "By"

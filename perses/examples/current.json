@@ -91,6 +91,13 @@
             "w": 12,
             "x": 0,
             "y": 24
+        },
+        {
+            "h": 6,
+            "i": "f0d70491-1710-49d6-aea0-0031a1f53535",
+            "w": 6,
+            "x": 0,
+            "y": 30
         }
     ],
     "panelMap": {},
@@ -1731,6 +1738,165 @@
             "timePreferance": "GLOBAL_TIME",
             "title": "trace operator",
             "yAxisUnit": "none"
+        },
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {
+                "A": ""
+            },
+            "contextLinks": {
+                "linksData": []
+            },
+            "customLegendColors": {},
+            "decimalPrecision": 2,
+            "description": "",
+            "fillMode": "none",
+            "fillSpans": false,
+            "id": "f0d70491-1710-49d6-aea0-0031a1f53535",
+            "isLogScale": false,
+            "legendPosition": "bottom",
+            "lineInterpolation": "spline",
+            "lineStyle": "solid",
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "http.client.request.body.size.min--float64--Gauge",
+                                "key": "http.client.request.body.size.min",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "",
+                            "aggregations": [
+                                {
+                                    "metricName": "http.client.request.body.size.min",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "avg",
+                                    "temporality": "",
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": ""
+                            },
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "source": "",
+                            "spaceAggregation": "",
+                            "stepInterval": null,
+                            "timeAggregation": "rate"
+                        }
+                    ],
+                    "queryFormulas": [],
+                    "queryTraceOperator": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "85bd9adc-b09d-4c50-b04f-de19a3aec58f",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": "sum(rate(flask_exporter_info[5m]))"
+                    },
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "B",
+                        "query": "sum(increase(flask_exporter_info[5m]))"
+                    }
+                ],
+                "queryType": "promql",
+                "unit": ""
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "",
+                    "fieldContext": "log",
+                    "fieldDataType": "",
+                    "isIndexed": false,
+                    "name": "timestamp",
+                    "signal": "logs",
+                    "type": "log"
+                },
+                {
+                    "dataType": "",
+                    "fieldContext": "log",
+                    "fieldDataType": "",
+                    "isIndexed": false,
+                    "name": "body",
+                    "signal": "logs",
+                    "type": "log"
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "fieldContext": "resource",
+                    "fieldDataType": "string",
+                    "name": "service.name",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "string",
+                    "name": "name",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "",
+                    "name": "duration_nano",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "",
+                    "name": "http_method",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "",
+                    "name": "response_status_code",
+                    "signal": "traces"
+                }
+            ],
+            "showPoints": false,
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "no results in this promql",
+            "yAxisUnit": ""
         }
     ]
 }

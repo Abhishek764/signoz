@@ -652,6 +652,69 @@
                         }
                     ]
                 }
+            },
+            "f0d70491": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "no results in this promql",
+                        "description": ""
+                    },
+                    "plugin": {
+                        "kind": "SigNozTimeSeriesChart",
+                        "spec": {
+                            "upstream": {
+                                "visual": {
+                                    "display": "line",
+                                    "lineStyle": "solid",
+                                    "areaOpacity": 0,
+                                    "showPoints": "auto",
+                                    "connectNulls": false
+                                },
+                                "yAxis": {
+                                    "show": true,
+                                    "label": ""
+                                }
+                            },
+                            "timePreference": "GLOBAL_TIME",
+                            "lineInterpolation": "spline",
+                            "nullZeroValues": "zero",
+                            "showPoints": false,
+                            "fillMode": "none",
+                            "fillSpans": false,
+                            "decimalPrecision": 2,
+                            "mergeAllActiveQueries": false,
+                            "softMin": 0,
+                            "softMax": 0,
+                            "contextLinks": {
+                                "linksData": []
+                            },
+                            "customLegendColors": {}
+                        }
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozPromQLQuery",
+                                    "spec": {
+                                        "queries": [
+                                            {
+                                                "name": "A",
+                                                "query": "sum(rate(flask_exporter_info[5m]))"
+                                            },
+                                            {
+                                                "name": "B",
+                                                "query": "sum(increase(flask_exporter_info[5m]))"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
             }
         },
         "layouts": [
@@ -747,6 +810,15 @@
                             "height": 6,
                             "content": {
                                 "$ref": "#/spec/panels/e1a41831"
+                            }
+                        },
+                        {
+                            "x": 0,
+                            "y": 30,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/f0d70491"
                             }
                         }
                     ]

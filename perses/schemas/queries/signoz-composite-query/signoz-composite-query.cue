@@ -13,6 +13,10 @@ import (
 // SigNozCompositeQuery groups multiple query plugins into a single
 // query request. Each entry is a typed envelope whose spec is
 // validated by the corresponding plugin schema.
+
+// this is to be used when there are multiple queries in a panel
+// in most cases, there will be only one query, and there it is a better idea to 
+// use the corresponding kind for that query instead of this composite query
 kind: "SigNozCompositeQuery"
 spec: close({
 	queries: [...#QueryEnvelope]

@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//nolint:unused
 func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/connection_artifact", handler.New(
 		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetConnectionArtifact),
@@ -171,7 +170,29 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/agent-check-in", handler.New(
+	// Agent check-in endpoint is kept same as older one to maintain backward compatibility with already deployed agents.
+	// In the future, this endpoint will be deprecated and a new endpoint will be introduced for consistency with above endpoints.
+	if err := router.Handle("/api/v1/cloud-integrations/{cloud_provider}/agent-check-in", handler.New(
+		provider.authZ.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
+		handler.OpenAPIDef{
+			ID:                  "AgentCheckInDeprecated",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "Agent check-in",
+			Description:         "[Deprecated] This endpoint is called by the deployed agent to check in",
+			Request:             new(citypes.PostableAgentCheckInRequest),
+			RequestContentType:  "application/json",
+			Response:            new(citypes.GettableAgentCheckInResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          true,                                 // this endpoint will be deprecated in future
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer), // agent role is viewer
+		},
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/check_in", handler.New(
 		provider.authZ.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
 		handler.OpenAPIDef{
 			ID:                  "AgentCheckIn",

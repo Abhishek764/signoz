@@ -19,7 +19,7 @@ type CloudIntegrationService struct {
 	types.TimeAuditable
 	Type               ServiceID      `json:"type"`
 	Config             *ServiceConfig `json:"config"`
-	CloudIntegrationID valuer.UUID    `json:"cloudIntegrationID"`
+	CloudIntegrationID valuer.UUID    `json:"cloudIntegrationId"`
 }
 
 type ServiceConfig struct {

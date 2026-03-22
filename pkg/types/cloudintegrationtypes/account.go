@@ -10,11 +10,11 @@ import (
 type Account struct {
 	types.Identifiable
 	types.TimeAuditable
-	ProviderAccountId *string           `json:"providerAccountID" required:"true" nullable:"true"`
+	ProviderAccountID *string           `json:"providerAccountId" required:"true" nullable:"true"`
 	Provider          CloudProviderType `json:"provider" required:"true"`
 	RemovedAt         *time.Time        `json:"removedAt,omitempty" required:"true" nullable:"true"`
 	AgentReport       *AgentReport      `json:"agentReport,omitempty" required:"true" nullable:"true"`
-	OrgID             valuer.UUID       `json:"orgID" required:"true"`
+	OrgID             valuer.UUID       `json:"orgId" required:"true"`
 	Config            *AccountConfig    `json:"config,omitempty" required:"true" nullable:"false"`
 }
 

@@ -1191,6 +1191,172 @@ describe('removeKeysFromExpression', () => {
 			expect(pairs).toHaveLength(2);
 		});
 	});
+
+	describe('Parenthesised expressions', () => {
+		it('should not leave a dangling AND when removing the last filter inside parens', () => {
+			const expression =
+				'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation)';
+			const result = removeKeysFromExpression(expression, ['operation'], true);
+
+			expect(result).toBe(
+				'(deployment.environment = $deployment.environment AND service.name = $service.name)',
+			);
+		});
+
+		it('should not leave a dangling AND when removing the first filter inside parens', () => {
+			const expression =
+				'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation)';
+			const result = removeKeysFromExpression(
+				expression,
+				['deployment.environment'],
+				true,
+			);
+
+			expect(result).toBe(
+				'(service.name = $service.name AND operation IN $top_level_operation)',
+			);
+		});
+
+		it('should not leave a dangling AND when removing a middle filter inside parens', () => {
+			const expression =
+				'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation)';
+			const result = removeKeysFromExpression(expression, ['service.name'], true);
+
+			expect(result).toBe(
+				'(deployment.environment = $deployment.environment AND operation IN $top_level_operation)',
+			);
+		});
+
+		it('should return empty parens content when removing the only filter inside parens', () => {
+			const expression = '(operation IN $top_level_operation)';
+			const result = removeKeysFromExpression(expression, ['operation'], true);
+
+			expect(result).toBe('');
+		});
+	});
+});
+
+describe('convertFiltersToExpressionWithExistingQuery — appending new filters', () => {
+	it('should insert a new filter inside parens with AND when expression is a single parenthesised group', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: {
+						id: 'deployment.environment',
+						key: 'deployment.environment',
+						type: 'string',
+					},
+					op: OPERATORS['='],
+					value: '$deployment.environment',
+				},
+				{
+					id: '2',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: '$service.name',
+				},
+				{
+					id: '3',
+					key: { id: 'host.id', key: 'host.id', type: 'string' },
+					op: 'IN',
+					value: '$host.id',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery =
+			'(deployment.environment = $deployment.environment AND service.name = $service.name)';
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filter.expression).toBe(
+			'(deployment.environment = $deployment.environment AND service.name = $service.name AND host.id IN $host.id)',
+		);
+	});
+
+	it('should append a new filter with AND when expression is not parenthesised', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: '$service.name',
+				},
+				{
+					id: '2',
+					key: { id: 'host.id', key: 'host.id', type: 'string' },
+					op: 'IN',
+					value: '$host.id',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery = 'service.name = $service.name';
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filter.expression).toBe(
+			'service.name = $service.name AND host.id IN $host.id',
+		);
+	});
+
+	it('should insert inside parens without double-closing for a multi-filter group', () => {
+		const filters = {
+			items: [
+				{
+					id: '1',
+					key: {
+						id: 'deployment.environment',
+						key: 'deployment.environment',
+						type: 'string',
+					},
+					op: OPERATORS['='],
+					value: '$deployment.environment',
+				},
+				{
+					id: '2',
+					key: { id: 'service.name', key: 'service.name', type: 'string' },
+					op: OPERATORS['='],
+					value: '$service.name',
+				},
+				{
+					id: '3',
+					key: { id: 'operation', key: 'operation', type: 'string' },
+					op: 'IN',
+					value: '$top_level_operation',
+				},
+				{
+					id: '4',
+					key: { id: 'host.id', key: 'host.id', type: 'string' },
+					op: 'IN',
+					value: '$host.id',
+				},
+			],
+			op: 'AND',
+		};
+
+		const existingQuery =
+			'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation)';
+
+		const result = convertFiltersToExpressionWithExistingQuery(
+			filters,
+			existingQuery,
+		);
+
+		expect(result.filter.expression).toBe(
+			'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation AND host.id IN $host.id)',
+		);
+	});
 });
 
 describe('formatValueForExpression', () => {

@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useNotifications } from 'hooks/useNotifications';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -51,6 +52,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 	);
 	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 	const updateMutation = useUpdateDashboard();
+	const { notifications } = useNotifications();
 
 	const onValueUpdate = useCallback(
 		(
@@ -180,6 +182,15 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			// Get current dashboard variables
 			const currentVariables = selectedDashboard.data.variables || {};
 
+			// Prevent duplicate variable names
+			const nameExists = Object.values(currentVariables).some(
+				(v) => v.name === name,
+			);
+			if (nameExists) {
+				notifications.error({ message: `Variable "${name}" already exists` });
+				return;
+			}
+
 			// Create tableRowData like Dashboard Settings does
 			const tableRowData = [];
 			const variableOrderArr = [];
@@ -232,7 +243,8 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 
 			// Convert to dashboard format and update
 			const updatedVariables = convertVariablesToDbFormat(tableRowData);
-			updateVariables(updatedVariables, newVariable.id, [], false);
+			// Don't pass currentRequestedId — variable creation should not modify widget filters.
+			updateVariables(updatedVariables);
 		},
 		[selectedDashboard, updateVariables],
 	);

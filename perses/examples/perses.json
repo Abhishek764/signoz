@@ -78,55 +78,21 @@
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
                         "spec": {
-                            "upstream": {
-                                "legend": {
-                                    "position": "right"
-                                },
-                                "visual": {
-                                    "display": "line",
-                                    "lineWidth": 1.5,
-                                    "lineStyle": "solid",
-                                    "areaOpacity": 0,
-                                    "showPoints": "auto",
-                                    "connectNulls": true
-                                },
-                                "yAxis": {
-                                    "show": true,
-                                    "label": "",
-                                    "format": {
-                                        "unit": "bytes"
-                                    },
-                                    "logBase": 10
+                            "fillSpans": true,
+                            "formatting": {
+                                "yAxisUnit": "By",
+                                "decimalPrecision": 3
+                            },
+                            "axes": {
+                                "softMax": 800,
+                                "isLogScale": true
+                            },
+                            "legend": {
+                                "position": "right",
+                                "customColors": {
+                                    "{service.name=\"sampleapp-gateway\"}": "#9ea5f7"
                                 }
                             },
-                            "timePreference": "GLOBAL_TIME",
-                            "lineInterpolation": "spline",
-                            "nullZeroValues": "zero",
-                            "showPoints": false,
-                            "fillMode": "none",
-                            "fillSpans": true,
-                            "decimalPrecision": 3,
-                            "mergeAllActiveQueries": false,
-                            "softMin": 0,
-                            "softMax": 800,
-                            "thresholds": [
-                                {
-                                    "value": 100,
-                                    "label": "kinda bad",
-                                    "color": "orange",
-                                    "operator": ">",
-                                    "format": "Text",
-                                    "unit": "By"
-                                },
-                                {
-                                    "value": 1024,
-                                    "label": "upper limit",
-                                    "color": "red",
-                                    "operator": ">",
-                                    "format": "Text",
-                                    "unit": "By"
-                                }
-                            ],
                             "contextLinks": {
                                 "linksData": [
                                     {
@@ -135,9 +101,22 @@
                                     }
                                 ]
                             },
-                            "customLegendColors": {
-                                "{service.name=\"sampleapp-gateway\"}": "#9ea5f7"
-                            }
+                            "thresholds": [
+                                {
+                                    "thresholdValue": 1024,
+                                    "thresholdUnit": "By",
+                                    "thresholdColor": "Red",
+                                    "thresholdFormat": "Text",
+                                    "thresholdLabel": "upper limit"
+                                },
+                                {
+                                    "thresholdValue": 100,
+                                    "thresholdUnit": "By",
+                                    "thresholdColor": "Orange",
+                                    "thresholdFormat": "Text",
+                                    "thresholdLabel": "kinda bad"
+                                }
+                            ]
                         }
                     },
                     "queries": [
@@ -185,42 +164,18 @@
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
                         "spec": {
-                            "upstream": {
-                                "visual": {
-                                    "display": "line",
-                                    "lineStyle": "solid",
-                                    "areaOpacity": 0,
-                                    "showPoints": "auto",
-                                    "connectNulls": true
-                                },
-                                "yAxis": {
-                                    "show": true,
-                                    "label": ""
-                                }
-                            },
-                            "timePreference": "GLOBAL_TIME",
-                            "lineInterpolation": "spline",
-                            "nullZeroValues": "zero",
-                            "showPoints": false,
-                            "fillMode": "none",
                             "fillSpans": true,
-                            "decimalPrecision": 1,
-                            "mergeAllActiveQueries": false,
-                            "softMin": 0,
-                            "softMax": 0,
+                            "formatting": {
+                                "decimalPrecision": 1
+                            },
                             "thresholds": [
                                 {
-                                    "value": 1,
-                                    "label": "max possible",
-                                    "color": "blue",
-                                    "operator": ">",
-                                    "format": "Background"
+                                    "thresholdValue": 1,
+                                    "thresholdColor": "Blue",
+                                    "thresholdFormat": "Background",
+                                    "thresholdLabel": "max possible"
                                 }
-                            ],
-                            "contextLinks": {
-                                "linksData": []
-                            },
-                            "customLegendColors": {}
+                            ]
                         }
                     },
                     "queries": [
@@ -560,35 +515,7 @@
                     },
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
-                        "spec": {
-                            "upstream": {
-                                "visual": {
-                                    "display": "line",
-                                    "lineStyle": "solid",
-                                    "areaOpacity": 0,
-                                    "showPoints": "auto",
-                                    "connectNulls": false
-                                },
-                                "yAxis": {
-                                    "show": true,
-                                    "label": ""
-                                }
-                            },
-                            "timePreference": "GLOBAL_TIME",
-                            "lineInterpolation": "spline",
-                            "nullZeroValues": "zero",
-                            "showPoints": false,
-                            "fillMode": "none",
-                            "fillSpans": false,
-                            "decimalPrecision": 2,
-                            "mergeAllActiveQueries": false,
-                            "softMin": 0,
-                            "softMax": 0,
-                            "contextLinks": {
-                                "linksData": []
-                            },
-                            "customLegendColors": {}
-                        }
+                        "spec": {}
                     },
                     "queries": [
                         {
@@ -662,35 +589,7 @@
                     },
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
-                        "spec": {
-                            "upstream": {
-                                "visual": {
-                                    "display": "line",
-                                    "lineStyle": "solid",
-                                    "areaOpacity": 0,
-                                    "showPoints": "auto",
-                                    "connectNulls": false
-                                },
-                                "yAxis": {
-                                    "show": true,
-                                    "label": ""
-                                }
-                            },
-                            "timePreference": "GLOBAL_TIME",
-                            "lineInterpolation": "spline",
-                            "nullZeroValues": "zero",
-                            "showPoints": false,
-                            "fillMode": "none",
-                            "fillSpans": false,
-                            "decimalPrecision": 2,
-                            "mergeAllActiveQueries": false,
-                            "softMin": 0,
-                            "softMax": 0,
-                            "contextLinks": {
-                                "linksData": []
-                            },
-                            "customLegendColors": {}
-                        }
+                        "spec": {}
                     },
                     "queries": [
                         {
@@ -703,15 +602,15 @@
                                             {
                                                 "type": "promql",
                                                 "spec": {
-                                                "name": "A",
-                                                "query": "sum(rate(flask_exporter_info[5m]))"
+                                                    "name": "A",
+                                                    "query": "sum(rate(flask_exporter_info[5m]))"
                                                 }
                                             },
                                             {
                                                 "type": "promql",
                                                 "spec": {
-                                                "name": "B",
-                                                "query": "sum(increase(flask_exporter_info[5m]))"
+                                                    "name": "B",
+                                                    "query": "sum(increase(flask_exporter_info[5m]))"
                                                 }
                                             }
                                         ]

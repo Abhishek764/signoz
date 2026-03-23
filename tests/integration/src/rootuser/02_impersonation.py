@@ -4,6 +4,7 @@ import requests
 
 from fixtures import types
 from fixtures.logger import setup_logger
+from fixtures.utils import get_user_role_names
 
 logger = setup_logger(__name__)
 
@@ -32,7 +33,7 @@ def test_impersonated_user_is_admin(signoz: types.SigNoz) -> None:
     Listing users is an admin-only endpoint.
     """
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
     )
 
@@ -46,4 +47,5 @@ def test_impersonated_user_is_admin(signoz: types.SigNoz) -> None:
         None,
     )
     assert root_user is not None
-    assert root_user["role"] == "ADMIN"
+    root_user_role_names = get_user_role_names(signoz, None, root_user["id"])
+    assert "signoz-admin" in root_user_role_names

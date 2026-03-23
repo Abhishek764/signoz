@@ -52,7 +52,7 @@ def test_root_user_signoz_admin_assignment(
 
     # Get the user from the /user/me endpoint and extract the id
     user_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

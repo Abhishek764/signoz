@@ -47,7 +47,7 @@ def test_user_invite_accept_role_grant(
     # Login with editor email and password
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
     user_me_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=2,
     )
@@ -102,7 +102,7 @@ def test_user_update_role_grant(
     # Get the editor user's id
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
     user_me_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=2,
     )
@@ -121,14 +121,14 @@ def test_user_update_role_grant(
     org_id = roles_data[0]["orgId"]
 
     # Update the user's role to viewer
-    update_payload = {"role": "VIEWER"}
+    update_payload = {"roleNames": ["signoz-viewer"]}
     update_response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{editor_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{editor_id}"),
         json=update_payload,
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert update_response.status_code == HTTPStatus.OK
+    assert update_response.status_code == HTTPStatus.NO_CONTENT
 
     # Check that user no longer has the editor role in the db
     with signoz.sqlstore.conn.connect() as conn:
@@ -179,7 +179,7 @@ def test_user_delete_role_revoke(
     # login with editor to get the user_id and check if user exists
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
     user_me_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=2,
     )

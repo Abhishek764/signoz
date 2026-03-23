@@ -26,7 +26,7 @@ def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> 
     assert "token" in pat_response["data"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
         headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
     )
@@ -85,7 +85,7 @@ def test_api_key_role(
     assert "token" in pat_response["data"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
         headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
     )
@@ -109,7 +109,7 @@ def test_api_key_role(
     assert "token" in pat_response["data"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
         headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
     )

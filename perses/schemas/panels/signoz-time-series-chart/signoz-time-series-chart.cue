@@ -1,12 +1,7 @@
 package model
 
-import (
-    tsModel "github.com/perses/plugins/timeserieschart/schemas@v0:model"
-)
-
 kind: "SigNozTimeSeriesChart"
 spec: close({
-    upstream:              tsModel.spec
     timePreference:        #TimePreference
     lineInterpolation?:    #LineInterpolation
     nullZeroValues?:       #NullZeroValues

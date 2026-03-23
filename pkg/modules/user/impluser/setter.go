@@ -327,13 +327,6 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
-	updaterUserRoles, err := module.getter.GetUserRoles(ctx, updatedBy)
-	if err != nil {
-		return nil, err
-	}
-
-	updaterUserRoleNames := roleNamesFromUserRoles(updaterUserRoles)
-
 	existingUserRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
 	if err != nil {
 		return nil, err
@@ -346,10 +339,6 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 	if len(updatable.RoleNames) > 0 {
 		grants, revokes = module.patchRolesNames(existingUserRoleNames, updatable.RoleNames)
 		rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
-	}
-
-	if rolesChanged && !slices.Contains(updaterUserRoleNames, authtypes.SigNozAdminRoleName) {
-		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
 	if rolesChanged && existingUser.ID == updatedBy {

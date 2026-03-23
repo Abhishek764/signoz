@@ -1446,7 +1446,7 @@ export const updateUserV2 = (
 	{ id }: UpdateUserV2PathParameters,
 	typesUpdatableUserDTO: BodyType<TypesUpdatableUserDTO>,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
@@ -1729,7 +1729,7 @@ export const invalidateGetMyUserV2 = async (
 export const updateMyUserV2 = (
 	typesUpdatableSelfUserDTO: BodyType<TypesUpdatableSelfUserDTO>,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/me`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },

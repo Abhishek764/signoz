@@ -7104,10 +7104,6 @@ paths:
               $ref: '#/components/schemas/TypesUpdatableUser'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "400":
           content:
@@ -7261,10 +7257,6 @@ paths:
               $ref: '#/components/schemas/TypesUpdatableSelfUser'
       responses:
         "204":
-          content:
-            application/json:
-              schema:
-                type: string
           description: No Content
         "401":
           content:

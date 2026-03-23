@@ -920,13 +920,17 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 
 func (module *setter) UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error {
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		// delete old user_role entries and create new ones from SSO
+		// delete old user_role entries
 		if err := module.userRoleStore.DeleteUserRoles(ctx, userID); err != nil {
 			return err
 		}
 
-		// create fresh ones
-		return module.createUserRoleEntries(ctx, orgID, userID, finalRoleNames)
+		// create fresh ones only if there are roles to assign
+		if len(finalRoleNames) > 0 {
+			return module.createUserRoleEntries(ctx, orgID, userID, finalRoleNames)
+		}
+
+		return nil
 	})
 }
 

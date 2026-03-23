@@ -122,6 +122,12 @@
       {
         "kind": "Panel",
         "spec": {
+          "name": "SigNozListPanel"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
           "name": "SigNozEverythingChart"
         }
       }

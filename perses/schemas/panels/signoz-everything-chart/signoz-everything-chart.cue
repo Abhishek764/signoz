@@ -23,7 +23,7 @@ spec: close({
     selectedLogFields?:    [...#LogField] | null
     selectedTracesFields?: [...#TelemetryFieldKey] | null
     isLogScale?:           bool
-    columnWidths?:         [string]: number
+    columnWidths?:         [string]: number // not a config choice — persisted user-resized column widths
     legendPosition?:       #LegendPosition
     customLegendColors?:   [string]: string
     contextLinks?:         #ContextLinks

@@ -185,7 +185,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Summary:             "Update my user v2",
 		Description:         "This endpoint updates the user I belong to",
 		Request:             new(types.UpdatableSelfUser),
-		RequestContentType:  "",
+		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,

@@ -180,6 +180,9 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 	if compositeQuery != nil {
 		// Build queries for each builder query
 		for queryName, query := range compositeQuery.BuilderQueries {
+			if query.Disabled {
+				continue
+			}
 			// making a local clone since we should not update the global params if there is sift by
 			start := params.Start
 			end := params.End
@@ -246,6 +249,9 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 
 		// Build queries for each expression
 		for _, query := range compositeQuery.BuilderQueries {
+			if query.Disabled {
+				continue
+			}
 			if query.Expression != query.QueryName {
 				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 

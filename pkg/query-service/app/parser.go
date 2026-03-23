@@ -16,10 +16,11 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
+	"log/slog"
+
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"log/slog"
 
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
@@ -958,6 +959,57 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			promQuery.Query = query.String()
+		}
+	}
+
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if query.Disabled {
+			continue
+		}
+		if query.Filters == nil {
+			continue
+		}
+		for _, filter := range query.Filters.Items {
+			if filter.Value == nil {
+				query.Disabled = true
+				break
+			}
+		}
+	}
+
+	// Disable queries that reference disabled queries in their expressions
+	// This needs to be done iteratively until no more queries are disabled
+	// because disabling one query may cause another dependent query to need disabling
+	for {
+		changed := false
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.Disabled {
+				continue
+			}
+			// Skip non-formula queries (where expression equals query name)
+			if query.QueryName == query.Expression {
+				continue
+			}
+
+			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, postprocess.EvalFuncs())
+			if err != nil {
+				// Expression parsing already validated earlier, skip gracefully
+				continue
+			}
+
+			// Check if any variable in the expression references a disabled query
+			for _, v := range expression.Vars() {
+				if refQuery, ok := queryRangeParams.CompositeQuery.BuilderQueries[v]; ok {
+					if refQuery.Disabled {
+						query.Disabled = true
+						changed = true
+						break
+					}
+				}
+			}
+		}
+		if !changed {
+			break
 		}
 	}
 

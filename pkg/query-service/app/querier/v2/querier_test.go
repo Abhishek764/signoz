@@ -2271,3 +2271,79 @@ func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
 		})
 	}
 }
+
+func TestV2DisabledQueriesAreNotExecuted(t *testing.T) {
+	// Test that queries with Disabled: true are not executed
+	params := &v3.QueryRangeParamsV3{
+		Start:   1675115596722,
+		End:     1675115596722 + 120*60*1000,
+		Step:    60,
+		Version: "v4",
+		CompositeQuery: &v3.CompositeQuery{
+			QueryType: v3.QueryTypeBuilder,
+			PanelType: v3.PanelTypeGraph,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					QueryName:          "A",
+					DataSource:         v3.DataSourceMetrics,
+					Temporality:        v3.Delta,
+					StepInterval:       60,
+					AggregateAttribute: v3.AttributeKey{Key: "test_metric", DataType: "float64", IsColumn: true},
+					AggregateOperator:  v3.AggregateOperatorSumRate,
+					TimeAggregation:    v3.TimeAggregationRate,
+					SpaceAggregation:   v3.SpaceAggregationSum,
+					Expression:         "A",
+					Disabled:           true, // This query is disabled
+				},
+				"B": {
+					QueryName:          "B",
+					DataSource:         v3.DataSourceMetrics,
+					Temporality:        v3.Delta,
+					StepInterval:       60,
+					AggregateAttribute: v3.AttributeKey{Key: "other_metric", DataType: "float64", IsColumn: true},
+					AggregateOperator:  v3.AggregateOperatorSumRate,
+					TimeAggregation:    v3.TimeAggregationRate,
+					SpaceAggregation:   v3.SpaceAggregationSum,
+					Expression:         "B",
+					Disabled:           false, // This query is enabled
+				},
+			},
+		},
+	}
+
+	cacheOpts := cache.Memory{
+		NumCounters: 10 * 1000,
+		MaxCost:     1 << 26,
+	}
+	c, err := cachetest.New(cache.Config{Provider: "memory", Memory: cacheOpts})
+	require.NoError(t, err)
+
+	opts := QuerierOptions{
+		Cache:        c,
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		TestingMode:  true,
+		ReturnedSeries: []*v3.Series{
+			{
+				Labels: map[string]string{"__name__": "other_metric"},
+				Points: []v3.Point{
+					{Timestamp: 1675115596722, Value: 1},
+				},
+			},
+		},
+	}
+	q := NewQuerier(opts)
+
+	_, errByName, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), params)
+	require.NoError(t, err)
+	require.Empty(t, errByName)
+
+	// Verify only the enabled query (B) was executed, not the disabled one (A)
+	executedQueries := q.QueriesExecuted()
+	require.Len(t, executedQueries, 1, "Expected exactly 1 query to be executed (only B, not A)")
+
+	// The executed query should be for "other_metric" (query B), not "test_metric" (query A)
+	require.Contains(t, executedQueries[0], "other_metric", "Expected query B to be executed")
+	require.NotContains(t, executedQueries[0], "test_metric", "Expected query A (disabled) to NOT be executed")
+}

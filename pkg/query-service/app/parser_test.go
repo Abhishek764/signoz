@@ -1574,3 +1574,215 @@ func TestParseQueryRangeParamsStepIntervalAdjustment(t *testing.T) {
 		})
 	}
 }
+
+func TestParseQueryRangeParams_DisablesQueriesWithEmptyFilterValues(t *testing.T) {
+	testCases := []struct {
+		name           string
+		filterValue    interface{}
+		expectDisabled bool
+	}{
+		{
+			name:           "nil filter value disables query",
+			filterValue:    nil,
+			expectDisabled: true,
+		},
+		{
+			name:           "empty string filter value keeps query enabled",
+			filterValue:    "",
+			expectDisabled: false,
+		},
+		{
+			name:           "non-empty string filter value keeps query enabled",
+			filterValue:    "some-value",
+			expectDisabled: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			queryRangeParams := v3.QueryRangeParamsV3{
+				Start: time.Now().Add(-1 * time.Hour).UnixMilli(),
+				End:   time.Now().UnixMilli(),
+				Step:  60,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeGraph,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							DataSource:         v3.DataSourceMetrics,
+							AggregateOperator:  v3.AggregateOperatorSum,
+							AggregateAttribute: v3.AttributeKey{Key: "test_metric", DataType: "float64"},
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key:      v3.AttributeKey{Key: "namespace"},
+										Operator: v3.FilterOperatorEqual,
+										Value:    tc.filterValue,
+									},
+								},
+							},
+							Expression:   "A",
+							StepInterval: 60,
+						},
+					},
+				},
+				Variables: map[string]interface{}{},
+			}
+
+			body := &bytes.Buffer{}
+			err := json.NewEncoder(body).Encode(queryRangeParams)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "/api/v3/query_range", body)
+
+			p, apiErr := ParseQueryRangeParams(req)
+			require.Nil(t, apiErr)
+
+			assert.Equal(t, tc.expectDisabled, p.CompositeQuery.BuilderQueries["A"].Disabled,
+				"Query disabled state mismatch for filter value: %v", tc.filterValue)
+		})
+	}
+}
+
+func TestParseQueryRangeParams_DisablesExpressionQueriesWithDisabledDependencies(t *testing.T) {
+	// Test that expression queries are disabled when their dependencies are disabled
+	queryRangeParams := v3.QueryRangeParamsV3{
+		Start: time.Now().Add(-1 * time.Hour).UnixMilli(),
+		End:   time.Now().UnixMilli(),
+		Step:  60,
+		CompositeQuery: &v3.CompositeQuery{
+			QueryType: v3.QueryTypeBuilder,
+			PanelType: v3.PanelTypeGraph,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					QueryName:          "A",
+					DataSource:         v3.DataSourceMetrics,
+					AggregateOperator:  v3.AggregateOperatorSum,
+					AggregateAttribute: v3.AttributeKey{Key: "metric_a", DataType: "float64"},
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "namespace"},
+								Operator: v3.FilterOperatorEqual,
+								Value:    "", // Empty value will disable this query
+							},
+						},
+					},
+					Expression:   "A",
+					StepInterval: 60,
+				},
+				"B": {
+					QueryName:          "B",
+					DataSource:         v3.DataSourceMetrics,
+					AggregateOperator:  v3.AggregateOperatorSum,
+					AggregateAttribute: v3.AttributeKey{Key: "metric_b", DataType: "float64"},
+					Expression:         "B",
+					StepInterval:       60,
+				},
+				"F1": {
+					QueryName:  "F1",
+					Expression: "A + B", // This depends on A, which is disabled
+				},
+			},
+		},
+		Variables: map[string]interface{}{},
+	}
+
+	body := &bytes.Buffer{}
+	err := json.NewEncoder(body).Encode(queryRangeParams)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/api/v3/query_range", body)
+
+	p, apiErr := ParseQueryRangeParams(req)
+	require.Nil(t, apiErr)
+
+	// A should be disabled because of empty filter value
+	assert.True(t, p.CompositeQuery.BuilderQueries["A"].Disabled, "Query A should be disabled due to empty filter value")
+
+	// B should not be disabled
+	assert.False(t, p.CompositeQuery.BuilderQueries["B"].Disabled, "Query B should not be disabled")
+
+	// F1 should be disabled because it depends on disabled query A
+	assert.True(t, p.CompositeQuery.BuilderQueries["F1"].Disabled, "Query F1 should be disabled because it depends on disabled query A")
+}
+
+func TestParseQueryRangeParams_DisablesMultipleFormulaDependencies(t *testing.T) {
+	// Test that multiple formula queries depending on a disabled query are all disabled
+	queryRangeParams := v3.QueryRangeParamsV3{
+		Start: time.Now().Add(-1 * time.Hour).UnixMilli(),
+		End:   time.Now().UnixMilli(),
+		Step:  60,
+		CompositeQuery: &v3.CompositeQuery{
+			QueryType: v3.QueryTypeBuilder,
+			PanelType: v3.PanelTypeGraph,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					QueryName:          "A",
+					DataSource:         v3.DataSourceMetrics,
+					AggregateOperator:  v3.AggregateOperatorSum,
+					AggregateAttribute: v3.AttributeKey{Key: "metric_a", DataType: "float64"},
+					Filters: &v3.FilterSet{
+						Operator: "AND",
+						Items: []v3.FilterItem{
+							{
+								Key:      v3.AttributeKey{Key: "namespace"},
+								Operator: v3.FilterOperatorEqual,
+								Value:    nil, // nil value will disable this query
+							},
+						},
+					},
+					Expression:   "A",
+					StepInterval: 60,
+				},
+				"B": {
+					QueryName:          "B",
+					DataSource:         v3.DataSourceMetrics,
+					AggregateOperator:  v3.AggregateOperatorSum,
+					AggregateAttribute: v3.AttributeKey{Key: "metric_b", DataType: "float64"},
+					Expression:         "B",
+					StepInterval:       60,
+				},
+				"C": {
+					QueryName:          "C",
+					DataSource:         v3.DataSourceMetrics,
+					AggregateOperator:  v3.AggregateOperatorSum,
+					AggregateAttribute: v3.AttributeKey{Key: "metric_c", DataType: "float64"},
+					Expression:         "C",
+					StepInterval:       60,
+				},
+				"F1": {
+					QueryName:  "F1",
+					Expression: "A + B", // Depends on A (disabled) and B
+				},
+				"F2": {
+					QueryName:  "F2",
+					Expression: "B + C", // Depends on B and C (both enabled)
+				},
+			},
+		},
+		Variables: map[string]interface{}{},
+	}
+
+	body := &bytes.Buffer{}
+	err := json.NewEncoder(body).Encode(queryRangeParams)
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/api/v3/query_range", body)
+
+	p, apiErr := ParseQueryRangeParams(req)
+	require.Nil(t, apiErr)
+
+	// A should be disabled because of nil filter value
+	assert.True(t, p.CompositeQuery.BuilderQueries["A"].Disabled, "Query A should be disabled")
+
+	// B and C should not be disabled
+	assert.False(t, p.CompositeQuery.BuilderQueries["B"].Disabled, "Query B should not be disabled")
+	assert.False(t, p.CompositeQuery.BuilderQueries["C"].Disabled, "Query C should not be disabled")
+
+	// F1 should be disabled because it depends on A
+	assert.True(t, p.CompositeQuery.BuilderQueries["F1"].Disabled, "Query F1 should be disabled because it depends on A")
+
+	// F2 should NOT be disabled because both B and C are enabled
+	assert.False(t, p.CompositeQuery.BuilderQueries["F2"].Disabled, "Query F2 should not be disabled because both B and C are enabled")
+}

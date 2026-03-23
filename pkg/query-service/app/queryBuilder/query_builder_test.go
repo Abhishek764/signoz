@@ -255,7 +255,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 							},
 						},
 						Expression:   "A",
-						Disabled:     true,
+						Disabled:     false,
 						StepInterval: 60,
 						OrderBy: []v3.OrderBy{
 							{
@@ -292,7 +292,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 							Items:    []v3.FilterItem{},
 						},
 						Expression:   "B",
-						Disabled:     true,
+						Disabled:     false,
 						StepInterval: 60,
 						OrderBy: []v3.OrderBy{
 							{
@@ -340,6 +340,62 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		require.Contains(t, queries["F1"], "SELECT A.`os.type` as `os.type`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.memory.usage'] AND temporality = '' AND __normalized = false AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name IN ['system.memory.usage'] AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) as A  INNER JOIN (SELECT * FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.network.io'] AND temporality = '' AND __normalized = false AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000) as filtered_time_series USING fingerprint WHERE metric_name IN ['system.network.io'] AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) HAVING value > 4) as B  ON A.`os.type` = B.`os.type` AND A.`ts` = B.`ts`")
 		require.NoError(t, err)
 
+	})
+	t.Run("TestFormulaWithDisabledDependencies", func(t *testing.T) {
+		// Test that formula queries are skipped when their dependencies are disabled
+		q := &v3.QueryRangeParamsV3{
+			Start: 1735036101000,
+			End:   1735637901000,
+			Step:  60,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:         "A",
+						DataSource:        v3.DataSourceMetrics,
+						AggregateOperator: v3.AggregateOperatorAvg,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "system.memory.usage",
+							DataType: v3.AttributeKeyDataTypeFloat64,
+						},
+						Expression:   "A",
+						Disabled:     true, // A is disabled
+						StepInterval: 60,
+					},
+					"B": {
+						QueryName:         "B",
+						DataSource:        v3.DataSourceMetrics,
+						AggregateOperator: v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "system.network.io",
+							DataType: v3.AttributeKeyDataTypeFloat64,
+						},
+						Expression:   "B",
+						Disabled:     true, // B is disabled
+						StepInterval: 60,
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A + B",
+						Disabled:   false,
+					},
+				},
+			},
+		}
+		qbOptions := QueryBuilderOptions{
+			BuildMetricQuery: metricsv3.PrepareMetricQuery,
+		}
+		qb := NewQueryBuilder(qbOptions)
+
+		queries, err := qb.PrepareQueries(q)
+		require.NoError(t, err)
+		// A and B are disabled, so they should not be in the queries map
+		require.NotContains(t, queries, "A")
+		require.NotContains(t, queries, "B")
+		// F1 depends on disabled queries, so it should produce invalid/empty SQL
+		// The formula is still "built" but with empty subqueries since dependencies are missing
+		// This is expected - the parser.go disables F1 before PrepareQueries is called
 	})
 }
 

@@ -164,6 +164,9 @@ func (q *querier) runBuilderQueries(ctx context.Context, orgID valuer.UUID, para
 	var wg sync.WaitGroup
 
 	for queryName, builderQuery := range params.CompositeQuery.BuilderQueries {
+		if builderQuery.Disabled {
+			continue
+		}
 		if queryName == builderQuery.Expression {
 			wg.Add(1)
 			go q.runBuilderQuery(ctx, orgID, builderQuery, params, cacheKeys, ch, &wg)

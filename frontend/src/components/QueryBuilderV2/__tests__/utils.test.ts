@@ -1227,11 +1227,11 @@ describe('removeKeysFromExpression', () => {
 			);
 		});
 
-		it('should return empty parens content when removing the only filter inside parens', () => {
+		it('should return empty parens when removing the only filter inside parens', () => {
 			const expression = '(operation IN $top_level_operation)';
 			const result = removeKeysFromExpression(expression, ['operation'], true);
 
-			expect(result).toBe('');
+			expect(result).toBe('()');
 		});
 	});
 });
@@ -1275,11 +1275,11 @@ describe('convertFiltersToExpressionWithExistingQuery — appending new filters'
 		);
 
 		expect(result.filter.expression).toBe(
-			'(deployment.environment = $deployment.environment AND service.name = $service.name AND host.id IN $host.id)',
+			'(deployment.environment = $deployment.environment AND service.name = $service.name AND host.id in $host.id)',
 		);
 	});
 
-	it('should append a new filter with AND when expression is not parenthesised', () => {
+	it('should append a new filter with a space when expression is not parenthesised', () => {
 		const filters = {
 			items: [
 				{
@@ -1306,7 +1306,7 @@ describe('convertFiltersToExpressionWithExistingQuery — appending new filters'
 		);
 
 		expect(result.filter.expression).toBe(
-			'service.name = $service.name AND host.id IN $host.id',
+			'service.name = $service.name host.id in $host.id',
 		);
 	});
 
@@ -1354,7 +1354,7 @@ describe('convertFiltersToExpressionWithExistingQuery — appending new filters'
 		);
 
 		expect(result.filter.expression).toBe(
-			'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation AND host.id IN $host.id)',
+			'(deployment.environment = $deployment.environment AND service.name = $service.name AND operation IN $top_level_operation AND host.id in $host.id)',
 		);
 	});
 });

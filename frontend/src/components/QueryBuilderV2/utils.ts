@@ -526,7 +526,7 @@ export const convertFiltersToExpressionWithExistingQuery = (
 			? `${trimmedQuery.slice(0, -1)} AND ${
 					nonExistingFilterExpression.expression
 			  })`
-			: `${trimmedQuery} AND ${nonExistingFilterExpression.expression}`;
+			: `${trimmedQuery} ${nonExistingFilterExpression.expression}`;
 		return {
 			filters: updatedFilters,
 			filter: { expression },

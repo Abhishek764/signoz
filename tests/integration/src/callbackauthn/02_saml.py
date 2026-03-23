@@ -165,7 +165,9 @@ def test_idp_initiated_saml_authn(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Assert that the user was created in signoz.
-    found_user = get_user_by_email(signoz, admin_token, "viewer.idp.initiated@saml.integration.test")
+    found_user = get_user_by_email(
+        signoz, admin_token, "viewer.idp.initiated@saml.integration.test"
+    )
     assert found_user is not None
 
     # Confirm role
@@ -675,4 +677,6 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     assert found_user is not None
     assert found_user["status"] == "active"
     found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
-    assert "signoz-viewer" in found_user_role_names  # default role from SSO domain config
+    assert (
+        "signoz-viewer" in found_user_role_names
+    )  # default role from SSO domain config

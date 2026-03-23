@@ -337,8 +337,29 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 	var grants, revokes []string
 	var rolesChanged bool
 	if len(updatable.RoleNames) > 0 {
+		// validate that all requested role names exist before making any changes
+		foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, updatable.RoleNames)
+		if err != nil {
+			return nil, err
+		}
+		if len(foundRoles) != len(updatable.RoleNames) {
+			foundNames := make(map[string]struct{}, len(foundRoles))
+			for _, r := range foundRoles {
+				foundNames[r.Name] = struct{}{}
+			}
+			var missing []string
+			for _, name := range updatable.RoleNames {
+				if _, ok := foundNames[name]; !ok {
+					missing = append(missing, name)
+				}
+			}
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "role names not found: %v", missing)
+		}
+
 		grants, revokes = module.patchRolesNames(existingUserRoleNames, updatable.RoleNames)
 		rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
+	} else {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "roleNames must not be empty")
 	}
 
 	if rolesChanged && existingUser.ID == updatedBy {

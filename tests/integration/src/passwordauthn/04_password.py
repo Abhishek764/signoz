@@ -36,7 +36,9 @@ def test_change_password(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Get the user id
-    found_user = get_user_by_email(signoz, admin_token, "admin+password@integration.test")
+    found_user = get_user_by_email(
+        signoz, admin_token, "admin+password@integration.test"
+    )
     assert found_user is not None
 
     # Try logging in with the password
@@ -86,7 +88,9 @@ def test_reset_password(
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get the user id for admin+password@integration.test
-    found_user = get_user_by_email(signoz, admin_token, "admin+password@integration.test")
+    found_user = get_user_by_email(
+        signoz, admin_token, "admin+password@integration.test"
+    )
     assert found_user is not None
 
     response = requests.get(
@@ -129,7 +133,9 @@ def test_reset_password_with_no_password(
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get the user id for admin+password@integration.test
-    found_user = get_user_by_email(signoz, admin_token, "admin+password@integration.test")
+    found_user = get_user_by_email(
+        signoz, admin_token, "admin+password@integration.test"
+    )
     assert found_user is not None
 
     with signoz.sqlstore.conn.connect() as conn:

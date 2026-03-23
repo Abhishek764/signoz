@@ -499,8 +499,12 @@
                         "name": "response size buckets"
                     },
                     "plugin": {
-                        "kind": "HistogramChart",
-                        "spec": {}
+                        "kind": "SigNozHistogramChart",
+                        "spec": {
+                            "histogramBuckets": {
+                                "bucketCount": 60
+                            }
+                        }
                     },
                     "queries": [
                         {

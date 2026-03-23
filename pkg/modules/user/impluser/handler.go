@@ -189,7 +189,7 @@ func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	users, err := h.getter.ListByOrgIDDeprecated(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return

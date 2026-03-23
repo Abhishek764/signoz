@@ -217,29 +217,6 @@ export const convertExpressionToFilters = (
 
 	return filters;
 };
-/**
- * Returns true if the expression is enclosed by a single matching outer parenthesis pair,
- * e.g. "(a AND b AND c)". Used to decide whether to insert new filters inside or append.
- */
-const isWrappedInParens = (expr: string): boolean => {
-	const trimmed = expr.trim();
-	if (!trimmed.startsWith('(') || !trimmed.endsWith(')')) {
-		return false;
-	}
-	let depth = 0;
-	for (let i = 0; i < trimmed.length - 1; i++) {
-		if (trimmed[i] === '(') {
-			depth += 1;
-		} else if (trimmed[i] === ')') {
-			depth -= 1;
-		}
-		if (depth === 0) {
-			return false;
-		} // outer paren closed before the end
-	}
-	return true;
-};
-
 const getQueryPairsMap = (query: string): Map<string, IQueryPair> => {
 	const queryPairs = extractQueryPairs(query);
 	const queryPairsMap: Map<string, IQueryPair> = new Map();
@@ -518,18 +495,13 @@ export const convertFiltersToExpressionWithExistingQuery = (
 	});
 
 	if (nonExistingFilterExpression.expression) {
-		const trimmedQuery = modifiedQuery.trim();
-		// If the existing expression is a single parenthesised group, insert the new
-		// filter inside the closing paren so the group stays intact.
-		// e.g. "(a AND b)" + "c" => "(a AND b AND c)" not "(a AND b) c"
-		const expression = isWrappedInParens(trimmedQuery)
-			? `${trimmedQuery.slice(0, -1)} AND ${
-					nonExistingFilterExpression.expression
-			  })`
-			: `${trimmedQuery} ${nonExistingFilterExpression.expression}`;
 		return {
 			filters: updatedFilters,
-			filter: { expression },
+			filter: {
+				expression: `${modifiedQuery.trim()} ${
+					nonExistingFilterExpression.expression
+				}`,
+			},
 		};
 	}
 

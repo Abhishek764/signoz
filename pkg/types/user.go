@@ -51,6 +51,15 @@ type DeprecatedUser struct {
 	Role Role `json:"role"`
 }
 
+type UpdatableSelfUser struct {
+	DisplayName string `json:"displayName" required:"true"`
+}
+
+type UpdatableUser struct {
+	DisplayName string   `json:"displayName" required:"true"`
+	RoleNames   []string `json:"roleNames" required:"true" nullable:"false"`
+}
+
 type PostableRegisterOrgAndAdmin struct {
 	Name           string       `json:"name"`
 	Email          valuer.Email `json:"email"`

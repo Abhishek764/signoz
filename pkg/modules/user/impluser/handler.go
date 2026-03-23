@@ -155,6 +155,25 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, userWithRoles)
 }
 
+func (h *handler) UpdateMyUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, user)
+}
+
 func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -193,7 +212,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, users)
 }
 
-func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UpdateUserDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -211,13 +230,40 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedUser, err := h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), id, &user, claims.UserID)
+	updatedUser, err := h.setter.UpdateUserDeprecated(ctx, valuer.MustNewUUID(claims.OrgID), id, &user, claims.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	render.Success(w, http.StatusOK, updatedUser)
+}
+
+func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	updatableUser := new(types.UpdatableUser)
+	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	_, err = h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), updatableUser, valuer.MustNewUUID(claims.UserID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {

@@ -179,6 +179,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/users/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.UpdateMyUser), handler.OpenAPIDef{
+		ID:                  "UpdateMyUserV2",
+		Tags:                []string{"users"},
+		Summary:             "Update my user v2",
+		Description:         "This endpoint updates the user I belong to",
+		Request:             new(types.UpdatableSelfUser),
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
 		ID:                  "GetUser",
 		Tags:                []string{"users"},
@@ -196,7 +213,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.UpdateUserDeprecated), handler.OpenAPIDef{
 		ID:                  "UpdateUser",
 		Tags:                []string{"users"},
 		Summary:             "Update user",
@@ -206,6 +223,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Response:            new(types.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
+		ID:                  "UpdateUserV2",
+		Tags:                []string{"users"},
+		Summary:             "Update user v2",
+		Description:         "This endpoint updates the user by id",
+		Request:             new(types.UpdatableUser),
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),

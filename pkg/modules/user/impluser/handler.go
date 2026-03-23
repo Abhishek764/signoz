@@ -106,7 +106,7 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, user)
 }
 
-func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetMyUserDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -123,6 +123,36 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, user)
+}
+
+func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userWithRoles := &authtypes.UserWithRoles{
+		User:  user,
+		Roles: userRoles,
+	}
+
+	render.Success(w, http.StatusOK, userWithRoles)
 }
 
 func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {

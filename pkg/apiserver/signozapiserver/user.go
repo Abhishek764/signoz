@@ -145,7 +145,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUserDeprecated), handler.OpenAPIDef{
 		ID:                  "GetMyUser",
 		Tags:                []string{"users"},
 		Summary:             "Get my user",
@@ -153,6 +153,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(types.DeprecatedUser),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
+		ID:                  "GetMyUserV2",
+		Tags:                []string{"users"},
+		Summary:             "Get my user v2",
+		Description:         "This endpoint returns the user I belong to",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(authtypes.UserWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

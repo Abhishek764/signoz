@@ -101,6 +101,7 @@ type Handler interface {
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
 	GetUser(http.ResponseWriter, *http.Request)
+	GetMyUserDeprecated(http.ResponseWriter, *http.Request)
 	GetMyUser(http.ResponseWriter, *http.Request)
 	GetUserRoles(http.ResponseWriter, *http.Request)
 

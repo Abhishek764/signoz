@@ -116,7 +116,7 @@ func (at *alertManagerTemplater) expandBody(
 			sb.WriteString(part)
 			// Add separator if not last alert
 			if i < len(ntd.Alerts)-1 {
-				sb.WriteString("<br><br>")
+				sb.WriteString("\n\n")
 			}
 		}
 		result := sb.String()

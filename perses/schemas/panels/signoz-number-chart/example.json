@@ -1,0 +1,36 @@
+{
+    "kind": "SigNozNumberChart",
+    "spec": {
+        "visualization": {
+            "timePreference": "GLOBAL_TIME"
+        },
+        "formatting": {
+            "yAxisUnit": "none",
+            "decimalPrecision": 1
+        },
+        "contextLinks": {
+            "linksData": [
+                {
+                    "label": "View details",
+                    "url": "http://localhost:8080/details"
+                }
+            ]
+        },
+        "thresholds": [
+            {
+                "thresholdValue": 1200000,
+                "thresholdOperator": ">",
+                "thresholdUnit": "none",
+                "thresholdColor": "Red",
+                "thresholdFormat": "Text"
+            },
+            {
+                "thresholdValue": 1200000,
+                "thresholdOperator": "<=",
+                "thresholdUnit": "none",
+                "thresholdColor": "Green",
+                "thresholdFormat": "Text"
+            }
+        ]
+    }
+}

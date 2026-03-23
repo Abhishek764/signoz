@@ -1,0 +1,32 @@
+{
+    "kind": "SigNozTableChart",
+    "spec": {
+        "visualization": {
+            "timePreference": "GLOBAL_TIME"
+        },
+        "formatting": {
+            "columnUnits": {
+                "A": "s"
+            },
+            "decimalPrecision": 2
+        },
+        "contextLinks": {
+            "linksData": [
+                {
+                    "label": "View trace",
+                    "url": "http://localhost:8080/trace/{{traceID}}"
+                }
+            ]
+        },
+        "thresholds": [
+            {
+                "thresholdValue": 1,
+                "thresholdOperator": ">",
+                "thresholdUnit": "min",
+                "thresholdColor": "Red",
+                "thresholdFormat": "Text",
+                "thresholdTableOptions": "A"
+            }
+        ]
+    }
+}

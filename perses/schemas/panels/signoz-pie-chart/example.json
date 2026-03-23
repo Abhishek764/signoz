@@ -1,0 +1,27 @@
+{
+    "kind": "SigNozPieChart",
+    "spec": {
+        "visualization": {
+            "timePreference": "GLOBAL_TIME"
+        },
+        "formatting": {
+            "yAxisUnit": "none",
+            "decimalPrecision": 1
+        },
+        "legend": {
+            "customColors": {
+                "\"201\"": "#2bc051",
+                "\"400\"": "#cc462e",
+                "\"500\"": "#ff0000"
+            }
+        },
+        "contextLinks": {
+            "linksData": [
+                {
+                    "label": "View breakdown",
+                    "url": "http://localhost:8080/breakdown"
+                }
+            ]
+        }
+    }
+}

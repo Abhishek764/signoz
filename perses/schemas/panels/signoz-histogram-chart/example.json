@@ -1,0 +1,23 @@
+{
+    "kind": "SigNozHistogramChart",
+    "spec": {
+        "histogramBuckets": {
+            "bucketCount": 60,
+            "bucketWidth": 100,
+            "mergeAllActiveQueries": true
+        },
+        "legend": {
+            "customColors": {
+                "series-A": "#9ea5f7"
+            }
+        },
+        "contextLinks": {
+            "linksData": [
+                {
+                    "label": "View histogram details",
+                    "url": "http://localhost:8080/histogram"
+                }
+            ]
+        }
+    }
+}

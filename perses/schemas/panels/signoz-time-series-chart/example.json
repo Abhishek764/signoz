@@ -1,0 +1,48 @@
+{
+    "kind": "SigNozTimeSeriesChart",
+    "spec": {
+        "visualization": {
+            "timePreference": "GLOBAL_TIME",
+            "fillSpans": true
+        },
+        "formatting": {
+            "yAxisUnit": "By",
+            "decimalPrecision": 3
+        },
+        "axes": {
+            "softMin": 0,
+            "softMax": 800,
+            "isLogScale": true
+        },
+        "legend": {
+            "position": "right",
+            "customColors": {
+                "{service.name=\"sampleapp-gateway\"}": "#9ea5f7"
+            }
+        },
+        "contextLinks": {
+            "linksData": [
+                {
+                    "label": "View service details",
+                    "url": "http://localhost:8080/{{_service.name}}?dfddf=%7B%7Blimit%7D%7D"
+                }
+            ]
+        },
+        "thresholds": [
+            {
+                "thresholdValue": 1024,
+                "thresholdUnit": "By",
+                "thresholdColor": "Red",
+                "thresholdFormat": "Text",
+                "thresholdLabel": "upper limit"
+            },
+            {
+                "thresholdValue": 100,
+                "thresholdUnit": "By",
+                "thresholdColor": "Orange",
+                "thresholdFormat": "Text",
+                "thresholdLabel": "kinda bad"
+            }
+        ]
+    }
+}

@@ -147,9 +147,14 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	roles := make([]*authtypes.Role, len(userRoles))
+	for idx, userRole := range userRoles {
+		roles[idx] = authtypes.NewRoleFromStorableRole(userRole.Role)
+	}
+
 	userWithRoles := &authtypes.UserWithRoles{
 		User:  user,
-		Roles: userRoles,
+		Roles: roles,
 	}
 
 	render.Success(w, http.StatusOK, userWithRoles)
@@ -562,5 +567,10 @@ func (h *handler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 	}
 
-	render.Success(w, http.StatusOK, userRoles)
+	roles := make([]*authtypes.Role, len(userRoles))
+	for idx, userRole := range userRoles {
+		roles[idx] = authtypes.NewRoleFromStorableRole(userRole.Role)
+	}
+
+	render.Success(w, http.StatusOK, roles)
 }

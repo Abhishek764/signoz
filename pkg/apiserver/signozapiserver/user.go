@@ -339,7 +339,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user roles by user id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*authtypes.UserRole, 0),
+		Response:            make([]*authtypes.Role, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},

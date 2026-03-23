@@ -437,6 +437,48 @@ export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 }
 
+export interface AuthtypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	roles?: AuthtypesRoleDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -2714,6 +2756,24 @@ export interface TypesStorableAPIKeyDTO {
 	userId?: string;
 }
 
+export interface TypesUpdatableSelfUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName: string;
+}
+
+export interface TypesUpdatableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	/**
+	 * @type array
+	 */
+	roleNames: string[];
+}
+
 export interface TypesUserDTO {
 	/**
 	 * @type string
@@ -3680,6 +3740,42 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListUsersV2200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateUserV2PathParameters = {
+	id: string;
+};
+export type GetUserRolesPathParameters = {
+	id: string;
+};
+export type GetUserRoles200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesRoleDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMyUserV2200 = {
+	data: AuthtypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */

@@ -60,8 +60,9 @@ type Getter interface {
 	// Get root user by org id.
 	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error)
 
-	// Get gets the users based on the given id
-	ListByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
+	// Get gets the users based on the given org id
+	ListByOrgIDDeprecated(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
+	ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
 
 	// Get deprecated user object by orgID and id.
 	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
@@ -93,6 +94,8 @@ type Handler interface {
 	CreateInvite(http.ResponseWriter, *http.Request)
 	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
+	// users
+	ListUsersDeprecated(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)

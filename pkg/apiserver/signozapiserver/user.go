@@ -111,7 +111,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsers), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsersDeprecated), handler.OpenAPIDef{
 		ID:                  "ListUsers",
 		Tags:                []string{"users"},
 		Summary:             "List users",
@@ -119,6 +119,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            make([]*types.DeprecatedUser, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsers), handler.OpenAPIDef{
+		ID:                  "ListUsersV2",
+		Tags:                []string{"users"},
+		Summary:             "List users v2",
+		Description:         "This endpoint lists all users for the organization",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            make([]*types.User, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

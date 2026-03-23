@@ -37,7 +37,7 @@ func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID)
 	return rootUser, userRoles, nil
 }
 
-func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
+func (module *getter) ListByOrgIDDeprecated(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -82,6 +82,23 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	}
 
 	return deprecatedUsers, nil
+}
+
+func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
+	users, err := module.store.ListUsersByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter root users if feature flag `hide_root_users` is true
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
+
+	if hideRootUsers {
+		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
+	}
+
+	return users, nil
 }
 
 func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.DeprecatedUser, error) {

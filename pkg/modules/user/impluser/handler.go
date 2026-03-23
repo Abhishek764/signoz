@@ -125,6 +125,25 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, user)
 }
 
+func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, users)
+}
+
 func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

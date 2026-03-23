@@ -1,0 +1,58 @@
+{
+  "name": "@signoz/signoz-panels",
+  "version": "0.0.1",
+  "description": "SigNoz panel plugins",
+  "perses": {
+    "schemasPath": ".",
+    "plugins": [
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozTimeSeriesChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozBarChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozNumberChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozPieChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozTableChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozHistogramChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozListPanel"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
+          "name": "SigNozIgnoredFieldsChart"
+        }
+      }
+    ]
+  }
+}

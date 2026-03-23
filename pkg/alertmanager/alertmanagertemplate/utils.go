@@ -8,7 +8,6 @@ import (
 	"text/template/parse"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -50,13 +49,12 @@ func WrapDollarVariables(src string) (string, error) {
 		return src, nil
 	}
 
-	funcMap := alertmanagertypes.AdditionalFuncMap()
 	// Create a new parse.Tree directly
 	tree := parse.New("template")
 	tree.Mode = parse.SkipFuncCheck
 
 	// Parse the template
-	_, err := tree.Parse(src, "{{", "}}", make(map[string]*parse.Tree), funcMap)
+	_, err := tree.Parse(src, "{{", "}}", make(map[string]*parse.Tree), nil)
 	if err != nil {
 		return "", err
 	}
@@ -160,10 +158,9 @@ func ExtractUsedVariables(src string) (map[string]bool, error) {
 	}
 
 	// Validate template syntax.
-	funcMap := alertmanagertypes.AdditionalFuncMap()
 	tree := parse.New("template")
 	tree.Mode = parse.SkipFuncCheck
-	if _, err := tree.Parse(preamble.String()+src, "{{", "}}", make(map[string]*parse.Tree), funcMap); err != nil {
+	if _, err := tree.Parse(preamble.String()+src, "{{", "}}", make(map[string]*parse.Tree), nil); err != nil {
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInternal, "failed to extract used variables")
 	}
 

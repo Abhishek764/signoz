@@ -82,6 +82,7 @@ func (at *alertManagerTemplater) expandTitle(
 	}
 
 	if input.DefaultTitleTemplate == "" {
+		at.logger.WarnContext(ctx, "missing default title template")
 		return "", nil, nil
 	}
 	// Fall back to the default title template if present in the input
@@ -126,6 +127,7 @@ func (at *alertManagerTemplater) expandBody(
 	}
 
 	if input.DefaultBodyTemplate == "" {
+		at.logger.WarnContext(ctx, "missing default body template")
 		return "", nil, nil
 	}
 	// Fall back to the default body template if present in the input

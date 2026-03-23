@@ -151,7 +151,7 @@ Description: Request rate exceeded 10k/s`,
 		},
 		{
 			// Pod crash loop on multiple pods — body is expanded once per alert
-			// and joined with "<br><br>", with the pod name pulled from labels.
+			// and joined with "\n\n", with the pod name pulled from labels.
 			name: "new template: pod crash loop on multiple pods, body per-alert",
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-1"}, nil, true),
@@ -163,7 +163,7 @@ Description: Request rate exceeded 10k/s`,
 				BodyTemplate:  "$labels.pod is crash looping",
 			},
 			wantTitle: "PodCrashLoop: 3 pods affected",
-			wantBody:  "api-worker-1 is crash looping<br><br>api-worker-2 is crash looping<br><br>api-worker-3 is crash looping",
+			wantBody:  "api-worker-1 is crash looping\n\napi-worker-2 is crash looping\n\napi-worker-3 is crash looping",
 		},
 		{
 			// Incident partially resolved — one service still down, one recovered.
@@ -178,7 +178,7 @@ Description: Request rate exceeded 10k/s`,
 				BodyTemplate:  "$labels.service ($status)",
 			},
 			wantTitle: "1 firing, 1 resolved",
-			wantBody:  "auth-service (firing)<br><br>payment-service (resolved)",
+			wantBody:  "auth-service (firing)\n\npayment-service (resolved)",
 		},
 		{
 			// $environment is not a known AlertData or NotificationTemplateData field,

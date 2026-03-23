@@ -626,13 +626,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid ClickHouse SQL spec",
 			)
 		}
-		if spec.Query == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"ClickHouse SQL query is required",
-			)
-		}
-		return nil
+		return spec.Validate()
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,

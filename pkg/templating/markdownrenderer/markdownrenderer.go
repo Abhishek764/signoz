@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
@@ -11,9 +12,8 @@ import (
 type OutputFormat int
 
 const (
-	MarkdownFormatPlainText OutputFormat = iota
-	MarkdownFormatHTML
-	MarkdownFormatSlackMarkdown
+	MarkdownFormatHTML OutputFormat = iota
+	MarkdownFormatSlackBlockKit
 )
 
 // MarkdownRenderer is the interface for rendering markdown to different formats.
@@ -23,8 +23,9 @@ type MarkdownRenderer interface {
 }
 
 type markdownRenderer struct {
-	logger       *slog.Logger
-	htmlRenderer goldmark.Markdown
+	logger                *slog.Logger
+	htmlRenderer          goldmark.Markdown
+	slackBlockKitRenderer goldmark.Markdown
 }
 
 func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
@@ -32,20 +33,22 @@ func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
 		// basic GitHub Flavored Markdown extensions
 		goldmark.WithExtensions(extension.GFM),
 	)
+	slackBlockKitRenderer := goldmark.New(
+		goldmark.WithExtensions(slackblockkitrenderer.BlockKitV2),
+	)
 	return &markdownRenderer{
-		logger:       logger,
-		htmlRenderer: htmlRenderer,
+		logger:                logger,
+		htmlRenderer:          htmlRenderer,
+		slackBlockKitRenderer: slackBlockKitRenderer,
 	}
 }
 
 func (r *markdownRenderer) Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error) {
 	switch outputFormat {
-	case MarkdownFormatPlainText:
-		return r.renderPlainText(ctx, markdown)
 	case MarkdownFormatHTML:
 		return r.renderHTML(ctx, markdown)
-	case MarkdownFormatSlackMarkdown:
-		return r.renderSlackMarkdown(ctx, markdown)
+	case MarkdownFormatSlackBlockKit:
+		return r.renderSlackBlockKit(ctx, markdown)
 	}
 	return "", nil
 }

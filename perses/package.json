@@ -128,7 +128,7 @@
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozEverythingChart"
+          "name": "SigNozIgnoredFieldsChart"
         }
       }
     ]

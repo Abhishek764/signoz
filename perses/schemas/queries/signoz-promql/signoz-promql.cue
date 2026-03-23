@@ -1,7 +1,7 @@
 package model
 
 // Source: pkg/types/querybuildertypes/querybuildertypesv5/prom_query.go — PromQuery
-kind: "SigNozPromQL"
+kind: "SigNozPromQLQuery"
 spec: close({
 	name:      #QueryName
 	query:     string & !=""

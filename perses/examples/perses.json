@@ -697,16 +697,22 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozPromQLQuery",
+                                    "kind": "SigNozCompositeQuery",
                                     "spec": {
                                         "queries": [
                                             {
+                                                "type": "promql",
+                                                "spec": {
                                                 "name": "A",
                                                 "query": "sum(rate(flask_exporter_info[5m]))"
+                                                }
                                             },
                                             {
+                                                "type": "promql",
+                                                "spec": {
                                                 "name": "B",
                                                 "query": "sum(increase(flask_exporter_info[5m]))"
+                                                }
                                             }
                                         ]
                                     }

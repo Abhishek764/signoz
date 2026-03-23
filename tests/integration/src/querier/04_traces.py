@@ -1,4 +1,3 @@
-from asyncio.unix_events import SelectorEventLoop
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List
@@ -508,7 +507,7 @@ def test_traces_list(
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 2: order by attribute timestamp field which is there in attributes as well
-        # This breaks as (timestamp >= '1773738262411000000') AND (timestamp < '1773738562411000000') order by attributes_string['timestamp'] as timestamp is invalid query
+        # attribute.timestamp gets adjusted to span.timestamp
         pytest.param(
             {
                 "type": "builder_query",
@@ -516,6 +515,11 @@ def test_traces_list(
                     "name": "A",
                     "signal": "traces",
                     "disabled": False,
+                    "selectFields": [
+                        {"name": "span_id"},
+                        {"name": "span.timestamp"},
+                        {"name": "trace_id"},
+                    ],
                     "order": [
                         {"key": {"name": "attribute.timestamp"}, "direction": "desc"}
                     ],
@@ -523,7 +527,11 @@ def test_traces_list(
                 },
             },
             HTTPStatus.OK,
-            lambda x: [],  # type: Callable[[List[Traces]], List[Any]]
+            lambda x: [
+                x[3].span_id,
+                format_timestamp(x[3].timestamp),
+                x[3].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 3: select timestamp with empty order by
         pytest.param(

@@ -247,6 +247,15 @@ func (m *defaultFieldMapper) FieldFor(
 		return key.Name, nil
 	}
 
+	// special handling for contextual map fields
+	if key.FieldContext == telemetrytypes.FieldContextSpan &&
+		(key.Name == SpanAttributesStringColumn ||
+			key.Name == SpanAttributesNumberColumn ||
+			key.Name == SpanAttributesBoolColumn ||
+			key.Name == SpanResourcesStringColumn) {
+		return key.Name, nil
+	}
+
 	column, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err

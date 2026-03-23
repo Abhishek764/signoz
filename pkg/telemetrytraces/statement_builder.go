@@ -72,6 +72,12 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	if requestType == qbtypes.RequestTypeRaw {
+		// we are expnding here to ensure that all the conflicts are taken care in adjustKeys
+		// i.e if there is a conflict we strip away context of the key in adjustKeys
+		query = b.expandRawSelectFields(query)
+	}
+
 	query = b.adjustKeys(ctx, keys, query, requestType)
 
 	// Check if filter contains trace_id(s) and optimize time range if needed
@@ -274,54 +280,20 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	sb.SelectMore(SpanTimestampColumn)
-	sb.SelectMore(SpanTraceIDColumn)
-	sb.SelectMore(SpanSpanIDColumn)
-	// By default select all
-	if len(query.SelectFields) == 0 {
-		// Select all intrinsic columns
-		sb.SelectMore(SpanTraceStateColumn)
-		sb.SelectMore(SpanParentSpanIDColumn)
-		sb.SelectMore(SpanFlagsColumn)
-		sb.SelectMore(SpanNameColumn)
-		sb.SelectMore(SpanKindColumn)
-		sb.SelectMore(SpanKindStringColumn)
-		sb.SelectMore(SpanDurationNanoColumn)
-		sb.SelectMore(SpanStatusCodeColumn)
-		sb.SelectMore(SpanStatusMessageColumn)
-		sb.SelectMore(SpanStatusCodeStringColumn)
-		sb.SelectMore(SpanEventsColumn)
-		sb.SelectMore(SpanLinksColumn)
-
-		// select all calculated columns
-		sb.SelectMore(SpanResponseStatusCodeColumn)
-		sb.SelectMore(SpanExternalHTTPURLColumn)
-		sb.SelectMore(SpanHTTPURLColumn)
-		sb.SelectMore(SpanExternalHTTPMethodColumn)
-		sb.SelectMore(SpanHTTPMethodColumn)
-		sb.SelectMore(SpanHTTPHostColumn)
-		sb.SelectMore(SpanDBNameColumn)
-		sb.SelectMore(SpanDBOperationColumn)
-		sb.SelectMore(SpanHasErrorColumn)
-		sb.SelectMore(SpanIsRemoteColumn)
-
-		// select all contextual columns
-		sb.SelectMore(SpanAttributesStringColumn)
-		sb.SelectMore(SpanAttributesNumberColumn)
-		sb.SelectMore(SpanAttributesBoolColumn)
-		sb.SelectMore(SpanResourcesStringColumn)
-	} else {
-		for _, field := range query.SelectFields {
-            // TODO(tvats): If a user specifies attribute.timestamp in the select fields, this loop will basically ignore it, as we already added a field by default. This can be fixed once we close https://github.com/SigNoz/engineering-pod/issues/3693
-			if field.Name == SpanTimestampColumn || field.Name == SpanTraceIDColumn || field.Name == SpanSpanIDColumn {
-				continue
-			}
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
-			if err != nil {
-				return nil, err
-			}
-			sb.SelectMore(colExpr)
+	for _, field := range query.SelectFields {
+		// For the contextual map columns, select them directly without considering their context
+		// if field.Name == SpanAttributesStringColumn ||
+		// 	field.Name == SpanAttributesNumberColumn ||
+		// 	field.Name == SpanAttributesBoolColumn ||
+		// 	field.Name == SpanResourcesStringColumn {
+		// 	sb.SelectMore(field.Name)
+		// 	continue
+		// }
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
+		if err != nil {
+			return nil, err
 		}
+		sb.SelectMore(colExpr)
 	}
 
 	// From table
@@ -834,4 +806,57 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 		query,
 		variables,
 	)
+}
+
+// expandRawSelectFields populates SelectFields for raw (list view) queries.
+// It must be called before adjustKeys so that normalization runs over the full set.
+func (b *traceQueryStatementBuilder) expandRawSelectFields(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation] {
+	selectFields := []telemetrytypes.TelemetryFieldKey{
+		{Name: SpanTimestampColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanTraceIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+		{Name: SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
+	}
+	if len(query.SelectFields) == 0 {
+		// Select all intrinsic columns
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanTraceStateColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanParentSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanFlagsColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanNameColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanKindColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanKindStringColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanDurationNanoColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanStatusCodeColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanStatusMessageColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanStatusCodeStringColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanEventsColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanLinksColumn, FieldContext: telemetrytypes.FieldContextSpan})
+
+		// select all calculated columns
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanResponseStatusCodeColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanExternalHTTPURLColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanHTTPURLColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanExternalHTTPMethodColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanHTTPMethodColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanHTTPHostColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanDBNameColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanDBOperationColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanHasErrorColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanIsRemoteColumn, FieldContext: telemetrytypes.FieldContextSpan})
+
+		// select all contextual map columns (special handling for them in field mapper)
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanAttributesStringColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanAttributesNumberColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanAttributesBoolColumn, FieldContext: telemetrytypes.FieldContextSpan})
+		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanResourcesStringColumn, FieldContext: telemetrytypes.FieldContextSpan})
+	} else {
+		for _, field := range query.SelectFields {
+			// TODO(tvats): If a user specifies attribute.timestamp in the select fields, this loop will basically ignore it, as we already added a field by default. This can be fixed once we close https://github.com/SigNoz/engineering-pod/issues/3693
+			if field.Name == SpanTimestampColumn || field.Name == SpanTraceIDColumn || field.Name == SpanSpanIDColumn {
+				continue
+			}
+			selectFields = append(selectFields, field)
+		}
+	}
+	query.SelectFields = selectFields
+	return query
 }

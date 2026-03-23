@@ -170,13 +170,19 @@ func (h *handler) UpdateMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	updatableSelfUser := new(types.UpdatableSelfUser)
+	if err := json.NewDecoder(r.Body).Decode(&updatableSelfUser); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	_, err = h.setter.UpdateMyUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), updatableSelfUser)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	render.Success(w, http.StatusOK, user)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {
@@ -565,6 +571,7 @@ func (h *handler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
 	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
+		return
 	}
 
 	roles := make([]*authtypes.Role, len(userRoles))

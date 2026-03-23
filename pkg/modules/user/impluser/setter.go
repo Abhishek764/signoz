@@ -366,7 +366,7 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 
 	if rolesChanged {
 		// this by default runs in txn
-		if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.OrgID, grants); err != nil {
+		if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, updatable.RoleNames); err != nil {
 			return nil, err
 		}
 	}

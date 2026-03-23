@@ -2,14 +2,18 @@ package model
 
 kind: "SigNozTimeSeriesChart"
 spec: close({
-    timePreference?:       #TimePreference
-    fillSpans?:            bool | *false
+    visualization?:        #Visualization
     formatting?:           #Formatting
     axes?:                 #Axes
     legend?:               #Legend
     contextLinks?:         #ContextLinks
     thresholds?:           [...#Threshold]
 })
+
+#Visualization: {
+    timePreference?: #TimePreference
+    fillSpans?:      bool | *false
+}
 
 #TimePreference: *"GLOBAL_TIME" | "LAST_5_MIN" | "LAST_15_MIN" | "LAST_30_MIN" | "LAST_1_HR" | "LAST_6_HR" | "LAST_1_DAY" | "LAST_3_DAYS" | "LAST_1_WEEK" | "LAST_1_MONTH"
 

@@ -78,7 +78,9 @@
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
                         "spec": {
-                            "fillSpans": true,
+                            "visualization": {
+                                "fillSpans": true
+                            },
                             "formatting": {
                                 "yAxisUnit": "By",
                                 "decimalPrecision": 3
@@ -164,7 +166,9 @@
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
                         "spec": {
-                            "fillSpans": true,
+                            "visualization": {
+                                "fillSpans": true
+                            },
                             "formatting": {
                                 "decimalPrecision": 1
                             },

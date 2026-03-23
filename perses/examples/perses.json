@@ -380,9 +380,11 @@
                         "name": "num traces for service per resp code"
                     },
                     "plugin": {
-                        "kind": "PieChart",
+                        "kind": "SigNozPieChart",
                         "spec": {
-                            "radius": 4892398421894629486193
+                            "formatting": {
+                                "decimalPrecision": 1
+                            }
                         }
                     },
                     "queries": [

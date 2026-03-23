@@ -196,6 +196,7 @@
                                                     "name": "A",
                                                     "signal": "metrics",
                                                     "expression": "A",
+                                                    "disabled": true,
                                                     "aggregations": [
                                                         {
                                                             "metricName": "signoz_calls_total",
@@ -215,6 +216,7 @@
                                                     "name": "B",
                                                     "signal": "metrics",
                                                     "expression": "B",
+                                                    "disabled": true,
                                                     "aggregations": [
                                                         {
                                                             "metricName": "signoz_calls_total",
@@ -305,8 +307,25 @@
                         "kind": "SigNozNumberChart",
                         "spec": {
                             "formatting": {
+                                "yAxisUnit": "none",
                                 "decimalPrecision": 1
-                            }
+                            },
+                            "thresholds": [
+                                {
+                                    "thresholdValue": 1200000,
+                                    "thresholdOperator": ">",
+                                    "thresholdUnit": "none",
+                                    "thresholdColor": "Red",
+                                    "thresholdFormat": "Text"
+                                },
+                                {
+                                    "thresholdValue": 1200000,
+                                    "thresholdOperator": "<=",
+                                    "thresholdUnit": "none",
+                                    "thresholdColor": "Green",
+                                    "thresholdFormat": "Text"
+                                }
+                            ]
                         }
                     },
                     "queries": [
@@ -344,6 +363,7 @@
                         "kind": "SigNozNumberChart",
                         "spec": {
                             "formatting": {
+                                "yAxisUnit": "none",
                                 "decimalPrecision": 1
                             }
                         }
@@ -384,6 +404,13 @@
                         "spec": {
                             "formatting": {
                                 "decimalPrecision": 1
+                            },
+                            "legend": {
+                                "customColors": {
+                                    "\"201\"": "#2bc051",
+                                    "\"400\"": "#cc462e",
+                                    "\"500\"": "#ff0000"
+                                }
                             }
                         }
                     },
@@ -428,7 +455,23 @@
                     },
                     "plugin": {
                         "kind": "SigNozTableChart",
-                        "spec": {}
+                        "spec": {
+                            "formatting": {
+                                "columnUnits": {
+                                    "A": "s"
+                                }
+                            },
+                            "thresholds": [
+                                {
+                                    "thresholdValue": 1,
+                                    "thresholdOperator": ">",
+                                    "thresholdUnit": "min",
+                                    "thresholdColor": "Red",
+                                    "thresholdFormat": "Text",
+                                    "thresholdTableOptions": "A"
+                                }
+                            ]
+                        }
                     },
                     "queries": [
                         {
@@ -438,7 +481,7 @@
                                     "kind": "SigNozClickHouseSQL",
                                     "spec": {
                                         "name": "A",
-                                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS avgLatency\nFROM __histogramCTE\nGROUP BY `service.name`"
+                                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS A\nFROM __histogramCTE\nGROUP BY `service.name`"
                                     }
                                 }
                             }
@@ -465,35 +508,11 @@
                                     "name": "body",
                                     "type": "log",
                                     "dataType": ""
-                                }
-                            ],
-                            "selectedTracesFields": [
-                                {
-                                    "name": "service.name",
-                                    "signal": "traces",
-                                    "fieldContext": "resource",
-                                    "fieldDataType": "string"
                                 },
                                 {
-                                    "name": "name",
-                                    "signal": "traces",
-                                    "fieldContext": "span",
-                                    "fieldDataType": "string"
-                                },
-                                {
-                                    "name": "duration_nano",
-                                    "signal": "traces",
-                                    "fieldContext": "span"
-                                },
-                                {
-                                    "name": "http_method",
-                                    "signal": "traces",
-                                    "fieldContext": "span"
-                                },
-                                {
-                                    "name": "response_status_code",
-                                    "signal": "traces",
-                                    "fieldContext": "span"
+                                    "name": "error",
+                                    "type": "",
+                                    "dataType": "string"
                                 }
                             ]
                         }
@@ -544,7 +563,8 @@
                         "kind": "SigNozHistogramChart",
                         "spec": {
                             "histogramBuckets": {
-                                "bucketCount": 60
+                                "bucketCount": 60,
+                                "mergeAllActiveQueries": true
                             }
                         }
                     },
@@ -582,7 +602,11 @@
                     },
                     "plugin": {
                         "kind": "SigNozTimeSeriesChart",
-                        "spec": {}
+                        "spec": {
+                            "legend": {
+                                "position": "right"
+                            }
+                        }
                     },
                     "queries": [
                         {
@@ -681,6 +705,33 @@
                                                 }
                                             }
                                         ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "0e6eb4ca": {
+                "kind": "Panel",
+                "spec": {
+                    "display": {
+                        "name": "no results in this promql",
+                        "description": ""
+                    },
+                    "plugin": {
+                        "kind": "SigNozTimeSeriesChart",
+                        "spec": {}
+                    },
+                    "queries": [
+                        {
+                            "kind": "TimeSeriesQuery",
+                            "spec": {
+                                "plugin": {
+                                    "kind": "SigNozPromQLQuery",
+                                    "spec": {
+                                        "name": "A",
+                                        "query": "sum(rate(flask_exporter_info[5m]))"
                                     }
                                 }
                             }
@@ -791,6 +842,15 @@
                             "height": 6,
                             "content": {
                                 "$ref": "#/spec/panels/f0d70491"
+                            }
+                        },
+                        {
+                            "x": 6,
+                            "y": 30,
+                            "width": 6,
+                            "height": 6,
+                            "content": {
+                                "$ref": "#/spec/panels/0e6eb4ca"
                             }
                         }
                     ]

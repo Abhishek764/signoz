@@ -95,8 +95,19 @@
         {
             "h": 6,
             "i": "f0d70491-1710-49d6-aea0-0031a1f53535",
+            "moved": false,
+            "static": false,
             "w": 6,
             "x": 0,
+            "y": 30
+        },
+        {
+            "h": 6,
+            "i": "0e6eb4ca-ae5a-4150-9676-ab44a6b3ff30",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
             "y": 30
         }
     ],
@@ -814,7 +825,34 @@
             "softMax": 0,
             "softMin": 0,
             "stackedBarChart": false,
-            "thresholds": [],
+            "thresholds": [
+                {
+                    "index": "33e3a354-889b-40f0-b866-d40364253a0e",
+                    "isEditEnabled": false,
+                    "keyIndex": 1,
+                    "selectedGraph": "value",
+                    "thresholdColor": "Red",
+                    "thresholdFormat": "Text",
+                    "thresholdLabel": "",
+                    "thresholdOperator": ">",
+                    "thresholdTableOptions": "A",
+                    "thresholdUnit": "none",
+                    "thresholdValue": 1200000
+                },
+                {
+                    "index": "dcba278c-2b15-43db-9473-228fa4816e47",
+                    "isEditEnabled": false,
+                    "keyIndex": 0,
+                    "selectedGraph": "value",
+                    "thresholdColor": "Green",
+                    "thresholdFormat": "Text",
+                    "thresholdLabel": "",
+                    "thresholdOperator": "<=",
+                    "thresholdTableOptions": "A",
+                    "thresholdUnit": "none",
+                    "thresholdValue": 1200000
+                }
+            ],
             "timePreferance": "GLOBAL_TIME",
             "title": "num traces for service",
             "yAxisUnit": "none"
@@ -959,7 +997,11 @@
             "contextLinks": {
                 "linksData": []
             },
-            "customLegendColors": {},
+            "customLegendColors": {
+                "\"201\"": "#2bc051",
+                "\"400\"": "#cc462e",
+                "\"500\"": "#ff0000"
+            },
             "decimalPrecision": 1,
             "description": "",
             "fillMode": "none",
@@ -1098,10 +1140,10 @@
             "bucketCount": 30,
             "bucketWidth": 0,
             "columnUnits": {
-                "A": ""
+                "A": "s"
             },
             "columnWidths": {
-                "avgLatency": 145,
+                "A": 145,
                 "service": 145
             },
             "contextLinks": {
@@ -1184,10 +1226,10 @@
                         "disabled": false,
                         "legend": "",
                         "name": "A",
-                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS avgLatency\nFROM __histogramCTE\nGROUP BY `service.name`"
+                        "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS A\nFROM __histogramCTE\nGROUP BY `service.name`"
                     }
                 ],
-                "id": "85f7f117-8b5a-4593-9ca4-46f337194218",
+                "id": "5793b262-8600-46b1-af2f-74f82cc039ee",
                 "promql": [
                     {
                         "disabled": false,
@@ -1255,7 +1297,21 @@
             "softMax": 0,
             "softMin": 0,
             "stackedBarChart": false,
-            "thresholds": [],
+            "thresholds": [
+                {
+                    "index": "03081ec6-9ff3-4bf9-acea-b01d2fa98727",
+                    "isEditEnabled": false,
+                    "keyIndex": 0,
+                    "selectedGraph": "table",
+                    "thresholdColor": "Red",
+                    "thresholdFormat": "Text",
+                    "thresholdLabel": "",
+                    "thresholdOperator": ">",
+                    "thresholdTableOptions": "A",
+                    "thresholdUnit": "min",
+                    "thresholdValue": 1
+                }
+            ],
             "timePreferance": "GLOBAL_TIME",
             "title": "average latency per service",
             "yAxisUnit": "none"
@@ -1266,6 +1322,7 @@
             "columnUnits": {},
             "columnWidths": {
                 "body": 350,
+                "error": 100,
                 "timestamp": 100
             },
             "contextLinks": {
@@ -1365,6 +1422,11 @@
                     "name": "body",
                     "signal": "logs",
                     "type": "log"
+                },
+                {
+                    "dataType": "string",
+                    "name": "error",
+                    "type": ""
                 }
             ],
             "selectedTracesFields": [
@@ -1425,7 +1487,7 @@
             "legendPosition": "bottom",
             "lineInterpolation": "spline",
             "lineStyle": "solid",
-            "mergeAllActiveQueries": false,
+            "mergeAllActiveQueries": true,
             "nullZeroValues": "zero",
             "opacity": "1",
             "panelTypes": "histogram",
@@ -1559,7 +1621,7 @@
             "fillSpans": false,
             "id": "e1a41831-2cab-43d8-bf92-e48f704e1b29",
             "isLogScale": false,
-            "legendPosition": "bottom",
+            "legendPosition": "right",
             "lineInterpolation": "spline",
             "lineStyle": "solid",
             "mergeAllActiveQueries": false,
@@ -1897,6 +1959,159 @@
             "timePreferance": "GLOBAL_TIME",
             "title": "no results in this promql",
             "yAxisUnit": ""
+        },
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {
+                "A": ""
+            },
+            "contextLinks": {
+                "linksData": []
+            },
+            "customLegendColors": {},
+            "decimalPrecision": 2,
+            "description": "",
+            "fillMode": "none",
+            "fillSpans": false,
+            "id": "0e6eb4ca-ae5a-4150-9676-ab44a6b3ff30",
+            "isLogScale": false,
+            "legendPosition": "bottom",
+            "lineInterpolation": "spline",
+            "lineStyle": "solid",
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "http.client.request.body.size.min--float64--Gauge",
+                                "key": "http.client.request.body.size.min",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "",
+                            "aggregations": [
+                                {
+                                    "metricName": "http.client.request.body.size.min",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "avg",
+                                    "temporality": "",
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": ""
+                            },
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "source": "",
+                            "spaceAggregation": "",
+                            "stepInterval": null,
+                            "timeAggregation": "rate"
+                        }
+                    ],
+                    "queryFormulas": [],
+                    "queryTraceOperator": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "85bd9adc-b09d-4c50-b04f-de19a3aec58f",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": "sum(rate(flask_exporter_info[5m]))"
+                    }
+                ],
+                "queryType": "promql",
+                "unit": ""
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "",
+                    "fieldContext": "log",
+                    "fieldDataType": "",
+                    "isIndexed": false,
+                    "name": "timestamp",
+                    "signal": "logs",
+                    "type": "log"
+                },
+                {
+                    "dataType": "",
+                    "fieldContext": "log",
+                    "fieldDataType": "",
+                    "isIndexed": false,
+                    "name": "body",
+                    "signal": "logs",
+                    "type": "log"
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "fieldContext": "resource",
+                    "fieldDataType": "string",
+                    "name": "service.name",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "string",
+                    "name": "name",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "",
+                    "name": "duration_nano",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "",
+                    "name": "http_method",
+                    "signal": "traces"
+                },
+                {
+                    "fieldContext": "span",
+                    "fieldDataType": "",
+                    "name": "response_status_code",
+                    "signal": "traces"
+                }
+            ],
+            "showPoints": false,
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "no results in this promql",
+            "yAxisUnit": "none"
         }
     ]
 }

@@ -355,12 +355,10 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 			}
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "role names not found: %v", missing)
 		}
-
-		grants, revokes = module.patchRolesNames(existingUserRoleNames, updatable.RoleNames)
-		rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
-	} else {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "roleNames must not be empty")
 	}
+
+	grants, revokes = module.patchRolesNames(existingUserRoleNames, updatable.RoleNames)
+	rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
 
 	if rolesChanged && existingUser.ID == updatedBy {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot change self roles")

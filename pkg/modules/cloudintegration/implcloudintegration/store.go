@@ -46,13 +46,13 @@ func (s *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, pr
 	return accounts, nil
 }
 
-func (s *store) CreateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+func (s *store) CreateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
 	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(account).Exec(ctx)
 	if err != nil {
-		return nil, s.store.WrapAlreadyExistsErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyExists, "cloud integration account with id %s already exists", account.ID)
+		return s.store.WrapAlreadyExistsErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyExists, "cloud integration account with id %s already exists", account.ID)
 	}
 
-	return account, nil
+	return nil
 }
 
 func (s *store) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
@@ -115,13 +115,13 @@ func (s *store) ListServices(ctx context.Context, cloudIntegrationID valuer.UUID
 	return services, nil
 }
 
-func (s *store) CreateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+func (s *store) CreateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
 	_, err := s.store.BunDBCtx(ctx).NewInsert().Model(service).Exec(ctx)
 	if err != nil {
-		return nil, s.store.WrapAlreadyExistsErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationServiceAlreadyExists, "cloud integration service with id %s already exists for integration account", service.Type)
+		return s.store.WrapAlreadyExistsErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationServiceAlreadyExists, "cloud integration service with id %s already exists for integration account", service.Type)
 	}
 
-	return service, nil
+	return nil
 }
 
 func (s *store) UpdateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {

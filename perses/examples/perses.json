@@ -250,8 +250,15 @@
                         "name": "total resp size"
                     },
                     "plugin": {
-                        "kind": "BarChart",
-                        "spec": {}
+                        "kind": "SigNozBarChart",
+                        "spec": {
+                            "visualization": {
+                                "stackedBarChart": false
+                            },
+                            "formatting": {
+                                "yAxisUnit": "By"
+                            }
+                        }
                     },
                     "queries": [
                         {

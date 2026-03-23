@@ -281,5 +281,22 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetUserRoles), handler.OpenAPIDef{
+		ID:                  "GetUserRoles",
+		Tags:                []string{"users"},
+		Summary:             "Get user roles",
+		Description:         "This endpoint returns the user roles by user id",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            make([]*authtypes.UserRole, 0),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

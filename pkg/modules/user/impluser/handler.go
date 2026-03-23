@@ -462,3 +462,29 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 
 	render.Success(w, http.StatusNoContent, nil)
 }
+
+func (h *handler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
+	if err != nil {
+		render.Error(w, err)
+	}
+
+	render.Success(w, http.StatusOK, userRoles)
+}

@@ -121,6 +121,10 @@ func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID v
 	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
 }
 
+func (module *getter) GetUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.User, error) {
+	return module.store.GetByOrgIDAndID(ctx, orgID, userID)
+}
+
 func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.DeprecatedUser, error) {
 	user, err := module.store.GetUser(ctx, id)
 	if err != nil {

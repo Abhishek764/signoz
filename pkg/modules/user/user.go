@@ -66,6 +66,7 @@ type Getter interface {
 
 	// Get deprecated user object by orgID and id.
 	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
+	GetUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.User, error)
 
 	// Get user by id.
 	Get(context.Context, valuer.UUID) (*types.DeprecatedUser, error)
@@ -101,6 +102,7 @@ type Handler interface {
 	DeleteUser(http.ResponseWriter, *http.Request)
 	GetUser(http.ResponseWriter, *http.Request)
 	GetMyUser(http.ResponseWriter, *http.Request)
+	GetUserRoles(http.ResponseWriter, *http.Request)
 
 	// Reset Password
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)

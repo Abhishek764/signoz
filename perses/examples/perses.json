@@ -302,8 +302,12 @@
                         "name": "num traces for service"
                     },
                     "plugin": {
-                        "kind": "StatChart",
-                        "spec": {}
+                        "kind": "SigNozNumberChart",
+                        "spec": {
+                            "formatting": {
+                                "decimalPrecision": 1
+                            }
+                        }
                     },
                     "queries": [
                         {
@@ -337,8 +341,12 @@
                         "name": "num logs for service"
                     },
                     "plugin": {
-                        "kind": "StatChart",
-                        "spec": {}
+                        "kind": "SigNozNumberChart",
+                        "spec": {
+                            "formatting": {
+                                "decimalPrecision": 1
+                            }
+                        }
                     },
                     "queries": [
                         {

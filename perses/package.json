@@ -98,6 +98,12 @@
       {
         "kind": "Panel",
         "spec": {
+          "name": "SigNozNumberChart"
+        }
+      },
+      {
+        "kind": "Panel",
+        "spec": {
           "name": "SigNozEverythingChart"
         }
       }

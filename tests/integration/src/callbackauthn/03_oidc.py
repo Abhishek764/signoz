@@ -11,11 +11,8 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
 )
-from fixtures.idputils import (
-    get_oidc_domain,
-    get_user_by_email,
-    perform_oidc_login,
-)
+from fixtures.idputils import get_oidc_domain, perform_oidc_login
+from fixtures.utils import get_user_by_email, get_user_role_names
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -112,26 +109,12 @@ def test_oidc_authn(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Assert that the user was created in signoz.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "viewer@oidc.integration.test"
-        ),
-        None,
-    )
-
+    found_user = get_user_by_email(signoz, admin_token, "viewer@oidc.integration.test")
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+
+    # Confirm role
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_oidc_update_domain_with_group_mappings(
@@ -208,7 +191,8 @@ def test_oidc_role_mapping_single_group_admin(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_oidc_role_mapping_single_group_editor(
@@ -234,7 +218,8 @@ def test_oidc_role_mapping_single_group_editor(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
 
 def test_oidc_role_mapping_multiple_groups_highest_wins(
@@ -264,7 +249,8 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_oidc_role_mapping_explicit_viewer_group(
@@ -291,7 +277,8 @@ def test_oidc_role_mapping_explicit_viewer_group(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_oidc_role_mapping_unmapped_group_uses_default(
@@ -317,7 +304,8 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_oidc_update_domain_with_use_role_claim(
@@ -397,7 +385,8 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_oidc_role_mapping_invalid_role_claim_fallback(
@@ -429,7 +418,8 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
 
 def test_oidc_role_mapping_case_insensitive(
@@ -459,7 +449,8 @@ def test_oidc_role_mapping_case_insensitive(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
 
 def test_oidc_name_mapping(
@@ -482,20 +473,13 @@ def test_oidc_name_mapping(
     )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    users = response.json()["data"]
-    found_user = next((u for u in users if u["email"] == email), None)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
     # Keycloak concatenates firstName + lastName into "name" claim
     assert found_user["displayName"] == "John Doe"
-    assert found_user["role"] == "VIEWER"  # Default role
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names  # Default role
 
 
 def test_oidc_empty_name_uses_fallback(
@@ -518,19 +502,12 @@ def test_oidc_empty_name_uses_fallback(
     )
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    users = response.json()["data"]
-    found_user = next((u for u in users if u["email"] == email), None)
+    found_user = get_user_by_email(signoz, admin_token, email)
 
     # User should still be created even with empty name
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
     # Note: displayName may be empty - this is a known limitation
 
 
@@ -570,16 +547,9 @@ def test_oidc_sso_login_activates_pending_invite_user(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    # User should be active with ADMIN role from invite, not VIEWER from SSO
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    found_user = next(
-        (user for user in response.json()["data"] if user["email"] == email),
-        None,
-    )
+    # User should be active with VIEWER role from SSO
+    found_user = get_user_by_email(signoz, admin_token, email)
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names

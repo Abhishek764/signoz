@@ -5,6 +5,7 @@ import requests
 
 from fixtures import types
 from fixtures.logger import setup_logger
+from fixtures.utils import get_user_by_email, get_user_role_names
 
 logger = setup_logger(__name__)
 
@@ -74,31 +75,10 @@ def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
 
     admin_token = get_token("admin@integration.test", "password123Z$")
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "admin@integration.test"),
-        None,
-    )
-
+    found_user = get_user_by_email(signoz, admin_token, "admin@integration.test")
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{found_user["id"]}"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["data"]["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_invite_and_register(
@@ -120,21 +100,11 @@ def test_invite_and_register(
     assert invited_user["role"] == "EDITOR"
 
     # Verify the user user appears in the users list but as pending_invite status
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "editor@integration.test"),
-        None,
-    )
+    found_user = get_user_by_email(signoz, admin_token, "editor@integration.test")
     assert found_user is not None
     assert found_user["status"] == "pending_invite"
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
     reset_token = invited_user["token"]
 
@@ -152,7 +122,7 @@ def test_invite_and_register(
 
     # Verify that an admin endpoint cannot be called by the editor user
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
         headers={"Authorization": f"Bearer {editor_token}"},
     )
@@ -160,24 +130,12 @@ def test_invite_and_register(
     assert response.status_code == HTTPStatus.FORBIDDEN
 
     # Verify that the editor user status has been updated to ACTIVE
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "editor@integration.test"),
-        None,
-    )
+    admin_token = get_token("admin@integration.test", "password123Z$")
+    found_user = get_user_by_email(signoz, admin_token, "editor@integration.test")
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
     assert found_user["displayName"] == "editor"
     assert found_user["email"] == "editor@integration.test"
     assert found_user["status"] == "active"
@@ -221,25 +179,7 @@ def test_self_access(
 ) -> None:
     admin_token = get_token("admin@integration.test", "password123Z$")
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "editor@integration.test"),
-        None,
-    )
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{found_user['id']}"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["data"]["role"] == "EDITOR"
+    found_user = get_user_by_email(signoz, admin_token, "editor@integration.test")
+    assert found_user is not None
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names

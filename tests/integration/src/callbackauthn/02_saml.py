@@ -12,11 +12,8 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
 )
-from fixtures.idputils import (
-    get_saml_domain,
-    get_user_by_email,
-    perform_saml_login,
-)
+from fixtures.idputils import get_saml_domain, perform_saml_login
+from fixtures.utils import get_user_by_email, get_user_role_names
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -131,26 +128,12 @@ def test_saml_authn(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Assert that the user was created in signoz.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "viewer@saml.integration.test"
-        ),
-        None,
-    )
-
+    found_user = get_user_by_email(signoz, admin_token, "viewer@saml.integration.test")
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+
+    # Confirm role
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_idp_initiated_saml_authn(
@@ -182,26 +165,14 @@ def test_idp_initiated_saml_authn(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Assert that the user was created in signoz.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
+    found_user = get_user_by_email(
+        signoz, admin_token, "viewer.idp.initiated@saml.integration.test"
     )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "viewer.idp.initiated@saml.integration.test"
-        ),
-        None,
-    )
-
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+
+    # Confirm role
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_saml_update_domain_with_group_mappings(
@@ -271,7 +242,8 @@ def test_saml_role_mapping_single_group_admin(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_saml_role_mapping_single_group_editor(
@@ -297,7 +269,8 @@ def test_saml_role_mapping_single_group_editor(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
 
 def test_saml_role_mapping_multiple_groups_highest_wins(
@@ -327,7 +300,8 @@ def test_saml_role_mapping_multiple_groups_highest_wins(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
 
 def test_saml_role_mapping_explicit_viewer_group(
@@ -354,7 +328,8 @@ def test_saml_role_mapping_explicit_viewer_group(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_saml_role_mapping_unmapped_group_uses_default(
@@ -380,7 +355,8 @@ def test_saml_role_mapping_unmapped_group_uses_default(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_saml_update_domain_with_use_role_claim(
@@ -457,7 +433,8 @@ def test_saml_role_mapping_role_claim_takes_precedence(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_saml_role_mapping_invalid_role_claim_fallback(
@@ -487,7 +464,8 @@ def test_saml_role_mapping_invalid_role_claim_fallback(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "EDITOR"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-editor" in found_user_role_names
 
 
 def test_saml_role_mapping_case_insensitive(
@@ -517,7 +495,8 @@ def test_saml_role_mapping_case_insensitive(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "ADMIN"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-admin" in found_user_role_names
 
 
 def test_saml_name_mapping(
@@ -545,7 +524,8 @@ def test_saml_name_mapping(
     assert (
         found_user["displayName"] == "Jane"
     )  # We are only mapping the first name here
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_saml_empty_name_fallback(
@@ -570,7 +550,8 @@ def test_saml_empty_name_fallback(
     found_user = get_user_by_email(signoz, admin_token, email)
 
     assert found_user is not None
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_saml_sso_login_activates_pending_invite_user(
@@ -613,7 +594,8 @@ def test_saml_sso_login_activates_pending_invite_user(
     found_user = get_user_by_email(signoz, admin_token, email)
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "VIEWER"
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert "signoz-viewer" in found_user_role_names
 
 
 def test_saml_sso_deleted_user_gets_new_user_on_login(
@@ -680,7 +662,7 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
 
     # Verify a NEW active user was auto-provisioned via SSO
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -694,4 +676,7 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     )
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "VIEWER"  # default role from SSO domain config
+    found_user_role_names = get_user_role_names(signoz, admin_token, found_user["id"])
+    assert (
+        "signoz-viewer" in found_user_role_names
+    )  # default role from SSO domain config

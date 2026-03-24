@@ -6,6 +6,7 @@ from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.logger import setup_logger
+from fixtures.utils import get_user_by_email
 
 logger = setup_logger(__name__)
 
@@ -35,23 +36,10 @@ def test_change_password(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Get the user id
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
+    found_user = get_user_by_email(
+        signoz, admin_token, "admin+password@integration.test"
     )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "admin+password@integration.test"
-        ),
-        None,
-    )
+    assert found_user is not None
 
     # Try logging in with the password
     token = get_token("admin+password@integration.test", "password123Z$")
@@ -100,23 +88,10 @@ def test_reset_password(
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get the user id for admin+password@integration.test
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
+    found_user = get_user_by_email(
+        signoz, admin_token, "admin+password@integration.test"
     )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "admin+password@integration.test"
-        ),
-        None,
-    )
+    assert found_user is not None
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(
@@ -158,23 +133,10 @@ def test_reset_password_with_no_password(
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get the user id for admin+password@integration.test
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
+    found_user = get_user_by_email(
+        signoz, admin_token, "admin+password@integration.test"
     )
-
-    assert response.status_code == HTTPStatus.OK
-
-    user_response = response.json()["data"]
-    found_user = next(
-        (
-            user
-            for user in user_response
-            if user["email"] == "admin+password@integration.test"
-        ),
-        None,
-    )
+    assert found_user is not None
 
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
@@ -305,17 +267,7 @@ def test_forgot_password_creates_reset_token(
 
     # Verify reset password token was created by querying the database
     # First, get the user ID
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == HTTPStatus.OK
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "forgot@integration.test"),
-        None,
-    )
+    found_user = get_user_by_email(signoz, admin_token, "forgot@integration.test")
     assert found_user is not None
 
     reset_token = None
@@ -371,17 +323,7 @@ def test_reset_password_with_expired_token(
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     # Get user ID for the forgot@integration.test user
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == HTTPStatus.OK
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "forgot@integration.test"),
-        None,
-    )
+    found_user = get_user_by_email(signoz, admin_token, "forgot@integration.test")
     assert found_user is not None
 
     # Get org ID

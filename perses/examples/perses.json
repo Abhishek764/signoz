@@ -10,6 +10,15 @@
             "description": "Trying to cover as many concepts here as possible"
         },
         "duration": "1h",
+        "datasources": {
+            "SigNozDatasource": {
+                "default": true,
+                "plugin": {
+                    "kind": "SigNozDatasource",
+                    "spec": {}
+                }
+            }
+        },
         "variables": [
             {
                 "kind": "ListVariable",

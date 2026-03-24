@@ -30,18 +30,18 @@
         },
         "thresholds": [
             {
-                "thresholdValue": 1024,
-                "thresholdUnit": "By",
-                "thresholdColor": "Red",
-                "thresholdFormat": "Text",
-                "thresholdLabel": "upper limit"
+                "value": 1024,
+                "unit": "By",
+                "color": "Red",
+                "format": "Text",
+                "label": "upper limit"
             },
             {
-                "thresholdValue": 100,
-                "thresholdUnit": "By",
-                "thresholdColor": "Orange",
-                "thresholdFormat": "Text",
-                "thresholdLabel": "kinda bad"
+                "value": 100,
+                "unit": "By",
+                "color": "Orange",
+                "format": "Text",
+                "label": "kinda bad"
             }
         ]
     }

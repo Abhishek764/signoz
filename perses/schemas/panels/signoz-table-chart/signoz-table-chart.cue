@@ -31,10 +31,10 @@ spec: close({
 }
 
 #Threshold: {
-    thresholdValue:        number
-    thresholdOperator:     ">" | "<" | ">=" | "<=" | "="
-    thresholdUnit?:        string
-    thresholdColor:        string
-    thresholdFormat:       "Text" | "Background"
-    thresholdTableOptions: string // which column this threshold applies to
+    value:        number
+    operator:     ">" | "<" | ">=" | "<=" | "="
+    unit?:        string
+    color:        string
+    format:       "Text" | "Background"
+    tableOptions: string // which column this threshold applies to
 }

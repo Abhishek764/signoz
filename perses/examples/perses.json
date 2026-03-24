@@ -105,18 +105,18 @@
                             },
                             "thresholds": [
                                 {
-                                    "thresholdValue": 1024,
-                                    "thresholdUnit": "By",
-                                    "thresholdColor": "Red",
-                                    "thresholdFormat": "Text",
-                                    "thresholdLabel": "upper limit"
+                                    "value": 1024,
+                                    "unit": "By",
+                                    "color": "Red",
+                                    "format": "Text",
+                                    "label": "upper limit"
                                 },
                                 {
-                                    "thresholdValue": 100,
-                                    "thresholdUnit": "By",
-                                    "thresholdColor": "Orange",
-                                    "thresholdFormat": "Text",
-                                    "thresholdLabel": "kinda bad"
+                                    "value": 100,
+                                    "unit": "By",
+                                    "color": "Orange",
+                                    "format": "Text",
+                                    "label": "kinda bad"
                                 }
                             ]
                         }
@@ -174,10 +174,10 @@
                             },
                             "thresholds": [
                                 {
-                                    "thresholdValue": 1,
-                                    "thresholdColor": "Blue",
-                                    "thresholdFormat": "Background",
-                                    "thresholdLabel": "max possible"
+                                    "value": 1,
+                                    "color": "Blue",
+                                    "format": "Background",
+                                    "label": "max possible"
                                 }
                             ]
                         }
@@ -312,18 +312,18 @@
                             },
                             "thresholds": [
                                 {
-                                    "thresholdValue": 1200000,
-                                    "thresholdOperator": ">",
-                                    "thresholdUnit": "none",
-                                    "thresholdColor": "Red",
-                                    "thresholdFormat": "Text"
+                                    "value": 1200000,
+                                    "operator": ">",
+                                    "unit": "none",
+                                    "color": "Red",
+                                    "format": "Text"
                                 },
                                 {
-                                    "thresholdValue": 1200000,
-                                    "thresholdOperator": "<=",
-                                    "thresholdUnit": "none",
-                                    "thresholdColor": "Green",
-                                    "thresholdFormat": "Text"
+                                    "value": 1200000,
+                                    "operator": "<=",
+                                    "unit": "none",
+                                    "color": "Green",
+                                    "format": "Text"
                                 }
                             ]
                         }
@@ -463,12 +463,12 @@
                             },
                             "thresholds": [
                                 {
-                                    "thresholdValue": 1,
-                                    "thresholdOperator": ">",
-                                    "thresholdUnit": "min",
-                                    "thresholdColor": "Red",
-                                    "thresholdFormat": "Text",
-                                    "thresholdTableOptions": "A"
+                                    "value": 1,
+                                    "operator": ">",
+                                    "unit": "min",
+                                    "color": "Red",
+                                    "format": "Text",
+                                    "tableOptions": "A"
                                 }
                             ]
                         }

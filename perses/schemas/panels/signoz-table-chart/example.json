@@ -20,12 +20,12 @@
         },
         "thresholds": [
             {
-                "thresholdValue": 1,
-                "thresholdOperator": ">",
-                "thresholdUnit": "min",
-                "thresholdColor": "Red",
-                "thresholdFormat": "Text",
-                "thresholdTableOptions": "A"
+                "value": 1,
+                "operator": ">",
+                "unit": "min",
+                "color": "Red",
+                "format": "Text",
+                "tableOptions": "A"
             }
         ]
     }

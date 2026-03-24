@@ -47,9 +47,9 @@ spec: close({
 }
 
 #Threshold: {
-    thresholdValue:     number
-    thresholdUnit?:     string
-    thresholdColor:     string
-    thresholdFormat:    "Text" | "Background"
-    thresholdLabel?:    string
+    value:     number
+    unit?:     string
+    color:     string
+    format:    "Text" | "Background"
+    label?:    string
 }

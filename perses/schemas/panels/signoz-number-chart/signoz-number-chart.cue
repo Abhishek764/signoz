@@ -31,9 +31,9 @@ spec: close({
 }
 
 #Threshold: {
-    thresholdValue:    number
-    thresholdOperator: ">" | "<" | ">=" | "<=" | "="
-    thresholdUnit?:    string
-    thresholdColor:    string
-    thresholdFormat:   "Text" | "Background"
+    value:    number
+    operator: ">" | "<" | ">=" | "<=" | "="
+    unit?:    string
+    color:    string
+    format:   "Text" | "Background"
 }

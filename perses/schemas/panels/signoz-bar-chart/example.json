@@ -31,11 +31,11 @@
         },
         "thresholds": [
             {
-                "thresholdValue": 500,
-                "thresholdUnit": "By",
-                "thresholdColor": "Red",
-                "thresholdFormat": "Text",
-                "thresholdLabel": "upper limit"
+                "value": 500,
+                "unit": "By",
+                "color": "Red",
+                "format": "Text",
+                "label": "upper limit"
             }
         ]
     }

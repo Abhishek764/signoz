@@ -18,18 +18,18 @@
         },
         "thresholds": [
             {
-                "thresholdValue": 1200000,
-                "thresholdOperator": ">",
-                "thresholdUnit": "none",
-                "thresholdColor": "Red",
-                "thresholdFormat": "Text"
+                "value": 1200000,
+                "operator": ">",
+                "unit": "none",
+                "color": "Red",
+                "format": "Text"
             },
             {
-                "thresholdValue": 1200000,
-                "thresholdOperator": "<=",
-                "thresholdUnit": "none",
-                "thresholdColor": "Green",
-                "thresholdFormat": "Text"
+                "value": 1200000,
+                "operator": "<=",
+                "unit": "none",
+                "color": "Green",
+                "format": "Text"
             }
         ]
     }

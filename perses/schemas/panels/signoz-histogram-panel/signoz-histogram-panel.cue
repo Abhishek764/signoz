@@ -1,10 +1,12 @@
 package model
 
+import "github.com/signoz/common"
+
 kind: "SigNozHistogramPanel"
 spec: close({
     histogramBuckets?:     #HistogramBuckets
     legend?:               #Legend
-    contextLinks?:         [...#ContextLinkProps]
+    contextLinks?:         [...common.#ContextLinkProps]
 })
 
 #HistogramBuckets: {
@@ -15,9 +17,4 @@ spec: close({
 
 #Legend: {
     customColors?: [string]: string
-}
-
-#ContextLinkProps: {
-    url:          string
-    label:        string
 }

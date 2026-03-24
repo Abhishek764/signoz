@@ -1,6 +1,22 @@
 package common
 
 // ──────────────────────────────────────────────
+// Shared types
+// ──────────────────────────────────────────────
+
+#TelemetryFieldKey: {
+    name:           string
+    key?:           string
+    description?:   string
+    unit?:          string
+    signal?:        string
+    fieldContext?:   string
+    fieldDataType?: string
+    materialized?:  bool
+    isIndexed?:     bool
+}
+
+// ──────────────────────────────────────────────
 // Panel types
 // ──────────────────────────────────────────────
 

@@ -14,7 +14,7 @@ spec: close({
 	filter?:         common.#FilterExpression
 	groupBy?:        [...common.#GroupByItem]
 	order?:          [...common.#OrderByItem]
-	selectFields?:   [...]
+	selectFields?:   [...common.#TelemetryFieldKey]
 	limit?:          common.#Limit
 	limitBy?:        #LimitBy
 	offset?:         common.#Offset

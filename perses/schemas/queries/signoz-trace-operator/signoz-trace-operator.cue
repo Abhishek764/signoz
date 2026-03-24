@@ -27,5 +27,5 @@ spec: close({
 	stepInterval?: number
 	having?:       common.#HavingExpression
 	legend?:       string
-	selectFields?: [...]
+	selectFields?: [...common.#TelemetryFieldKey]
 })

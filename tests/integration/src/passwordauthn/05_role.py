@@ -178,7 +178,8 @@ def test_remove_all_roles(
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
-    # Rotate token — new token should also fail API calls
+    # Token rotation should also fail for a user with no roles
+    # (the session endpoint requires roles to build an identity)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/sessions/rotate"),
         json={
@@ -187,18 +188,9 @@ def test_remove_all_roles(
         headers={"Authorization": f"Bearer {new_user_token}"},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.OK
-
-    rotate_response = response.json()["data"]
-    new_user_token = rotate_response["accessToken"]
-
-    # API calls with new token should be forbidden (no roles)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {new_user_token}"},
+    assert response.status_code != HTTPStatus.OK, (
+        "token rotation should fail for user with no roles"
     )
-    assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 def test_multiple_roles(

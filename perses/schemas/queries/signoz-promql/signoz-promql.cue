@@ -8,7 +8,7 @@ spec: close({
 	name:      common.#QueryName
 	query:     string & !=""
 	disabled?: bool | *false
-	step?:     number
+	step?:     =~"^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$" | number
 	stats?:    bool
 	legend?:   string
 })

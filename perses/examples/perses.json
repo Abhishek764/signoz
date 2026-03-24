@@ -82,7 +82,7 @@
                                 "fillSpans": true
                             },
                             "formatting": {
-                                "yAxisUnit": "By",
+                                "unit": "By",
                                 "decimalPrecision": 3
                             },
                             "axes": {
@@ -258,7 +258,7 @@
                                 "stackedBarChart": false
                             },
                             "formatting": {
-                                "yAxisUnit": "By"
+                                "unit": "By"
                             }
                         }
                     },
@@ -307,7 +307,7 @@
                         "kind": "SigNozNumberChart",
                         "spec": {
                             "formatting": {
-                                "yAxisUnit": "none",
+                                "unit": "none",
                                 "decimalPrecision": 1
                             },
                             "thresholds": [
@@ -363,7 +363,7 @@
                         "kind": "SigNozNumberChart",
                         "spec": {
                             "formatting": {
-                                "yAxisUnit": "none",
+                                "unit": "none",
                                 "decimalPrecision": 1
                             }
                         }

@@ -18,7 +18,7 @@ spec: close({
 #TimePreference: *"GLOBAL_TIME" | "LAST_5_MIN" | "LAST_15_MIN" | "LAST_30_MIN" | "LAST_1_HR" | "LAST_6_HR" | "LAST_1_DAY" | "LAST_3_DAYS" | "LAST_1_WEEK" | "LAST_1_MONTH"
 
 #Formatting: {
-    yAxisUnit?:        string | *""
+    unit?:        string | *""
     decimalPrecision?: #PrecisionOption
 }
 

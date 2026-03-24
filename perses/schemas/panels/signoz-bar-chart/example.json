@@ -7,7 +7,7 @@
             "stackedBarChart": false
         },
         "formatting": {
-            "yAxisUnit": "By",
+            "unit": "By",
             "decimalPrecision": 2
         },
         "axes": {

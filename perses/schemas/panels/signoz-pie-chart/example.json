@@ -5,7 +5,7 @@
             "timePreference": "GLOBAL_TIME"
         },
         "formatting": {
-            "yAxisUnit": "none",
+            "unit": "none",
             "decimalPrecision": 1
         },
         "legend": {

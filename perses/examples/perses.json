@@ -32,7 +32,7 @@
                     "plugin": {
                         "kind": "SigNozDynamicVariable",
                         "spec": {
-                            "attributeName": "service.name",
+                            "name": "service.name",
                             "source": "Metrics",
                             "sort": "disabled"
                         }

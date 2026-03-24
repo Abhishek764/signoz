@@ -337,9 +337,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			for (let j = idxCurrentRow + 1; j < dashboardLayout.length; j++) {
 				updatedDashboardLayout[j].y += maxY;
 				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
-					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
-						updatedDashboardLayout[j].i
-					].widgets.map((w) => ({
+					updatedPanelMap[updatedDashboardLayout[j].i].widgets = (
+						updatedPanelMap[updatedDashboardLayout[j].i].widgets ?? []
+					).map((w) => ({
 						...w,
 						y: w.y + maxY,
 					}));
@@ -376,9 +376,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			for (let j = currentIdx + 1; j < updatedDashboardLayout.length; j++) {
 				updatedDashboardLayout[j].y += maxY;
 				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
-					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
-						updatedDashboardLayout[j].i
-					].widgets.map((w) => ({
+					updatedPanelMap[updatedDashboardLayout[j].i].widgets = (
+						updatedPanelMap[updatedDashboardLayout[j].i].widgets ?? []
+					).map((w) => ({
 						...w,
 						y: w.y + maxY,
 					}));

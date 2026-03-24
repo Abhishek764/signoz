@@ -31,10 +31,22 @@ package common
 
 #Offset: int & >=0
 
+#ReduceTo: "sum" | "count" | "avg" | "min" | "max" | "last" | "median"
+
+#MetricAggregation: close({
+    metricName:       string & !=""
+    timeAggregation:  "latest" | "sum" | "avg" | "min" | "max" | "count" | "rate" | "increase"
+    spaceAggregation: "sum" | "avg" | "min" | "max" | "count" | "p50" | "p75" | "p90" | "p95" | "p99"
+    reduceTo?:        #ReduceTo
+    temporality?:     "delta" | "cumulative" | "unspecified"
+})
+
 #ExpressionAggregation: close({
     expression: string & !=""
     alias?:     string
 })
+
+#Aggregation: #MetricAggregation | #ExpressionAggregation
 
 #FilterExpression: close({
     expression: string

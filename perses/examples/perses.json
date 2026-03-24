@@ -336,7 +336,7 @@
                                         "name": "A",
                                         "signal": "traces",
                                         "expression": "A",
-                                        "expressionAggregations": [
+                                        "aggregations": [
                                             {
                                                 "expression": "count() "
                                             }
@@ -376,7 +376,7 @@
                                         "name": "A",
                                         "signal": "logs",
                                         "expression": "A",
-                                        "expressionAggregations": [
+                                        "aggregations": [
                                             {
                                                 "expression": "count() "
                                             }
@@ -422,7 +422,7 @@
                                         "name": "A",
                                         "signal": "traces",
                                         "expression": "A",
-                                        "expressionAggregations": [
+                                        "aggregations": [
                                             {
                                                 "expression": "count() "
                                             }
@@ -525,7 +525,7 @@
                                         "name": "A",
                                         "signal": "logs",
                                         "expression": "A",
-                                        "expressionAggregations": [
+                                        "aggregations": [
                                             {
                                                 "expression": "count() "
                                             }
@@ -620,7 +620,7 @@
                                                     "name": "A",
                                                     "signal": "traces",
                                                     "expression": "A",
-                                                    "expressionAggregations": [
+                                                    "aggregations": [
                                                         {
                                                             "expression": "count() "
                                                         }
@@ -637,7 +637,7 @@
                                                     "name": "B",
                                                     "signal": "traces",
                                                     "expression": "B",
-                                                    "expressionAggregations": [
+                                                    "aggregations": [
                                                         {
                                                             "expression": "count() "
                                                         }

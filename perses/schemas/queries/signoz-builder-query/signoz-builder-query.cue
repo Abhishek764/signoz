@@ -10,9 +10,7 @@ spec: close({
 	expression: string
 	disabled?:  bool | *false
 
-	// Metrics use structured aggregations; logs/traces use expression-based.
-	aggregations?:           [...#MetricAggregation]
-	expressionAggregations?: [...common.#ExpressionAggregation]
+	aggregations?:   [...common.#Aggregation]
 	filter?:         common.#FilterExpression
 	groupBy?:        [...common.#GroupByItem]
 	order?:          [...common.#OrderByItem]
@@ -26,7 +24,7 @@ spec: close({
 	functions?:      [...common.#Function]
 	legend?:         string
 	stepInterval?:   number
-	reduceTo?:       #ReduceTo
+	reduceTo?:       common.#ReduceTo
 	pageSize?:       int & >=1
 	source?:         string
 })
@@ -34,14 +32,4 @@ spec: close({
 #LimitBy: close({
 	keys:  [...string]
 	value: string
-})
-
-#ReduceTo: "sum" | "count" | "avg" | "min" | "max" | "last" | "median"
-
-#MetricAggregation: close({
-	metricName:       string & !=""
-	timeAggregation:  "latest" | "sum" | "avg" | "min" | "max" | "count" | "rate" | "increase"
-	spaceAggregation: "sum" | "avg" | "min" | "max" | "count" | "p50" | "p75" | "p90" | "p95" | "p99"
-	reduceTo?:        #ReduceTo
-	temporality?:     "delta" | "cumulative" | "unspecified"
 })

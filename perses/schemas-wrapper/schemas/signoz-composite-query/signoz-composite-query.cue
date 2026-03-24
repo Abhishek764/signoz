@@ -1,11 +1,11 @@
 package model
 
 import (
-	bq "github.com/signoz/schemas/queries/signoz-builder-query:model"
-	f "github.com/signoz/schemas/queries/signoz-formula:model"
-	to "github.com/signoz/schemas/queries/signoz-trace-operator:model"
-	pql "github.com/signoz/schemas/queries/signoz-promql:model"
-	ch "github.com/signoz/schemas/queries/signoz-clickhouse-sql:model"
+	bq "github.com/signoz/schemas-wrapper/schemas/signoz-builder-query:model"
+	f "github.com/signoz/schemas-wrapper/schemas/signoz-formula:model"
+	to "github.com/signoz/schemas-wrapper/schemas/signoz-trace-operator:model"
+	pql "github.com/signoz/schemas-wrapper/schemas/signoz-promql:model"
+	ch "github.com/signoz/schemas-wrapper/schemas/signoz-clickhouse-sql:model"
 )
 
 // Source: pkg/types/querybuildertypes/querybuildertypesv5/req.go — CompositeQuery

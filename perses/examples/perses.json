@@ -95,14 +95,12 @@
                                     "{service.name=\"sampleapp-gateway\"}": "#9ea5f7"
                                 }
                             },
-                            "contextLinks": {
-                                "linksData": [
-                                    {
-                                        "label": "View service details",
-                                        "url": "http://localhost:8080/{{_service.name}}?dfddf=%7B%7Blimit%7D%7D"
-                                    }
-                                ]
-                            },
+                            "contextLinks": [
+                                {
+                                    "label": "View service details",
+                                    "url": "http://localhost:8080/{{_service.name}}?dfddf=%7B%7Blimit%7D%7D"
+                                }
+                            ],
                             "thresholds": [
                                 {
                                     "value": 1024,

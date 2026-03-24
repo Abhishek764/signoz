@@ -10,14 +10,12 @@
             },
             "decimalPrecision": 2
         },
-        "contextLinks": {
-            "linksData": [
-                {
-                    "label": "View trace",
-                    "url": "http://localhost:8080/trace/{{traceID}}"
-                }
-            ]
-        },
+        "contextLinks": [
+            {
+                "label": "View trace",
+                "url": "http://localhost:8080/trace/{{traceID}}"
+            }
+        ],
         "thresholds": [
             {
                 "value": 1,

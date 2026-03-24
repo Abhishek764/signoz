@@ -6,7 +6,7 @@ spec: close({
     formatting?:           #Formatting
     axes?:                 #Axes
     legend?:               #Legend
-    contextLinks?:         #ContextLinks
+    contextLinks?:         [...#ContextLinkProps]
     thresholds?:           [...#Threshold]
 })
 
@@ -36,10 +36,6 @@ spec: close({
 }
 
 #LegendPosition: *"bottom" | "right"
-
-#ContextLinks: {
-    linksData?: [...#ContextLinkProps]
-}
 
 #ContextLinkProps: {
     url:          string

@@ -5,7 +5,7 @@ spec: close({
     visualization?:        #Visualization
     formatting?:           #Formatting
     legend?:               #Legend
-    contextLinks?:         #ContextLinks
+    contextLinks?:         [...#ContextLinkProps]
 })
 
 #Visualization: {
@@ -23,10 +23,6 @@ spec: close({
 
 #Legend: {
     customColors?: [string]: string
-}
-
-#ContextLinks: {
-    linksData?: [...#ContextLinkProps]
 }
 
 #ContextLinkProps: {

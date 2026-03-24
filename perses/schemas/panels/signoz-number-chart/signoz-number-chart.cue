@@ -4,7 +4,7 @@ kind: "SigNozNumberChart"
 spec: close({
     visualization?:        #Visualization
     formatting?:           #Formatting
-    contextLinks?:         #ContextLinks
+    contextLinks?:         [...#ContextLinkProps]
     thresholds?:           [...#Threshold]
 })
 
@@ -20,10 +20,6 @@ spec: close({
 }
 
 #PrecisionOption: *2 | 0 | 1 | 3 | 4 | "full"
-
-#ContextLinks: {
-    linksData?: [...#ContextLinkProps]
-}
 
 #ContextLinkProps: {
     url:          string

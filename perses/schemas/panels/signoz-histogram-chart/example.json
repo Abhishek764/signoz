@@ -11,13 +11,11 @@
                 "series-A": "#9ea5f7"
             }
         },
-        "contextLinks": {
-            "linksData": [
-                {
-                    "label": "View histogram details",
-                    "url": "http://localhost:8080/histogram"
-                }
-            ]
-        }
+        "contextLinks": [
+            {
+                "label": "View histogram details",
+                "url": "http://localhost:8080/histogram"
+            }
+        ]
     }
 }

@@ -15,13 +15,11 @@
                 "\"500\"": "#ff0000"
             }
         },
-        "contextLinks": {
-            "linksData": [
-                {
-                    "label": "View breakdown",
-                    "url": "http://localhost:8080/breakdown"
-                }
-            ]
-        }
+        "contextLinks": [
+            {
+                "label": "View breakdown",
+                "url": "http://localhost:8080/breakdown"
+            }
+        ]
     }
 }

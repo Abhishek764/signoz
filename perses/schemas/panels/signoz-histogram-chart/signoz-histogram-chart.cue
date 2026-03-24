@@ -4,7 +4,7 @@ kind: "SigNozHistogramChart"
 spec: close({
     histogramBuckets?:     #HistogramBuckets
     legend?:               #Legend
-    contextLinks?:         #ContextLinks
+    contextLinks?:         [...#ContextLinkProps]
 })
 
 #HistogramBuckets: {
@@ -15,10 +15,6 @@ spec: close({
 
 #Legend: {
     customColors?: [string]: string
-}
-
-#ContextLinks: {
-    linksData?: [...#ContextLinkProps]
 }
 
 #ContextLinkProps: {

@@ -21,14 +21,12 @@
                 "series-A": "#9ea5f7"
             }
         },
-        "contextLinks": {
-            "linksData": [
-                {
-                    "label": "View details",
-                    "url": "http://localhost:8080/{{_service.name}}"
-                }
-            ]
-        },
+        "contextLinks": [
+            {
+                "label": "View details",
+                "url": "http://localhost:8080/{{_service.name}}"
+            }
+        ],
         "thresholds": [
             {
                 "value": 500,

@@ -244,7 +244,9 @@ def test_multiple_roles(
     # Validate user starts with viewer role
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
     assert role_names is not None
-    assert role_names == ["signoz-viewer"], f"expected ['signoz-viewer'], got {role_names}"
+    assert role_names == [
+        "signoz-viewer"
+    ], f"expected ['signoz-viewer'], got {role_names}"
 
     # As viewer, admin-only APIs should be forbidden
     response = requests.get(
@@ -276,9 +278,10 @@ def test_multiple_roles(
     # Validate user has both roles
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
     assert role_names is not None
-    assert sorted(role_names) == ["signoz-editor", "signoz-viewer"], (
-        f"expected ['signoz-editor', 'signoz-viewer'], got {sorted(role_names)}"
-    )
+    assert sorted(role_names) == [
+        "signoz-editor",
+        "signoz-viewer",
+    ], f"expected ['signoz-editor', 'signoz-viewer'], got {sorted(role_names)}"
 
     # Rotate token to pick up new roles
     response = requests.post(
@@ -301,9 +304,10 @@ def test_multiple_roles(
     )
     assert response.status_code == HTTPStatus.OK
     me_role_names = sorted(r["name"] for r in response.json()["data"]["roles"])
-    assert me_role_names == ["signoz-editor", "signoz-viewer"], (
-        f"expected ['signoz-editor', 'signoz-viewer'] in /me, got {me_role_names}"
-    )
+    assert me_role_names == [
+        "signoz-editor",
+        "signoz-viewer",
+    ], f"expected ['signoz-editor', 'signoz-viewer'] in /me, got {me_role_names}"
 
     # Editor+viewer still cannot access admin-only APIs
     response = requests.get(
@@ -380,9 +384,9 @@ def test_multiple_roles(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
-    assert role_names == ["signoz-viewer"], (
-        f"expected ['signoz-viewer'] after reduction, got {role_names}"
-    )
+    assert role_names == [
+        "signoz-viewer"
+    ], f"expected ['signoz-viewer'] after reduction, got {role_names}"
 
     # Rotate token to pick up reduced roles
     response = requests.post(

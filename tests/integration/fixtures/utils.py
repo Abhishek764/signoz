@@ -61,6 +61,6 @@ def get_user_role_names(signoz: types.SigNoz, admin_token: str, user_id: str) ->
 
     roles = response.json()["data"]
     if not roles:
-        return None
+        return []
 
     return [role["name"] for role in roles]

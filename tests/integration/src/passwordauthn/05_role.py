@@ -188,9 +188,9 @@ def test_remove_all_roles(
         headers={"Authorization": f"Bearer {new_user_token}"},
         timeout=2,
     )
-    assert response.status_code != HTTPStatus.OK, (
-        "token rotation should fail for user with no roles"
-    )
+    assert (
+        response.status_code != HTTPStatus.OK
+    ), "token rotation should fail for user with no roles"
 
 
 def test_multiple_roles(

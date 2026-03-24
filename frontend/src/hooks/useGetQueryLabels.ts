@@ -11,12 +11,13 @@ export const useGetQueryLabels = (
 			const queryLabels = getQueryLabelWithAggregation(
 				currentQuery?.builder?.queryData || [],
 			);
-			const formulaLabels = (currentQuery?.builder?.queryFormulas ?? []).map(
-				(formula) => ({
-					label: formula.queryName,
-					value: formula.queryName,
-				}),
-			);
+			const formulaLabels = (Array.isArray(currentQuery?.builder?.queryFormulas)
+				? currentQuery.builder.queryFormulas
+				: []
+			).map((formula) => ({
+				label: formula.queryName,
+				value: formula.queryName,
+			}));
 			return [...queryLabels, ...formulaLabels];
 		}
 		if (currentQuery?.queryType === EQueryType.CLICKHOUSE) {

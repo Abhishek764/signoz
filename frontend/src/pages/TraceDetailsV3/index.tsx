@@ -99,7 +99,7 @@ function TraceDetailsV3(): JSX.Element {
 			<SpanDetailsDrawer
 				panelState={panelState}
 				selectedSpan={selectedSpan}
-				traceId={traceId || ''}
+				// traceId={traceId || ''}
 			/>
 		</div>
 	);

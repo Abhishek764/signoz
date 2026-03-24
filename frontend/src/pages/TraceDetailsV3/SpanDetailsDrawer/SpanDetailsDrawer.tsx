@@ -6,18 +6,20 @@ import {
 	Ellipsis,
 	ExternalLink,
 } from '@signozhq/icons';
+import DetailField from 'components/DetailField/DetailField';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
 import { noop } from 'lodash-es';
 import { Span } from 'types/api/trace/getTraceV2';
 
-import './SpanDetailsDrawer.styles.scss';
+// import SpanPercentile from './SpanPercentile/SpanPercentile';
+// import './SpanDetailsDrawer.styles.scss';
 
 interface SpanDetailsDrawerProps {
 	panelState: DetailsPanelState;
 	selectedSpan: Span | undefined;
-	traceId: string;
+	// traceId: string;
 }
 
 const SPAN_HEADER_ACTIONS: HeaderAction[] = [
@@ -75,8 +77,8 @@ const SPAN_HEADER_ACTIONS: HeaderAction[] = [
 function SpanDetailsDrawer({
 	panelState,
 	selectedSpan,
-	traceId,
-}: SpanDetailsDrawerProps): JSX.Element {
+}: // traceId,
+SpanDetailsDrawerProps): JSX.Element {
 	return (
 		<DetailsPanelDrawer
 			isOpen={panelState.isOpen}
@@ -89,22 +91,22 @@ function SpanDetailsDrawer({
 				actions={SPAN_HEADER_ACTIONS}
 			/>
 
-			{/* Step 6: HighlightedOptions */}
-			{/* Step 7: KeyAttributes */}
-			{/* Step 8: MiniTraceContext */}
-			{/* Step 9: ContentTabs + content area */}
-
 			{selectedSpan && (
-				<div className="span-details-drawer__placeholder">
-					<span>
-						{selectedSpan.name} &middot; {selectedSpan.serviceName}
-					</span>
-					<span className="span-details-drawer__placeholder-id">
-						Trace: {traceId}
-					</span>
-					<span className="span-details-drawer__placeholder-id">
-						Span: {selectedSpan.spanId}
-					</span>
+				<div className="span-details-drawer__body">
+					<DetailField
+						label="Span name"
+						direction="row"
+						labelCase="normal"
+						value={selectedSpan.name}
+					/>
+
+					{/* TODO: Add SpanPercentile next to span name value */}
+					{/* <SpanPercentile selectedSpan={selectedSpan} /> */}
+
+					{/* Step 6: HighlightedOptions */}
+					{/* Step 7: KeyAttributes */}
+					{/* Step 8: MiniTraceContext */}
+					{/* Step 9: ContentTabs + content area */}
 				</div>
 			)}
 		</DetailsPanelDrawer>

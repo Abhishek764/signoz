@@ -5,19 +5,10 @@
 		gap: 2px;
 	}
 
-	&__placeholder {
+	&__body {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
-		padding: 16px;
-		font-size: 13px;
-		color: var(--l1-foreground);
-	}
-
-	&__placeholder-id {
-		font-size: 12px;
-		color: var(--l2-foreground);
-		font-family: 'SF Mono', 'Fira Code', monospace;
-		word-break: break-all;
+		flex: 1;
+		overflow-y: auto;
 	}
 }

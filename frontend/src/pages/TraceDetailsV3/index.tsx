@@ -5,10 +5,12 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/resizable';
+import { useDetailsPanel } from 'components/DetailsPanel';
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
+import SpanDetailsDrawer from './SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall, {
@@ -31,6 +33,9 @@ function TraceDetailsV3(): JSX.Element {
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
 	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
+
+	const selectedSpanId = urlQuery.get('spanId') || undefined;
+	const panelState = useDetailsPanel({ entityId: selectedSpanId });
 
 	useEffect(() => {
 		setInterestedSpanId({
@@ -91,6 +96,11 @@ function TraceDetailsV3(): JSX.Element {
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>
+			<SpanDetailsDrawer
+				panelState={panelState}
+				selectedSpan={selectedSpan}
+				traceId={traceId || ''}
+			/>
 		</div>
 	);
 }

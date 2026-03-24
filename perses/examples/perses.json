@@ -23,8 +23,8 @@
                     "plugin": {
                         "kind": "SigNozDynamicVariable",
                         "spec": {
-                            "dynamicVariablesAttribute": "service.name",
-                            "dynamicVariablesSource": "Metrics",
+                            "attributeName": "service.name",
+                            "source": "Metrics",
                             "sort": "DISABLED"
                         }
                     }

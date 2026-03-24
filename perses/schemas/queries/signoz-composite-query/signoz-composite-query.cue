@@ -3,7 +3,6 @@ package model
 import (
 	bq "github.com/signoz/schemas/queries/signoz-builder-query:model"
 	f "github.com/signoz/schemas/queries/signoz-formula:model"
-	j "github.com/signoz/schemas/queries/signoz-join:model"
 	to "github.com/signoz/schemas/queries/signoz-trace-operator:model"
 	pql "github.com/signoz/schemas/queries/signoz-promql:model"
 	ch "github.com/signoz/schemas/queries/signoz-clickhouse-sql:model"
@@ -31,10 +30,6 @@ spec: close({
 	close({
 		type: "builder_formula",
 		spec: f.spec
-	}) |
-	close({
-		type: "builder_join",
-		spec: j.spec
 	}) |
 	close({
 		type: "builder_trace_operator",

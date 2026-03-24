@@ -42,12 +42,6 @@
         }
       },
       {
-        "kind": "TimeSeriesQuery",
-        "spec": {
-          "name": "SigNozJoin"
-        }
-      },
-      {
         "kind": "LogQuery",
         "spec": {
           "name": "SigNozBuilderQuery"

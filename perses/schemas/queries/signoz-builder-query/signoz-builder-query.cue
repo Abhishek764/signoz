@@ -1,27 +1,29 @@
 package model
 
+import "github.com/signoz/common"
+
 // Source: pkg/types/querybuildertypes/querybuildertypesv5/builder_query.go — QueryBuilderQuery
 kind: "SigNozBuilderQuery"
 spec: close({
-	name:       #QueryName
+	name:       common.#QueryName
 	signal:     "metrics" | "logs" | "traces"
 	expression: string
 	disabled?:  bool | *false
 
 	// Metrics use structured aggregations; logs/traces use expression-based.
 	aggregations?:           [...#MetricAggregation]
-	expressionAggregations?: [...#ExpressionAggregation]
-	filter?:         #FilterExpression
-	groupBy?:        [...#GroupByItem]
-	order?:          [...#OrderByItem]
+	expressionAggregations?: [...common.#ExpressionAggregation]
+	filter?:         common.#FilterExpression
+	groupBy?:        [...common.#GroupByItem]
+	order?:          [...common.#OrderByItem]
 	selectFields?:   [...]
-	limit?:          #Limit
+	limit?:          common.#Limit
 	limitBy?:        #LimitBy
-	offset?:         #Offset
+	offset?:         common.#Offset
 	cursor?:         string
-	having?:         #HavingExpression
+	having?:         common.#HavingExpression
 	// secondaryAggregations not added — not yet implemented.
-	functions?:      [...#Function]
+	functions?:      [...common.#Function]
 	legend?:         string
 	stepInterval?:   number
 	reduceTo?:       #ReduceTo
@@ -34,13 +36,7 @@ spec: close({
 	value: string
 })
 
-#QueryName: =~"^[A-Za-z][A-Za-z0-9_]*$"
-
 #ReduceTo: "sum" | "count" | "avg" | "min" | "max" | "last" | "median"
-
-#Limit: int & >=0 & <=10000
-
-#Offset: int & >=0
 
 #MetricAggregation: close({
 	metricName:       string & !=""
@@ -48,37 +44,4 @@ spec: close({
 	spaceAggregation: "sum" | "avg" | "min" | "max" | "count" | "p50" | "p75" | "p90" | "p95" | "p99"
 	reduceTo?:        #ReduceTo
 	temporality?:     "delta" | "cumulative" | "unspecified"
-})
-
-#ExpressionAggregation: close({
-	expression: string & !=""
-	alias?:     string
-})
-
-#FilterExpression: close({
-	expression: string
-})
-
-#GroupByItem: close({
-	name:           string & !=""
-	fieldDataType?: string
-	fieldContext?:   string
-})
-
-#OrderByItem: close({
-	columnName: string & !=""
-	order:      "asc" | "desc"
-})
-
-#HavingExpression: close({
-	expression: string
-})
-
-#Function: close({
-	name: "cutOffMin" | "cutOffMax" | "clampMin" | "clampMax" |
-		"absolute" | "runningDiff" | "log2" | "log10" |
-		"cumulativeSum" | "ewma3" | "ewma5" | "ewma7" |
-		"median3" | "median5" | "median7" | "timeShift" |
-		"anomaly" | "fillZero"
-	args?: [...close({value: number | string | bool})]
 })

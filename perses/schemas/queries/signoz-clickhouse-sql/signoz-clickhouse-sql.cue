@@ -1,12 +1,12 @@
 package model
 
+import "github.com/signoz/common"
+
 // Source: pkg/types/querybuildertypes/querybuildertypesv5/clickhouse_query.go — ClickHouseQuery
 kind: "SigNozClickHouseSQL"
 spec: close({
-	name:      #QueryName
+	name:      common.#QueryName
 	query:     string & !=""
 	disabled?: bool | *false
 	legend?:   string
 })
-
-#QueryName: =~"^[A-Za-z][A-Za-z0-9_]*$"

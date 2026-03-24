@@ -1,5 +1,9 @@
 package common
 
+// ──────────────────────────────────────────────
+// Panel types
+// ──────────────────────────────────────────────
+
 #ContextLinkProps: {
     url:   string
     label: string
@@ -16,3 +20,46 @@ package common
 }
 
 #LegendPosition: *"bottom" | "right"
+
+// ──────────────────────────────────────────────
+// Query types
+// ──────────────────────────────────────────────
+
+#QueryName: =~"^[A-Za-z][A-Za-z0-9_]*$"
+
+#Limit: int & >=0 & <=10000
+
+#Offset: int & >=0
+
+#ExpressionAggregation: close({
+    expression: string & !=""
+    alias?:     string
+})
+
+#FilterExpression: close({
+    expression: string
+})
+
+#GroupByItem: close({
+    name:           string & !=""
+    fieldDataType?: string
+    fieldContext?:   string
+})
+
+#OrderByItem: close({
+    columnName: string & !=""
+    order:      "asc" | "desc"
+})
+
+#HavingExpression: close({
+    expression: string
+})
+
+#Function: close({
+    name: "cutOffMin" | "cutOffMax" | "clampMin" | "clampMax" |
+        "absolute" | "runningDiff" | "log2" | "log10" |
+        "cumulativeSum" | "ewma3" | "ewma5" | "ewma7" |
+        "median3" | "median5" | "median7" | "timeShift" |
+        "anomaly" | "fillZero"
+    args?: [...close({value: number | string | bool})]
+})

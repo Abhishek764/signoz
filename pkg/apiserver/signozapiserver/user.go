@@ -196,7 +196,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.GetUserDeprecated), handler.OpenAPIDef{
 		ID:                  "GetUser",
 		Tags:                []string{"users"},
 		Summary:             "Get user",
@@ -204,6 +204,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(types.DeprecatedUser),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
+		ID:                  "GetUserV2",
+		Tags:                []string{"users"},
+		Summary:             "Get user by user id",
+		Description:         "This endpoint returns the user by id",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.User),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},

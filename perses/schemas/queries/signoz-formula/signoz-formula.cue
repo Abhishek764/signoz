@@ -13,4 +13,5 @@ spec: close({
 	having?:       common.#HavingExpression
 	stepInterval?: number
 	order?:        [...common.#OrderByItem]
+	functions?:      [...common.#Function]
 })

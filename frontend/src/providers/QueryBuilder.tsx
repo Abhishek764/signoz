@@ -211,7 +211,7 @@ export function QueryBuilderProvider({
 				return currentElement;
 			});
 
-			const promql: IPromQLQuery[] = query.promql.map((item) => ({
+			const promql: IPromQLQuery[] = (query.promql ?? []).map((item) => ({
 				...initialQueryPromQLData,
 				...item,
 			}));

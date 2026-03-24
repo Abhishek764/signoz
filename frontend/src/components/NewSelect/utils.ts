@@ -127,7 +127,7 @@ export const filterOptionsBySearch = (
 			if ('options' in option && Array.isArray(option.options)) {
 				// Filter nested options
 				const filteredSubOptions = option.options.filter((subOption) =>
-					subOption.label.toLowerCase().includes(lowerSearchText),
+					String(subOption.label).toLowerCase().includes(lowerSearchText),
 				);
 
 				return filteredSubOptions.length > 0
@@ -136,7 +136,7 @@ export const filterOptionsBySearch = (
 			}
 
 			// Filter top-level options
-			return option.label.toLowerCase().includes(lowerSearchText)
+			return String(option.label).toLowerCase().includes(lowerSearchText)
 				? option
 				: undefined;
 		})

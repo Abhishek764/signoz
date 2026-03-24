@@ -1,34 +1,23 @@
 .span-details-drawer {
-	&__content {
+	&__header-nav {
 		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		padding: 16px;
+		align-items: center;
+		gap: 2px;
 	}
 
-	&__field {
+	&__placeholder {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
-	}
-
-	&__label {
-		font-size: 12px;
-		color: var(--text-slate-200);
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-	}
-
-	&__value {
-		font-size: 13px;
-		color: var(--text-slate-50);
-		word-break: break-all;
-		font-family: 'SF Mono', 'Fira Code', monospace;
-	}
-
-	&__empty {
-		color: var(--text-slate-400);
-		font-size: 13px;
 		padding: 16px;
+		font-size: 13px;
+		color: var(--l1-foreground);
+	}
+
+	&__placeholder-id {
+		font-size: 12px;
+		color: var(--l2-foreground);
+		font-family: 'SF Mono', 'Fira Code', monospace;
+		word-break: break-all;
 	}
 }

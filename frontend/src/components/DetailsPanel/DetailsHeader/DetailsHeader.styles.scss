@@ -1,0 +1,39 @@
+.details-header {
+	// ghost + secondary missing hover bg token in @signozhq/button
+	--button-ghost-hover-background: var(--l3-background);
+
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l1-border);
+	min-height: 40px;
+
+	&__icon-btn {
+		flex-shrink: 0;
+	}
+
+	&__title {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--l1-foreground);
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__actions {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		flex-shrink: 0;
+	}
+
+	&__nav {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+}

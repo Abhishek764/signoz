@@ -5,7 +5,6 @@ import './DetailsPanelDrawer.styles.scss';
 interface DetailsPanelDrawerProps {
 	isOpen: boolean;
 	onClose: () => void;
-	title?: string;
 	children: React.ReactNode;
 	className?: string;
 }
@@ -13,7 +12,6 @@ interface DetailsPanelDrawerProps {
 function DetailsPanelDrawer({
 	isOpen,
 	onClose,
-	title,
 	children,
 	className,
 }: DetailsPanelDrawerProps): JSX.Element {
@@ -27,10 +25,8 @@ function DetailsPanelDrawer({
 			}}
 			direction="right"
 			type="panel"
-			showCloseButton
 			showOverlay={false}
 			allowOutsideClick
-			header={{ title: title || '' }}
 			className={`details-panel-drawer ${className || ''}`}
 			content={<div className="details-panel-drawer__body">{children}</div>}
 		/>

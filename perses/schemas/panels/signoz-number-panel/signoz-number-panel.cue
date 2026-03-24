@@ -1,11 +1,11 @@
 package model
 
-kind: "SigNozPieChart"
+kind: "SigNozNumberPanel"
 spec: close({
     visualization?:        #Visualization
     formatting?:           #Formatting
-    legend?:               #Legend
     contextLinks?:         [...#ContextLinkProps]
+    thresholds?:           [...#Threshold]
 })
 
 #Visualization: {
@@ -21,11 +21,15 @@ spec: close({
 
 #PrecisionOption: *2 | 0 | 1 | 3 | 4 | "full"
 
-#Legend: {
-    customColors?: [string]: string
-}
-
 #ContextLinkProps: {
     url:          string
     label:        string
+}
+
+#Threshold: {
+    value:    number
+    operator: ">" | "<" | ">=" | "<=" | "="
+    unit?:    string
+    color:    string
+    format:   "Text" | "Background"
 }

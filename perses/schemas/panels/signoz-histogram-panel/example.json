@@ -1,5 +1,5 @@
 {
-    "kind": "SigNozHistogramChart",
+    "kind": "SigNozHistogramPanel",
     "spec": {
         "histogramBuckets": {
             "bucketCount": 60,

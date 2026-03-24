@@ -1,5 +1,5 @@
 {
-    "kind": "SigNozPieChart",
+    "kind": "SigNozPieChartPanel",
     "spec": {
         "visualization": {
             "timePreference": "GLOBAL_TIME"

@@ -8,37 +8,37 @@
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozTimeSeriesChart"
+          "name": "SigNozTimeSeriesPanel"
         }
       },
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozBarChart"
+          "name": "SigNozBarChartPanel"
         }
       },
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozNumberChart"
+          "name": "SigNozNumberPanel"
         }
       },
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozPieChart"
+          "name": "SigNozPieChartPanel"
         }
       },
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozTableChart"
+          "name": "SigNozTablePanel"
         }
       },
       {
         "kind": "Panel",
         "spec": {
-          "name": "SigNozHistogramChart"
+          "name": "SigNozHistogramPanel"
         }
       },
       {

@@ -1,6 +1,6 @@
 package model
 
-kind: "SigNozHistogramChart"
+kind: "SigNozHistogramPanel"
 spec: close({
     histogramBuckets?:     #HistogramBuckets
     legend?:               #Legend

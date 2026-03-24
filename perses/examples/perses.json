@@ -76,7 +76,7 @@
                         "description": ""
                     },
                     "plugin": {
-                        "kind": "SigNozTimeSeriesChart",
+                        "kind": "SigNozTimeSeriesPanel",
                         "spec": {
                             "visualization": {
                                 "fillSpans": true
@@ -162,7 +162,7 @@
                         "description": ""
                     },
                     "plugin": {
-                        "kind": "SigNozTimeSeriesChart",
+                        "kind": "SigNozTimeSeriesPanel",
                         "spec": {
                             "visualization": {
                                 "fillSpans": true
@@ -250,7 +250,7 @@
                         "name": "total resp size"
                     },
                     "plugin": {
-                        "kind": "SigNozBarChart",
+                        "kind": "SigNozBarChartPanel",
                         "spec": {
                             "visualization": {
                                 "stackedBarChart": false
@@ -302,7 +302,7 @@
                         "name": "num traces for service"
                     },
                     "plugin": {
-                        "kind": "SigNozNumberChart",
+                        "kind": "SigNozNumberPanel",
                         "spec": {
                             "formatting": {
                                 "unit": "none",
@@ -358,7 +358,7 @@
                         "name": "num logs for service"
                     },
                     "plugin": {
-                        "kind": "SigNozNumberChart",
+                        "kind": "SigNozNumberPanel",
                         "spec": {
                             "formatting": {
                                 "unit": "none",
@@ -398,7 +398,7 @@
                         "name": "num traces for service per resp code"
                     },
                     "plugin": {
-                        "kind": "SigNozPieChart",
+                        "kind": "SigNozPieChartPanel",
                         "spec": {
                             "formatting": {
                                 "decimalPrecision": 1
@@ -452,7 +452,7 @@
                         "name": "average latency per service"
                     },
                     "plugin": {
-                        "kind": "SigNozTableChart",
+                        "kind": "SigNozTablePanel",
                         "spec": {
                             "formatting": {
                                 "columnUnits": {
@@ -558,7 +558,7 @@
                         "name": "response size buckets"
                     },
                     "plugin": {
-                        "kind": "SigNozHistogramChart",
+                        "kind": "SigNozHistogramPanel",
                         "spec": {
                             "histogramBuckets": {
                                 "bucketCount": 60,
@@ -599,7 +599,7 @@
                         "description": ""
                     },
                     "plugin": {
-                        "kind": "SigNozTimeSeriesChart",
+                        "kind": "SigNozTimeSeriesPanel",
                         "spec": {
                             "legend": {
                                 "position": "right"
@@ -677,7 +677,7 @@
                         "description": ""
                     },
                     "plugin": {
-                        "kind": "SigNozTimeSeriesChart",
+                        "kind": "SigNozTimeSeriesPanel",
                         "spec": {}
                     },
                     "queries": [
@@ -718,7 +718,7 @@
                         "description": ""
                     },
                     "plugin": {
-                        "kind": "SigNozTimeSeriesChart",
+                        "kind": "SigNozTimeSeriesPanel",
                         "spec": {}
                     },
                     "queries": [

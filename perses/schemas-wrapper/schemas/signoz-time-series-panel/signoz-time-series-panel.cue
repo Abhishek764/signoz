@@ -9,7 +9,7 @@ spec: close({
     axes?:                 common.#Axes
     legend?:               #Legend
     contextLinks?:         [...common.#ContextLinkProps]
-    thresholds?:           [...#Threshold]
+    thresholds?:           [...common.#ThresholdWithLabel]
 })
 
 #Visualization: {
@@ -25,12 +25,4 @@ spec: close({
 #Legend: {
     position?:     common.#LegendPosition
     customColors?: [string]: string
-}
-
-#Threshold: {
-    value:     number
-    unit?:     string
-    color:     string
-    format:    "Text" | "Background"
-    label?:    string
 }

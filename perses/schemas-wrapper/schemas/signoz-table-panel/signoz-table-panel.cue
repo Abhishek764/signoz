@@ -7,7 +7,7 @@ spec: close({
     visualization?:        #Visualization
     formatting?:           #Formatting
     contextLinks?:         [...common.#ContextLinkProps]
-    thresholds?:           [...#Threshold]
+    thresholds?:           [...#TableThreshold]
 })
 
 #Visualization: {
@@ -19,11 +19,7 @@ spec: close({
     decimalPrecision?: common.#PrecisionOption
 }
 
-#Threshold: {
-    value:        number
-    operator:     ">" | "<" | ">=" | "<=" | "="
-    unit?:        string
-    color:        string
-    format:       "Text" | "Background"
-    tableOptions: string // which column this threshold applies to
+#TableThreshold: {
+    common.#ComparisonThreshold
+    tableOptions: string
 }

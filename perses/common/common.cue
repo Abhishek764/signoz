@@ -37,6 +37,22 @@ package common
 
 #LegendPosition: *"bottom" | "right"
 
+#ThresholdWithLabel: {
+    value:  number
+    unit?:  string
+    color:  string
+    format: "Text" | "Background"
+    label?: string
+}
+
+#ComparisonThreshold: {
+    value:    number
+    operator: ">" | "<" | ">=" | "<=" | "="
+    unit?:    string
+    color:    string
+    format:   "Text" | "Background"
+}
+
 // ──────────────────────────────────────────────
 // Query types
 // ──────────────────────────────────────────────

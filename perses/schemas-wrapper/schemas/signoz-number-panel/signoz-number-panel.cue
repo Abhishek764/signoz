@@ -7,7 +7,7 @@ spec: close({
     visualization?:        #Visualization
     formatting?:           #Formatting
     contextLinks?:         [...common.#ContextLinkProps]
-    thresholds?:           [...#Threshold]
+    thresholds?:           [...common.#ComparisonThreshold]
 })
 
 #Visualization: {
@@ -17,12 +17,4 @@ spec: close({
 #Formatting: {
     unit?:             string | *""
     decimalPrecision?: common.#PrecisionOption
-}
-
-#Threshold: {
-    value:    number
-    operator: ">" | "<" | ">=" | "<=" | "="
-    unit?:    string
-    color:    string
-    format:   "Text" | "Background"
 }

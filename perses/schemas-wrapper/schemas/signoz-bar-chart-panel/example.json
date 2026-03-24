@@ -2,7 +2,7 @@
     "kind": "SigNozBarChartPanel",
     "spec": {
         "visualization": {
-            "timePreference": "GLOBAL_TIME",
+            "timePreference": "globalTime",
             "fillSpans": false,
             "stackedBarChart": false
         },

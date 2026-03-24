@@ -34,7 +34,7 @@
                         "spec": {
                             "attributeName": "service.name",
                             "source": "Metrics",
-                            "sort": "DISABLED"
+                            "sort": "disabled"
                         }
                     }
                 }
@@ -52,7 +52,7 @@
                         "kind": "SigNozQueryVariable",
                         "spec": {
                             "queryValue": "SELECT JSONExtractString(labels, 'http.status_code') AS status_code FROM signoz_metrics.distributed_time_series_v4_1day WHERE status_code != '' GROUP BY status_code",
-                            "sort": "ASC"
+                            "sort": "asc"
                         }
                     }
                 }
@@ -70,7 +70,7 @@
                         "kind": "SigNozCustomVariable",
                         "spec": {
                             "customValue": "1,10,20,40,80,160,200",
-                            "sort": "DISABLED"
+                            "sort": "disabled"
                         }
                     }
                 }

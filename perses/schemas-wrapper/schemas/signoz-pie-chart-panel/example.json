@@ -2,7 +2,7 @@
     "kind": "SigNozPieChartPanel",
     "spec": {
         "visualization": {
-            "timePreference": "GLOBAL_TIME"
+            "timePreference": "globalTime"
         },
         "formatting": {
             "unit": "none",

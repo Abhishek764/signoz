@@ -3,6 +3,6 @@
     "spec": {
         "attributeName": "host_name",
         "source": "metrics",
-        "sort": "ASC"
+        "sort": "asc"
     }
 }

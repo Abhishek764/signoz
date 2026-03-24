@@ -2,6 +2,6 @@
     "kind": "SigNozCustomVariable",
     "spec": {
         "customValue": "production,staging,development",
-        "sort": "DISABLED"
+        "sort": "disabled"
     }
 }

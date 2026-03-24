@@ -2,7 +2,7 @@
     "kind": "SigNozTablePanel",
     "spec": {
         "visualization": {
-            "timePreference": "GLOBAL_TIME"
+            "timePreference": "globalTime"
         },
         "formatting": {
             "columnUnits": {

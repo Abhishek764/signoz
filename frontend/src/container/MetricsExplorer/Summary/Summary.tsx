@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
+import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -104,6 +105,8 @@ function Summary(): JSX.Element {
 		setCurrentQueryFilterExpression,
 	] = useState<string>(appliedFilterExpression);
 
+	const [isCancelled, setIsCancelled] = useState<boolean>(false);
+
 	useEffect(() => {
 		setCurrentQueryFilterExpression(appliedFilterExpression);
 	}, [appliedFilterExpression]);
@@ -164,6 +167,7 @@ function Summary(): JSX.Element {
 		isLoading: isGetMetricsStatsLoading,
 		isError: isGetMetricsStatsError,
 		error: metricsStatsError,
+		reset: resetMetricsStats,
 	} = useGetMetricsStats();
 
 	const {
@@ -172,6 +176,7 @@ function Summary(): JSX.Element {
 		isLoading: isGetMetricsTreemapLoading,
 		isError: isGetMetricsTreemapError,
 		error: metricsTreemapError,
+		reset: resetMetricsTreemap,
 	} = useGetMetricsTreemap();
 
 	const metricsStatsApiError = useMemo(
@@ -195,6 +200,40 @@ function Summary(): JSX.Element {
 			data: metricsTreemapQuery,
 		});
 	}, [metricsTreemapQuery, getMetricsTreemap]);
+
+	const handleCancelQuery = useCallback(() => {
+		resetMetricsStats();
+		resetMetricsTreemap();
+		setCurrentQueryFilterExpression(appliedFilterExpression);
+		setIsCancelled(true);
+	}, [
+		resetMetricsStats,
+		resetMetricsTreemap,
+		setCurrentQueryFilterExpression,
+		appliedFilterExpression,
+	]);
+
+	const handleRunQuery = useCallback(() => {
+		setIsCancelled(false);
+		getMetricsStats({
+			data: {
+				...metricsListQuery,
+				filter: { expression: currentQueryFilterExpression },
+			},
+		});
+		getMetricsTreemap({
+			data: {
+				...metricsTreemapQuery,
+				filter: { expression: currentQueryFilterExpression },
+			},
+		});
+	}, [
+		getMetricsStats,
+		getMetricsTreemap,
+		metricsListQuery,
+		metricsTreemapQuery,
+		currentQueryFilterExpression,
+	]);
 
 	const handleFilterChange = useCallback(
 		(expression: string) => {
@@ -330,10 +369,18 @@ function Summary(): JSX.Element {
 		!isGetMetricsTreemapLoading &&
 		!isGetMetricsTreemapError;
 
+	const isLoadingQueries =
+		isGetMetricsStatsLoading || isGetMetricsTreemapLoading;
+
 	const showFullScreenLoading =
-		(isGetMetricsStatsLoading || isGetMetricsTreemapLoading) &&
+		isLoadingQueries &&
 		formattedMetricsData.length === 0 &&
 		!treeMapData?.data[heatmapView]?.length;
+
+	const showNoMetrics =
+		isMetricsListDataEmpty &&
+		isMetricsTreeMapDataEmpty &&
+		!appliedFilterExpression;
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -343,13 +390,30 @@ function Summary(): JSX.Element {
 					onChange={handleFilterChange}
 					currentQueryFilterExpression={currentQueryFilterExpression}
 					setCurrentQueryFilterExpression={setCurrentQueryFilterExpression}
-					isLoading={isGetMetricsStatsLoading || isGetMetricsTreemapLoading}
+					isLoading={isLoadingQueries}
+					handleCancelQuery={handleCancelQuery}
+					onRunQuery={handleRunQuery}
 				/>
 				{showFullScreenLoading ? (
 					<MetricsLoading />
-				) : isMetricsListDataEmpty &&
-				  isMetricsTreeMapDataEmpty &&
-				  !appliedFilterExpression ? (
+				) : isCancelled ? (
+					<div className="no-logs-container">
+						<div className="no-logs-container-content">
+							<img
+								className="eyes-emoji"
+								src="/Images/eyesEmoji.svg"
+								alt="eyes emoji"
+							/>
+							<Typography className="no-logs-text">
+								Query cancelled.
+								<span className="sub-text">
+									{' '}
+									Click &quot;Run Query&quot; to load metrics.
+								</span>
+							</Typography>
+						</div>
+					</div>
+				) : showNoMetrics ? (
 					<NoLogs dataSource={DataSource.METRICS} />
 				) : (
 					<>

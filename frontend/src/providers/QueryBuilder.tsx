@@ -184,7 +184,7 @@ export function QueryBuilderProvider({
 			const setupedQueryData = builder.queryData.map((item) => {
 				const currentElement: IBuilderQuery = {
 					...item,
-					groupBy: item.groupBy.map(({ id: _, ...item }) => ({
+					groupBy: (item.groupBy ?? []).map(({ id: _, ...item }) => ({
 						...item,
 						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
 					})),

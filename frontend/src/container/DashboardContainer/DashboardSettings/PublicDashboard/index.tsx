@@ -13,6 +13,7 @@ import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
+import { UpdatePublicDashboardProps } from 'types/api/dashboard/public/update';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 
@@ -59,7 +60,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const [defaultTimeRange, setDefaultTimeRange] = useState('30m');
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
-	const { selectedDashboard } = useDashboardStore();
+	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -114,13 +115,32 @@ function PublicDashboardSetting(): JSX.Element {
 		}
 	}, [publicDashboardResponse]);
 
+	const updateSelectedDashboardAfterPublicDashboardChange = (
+		data: UpdatePublicDashboardProps,
+	): void => {
+		if (!selectedDashboard) {
+			return;
+		}
+
+		const updatedDashboard = {
+			...selectedDashboard,
+			publicPath: data.publicPath,
+			timeRangeEnabled: data.timeRangeEnabled,
+			defaultTimeRange: data.defaultTimeRange,
+			updatedAt: new Date().toISOString(),
+		};
+
+		setSelectedDashboard(updatedDashboard);
+	};
+
 	const {
 		mutate: createPublicDashboard,
 		isLoading: isLoadingCreatePublicDashboard,
 		data: createPublicDashboardResponse,
 	} = useMutation(createPublicDashboardAPI, {
-		onSuccess: () => {
+		onSuccess: (data) => {
 			toast.success('Public dashboard created successfully');
+			updateSelectedDashboardAfterPublicDashboardChange(data.data);
 		},
 		onError: (error: APIError) => {
 			showErrorNotification(error);
@@ -132,8 +152,11 @@ function PublicDashboardSetting(): JSX.Element {
 		isLoading: isLoadingUpdatePublicDashboard,
 		data: updatePublicDashboardResponse,
 	} = useMutation(updatePublicDashboardAPI, {
-		onSuccess: () => {
+		onSuccess: (data) => {
 			toast.success('Public dashboard updated successfully');
+			if (data?.data) {
+				updateSelectedDashboardAfterPublicDashboardChange(data.data);
+			}
 		},
 		onError: (error: APIError) => {
 			showErrorNotification(error);
@@ -147,6 +170,17 @@ function PublicDashboardSetting(): JSX.Element {
 	} = useMutation(revokePublicDashboardAccessAPI, {
 		onSuccess: () => {
 			toast.success('Dashboard unpublished successfully');
+			if (selectedDashboard) {
+				const updatedDashboard = {
+					...selectedDashboard,
+					publicPath: undefined,
+					timeRangeEnabled: false,
+					defaultTimeRange: '30m',
+					updatedAt: new Date().toISOString(),
+				};
+
+				setSelectedDashboard(updatedDashboard);
+			}
 		},
 		onError: (error: APIError) => {
 			showErrorNotification(error);

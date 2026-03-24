@@ -1,10 +1,10 @@
 package model
 
+import "github.com/signoz/common"
+
 // defaultValue lives on the Perses ListVariable wrapper (spec level).
 kind: "SigNozCustomVariable"
 spec: close({
 	customValue: =~"^[^,]+(,[^,]+)*$"
-	sort?:       #VariableSortOrder
+	sort?:       common.#VariableSortOrder
 })
-
-#VariableSortOrder: *"DISABLED" | "ASC" | "DESC"

@@ -63,3 +63,9 @@ package common
         "anomaly" | "fillZero"
     args?: [...close({value: number | string | bool})]
 })
+
+// ──────────────────────────────────────────────
+// Variable types
+// ──────────────────────────────────────────────
+
+#VariableSortOrder: *"DISABLED" | "ASC" | "DESC"

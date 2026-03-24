@@ -217,3 +217,7 @@ func (module *getter) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*
 
 	return userRoles, nil
 }
+
+func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {
+	return module.store.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
+}

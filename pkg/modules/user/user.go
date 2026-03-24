@@ -91,6 +91,9 @@ type Getter interface {
 
 	// Gets user_role with roles entries from db
 	GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
+
+	// Gets all the user with role using role id in an org id
+	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
 }
 
 type Handler interface {
@@ -110,6 +113,7 @@ type Handler interface {
 	GetMyUser(http.ResponseWriter, *http.Request)
 	UpdateMyUser(http.ResponseWriter, *http.Request)
 	GetUserRoles(http.ResponseWriter, *http.Request)
+	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
 	// Reset Password
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)

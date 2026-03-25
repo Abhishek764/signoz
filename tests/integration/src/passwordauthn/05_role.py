@@ -273,7 +273,9 @@ def test_multiple_roles(
         headers={"Authorization": f"Bearer {new_user_token}"},
     )
     assert response.status_code == HTTPStatus.OK
-    me_role_names = sorted(ur["role"]["name"] for ur in response.json()["data"]["userRoles"])
+    me_role_names = sorted(
+        ur["role"]["name"] for ur in response.json()["data"]["userRoles"]
+    )
     assert me_role_names == [
         "signoz-editor",
         "signoz-viewer",

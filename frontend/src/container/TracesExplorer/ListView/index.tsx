@@ -11,7 +11,7 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
-import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
+// import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
@@ -239,7 +239,7 @@ function ListView({
 					/>
 				</div>
 
-				<DownloadOptionsMenu dataSource={DataSource.TRACES} />
+				{/* <DownloadOptionsMenu dataSource={DataSource.TRACES} /> */}
 
 				<TraceExplorerControls
 					isLoading={isFetching}

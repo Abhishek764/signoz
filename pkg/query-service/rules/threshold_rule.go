@@ -579,22 +579,21 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	return resultVector, nil
 }
 
-func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
-	prevState := r.State()
-
-	valueFormatter := units.FormatterFromUnit(r.Unit())
-
-	var res ruletypes.Vector
-	var err error
-
+func (r *ThresholdRule) BuildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 	if r.version == "v5" {
 		r.logger.InfoContext(ctx, "running v5 query")
-		res, err = r.buildAndRunQueryV5(ctx, r.orgID, ts)
-	} else {
-		r.logger.InfoContext(ctx, "running v4 query")
-		res, err = r.buildAndRunQuery(ctx, r.orgID, ts)
+		return r.buildAndRunQueryV5(ctx, r.orgID, ts)
 	}
+	r.logger.InfoContext(ctx, "running v4 query")
+	return r.buildAndRunQuery(ctx, r.orgID, ts)
 
+}
+
+func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
+	prevState := r.State()
+	valueFormatter := units.FormatterFromUnit(r.Unit())
+
+	res, err := r.BuildAndRunQuery(ctx, ts)
 	if err != nil {
 		return 0, err
 	}
@@ -616,6 +615,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		for _, lbl := range smpl.Metric {
 			l[lbl.Name] = lbl.Value
 		}
+
+		r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", smpl)
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		// todo(aniket): handle different threshold
@@ -640,7 +641,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "Expanding alert template failed", errors.Attr(err), "data", tmplData)
+				r.logger.ErrorContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), errors.Attr(err), "data", tmplData)
 			}
 			return result
 		}
@@ -668,7 +669,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		switch r.typ {
+		switch r.typ { // DIFF
 		case ruletypes.AlertTypeTraces:
 			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
@@ -688,7 +689,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			return 0, fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
+			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", "rule_id", r.ID(), "alert", alerts[h])
+			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
+			// We have already acquired the lock above hence using SetHealth and
+			// SetLastError will deadlock.
+			r.health = ruletypes.HealthBad
+			r.lastError = err
+			return 0, err
 		}
 
 		alerts[h] = &ruletypes.Alert{
@@ -712,7 +719,6 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
 		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
-
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
 			// Update the recovering and missing state of existing alert
@@ -733,7 +739,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "labels", a.Labels)
+			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "rule_name", r.Name(), "labels", a.Labels)
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
@@ -780,11 +786,11 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 
 		// We need to change firing alert to recovering if the returned sample meets recovery threshold
-		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
+		changeFiringToRecovering := a.State == model.StateFiring && a.IsRecovering
 		// We need to change recovering alerts to firing if the returned sample meets target threshold
 		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
 		// in any of the above case we need to update the status of alert
-		if changeAlertingToRecovering || changeRecoveringToFiring {
+		if changeFiringToRecovering || changeRecoveringToFiring {
 			state := model.StateRecovering
 			if changeRecoveringToFiring {
 				state = model.StateFiring

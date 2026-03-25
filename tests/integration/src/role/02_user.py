@@ -246,6 +246,53 @@ def test_user_delete_role_revoke(
                 assert row["_user"] != _user
 
 
+def test_update_my_user(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Invite a viewer user
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": "admin+updateme@integration.test", "role": "VIEWER"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    reset_token = response.json()["data"]["token"]
+
+    # Activate user
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "password123Z$", "token": reset_token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Login as viewer
+    viewer_token = get_token("admin+updateme@integration.test", "password123Z$")
+
+    # Update own display name via PUT /api/v2/users/me
+    response = requests.put(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
+        json={"displayName": "viewer updated name"},
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # Verify the update via GET /api/v2/users/me
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["data"]["displayName"] == "viewer updated name"
+
+
 def test_update_user_by_id(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

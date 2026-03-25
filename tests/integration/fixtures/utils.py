@@ -64,3 +64,66 @@ def get_user_role_names(signoz: types.SigNoz, admin_token: str, user_id: str) ->
         return []
 
     return [role["name"] for role in roles]
+
+
+def get_user_roles(signoz: types.SigNoz, admin_token: str, user_id: str) -> list:
+    """Helper to get the user roles (full objects) by user ID"""
+    headers = {"Authorization": f"Bearer {admin_token}"} if admin_token else {}
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
+        timeout=2,
+        headers=headers,
+    )
+    return response.json()["data"] or []
+
+
+def add_user_role(signoz: types.SigNoz, admin_token: str, user_id: str, role_name: str) -> None:
+    """Helper to add a role to a user via POST /api/v2/users/{id}/roles"""
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
+        json={"name": role_name},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == 200, f"failed to add role {role_name}: {response.text}"
+
+
+def remove_user_role_by_name(
+    signoz: types.SigNoz, admin_token: str, user_id: str, role_name: str
+) -> None:
+    """Helper to remove a role from a user by role name"""
+    roles = get_user_roles(signoz, admin_token, user_id)
+    role_id = next((r["id"] for r in roles if r["name"] == role_name), None)
+    assert role_id is not None, f"role {role_name} not found for user {user_id}"
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles/{role_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == 204, f"failed to remove role {role_name}: {response.text}"
+
+
+def set_user_roles(
+    signoz: types.SigNoz, admin_token: str, user_id: str, desired_role_names: list
+) -> None:
+    """Helper to set exact roles for a user using POST/DELETE endpoints"""
+    current_roles = get_user_roles(signoz, admin_token, user_id)
+    current_names = {r["name"] for r in current_roles}
+    desired_names = set(desired_role_names)
+
+    # Remove roles not in desired set
+    for role in current_roles:
+        if role["name"] not in desired_names:
+            response = requests.delete(
+                signoz.self.host_configs["8080"].get(
+                    f"/api/v2/users/{user_id}/roles/{role['id']}"
+                ),
+                headers={"Authorization": f"Bearer {admin_token}"},
+                timeout=2,
+            )
+            assert response.status_code == 204
+
+    # Add roles not in current set
+    for name in desired_names:
+        if name not in current_names:
+            add_user_role(signoz, admin_token, user_id, name)

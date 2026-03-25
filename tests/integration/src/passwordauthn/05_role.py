@@ -4,7 +4,12 @@ from typing import Callable, Tuple
 import requests
 
 from fixtures import types
-from fixtures.utils import get_user_role_names
+from fixtures.utils import (
+    add_user_role,
+    get_user_role_names,
+    remove_user_role_by_name,
+    set_user_roles,
+)
 
 
 def test_change_role(
@@ -59,18 +64,9 @@ def test_change_role(
 
     assert response.status_code == HTTPStatus.FORBIDDEN
 
-    # Change the new user's role - move to ADMIN
-    response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{new_user_id}"),
-        json={
-            "displayName": "role change user",
-            "roleNames": ["signoz-admin"],
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    # Change the new user's role - add ADMIN, remove VIEWER
+    add_user_role(signoz, admin_token, new_user_id, "signoz-admin")
+    remove_user_role_by_name(signoz, admin_token, new_user_id, "signoz-viewer")
 
     # Make some API calls again
     response = requests.get(
@@ -154,17 +150,8 @@ def test_remove_all_roles(
     assert role_names is not None
     assert "signoz-editor" in role_names
 
-    # Remove all roles
-    response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{new_user_id}"),
-        json={
-            "displayName": "no roles user",
-            "roleNames": [],
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    # Remove all roles via DELETE endpoint
+    set_user_roles(signoz, admin_token, new_user_id, [])
 
     # Validate the user has no roles
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
@@ -255,17 +242,8 @@ def test_multiple_roles(
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
 
-    # Assign multiple roles: editor + viewer
-    response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{new_user_id}"),
-        json={
-            "displayName": "multi role user",
-            "roleNames": ["signoz-editor", "signoz-viewer"],
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    # Assign multiple roles: add editor (viewer already assigned)
+    add_user_role(signoz, admin_token, new_user_id, "signoz-editor")
 
     # Validate user has both roles
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
@@ -295,7 +273,7 @@ def test_multiple_roles(
         headers={"Authorization": f"Bearer {new_user_token}"},
     )
     assert response.status_code == HTTPStatus.OK
-    me_role_names = sorted(r["name"] for r in response.json()["data"]["roles"])
+    me_role_names = sorted(ur["role"]["name"] for ur in response.json()["data"]["userRoles"])
     assert me_role_names == [
         "signoz-editor",
         "signoz-viewer",
@@ -316,17 +294,8 @@ def test_multiple_roles(
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
 
-    # Assign all three roles including admin
-    response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{new_user_id}"),
-        json={
-            "displayName": "multi role user",
-            "roleNames": ["signoz-admin", "signoz-editor", "signoz-viewer"],
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    # Add admin role (editor + viewer already assigned)
+    add_user_role(signoz, admin_token, new_user_id, "signoz-admin")
 
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
     assert sorted(role_names) == [
@@ -364,16 +333,7 @@ def test_multiple_roles(
     assert response.status_code == HTTPStatus.OK
 
     # Reduce back to single viewer role
-    response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{new_user_id}"),
-        json={
-            "displayName": "multi role user",
-            "roleNames": ["signoz-viewer"],
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    set_user_roles(signoz, admin_token, new_user_id, ["signoz-viewer"])
 
     role_names = get_user_role_names(signoz, admin_token, new_user_id)
     assert role_names == [

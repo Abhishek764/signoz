@@ -52,13 +52,14 @@ func TestExpandTemplates(t *testing.T) {
 	at, ctx := testSetup(t)
 
 	tests := []struct {
-		name            string
-		alerts          []*types.Alert
-		input           TemplateInput
-		wantTitle       string
-		wantBody        string
-		wantMissingVars []string
-		errorContains   string
+		name              string
+		alerts            []*types.Alert
+		input             TemplateInput
+		wantTitle         string
+		wantBody          []string
+		wantMissingVars   []string
+		errorContains     string
+		wantIsDefaultBody bool
 	}{
 		{
 			// High request throughput on a service — service is a custom label.
@@ -84,11 +85,12 @@ Service: $service
 Description: $description`,
 			},
 			wantTitle: "High request throughput for payment-service",
-			wantBody: `The service payment-service is getting high request. Please investigate.
+			wantBody: []string{`The service payment-service is getting high request. Please investigate.
 Severity: warning
 Status: firing
 Service: payment-service
-Description: Request rate exceeded 10k/s`,
+Description: Request rate exceeded 10k/s`},
+			wantIsDefaultBody: false,
 		},
 		{
 			// Disk usage alert using old Go template syntax throughout.
@@ -135,7 +137,7 @@ Description: Request rate exceeded 10k/s`,
      {{ end }}`,
 			},
 			wantTitle: "[FIRING:1] DiskUsageHigh for  (instance=\"db-primary-01\")",
-			wantBody: `*Alert:* DiskUsageHigh - critical
+			wantBody: []string{`*Alert:* DiskUsageHigh - critical
 
      *Summary:* Disk usage high on database host
      *Description:* Disk usage is high on the database host
@@ -147,7 +149,8 @@ Description: Request rate exceeded 10k/s`,
         • *instance:* db-primary-01
         • *severity:* critical
        
-     `,
+     `},
+			wantIsDefaultBody: true,
 		},
 		{
 			// Pod crash loop on multiple pods — body is expanded once per alert
@@ -162,8 +165,9 @@ Description: Request rate exceeded 10k/s`,
 				TitleTemplate: "$rule_name: $total_firing pods affected",
 				BodyTemplate:  "$labels.pod is crash looping",
 			},
-			wantTitle: "PodCrashLoop: 3 pods affected",
-			wantBody:  "api-worker-1 is crash looping<br><br>api-worker-2 is crash looping<br><br>api-worker-3 is crash looping",
+			wantTitle:         "PodCrashLoop: 3 pods affected",
+			wantBody:          []string{"api-worker-1 is crash looping", "api-worker-2 is crash looping", "api-worker-3 is crash looping"},
+			wantIsDefaultBody: false,
 		},
 		{
 			// Incident partially resolved — one service still down, one recovered.
@@ -177,8 +181,9 @@ Description: Request rate exceeded 10k/s`,
 				TitleTemplate: "$total_firing firing, $total_resolved resolved",
 				BodyTemplate:  "$labels.service ($status)",
 			},
-			wantTitle: "1 firing, 1 resolved",
-			wantBody:  "auth-service (firing)<br><br>payment-service (resolved)",
+			wantTitle:         "1 firing, 1 resolved",
+			wantBody:          []string{"auth-service (firing)", "payment-service (resolved)"},
+			wantIsDefaultBody: false,
 		},
 		{
 			// $environment is not a known AlertData or NotificationTemplateData field,
@@ -203,7 +208,7 @@ Description: Request rate exceeded 10k/s`,
 			input: TemplateInput{
 				BodyTemplate: "$rule_name: see runbook at $runbook_url",
 			},
-			wantBody:        "PodOOMKilled: see runbook at <no value>",
+			wantBody:        []string{"PodOOMKilled: see runbook at <no value>"},
 			wantMissingVars: []string{"runbook_url"},
 		},
 		{
@@ -217,7 +222,7 @@ Description: Request rate exceeded 10k/s`,
 				BodyTemplate:  "$rule_name: see runbook at $runbook_url",
 			},
 			wantTitle:       "[<no value>] HighMemory and [<no value>]",
-			wantBody:        "HighMemory: see runbook at <no value>",
+			wantBody:        []string{"HighMemory: see runbook at <no value>"},
 			wantMissingVars: []string{"environment", "runbook_url", "service"},
 		},
 		{
@@ -230,10 +235,11 @@ Description: Request rate exceeded 10k/s`,
 			input: TemplateInput{
 				TitleTemplate:        "   ",
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})",
-				BodyTemplate:         "$rule_name ($severity) for $alertname",
+				DefaultBodyTemplate:  "Runbook: https://runbook.example.com",
 			},
-			wantTitle: "HighCPU (RESOLVED)",
-			wantBody:  "HighCPU (critical) for HighCPU",
+			wantTitle:         "HighCPU (RESOLVED)",
+			wantBody:          []string{"Runbook: https://runbook.example.com"},
+			wantIsDefaultBody: true,
 		},
 		{
 			name: "using non-existing function in template",
@@ -259,9 +265,10 @@ Description: Request rate exceeded 10k/s`,
 			if tc.wantTitle != "" {
 				require.Equal(t, tc.wantTitle, got.Title)
 			}
-			if tc.wantBody != "" {
+			if tc.wantBody != nil {
 				require.Equal(t, tc.wantBody, got.Body)
 			}
+			require.Equal(t, tc.wantIsDefaultBody, got.IsDefaultTemplatedBody)
 
 			require.Len(t, got.MissingVars, len(tc.wantMissingVars))
 			for _, v := range tc.wantMissingVars {

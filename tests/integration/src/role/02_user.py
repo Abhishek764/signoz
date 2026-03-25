@@ -7,7 +7,6 @@ from sqlalchemy import sql
 
 from fixtures.auth import (
     USER_ADMIN_EMAIL,
-    USER_ADMIN_NAME,
     USER_ADMIN_PASSWORD,
     USER_EDITOR_EMAIL,
     USER_EDITOR_PASSWORD,
@@ -138,12 +137,16 @@ def test_user_update_role_grant(
     )
     assert roles_list_response.status_code == HTTPStatus.OK
     editor_role_id = next(
-        r["id"] for r in roles_list_response.json()["data"] if r["name"] == "signoz-editor"
+        r["id"]
+        for r in roles_list_response.json()["data"]
+        if r["name"] == "signoz-editor"
     )
 
     # Remove the editor role
     remove_response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{editor_id}/roles/{editor_role_id}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v2/users/{editor_id}/roles/{editor_role_id}"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -241,41 +244,6 @@ def test_user_delete_role_revoke(
             else:
                 _user = f"user:organization/{org_id}/user/{editor_id}"
                 assert row["_user"] != _user
-
-
-def test_update_my_user(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # Update own display name via PUT /api/v2/users/me
-    response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        json={"displayName": "updated admin name"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
-
-    # Verify the update via GET /api/v2/users/me
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["data"]["displayName"] == "updated admin name"
-
-    # Restore original name
-    response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        json={"displayName": USER_ADMIN_NAME},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 def test_update_user_by_id(

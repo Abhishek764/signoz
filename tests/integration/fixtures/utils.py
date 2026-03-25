@@ -77,7 +77,9 @@ def get_user_roles(signoz: types.SigNoz, admin_token: str, user_id: str) -> list
     return response.json()["data"] or []
 
 
-def add_user_role(signoz: types.SigNoz, admin_token: str, user_id: str, role_name: str) -> None:
+def add_user_role(
+    signoz: types.SigNoz, admin_token: str, user_id: str, role_name: str
+) -> None:
     """Helper to add a role to a user via POST /api/v2/users/{id}/roles"""
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
@@ -85,7 +87,9 @@ def add_user_role(signoz: types.SigNoz, admin_token: str, user_id: str, role_nam
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert response.status_code == 200, f"failed to add role {role_name}: {response.text}"
+    assert (
+        response.status_code == 200
+    ), f"failed to add role {role_name}: {response.text}"
 
 
 def remove_user_role_by_name(
@@ -96,11 +100,15 @@ def remove_user_role_by_name(
     role_id = next((r["id"] for r in roles if r["name"] == role_name), None)
     assert role_id is not None, f"role {role_name} not found for user {user_id}"
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles/{role_id}"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v2/users/{user_id}/roles/{role_id}"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert response.status_code == 204, f"failed to remove role {role_name}: {response.text}"
+    assert (
+        response.status_code == 204
+    ), f"failed to remove role {role_name}: {response.text}"
 
 
 def set_user_roles(

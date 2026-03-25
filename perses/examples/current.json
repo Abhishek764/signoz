@@ -147,6 +147,7 @@
             "defaultValue": "",
             "description": "",
             "id": "58301d14-b109-4bb1-9d12-71513a659ddd",
+            "key": "58301d14-b109-4bb1-9d12-71513a659ddd",
             "modificationUUID": "840e2f4d-eaf6-4c2b-9145-ce5feaa961f3",
             "multiSelect": true,
             "name": "statusCodesFromQuery",
@@ -180,6 +181,22 @@
             "sort": "DISABLED",
             "textboxValue": "",
             "type": "CUSTOM"
+        },
+        "df733907-7071-4f53-a3b2-f88ab28ecdd6": {
+            "customValue": "",
+            "defaultValue": "defaultvaluegoeshere",
+            "description": "",
+            "id": "df733907-7071-4f53-a3b2-f88ab28ecdd6",
+            "modificationUUID": "743ade7c-b5fb-4210-945a-2852e8a9ef68",
+            "multiSelect": false,
+            "name": "textboxvar",
+            "order": 0,
+            "queryValue": "",
+            "selectedValue": "defaultvaluegoeshere",
+            "showALLOption": false,
+            "sort": "DISABLED",
+            "textboxValue": "defaultvaluegoeshere",
+            "type": "TEXTBOX"
         }
     },
     "version": "v5",

@@ -124,6 +124,12 @@
         "spec": {
           "name": "SigNozQueryVariable"
         }
+      },
+      {
+        "kind": "Variable",
+        "spec": {
+          "name": "SigNozTextboxVariable"
+        }
       }
     ]
   }

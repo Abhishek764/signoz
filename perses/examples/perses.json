@@ -74,6 +74,20 @@
                         }
                     }
                 }
+            },
+            {
+                "kind": "TextVariable",
+                "spec": {
+                    "name": "textboxvar",
+                    "display": {
+                        "name": "textboxvar"
+                    },
+                    "value": "defaultvaluegoeshere",
+                    "plugin": {
+                        "kind": "SigNozTextboxVariable",
+                        "spec": {}
+                    }
+                }
             }
         ],
         "panels": {

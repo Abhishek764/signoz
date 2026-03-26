@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -14,6 +15,7 @@ type OutputFormat int
 const (
 	MarkdownFormatHTML OutputFormat = iota
 	MarkdownFormatSlackBlockKit
+	MarkdownFormatNoop
 )
 
 // MarkdownRenderer is the interface for rendering markdown to different formats.
@@ -49,6 +51,9 @@ func (r *markdownRenderer) Render(ctx context.Context, markdown string, outputFo
 		return r.renderHTML(ctx, markdown)
 	case MarkdownFormatSlackBlockKit:
 		return r.renderSlackBlockKit(ctx, markdown)
+	case MarkdownFormatNoop:
+		return markdown, nil
+	default:
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown output format: %v", outputFormat)
 	}
-	return "", nil
 }

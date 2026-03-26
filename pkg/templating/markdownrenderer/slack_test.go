@@ -8,7 +8,7 @@ import (
 )
 
 func jsonEqual(a, b string) bool {
-	var va, vb interface{}
+	var va, vb any
 	if err := json.Unmarshal([]byte(a), &va); err != nil {
 		return false
 	}
@@ -21,7 +21,7 @@ func jsonEqual(a, b string) bool {
 }
 
 func prettyJSON(s string) string {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal([]byte(s), &v); err != nil {
 		return s
 	}

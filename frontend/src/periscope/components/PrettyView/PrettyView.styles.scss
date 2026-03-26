@@ -8,6 +8,17 @@
 		display: none; // Chrome, Safari
 	}
 
+	&__search-input {
+		margin-bottom: 8px;
+		width: 100%;
+		border: 1px solid var(--l2-border) !important;
+		border-radius: 4px;
+
+		&:focus {
+			border-color: var(--primary) !important;
+		}
+	}
+
 	// Font spec: SF Mono, 12px, 400, 18px line-height, -0.5% letter-spacing
 	font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
 	font-size: 12px;

@@ -1,11 +1,14 @@
 import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { Copy, Ellipsis } from '@signozhq/icons';
+import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import type { MenuProps } from 'antd';
 // TODO: Replace antd Dropdown with @signozhq/ui DropdownMenu when moving to design library
 import { Dropdown } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+
+import useSearchFilter from './hooks/useSearchFilter';
 
 import './PrettyView.styles.scss';
 
@@ -88,6 +91,7 @@ export interface PrettyViewProps {
 		fieldValue: unknown,
 		isNested: boolean,
 	) => void;
+	searchable?: boolean;
 }
 
 function copyToClipboard(value: unknown): void {
@@ -100,8 +104,14 @@ function copyToClipboard(value: unknown): void {
 	});
 }
 
-function PrettyView({ data, actions, onAction }: PrettyViewProps): JSX.Element {
+function PrettyView({
+	data,
+	actions,
+	onAction,
+	searchable = true,
+}: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const { searchQuery, setSearchQuery, filteredData } = useSearchFilter(data);
 
 	const theme = useMemo(
 		() => ({
@@ -201,7 +211,7 @@ function PrettyView({ data, actions, onAction }: PrettyViewProps): JSX.Element {
 	const getItemString = useCallback(
 		(
 			_nodeType: string,
-			data: unknown,
+			nodeData: unknown,
 			itemType: React.ReactNode,
 			itemString: string,
 			keyPath: KeyPath,
@@ -213,7 +223,7 @@ function PrettyView({ data, actions, onAction }: PrettyViewProps): JSX.Element {
 					</>
 				),
 				fieldKey: String(keyPath[0]),
-				value: data,
+				value: nodeData,
 				isNested: true,
 			}),
 		[renderWithActions],
@@ -236,8 +246,19 @@ function PrettyView({ data, actions, onAction }: PrettyViewProps): JSX.Element {
 
 	return (
 		<div className="pretty-view">
+			{searchable && (
+				<Input
+					className="pretty-view__search-input"
+					type="text"
+					placeholder="Search for a field..."
+					value={searchQuery}
+					onChange={(e): void => setSearchQuery(e.target.value)}
+				/>
+			)}
+
 			<JSONTree
-				data={data}
+				key={searchQuery}
+				data={filteredData}
 				theme={theme}
 				invertTheme={false}
 				hideRoot
@@ -253,8 +274,7 @@ export default PrettyView;
 
 //  Remaining for PrettyView:
 //   1. Pinned items — localStorage persistence, pin/unpin action in dropdown, "PINNED ITEMS" section at top showing pinned key:value rows
-//   2. Search — input bar with match count + prev/next navigation, highlights matching keys/values in tree
-//  2a. actions should have there own onCLick instead of using the generic onAction callback, to avoid confusion with pinned items and search which also have "actions"
-// 2b. move to constants code that can be moved
-//   3. JSON view — Monaco Editor mode (separate component but related)
-//   4. View mode switcher — Pretty/JSON toggle toolbar above the content
+//  1a. actions should have there own onClick instead of using the generic onAction callback
+//  1b. move to constants code that can be moved
+//   2. JSON view — Monaco Editor mode (separate component but related)
+//   3. View mode switcher — Pretty/JSON toggle toolbar above the content

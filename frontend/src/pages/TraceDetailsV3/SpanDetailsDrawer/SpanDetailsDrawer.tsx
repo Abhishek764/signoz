@@ -6,20 +6,22 @@ import {
 	Ellipsis,
 	ExternalLink,
 } from '@signozhq/icons';
-import DetailField from 'components/DetailField/DetailField';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
 import { noop } from 'lodash-es';
+import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Span } from 'types/api/trace/getTraceV2';
 
-// import SpanPercentile from './SpanPercentile/SpanPercentile';
-// import './SpanDetailsDrawer.styles.scss';
+import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
+import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
+import useSpanPercentile from './SpanPercentile/useSpanPercentile';
+
+import './SpanDetailsDrawer.styles.scss';
 
 interface SpanDetailsDrawerProps {
 	panelState: DetailsPanelState;
 	selectedSpan: Span | undefined;
-	// traceId: string;
 }
 
 const SPAN_HEADER_ACTIONS: HeaderAction[] = [
@@ -74,11 +76,65 @@ const SPAN_HEADER_ACTIONS: HeaderAction[] = [
 	},
 ];
 
+function SpanDetailsContent({
+	selectedSpan,
+}: {
+	selectedSpan: Span;
+}): JSX.Element {
+	const percentile = useSpanPercentile(selectedSpan);
+
+	return (
+		<div className="span-details-drawer__body">
+			<div className="span-details-drawer__span-row">
+				<KeyValueLabel badgeKey="Span name" badgeValue={selectedSpan.name} />
+				<SpanPercentileBadge
+					loading={percentile.loading}
+					percentileValue={percentile.percentileValue}
+					duration={percentile.duration}
+					spanPercentileData={percentile.spanPercentileData}
+					isOpen={percentile.isOpen}
+					toggleOpen={percentile.toggleOpen}
+				/>
+			</div>
+
+			<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
+
+			{/* Step 6: HighlightedOptions */}
+			{/* TODO: Drive this from a config file */}
+			<div className="span-details-drawer__highlighted-options">
+				<KeyValueLabel
+					badgeKey="SERVICE"
+					badgeValue={selectedSpan.serviceName}
+					direction="column"
+				/>
+				<KeyValueLabel
+					badgeKey="STATUS CODE STRING"
+					badgeValue={selectedSpan.statusCodeString}
+					direction="column"
+				/>
+				<KeyValueLabel
+					badgeKey="TRACE ID"
+					badgeValue={selectedSpan.traceId}
+					direction="column"
+				/>
+				<KeyValueLabel
+					badgeKey="SPAN KIND"
+					badgeValue={selectedSpan.spanKind}
+					direction="column"
+				/>
+			</div>
+
+			{/* Step 7: KeyAttributes */}
+			{/* Step 8: MiniTraceContext */}
+			{/* Step 9: ContentTabs + content area */}
+		</div>
+	);
+}
+
 function SpanDetailsDrawer({
 	panelState,
 	selectedSpan,
-}: // traceId,
-SpanDetailsDrawerProps): JSX.Element {
+}: SpanDetailsDrawerProps): JSX.Element {
 	return (
 		<DetailsPanelDrawer
 			isOpen={panelState.isOpen}
@@ -91,24 +147,11 @@ SpanDetailsDrawerProps): JSX.Element {
 				actions={SPAN_HEADER_ACTIONS}
 			/>
 
-			{selectedSpan && (
-				<div className="span-details-drawer__body">
-					<DetailField
-						label="Span name"
-						direction="row"
-						labelCase="normal"
-						value={selectedSpan.name}
-					/>
-
-					{/* TODO: Add SpanPercentile next to span name value */}
-					{/* <SpanPercentile selectedSpan={selectedSpan} /> */}
-
-					{/* Step 6: HighlightedOptions */}
-					{/* Step 7: KeyAttributes */}
-					{/* Step 8: MiniTraceContext */}
-					{/* Step 9: ContentTabs + content area */}
-				</div>
-			)}
+			{selectedSpan && <SpanDetailsContent selectedSpan={selectedSpan} />}
+			{/* Step 6: HighlightedOptions */}
+			{/* Step 7: KeyAttributes */}
+			{/* Step 8: MiniTraceContext */}
+			{/* Step 9: ContentTabs + content area */}
 		</DetailsPanelDrawer>
 	);
 }

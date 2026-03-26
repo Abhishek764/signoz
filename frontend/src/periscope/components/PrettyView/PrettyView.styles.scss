@@ -1,5 +1,5 @@
 .pretty-view {
-	padding: 8px 0;
+	padding: 0 0 8px 0;
 	overflow-y: auto;
 	flex: 1;
 	scrollbar-width: none; // Firefox
@@ -9,10 +9,17 @@
 	}
 
 	&__search-input {
+		position: sticky;
+		top: 0;
+		z-index: 1;
 		margin-bottom: 8px;
 		width: 100%;
 		border: 1px solid var(--l2-border) !important;
 		border-radius: 4px;
+		font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace !important;
+		font-size: 12px !important;
+		line-height: 18px !important;
+		background: var(--l1-background) !important;
 
 		&:focus {
 			border-color: var(--primary) !important;

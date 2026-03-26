@@ -2,112 +2,40 @@ import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { Copy, Ellipsis } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
 import type { MenuProps } from 'antd';
 // TODO: Replace antd Dropdown with @signozhq/ui DropdownMenu when moving to design library
 import { Dropdown } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
+import { darkTheme, lightTheme, themeExtension } from './constants';
 import useSearchFilter from './hooks/useSearchFilter';
+import { copyToClipboard } from './utils';
 
 import './PrettyView.styles.scss';
 
-// Dark theme — SigNoz design palette
-const darkTheme = {
-	scheme: 'signoz-dark',
-	author: 'signoz',
-	base00: 'transparent',
-	base01: '#161922',
-	base02: '#1d212d',
-	base03: '#62687C',
-	base04: '#ADB4C2',
-	base05: '#ADB4C2',
-	base06: '#ADB4C2',
-	base07: '#ADB4C2',
-	base08: '#EA6D71',
-	base09: '#7CEDBD',
-	base0A: '#7CEDBD',
-	base0B: '#ADB4C2',
-	base0C: '#23C4F8',
-	base0D: '#95ACFB',
-	base0E: '#95ACFB',
-	base0F: '#AD7F58',
-};
-
-// Light theme
-const lightTheme = {
-	scheme: 'signoz-light',
-	author: 'signoz',
-	base00: 'transparent',
-	base01: '#F9F9FB',
-	base02: '#EFF0F3',
-	base03: '#80828D',
-	base04: '#62636C',
-	base05: '#62636C',
-	base06: '#62636C',
-	base07: '#1E1F24',
-	base08: '#E5484D',
-	base09: '#168757',
-	base0A: '#168757',
-	base0B: '#62636C',
-	base0C: '#157594',
-	base0D: '#2F48A0',
-	base0E: '#2F48A0',
-	base0F: '#684C35',
-};
-
-const themeExtension = {
-	value: ({
-		style,
-	}: {
-		style: Record<string, unknown>;
-	}): { style: Record<string, unknown>; className: string } => ({
-		style: { ...style },
-		className: 'pretty-view__row',
-	}),
-	nestedNode: ({
-		style,
-	}: {
-		style: Record<string, unknown>;
-	}): { style: Record<string, unknown>; className: string } => ({
-		style: { ...style },
-		className: 'pretty-view__nested-row',
-	}),
-};
+export interface FieldContext {
+	fieldKey: string;
+	fieldValue: unknown;
+	isNested: boolean;
+}
 
 export interface PrettyViewAction {
 	key: string;
 	label: React.ReactNode;
 	icon?: React.ReactNode;
+	onClick: (context: FieldContext) => void;
 }
 
 export interface PrettyViewProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	data: Record<string, any>;
 	actions?: PrettyViewAction[];
-	onAction?: (
-		action: string,
-		fieldKey: string,
-		fieldValue: unknown,
-		isNested: boolean,
-	) => void;
 	searchable?: boolean;
-}
-
-function copyToClipboard(value: unknown): void {
-	const text =
-		typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
-	navigator.clipboard.writeText(text);
-	toast.success('Copied to clipboard', {
-		richColors: true,
-		position: 'top-right',
-	});
 }
 
 function PrettyView({
 	data,
 	actions,
-	onAction,
 	searchable = true,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -131,14 +59,13 @@ function PrettyView({
 	);
 
 	const buildMenuItems = useCallback(
-		(fieldKey: string, value: unknown, isNested: boolean): MenuProps['items'] => {
+		(context: FieldContext): MenuProps['items'] => {
 			const copyItem = {
 				key: 'copy',
 				label: 'Copy',
 				icon: <Copy size={12} />,
 				onClick: (): void => {
-					copyToClipboard(value);
-					onAction?.('copy', fieldKey, value, isNested);
+					copyToClipboard(context.fieldValue);
 				},
 			};
 
@@ -146,12 +73,12 @@ function PrettyView({
 				return [copyItem];
 			}
 
-			const consumerItems = actions.map((item) => ({
-				key: item.key,
-				label: item.label,
-				icon: item.icon,
+			const consumerItems = actions.map((action) => ({
+				key: action.key,
+				label: action.label,
+				icon: action.icon,
 				onClick: (): void => {
-					onAction?.(item.key, fieldKey, value, isNested);
+					action.onClick(context);
 				},
 			}));
 
@@ -161,7 +88,7 @@ function PrettyView({
 				...consumerItems,
 			];
 		},
-		[actions, onAction],
+		[actions],
 	);
 
 	const renderWithActions = useCallback(
@@ -176,7 +103,8 @@ function PrettyView({
 			value: unknown;
 			isNested: boolean;
 		}): React.ReactNode => {
-			const menuItems = buildMenuItems(fieldKey, value, isNested);
+			const context: FieldContext = { fieldKey, fieldValue: value, isNested };
+			const menuItems = buildMenuItems(context);
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
@@ -273,8 +201,6 @@ function PrettyView({
 export default PrettyView;
 
 //  Remaining for PrettyView:
-//   1. Pinned items — localStorage persistence, pin/unpin action in dropdown, "PINNED ITEMS" section at top showing pinned key:value rows
-//  1a. actions should have there own onClick instead of using the generic onAction callback
-//  1b. move to constants code that can be moved
+//   1. Pinned items — localStorage persistence, pin/unpin action in dropdown, "PINNED ITEMS" section at top
 //   2. JSON view — Monaco Editor mode (separate component but related)
 //   3. View mode switcher — Pretty/JSON toggle toolbar above the content

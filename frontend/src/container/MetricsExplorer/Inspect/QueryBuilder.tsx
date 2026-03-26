@@ -20,6 +20,8 @@ function QueryBuilder({
 	inspectMetricsTimeSeries,
 	currentQuery,
 	setCurrentQuery,
+	isLoadingQueries,
+	handleCancelQuery,
 }: QueryBuilderProps): JSX.Element {
 	const applyInspectionOptions = useCallback(() => {
 		setAppliedMetricName(currentMetricName ?? '');
@@ -39,7 +41,11 @@ function QueryBuilder({
 				>
 					Query Builder
 				</Button>
-				<RunQueryBtn onStageRunQuery={applyInspectionOptions} />
+				<RunQueryBtn
+					onStageRunQuery={applyInspectionOptions}
+					handleCancelQuery={handleCancelQuery}
+					isLoadingQueries={isLoadingQueries}
+				/>
 			</div>
 			<Card className="inspect-metrics-query-builder-content">
 				<MetricNameSearch

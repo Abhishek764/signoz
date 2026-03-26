@@ -42,7 +42,7 @@ export default function RightToolbarActions({
 	if (showLiveLogs) {
 		return (
 			<div className="right-toolbar-actions-container">
-				<RunQueryBtn />
+				<RunQueryBtn disabled />
 			</div>
 		);
 	}
@@ -59,7 +59,7 @@ export default function RightToolbarActions({
 	return (
 		<div className="right-toolbar-actions-container">
 			<RunQueryBtn
-				isLoadingQueries={isLoadingQueries}
+				isLoadingQueries={!!isLoadingQueries}
 				handleCancelQuery={handleCancelQuery}
 				onStageRunQuery={onStageRunQuery}
 			/>

@@ -10,6 +10,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
 import { Threshold } from 'container/CreateAlertV2/context/types';
@@ -185,7 +186,7 @@ function ChartPreview({
 		ENTITY_VERSION_V5,
 		{
 			queryKey: [
-				'chartPreview',
+				REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
 				userQueryKey || JSON.stringify(query),
 				selectedInterval,
 				minTime,

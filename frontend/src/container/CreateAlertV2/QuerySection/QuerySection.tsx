@@ -1,9 +1,11 @@
 import { useCallback, useMemo } from 'react';
+import { useIsFetching, useQueryClient } from 'react-query';
 import { Button } from 'antd';
 import classNames from 'classnames';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
@@ -61,6 +63,13 @@ function QuerySection(): JSX.Element {
 		const stagedQueryKey = getMetricNameFromQueryData(stagedQueryData);
 		return currentQueryKey !== stagedQueryKey;
 	}, [currentQuery, alertType, thresholdState, stagedQuery]);
+
+	const queryClient = useQueryClient();
+	const isLoadingQueries =
+		useIsFetching([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]) > 0;
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
+	}, [queryClient]);
 
 	const runQueryHandler = useCallback(() => {
 		// Reset the source param when the query is changed
@@ -130,6 +139,8 @@ function QuerySection(): JSX.Element {
 				setQueryCategory={onQueryCategoryChange}
 				alertType={alertType}
 				runQuery={runQueryHandler}
+				isLoadingQueries={isLoadingQueries}
+				handleCancelQuery={handleCancelQuery}
 				alertDef={alertDef}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				key={currentQuery.queryType}

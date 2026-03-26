@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-import { QueryKey, useIsFetching, useQueryClient } from 'react-query';
 import { Button } from 'antd';
 import cx from 'classnames';
 import {
@@ -12,14 +10,23 @@ import {
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import './RunQueryBtn.scss';
-interface RunQueryBtnProps {
+
+type RunQueryBtnProps = {
 	className?: string;
 	label?: string;
-	isLoadingQueries?: boolean;
-	handleCancelQuery?: () => void;
-	onStageRunQuery?: () => void;
-	queryRangeKey?: QueryKey;
-}
+	disabled?: boolean;
+} & (
+	| {
+			onStageRunQuery: () => void;
+			handleCancelQuery: () => void;
+			isLoadingQueries: boolean;
+	  }
+	| {
+			onStageRunQuery?: never;
+			handleCancelQuery?: never;
+			isLoadingQueries?: never;
+	  }
+);
 
 function RunQueryBtn({
 	className,
@@ -27,33 +34,17 @@ function RunQueryBtn({
 	isLoadingQueries,
 	handleCancelQuery,
 	onStageRunQuery,
-	queryRangeKey,
+	disabled,
 }: RunQueryBtnProps): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
-	const queryClient = useQueryClient();
-	const isKeyFetchingCount = useIsFetching(
-		queryRangeKey as QueryKey | undefined,
-	);
-	const isLoading =
-		typeof isLoadingQueries === 'boolean'
-			? isLoadingQueries
-			: isKeyFetchingCount > 0;
-
-	const onCancel = useCallback(() => {
-		if (handleCancelQuery) {
-			return handleCancelQuery();
-		}
-		if (queryRangeKey) {
-			queryClient.cancelQueries(queryRangeKey);
-		}
-	}, [handleCancelQuery, queryClient, queryRangeKey]);
+	const isLoading = isLoadingQueries ?? false;
 
 	return isLoading ? (
 		<Button
 			type="default"
 			icon={<Loader2 size={14} className="loading-icon animate-spin" />}
 			className={cx('cancel-query-btn periscope-btn danger', className)}
-			onClick={onCancel}
+			onClick={handleCancelQuery}
 		>
 			Cancel
 		</Button>
@@ -61,7 +52,7 @@ function RunQueryBtn({
 		<Button
 			type="primary"
 			className={cx('run-query-btn periscope-btn primary', className)}
-			disabled={isLoading || !onStageRunQuery}
+			disabled={disabled}
 			onClick={onStageRunQuery}
 			icon={<Play size={14} />}
 		>

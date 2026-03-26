@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from 'react-query';
+import { useIsFetching, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -127,6 +127,11 @@ function FormAlertRules({
 
 	// use query client
 	const ruleCache = useQueryClient();
+	const isLoadingAlertQuery =
+		useIsFetching([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]) > 0;
+	const handleCancelAlertQuery = useCallback(() => {
+		ruleCache.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
+	}, [ruleCache]);
 
 	const isNewRule = !ruleId || isEmpty(ruleId);
 
@@ -914,6 +919,8 @@ function FormAlertRules({
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={(): void => handleRunQuery()}
+							isLoadingQueries={isLoadingAlertQuery}
+							handleCancelQuery={handleCancelAlertQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}

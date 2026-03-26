@@ -129,11 +129,7 @@ def test_clickhouse_sql_valid_raw_query(
     [
         (
             "SELECT * FROM signoz_logs.distributed_logs LIMIT 10",
-            "deprecated table",  # This is captured by validate()
-        ),
-        (
-            "SELECT count() AS value FROM signoz_logs.logs_v2",
-            "local table",  # This is captured by validate()
+            "deprecated",  # This is captured by validate()
         ),
         (
             "SELECT * from invalid_table",
@@ -149,8 +145,8 @@ def test_clickhouse_sql_invalid_queries(
     expected_error: str,
 ) -> None:
     """
-    ClickHouse SQL queries referencing deprecated or local (non-distributed)
-    tables are rejected with HTTP 400.
+    ClickHouse SQL queries referencing deprecated tables or unknown tables are
+    rejected with HTTP 400.
     """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     end = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
@@ -168,3 +164,47 @@ def test_clickhouse_sql_invalid_queries(
     body = response.json()
     assert body["status"] == "error"
     assert expected_error in body["error"]["message"]
+
+
+def test_clickhouse_sql_local_table_warning(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """
+    ClickHouse SQL queries referencing local (non-distributed) tables are
+    executed but the response includes a warning advising use of the
+    distributed table instead.
+    """
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    end = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+    start = end - 60_000
+
+    response = make_query_request(
+        signoz,
+        token,
+        start,
+        end,
+        [
+            {
+                "type": "clickhouse_sql",
+                "spec": {
+                    "name": "A",
+                    "query": "SELECT count() AS value FROM signoz_logs.logs_v2",
+                },
+            }
+        ],
+        request_type="scalar",
+    )
+    assert response.status_code == HTTPStatus.OK
+    body = response.json()
+    assert body["status"] == "success"
+
+    warning = body["data"].get("warning")
+    assert warning is not None, "Expected a warning in the response for local table usage"
+    warning_messages = " ".join(
+        w["message"] for w in warning.get("warnings", [])
+    )
+    assert "distributed" in warning_messages, (
+        f"Expected warning to mention distributed table, got: {warning_messages}"
+    )

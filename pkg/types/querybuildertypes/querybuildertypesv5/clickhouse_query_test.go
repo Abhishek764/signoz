@@ -1,7 +1,10 @@
 package querybuildertypesv5
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 func TestClickHouseQuery_Copy(t *testing.T) {
@@ -67,20 +70,23 @@ func TestClickHouseQuery_Validate_DeprecatedTables(t *testing.T) {
 			if err == nil {
 				t.Fatalf("Validate() expected error for deprecated table %q but got none", tt.table)
 			}
-			if !contains(err.Error(), tt.wantErrMsg) {
-				t.Errorf("Validate() error = %q, want to contain %q", err.Error(), tt.wantErrMsg)
+			_, _, _, _, _, additional := errors.Unwrapb(err)
+			combined := strings.Join(additional, "\n")
+			if !contains(combined, tt.wantErrMsg) {
+				t.Errorf("Validate() additional = %q, want to contain %q", combined, tt.wantErrMsg)
 			}
 		})
 	}
 }
 
-// TestClickHouseQuery_Validate_LocalTables covers every local-table entry,
-// verifying rejection and the correct "use distributed table X instead" message.
-func TestClickHouseQuery_Validate_LocalTables(t *testing.T) {
+// TestClickHouseQuery_LocalTableUsageWarning covers every local-table entry,
+// verifying that Validate() passes but LocalTableUsageWarning() returns the
+// correct "use distributed table X instead" message.
+func TestClickHouseQuery_LocalTableUsageWarning(t *testing.T) {
 	tests := []struct {
 		table string
 		query string
-		dist  string // expected distributed replacement in error
+		dist  string // expected distributed replacement in warning
 	}{
 		// Traces
 		{"signoz_index_v3", "SELECT * FROM signoz_index_v3", "distributed_signoz_index_v3"},
@@ -103,20 +109,23 @@ func TestClickHouseQuery_Validate_LocalTables(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.table, func(t *testing.T) {
 			q := ClickHouseQuery{Name: "A", Query: tt.query}
-			err := q.Validate()
-			if err == nil {
-				t.Fatalf("Validate() expected error for local table %q but got none", tt.table)
+			if err := q.Validate(); err != nil {
+				t.Fatalf("Validate() unexpected error for local table %q: %v", tt.table, err)
+			}
+			warning := q.LocalTableUsageWarning()
+			if warning == "" {
+				t.Fatalf("LocalTableUsageWarning() expected warning for local table %q but got none", tt.table)
 			}
 			wantFragment := `use distributed table "` + tt.dist + `"`
-			if !contains(err.Error(), wantFragment) {
-				t.Errorf("Validate() error = %q, want to contain %q", err.Error(), wantFragment)
+			if !contains(warning, wantFragment) {
+				t.Errorf("LocalTableUsageWarning() = %q, want to contain %q", warning, wantFragment)
 			}
 		})
 	}
 }
 
-// TestClickHouseQuery_Validate_CaseInsensitive verifies that table pattern
-// matching is case-insensitive.
+// TestClickHouseQuery_Validate_CaseInsensitive verifies that deprecated table
+// pattern matching is case-insensitive and returns an error.
 func TestClickHouseQuery_Validate_CaseInsensitive(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -124,14 +133,35 @@ func TestClickHouseQuery_Validate_CaseInsensitive(t *testing.T) {
 	}{
 		{"deprecated table uppercase", "SELECT * FROM DISTRIBUTED_SIGNOZ_INDEX_V2"},
 		{"deprecated table mixed case", "SELECT * FROM Distributed_SignoZ_Index_V2"},
-		{"local table uppercase", "SELECT * FROM SAMPLES_V4"},
-		{"local table mixed case", "SELECT * FROM Time_Series_V4"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := (ClickHouseQuery{Name: "A", Query: tt.query}).Validate()
 			if err == nil {
 				t.Errorf("Validate() expected error for %q but got none", tt.query)
+			}
+		})
+	}
+}
+
+// TestClickHouseQuery_LocalTableUsageWarning_CaseInsensitive verifies that local
+// table pattern matching is case-insensitive and returns a warning.
+func TestClickHouseQuery_LocalTableUsageWarning_CaseInsensitive(t *testing.T) {
+	tests := []struct {
+		name  string
+		query string
+	}{
+		{"local table uppercase", "SELECT * FROM SAMPLES_V4"},
+		{"local table mixed case", "SELECT * FROM Time_Series_V4"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			q := ClickHouseQuery{Name: "A", Query: tt.query}
+			if err := q.Validate(); err != nil {
+				t.Errorf("Validate() unexpected error for %q: %v", tt.query, err)
+			}
+			if q.LocalTableUsageWarning() == "" {
+				t.Errorf("LocalTableUsageWarning() expected warning for %q but got none", tt.query)
 			}
 		})
 	}

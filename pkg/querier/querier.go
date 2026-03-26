@@ -258,6 +258,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					event.LogsUsed = strings.Contains(spec.Query, "signoz_logs")
 					event.TracesUsed = strings.Contains(spec.Query, "signoz_traces")
 				}
+				if w := spec.LocalTableUsageWarning(); w != "" {
+					// TODO: remove this if we have too much log volume from this
+					q.logger.WarnContext(ctx, "clickhouse query references local tables", slog.String("warning", w))
+					intervalWarnings = append(intervalWarnings, w)
+				}
 			}
 		case qbtypes.QueryTypeTraceOperator:
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {

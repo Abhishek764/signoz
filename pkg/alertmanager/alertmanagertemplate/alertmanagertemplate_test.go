@@ -196,8 +196,9 @@ Description: Request rate exceeded 10k/s`},
 			input: TemplateInput{
 				TitleTemplate: "[$environment] $rule_name",
 			},
-			wantTitle:       "[<no value>] HighCPU",
-			wantMissingVars: []string{"environment"},
+			wantTitle:         "[<no value>] HighCPU",
+			wantMissingVars:   []string{"environment"},
+			wantIsDefaultBody: true,
 		},
 		{
 			// $runbook_url is not a known field — someone tried to embed a runbook link

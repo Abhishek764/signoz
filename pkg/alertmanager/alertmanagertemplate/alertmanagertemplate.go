@@ -55,7 +55,7 @@ func (at *alertManagerTemplater) ProcessTemplates(
 		mergeMissingVars(missingVars, titleMissingVars)
 	}
 
-	// isDefaultTemplated tracks whether the body used default templates
+	// isDefaultTemplated tracks whether the body is templated using default templates
 	isDefaultTemplated := false
 	body, bodyMissingVars, err := at.expandBody(input.BodyTemplate, ntd)
 	if err != nil {
@@ -63,7 +63,7 @@ func (at *alertManagerTemplater) ProcessTemplates(
 	}
 	// if body template results in nil, use default template
 	// this happens for old alerts and API users who've not configured custom body annotation
-	if body == nil && input.DefaultBodyTemplate != "" {
+	if body == nil {
 		isDefaultTemplated = true
 		defaultBody, err := at.expandDefaultTemplate(ctx, input.DefaultBodyTemplate, alerts)
 		if err != nil {
@@ -95,6 +95,12 @@ func (at *alertManagerTemplater) expandDefaultTemplate(
 	tmplStr string,
 	alerts []*types.Alert,
 ) (string, error) {
+	// if even the default template is empty, return empty string
+	// this is possible if user added channel with blank template
+	if tmplStr == "" {
+		at.logger.WarnContext(ctx, "default template is empty")
+		return "", nil
+	}
 	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
 	result, err := at.tmpl.ExecuteTextString(tmplStr, data)
 	if err != nil {

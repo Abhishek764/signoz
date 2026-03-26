@@ -87,9 +87,7 @@ def delete_service_account(
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
-def find_service_account_by_name(
-    signoz: types.SigNoz, token: str, name: str
-) -> dict:
+def find_service_account_by_name(signoz: types.SigNoz, token: str, name: str) -> dict:
     """Find a service account by name from the list endpoint."""
     list_resp = requests.get(
         signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),

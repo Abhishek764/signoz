@@ -185,9 +185,7 @@ def test_create_api_key_with_expiry(
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    key_entry = next(
-        k for k in keys_resp.json()["data"] if k["name"] == "future-key"
-    )
+    key_entry = next(k for k in keys_resp.json()["data"] if k["name"] == "future-key")
     assert key_entry["expiresAt"] == future_ts
 
 
@@ -198,9 +196,7 @@ def test_create_api_key_with_past_expiry_rejected(
 ):
     """Creating a key with an already-past expiresAt should be rejected."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id = create_service_account(
-        signoz, token, "sa-key-past-expiry"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-key-past-expiry")
 
     past_ts = int(time.time()) - 60  # 1 minute ago
     response = requests.post(
@@ -224,9 +220,7 @@ def test_create_api_key_no_expiry(
 ):
     """Key with expiresAt=0 should never expire."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id = create_service_account(
-        signoz, token, "sa-key-no-expiry"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-key-no-expiry")
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(
@@ -255,9 +249,7 @@ def test_create_api_key_no_expiry(
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    key_entry = next(
-        k for k in keys_resp.json()["data"] if k["name"] == "forever-key"
-    )
+    key_entry = next(k for k in keys_resp.json()["data"] if k["name"] == "forever-key")
     assert key_entry["expiresAt"] == 0
 
 
@@ -268,9 +260,7 @@ def test_update_api_key_expiry(
 ):
     """Updating expiresAt to a past value should be rejected."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id = create_service_account(
-        signoz, token, "sa-key-update-expiry"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-key-update-expiry")
 
     # create with no expiry
     create_resp = requests.post(

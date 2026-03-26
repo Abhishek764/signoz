@@ -22,9 +22,7 @@ def test_service_account_key_auth_on_dashboards(
 ):
     """Service account API key with admin role can access dashboards."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_service_account_with_key(
-        signoz, token, "sa-dashboard-test"
-    )
+    _, api_key = create_service_account_with_key(signoz, token, "sa-dashboard-test")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
@@ -42,9 +40,7 @@ def test_service_account_key_forbidden_on_user_me(
 ):
     """Service account key must not access /api/v1/user/me — it's user-only."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_service_account_with_key(
-        signoz, token, "sa-user-me-test"
-    )
+    _, api_key = create_service_account_with_key(signoz, token, "sa-user-me-test")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user/me"),

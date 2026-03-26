@@ -1,0 +1,123 @@
+.pretty-view {
+	padding: 8px 0;
+	overflow-y: auto;
+	flex: 1;
+	scrollbar-width: none; // Firefox
+
+	&::-webkit-scrollbar {
+		display: none; // Chrome, Safari
+	}
+
+	// Font spec: SF Mono, 12px, 400, 18px line-height, -0.5% letter-spacing
+	font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.06px;
+
+	// Override react-json-tree inline styles
+	ul {
+		margin: 0 !important;
+		padding-left: 16px !important;
+		list-style: none !important;
+		background-color: transparent !important;
+	}
+
+	> ul {
+		padding-left: 0 !important;
+	}
+
+	// Force font on all tree elements
+	li,
+	span,
+	label {
+		font-family: inherit !important;
+		font-size: inherit !important;
+		line-height: inherit !important;
+		letter-spacing: inherit !important;
+	}
+
+	// Fix react-json-tree text-indent wrapping
+	li {
+		text-indent: 0 !important;
+		padding-top: 2px !important;
+		padding-bottom: 2px !important;
+	}
+
+	.pretty-view__actions {
+		margin-right: 16px;
+	}
+
+	// Leaf node row — hover highlights only this row
+	&__row {
+		border-radius: 2px;
+		display: flex !important;
+		align-items: baseline;
+
+		&:hover {
+			background-color: var(--l3-background);
+
+			.pretty-view__actions {
+				opacity: 1;
+			}
+		}
+
+		// Push actions to the right edge
+		> span {
+			flex: 1;
+		}
+	}
+
+	// Nested node (object/array) — hover only on the label line, not children
+	&__nested-row {
+		> label,
+		> span:not(ul span) {
+			border-radius: 2px;
+			padding: 1px 2px;
+			display: inline !important; // keep item string inline with label
+		}
+
+		// Highlight label + item string on hover, show actions
+		&:hover > label,
+		&:hover > label + span {
+			background-color: var(--l3-background);
+		}
+
+		&:hover > label + span .pretty-view__actions {
+			opacity: 1;
+		}
+
+		// In nested rows, value-row should not take full width
+		.pretty-view__value-row {
+			width: auto;
+		}
+	}
+
+	// Value + actions wrapper (from valueRenderer / getItemString)
+	&__value-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	// In leaf rows, value-row takes full width to push ... to the right
+	&__row &__value-row {
+		justify-content: space-between;
+		width: 100%;
+	}
+
+	// ... actions button — hidden by default, shown on row hover
+	&__actions {
+		opacity: 0;
+		display: inline-flex;
+		align-items: center;
+		cursor: pointer;
+		color: var(--l2-foreground);
+		transition: opacity 0.1s ease;
+		padding: 0 2px;
+
+		&:hover {
+			color: var(--l1-foreground);
+		}
+	}
+}

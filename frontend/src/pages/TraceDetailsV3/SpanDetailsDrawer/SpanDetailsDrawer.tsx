@@ -14,6 +14,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import dayjs from 'dayjs';
 import { noop } from 'lodash-es';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
+import { PrettyView } from 'periscope/components/PrettyView';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import { KEY_ATTRIBUTE_KEYS } from './constants';
@@ -185,6 +186,9 @@ function SpanDetailsContent({
 
 			{/* Step 8: MiniTraceContext */}
 			{/* Step 9: ContentTabs + content area */}
+
+			{/* Step 10: Pretty view */}
+			<PrettyView data={selectedSpan} />
 		</div>
 	);
 }

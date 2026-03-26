@@ -71,8 +71,8 @@ func (r *BaseRule) EvalVector(ctx context.Context, ts time.Time, res ruletypes.V
 			return result
 		}
 
-		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel)                    // DIFF
-		resultLabels := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Labels() // DIFF
+		lb := labels.NewBuilder(smpl.Metric).Del(opts.DeleteLabels...).Del()
+		resultLabels := labels.NewBuilder(smpl.Metric).Del(opts.DeleteLabels...).Labels()
 
 		for name, value := range r.labels.Map() {
 			lb.Set(name, expand(value))
@@ -91,6 +91,11 @@ func (r *BaseRule) EvalVector(ctx context.Context, ts time.Time, res ruletypes.V
 			lb.Set(labels.NoDataLabel, "true")
 		}
 
+		if opts.ExtraAnnotations != nil {
+			extra := opts.ExtraAnnotations(ctx, ts, smpl.Metric)
+			annotations = append(annotations, extra...)
+		}
+
 		lbs := lb.Labels()
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
@@ -98,8 +103,7 @@ func (r *BaseRule) EvalVector(ctx context.Context, ts time.Time, res ruletypes.V
 		if _, ok := alerts[h]; ok {
 			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", "rule_id", r.ID(), "alert", alerts[h])
 			err := fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
-			// We have already acquired the lock above hence using SetHealth and
-			// SetLastError will deadlock.
+			// We have already acquired the lock above hence using SetHealth and SetLastError will deadlock.
 			r.health = ruletypes.HealthBad
 			r.lastError = err
 			return 0, err
@@ -166,7 +170,7 @@ func (r *BaseRule) EvalVector(ctx context.Context, ts time.Time, res ruletypes.V
 					UnixMilli:    ts.UnixMilli(),
 					Labels:       model.LabelsString(labelsJSON),
 					Fingerprint:  a.QueryResultLables.Hash(),
-					Value:        a.Value, // DIFF
+					Value:        a.Value,
 				})
 			}
 			continue

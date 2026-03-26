@@ -3,6 +3,7 @@ package alertmanagertemplate
 import (
 	"context"
 	"log/slog"
+	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -73,10 +74,17 @@ func (at *alertManagerTemplater) ProcessTemplates(
 		mergeMissingVars(missingVars, bodyMissingVars)
 	}
 
+	// convert the internal map to a sorted slice for returning missing variables
+	missingVarsList := make([]string, 0, len(missingVars))
+	for k := range missingVars {
+		missingVarsList = append(missingVarsList, k)
+	}
+	sort.Strings(missingVarsList)
+
 	return &ExpandedTemplates{
 		Title:                  title,
 		Body:                   body,
-		MissingVars:            missingVars,
+		MissingVars:            missingVarsList,
 		IsDefaultTemplatedBody: isDefaultTemplated,
 	}, nil
 }

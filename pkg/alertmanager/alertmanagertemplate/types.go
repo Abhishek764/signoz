@@ -24,7 +24,7 @@ type ExpandedTemplates struct {
 	// IsDefaultTemplatedBody is true if the body templates are templated using
 	// default templates, false when custom templates were used for templating.
 	IsDefaultTemplatedBody bool
-	MissingVars            map[string]bool // union of unknown vars from title + body templates
+	MissingVars            []string // union of unknown vars from title + body templates
 }
 
 // AlertData holds per-alert data used when expanding body templates

@@ -3,6 +3,7 @@ package alertmanagertemplate
 import (
 	"context"
 	"log/slog"
+	"sort"
 	"testing"
 	"time"
 
@@ -270,9 +271,11 @@ Description: Request rate exceeded 10k/s`},
 			}
 			require.Equal(t, tc.wantIsDefaultBody, got.IsDefaultTemplatedBody)
 
-			require.Len(t, got.MissingVars, len(tc.wantMissingVars))
-			for _, v := range tc.wantMissingVars {
-				require.True(t, got.MissingVars[v], "expected %q in MissingVars", v)
+			if len(tc.wantMissingVars) == 0 {
+				require.Empty(t, got.MissingVars)
+			} else {
+				sort.Strings(tc.wantMissingVars)
+				require.Equal(t, tc.wantMissingVars, got.MissingVars)
 			}
 		})
 	}

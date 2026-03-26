@@ -163,7 +163,11 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	serviceAccount.UpdateStatus(serviceaccounttypes.ServiceAccountStatusDeleted)
+	err = serviceAccount.UpdateStatus(serviceaccounttypes.ServiceAccountStatusDeleted)
+	if err != nil {
+		return err
+	}
+
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		// revoke all the API keys on disable
 		err := module.store.RevokeAllFactorAPIKeys(ctx, id)

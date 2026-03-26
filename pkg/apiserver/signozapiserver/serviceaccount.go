@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/gorilla/mux"
 )
@@ -85,7 +86,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets all the roles for the existing service account",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new([]*serviceaccounttypes.ServiceAccountRole),
+		Response:            new([]*authtypes.Role),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
@@ -125,7 +126,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

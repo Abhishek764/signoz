@@ -59,9 +59,9 @@ type ServiceAccountRole struct {
 }
 
 type ServiceAccountWithRoles struct {
-	*ServiceAccount
+	*ServiceAccount `bun:",extend"`
 
-	ServiceAccountRoles []*ServiceAccountRole `bun:"rel:has-many,join:service_account_id=id" json:"serviceAccountRoles" required:"true" nullable:"true"`
+	ServiceAccountRoles []*ServiceAccountRole `bun:"rel:has-many,join:id=service_account_id" json:"serviceAccountRoles" required:"true" nullable:"true"`
 }
 
 type PostableServiceAccount struct {
@@ -205,7 +205,7 @@ func (serviceAccount *ServiceAccountWithRoles) RoleNames() []string {
 	return names
 }
 
-func (sa *PostableServiceAccount) UnmarshalJSON(data []byte) error {
+func (serviceAccount *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 	type Alias PostableServiceAccount
 
 	var temp Alias
@@ -217,8 +217,17 @@ func (sa *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must conform to the regex: %s", serviceAccountNameRegex.String())
 	}
 
-	*sa = PostableServiceAccount(temp)
+	*serviceAccount = PostableServiceAccount(temp)
 	return nil
+}
+
+func (serviceAccount *ServiceAccountWithRoles) GetRoles() []*authtypes.Role {
+	roles := make([]*authtypes.Role, len(serviceAccount.ServiceAccountRoles))
+	for idx, serviceAccountRole := range serviceAccount.ServiceAccountRoles {
+		roles[idx] = serviceAccountRole.Role
+	}
+
+	return roles
 }
 
 type Store interface {

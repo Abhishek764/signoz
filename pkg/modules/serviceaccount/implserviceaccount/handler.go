@@ -59,7 +59,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccountWithRoles, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccountWithRoles, err := handler.module.GetWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -82,7 +82,7 @@ func (handler *handler) GetMe(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccountWithRoles, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccountWithRoles, err := handler.module.GetWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -111,7 +111,7 @@ func (handler *handler) GetRoles(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, serviceAccount.ServiceAccountRoles)
+	render.Success(rw, http.StatusOK, serviceAccount.GetRoles())
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {

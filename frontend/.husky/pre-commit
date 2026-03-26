@@ -1,4 +1,18 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Run Python formatter and linter only when Python files are staged.
+# If py-fmt modifies any files, they are automatically staged and the commit proceeds.
+if git diff --cached --name-only | grep -q '\.py$'; then
+  echo 'Running make py-fmt'
+  make py-fmt
+  if ! git diff --quiet; then
+    echo "\033[1;33mpy-fmt made changes. Staging them automatically.\033[0m"
+    git add $(git diff --name-only)
+  fi
+
+  echo 'Running make py-lint'
+  make py-lint
+fi
+
 cd frontend && yarn lint-staged

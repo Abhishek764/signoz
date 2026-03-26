@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Button } from '@signozhq/button';
 import {
 	ChartBar,
@@ -9,10 +10,13 @@ import {
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import dayjs from 'dayjs';
 import { noop } from 'lodash-es';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Span } from 'types/api/trace/getTraceV2';
 
+import { KEY_ATTRIBUTE_KEYS } from './constants';
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
@@ -83,10 +87,51 @@ function SpanDetailsContent({
 }): JSX.Element {
 	const percentile = useSpanPercentile(selectedSpan);
 
+	const keyAttributes = useMemo(() => {
+		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
+
+		// Merge all attribute sources into one lookup
+		const allAttrs: Record<string, string> = {
+			...selectedSpan.attributes_string,
+			...selectedSpan.resources_string,
+			...(selectedSpan.http_method && { http_method: selectedSpan.http_method }),
+			...(selectedSpan.http_url && { http_url: selectedSpan.http_url }),
+			...(selectedSpan.http_host && { http_host: selectedSpan.http_host }),
+			...(selectedSpan.db_name && { db_name: selectedSpan.db_name }),
+			...(selectedSpan.db_operation && {
+				db_operation: selectedSpan.db_operation,
+			}),
+			...(selectedSpan.external_http_method && {
+				external_http_method: selectedSpan.external_http_method,
+			}),
+			...(selectedSpan.external_http_url && {
+				external_http_url: selectedSpan.external_http_url,
+			}),
+			...(selectedSpan.response_status_code && {
+				response_status_code: selectedSpan.response_status_code,
+			}),
+			datetime: dayjs(selectedSpan.timestamp).format('MMM D, YYYY — HH:mm:ss'),
+			duration: getYAxisFormattedValue(
+				`${selectedSpan.durationNano / 1000000}`,
+				'ms',
+			),
+			'span.kind': selectedSpan.spanKind,
+			status_code_string: selectedSpan.statusCodeString,
+		};
+
+		return keys
+			.filter((key) => allAttrs[key])
+			.map((key) => ({ key, value: String(allAttrs[key]) }));
+	}, [selectedSpan]);
+
 	return (
 		<div className="span-details-drawer__body">
 			<div className="span-details-drawer__span-row">
-				<KeyValueLabel badgeKey="Span name" badgeValue={selectedSpan.name} />
+				<KeyValueLabel
+					badgeKey="Span name"
+					badgeValue={selectedSpan.name}
+					maxCharacters={50}
+				/>
 				<SpanPercentileBadge
 					loading={percentile.loading}
 					percentileValue={percentile.percentileValue}
@@ -125,6 +170,19 @@ function SpanDetailsContent({
 			</div>
 
 			{/* Step 7: KeyAttributes */}
+			{keyAttributes.length > 0 && (
+				<div className="span-details-drawer__key-attributes">
+					<div className="span-details-drawer__key-attributes-label">
+						KEY ATTRIBUTES
+					</div>
+					<div className="span-details-drawer__key-attributes-chips">
+						{keyAttributes.map(({ key, value }) => (
+							<KeyValueLabel key={key} badgeKey={key} badgeValue={value} />
+						))}
+					</div>
+				</div>
+			)}
+
 			{/* Step 8: MiniTraceContext */}
 			{/* Step 9: ContentTabs + content area */}
 		</div>

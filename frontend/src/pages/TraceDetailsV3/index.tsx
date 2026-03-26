@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
 	ResizableHandle,
@@ -10,6 +10,8 @@ import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
+// TODO: Remove mock data when new API is available
+import { mockSpan } from './mockSpanDetailsData';
 import SpanDetailsDrawer from './SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
@@ -36,6 +38,17 @@ function TraceDetailsV3(): JSX.Element {
 
 	const selectedSpanId = urlQuery.get('spanId') || undefined;
 	const panelState = useDetailsPanel({ entityId: selectedSpanId });
+
+	// TODO: Remove mock enrichment when new API is available
+	const enrichedSpan = useMemo(() => {
+		if (!selectedSpan) {
+			return undefined;
+		}
+		return {
+			...selectedSpan,
+			...mockSpan,
+		};
+	}, [selectedSpan]);
 
 	useEffect(() => {
 		setInterestedSpanId({
@@ -96,11 +109,7 @@ function TraceDetailsV3(): JSX.Element {
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>
-			<SpanDetailsDrawer
-				panelState={panelState}
-				selectedSpan={selectedSpan}
-				// traceId={traceId || ''}
-			/>
+			<SpanDetailsDrawer panelState={panelState} selectedSpan={enrichedSpan} />
 		</div>
 	);
 }

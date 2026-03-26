@@ -32,4 +32,26 @@
 			min-width: 120px;
 		}
 	}
+
+	&__key-attributes {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 8px 0;
+
+		&-label {
+			font-size: var(--font-size-xs);
+			font-weight: var(--font-weight-medium);
+			color: var(--l2-foreground);
+			text-transform: uppercase;
+			letter-spacing: 0.48px;
+			line-height: var(--line-height-20);
+		}
+
+		&-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+		}
+	}
 }

@@ -10,6 +10,7 @@ import (
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -17,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testSetup(t *testing.T) (AlertNotificationProcessor, context.Context) {
+func testSetup(t *testing.T) (alertmanagertypes.NotificationProcessor, context.Context) {
 	t.Helper()
 	tmpl := test.CreateTmpl(t)
 	logger := slog.New(slog.DiscardHandler)
@@ -60,7 +61,7 @@ func TestProcessAlertNotification(t *testing.T) {
 	tests := []struct {
 		name              string
 		alerts            []*types.Alert
-		input             Input
+		input             alertmanagertypes.NotificationProcessorInput
 		wantTitle         string
 		wantBody          []string
 		wantIsDefaultBody bool
@@ -80,7 +81,7 @@ func TestProcessAlertNotification(t *testing.T) {
 					true,
 				),
 			},
-			input: Input{
+			input: alertmanagertypes.NotificationProcessorInput{
 				TitleTemplate: "Alert: $rule_name on $service",
 				BodyTemplate:  "**Service:** $service\n\n**Description:** $description",
 			},
@@ -101,7 +102,7 @@ func TestProcessAlertNotification(t *testing.T) {
 					true,
 				),
 			},
-			input: Input{
+			input: alertmanagertypes.NotificationProcessorInput{
 				TitleTemplate: "$rule_name - $severity",
 				BodyTemplate:  "Memory alert: $description",
 			},
@@ -123,7 +124,7 @@ func TestProcessAlertNotification(t *testing.T) {
 					true,
 				),
 			},
-			input: Input{
+			input: alertmanagertypes.NotificationProcessorInput{
 				TitleTemplate: "$rule_name on $host",
 				BodyTemplate:  "**Host:** $labels.host is full",
 			},
@@ -144,7 +145,7 @@ func TestProcessAlertNotification(t *testing.T) {
 					true,
 				),
 			},
-			input: Input{
+			input: alertmanagertypes.NotificationProcessorInput{
 				DefaultTitleTemplate: `{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})`,
 				DefaultBodyTemplate:  `{{ range .Alerts }}{{ .Annotations.description }}{{ end }}`,
 			},
@@ -162,7 +163,7 @@ func TestProcessAlertNotification(t *testing.T) {
 					true,
 				),
 			},
-			input: Input{
+			input: alertmanagertypes.NotificationProcessorInput{
 				TitleTemplate: "[$environment] $rule_name",
 				BodyTemplate:  "See runbook: $runbook_url",
 			},
@@ -179,7 +180,7 @@ func TestProcessAlertNotification(t *testing.T) {
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrash", "pod": "worker-2"}, nil, true),
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrash", "pod": "worker-3"}, nil, false),
 			},
-			input: Input{
+			input: alertmanagertypes.NotificationProcessorInput{
 				TitleTemplate: "$rule_name: $total_firing firing",
 				BodyTemplate:  "$labels.pod ($status)",
 			},

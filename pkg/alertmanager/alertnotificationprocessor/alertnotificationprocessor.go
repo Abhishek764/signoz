@@ -6,13 +6,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/types"
 )
-
-// AlertNotificationProcessor orchestrates template expansion and markdown rendering
-type AlertNotificationProcessor interface {
-	ProcessAlertNotification(ctx context.Context, input Input, alerts []*types.Alert, rendererFormat markdownrenderer.OutputFormat) (*Result, error)
-}
 
 type alertNotificationProcessor struct {
 	templater alertmanagertemplate.AlertManagerTemplater
@@ -20,7 +16,7 @@ type alertNotificationProcessor struct {
 	logger    *slog.Logger
 }
 
-func New(templater alertmanagertemplate.AlertManagerTemplater, renderer markdownrenderer.MarkdownRenderer, logger *slog.Logger) AlertNotificationProcessor {
+func New(templater alertmanagertemplate.AlertManagerTemplater, renderer markdownrenderer.MarkdownRenderer, logger *slog.Logger) alertmanagertypes.NotificationProcessor {
 	return &alertNotificationProcessor{
 		templater: templater,
 		renderer:  renderer,
@@ -28,7 +24,7 @@ func New(templater alertmanagertemplate.AlertManagerTemplater, renderer markdown
 	}
 }
 
-func (p *alertNotificationProcessor) ProcessAlertNotification(ctx context.Context, input Input, alerts []*types.Alert, rendererFormat markdownrenderer.OutputFormat) (*Result, error) {
+func (p *alertNotificationProcessor) ProcessAlertNotification(ctx context.Context, input alertmanagertypes.NotificationProcessorInput, alerts []*types.Alert, rendererFormat markdownrenderer.OutputFormat) (*alertmanagertypes.NotificationProcessorResult, error) {
 	// delegate to templater
 	expanded, err := p.templater.ProcessTemplates(ctx, alertmanagertemplate.TemplateInput{
 		TitleTemplate:        input.TitleTemplate,
@@ -56,7 +52,7 @@ func (p *alertNotificationProcessor) ProcessAlertNotification(ctx context.Contex
 		}
 	}
 
-	return &Result{
+	return &alertmanagertypes.NotificationProcessorResult{
 		Title:                  expanded.Title,
 		Body:                   renderedBodies,
 		IsDefaultTemplatedBody: expanded.IsDefaultTemplatedBody,

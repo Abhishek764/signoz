@@ -11,8 +11,11 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
@@ -65,6 +68,7 @@ type Server struct {
 	pipelineBuilder     *notify.PipelineBuilder
 	marker              *alertmanagertypes.MemMarker
 	tmpl                *template.Template
+	processor           alertmanagertypes.NotificationProcessor
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
@@ -233,6 +237,11 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
+	// Construct the alert notification processor
+	templater := alertmanagertemplate.New(server.tmpl, server.logger)
+	renderer := markdownrenderer.NewMarkdownRenderer(server.logger)
+	server.processor = alertnotificationprocessor.New(templater, renderer, server.logger)
+
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
 	activeReceivers := make(map[string]struct{})
@@ -249,7 +258,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", "receiver", rcv.Name)
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.processor)
 		if err != nil {
 			return err
 		}
@@ -325,7 +334,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.processor, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -408,6 +417,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 					server.alertmanagerConfig,
 					server.tmpl,
 					server.logger,
+					server.processor,
 					group.groupLabels,
 					group.alerts...,
 				)

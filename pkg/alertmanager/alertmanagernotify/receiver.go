@@ -26,7 +26,7 @@ var customNotifierIntegrations = []string{
 	msteamsv2.Integration,
 }
 
-func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
+func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, proc alertmanagertypes.NotificationProcessor) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 	if err != nil {
 		return nil, err

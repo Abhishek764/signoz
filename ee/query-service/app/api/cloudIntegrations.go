@@ -134,20 +134,19 @@ func (ah *APIHandler) getOrCreateCloudIntegrationFactorAPIKey(ctx context.Contex
 	return factorAPIKey.Key, nil
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(ctx context.Context, orgId valuer.UUID) (*serviceaccounttypes.ServiceAccountWithRoles, *basemodel.ApiError) {
-	prefix := ah.Signoz.Modules.ServiceAccount.Config().Email.Domain
-	cloudIntegrationSA := serviceaccounttypes.NewServiceAccount("integration", prefix, serviceaccounttypes.ServiceAccountStatusActive, orgId)
-	cloudIntegrationSAWithRoles, err := ah.Signoz.Modules.ServiceAccount.NewServiceAccountWithRoles(ctx, orgId, cloudIntegrationSA, []*serviceaccounttypes.PostableServiceAccountRole{{Name: authtypes.SigNozViewerRoleName}})
+func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(ctx context.Context, orgId valuer.UUID) (*serviceaccounttypes.ServiceAccount, *basemodel.ApiError) {
+	domain := ah.Signoz.Modules.ServiceAccount.Config().Email.Domain
+	cloudIntegrationServiceAccount := serviceaccounttypes.NewServiceAccount("integration", domain, serviceaccounttypes.ServiceAccountStatusActive, orgId)
+	cloudIntegrationServiceAccount, err := ah.Signoz.Modules.ServiceAccount.GetOrCreate(ctx, orgId, cloudIntegrationServiceAccount)
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
+	}
+	err = ah.Signoz.Modules.ServiceAccount.SetRoleByName(ctx, orgId, cloudIntegrationServiceAccount.ID, authtypes.SigNozViewerRoleName)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
 	}
 
-	cloudIntegrationSAWithRoles, err = ah.Signoz.Modules.ServiceAccount.GetOrCreate(ctx, orgId, cloudIntegrationSAWithRoles)
-	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
-	}
-
-	return cloudIntegrationSAWithRoles, nil
+	return cloudIntegrationServiceAccount, nil
 }
 
 func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (

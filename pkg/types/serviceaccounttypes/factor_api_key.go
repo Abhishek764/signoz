@@ -17,26 +17,16 @@ var (
 	ErrCodeAPIKeyExpired       = errors.MustNewCode("api_key_expired")
 )
 
-type StorableFactorAPIKey struct {
+type FactorAPIKey struct {
 	bun.BaseModel `bun:"table:factor_api_key,alias:factor_api_key"`
 
 	types.Identifiable
 	types.TimeAuditable
-	Name             string    `bun:"name"`
-	Key              string    `bun:"key"`
-	ExpiresAt        uint64    `bun:"expires_at"`
-	LastObservedAt   time.Time `bun:"last_observed_at"`
-	ServiceAccountID string    `bun:"service_account_id"`
-}
-
-type FactorAPIKey struct {
-	types.Identifiable
-	types.TimeAuditable
-	Name             string      `json:"name" requrired:"true"`
-	Key              string      `json:"key" required:"true"`
-	ExpiresAt        uint64      `json:"expiresAt" required:"true"`
-	LastObservedAt   time.Time   `json:"lastObservedAt" required:"true"`
-	ServiceAccountID valuer.UUID `json:"serviceAccountId" required:"true"`
+	Name             string      `bun:"name"`
+	Key              string      `bun:"key"`
+	ExpiresAt        uint64      `bun:"expires_at"`
+	LastObservedAt   time.Time   `bun:"last_observed_at"`
+	ServiceAccountID valuer.UUID `bun:"service_account_id"`
 }
 
 type GettableFactorAPIKeyWithKey struct {
@@ -61,40 +51,6 @@ type PostableFactorAPIKey struct {
 type UpdatableFactorAPIKey struct {
 	Name      string `json:"name" required:"true"`
 	ExpiresAt uint64 `json:"expiresAt" required:"true"`
-}
-
-func NewFactorAPIKeyFromStorable(storable *StorableFactorAPIKey) *FactorAPIKey {
-	return &FactorAPIKey{
-		Identifiable:     storable.Identifiable,
-		TimeAuditable:    storable.TimeAuditable,
-		Name:             storable.Name,
-		Key:              storable.Key,
-		ExpiresAt:        storable.ExpiresAt,
-		LastObservedAt:   storable.LastObservedAt,
-		ServiceAccountID: valuer.MustNewUUID(storable.ServiceAccountID),
-	}
-}
-
-func NewFactorAPIKeyFromStorables(storables []*StorableFactorAPIKey) []*FactorAPIKey {
-	factorAPIKeys := make([]*FactorAPIKey, len(storables))
-
-	for idx, storable := range storables {
-		factorAPIKeys[idx] = NewFactorAPIKeyFromStorable(storable)
-	}
-
-	return factorAPIKeys
-}
-
-func NewStorableFactorAPIKey(factorAPIKey *FactorAPIKey) *StorableFactorAPIKey {
-	return &StorableFactorAPIKey{
-		Identifiable:     factorAPIKey.Identifiable,
-		TimeAuditable:    factorAPIKey.TimeAuditable,
-		Name:             factorAPIKey.Name,
-		Key:              factorAPIKey.Key,
-		ExpiresAt:        factorAPIKey.ExpiresAt,
-		LastObservedAt:   factorAPIKey.LastObservedAt,
-		ServiceAccountID: factorAPIKey.ServiceAccountID.String(),
-	}
 }
 
 func NewGettableFactorAPIKeys(keys []*FactorAPIKey) []*GettableFactorAPIKey {

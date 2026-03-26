@@ -1,6 +1,7 @@
 package serviceaccounttypes
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -35,7 +36,7 @@ var (
 
 type ServiceAccountStatus struct{ valuer.String }
 
-type StorableServiceAccount struct {
+type ServiceAccount struct {
 	bun.BaseModel `bun:"table:service_account,alias:service_account"`
 
 	types.Identifiable
@@ -46,26 +47,32 @@ type StorableServiceAccount struct {
 	OrgID  valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
 }
 
-type ServiceAccount = StorableServiceAccount
+type ServiceAccountRole struct {
+	bun.BaseModel `bun:"table:service_account_role,alias:service_account_role"`
+
+	types.Identifiable
+	types.TimeAuditable
+	ServiceAccountID valuer.UUID `bun:"service_account_id" json:"serviceAccountId" required:"true"`
+	RoleID           valuer.UUID `bun:"role_id" json:"roleId" required:"true"`
+
+	Role *authtypes.Role `bun:"rel:belongs-to,join:role_id=id" json:"role" required:"true"`
+}
+
 type ServiceAccountWithRoles struct {
 	*ServiceAccount
 
-	ServiceAccountRoles []*ServiceAccountRole `json:"roles" required:"true" nullable:"false"`
+	ServiceAccountRoles []*ServiceAccountRole `bun:"rel:has-many,join:service_account_id=id" json:"serviceAccountRoles" required:"true" nullable:"true"`
 }
 
 type PostableServiceAccount struct {
-	Name  string                        `json:"name" required:"true"`
-	Roles []*PostableServiceAccountRole `json:"roles" required:"true" nullable:"false"`
+	Name string `json:"name" required:"true"`
 }
 
-type UpdatableServiceAccount struct {
-	Name  string                         `json:"name" required:"true"`
-	Roles []*UpdatableServiceAccountRole `json:"roles" required:"true" nullable:"false"`
+type PostableServiceAccountRole struct {
+	ID valuer.UUID `json:"id" required:"true"`
 }
 
-type UpdatableServiceAccountStatus struct {
-	Status ServiceAccountStatus `json:"status" required:"true"`
-}
+type UpdatableServiceAccount = PostableServiceAccount
 
 func NewServiceAccount(name string, emailDomain string, status ServiceAccountStatus, orgID valuer.UUID) *ServiceAccount {
 	return &ServiceAccount{
@@ -90,101 +97,55 @@ func NewServiceAccountWithRoles(sa *ServiceAccount, saRoles []*ServiceAccountRol
 	}
 }
 
-func NewServiceAccountRoleFromStorables(storableServiceAccount *StorableServiceAccount, roles []*ServiceAccountRole) *ServiceAccountWithRoles {
-	return &ServiceAccountWithRoles{
-		ServiceAccount: &ServiceAccount{
-			Identifiable:  storableServiceAccount.Identifiable,
-			TimeAuditable: storableServiceAccount.TimeAuditable,
-			Name:          storableServiceAccount.Name,
-			Email:         storableServiceAccount.Email,
-			Status:        storableServiceAccount.Status,
-			OrgID:         storableServiceAccount.OrgID,
-		},
-		ServiceAccountRoles: roles,
-	}
-}
-
-func NewServiceAccountsWithRolesFromRoles(storableServiceAccounts []*StorableServiceAccount, storableServiceAccountRoles []*StorableServiceAccountRole, roles []*authtypes.Role) []*ServiceAccountWithRoles {
-	roleIDToRole := make(map[valuer.UUID]*authtypes.Role, len(roles))
-	for _, role := range roles {
-		roleIDToRole[role.ID] = role
-	}
-
-	serviceAccountIDToRoles := make(map[valuer.UUID][]*StorableServiceAccountRole)
-	for _, sar := range storableServiceAccountRoles {
-		serviceAccountIDToRoles[sar.ServiceAccountID] = append(serviceAccountIDToRoles[sar.ServiceAccountID], sar)
-	}
-
-	serviceAccountsWithRoles := make([]*ServiceAccountWithRoles, 0, len(storableServiceAccounts))
-	for _, sa := range storableServiceAccounts {
-		storedRoles := serviceAccountIDToRoles[sa.ID]
-		serviceAccountRoles := make([]*ServiceAccountRole, 0, len(storedRoles))
-		for _, sr := range storedRoles {
-			serviceAccountRoles = append(serviceAccountRoles, &ServiceAccountRole{
-				StorableServiceAccountRole: sr,
-				Name:                       roleIDToRole[sr.RoleID].Name,
-			})
-		}
-
-		serviceAccountWithRoles := NewServiceAccountRoleFromStorables(sa, serviceAccountRoles)
-		serviceAccountsWithRoles = append(serviceAccountsWithRoles, serviceAccountWithRoles)
-	}
-
-	return serviceAccountsWithRoles
-}
-
-func (sa *ServiceAccount) Update(name string) error {
-	if err := sa.ErrIfDeleted(); err != nil {
+func (serviceAccount *ServiceAccount) Update(name string) error {
+	if err := serviceAccount.ErrIfDeleted(); err != nil {
 		return err
 	}
 
-	sa.Name = name
-	sa.UpdatedAt = time.Now()
+	serviceAccount.Name = name
+	serviceAccount.UpdatedAt = time.Now()
 	return nil
 }
 
-func (sa *ServiceAccount) UpdateStatus(status ServiceAccountStatus) error {
-	if err := sa.ErrIfDeleted(); err != nil {
+func (serviceAccount *ServiceAccount) UpdateStatus(status ServiceAccountStatus) error {
+	if err := serviceAccount.ErrIfDeleted(); err != nil {
 		return err
 	}
 
-	sa.Status = status
-	sa.UpdatedAt = time.Now()
+	serviceAccount.Status = status
+	serviceAccount.UpdatedAt = time.Now()
 	return nil
 }
 
-func (sa *ServiceAccount) ErrIfDeleted() error {
-	if sa.Status == ServiceAccountStatusDeleted {
+func (serviceAccount *ServiceAccount) ErrIfDeleted() error {
+	if serviceAccount.Status == ServiceAccountStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeServiceAccountOperationUnsupported, "this operation is not supported for disabled service account")
 	}
 
 	return nil
 }
 
-func (sa *ServiceAccount) NewServiceAccountRoles(roles []*authtypes.Role) []*ServiceAccountRole {
-	serviceAccountRoles := make([]*ServiceAccountRole, len(roles))
-	for idx, role := range roles {
-		serviceAccountRoles[idx] = &ServiceAccountRole{
-			StorableServiceAccountRole: &StorableServiceAccountRole{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
-				ServiceAccountID: sa.ID,
-				RoleID:           role.ID,
-			},
-			Name: role.Name,
-		}
+func (serviceAccount *ServiceAccount) AddRole(role *authtypes.Role) (*ServiceAccountRole, error) {
+	if err := serviceAccount.ErrIfDeleted(); err != nil {
+		return nil, err
 	}
 
-	return serviceAccountRoles
+	return &ServiceAccountRole{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		ServiceAccountID: serviceAccount.ID,
+		RoleID:           role.ID,
+		Role:             role,
+	}, nil
 }
 
-func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*FactorAPIKey, error) {
-	if err := sa.ErrIfDeleted(); err != nil {
+func (serviceAccount *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*FactorAPIKey, error) {
+	if err := serviceAccount.ErrIfDeleted(); err != nil {
 		return nil, err
 	}
 
@@ -212,38 +173,36 @@ func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*Facto
 		Key:              encodedKey,
 		ExpiresAt:        expiresAt,
 		LastObservedAt:   time.Now(),
-		ServiceAccountID: sa.ID,
+		ServiceAccountID: serviceAccount.ID,
 	}, nil
 }
 
-func (sa *ServiceAccountWithRoles) DiffRoles(input *ServiceAccountWithRoles) ([]string, []string) {
-	currentRolesSet := make(map[string]struct{}, len(sa.ServiceAccountRoles))
-	inputRolesSet := make(map[string]struct{}, len(input.ServiceAccountRoles))
-
-	for _, role := range sa.ServiceAccountRoles {
-		currentRolesSet[role.Name] = struct{}{}
+func (serviceAccount *ServiceAccount) ToIdentity() *authtypes.Identity {
+	return &authtypes.Identity{
+		ServiceAccountID: serviceAccount.ID,
+		Principal:        authtypes.PrincipalServiceAccount,
+		OrgID:            serviceAccount.OrgID,
+		IdenNProvider:    authtypes.IdentNProviderAPIKey,
+		Email:            serviceAccount.Email,
 	}
-	for _, role := range input.ServiceAccountRoles {
-		inputRolesSet[role.Name] = struct{}{}
-	}
+}
 
-	// additions: roles present in input but not in current
-	additions := []string{}
-	for _, role := range input.ServiceAccountRoles {
-		if _, exists := currentRolesSet[role.Name]; !exists {
-			additions = append(additions, role.Name)
-		}
+func (serviceAccount *ServiceAccount) Traits() map[string]any {
+	return map[string]any{
+		"name":       serviceAccount.Name,
+		"email":      serviceAccount.Email.String(),
+		"created_at": serviceAccount.CreatedAt,
+		"status":     serviceAccount.Status.StringValue(),
 	}
+}
 
-	// deletions: roles present in current but not in input
-	deletions := []string{}
-	for _, role := range sa.ServiceAccountRoles {
-		if _, exists := inputRolesSet[role.Name]; !exists {
-			deletions = append(deletions, role.Name)
-		}
+func (serviceAccount *ServiceAccountWithRoles) RoleNames() []string {
+	names := []string{}
+	for _, role := range serviceAccount.ServiceAccountRoles {
+		names = append(names, role.Role.Name)
 	}
 
-	return additions, deletions
+	return names
 }
 
 func (sa *PostableServiceAccount) UnmarshalJSON(data []byte) error {
@@ -258,74 +217,36 @@ func (sa *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must conform to the regex: %s", serviceAccountNameRegex.String())
 	}
 
-	if len(temp.Roles) == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "roles cannot be empty")
-	}
-
 	*sa = PostableServiceAccount(temp)
 	return nil
 }
 
-func (sa *UpdatableServiceAccount) UnmarshalJSON(data []byte) error {
-	type Alias UpdatableServiceAccount
+type Store interface {
+	// Service Account
+	Create(context.Context, *ServiceAccount) error
+	GetWithRoles(context.Context, valuer.UUID, valuer.UUID) (*ServiceAccountWithRoles, error)
+	Get(context.Context, valuer.UUID, valuer.UUID) (*ServiceAccount, error)
+	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*ServiceAccount, error)
+	GetByID(context.Context, valuer.UUID) (*ServiceAccount, error)
+	CountByOrgID(context.Context, valuer.UUID) (int64, error)
+	List(context.Context, valuer.UUID) ([]*ServiceAccount, error)
+	Update(context.Context, valuer.UUID, *ServiceAccount) error
 
-	var temp Alias
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
+	// Service Account Role
+	CreateServiceAccountRole(context.Context, *ServiceAccountRole) error
+	DeleteServiceAccountRole(context.Context, valuer.UUID, valuer.UUID) error
 
-	if match := serviceAccountNameRegex.MatchString(temp.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must conform to the regex: %s", serviceAccountNameRegex.String())
-	}
+	// Service Account Factor API Key
+	CreateFactorAPIKey(context.Context, *FactorAPIKey) error
+	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*FactorAPIKey, error)
+	GetFactorAPIKeyByName(context.Context, valuer.UUID, string) (*FactorAPIKey, error)
+	GetFactorAPIKeyByKey(context.Context, string) (*FactorAPIKey, error)
+	CountFactorAPIKeysByOrgID(context.Context, valuer.UUID) (int64, error)
+	ListFactorAPIKey(context.Context, valuer.UUID) ([]*FactorAPIKey, error)
+	UpdateFactorAPIKey(context.Context, valuer.UUID, *FactorAPIKey) error
+	UpdateLastObservedAt(context.Context, string, time.Time) error
+	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error
+	RevokeAllFactorAPIKeys(context.Context, valuer.UUID) error
 
-	if len(temp.Roles) == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "roles cannot be empty")
-	}
-
-	*sa = UpdatableServiceAccount(temp)
-	return nil
-}
-
-func (sa *UpdatableServiceAccountStatus) UnmarshalJSON(data []byte) error {
-	type Alias UpdatableServiceAccountStatus
-
-	var temp Alias
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	if temp.Status != ServiceAccountStatusDeleted {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "invalid status: %s, allowed status are: %v", temp.Status, ServiceAccountStatusDeleted)
-	}
-
-	*sa = UpdatableServiceAccountStatus(temp)
-	return nil
-}
-
-func (sa *StorableServiceAccount) ToIdentity() *authtypes.Identity {
-	return &authtypes.Identity{
-		ServiceAccountID: sa.ID,
-		Principal:        authtypes.PrincipalServiceAccount,
-		OrgID:            sa.OrgID,
-		IdenNProvider:    authtypes.IdentNProviderAPIKey,
-		Email:            sa.Email,
-	}
-}
-
-func (sa *ServiceAccount) Traits() map[string]any {
-	return map[string]any{
-		"name":       sa.Name,
-		"email":      sa.Email.String(),
-		"created_at": sa.CreatedAt,
-		"status":     sa.Status.StringValue(),
-	}
-}
-
-func (sa *ServiceAccountWithRoles) RoleNames() []string {
-	names := []string{}
-	for _, role := range sa.ServiceAccountRoles {
-		names = append(names, role.Name)
-	}
-
-	return names
+	RunInTx(context.Context, func(context.Context) error) error
 }

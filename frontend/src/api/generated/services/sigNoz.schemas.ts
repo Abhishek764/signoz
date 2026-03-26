@@ -2583,31 +2583,9 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 */
 	createdAt?: Date;
 	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	expiresAt: number;
-	/**
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	key: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	lastObservedAt: Date;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	serviceAccountId: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2643,17 +2621,46 @@ export interface ServiceaccounttypesPostableServiceAccountDTO {
 	 * @type string
 	 */
 	name: string;
-	/**
-	 * @type array
-	 */
-	roles: ServiceaccounttypesPostableServiceAccountRoleDTO[];
 }
 
 export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
 	 */
+	id: string;
+}
+
+export interface ServiceaccounttypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
 	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 export interface ServiceaccounttypesServiceAccountRoleDTO {
@@ -2666,10 +2673,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
+	role: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */
@@ -2709,8 +2713,9 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	orgId: string;
 	/**
 	 * @type array
+	 * @nullable true
 	 */
-	roles: ServiceaccounttypesServiceAccountRoleDTO[];
+	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -2732,24 +2737,6 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	 * @type string
 	 */
 	name: string;
-}
-
-export interface ServiceaccounttypesUpdatableServiceAccountDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type array
-	 */
-	roles: ServiceaccounttypesPostableServiceAccountRoleDTO[];
-}
-
-export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
-	/**
-	 * @type string
-	 */
-	status: string;
 }
 
 export enum TelemetrytypesFieldContextDTO {
@@ -3625,7 +3612,7 @@ export type ListServiceAccounts200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesServiceAccountWithRolesDTO[];
+	data: ServiceaccounttypesServiceAccountDTO[];
 	/**
 	 * @type string
 	 */
@@ -3690,9 +3677,44 @@ export type UpdateServiceAccountKeyPathParameters = {
 	id: string;
 	fid: string;
 };
-export type UpdateServiceAccountStatusPathParameters = {
+export type GetServiceAccountRolesPathParameters = {
 	id: string;
 };
+export type GetServiceAccountRoles200 = {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	data: ServiceaccounttypesServiceAccountRoleDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccountRolePathParameters = {
+	id: string;
+};
+export type CreateServiceAccountRole201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteServiceAccountRolePathParameters = {
+	id: string;
+	rid: string;
+};
+export type GetMyServiceAccount200 = {
+	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListUsers200 = {
 	/**
 	 * @type array

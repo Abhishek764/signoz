@@ -35,20 +35,14 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sa := serviceaccounttypes.NewServiceAccount(req.Name, handler.module.Config().Email.Domain, serviceaccounttypes.ServiceAccountStatusActive, valuer.MustNewUUID(claims.OrgID))
-	saWithRoles, err := handler.module.NewServiceAccountWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), sa, req.Roles)
+	serviceAccount := serviceaccounttypes.NewServiceAccount(req.Name, handler.module.Config().Email.Domain, serviceaccounttypes.ServiceAccountStatusActive, valuer.MustNewUUID(claims.OrgID))
+	err = handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), saWithRoles)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusCreated, types.Identifiable{ID: sa.ID})
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: serviceAccount.ID})
 }
 
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -65,13 +59,59 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	saWithRoles, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccountWithRoles, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, saWithRoles)
+	render.Success(rw, http.StatusOK, serviceAccountWithRoles)
+}
+
+func (handler *handler) GetMe(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(claims.ServiceAccountID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccountWithRoles, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, serviceAccountWithRoles)
+}
+
+func (handler *handler) GetRoles(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccount, err := handler.module.GetWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, serviceAccount.ServiceAccountRoles)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -82,13 +122,13 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sasWithRoles, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
+	serviceAccounts, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, sasWithRoles)
+	render.Success(rw, http.StatusOK, serviceAccounts)
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
@@ -111,25 +151,19 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceAccountWithRoles, err := handler.module.NewServiceAccountWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount, req.Roles)
+	err = serviceAccount.Update(req.Name)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = serviceAccountWithRoles.Update(req.Name)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccountWithRoles)
+	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -138,7 +172,48 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) UpdateStatus(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) UpdateMe(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(claims.ServiceAccountID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(serviceaccounttypes.UpdatableServiceAccount)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = serviceAccount.Update(req.Name)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) SetRole(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -152,25 +227,42 @@ func (handler *handler) UpdateStatus(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.UpdatableServiceAccountStatus)
+	req := new(serviceaccounttypes.PostableServiceAccountRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	err = handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), id, req.ID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = serviceAccount.UpdateStatus(req.Status)
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) DeleteRole(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.UpdateStatus(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	roleID, err := valuer.NewUUID(mux.Vars(r)["rid"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.DeleteRole(ctx, valuer.MustNewUUID(claims.OrgID), id, roleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -223,7 +315,7 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 	}
 
 	// this takes care of checking the existence of service account and the org constraint.
-	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -258,7 +350,7 @@ func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -299,7 +391,7 @@ func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -346,7 +438,7 @@ func (handler *handler) RevokeFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return

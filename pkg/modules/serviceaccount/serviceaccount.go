@@ -6,52 +6,55 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	satypes "github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
-	// Returns a new service account with roles inmemeory aggregate
-	NewServiceAccountWithRoles(context.Context, valuer.UUID, *satypes.ServiceAccount, []*satypes.PostableServiceAccountRole) (*satypes.ServiceAccountWithRoles, error)
-
 	// Creates a new service account for an organization.
-	Create(context.Context, valuer.UUID, *satypes.ServiceAccountWithRoles) error
+	Create(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
-	// Gets a service account by id.
-	Get(context.Context, valuer.UUID, valuer.UUID) (*satypes.ServiceAccountWithRoles, error)
+	// Gets a service account with roles by id.
+	GetWithRoles(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccountWithRoles, error)
 
 	// Gets or creates a service account by name
-	GetOrCreate(context.Context, valuer.UUID, *satypes.ServiceAccountWithRoles) (*satypes.ServiceAccountWithRoles, error)
+	GetOrCreate(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error)
 
-	// Gets a service account by id without fetching roles.
-	GetWithoutRoles(context.Context, valuer.UUID, valuer.UUID) (*satypes.ServiceAccount, error)
+	// Gets a service account by id
+	Get(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
 
 	// List all service accounts for an organization.
-	List(context.Context, valuer.UUID) ([]*satypes.ServiceAccountWithRoles, error)
+	List(context.Context, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error)
 
 	// Updates an existing service account
-	Update(context.Context, valuer.UUID, *satypes.ServiceAccountWithRoles) error
+	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
-	// Updates an existing service account status
-	UpdateStatus(context.Context, valuer.UUID, *satypes.ServiceAccountWithRoles) error
+	// Assign a role to the service account. this is safe to retry
+	SetRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error
+
+	// Assigns a role by name to service account, this is safe to retry
+	SetRoleByName(context.Context, valuer.UUID, valuer.UUID, string) error
+
+	// Revokes a role from service account, this is safe to retry
+	DeleteRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error
 
 	// Deletes an existing service account by id
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Creates a new API key for a service account
-	CreateFactorAPIKey(context.Context, *satypes.FactorAPIKey) error
+	CreateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) error
 
 	// Gets a factor API key by id
-	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*satypes.FactorAPIKey, error)
+	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error)
 
 	// Gets or creates a factor api key by name
-	GetOrCreateFactorAPIKey(context.Context, *satypes.FactorAPIKey) (*satypes.FactorAPIKey, error)
+	GetOrCreateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) (*serviceaccounttypes.FactorAPIKey, error)
 
 	// Lists all the API keys for a service account
-	ListFactorAPIKey(context.Context, valuer.UUID) ([]*satypes.FactorAPIKey, error)
+	ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error)
 
 	// Updates an existing API key for a service account
-	UpdateFactorAPIKey(context.Context, valuer.UUID, valuer.UUID, *satypes.FactorAPIKey) error
+	UpdateFactorAPIKey(context.Context, valuer.UUID, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
 
 	// Set the last observed at for an api key.
 	SetLastObservedAt(context.Context, string, time.Time) error
@@ -70,11 +73,19 @@ type Handler interface {
 
 	Get(http.ResponseWriter, *http.Request)
 
+	GetRoles(http.ResponseWriter, *http.Request)
+
+	GetMe(http.ResponseWriter, *http.Request)
+
 	List(http.ResponseWriter, *http.Request)
 
 	Update(http.ResponseWriter, *http.Request)
 
-	UpdateStatus(http.ResponseWriter, *http.Request)
+	UpdateMe(http.ResponseWriter, *http.Request)
+
+	SetRole(http.ResponseWriter, *http.Request)
+
+	DeleteRole(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 

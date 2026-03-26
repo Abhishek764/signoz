@@ -277,7 +277,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, 
 	return contextlinks.PrepareLinksToTraces(start, end, filterItems)
 }
 
-func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) *qbtypes.QueryRangeRequest {
 	r.logger.InfoContext(
 		ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
 	)
@@ -296,16 +296,13 @@ func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (
 	}
 	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
 	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
-	return req, nil
+	return req
 }
 
 func (r *ThresholdRule) prepareLinksToLogsV5(ctx context.Context, ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
-	qr, err := r.prepareQueryRangeV5(ctx, ts)
-	if err != nil {
-		return ""
-	}
+	qr := r.prepareQueryRangeV5(ctx, ts)
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
@@ -342,10 +339,7 @@ func (r *ThresholdRule) prepareLinksToLogsV5(ctx context.Context, ts time.Time, 
 func (r *ThresholdRule) prepareLinksToTracesV5(ctx context.Context, ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
-	qr, err := r.prepareQueryRangeV5(ctx, ts)
-	if err != nil {
-		return ""
-	}
+	qr := r.prepareQueryRangeV5(ctx, ts)
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
@@ -494,10 +488,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 }
 
 func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
-	params, err := r.prepareQueryRangeV5(ctx, ts)
-	if err != nil {
-		return nil, err
-	}
+	params := r.prepareQueryRangeV5(ctx, ts)
 
 	var results []*v3.Result
 

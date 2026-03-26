@@ -116,7 +116,7 @@ function PrettyView({ data, actions, onAction }: PrettyViewProps): JSX.Element {
 			_keyPath: readonly (string | number)[],
 			_data: unknown,
 			level: number,
-		): boolean => level < 2,
+		): boolean => level < 5,
 		[],
 	);
 

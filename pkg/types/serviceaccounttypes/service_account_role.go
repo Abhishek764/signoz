@@ -15,8 +15,29 @@ type StorableServiceAccountRole struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	ServiceAccountID string `bun:"service_account_id"`
-	RoleID           string `bun:"role_id"`
+	ServiceAccountID valuer.UUID `bun:"service_account_id" json:"serviceAccountId" required:"true"`
+	RoleID           valuer.UUID `bun:"role_id" json:"roleId" required:"true"`
+}
+
+type ServiceAccountRole struct {
+	*StorableServiceAccountRole
+
+	Name string `json:"name" required:"true"`
+}
+
+type PostableServiceAccountRole struct {
+	Name string `json:"name" required:"true"`
+}
+
+type UpdatableServiceAccountRole = PostableServiceAccountRole
+
+func NewStorableServiceAccountRole(saRoles []*ServiceAccountRole) []*StorableServiceAccountRole {
+	storables := make([]*StorableServiceAccountRole, len(saRoles))
+	for idx, saRole := range saRoles {
+		storables[idx] = saRole.StorableServiceAccountRole
+	}
+
+	return storables
 }
 
 func NewStorableServiceAccountRoles(serviceAccountID valuer.UUID, roles []*authtypes.Role) []*StorableServiceAccountRole {
@@ -30,52 +51,43 @@ func NewStorableServiceAccountRoles(serviceAccountID valuer.UUID, roles []*autht
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			ServiceAccountID: serviceAccountID.String(),
-			RoleID:           role.ID.String(),
+			ServiceAccountID: serviceAccountID,
+			RoleID:           role.ID,
 		}
 	}
 
 	return storableServiceAccountRoles
 }
 
-func NewRolesFromStorableServiceAccountRoles(storable []*StorableServiceAccountRole, roles []*authtypes.Role) ([]string, error) {
-	roleIDToName := make(map[string]string, len(roles))
+func NewServiceAccountRolesFromStorables(storable []*StorableServiceAccountRole, roles []*authtypes.Role) ([]*ServiceAccountRole, error) {
+	roleIDToName := make(map[valuer.UUID]string, len(roles))
 	for _, role := range roles {
-		roleIDToName[role.ID.String()] = role.Name
+		roleIDToName[role.ID] = role.Name
 	}
 
-	names := make([]string, 0, len(storable))
+	names := make([]*ServiceAccountRole, 0, len(storable))
 	for _, sar := range storable {
 		roleName, ok := roleIDToName[sar.RoleID]
 		if !ok {
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "role id %s not found in provided roles", sar.RoleID)
 		}
-		names = append(names, roleName)
+		names = append(names, &ServiceAccountRole{StorableServiceAccountRole: sar, Name: roleName})
 	}
 
 	return names, nil
 }
 
-func GetUniqueRolesAndServiceAccountMapping(storableServiceAccountRoles []*StorableServiceAccountRole) (map[string][]valuer.UUID, []valuer.UUID) {
-	serviceAccountIDRoles := make(map[string][]valuer.UUID)
-	uniqueRoleIDSet := make(map[string]struct{})
+func GetUniqueRoleIDs(storableServiceAccountRoles []*StorableServiceAccountRole) []valuer.UUID {
+	uniqueRoleIDSet := make(map[valuer.UUID]struct{})
 
 	for _, sar := range storableServiceAccountRoles {
-		saID := sar.ServiceAccountID
-		roleID := sar.RoleID
-		if _, ok := serviceAccountIDRoles[saID]; !ok {
-			serviceAccountIDRoles[saID] = make([]valuer.UUID, 0)
-		}
-
-		roleUUID := valuer.MustNewUUID(roleID)
-		serviceAccountIDRoles[saID] = append(serviceAccountIDRoles[saID], roleUUID)
-		uniqueRoleIDSet[roleID] = struct{}{}
+		uniqueRoleIDSet[sar.RoleID] = struct{}{}
 	}
 
 	roleIDs := make([]valuer.UUID, 0, len(uniqueRoleIDSet))
 	for rid := range uniqueRoleIDSet {
-		roleIDs = append(roleIDs, valuer.MustNewUUID(rid))
+		roleIDs = append(roleIDs, rid)
 	}
 
-	return serviceAccountIDRoles, roleIDs
+	return roleIDs
 }

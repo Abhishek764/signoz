@@ -2642,18 +2642,21 @@ export interface ServiceaccounttypesPostableServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	email: string;
-	/**
-	 * @type string
-	 */
 	name: string;
 	/**
 	 * @type array
 	 */
-	roles: string[];
+	roles: ServiceaccounttypesPostableServiceAccountRoleDTO[];
 }
 
-export interface ServiceaccounttypesServiceAccountDTO {
+export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface ServiceaccounttypesServiceAccountRoleDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2661,9 +2664,33 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	createdAt?: Date;
 	/**
 	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
+	/**
+	 * @type string
 	 * @format date-time
 	 */
-	deletedAt: Date;
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesServiceAccountWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
 	/**
 	 * @type string
 	 */
@@ -2683,7 +2710,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	/**
 	 * @type array
 	 */
-	roles: string[];
+	roles: ServiceaccounttypesServiceAccountRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -2711,15 +2738,11 @@ export interface ServiceaccounttypesUpdatableServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	email: string;
-	/**
-	 * @type string
-	 */
 	name: string;
 	/**
 	 * @type array
 	 */
-	roles: string[];
+	roles: ServiceaccounttypesPostableServiceAccountRoleDTO[];
 }
 
 export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
@@ -2872,63 +2895,6 @@ export interface TypesDeprecatedUserDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesGettableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	createdByUser?: TypesUserDTO;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresAt?: number;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	lastUsed?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	updatedByUser?: TypesUserDTO;
-	/**
-	 * @type string
-	 */
-	userId?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
@@ -3011,22 +2977,6 @@ export interface TypesOrganizationDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesPostableAPIKeyDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresInDays?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableBulkInviteRequestDTO {
 	/**
 	 * @type array
@@ -3097,88 +3047,6 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 */
 	token?: string;
-}
-
-export interface TypesStorableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
-}
-
-export interface TypesUserDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
 }
 
 export interface ZeustypesGettableHostDTO {
@@ -3675,31 +3543,6 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
-export type ListAPIKeys200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesGettableAPIKeyDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateAPIKey201 = {
-	data: TypesGettableAPIKeyDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type RevokeAPIKeyPathParameters = {
-	id: string;
-};
-export type UpdateAPIKeyPathParameters = {
-	id: string;
-};
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
 };
@@ -3782,7 +3625,7 @@ export type ListServiceAccounts200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesServiceAccountDTO[];
+	data: ServiceaccounttypesServiceAccountWithRolesDTO[];
 	/**
 	 * @type string
 	 */
@@ -3804,7 +3647,7 @@ export type GetServiceAccountPathParameters = {
 	id: string;
 };
 export type GetServiceAccount200 = {
-	data: ServiceaccounttypesServiceAccountDTO;
+	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**
 	 * @type string
 	 */

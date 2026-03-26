@@ -2,6 +2,7 @@ package serviceaccounttypes
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -12,6 +13,7 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableServiceAccount, error)
 	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
 	GetByID(context.Context, valuer.UUID) (*StorableServiceAccount, error)
+	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 	List(context.Context, valuer.UUID) ([]*StorableServiceAccount, error)
 	Update(context.Context, valuer.UUID, *StorableServiceAccount) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -25,8 +27,12 @@ type Store interface {
 	// Service Account Factor API Key
 	CreateFactorAPIKey(context.Context, *StorableFactorAPIKey) error
 	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*StorableFactorAPIKey, error)
+	GetFactorAPIKeyByName(context.Context, valuer.UUID, string) (*StorableFactorAPIKey, error)
+	GetFactorAPIKeyByKey(context.Context, string) (*StorableFactorAPIKey, error)
+	CountFactorAPIKeysByOrgID(context.Context, valuer.UUID) (int64, error)
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*StorableFactorAPIKey, error)
 	UpdateFactorAPIKey(context.Context, valuer.UUID, *StorableFactorAPIKey) error
+	UpdateLastObservedAt(context.Context, string, time.Time) error
 	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error
 	RevokeAllFactorAPIKeys(context.Context, valuer.UUID) error
 

@@ -35,14 +35,20 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount := serviceaccounttypes.NewServiceAccount(req.Name, req.Email, req.Roles, serviceaccounttypes.StatusActive, valuer.MustNewUUID(claims.OrgID))
-	err = handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
+	sa := serviceaccounttypes.NewServiceAccount(req.Name, handler.module.Config().Email.Domain, serviceaccounttypes.ServiceAccountStatusActive, valuer.MustNewUUID(claims.OrgID))
+	saWithRoles, err := handler.module.NewServiceAccountWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), sa, req.Roles)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, types.Identifiable{ID: serviceAccount.ID})
+	err = handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), saWithRoles)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: sa.ID})
 }
 
 func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
@@ -59,13 +65,13 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	saWithRoles, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, serviceAccount)
+	render.Success(rw, http.StatusOK, saWithRoles)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -76,13 +82,13 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccounts, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
+	sasWithRoles, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, serviceAccounts)
+	render.Success(rw, http.StatusOK, sasWithRoles)
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
@@ -105,19 +111,25 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = serviceAccount.Update(req.Name, req.Email, req.Roles)
+	serviceAccountWithRoles, err := handler.module.NewServiceAccountWithRoles(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount, req.Roles)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
+	err = serviceAccountWithRoles.Update(req.Name)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccountWithRoles)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -299,7 +311,12 @@ func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	factorAPIKey.Update(req.Name, req.ExpiresAt)
+	err = factorAPIKey.Update(req.Name, req.ExpiresAt)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.module.UpdateFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount.ID, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)

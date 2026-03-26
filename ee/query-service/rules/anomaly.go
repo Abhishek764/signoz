@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"math"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
@@ -18,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
-	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -38,16 +36,6 @@ const (
 
 type AnomalyRule struct {
 	*baserules.BaseRule
-
-	mtx sync.Mutex
-
-	reader interfaces.Reader
-
-	// querierV2 is used for alerts created after the introduction of new metrics query builder
-	querierV2 interfaces.Querier
-
-	// querierV5 is used for alerts migrated after the introduction of new query builder
-	querierV5 querierV5.Querier
 
 	provider   anomaly.Provider
 	providerV2 anomalyV2.Provider
@@ -97,14 +85,6 @@ func NewAnomalyRule(
 
 	logger.Info("using seasonality", "seasonality", t.seasonality.String())
 
-	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:       reader,
-		Cache:        cache,
-		KeyGenerator: queryBuilder.NewKeyGenerator(),
-	}
-
-	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
-	t.reader = reader
 	if t.seasonality == anomaly.SeasonalityHourly {
 		t.provider = anomaly.NewHourlyProvider(
 			anomaly.WithCache[*anomaly.HourlyProvider](cache),
@@ -142,7 +122,6 @@ func NewAnomalyRule(
 		)
 	}
 
-	t.querierV5 = querierV5
 	t.version = p.Version
 	t.logger = logger
 	return &t, nil
@@ -324,15 +303,6 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 		resultVector = append(resultVector, results...)
 	}
 	return resultVector, nil
-}
-
-func (r *AnomalyRule) BuildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
-	if r.version == "v5" {
-		r.logger.InfoContext(ctx, "running v5 query")
-		return r.buildAndRunQueryV5(ctx, r.OrgID(), ts)
-	}
-	r.logger.InfoContext(ctx, "running v4 query")
-	return r.buildAndRunQuery(ctx, r.OrgID(), ts)
 }
 
 func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {

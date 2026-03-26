@@ -425,6 +425,39 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
+export interface AuthtypesStorableRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -435,6 +468,74 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUserRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role?: AuthtypesStorableRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	userId?: string;
+}
+
+export interface AuthtypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	userRoles?: AuthtypesUserRoleDTO[] | null;
 }
 
 export interface CloudintegrationtypesAWSAccountConfigDTO {
@@ -3016,6 +3117,13 @@ export interface TypesPostableResetPasswordDTO {
 	token?: string;
 }
 
+export interface TypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
@@ -3034,6 +3142,50 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 */
 	token?: string;
+}
+
+export interface TypesUpdatableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName: string;
+}
+
+export interface TypesUserDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 export interface ZeustypesGettableHostDTO {
@@ -3715,7 +3867,7 @@ export type GetMyServiceAccount200 = {
 	status: string;
 };
 
-export type ListUsers200 = {
+export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
 	 */
@@ -3729,10 +3881,10 @@ export type ListUsers200 = {
 export type DeleteUserPathParameters = {
 	id: string;
 };
-export type GetUserPathParameters = {
+export type GetUserDeprecatedPathParameters = {
 	id: string;
 };
-export type GetUser200 = {
+export type GetUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3740,10 +3892,10 @@ export type GetUser200 = {
 	status: string;
 };
 
-export type UpdateUserPathParameters = {
+export type UpdateUserDeprecatedPathParameters = {
 	id: string;
 };
-export type UpdateUser200 = {
+export type UpdateUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3751,7 +3903,7 @@ export type UpdateUser200 = {
 	status: string;
 };
 
-export type GetMyUser200 = {
+export type GetMyUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -4048,6 +4200,20 @@ export type Readyz503 = {
 	status: string;
 };
 
+export type GetUsersByRoleIDPathParameters = {
+	id: string;
+};
+export type GetUsersByRoleID200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**
@@ -4066,6 +4232,60 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListUsers200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetUserPathParameters = {
+	id: string;
+};
+export type GetUser200 = {
+	data: AuthtypesUserWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateUserPathParameters = {
+	id: string;
+};
+export type GetRolesByUserIDPathParameters = {
+	id: string;
+};
+export type GetRolesByUserID200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesRoleDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type SetRoleByUserIDPathParameters = {
+	id: string;
+};
+export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
+	id: string;
+	roleId: string;
+};
+export type GetMyUser200 = {
+	data: AuthtypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */

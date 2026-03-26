@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -192,24 +191,6 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		DeleteLabels: []string{labels.MetricNameLabel},
 	}
 	return r.EvalVector(ctx, ts, res, opts)
-}
-
-func (r *PromRule) String() string {
-	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
-		RuleCondition:     r.ruleCondition,
-		EvalWindow:        r.evalWindow,
-		Labels:            r.labels.Map(),
-		Annotations:       r.annotations.Map(),
-		PreferredChannels: r.preferredChannels,
-	}
-
-	byt, err := json.Marshal(ar)
-	if err != nil {
-		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
-	}
-
-	return string(byt)
 }
 
 func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (promql.Matrix, error) {

@@ -3,7 +3,6 @@ package rules
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
@@ -615,22 +614,4 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		},
 	}
 	return r.EvalVector(ctx, ts, res, opts)
-}
-
-func (r *ThresholdRule) String() string {
-	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
-		RuleCondition:     r.ruleCondition,
-		EvalWindow:        r.evalWindow,
-		Labels:            r.labels.Map(),
-		Annotations:       r.annotations.Map(),
-		PreferredChannels: r.preferredChannels,
-	}
-
-	byt, err := json.Marshal(ar)
-	if err != nil {
-		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
-	}
-
-	return string(byt)
 }

@@ -324,22 +324,3 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	}
 	return r.EvalVector(ctx, ts, res, opts)
 }
-
-func (r *AnomalyRule) String() string {
-
-	ar := ruletypes.PostableRule{
-		AlertName:         r.Name(),
-		RuleCondition:     r.Condition(),
-		EvalWindow:        r.EvalWindow(),
-		Labels:            r.Labels().Map(),
-		Annotations:       r.Annotations().Map(),
-		PreferredChannels: r.PreferredChannels(),
-	}
-
-	byt, err := json.Marshal(ar)
-	if err != nil {
-		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
-	}
-
-	return string(byt)
-}

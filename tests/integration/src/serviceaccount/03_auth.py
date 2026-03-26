@@ -6,19 +6,25 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
-from fixtures.serviceaccount import SA_BASE, create_sa_with_key
+from fixtures.serviceaccount import (
+    SERVICE_ACCOUNT_BASE,
+    create_service_account_with_key,
+    delete_service_account,
+)
 
 logger = setup_logger(__name__)
 
 
-def test_sa_key_auth_on_dashboards(
+def test_service_account_key_auth_on_dashboards(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """Service account API key with admin role can access dashboards."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_sa_with_key(signoz, token, "sa-dashboard-test")
+    _, api_key = create_service_account_with_key(
+        signoz, token, "sa-dashboard-test"
+    )
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
@@ -29,14 +35,16 @@ def test_sa_key_auth_on_dashboards(
     assert response.status_code == HTTPStatus.OK, response.text
 
 
-def test_sa_key_forbidden_on_user_me(
+def test_service_account_key_forbidden_on_user_me(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """Service account key must not access /api/v1/user/me — it's user-only."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_sa_with_key(signoz, token, "sa-user-me-test")
+    _, api_key = create_service_account_with_key(
+        signoz, token, "sa-user-me-test"
+    )
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user/me"),
@@ -47,17 +55,17 @@ def test_sa_key_forbidden_on_user_me(
     ## This shouldn't be allowed on api key identn, will be updated once we fix that.
     assert (
         response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404 for SA on /user/me, got {response.status_code}: {response.text}"
+    ), f"Expected 404 for service account on /user/me, got {response.status_code}: {response.text}"
 
 
-def test_sa_key_forbidden_on_user_preferences(
+def test_service_account_key_forbidden_on_user_preferences(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """Service account key must not access user preference endpoints."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_sa_with_key(signoz, token, "sa-pref-test")
+    _, api_key = create_service_account_with_key(signoz, token, "sa-pref-test")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user/preferences"),
@@ -68,38 +76,44 @@ def test_sa_key_forbidden_on_user_preferences(
     ## This shouldn't be allowed on api key identn, will be updated once we fix that.
     assert (
         response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for SA on /user/preferences, got {response.status_code}: {response.text}"
+    ), f"Expected 200 for service account on /user/preferences, got {response.status_code}: {response.text}"
 
 
-def test_sa_role_access_admin(
+def test_service_account_role_access_admin(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Admin SA can access admin, edit, and view endpoints."""
+    """Admin service account can access admin, edit, and view endpoints."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_sa_with_key(signoz, token, "sa-role-admin", role="signoz-admin")
+    _, api_key = create_service_account_with_key(
+        signoz, token, "sa-role-admin", role="signoz-admin"
+    )
 
     # AdminAccess: list service accounts
     resp = requests.get(
-        signoz.self.host_configs["8080"].get(SA_BASE),
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
     assert (
         resp.status_code == HTTPStatus.OK
-    ), f"Admin SA should access admin endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Admin service account should access admin endpoint, got {resp.status_code}: {resp.text}"
 
     # EditAccess: create a dashboard
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        json={"title": "admin-sa-dash", "uploadedGrafana": False, "version": "v4"},
+        json={
+            "title": "admin-sa-dash",
+            "uploadedGrafana": False,
+            "version": "v4",
+        },
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
     assert (
         resp.status_code == HTTPStatus.CREATED
-    ), f"Admin SA should access edit endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Admin service account should access edit endpoint, got {resp.status_code}: {resp.text}"
 
     # ViewAccess: list dashboards
     resp = requests.get(
@@ -109,40 +123,44 @@ def test_sa_role_access_admin(
     )
     assert (
         resp.status_code == HTTPStatus.OK
-    ), f"Admin SA should access view endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Admin service account should access view endpoint, got {resp.status_code}: {resp.text}"
 
 
-def test_sa_role_access_editor(
+def test_service_account_role_access_editor(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Editor SA can access edit and view endpoints but not admin."""
+    """Editor service account can access edit and view endpoints but not admin."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_sa_with_key(
+    _, api_key = create_service_account_with_key(
         signoz, token, "sa-role-editor", role="signoz-editor"
     )
 
     # AdminAccess: should be forbidden
     resp = requests.get(
-        signoz.self.host_configs["8080"].get(SA_BASE),
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
     assert (
         resp.status_code == HTTPStatus.FORBIDDEN
-    ), f"Editor SA should be forbidden from admin endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Editor service account should be forbidden from admin endpoint, got {resp.status_code}: {resp.text}"
 
     # EditAccess: create a dashboard
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        json={"title": "editor-sa-dash", "uploadedGrafana": False, "version": "v4"},
+        json={
+            "title": "editor-sa-dash",
+            "uploadedGrafana": False,
+            "version": "v4",
+        },
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
     assert (
         resp.status_code == HTTPStatus.CREATED
-    ), f"Editor SA should access edit endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Editor service account should access edit endpoint, got {resp.status_code}: {resp.text}"
 
     # ViewAccess: list dashboards
     resp = requests.get(
@@ -152,40 +170,44 @@ def test_sa_role_access_editor(
     )
     assert (
         resp.status_code == HTTPStatus.OK
-    ), f"Editor SA should access view endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Editor service account should access view endpoint, got {resp.status_code}: {resp.text}"
 
 
-def test_sa_role_access_viewer(
+def test_service_account_role_access_viewer(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Viewer SA can access view endpoints but not edit or admin."""
+    """Viewer service account can access view endpoints but not edit or admin."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _, api_key = create_sa_with_key(
+    _, api_key = create_service_account_with_key(
         signoz, token, "sa-role-viewer", role="signoz-viewer"
     )
 
     # AdminAccess: should be forbidden
     resp = requests.get(
-        signoz.self.host_configs["8080"].get(SA_BASE),
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
     assert (
         resp.status_code == HTTPStatus.FORBIDDEN
-    ), f"Viewer SA should be forbidden from admin endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Viewer service account should be forbidden from admin endpoint, got {resp.status_code}: {resp.text}"
 
     # EditAccess: should be forbidden
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        json={"title": "viewer-sa-dash", "uploadedGrafana": False, "version": "v4"},
+        json={
+            "title": "viewer-sa-dash",
+            "uploadedGrafana": False,
+            "version": "v4",
+        },
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
     assert (
         resp.status_code == HTTPStatus.FORBIDDEN
-    ), f"Viewer SA should be forbidden from edit endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Viewer service account should be forbidden from edit endpoint, got {resp.status_code}: {resp.text}"
 
     # ViewAccess: list dashboards
     resp = requests.get(
@@ -195,17 +217,19 @@ def test_sa_role_access_viewer(
     )
     assert (
         resp.status_code == HTTPStatus.OK
-    ), f"Viewer SA should access view endpoint, got {resp.status_code}: {resp.text}"
+    ), f"Viewer service account should access view endpoint, got {resp.status_code}: {resp.text}"
 
 
-def test_sa_key_deleted_account_rejected(
+def test_service_account_key_deleted_account_rejected(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """A deleted service account's key must be rejected."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    sa_id, api_key = create_sa_with_key(signoz, token, "sa-disable-auth")
+    service_account_id, api_key = create_service_account_with_key(
+        signoz, token, "sa-disable-auth"
+    )
 
     # verify the key works before deleting
     response = requests.get(
@@ -215,14 +239,8 @@ def test_sa_key_deleted_account_rejected(
     )
     assert response.status_code == HTTPStatus.OK
 
-    # delete the SA
-    disable_resp = requests.put(
-        signoz.self.host_configs["8080"].get(f"{SA_BASE}/{sa_id}/status"),
-        json={"status": "deleted"},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert disable_resp.status_code == HTTPStatus.NO_CONTENT
+    # soft-delete the SA
+    delete_service_account(signoz, token, service_account_id)
 
     # now the key should be rejected
     response = requests.get(
@@ -234,17 +252,19 @@ def test_sa_key_deleted_account_rejected(
     assert response.status_code in (
         HTTPStatus.UNAUTHORIZED,
         HTTPStatus.FORBIDDEN,
-    ), f"Expected 401/403 for disabled SA, got {response.status_code}: {response.text}"
+    ), f"Expected 401/403 for disabled service account, got {response.status_code}: {response.text}"
 
 
-def test_sa_key_revoked_key_rejected(
+def test_service_account_key_revoked_key_rejected(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
     """A revoked API key must be rejected."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    sa_id, api_key = create_sa_with_key(signoz, token, "sa-revoke-auth")
+    service_account_id, api_key = create_service_account_with_key(
+        signoz, token, "sa-revoke-auth"
+    )
 
     # verify the key works first
     response = requests.get(
@@ -256,7 +276,9 @@ def test_sa_key_revoked_key_rejected(
 
     # find the key id
     keys_resp = requests.get(
-        signoz.self.host_configs["8080"].get(f"{SA_BASE}/{sa_id}/keys"),
+        signoz.self.host_configs["8080"].get(
+            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
+        ),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -264,7 +286,9 @@ def test_sa_key_revoked_key_rejected(
 
     # revoke it
     revoke_resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{SA_BASE}/{sa_id}/keys/{key_id}"),
+        signoz.self.host_configs["8080"].get(
+            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys/{key_id}"
+        ),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )

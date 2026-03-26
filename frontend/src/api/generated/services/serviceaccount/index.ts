@@ -1081,14 +1081,13 @@ export const useCreateServiceAccountRole = <
  * This endpoint revokes a role from service account
  * @summary Delete service account role
  */
-export const deleteServiceAccountRole = (
-	{ id, rid }: DeleteServiceAccountRolePathParameters,
-	signal?: AbortSignal,
-) => {
+export const deleteServiceAccountRole = ({
+	id,
+	rid,
+}: DeleteServiceAccountRolePathParameters) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/service_accounts/${id}/roles/${rid}`,
-		method: 'POST',
-		signal,
+		method: 'DELETE',
 	});
 };
 

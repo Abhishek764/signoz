@@ -176,7 +176,16 @@ def test_generate_connection_params(
     )
     assert integration_sa is not None, "Integration service account should exist"
 
-    role_names = [role["name"] for role in integration_sa["roles"]]
+    # Fetch roles via the dedicated roles endpoint
+    roles_resp = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/service_accounts/{integration_sa['id']}/roles"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert roles_resp.status_code == HTTPStatus.OK, roles_resp.text
+    role_names = [role["name"] for role in roles_resp.json()["data"]]
 
     assert (
         "signoz-viewer" in role_names

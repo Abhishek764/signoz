@@ -3837,7 +3837,7 @@ export type GetServiceAccountRoles200 = {
 	 * @type array
 	 * @nullable true
 	 */
-	data: ServiceaccounttypesServiceAccountRoleDTO[] | null;
+	data: AuthtypesRoleDTO[] | null;
 	/**
 	 * @type string
 	 */

@@ -5864,7 +5864,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/ServiceaccounttypesServiceAccountRole'
+                      $ref: '#/components/schemas/AuthtypesRole'
                     nullable: true
                     type: array
                   status:
@@ -5969,7 +5969,7 @@ paths:
       tags:
       - serviceaccount
   /api/v1/service_accounts/{id}/roles/{rid}:
-    post:
+    delete:
       deprecated: false
       description: This endpoint revokes a role from service account
       operationId: DeleteServiceAccountRole

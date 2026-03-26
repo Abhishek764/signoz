@@ -205,7 +205,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists the service account keys",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*serviceaccounttypes.FactorAPIKey, 0),
+		Response:            make([]*serviceaccounttypes.GettableFactorAPIKey, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

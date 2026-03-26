@@ -2677,16 +2677,34 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export interface ServiceaccounttypesFactorAPIKeyDTO {
+export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
 	 */
 	createdAt?: Date;
 	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expiresAt: number;
+	/**
 	 * @type string
 	 */
 	id: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	lastObservedAt: Date;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3803,7 +3821,7 @@ export type ListServiceAccountKeys200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesFactorAPIKeyDTO[];
+	data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	/**
 	 * @type string
 	 */

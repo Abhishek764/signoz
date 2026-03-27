@@ -10,7 +10,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -21,6 +24,8 @@ import (
 
 const (
 	Integration = "slack"
+	colorRed    = "#FF0000"
+	colorGreen  = "#00FF00"
 )
 
 // https://api.slack.com/reference/messaging/attachments#legacy_fields - 1024, no units given, assuming runes or characters.
@@ -28,17 +33,18 @@ const maxTitleLenRunes = 1024
 
 // Notifier implements a Notifier for Slack notifications.
 type Notifier struct {
-	conf    *config.SlackConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *config.SlackConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	processor alertmanagertypes.NotificationProcessor
 
 	postJSONFunc func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error)
 }
 
 // New returns a new Slack notification handler.
-func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -50,6 +56,7 @@ func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, httpOpts .
 		logger:       l,
 		client:       client,
 		retrier:      &notify.Retrier{},
+		processor:    proc,
 		postJSONFunc: notify.PostJSON,
 	}, nil
 }
@@ -70,16 +77,17 @@ type attachment struct {
 	Title      string               `json:"title,omitempty"`
 	TitleLink  string               `json:"title_link,omitempty"`
 	Pretext    string               `json:"pretext,omitempty"`
-	Text       string               `json:"text"`
-	Fallback   string               `json:"fallback"`
-	CallbackID string               `json:"callback_id"`
+	Text       string               `json:"text,omitempty"`
+	Fallback   string               `json:"fallback,omitempty"`
+	CallbackID string               `json:"callback_id,omitempty"`
 	Fields     []config.SlackField  `json:"fields,omitempty"`
 	Actions    []config.SlackAction `json:"actions,omitempty"`
 	ImageURL   string               `json:"image_url,omitempty"`
 	ThumbURL   string               `json:"thumb_url,omitempty"`
-	Footer     string               `json:"footer"`
+	Footer     string               `json:"footer,omitempty"`
 	Color      string               `json:"color,omitempty"`
 	MrkdwnIn   []string             `json:"mrkdwn_in,omitempty"`
+	Blocks     []any                `json:"blocks,omitempty"`
 }
 
 // Notify implements the Notifier interface.
@@ -97,79 +105,14 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		data     = notify.GetTemplateData(ctx, n.tmpl, as, logger)
 		tmplText = notify.TmplText(n.tmpl, data, &err)
 	)
-	var markdownIn []string
 
-	if len(n.conf.MrkdwnIn) == 0 {
-		markdownIn = []string{"fallback", "pretext", "text"}
-	} else {
-		markdownIn = n.conf.MrkdwnIn
+	attachments, err := n.prepareContent(ctx, as, tmplText)
+	if err != nil {
+		return false, err
 	}
 
-	title, truncated := notify.TruncateInRunes(tmplText(n.conf.Title), maxTitleLenRunes)
-	if truncated {
-		logger.WarnContext(ctx, "Truncated title", "max_runes", maxTitleLenRunes)
-	}
-	att := &attachment{
-		Title:      title,
-		TitleLink:  tmplText(n.conf.TitleLink),
-		Pretext:    tmplText(n.conf.Pretext),
-		Text:       tmplText(n.conf.Text),
-		Fallback:   tmplText(n.conf.Fallback),
-		CallbackID: tmplText(n.conf.CallbackID),
-		ImageURL:   tmplText(n.conf.ImageURL),
-		ThumbURL:   tmplText(n.conf.ThumbURL),
-		Footer:     tmplText(n.conf.Footer),
-		Color:      tmplText(n.conf.Color),
-		MrkdwnIn:   markdownIn,
-	}
-
-	numFields := len(n.conf.Fields)
-	if numFields > 0 {
-		fields := make([]config.SlackField, numFields)
-		for index, field := range n.conf.Fields {
-			// Check if short was defined for the field otherwise fallback to the global setting
-			var short bool
-			if field.Short != nil {
-				short = *field.Short
-			} else {
-				short = n.conf.ShortFields
-			}
-
-			// Rebuild the field by executing any templates and setting the new value for short
-			fields[index] = config.SlackField{
-				Title: tmplText(field.Title),
-				Value: tmplText(field.Value),
-				Short: &short,
-			}
-		}
-		att.Fields = fields
-	}
-
-	numActions := len(n.conf.Actions)
-	if numActions > 0 {
-		actions := make([]config.SlackAction, numActions)
-		for index, action := range n.conf.Actions {
-			slackAction := config.SlackAction{
-				Type:  tmplText(action.Type),
-				Text:  tmplText(action.Text),
-				URL:   tmplText(action.URL),
-				Style: tmplText(action.Style),
-				Name:  tmplText(action.Name),
-				Value: tmplText(action.Value),
-			}
-
-			if action.ConfirmField != nil {
-				slackAction.ConfirmField = &config.SlackConfirmationField{
-					Title:       tmplText(action.ConfirmField.Title),
-					Text:        tmplText(action.ConfirmField.Text),
-					OkText:      tmplText(action.ConfirmField.OkText),
-					DismissText: tmplText(action.ConfirmField.DismissText),
-				}
-			}
-
-			actions[index] = slackAction
-		}
-		att.Actions = actions
+	if len(attachments) > 0 {
+		n.addFieldsAndActions(&attachments[0], tmplText)
 	}
 
 	req := &request{
@@ -179,7 +122,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		IconURL:     tmplText(n.conf.IconURL),
 		LinkNames:   n.conf.LinkNames,
 		Text:        tmplText(n.conf.MessageText),
-		Attachments: []attachment{*att},
+		Attachments: attachments,
 	}
 	if err != nil {
 		return false, err
@@ -233,6 +176,133 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	return retry, nil
+}
+
+// prepareContent extracts custom templates from alert annotations, runs the
+// notification processor, and returns the Slack attachment(s) ready to send.
+func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tmplText func(string) string) ([]attachment, error) {
+	// Extract custom templates and process them
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Title,
+		// use default body templating to prepare the attachment
+		// as default template uses plain text markdown rendering instead of blockkit
+		DefaultBodyTemplate: "NO_OP",
+	}, alerts, markdownrenderer.MarkdownFormatSlackBlockKit)
+	if err != nil {
+		return nil, err
+	}
+
+	title, truncated := notify.TruncateInRunes(result.Title, maxTitleLenRunes)
+	if truncated {
+		n.logger.Warn("Truncated title", "max_runes", maxTitleLenRunes)
+	}
+
+	if result.IsDefaultTemplatedBody {
+		var markdownIn []string
+		if len(n.conf.MrkdwnIn) == 0 {
+			markdownIn = []string{"fallback", "pretext", "text"}
+		} else {
+			markdownIn = n.conf.MrkdwnIn
+		}
+		attachments := []attachment{
+			{
+				Title:      title,
+				TitleLink:  tmplText(n.conf.TitleLink),
+				Pretext:    tmplText(n.conf.Pretext),
+				Text:       tmplText(n.conf.Text),
+				Fallback:   tmplText(n.conf.Fallback),
+				CallbackID: tmplText(n.conf.CallbackID),
+				ImageURL:   tmplText(n.conf.ImageURL),
+				ThumbURL:   tmplText(n.conf.ThumbURL),
+				Footer:     tmplText(n.conf.Footer),
+				Color:      tmplText(n.conf.Color),
+				MrkdwnIn:   markdownIn,
+			},
+		}
+		return attachments, nil
+	}
+
+	// Custom template path: one title attachment + one attachment per alert body.
+	// Each alert body gets its own attachment so we can set per-alert color
+	// (red for firing, green for resolved).
+	attachments := make([]attachment, 0, 1+len(result.Body))
+
+	// Title-only attachment (no color)
+	attachments = append(attachments, attachment{
+		Title:     title,
+		TitleLink: tmplText(n.conf.TitleLink),
+	})
+
+	for i, body := range result.Body {
+		var parsed []any
+		if err := json.Unmarshal([]byte(body), &parsed); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse BlockKit blocks from custom template body")
+		}
+
+		color := colorRed // red for firing
+		if i < len(alerts) && alerts[i].Resolved() {
+			color = colorGreen // green for resolved
+		}
+
+		attachments = append(attachments, attachment{
+			Blocks: parsed,
+			Color:  color,
+		})
+	}
+
+	return attachments, nil
+}
+
+// addFieldsAndActions populates fields and actions on the attachment from the Slack config.
+func (n *Notifier) addFieldsAndActions(att *attachment, tmplText func(string) string) {
+	numFields := len(n.conf.Fields)
+	if numFields > 0 {
+		fields := make([]config.SlackField, numFields)
+		for index, field := range n.conf.Fields {
+			var short bool
+			if field.Short != nil {
+				short = *field.Short
+			} else {
+				short = n.conf.ShortFields
+			}
+			fields[index] = config.SlackField{
+				Title: tmplText(field.Title),
+				Value: tmplText(field.Value),
+				Short: &short,
+			}
+		}
+		att.Fields = fields
+	}
+
+	numActions := len(n.conf.Actions)
+	if numActions > 0 {
+		actions := make([]config.SlackAction, numActions)
+		for index, action := range n.conf.Actions {
+			slackAction := config.SlackAction{
+				Type:  tmplText(action.Type),
+				Text:  tmplText(action.Text),
+				URL:   tmplText(action.URL),
+				Style: tmplText(action.Style),
+				Name:  tmplText(action.Name),
+				Value: tmplText(action.Value),
+			}
+
+			if action.ConfirmField != nil {
+				slackAction.ConfirmField = &config.SlackConfirmationField{
+					Title:       tmplText(action.ConfirmField.Title),
+					Text:        tmplText(action.ConfirmField.Text),
+					OkText:      tmplText(action.ConfirmField.OkText),
+					DismissText: tmplText(action.ConfirmField.DismissText),
+				}
+			}
+
+			actions[index] = slackAction
+		}
+		att.Actions = actions
+	}
 }
 
 // checkResponseError parses out the error message from Slack API response.

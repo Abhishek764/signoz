@@ -13,6 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -25,13 +30,22 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
+func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
+	logger := slog.Default()
+	templater := alertmanagertemplate.New(tmpl, logger)
+	renderer := markdownrenderer.NewMarkdownRenderer(logger)
+	return alertnotificationprocessor.New(templater, renderer, logger)
+}
+
 func TestSlackRetry(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.SlackConfig{
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -45,13 +59,15 @@ func TestSlackRedactedURL(t *testing.T) {
 	ctx, u, fn := test.GetContextWithCancelingURL()
 	defer fn()
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.SlackConfig{
 			APIURL:     &config.SecretURL{URL: u},
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -67,13 +83,15 @@ func TestGettingSlackURLFromFile(t *testing.T) {
 	_, err = f.WriteString(u.String())
 	require.NoError(t, err, "writing to temp file failed")
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.SlackConfig{
 			APIURLFile: f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -89,13 +107,15 @@ func TestTrimmingSlackURLFromFile(t *testing.T) {
 	_, err = f.WriteString(u.String() + "\n\n")
 	require.NoError(t, err, "writing to temp file failed")
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.SlackConfig{
 			APIURLFile: f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -180,6 +200,7 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			apiurl, _ := url.Parse("https://slack.com/post.Message")
+			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.SlackConfig{
 					NotifierConfig: config.NotifierConfig{},
@@ -187,8 +208,9 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 					APIURL:         &config.SecretURL{URL: apiurl},
 					Channel:        "channelname",
 				},
-				test.CreateTmpl(t),
+				tmpl,
 				promslog.NewNopLogger(),
+				newTestProcessor(tmpl),
 			)
 			require.NoError(t, err)
 
@@ -238,6 +260,7 @@ func TestSlackTimeout(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			u, _ := url.Parse("https://slack.com/post.Message")
+			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.SlackConfig{
 					NotifierConfig: config.NotifierConfig{},
@@ -246,8 +269,9 @@ func TestSlackTimeout(t *testing.T) {
 					Channel:        "channelname",
 					Timeout:        tt.timeout,
 				},
-				test.CreateTmpl(t),
+				tmpl,
 				promslog.NewNopLogger(),
+				newTestProcessor(tmpl),
 			)
 			require.NoError(t, err)
 			notifier.postJSONFunc = func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error) {
@@ -276,6 +300,196 @@ func TestSlackTimeout(t *testing.T) {
 			require.Equal(t, tt.wantErr, err != nil)
 		})
 	}
+}
+
+// setupTestContext creates a context with group key, receiver name, and group labels
+// required by the notification processor.
+func setupTestContext() context.Context {
+	ctx := context.Background()
+	ctx = notify.WithGroupKey(ctx, "test-group")
+	ctx = notify.WithReceiverName(ctx, "slack")
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{
+		"alertname": "TestAlert",
+		"severity":  "critical",
+	})
+	return ctx
+}
+
+func TestPrepareContent(t *testing.T) {
+	t.Run("default template uses go text template config for title and body", func(t *testing.T) {
+		// When alerts have no custom annotation templates (title_template / body_template),
+		tmpl := test.CreateTmpl(t)
+		proc := newTestProcessor(tmpl)
+		notifier := &Notifier{
+			conf: &config.SlackConfig{
+				Title:     `{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})`,
+				Text:      `{{ range .Alerts }}Alert: {{ .Labels.alertname }} - severity {{ .Labels.severity }}{{ end }}`,
+				Color:     `{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}`,
+				TitleLink: "https://alertmanager.signoz.com",
+			},
+			tmpl:      tmpl,
+			logger:    slog.New(slog.DiscardHandler),
+			processor: proc,
+		}
+
+		ctx := setupTestContext()
+		alerts := []*types.Alert{
+			{Alert: model.Alert{
+				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			}},
+		}
+
+		// Build tmplText the same way Notify does
+		var err error
+		data := notify.GetTemplateData(ctx, tmpl, alerts, slog.New(slog.DiscardHandler))
+		tmplText := notify.TmplText(tmpl, data, &err)
+
+		atts, attErr := notifier.prepareContent(ctx, alerts, tmplText)
+		require.NoError(t, attErr)
+		require.NoError(t, err)
+		require.Len(t, atts, 1)
+
+		require.Equal(t, "HighCPU (FIRING)", atts[0].Title)
+		require.Equal(t, "Alert: HighCPU - severity critical", atts[0].Text)
+		// Color is templated — firing alert should be "danger"
+		require.Equal(t, "danger", atts[0].Color)
+		// No BlockKit blocks for default template
+		require.Nil(t, atts[0].Blocks)
+		// Default markdownIn when config has none
+		require.Equal(t, []string{"fallback", "pretext", "text"}, atts[0].MrkdwnIn)
+	})
+
+	t.Run("custom template produces 1+N attachments with per-alert color", func(t *testing.T) {
+		// When alerts carry custom $variable annotation templates (title_template / body_template)
+		tmpl := test.CreateTmpl(t)
+		proc := newTestProcessor(tmpl)
+		notifier := &Notifier{
+			conf: &config.SlackConfig{
+				Title:     "default title fallback",
+				Text:      "default text fallback",
+				TitleLink: "https://alertmanager.signoz.com",
+			},
+			tmpl:      tmpl,
+			logger:    slog.New(slog.DiscardHandler),
+			processor: proc,
+		}
+		tmplText := func(s string) string { return s }
+
+		ctx := setupTestContext()
+		firingAlert := &types.Alert{
+			Alert: model.Alert{
+				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", "service": "api-server"},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+				Annotations: model.LabelSet{
+					ruletypes.AnnotationTitleTemplate: "$rule_name on $service",
+					ruletypes.AnnotationBodyTemplate:  "**Service:** $service is in $status state",
+				},
+			},
+		}
+		resolvedAlert := &types.Alert{
+			Alert: model.Alert{
+				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", "service": "api-server"},
+				StartsAt: time.Now().Add(-2 * time.Hour),
+				EndsAt:   time.Now().Add(-time.Hour),
+				Annotations: model.LabelSet{
+					ruletypes.AnnotationTitleTemplate: "$rule_name on $service",
+					ruletypes.AnnotationBodyTemplate:  "**Service:** $service is in $status state",
+				},
+			},
+		}
+
+		atts, err := notifier.prepareContent(ctx, []*types.Alert{firingAlert, resolvedAlert}, tmplText)
+		require.NoError(t, err)
+
+		// 1 title attachment + 2 body attachments (one per alert)
+		require.Len(t, atts, 3)
+
+		// First attachment: title-only, no color, no blocks
+		require.Equal(t, "HighCPU on api-server", atts[0].Title)
+		require.Empty(t, atts[0].Color)
+		require.Nil(t, atts[0].Blocks)
+		require.Equal(t, "https://alertmanager.signoz.com", atts[0].TitleLink)
+
+		// Second attachment: firing alert body rendered as BlockKit JSON, red color
+		require.NotNil(t, atts[1].Blocks)
+		require.Equal(t, "#FF0000", atts[1].Color)
+		// Verify the rendered body contains the expanded $service value
+		bodyJSON, jsonErr := json.Marshal(atts[1].Blocks)
+		require.NoError(t, jsonErr)
+		require.Equal(t, "[{\"text\":{\"text\":\"*Service:* api-server is in firing state\",\"type\":\"mrkdwn\"},\"type\":\"section\"}]", string(bodyJSON))
+
+		// Third attachment: resolved alert body rendered as BlockKit JSON, green color
+		require.NotNil(t, atts[2].Blocks)
+		require.Equal(t, "#00FF00", atts[2].Color)
+		bodyJSON, jsonErr = json.Marshal(atts[2].Blocks)
+		require.NoError(t, jsonErr)
+		require.Equal(t, "[{\"text\":{\"text\":\"*Service:* api-server is in resolved state\",\"type\":\"mrkdwn\"},\"type\":\"section\"}]", string(bodyJSON))
+
+	})
+
+	t.Run("default template with fields and actions", func(t *testing.T) {
+		// Verifies that addFieldsAndActions (called from Notify after prepareContent)
+		// correctly populates fields and actions on the attachment from config.
+		tmpl := test.CreateTmpl(t)
+		proc := newTestProcessor(tmpl)
+		short := true
+		notifier := &Notifier{
+			conf: &config.SlackConfig{
+				Title: `{{ .CommonLabels.alertname }}`,
+				Text:  "alert text",
+				Color: "warning",
+				Fields: []*config.SlackField{
+					{Title: "Severity", Value: "critical", Short: &short},
+					{Title: "Service", Value: "api-server", Short: &short},
+				},
+				Actions: []*config.SlackAction{
+					{Type: "button", Text: "View Alert", URL: "https://alertmanager.signoz.com"},
+				},
+				TitleLink: "https://alertmanager.signoz.com",
+			},
+			tmpl:      tmpl,
+			logger:    slog.New(slog.DiscardHandler),
+			processor: proc,
+		}
+		tmplText := func(s string) string { return s }
+
+		ctx := setupTestContext()
+		alerts := []*types.Alert{
+			{Alert: model.Alert{
+				Labels:   model.LabelSet{ruletypes.LabelAlertName: "TestAlert"},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			}},
+		}
+		atts, err := notifier.prepareContent(ctx, alerts, tmplText)
+		require.NoError(t, err)
+		require.Len(t, atts, 1)
+
+		// prepareContent does not populate fields/actions — that's done by
+		// addFieldsAndActions which is called from Notify.
+		require.Nil(t, atts[0].Fields)
+		require.Nil(t, atts[0].Actions)
+
+		// Simulate what Notify does after prepareContent
+		notifier.addFieldsAndActions(&atts[0], tmplText)
+
+		// Verify fields
+		require.Len(t, atts[0].Fields, 2)
+		require.Equal(t, "Severity", atts[0].Fields[0].Title)
+		require.Equal(t, "critical", atts[0].Fields[0].Value)
+		require.True(t, *atts[0].Fields[0].Short)
+		require.Equal(t, "Service", atts[0].Fields[1].Title)
+		require.Equal(t, "api-server", atts[0].Fields[1].Value)
+
+		// Verify actions
+		require.Len(t, atts[0].Actions, 1)
+		require.Equal(t, "button", atts[0].Actions[0].Type)
+		require.Equal(t, "View Alert", atts[0].Actions[0].Text)
+		require.Equal(t, "https://alertmanager.signoz.com", atts[0].Actions[0].URL)
+	})
 }
 
 func TestSlackMessageField(t *testing.T) {
@@ -325,7 +539,7 @@ func TestSlackMessageField(t *testing.T) {
 	tmpl.ExternalURL = u
 
 	logger := slog.New(slog.DiscardHandler)
-	notifier, err := New(conf, tmpl, logger)
+	notifier, err := New(conf, tmpl, logger, newTestProcessor(tmpl))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,12 +5,18 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -19,17 +25,27 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
 
+func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
+	logger := slog.Default()
+	templater := alertmanagertemplate.New(tmpl, logger)
+	renderer := markdownrenderer.NewMarkdownRenderer(logger)
+	return alertnotificationprocessor.New(templater, renderer, logger)
+}
+
 func TestWebhookRetry(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.WebhookConfig{
 			URL:        config.SecretTemplateURL("http://example.com"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	if err != nil {
 		require.NoError(t, err)
@@ -92,13 +108,15 @@ func TestWebhookRedactedURL(t *testing.T) {
 	defer fn()
 
 	secret := "secret"
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.WebhookConfig{
 			URL:        config.SecretTemplateURL(u.String()),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -114,13 +132,15 @@ func TestWebhookReadingURLFromFile(t *testing.T) {
 	_, err = f.WriteString(u.String() + "\n")
 	require.NoError(t, err, "writing to temp file failed")
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.WebhookConfig{
 			URLFile:    f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -174,13 +194,15 @@ func TestWebhookURLTemplating(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			calledURL = "" // Reset for each test
 
+			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.WebhookConfig{
 					URL:        config.SecretTemplateURL(tc.url),
 					HTTPConfig: &commoncfg.HTTPClientConfig{},
 				},
-				test.CreateTmpl(t),
+				tmpl,
 				promslog.NewNopLogger(),
+				newTestProcessor(tmpl),
 			)
 			require.NoError(t, err)
 
@@ -211,4 +233,96 @@ func TestWebhookURLTemplating(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTemplateAlerts(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
+	proc := newTestProcessor(tmpl)
+
+	notifier, err := New(
+		&config.WebhookConfig{
+			URL:        config.SecretTemplateURL("http://example.com"),
+			HTTPConfig: &commoncfg.HTTPClientConfig{},
+		},
+		tmpl,
+		slog.Default(),
+		proc,
+	)
+	require.NoError(t, err)
+
+	t.Run("annotations are updated with custom title and body templates", func(t *testing.T) {
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "TestAlert",
+						"severity":  "critical",
+					},
+					Annotations: model.LabelSet{
+						ruletypes.AnnotationTitleTemplate: "Alert: $labels.alertname",
+						ruletypes.AnnotationBodyTemplate:  "Severity is $labels.severity",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "TestAlert",
+						"severity":  "warning",
+					},
+					Annotations: model.LabelSet{
+						ruletypes.AnnotationTitleTemplate: "Alert: $labels.alertname",
+						ruletypes.AnnotationBodyTemplate:  "Severity is $labels.severity",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
+		}
+
+		ctx := context.Background()
+		err := notifier.templateAlerts(ctx, alerts)
+		require.NoError(t, err)
+
+		// Both alerts should have their title_template updated to the rendered title
+		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[0].Annotations[ruletypes.AnnotationTitleTemplate])
+		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[1].Annotations[ruletypes.AnnotationTitleTemplate])
+		// Each alert should have its own body_template based on its labels
+		require.Equal(t, model.LabelValue("Severity is critical"), alerts[0].Annotations[ruletypes.AnnotationBodyTemplate])
+		require.Equal(t, model.LabelValue("Severity is warning"), alerts[1].Annotations[ruletypes.AnnotationBodyTemplate])
+	})
+
+	t.Run("annotations not updated when template keys are absent", func(t *testing.T) {
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "NoTemplateAlert",
+					},
+					Annotations: model.LabelSet{
+						"summary":     "keep this",
+						"description": "keep this too",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
+		}
+
+		ctx := context.Background()
+		err := notifier.templateAlerts(ctx, alerts)
+		require.NoError(t, err)
+
+		// title_template and body_template keys should NOT be added
+		_, hasTitleTemplate := alerts[0].Annotations[ruletypes.AnnotationTitleTemplate]
+		_, hasBodyTemplate := alerts[0].Annotations[ruletypes.AnnotationBodyTemplate]
+		require.False(t, hasTitleTemplate, "title_template should not be added when absent")
+		require.False(t, hasBodyTemplate, "body_template should not be added when absent")
+
+		// Existing annotations should remain untouched
+		require.Equal(t, model.LabelValue("keep this"), alerts[0].Annotations["summary"])
+		require.Equal(t, model.LabelValue("keep this too"), alerts[0].Annotations["description"])
+	})
 }

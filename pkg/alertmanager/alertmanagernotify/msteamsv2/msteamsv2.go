@@ -11,7 +11,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -40,6 +43,7 @@ type Notifier struct {
 	retrier      *notify.Retrier
 	webhookURL   *config.SecretURL
 	postJSONFunc func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error)
+	processor    alertmanagertypes.NotificationProcessor
 }
 
 // https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1#adaptivecarditemschema
@@ -90,7 +94,7 @@ type teamsMessage struct {
 }
 
 // New returns a new notifier that uses the Microsoft Teams Power Platform connector.
-func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -105,6 +109,7 @@ func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *s
 		retrier:      &notify.Retrier{},
 		webhookURL:   c.WebhookURL,
 		postJSONFunc: notify.PostJSON,
+		processor:    proc,
 	}
 
 	return n, nil
@@ -124,23 +129,9 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	title := tmpl(n.conf.Title)
-	if err != nil {
-		return false, err
-	}
-
 	titleLink := tmpl(n.titleLink)
 	if err != nil {
 		return false, err
-	}
-
-	alerts := types.Alerts(as...)
-	color := colorGrey
-	switch alerts.Status() {
-	case model.AlertFiring:
-		color = colorRed
-	case model.AlertResolved:
-		color = colorGreen
 	}
 
 	var url string
@@ -154,6 +145,11 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		url = strings.TrimSpace(string(content))
 	}
 
+	bodyBlocks, err := n.prepareContent(ctx, as)
+	if err != nil {
+		return false, err
+	}
+
 	// A message as referenced in https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1%2Cdotnet#request-body-schema
 	t := teamsMessage{
 		Type: "message",
@@ -165,17 +161,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 					Schema:  "http://adaptivecards.io/schemas/adaptive-card.json",
 					Type:    "AdaptiveCard",
 					Version: "1.2",
-					Body: []Body{
-						{
-							Type:   "TextBlock",
-							Text:   title,
-							Weight: "Bolder",
-							Size:   "Medium",
-							Wrap:   true,
-							Style:  "heading",
-							Color:  color,
-						},
-					},
+					Body:    bodyBlocks,
 					Actions: []Action{
 						{
 							Type:  "Action.OpenUrl",
@@ -189,20 +175,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 				},
 			},
 		},
-	}
-
-	// add labels and annotations to the body of all alerts
-	for _, alert := range as {
-		t.Attachments[0].Content.Body = append(t.Attachments[0].Content.Body, Body{
-			Type:   "TextBlock",
-			Text:   "Alerts",
-			Weight: "Bolder",
-			Size:   "Medium",
-			Wrap:   true,
-			Color:  color,
-		})
-
-		t.Attachments[0].Content.Body = append(t.Attachments[0].Content.Body, n.createLabelsAndAnnotationsBody(alert)...)
 	}
 
 	var payload bytes.Buffer
@@ -222,6 +194,87 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 	return shouldRetry, err
+}
+
+// prepareContent prepares the body blocks for the templated title and body.
+func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([]Body, error) {
+	// run the notification processor to get the title and body
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Title,
+		DefaultBodyTemplate:  "",
+	}, alerts, markdownrenderer.MarkdownFormatNoop)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks := []Body{}
+
+	// common color for the title block
+	aggregateAlerts := types.Alerts(alerts...)
+	color := colorGrey
+	switch aggregateAlerts.Status() {
+	case model.AlertFiring:
+		color = colorRed
+	case model.AlertResolved:
+		color = colorGreen
+	}
+
+	// handle default templated body
+	if result.IsDefaultTemplatedBody {
+		blocks = append(blocks, Body{
+			Type:   "TextBlock",
+			Text:   result.Title,
+			Weight: "Bolder",
+			Size:   "Medium",
+			Wrap:   true,
+			Style:  "heading",
+			Color:  color,
+		})
+
+		for _, alert := range alerts {
+			blocks = append(blocks, Body{
+				Type:   "TextBlock",
+				Text:   "Alerts",
+				Weight: "Bolder",
+				Size:   "Medium",
+				Wrap:   true,
+				Color:  color,
+			})
+			blocks = append(blocks, n.createLabelsAndAnnotationsBody(alert)...)
+		}
+	} else {
+		blocks = append(blocks, Body{
+			Type:   "TextBlock",
+			Text:   result.Title,
+			Weight: "Bolder",
+			Size:   "Medium",
+			Wrap:   true,
+			Style:  "heading",
+			Color:  color,
+		})
+
+		for i, body := range result.Body {
+			b := Body{
+				Type:  "TextBlock",
+				Text:  body,
+				Wrap:  true,
+				Color: colorGrey,
+			}
+			if i < len(alerts) {
+				if alerts[i].Resolved() {
+					b.Color = colorGreen
+				} else {
+					b.Color = colorRed
+				}
+			}
+			blocks = append(blocks, b)
+		}
+	}
+
+	return blocks, nil
 }
 
 func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {

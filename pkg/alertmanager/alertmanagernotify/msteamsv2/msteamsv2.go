@@ -204,7 +204,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
-		DefaultBodyTemplate:  "",
+		// the default body template is not used and instead we add collection of labels and annotations for each alert
+		DefaultBodyTemplate: "NO_OP",
 	}, alerts, markdownrenderer.MarkdownFormatNoop)
 	if err != nil {
 		return nil, err

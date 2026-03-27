@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,7 +14,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -26,14 +32,23 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
+func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
+	logger := slog.Default()
+	templater := alertmanagertemplate.New(tmpl, logger)
+	renderer := markdownrenderer.NewMarkdownRenderer(logger)
+	return alertnotificationprocessor.New(templater, renderer, logger)
+}
+
 func TestPagerDutyRetryV1(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.PagerdutyConfig{
 			ServiceKey: config.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -45,13 +60,15 @@ func TestPagerDutyRetryV1(t *testing.T) {
 }
 
 func TestPagerDutyRetryV2(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.PagerdutyConfig{
 			RoutingKey: config.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -67,13 +84,15 @@ func TestPagerDutyRedactedURLV1(t *testing.T) {
 	defer fn()
 
 	key := "01234567890123456789012345678901"
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.PagerdutyConfig{
 			ServiceKey: config.Secret(key),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 	notifier.apiV1 = u.String()
@@ -86,14 +105,16 @@ func TestPagerDutyRedactedURLV2(t *testing.T) {
 	defer fn()
 
 	key := "01234567890123456789012345678901"
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.PagerdutyConfig{
 			URL:        &config.URL{URL: u},
 			RoutingKey: config.Secret(key),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -110,13 +131,15 @@ func TestPagerDutyV1ServiceKeyFromFile(t *testing.T) {
 	ctx, u, fn := test.GetContextWithCancelingURL()
 	defer fn()
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.PagerdutyConfig{
 			ServiceKeyFile: f.Name(),
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 	notifier.apiV1 = u.String()
@@ -134,14 +157,16 @@ func TestPagerDutyV2RoutingKeyFromFile(t *testing.T) {
 	ctx, u, fn := test.GetContextWithCancelingURL()
 	defer fn()
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.PagerdutyConfig{
 			URL:            &config.URL{URL: u},
 			RoutingKeyFile: f.Name(),
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -298,7 +323,8 @@ func TestPagerDutyTemplating(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			tc.cfg.URL = &config.URL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
-			pd, err := New(tc.cfg, test.CreateTmpl(t), promslog.NewNopLogger())
+			tmpl := test.CreateTmpl(t)
+			pd, err := New(tc.cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
 			require.NoError(t, err)
 			if pd.apiV1 != "" {
 				pd.apiV1 = u.String()
@@ -388,13 +414,15 @@ func TestEventSizeEnforcement(t *testing.T) {
 		Details:    bigDetailsV1,
 	}
 
+	tmpl := test.CreateTmpl(t)
 	notifierV1, err := New(
 		&config.PagerdutyConfig{
 			ServiceKey: config.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -416,8 +444,9 @@ func TestEventSizeEnforcement(t *testing.T) {
 			RoutingKey: config.Secret("01234567890123456789012345678901"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		newTestProcessor(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -532,7 +561,8 @@ func TestPagerDutyEmptySrcHref(t *testing.T) {
 		Links:      links,
 	}
 
-	pagerDuty, err := New(&pagerDutyConfig, test.CreateTmpl(t), promslog.NewNopLogger())
+	pdTmpl := test.CreateTmpl(t)
+	pagerDuty, err := New(&pagerDutyConfig, pdTmpl, promslog.NewNopLogger(), newTestProcessor(pdTmpl))
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -599,7 +629,8 @@ func TestPagerDutyTimeout(t *testing.T) {
 				Timeout:    tt.timeout,
 			}
 
-			pd, err := New(&cfg, test.CreateTmpl(t), promslog.NewNopLogger())
+			tmpl := test.CreateTmpl(t)
+			pd, err := New(&cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -876,4 +907,80 @@ func TestRenderDetails(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestPrepareContent(t *testing.T) {
+	prepareContext := func() context.Context {
+		ctx := context.Background()
+		ctx = notify.WithGroupKey(ctx, "1")
+		ctx = notify.WithReceiverName(ctx, "test-receiver")
+		ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "HighCPU for Payment service"})
+		return ctx
+	}
+	t.Run("default template uses go text template config for title", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.PagerdutyConfig{
+				RoutingKey:  config.Secret("01234567890123456789012345678901"),
+				HTTPConfig:  &commoncfg.HTTPClientConfig{},
+				Description: `{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})`,
+			},
+			tmpl,
+			promslog.NewNopLogger(),
+			newTestProcessor(tmpl),
+		)
+		require.NoError(t, err)
+
+		ctx := prepareContext()
+
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels:   model.LabelSet{"alertname": "HighCPU for Payment service"},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
+		}
+
+		title, err := notifier.prepareContent(ctx, alerts)
+		require.NoError(t, err)
+		require.Equal(t, "HighCPU for Payment service (FIRING)", title)
+	})
+
+	t.Run("custom template uses $variable annotation for title", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.PagerdutyConfig{
+				RoutingKey: config.Secret("01234567890123456789012345678901"),
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+			},
+			tmpl,
+			promslog.NewNopLogger(),
+			newTestProcessor(tmpl),
+		)
+		require.NoError(t, err)
+
+		ctx := prepareContext()
+
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "HighCPU",
+						"service":   "api-server",
+					},
+					Annotations: model.LabelSet{
+						ruletypes.AnnotationTitleTemplate: "$rule_name on $service is in $status state",
+					},
+					StartsAt: time.Now().Add(-time.Hour),
+					EndsAt:   time.Now(),
+				},
+			},
+		}
+
+		title, err := notifier.prepareContent(ctx, alerts)
+		require.NoError(t, err)
+		require.Equal(t, "HighCPU on api-server is in resolved state", title)
+	})
 }

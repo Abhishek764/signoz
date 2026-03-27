@@ -11,7 +11,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -30,25 +33,27 @@ const maxMessageLenRunes = 130
 
 // Notifier implements a Notifier for OpsGenie notifications.
 type Notifier struct {
-	conf    *config.OpsGenieConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *config.OpsGenieConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	processor alertmanagertypes.NotificationProcessor
 }
 
 // New returns a new OpsGenie notifier.
-func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return &Notifier{
-		conf:    c,
-		tmpl:    t,
-		logger:  l,
-		client:  client,
-		retrier: &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		conf:      c,
+		tmpl:      t,
+		logger:    l,
+		client:    client,
+		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		processor: proc,
 	}, nil
 }
 
@@ -119,6 +124,47 @@ func safeSplit(s, sep string) []string {
 	return b
 }
 
+// prepareContent extracts custom templates from alert annotations, runs the
+// notification processor, and returns a ready-to-use title (truncated to the
+// OpsGenie 130-rune limit) and description.
+func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (string, string, error) {
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Message,
+		DefaultBodyTemplate:  n.conf.Description,
+	}, alerts, markdownrenderer.MarkdownFormatHTML)
+	if err != nil {
+		return "", "", err
+	}
+
+	title := result.Title
+	description := strings.Join(result.Body, "\n")
+
+	if result.IsCustomTemplated() {
+		// OpsGenie uses basic HTML for alert description previews, so we
+		// separate each per-alert body with an <hr> divider.
+		var b strings.Builder
+		for i, part := range result.Body {
+			if i > 0 {
+				b.WriteString("<hr>")
+			}
+			b.WriteString("<div>")
+			b.WriteString(part)
+			b.WriteString("</div>")
+		}
+		description = b.String()
+	}
+
+	title, truncated := notify.TruncateInRunes(title, maxMessageLenRunes)
+	if truncated {
+		n.logger.WarnContext(ctx, "Truncated message", "max_runes", maxMessageLenRunes)
+	}
+
+	return title, description, nil
+}
+
 // Create requests for a list of alerts.
 func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*http.Request, bool, error) {
 	key, err := notify.ExtractGroupKey(ctx)
@@ -164,9 +210,9 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 		}
 		requests = append(requests, req.WithContext(ctx))
 	default:
-		message, truncated := notify.TruncateInRunes(tmpl(n.conf.Message), maxMessageLenRunes)
-		if truncated {
-			logger.WarnContext(ctx, "Truncated message", "alert", key, "max_runes", maxMessageLenRunes)
+		message, description, err := n.prepareContent(ctx, as)
+		if err != nil {
+			return nil, false, err
 		}
 
 		createEndpointURL := n.conf.APIURL.Copy()
@@ -205,7 +251,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 		msg := &opsGenieCreateMessage{
 			Alias:       alias,
 			Message:     message,
-			Description: tmpl(n.conf.Description),
+			Description: description,
 			Details:     details,
 			Source:      tmpl(n.conf.Source),
 			Responders:  responders,

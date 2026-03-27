@@ -19,7 +19,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -34,16 +37,17 @@ const (
 
 // Email implements a Notifier for email notifications.
 type Email struct {
-	conf     *config.EmailConfig
-	tmpl     *template.Template
-	logger   *slog.Logger
-	hostname string
+	conf      *config.EmailConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	hostname  string
+	processor alertmanagertypes.NotificationProcessor
 }
 
 var errNoAuthUserNameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
 
 // New returns a new Email notifier.
-func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
+func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor) *Email {
 	if _, ok := c.Headers["Subject"]; !ok {
 		c.Headers["Subject"] = config.DefaultEmailSubject
 	}
@@ -59,7 +63,7 @@ func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
 	if err != nil {
 		h = "localhost.localdomain"
 	}
-	return &Email{conf: c, tmpl: t, logger: l, hostname: h}
+	return &Email{conf: c, tmpl: t, logger: l, hostname: h, processor: proc}
 }
 
 // auth resolves a string of authentication mechanisms.
@@ -244,6 +248,15 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		}
 	}
 
+	// Prepare the content for the email
+	title, htmlBody, err := n.prepareContent(ctx, as, data)
+	if err != nil {
+		return false, err
+	}
+	if title != "" {
+		n.conf.Headers["Subject"] = title
+	}
+
 	// Send the email headers and body.
 	message, err := c.Data()
 	if err != nil {
@@ -335,7 +348,10 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		}
 	}
 
-	if len(n.conf.HTML) > 0 {
+	// TODO: handle case where both custom and default body templates
+	// result in empty body, write no message in the email body
+
+	if htmlBody != "" {
 		// Html template
 		// Preferred alternative placed last per section 5.1.4 of RFC 2046
 		// https://www.ietf.org/rfc/rfc2046.txt
@@ -346,12 +362,8 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		if err != nil {
 			return false, errors.WrapInternalf(err, errors.CodeInternal, "create part for html template")
 		}
-		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
-		if err != nil {
-			return false, errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
-		}
 		qw := quotedprintable.NewWriter(w)
-		_, err = qw.Write([]byte(body))
+		_, err = qw.Write([]byte(htmlBody))
 		if err != nil {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "write HTML part")
 		}
@@ -378,6 +390,47 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	success = true
 	return false, nil
+}
+
+// prepareContent extracts custom templates from alerts, runs the notification processor,
+// and returns the resolved subject title (if any) and the HTML body for the email.
+func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data *template.Data) (string, string, error) {
+	// run the notification processor to get the title and body
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Headers["Subject"],
+		// no templating needed for email body as it will be handled with legacy templating
+		DefaultBodyTemplate: "NO_OP",
+	}, alerts, markdownrenderer.MarkdownFormatHTML)
+	if err != nil {
+		return "", "", err
+	}
+
+	title := result.Title
+
+	// handle custom templating for body
+	if result.IsCustomTemplated() {
+		// TODO: use notification processor to template this
+		// with signoz stored alert notification template
+		var b strings.Builder
+		for _, part := range result.Body {
+			b.WriteString("<div>")
+			b.WriteString(part)
+			b.WriteString("</div>")
+		}
+		return title, b.String(), nil
+	} else if len(n.conf.HTML) > 0 {
+		// if custom body template was not provided, use the default template
+		// specified in the email channel config
+		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
+		if err != nil {
+			return "", "", errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
+		}
+		return title, body, nil
+	}
+	return title, "", nil
 }
 
 type loginAuth struct {

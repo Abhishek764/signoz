@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,7 +14,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/emersion/go-smtp"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -29,6 +35,13 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
+
+func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
+	logger := slog.Default()
+	templater := alertmanagertemplate.New(tmpl, logger)
+	renderer := markdownrenderer.NewMarkdownRenderer(logger)
+	return alertnotificationprocessor.New(templater, renderer, logger)
+}
 
 const (
 	emailNoAuthConfigVar = "EMAIL_NO_AUTH_CONFIG"
@@ -158,7 +171,7 @@ func notifyEmailWithContext(ctx context.Context, t *testing.T, cfg *config.Email
 		return nil, false, err
 	}
 
-	email := New(cfg, tmpl, promslog.NewNopLogger())
+	email := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
 
 	retry, err := email.Notify(ctx, firingAlert)
 	if err != nil {
@@ -702,7 +715,7 @@ func TestEmailRejected(t *testing.T) {
 	tmpl, firingAlert, err := prepare(cfg)
 	require.NoError(t, err)
 
-	e := New(cfg, tmpl, promslog.NewNopLogger())
+	e := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
 
 	// Send the alert to mock SMTP server.
 	retry, err := e.Notify(context.Background(), firingAlert)
@@ -1024,6 +1037,100 @@ func TestEmailImplicitTLS(t *testing.T) {
 				tt.expectImplicit, tt.port, tt.forceImplicitTLS)
 		})
 	}
+}
+
+func TestPrepareContent(t *testing.T) {
+	t.Run("custom template", func(t *testing.T) {
+		tmpl, err := template.FromGlobs([]string{})
+		require.NoError(t, err)
+		tmpl.ExternalURL, _ = url.Parse("http://am")
+
+		bodyTpl := "line $labels.instance"
+		a1 := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					model.LabelName("instance"): model.LabelValue("one"),
+				},
+				Annotations: model.LabelSet{
+					model.LabelName(ruletypes.AnnotationBodyTemplate): model.LabelValue(bodyTpl),
+				},
+			},
+		}
+		a2 := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					model.LabelName("instance"): model.LabelValue("two"),
+				},
+				Annotations: model.LabelSet{
+					model.LabelName(ruletypes.AnnotationBodyTemplate): model.LabelValue(bodyTpl),
+				},
+			},
+		}
+		alerts := []*types.Alert{a1, a2}
+
+		cfg := &config.EmailConfig{Headers: map[string]string{"Subject": "subj"}}
+		n := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+
+		ctx := context.Background()
+		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
+		_, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		require.NoError(t, err)
+		// Goldmark will append newlines inside paragraph tags.
+		require.Equal(t, "<div><p>line one</p><p></p></div><div><p>line two</p><p></p></div>", htmlBody)
+	})
+
+	t.Run("default template with HTML and custom title template", func(t *testing.T) {
+		tmpl, err := template.FromGlobs([]string{})
+		require.NoError(t, err)
+		tmpl.ExternalURL, _ = url.Parse("http://am")
+
+		firingAlert := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{},
+				Annotations: model.LabelSet{
+					model.LabelName(ruletypes.AnnotationTitleTemplate): model.LabelValue("fixed from $status"),
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}
+		alerts := []*types.Alert{firingAlert}
+		cfg := &config.EmailConfig{
+			Headers: map[string]string{},
+			HTML:    "Status: {{ .Status }}",
+		}
+		n := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+
+		ctx := context.Background()
+		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
+		title, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		require.NoError(t, err)
+		require.Equal(t, "Status: firing", htmlBody)
+		require.Equal(t, "fixed from firing", title)
+	})
+
+	t.Run("default template without HTML", func(t *testing.T) {
+		cfg := &config.EmailConfig{Headers: map[string]string{"Subject": "the email subject"}}
+		tmpl, err := template.FromGlobs([]string{})
+		require.NoError(t, err)
+		tmpl.ExternalURL, _ = url.Parse("http://am")
+		n := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+
+		firingAlert := &types.Alert{
+			Alert: model.Alert{
+				Labels:   model.LabelSet{},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}
+		alerts := []*types.Alert{firingAlert}
+		ctx := context.Background()
+		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
+		title, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		require.NoError(t, err)
+		require.Equal(t, "", htmlBody)
+		require.Equal(t, "the email subject", title)
+	})
 }
 
 func ptrTo(b bool) *bool {

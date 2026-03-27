@@ -1,0 +1,166 @@
+{
+	"title": "Kong Monitoring Dashboard",
+	"description": "Monitor Kong API Gateway health, performance, and traffic metrics.",
+	"variables": [
+		{ "name": "namespace", "type": "label", "label": "Namespace" },
+		{ "name": "service", "type": "label", "label": "Service" }
+	],
+	"sections": [
+		{
+			"title": "General Overview",
+			"panels": [
+				{
+					"title": "Total Requests",
+					"type": "stat",
+					"query": "sum(kong_http_requests_total{namespace=\"$namespace\",service=\"$service\"})"
+				},
+				{
+					"title": "Active Connections",
+					"type": "stat",
+					"query": "sum(kong_connections_active{namespace=\"$namespace\"})"
+				},
+				{
+					"title": "Uptime",
+					"type": "stat",
+					"query": "time() - kong_process_start_time_seconds{namespace=\"$namespace\"}"
+				},
+				{
+					"title": "CPU Usage",
+					"type": "timeseries",
+					"query": "sum(rate(kong_cpu_usage_seconds_total{namespace=\"$namespace\"}[5m]))"
+				},
+				{
+					"title": "Memory Usage",
+					"type": "timeseries",
+					"query": "sum(kong_memory_usage_bytes{namespace=\"$namespace\"})"
+				}
+			]
+		},
+		{
+			"title": "Request Metrics",
+			"panels": [
+				{
+					"title": "Request Rate",
+					"type": "timeseries",
+					"query": "sum(rate(kong_http_requests_total{namespace=\"$namespace\"}[1m]))"
+				},
+				{
+					"title": "Response Status Codes",
+					"type": "barchart",
+					"query": "sum by (code)(rate(kong_http_requests_total{namespace=\"$namespace\"}[1m]))"
+				},
+				{
+					"title": "Request Size",
+					"type": "timeseries",
+					"query": "avg(kong_request_size_bytes{namespace=\"$namespace\"})"
+				},
+				{
+					"title": "Response Size",
+					"type": "timeseries",
+					"query": "avg(kong_response_size_bytes{namespace=\"$namespace\"})"
+				}
+			]
+		},
+		{
+			"title": "Latency Metrics",
+			"panels": [
+				{
+					"title": "P50 Request Latency (ms)",
+					"type": "timeseries",
+					"query": "histogram_quantile(0.5, sum by (le)(rate(kong_http_latency_bucket{namespace=\"$namespace\"}[5m]))) * 1000"
+				},
+				{
+					"title": "Request Latency Percentiles (ms)",
+					"type": "timeseries",
+					"query": "histogram_quantile(0.99, sum by (le)(rate(kong_http_latency_bucket{namespace=\"$namespace\"}[5m]))) * 1000"
+				},
+				{
+					"title": "Upstream Latency",
+					"type": "timeseries",
+					"query": "avg(kong_upstream_latency_ms{namespace=\"$namespace\"})"
+				}
+			]
+		},
+		{
+			"title": "Error Metrics",
+			"panels": [
+				{
+					"title": "Total Errors",
+					"type": "stat",
+					"query": "sum(kong_http_requests_total{code=~\"5.*\",namespace=\"$namespace\"})"
+				},
+				{
+					"title": "Error Rate",
+					"type": "timeseries",
+					"query": "sum(rate(kong_http_requests_total{code=~\"5.*\",namespace=\"$namespace\"}[1m]))"
+				},
+				{
+					"title": "Top Error Types",
+					"type": "table",
+					"query": "topk(5, sum(rate(kong_http_requests_total{code=~\"5.*\",namespace=\"$namespace\"}[5m])) by (error_type))"
+				},
+				{
+					"title": "Failed Requests by Service",
+					"type": "barchart",
+					"query": "sum(rate(kong_http_requests_total{code=~\"5.*\",namespace=\"$namespace\"}[5m])) by (service)"
+				}
+			]
+		},
+		{
+			"title": "Traffic Metrics",
+			"panels": [
+				{
+					"title": "Incoming Traffic Volume",
+					"type": "timeseries",
+					"query": "sum(rate(kong_bandwidth_bytes{namespace=\"$namespace\",type=\"ingress\"}[1m]))"
+				},
+				{
+					"title": "Outgoing Traffic Volume",
+					"type": "timeseries",
+					"query": "sum(rate(kong_upstream_requests_total{namespace=\"$namespace\"}[1m]))"
+				},
+				{
+					"title": "Connection Rate",
+					"type": "timeseries",
+					"query": "sum(rate(kong_connections_accepted{namespace=\"$namespace\"}[1m]))"
+				},
+				{
+					"title": "Rejected Connections",
+					"type": "timeseries",
+					"query": "sum(rate(kong_connections_rejected{namespace=\"$namespace\"}[1m]))"
+				}
+			]
+		},
+		{
+			"title": "Plugin Metrics",
+			"panels": [
+				{
+					"title": "Active Plugins",
+					"type": "table",
+					"query": "sum(rate(kong_plugin_requests_total{namespace=\"$namespace\"}[5m])) by (plugin)"
+				},
+				{
+					"title": "Plugin Error Rates",
+					"type": "barchart",
+					"query": "sum(rate(kong_plugin_errors_total{namespace=\"$namespace\"}[5m])) by (plugin)"
+				},
+				{
+					"title": "Plugin Latency",
+					"type": "timeseries",
+					"query": "avg(kong_plugin_latency_ms{namespace=\"$namespace\"}) by (plugin)"
+				}
+			]
+		},
+		{
+			"title": "Resource Usage",
+			"panels": [
+				{
+					"title": "Pod Restarts",
+					"type": "stat",
+					"query": "sum(kube_pod_container_status_restarts_total{container=\"kong\",namespace=\"$namespace\"})",
+					"description": "Requires kube-state-metrics to be installed."
+				}
+			]
+		}
+	]
+}

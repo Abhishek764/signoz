@@ -222,18 +222,19 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		color = colorGreen
 	}
 
+	// add title block
+	blocks = append(blocks, Body{
+		Type:   "TextBlock",
+		Text:   result.Title,
+		Weight: "Bolder",
+		Size:   "Medium",
+		Wrap:   true,
+		Style:  "heading",
+		Color:  color,
+	})
+
 	// handle default templated body
 	if result.IsDefaultTemplatedBody {
-		blocks = append(blocks, Body{
-			Type:   "TextBlock",
-			Text:   result.Title,
-			Weight: "Bolder",
-			Size:   "Medium",
-			Wrap:   true,
-			Style:  "heading",
-			Color:  color,
-		})
-
 		for _, alert := range alerts {
 			blocks = append(blocks, Body{
 				Type:   "TextBlock",
@@ -246,16 +247,6 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 			blocks = append(blocks, n.createLabelsAndAnnotationsBody(alert)...)
 		}
 	} else {
-		blocks = append(blocks, Body{
-			Type:   "TextBlock",
-			Text:   result.Title,
-			Weight: "Bolder",
-			Size:   "Medium",
-			Wrap:   true,
-			Style:  "heading",
-			Color:  color,
-		})
-
 		for i, body := range result.Body {
 			b := Body{
 				Type:  "TextBlock",

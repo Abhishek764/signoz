@@ -34,3 +34,9 @@ type NotificationProcessorResult struct {
 	// custom template expansion.
 	MissingVars []string
 }
+
+// IsCustomTemplated returns true if the body came from custom annotation templates
+// rather than default templates.
+func (npr NotificationProcessorResult) IsCustomTemplated() bool {
+	return !npr.IsDefaultTemplatedBody
+}

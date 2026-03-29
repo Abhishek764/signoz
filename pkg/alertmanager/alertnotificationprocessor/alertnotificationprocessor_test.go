@@ -174,6 +174,72 @@ func TestProcessAlertNotification(t *testing.T) {
 			wantMissingVars:   []string{"environment", "runbook_url"},
 		},
 		{
+			name: "slack mrkdwn renders bold and italic correctly",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{
+						ruletypes.LabelAlertName:    "HighCPU",
+						ruletypes.LabelSeverityName: "critical",
+						"service":                   "api-server",
+					},
+					map[string]string{"description": "CPU usage exceeded 95%"},
+					true,
+				),
+			},
+			input: alertmanagertypes.NotificationProcessorInput{
+				TitleTemplate: "Alert: $rule_name",
+				BodyTemplate:  "**Service:** $service\n\n*Description:* $description",
+			},
+			RendererFormat:    markdownrenderer.MarkdownFormatSlackMrkdwn,
+			wantTitle:         "Alert: HighCPU",
+			wantBody:          []string{"*Service:* api-server\n\n_Description:_ CPU usage exceeded 95%\n\n"},
+			wantIsDefaultBody: false,
+		},
+		{
+			name: "slack mrkdwn with multiple alerts produces per-alert bodies",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "SvcDown", "service": "auth"},
+					map[string]string{"description": "Auth service **down**"},
+					true,
+				),
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "SvcDown", "service": "payments"},
+					map[string]string{"description": "Payments service **degraded**"},
+					false,
+				),
+			},
+			input: alertmanagertypes.NotificationProcessorInput{
+				TitleTemplate: "$rule_name: $total_firing firing, $total_resolved resolved",
+				BodyTemplate:  "**$service** ($status): $description",
+			},
+			RendererFormat:    markdownrenderer.MarkdownFormatSlackMrkdwn,
+			wantTitle:         "SvcDown: 1 firing, 1 resolved",
+			wantBody:          []string{"*auth* (firing): Auth service *down*\n\n", "*payments* (resolved): Payments service *degraded*\n\n"},
+			wantIsDefaultBody: false,
+		},
+		{
+			name: "slack mrkdwn skips rendering for default templates",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{
+						ruletypes.LabelAlertName:    "TestAlert",
+						ruletypes.LabelSeverityName: "critical",
+					},
+					map[string]string{"description": "Something broke"},
+					true,
+				),
+			},
+			input: alertmanagertypes.NotificationProcessorInput{
+				DefaultTitleTemplate: `{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})`,
+				DefaultBodyTemplate:  `{{ range .Alerts }}**Bold** *italic* ~~strike~~ {{ .Annotations.description }}{{ end }}`,
+			},
+			RendererFormat:    markdownrenderer.MarkdownFormatSlackMrkdwn,
+			wantTitle:         "TestAlert (FIRING)",
+			wantBody:          []string{"**Bold** *italic* ~~strike~~ Something broke"},
+			wantIsDefaultBody: true,
+		},
+		{
 			name: "multiple alerts produce one body entry per alert",
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrash", "pod": "worker-1"}, nil, true),

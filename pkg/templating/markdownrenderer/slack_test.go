@@ -119,41 +119,34 @@ error: connection timeout after 30s
 func TestRenderSlackMrkdwn(t *testing.T) {
 	renderer := NewMarkdownRenderer(slog.Default())
 
-	tests := []struct {
-		name     string
-		markdown string
-		expected string
-	}{
-		{
-			name:     "simple paragraph",
-			markdown: "Hello world",
-			expected: "Hello world\n\n",
-		},
-		{
-			name: "alert-themed with heading, list, and code block",
-			markdown: `# Alert Triggered
+	markdown := `# Alert Triggered
 
 - Service: **checkout-api**
 - Status: _critical_
+- Dashboard: [View Dashboard](https://example.com/dashboard)
+
+| Metric | Value | Threshold |
+| --- | --- | --- |
+| Latency | 250ms | 100ms |
+| Error Rate | 5.2% | 1% |
 
 ` + "```" + `
 error: connection timeout after 30s
-` + "```",
-			expected: "*Alert Triggered*\n\n• Service: *checkout-api*\n• Status: _critical_\n\n```\nerror: connection timeout after 30s\n```\n\n",
-		},
+` + "```"
+
+	expected := "*Alert Triggered*\n\n" +
+		"• Service: *checkout-api*\n" +
+		"• Status: _critical_\n" +
+		"• Dashboard: <https://example.com/dashboard|View Dashboard>\n\n" +
+		"```\nMetric     | Value | Threshold\n-----------|-------|----------\nLatency    | 250ms | 100ms    \nError Rate | 5.2%  | 1%       \n```\n\n" +
+		"```\nerror: connection timeout after 30s\n```\n\n"
+
+	got, err := renderer.Render(context.Background(), markdown, MarkdownFormatSlackMrkdwn)
+	if err != nil {
+		t.Fatalf("Render error: %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := renderer.Render(context.Background(), tt.markdown, MarkdownFormatSlackMrkdwn)
-			if err != nil {
-				t.Fatalf("Render error: %v", err)
-			}
-
-			if got != tt.expected {
-				t.Errorf("mrkdwn mismatch\n\nMarkdown:\n%s\n\nExpected:\n%q\n\nGot:\n%q",
-					tt.markdown, tt.expected, got)
-			}
-		})
+	if got != expected {
+		t.Errorf("mrkdwn mismatch\n\nExpected:\n%q\n\nGot:\n%q", expected, got)
 	}
 }

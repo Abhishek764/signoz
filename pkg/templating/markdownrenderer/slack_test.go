@@ -115,3 +115,45 @@ error: connection timeout after 30s
 		})
 	}
 }
+
+func TestRenderSlackMrkdwn(t *testing.T) {
+	renderer := NewMarkdownRenderer(slog.Default())
+
+	tests := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "simple paragraph",
+			markdown: "Hello world",
+			expected: "Hello world\n\n",
+		},
+		{
+			name: "alert-themed with heading, list, and code block",
+			markdown: `# Alert Triggered
+
+- Service: **checkout-api**
+- Status: _critical_
+
+` + "```" + `
+error: connection timeout after 30s
+` + "```",
+			expected: "*Alert Triggered*\n\n• Service: *checkout-api*\n• Status: _critical_\n\n```\nerror: connection timeout after 30s\n```\n\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := renderer.Render(context.Background(), tt.markdown, MarkdownFormatSlackMrkdwn)
+			if err != nil {
+				t.Fatalf("Render error: %v", err)
+			}
+
+			if got != tt.expected {
+				t.Errorf("mrkdwn mismatch\n\nMarkdown:\n%s\n\nExpected:\n%q\n\nGot:\n%q",
+					tt.markdown, tt.expected, got)
+			}
+		})
+	}
+}

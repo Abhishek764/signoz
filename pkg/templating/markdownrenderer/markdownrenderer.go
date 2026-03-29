@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
+	"github.com/SigNoz/signoz/pkg/templating/slackmrkdwnrenderer"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
@@ -15,6 +16,7 @@ type OutputFormat int
 const (
 	MarkdownFormatHTML OutputFormat = iota
 	MarkdownFormatSlackBlockKit
+	MarkdownFormatSlackMrkdwn
 	MarkdownFormatNoop
 )
 
@@ -28,6 +30,7 @@ type markdownRenderer struct {
 	logger                *slog.Logger
 	htmlRenderer          goldmark.Markdown
 	slackBlockKitRenderer goldmark.Markdown
+	slackMrkdwnRenderer   goldmark.Markdown
 }
 
 func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
@@ -38,10 +41,14 @@ func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
 	slackBlockKitRenderer := goldmark.New(
 		goldmark.WithExtensions(slackblockkitrenderer.BlockKitV2),
 	)
+	slackMrkdwnRenderer := goldmark.New(
+		goldmark.WithExtensions(slackmrkdwnrenderer.SlackMrkdwn),
+	)
 	return &markdownRenderer{
 		logger:                logger,
 		htmlRenderer:          htmlRenderer,
 		slackBlockKitRenderer: slackBlockKitRenderer,
+		slackMrkdwnRenderer:   slackMrkdwnRenderer,
 	}
 }
 
@@ -51,6 +58,8 @@ func (r *markdownRenderer) Render(ctx context.Context, markdown string, outputFo
 		return r.renderHTML(ctx, markdown)
 	case MarkdownFormatSlackBlockKit:
 		return r.renderSlackBlockKit(ctx, markdown)
+	case MarkdownFormatSlackMrkdwn:
+		return r.renderSlackMrkdwn(ctx, markdown)
 	case MarkdownFormatNoop:
 		return markdown, nil
 	default:

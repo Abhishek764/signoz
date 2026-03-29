@@ -190,7 +190,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		// use default body templating to prepare the attachment
 		// as default template uses plain text markdown rendering instead of blockkit
 		DefaultBodyTemplate: "NO_OP",
-	}, alerts, markdownrenderer.MarkdownFormatSlackBlockKit)
+	}, alerts, markdownrenderer.MarkdownFormatSlackMrkdwn)
 	if err != nil {
 		return nil, err
 	}
@@ -237,19 +237,15 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 	})
 
 	for i, body := range result.Body {
-		var parsed []any
-		if err := json.Unmarshal([]byte(body), &parsed); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse BlockKit blocks from custom template body")
-		}
-
 		color := colorRed // red for firing
 		if i < len(alerts) && alerts[i].Resolved() {
 			color = colorGreen // green for resolved
 		}
 
 		attachments = append(attachments, attachment{
-			Blocks: parsed,
-			Color:  color,
+			Text:     body,
+			Color:    color,
+			MrkdwnIn: []string{"text"},
 		})
 	}
 

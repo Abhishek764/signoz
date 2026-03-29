@@ -377,26 +377,47 @@ func TestPrepareContent(t *testing.T) {
 		}
 		tmplText := func(s string) string { return s }
 
+		bodyTemplate := `## $rule_name
+
+**Service:** *$labels.service*
+**Instance:** *$labels.instance*
+**Region:** *$labels.region*
+**Method:** *$labels.http_method*
+
+---
+
+| Metric | Value |
+|--------|-------|
+| **Current** | *$value* |
+| **Threshold** | *$threshold* |
+
+**Status:** $status | **Severity:** $severity`
+		titleTemplate := "[$status] $rule_name — $labels.service"
+
 		ctx := setupTestContext()
 		firingAlert := &types.Alert{
 			Alert: model.Alert{
-				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", "service": "api-server"},
+				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical", "service": "api-server", "instance": "i-0abc123", "region": "us-east-1", "http_method": "GET"},
 				StartsAt: time.Now(),
 				EndsAt:   time.Now().Add(time.Hour),
 				Annotations: model.LabelSet{
-					ruletypes.AnnotationTitleTemplate: "$rule_name on $service",
-					ruletypes.AnnotationBodyTemplate:  "**Service:** $service is in $status state",
+					ruletypes.AnnotationTitleTemplate: model.LabelValue(titleTemplate),
+					ruletypes.AnnotationBodyTemplate:  model.LabelValue(bodyTemplate),
+					"value":                           "100",
+					"threshold":                       "200",
 				},
 			},
 		}
 		resolvedAlert := &types.Alert{
 			Alert: model.Alert{
-				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", "service": "api-server"},
+				Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical", "service": "api-server", "instance": "i-0abc123", "region": "us-east-1", "http_method": "GET"},
 				StartsAt: time.Now().Add(-2 * time.Hour),
 				EndsAt:   time.Now().Add(-time.Hour),
 				Annotations: model.LabelSet{
-					ruletypes.AnnotationTitleTemplate: "$rule_name on $service",
-					ruletypes.AnnotationBodyTemplate:  "**Service:** $service is in $status state",
+					ruletypes.AnnotationTitleTemplate: model.LabelValue(titleTemplate),
+					ruletypes.AnnotationBodyTemplate:  model.LabelValue(bodyTemplate),
+					"value":                           "50",
+					"threshold":                       "200",
 				},
 			},
 		}
@@ -408,26 +429,34 @@ func TestPrepareContent(t *testing.T) {
 		require.Len(t, atts, 3)
 
 		// First attachment: title-only, no color, no blocks
-		require.Equal(t, "HighCPU on api-server", atts[0].Title)
+		require.Equal(t, "[firing] HighCPU — api-server", atts[0].Title)
 		require.Empty(t, atts[0].Color)
 		require.Nil(t, atts[0].Blocks)
 		require.Equal(t, "https://alertmanager.signoz.com", atts[0].TitleLink)
 
-		// Second attachment: firing alert body rendered as BlockKit JSON, red color
-		require.NotNil(t, atts[1].Blocks)
+		expectedFiringBody := "*HighCPU*\n\n" +
+			"*Service:* _api-server_\n*Instance:* _i-0abc123_\n*Region:* _us-east-1_\n*Method:* _GET_\n\n" +
+			"---\n\n" +
+			"```\nMetric    | Value\n----------|------\nCurrent   | 100  \nThreshold | 200  \n```\n\n" +
+			"*Status:* firing | *Severity:* critical\n\n"
+
+		expectedResolvedBody := "*HighCPU*\n\n" +
+			"*Service:* _api-server_\n*Instance:* _i-0abc123_\n*Region:* _us-east-1_\n*Method:* _GET_\n\n" +
+			"---\n\n" +
+			"```\nMetric    | Value\n----------|------\nCurrent   | 50   \nThreshold | 200  \n```\n\n" +
+			"*Status:* resolved | *Severity:* critical\n\n"
+
+		// Second attachment: firing alert body rendered as slack mrkdwn text, red color
+		require.Nil(t, atts[1].Blocks)
 		require.Equal(t, "#FF0000", atts[1].Color)
-		// Verify the rendered body contains the expanded $service value
-		bodyJSON, jsonErr := json.Marshal(atts[1].Blocks)
-		require.NoError(t, jsonErr)
-		require.Equal(t, "[{\"text\":{\"text\":\"*Service:* api-server is in firing state\",\"type\":\"mrkdwn\"},\"type\":\"section\"}]", string(bodyJSON))
+		require.Equal(t, []string{"text"}, atts[1].MrkdwnIn)
+		require.Equal(t, expectedFiringBody, atts[1].Text)
 
-		// Third attachment: resolved alert body rendered as BlockKit JSON, green color
-		require.NotNil(t, atts[2].Blocks)
+		// Third attachment: resolved alert body rendered as slack mrkdwn text, green color
+		require.Nil(t, atts[2].Blocks)
 		require.Equal(t, "#00FF00", atts[2].Color)
-		bodyJSON, jsonErr = json.Marshal(atts[2].Blocks)
-		require.NoError(t, jsonErr)
-		require.Equal(t, "[{\"text\":{\"text\":\"*Service:* api-server is in resolved state\",\"type\":\"mrkdwn\"},\"type\":\"section\"}]", string(bodyJSON))
-
+		require.Equal(t, []string{"text"}, atts[2].MrkdwnIn)
+		require.Equal(t, expectedResolvedBody, atts[2].Text)
 	})
 
 	t.Run("default template with fields and actions", func(t *testing.T) {

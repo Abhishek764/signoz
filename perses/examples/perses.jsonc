@@ -38,6 +38,7 @@
     },
     "variables": [
       {
+        // what is a ListVariable
         "kind": "ListVariable",
         "spec": {
           "name": "serviceName",
@@ -68,6 +69,7 @@
           "plugin": {
             "kind": "SigNozQueryVariable",
             "spec": {
+              // missing defaultValue for these list variables
               "queryValue": "SELECT JSONExtractString(labels, 'http.status_code') AS status_code FROM signoz_metrics.distributed_time_series_v4_1day WHERE status_code != '' GROUP BY status_code",
               "sort": "asc"
             }
@@ -93,6 +95,8 @@
         }
       },
       {
+        // do we need uuid for id here? Do we need id at all?
+        // migration will require cleanup from localstorage as it is all saved with ids right now
         "kind": "TextVariable",
         "spec": {
           "name": "textboxvar",
@@ -101,8 +105,15 @@
           },
           "value": "defaultvaluegoeshere",
           "plugin": {
+            // just to confirm, this would be the type right?
             "kind": "SigNozTextboxVariable",
-            "spec": {}
+            "spec": {
+              // How should selectedValue be handled on share?
+              // we should have an option for selectedValue here
+              // should go in for all variables
+              // should be auto filled with the default or with the queried value. All for multi, first for single
+              // if selectedValue goes in, then we will need allSelected as well
+            }
           }
         }
       }

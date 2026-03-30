@@ -8,4 +8,5 @@ spec: close({
 	name: string
 	source:    string
 	sort?: common.#VariableSortOrder
+	// where does attribute go here?
 })

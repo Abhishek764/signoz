@@ -179,6 +179,30 @@ func AdjustedMetricTimeRange(start, end, step uint64, mq qbtypes.QueryBuilderQue
 	return start, end
 }
 
+// TimeIntervalExpr returns a ClickHouse SQL expression for bucketing a DateTime column
+// into step-second intervals, aligned to an optional offset (in seconds).
+//
+// Without a shift (shiftSec == 0):
+//
+//	toStartOfInterval(<col>, INTERVAL <step> SECOND)
+//
+// With a shift:
+//
+//	toStartOfInterval(<col> + INTERVAL <shift> SECOND, INTERVAL <step> SECOND) - INTERVAL <shift> SECOND
+//
+// The shift form ensures bucket boundaries align with the shifted time range, so that
+// the resulting timestamps can be forward-shifted by <shift> and land exactly on the
+// same bucket boundaries as the non-shifted series.
+func TimeIntervalExpr(col string, stepSec, shiftSec int64) string {
+	if shiftSec == 0 {
+		return fmt.Sprintf("toStartOfInterval(%s, INTERVAL %d SECOND)", col, stepSec)
+	}
+	return fmt.Sprintf(
+		"toStartOfInterval(%s + INTERVAL %d SECOND, INTERVAL %d SECOND) - INTERVAL %d SECOND",
+		col, shiftSec, stepSec, shiftSec,
+	)
+}
+
 func AssignReservedVars(vars map[string]any, start, end uint64) {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)

@@ -22,6 +22,8 @@ spec: close({
 })
 
 // QueryEnvelope wraps a single query plugin with a type discriminator.
+
+// need to verify the types internally are marked required where necessary, so that we can make them optional here and not have to worry about it at the top level
 #QueryEnvelope:
 	close({
 		type: "builder_query",

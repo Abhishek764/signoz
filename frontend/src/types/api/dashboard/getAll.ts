@@ -132,6 +132,7 @@ export interface IBaseWidget {
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: TelemetryFieldKey[] | null;
 	isLogScale?: boolean;
+	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
 	contextLinks?: ContextLinksData;

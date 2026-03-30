@@ -149,7 +149,7 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *ser
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return err
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountAlreadyExists, "service account with name: %s already exists", storable.Name)
 	}
 
 	return nil
@@ -299,7 +299,7 @@ func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID val
 		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {
-		return err
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists in service account: %s", storable.Name, storable.ServiceAccountID)
 	}
 
 	return nil

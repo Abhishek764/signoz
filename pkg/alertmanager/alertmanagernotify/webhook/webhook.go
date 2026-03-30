@@ -108,14 +108,14 @@ func (n *Notifier) templateAlerts(ctx context.Context, alerts []*types.Alert) er
 // Notify implements the Notifier interface.
 func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
 	alerts, numTruncated := truncateAlerts(n.conf.MaxAlerts, alerts)
+	// template alerts before preparing the notification data
+	if err := n.templateAlerts(ctx, alerts); err != nil {
+		return false, err
+	}
 	data := notify.GetTemplateData(ctx, n.tmpl, alerts, n.logger)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
-		return false, err
-	}
-
-	if err := n.templateAlerts(ctx, alerts); err != nil {
 		return false, err
 	}
 

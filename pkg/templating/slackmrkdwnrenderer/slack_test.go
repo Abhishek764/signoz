@@ -88,6 +88,11 @@ func TestRenderer(t *testing.T) {
 			markdown: "<user@example.com>",
 			expected: "<mailto:user@example.com|user@example.com>\n\n",
 		},
+		{
+			name:     "No value string parsed as is",
+			markdown: "Service: <no value>",
+			expected: "Service: <no value>\n\n",
+		},
 	}
 
 	for _, tt := range tests {

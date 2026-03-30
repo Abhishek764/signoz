@@ -34,6 +34,7 @@ func (r *Renderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(ast.KindListItem, r.renderListItem)
 	reg.Register(ast.KindParagraph, r.renderParagraph)
 	reg.Register(ast.KindTextBlock, r.renderTextBlock)
+	reg.Register(ast.KindRawHTML, r.renderRawHTML)
 	reg.Register(ast.KindThematicBreak, r.renderThematicBreak)
 
 	// Inlines
@@ -167,6 +168,18 @@ func (r *Renderer) renderParagraph(w util.BufWriter, source []byte, n ast.Node, 
 func (r *Renderer) renderTextBlock(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering && n.PreviousSibling() != nil {
 		r.writeLineSeparator(w)
+	}
+	return ast.WalkContinue, nil
+}
+
+func (r *Renderer) renderRawHTML(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+	if entering {
+		n := n.(*ast.RawHTML)
+		l := n.Segments.Len()
+		for i := 0; i < l; i++ {
+			segment := n.Segments.At(i)
+			_, _ = w.Write(segment.Value(source))
+		}
 	}
 	return ast.WalkContinue, nil
 }

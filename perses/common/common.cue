@@ -4,7 +4,8 @@ package common
 // Shared types
 // ──────────────────────────────────────────────
 
-// ! What is used for
+// ! What is used for - Got answer
+// Which one of these will be there if this exists
 #TelemetryFieldKey: {
     name:           string
     key?:           string

@@ -14,7 +14,10 @@ spec: close({
     timePreference?: common.#TimePreference
 }
 
+// where to store if alerts can be added or not?
+
 #Formatting: {
+    // mainly need to discuss optional fields
     unit?:             string | *""
     decimalPrecision?: common.#PrecisionOption
 }

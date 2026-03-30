@@ -23,3 +23,9 @@ spec: close({
     common.#ComparisonThreshold
     tableOptions: string
 }
+
+// missing
+columnWidths
+customColumnTitles
+hiddenColumns
+renderColumnCell - can be FE

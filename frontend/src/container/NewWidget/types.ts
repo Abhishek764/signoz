@@ -16,8 +16,10 @@ export interface NewWidgetProps {
 }
 
 export interface WidgetGraphProps {
+	// this should be inside the querier plugin definition
 	selectedLogFields: Widgets['selectedLogFields'];
 	setSelectedLogFields?: Dispatch<SetStateAction<Widgets['selectedLogFields']>>;
+	// this should be inside the querier plugin definition
 	selectedTracesFields: Widgets['selectedTracesFields'];
 	setSelectedTracesFields?: Dispatch<
 		SetStateAction<Widgets['selectedTracesFields']>

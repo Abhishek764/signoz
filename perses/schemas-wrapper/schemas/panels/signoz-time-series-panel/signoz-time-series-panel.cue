@@ -24,5 +24,13 @@ spec: close({
 
 #Legend: {
     position?:     common.#LegendPosition
+    // why call it customColors?
     customColors?: [string]: string
 }
+
+// chart appearance
+ - fill mode
+ - line style
+ - line interpolation
+ - show points
+ - span gaps

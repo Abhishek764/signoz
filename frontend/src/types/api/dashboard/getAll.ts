@@ -118,7 +118,6 @@ export interface IBaseWidget {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	stepSize?: number;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption; // number of decimals or 'full precision'
 	stackedBarChart?: boolean;
@@ -133,7 +132,6 @@ export interface IBaseWidget {
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: TelemetryFieldKey[] | null;
 	isLogScale?: boolean;
-	columnWidths?: Record<string, number>;
 	legendPosition?: LegendPosition;
 	customLegendColors?: Record<string, string>;
 	contextLinks?: ContextLinksData;

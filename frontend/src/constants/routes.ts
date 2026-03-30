@@ -87,6 +87,7 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
+	AI_ASSISTANT: '/ai-assistant/:conversationId',
 } as const;
 
 export default ROUTES;

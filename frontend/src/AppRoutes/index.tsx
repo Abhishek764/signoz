@@ -215,7 +215,8 @@ function App(): JSX.Element {
 	useEffect(() => {
 		if (
 			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/')
+			pathname.startsWith('/public/dashboard/') ||
+			pathname.startsWith('/ai-assistant/')
 		) {
 			window.Pylon?.('hideChatBubble');
 		} else {

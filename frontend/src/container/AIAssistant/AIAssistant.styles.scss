@@ -1,0 +1,767 @@
+// ─── Inline panel ─────────────────────────────────────────────────────────────
+
+.ai-assistant-panel {
+	display: flex;
+	flex-direction: column;
+	width: 380px;
+	min-width: 320px;
+	max-width: 480px;
+	flex-shrink: 0;
+	height: 100%;
+	border-left: 1px solid var(--l1-border);
+	background: var(--l1-background);
+	overflow: hidden;
+}
+
+.ai-assistant-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+	background: var(--l1-background);
+}
+
+.ai-assistant-panel__title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.ai-assistant-panel__actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+// ─── Full-screen page ─────────────────────────────────────────────────────────
+
+.ai-assistant-page {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--l1-background);
+}
+
+.ai-assistant-page__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 24px;
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+	background: var(--l1-background);
+}
+
+.ai-assistant-page__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.ai-assistant-page__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.ai-assistant-page__body {
+	flex: 1;
+	display: flex;
+	flex-direction: row;  // history sidebar + chat area side by side
+	overflow: hidden;
+	width: 100%;
+}
+
+.ai-assistant-page__chat {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 0 24px;
+}
+
+// ─── Conversation layout ──────────────────────────────────────────────────────
+
+.ai-conversation {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.ai-conversation__input-wrapper {
+	flex-shrink: 0;
+	padding: 12px 16px 16px;
+	border-top: 1px solid var(--l1-border);
+}
+
+// Tighter padding when inside the narrow side panel
+.ai-assistant-panel .ai-conversation__input-wrapper {
+	padding: 8px 12px 12px;
+}
+
+// ─── Scrollbar mixin ─────────────────────────────────────────────────────────
+
+@mixin ai-scrollbar($width: 0.3rem) {
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+	transition: scrollbar-color 0.2s;
+
+	&:hover {
+		scrollbar-color: var(--bg-slate-400) transparent;
+	}
+
+	&::-webkit-scrollbar {
+		width: $width;
+		height: $width;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: transparent;
+		border-radius: 999px;
+		transition: background 0.2s;
+	}
+
+	&:hover::-webkit-scrollbar-thumb {
+		background: var(--bg-slate-400);
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--bg-slate-300);
+	}
+}
+
+// ─── Message list (react-virtuoso) ───────────────────────────────────────────
+
+.ai-messages {
+	flex: 1;
+	overflow: auto;
+	@include ai-scrollbar;
+
+	& > div {
+		padding: 16px 0;
+	}
+}
+
+.ai-messages__empty {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 32px 16px;
+	color: var(--l2-foreground);
+	font-size: 13px;
+	text-align: center;
+}
+
+// ─── Individual messages ──────────────────────────────────────────────────────
+
+.ai-message {
+	display: flex;
+	padding: 6px 16px;
+
+	&--user {
+		justify-content: flex-end;
+	}
+
+	&--assistant {
+		justify-content: flex-start;
+	}
+}
+
+// Tighter padding in the narrow panel
+.ai-assistant-panel .ai-message {
+	padding: 4px 12px;
+}
+
+.ai-message__bubble {
+	max-width: 80%;
+	border-radius: 12px;
+	padding: 10px 14px;
+	font-size: 13px;
+	line-height: 1.55;
+
+	.ai-message--user & {
+		background: var(--primary, var(--bg-robin-500));
+		color: #fff;
+		border-bottom-right-radius: 3px;
+	}
+
+	.ai-message--assistant & {
+		background: var(--l2-background);
+		color: var(--l1-foreground);
+		border-bottom-left-radius: 3px;
+	}
+}
+
+.ai-assistant-panel .ai-message__bubble {
+	max-width: 90%;
+}
+
+.ai-message__text {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.ai-message__markdown {
+	p,
+	ul,
+	ol,
+	pre,
+	blockquote {
+		margin-top: 0;
+		margin-bottom: 0.5em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	code {
+		font-family: 'Geist Mono', 'Fira Code', monospace;
+		font-size: 12px;
+		border-radius: 3px;
+		padding: 1px 4px;
+		background: var(--l3-background);
+		color: var(--l1-foreground);
+	}
+
+	pre code {
+		display: block;
+		padding: 10px;
+		overflow-x: auto;
+		border-radius: 6px;
+	}
+
+	table {
+		border-collapse: collapse;
+		font-size: 12px;
+		margin: 0.5em 0;
+
+		th,
+		td {
+			padding: 4px 10px;
+			border: 1px solid var(--l2-border);
+		}
+
+		th {
+			background: var(--l2-background);
+			color: var(--l1-foreground);
+			font-weight: 600;
+		}
+
+		td {
+			color: var(--l1-foreground);
+		}
+	}
+}
+
+// ─── Attachment preview ───────────────────────────────────────────────────────
+
+.ai-message__attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.ai-message__attachment-image {
+	max-width: 200px;
+	max-height: 160px;
+	border-radius: 6px;
+	object-fit: cover;
+}
+
+.ai-message__attachment-file {
+	font-size: 11px;
+	padding: 3px 8px;
+	border-radius: 4px;
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	max-width: 180px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// ─── Typing / streaming indicator ────────────────────────────────────────────
+
+.ai-message__typing-indicator {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+
+	span {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--l2-foreground);
+		animation: ai-bounce 1.2s infinite ease-in-out;
+
+		&:nth-child(2) { animation-delay: 0.2s; }
+		&:nth-child(3) { animation-delay: 0.4s; }
+	}
+}
+
+@keyframes ai-bounce {
+	0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+	40%           { transform: scale(1);   opacity: 1;   }
+}
+
+// ─── Input bar ────────────────────────────────────────────────────────────────
+
+.ai-assistant-input {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	background: var(--l2-background);
+	border-radius: 10px;
+	padding: 8px 10px;
+	border: 1px solid var(--l2-border);
+	transition: border-color 0.15s;
+
+	&:focus-within {
+		border-color: var(--primary, var(--bg-robin-500));
+	}
+}
+
+.ai-assistant-input__attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.ai-assistant-input__attachment-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	background: var(--l3-background);
+	border-radius: 4px;
+	padding: 2px 6px 2px 8px;
+	color: var(--l2-foreground);
+	max-width: 180px;
+}
+
+.ai-assistant-input__attachment-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ai-assistant-input__attachment-remove {
+	flex-shrink: 0;
+	padding: 0 !important;
+	height: auto !important;
+	min-height: 0 !important;
+}
+
+.ai-assistant-input__row {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+// Attach + send buttons rendered by @signozhq/button — no extra rules needed.
+
+.ai-assistant-input__textarea {
+	flex: 1;
+	background: transparent;
+	border: none;
+	outline: none;
+	resize: none;
+	color: var(--l1-foreground);
+	font-size: 13px;
+	line-height: 1.5;
+	max-height: 160px;
+	overflow-y: auto;
+	font-family: inherit;
+	@include ai-scrollbar(0.2rem);
+
+	&::placeholder {
+		color: var(--l3-foreground, var(--l2-foreground));
+		opacity: 0.6;
+	}
+}
+
+.ai-assistant-input__send-btn {
+	flex-shrink: 0;
+	border-radius: 6px;
+}
+
+// ─── Rich blocks (ai-* fenced code blocks) ───────────────────────────────────
+
+.ai-block {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 8px;
+	padding: 12px 14px;
+	margin: 8px 0;
+
+	&:first-child { margin-top: 0; }
+	&:last-child  { margin-bottom: 0; }
+}
+
+.ai-block__title {
+	margin: 0 0 10px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--l2-foreground);
+}
+
+.ai-block__unit {
+	font-weight: 400;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+.ai-block__empty {
+	margin: 0;
+	font-size: 12px;
+	color: var(--l3-foreground, var(--l2-foreground));
+}
+
+// ─── Interactive question ─────────────────────────────────────────────────────
+
+.ai-question__options {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	// Checkbox variant stacks items vertically too
+	&.ai-question__options--checkbox {
+		margin-bottom: 10px;
+	}
+}
+
+.ai-question__option {
+	// Ensure Antd Radio/Checkbox labels pick up the foreground token
+	color: var(--l1-foreground) !important;
+	font-size: 13px !important;
+}
+
+.ai-question__submit {
+	margin-top: 2px;
+}
+
+.ai-question--answered {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 12px;
+	opacity: 0.7;
+}
+
+.ai-question__check {
+	color: var(--bg-forest-500, #22c55e);
+	font-size: 13px;
+}
+
+.ai-question__answer-text {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}
+
+// ─── Timeseries table ─────────────────────────────────────────────────────────
+
+.ai-timeseries__scroll {
+	overflow-x: auto;
+	@include ai-scrollbar(0.25rem);
+}
+
+.ai-timeseries__table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 12px;
+
+	th {
+		padding: 6px 12px;
+		text-align: left;
+		background: var(--l3-background);
+		color: var(--l2-foreground);
+		font-weight: 600;
+		border-bottom: 1px solid var(--l2-border);
+		white-space: nowrap;
+	}
+
+	td {
+		padding: 5px 12px;
+		color: var(--l1-foreground);
+		border-bottom: 1px solid var(--l1-border);
+		font-family: 'Geist Mono', 'Fira Code', monospace;
+		white-space: nowrap;
+	}
+
+	tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	tbody tr:hover td {
+		background: var(--l3-background);
+	}
+}
+
+// ─── Chart.js canvas wrapper (bar, line, pie/doughnut) ───────────────────────
+
+.ai-chart__canvas-wrap {
+	position: relative;
+	height: 200px;
+
+	&--pie {
+		height: 180px;
+	}
+}
+
+// ─── Confirm block ────────────────────────────────────────────────────────────
+
+.ai-confirm__message {
+	margin: 0 0 10px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	line-height: 1.5;
+}
+
+.ai-confirm__actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.ai-confirm--answered {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	opacity: 0.7;
+}
+
+.ai-confirm__icon {
+	flex-shrink: 0;
+
+	&--ok { color: var(--bg-forest-500, #22c55e); }
+	&--no { color: var(--bg-cherry-500, #ef4444); }
+}
+
+.ai-confirm__answer-text {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}
+
+// ─── Floating trigger button ──────────────────────────────────────────────────
+
+.ai-trigger {
+	position: absolute;
+	bottom: 24px;
+	right: 24px;
+	z-index: 10;
+
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	border: none;
+	cursor: pointer;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background: var(--primary, var(--bg-robin-500));
+	color: #fff;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+	transition: transform 0.15s, box-shadow 0.15s;
+
+	&:hover {
+		transform: scale(1.08);
+		box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+	}
+
+	&:active {
+		transform: scale(0.96);
+	}
+}
+
+// ─── Chat history sidebar ─────────────────────────────────────────────────────
+
+.ai-history {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+
+	// Full-screen page: fixed-width left column
+	.ai-assistant-page & {
+		width: 220px;
+		flex-shrink: 0;
+		border-right: 1px solid var(--l1-border);
+	}
+
+	// Side panel: full-width overlay (replaces conversation view)
+	.ai-assistant-panel & {
+		width: 100%;
+		flex: 1;
+	}
+}
+
+.ai-history__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px 8px;
+	flex-shrink: 0;
+}
+
+.ai-history__heading {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--l2-foreground);
+}
+
+.ai-history__new-btn {
+	gap: 4px;
+}
+
+.ai-history__list {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0 6px 12px;
+	@include ai-scrollbar(0.25rem);
+}
+
+.ai-history__empty {
+	margin: 20px 8px 0;
+	font-size: 12px;
+	color: var(--l3-foreground, var(--l2-foreground));
+	text-align: center;
+}
+
+.ai-history__group {
+	margin-bottom: 8px;
+}
+
+.ai-history__group-label {
+	display: block;
+	padding: 6px 8px 3px;
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--l3-foreground, var(--l2-foreground));
+}
+
+// ─── Conversation item ────────────────────────────────────────────────────────
+
+.ai-history__item {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	cursor: pointer;
+	min-width: 0;
+	position: relative;
+
+	&:hover {
+		background: var(--l2-background);
+
+		.ai-history__item-actions {
+			opacity: 1;
+		}
+	}
+
+	&--active {
+		background: var(--l2-background);
+
+		.ai-history__item-title {
+			color: var(--l1-foreground);
+			font-weight: 500;
+		}
+
+		.ai-history__item-actions {
+			opacity: 1;
+		}
+	}
+}
+
+.ai-history__item-icon {
+	flex-shrink: 0;
+	color: var(--l3-foreground, var(--l2-foreground));
+}
+
+.ai-history__item-body {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.ai-history__item-title {
+	font-size: 12px;
+	color: var(--l2-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.4;
+}
+
+.ai-history__item-time {
+	font-size: 10px;
+	color: var(--l3-foreground, var(--l2-foreground));
+	opacity: 0.7;
+}
+
+.ai-history__item-input {
+	width: 100%;
+	background: transparent;
+	border: none;
+	border-bottom: 1px solid var(--primary, var(--bg-robin-500));
+	outline: none;
+	color: var(--l1-foreground);
+	font-size: 12px;
+	font-family: inherit;
+	padding: 1px 0;
+}
+
+.ai-history__item-actions {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+	flex-shrink: 0;
+	opacity: 0;
+	transition: opacity 0.12s;
+}
+
+.ai-history__item-btn {
+	padding: 2px !important;
+	height: auto !important;
+	min-height: 0 !important;
+
+	&--danger:hover {
+		color: var(--bg-cherry-500, #ef4444) !important;
+	}
+}
+
+// Active button state for History toggle in panel header
+.ai-panel-btn--active {
+	background: var(--l2-background) !important;
+	color: var(--primary, var(--bg-robin-500)) !important;
+}

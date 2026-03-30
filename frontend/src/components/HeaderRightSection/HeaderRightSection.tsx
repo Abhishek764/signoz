@@ -1,9 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Button as PeriscopeButton } from '@signozhq/button';
+import { Tooltip as PeriscopeTooltip } from '@signozhq/tooltip';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Globe, Inbox, SquarePen } from 'lucide-react';
+import { Bot, Globe, Inbox, SquarePen } from 'lucide-react';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
@@ -70,6 +73,17 @@ function HeaderRightSection({
 
 	return (
 		<div className="header-right-section-container">
+			<PeriscopeTooltip title="AI Assistant">
+				<PeriscopeButton
+					variant="ghost"
+					size="xs"
+					onClick={openAIAssistant}
+					aria-label="Open AI Assistant"
+				>
+					<Bot size={14} />
+				</PeriscopeButton>
+			</PeriscopeTooltip>
+
 			{enableFeedback && isLicenseEnabled && (
 				<Popover
 					rootClassName="header-section-popover-root"

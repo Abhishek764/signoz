@@ -74,6 +74,33 @@ func extractFieldMappings(data any) []fieldMapping {
 	return mappings
 }
 
+// prepareVariableName prepares the variable name to be used in go-text-template
+// it replaces every unwanted character like dots, spaces, etc. with an underscore
+// for example, "http.request.method" becomes "http_request_method"
+func prepareVariableName(key string) string {
+	var b strings.Builder
+	b.Grow(len(key))
+
+	for i, r := range key {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r == '_': // valid variable name characters
+			b.WriteRune(r)
+		case r >= '0' && r <= '9':
+			if b.Len() == 0 {
+				// leading digit — replace with underscore
+				b.WriteByte('_')
+			} else {
+				b.WriteRune(r)
+			}
+		default:
+			// dots, hyphens, spaces, etc. → underscore
+			b.WriteByte('_')
+		}
+		_ = i
+	}
+	return b.String()
+}
+
 // extractNestedFieldsDefinitions adds the labels and annotations keys from the data struct to the template variable definitions
 // it takes the known data struct and extracts the labels and annotations maps and adds their keys to template variable definitions to be used in the template
 func extractNestedFieldsDefinitions(data any) map[string]string {
@@ -81,10 +108,10 @@ func extractNestedFieldsDefinitions(data any) map[string]string {
 
 	addLabelsAndAnnotations := func(labels, annotations map[string]string) {
 		for k := range annotations {
-			variables[k] = fmt.Sprintf("index .annotations \"%s\"", k)
+			variables[prepareVariableName(k)] = fmt.Sprintf("index .annotations \"%s\"", k)
 		}
 		for k := range labels {
-			variables[k] = fmt.Sprintf("index .labels \"%s\"", k)
+			variables[prepareVariableName(k)] = fmt.Sprintf("index .labels \"%s\"", k)
 		}
 	}
 
@@ -111,11 +138,13 @@ func prepareDataForTemplating(data any) (map[string]interface{}, error) {
 
 	addLabelsAndAnnotationsValues := func(labels, annotations map[string]string) {
 		for k, v := range labels {
+			k = prepareVariableName(k)
 			if _, ok := result[k]; !ok {
 				result[k] = v
 			}
 		}
 		for k, v := range annotations {
+			k = prepareVariableName(k)
 			if _, ok := result[k]; !ok {
 				result[k] = v
 			}

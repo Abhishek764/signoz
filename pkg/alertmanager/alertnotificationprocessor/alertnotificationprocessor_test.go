@@ -174,7 +174,7 @@ func TestProcessAlertNotification(t *testing.T) {
 			wantMissingVars:   []string{"environment", "runbook_url"},
 		},
 		{
-			name: "slack mrkdwn renders bold and italic correctly",
+			name: "slack mrkdwn renders bold and italic correctly along with missing variables",
 			alerts: []*types.Alert{
 				createAlert(
 					map[string]string{
@@ -188,11 +188,12 @@ func TestProcessAlertNotification(t *testing.T) {
 			},
 			input: alertmanagertypes.NotificationProcessorInput{
 				TitleTemplate: "Alert: $rule_name",
-				BodyTemplate:  "**Service:** $service\n\n*Description:* $description",
+				BodyTemplate:  "**Service:** $service\n\n*Description:* $description $http_request_method",
 			},
 			RendererFormat:    markdownrenderer.MarkdownFormatSlackMrkdwn,
 			wantTitle:         "Alert: HighCPU",
-			wantBody:          []string{"*Service:* api-server\n\n_Description:_ CPU usage exceeded 95%\n\n"},
+			wantBody:          []string{"*Service:* api-server\n\n_Description:_ CPU usage exceeded 95% <no value>\n\n"},
+			wantMissingVars:   []string{"http_request_method"},
 			wantIsDefaultBody: false,
 		},
 		{

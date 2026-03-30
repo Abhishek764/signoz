@@ -32,7 +32,7 @@ func TestClickHouseQuery_Validate_DeprecatedTables(t *testing.T) {
 		{
 			"distributed_signoz_spans",
 			"SELECT * FROM distributed_signoz_spans",
-			`deprecated table "distributed_signoz_spans"`,
+			`table "distributed_signoz_spans" is deprecated`,
 		},
 		// Traces V2 → V3 (local)
 		{
@@ -43,12 +43,12 @@ func TestClickHouseQuery_Validate_DeprecatedTables(t *testing.T) {
 		{
 			"usage_explorer",
 			"SELECT * FROM usage_explorer",
-			`deprecated table "usage_explorer"`,
+			`table "usage_explorer" is deprecated`,
 		},
 		{
 			"signoz_spans",
 			"SELECT * FROM signoz_spans LIMIT 10",
-			`deprecated table "signoz_spans"`,
+			`table "signoz_spans" is deprecated`,
 		},
 		// Logs V1 → V2
 		{

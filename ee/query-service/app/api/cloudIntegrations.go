@@ -112,7 +112,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 func (ah *APIHandler) getOrCreateCloudIntegrationFactorAPIKey(ctx context.Context, orgID valuer.UUID, cloudProvider string) (
 	string, *basemodel.ApiError,
 ) {
-	integrationPATName := fmt.Sprintf("%s integration", cloudProvider)
+	integrationPATName := fmt.Sprintf("%s", cloudProvider)
 	serviceAccount, apiErr := ah.getOrCreateCloudIntegrationServiceAccount(ctx, orgID)
 	if apiErr != nil {
 		return "", apiErr

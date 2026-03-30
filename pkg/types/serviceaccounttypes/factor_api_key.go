@@ -2,12 +2,17 @@ package serviceaccounttypes
 
 import (
 	"encoding/json"
+	"regexp"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+)
+
+var (
+	factorAPIKeyNameRegex = regexp.MustCompile("^[a-z-]{1,80}$")
 )
 
 var (
@@ -80,10 +85,6 @@ func NewGettableFactorAPIKeyWithKey(id valuer.UUID, key string) *GettableFactorA
 }
 
 func (apiKey *FactorAPIKey) Update(name string, expiresAt uint64) error {
-	if expiresAt != 0 && time.Now().After(time.Unix(int64(expiresAt), 0)) {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "cannot set api key expiry in the past")
-	}
-
 	apiKey.Name = name
 	apiKey.ExpiresAt = expiresAt
 	apiKey.UpdatedAt = time.Now()
@@ -110,8 +111,12 @@ func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name cannot be empty")
+	if match := factorAPIKeyNameRegex.MatchString(temp.Name); !match {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must conform to the regex: %s", factorAPIKeyNameRegex.String())
+	}
+
+	if temp.ExpiresAt != 0 && time.Now().After(time.Unix(int64(temp.ExpiresAt), 0)) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "cannot set api key expiry in the past")
 	}
 
 	*key = PostableFactorAPIKey(temp)
@@ -126,8 +131,12 @@ func (key *UpdatableFactorAPIKey) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if temp.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name cannot be empty")
+	if match := factorAPIKeyNameRegex.MatchString(temp.Name); !match {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must conform to the regex: %s", factorAPIKeyNameRegex.String())
+	}
+
+	if temp.ExpiresAt != 0 && time.Now().After(time.Unix(int64(temp.ExpiresAt), 0)) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "cannot set api key expiry in the past")
 	}
 
 	*key = UpdatableFactorAPIKey(temp)

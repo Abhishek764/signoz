@@ -11,6 +11,7 @@ spec: close({
     stepSize?:             number
     columnWidths?:         [string]: number // not a config choice — persisted user-resized column widths
     // "Chart Appearance" section in UI — could not find this section in the app.
+    // This is behind a boolean flag right now. Can help reproduce locally
     // These 4 fields are gated behind panelTypeVs* constants (TIME_SERIES only).
     lineInterpolation?:    #LineInterpolation
     showPoints?:           bool

@@ -7,3 +7,5 @@ kind: "SigNozDatasource"
 // Add fields here if SigNoz ever supports multiple backends or
 // configurable API versions.
 spec: close({})
+
+ // this is required to override the default that always requires a spec

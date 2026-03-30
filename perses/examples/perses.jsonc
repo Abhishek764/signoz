@@ -2,14 +2,31 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "the-everything-dashboard",
-    "project": "signoz"
+    "project": "signoz" // should this be an id? What is this project exactly?
+    // where would createdAt, updatedAt, createdBy, updatedBy be used?
+    // where would dashboardID or organizationID go
+    // where is locked going to come in
+    // can we have public path here as well? default time range and
+
+    // where would version go?
+    // where would image value go?
+    // where would tags go?
+
+    // we have uploadedGrafana. What is uploadedGrafana used for?
+
+    // ! all above looks like we need a plugin for the root dashboard as well
+
+    // how is panelMap and widgets translated to layout? Is layout the same as before?
+    // where is timePreferance set up
+    // collapsed?
+    // ? https://github.com/react-grid-layout/react-grid-layout?tab=readme-ov-file#layout-item
   },
   "spec": {
     "display": {
-      "name": "The everything dashboard",
+      "name": "The everything dashboard", // this is duplicate?
       "description": "Trying to cover as many concepts here as possible"
     },
-    "duration": "1h",
+    "duration": "1h", // is this required?
     "datasources": {
       "SigNozDatasource": {
         "default": true,
@@ -91,6 +108,8 @@
       }
     ],
     "panels": {
+      // need metadata inside this for section creation
+      // maybe another key just for sections. much easier
       "24e2697b": {
         "kind": "Panel",
         "spec": {
@@ -765,12 +784,25 @@
       {
         "kind": "Grid",
         "spec": {
+          // ! where is row header?
+          // w: 12,
+          // 	minW: 12,
+          // 	minH: 1,
+          // 	maxH: 1,
+          // 	x: 0,
+          // 	h: 1,
+          // 	y: 0,
+          // These above properties are required for the headers only
+          // need collapsed state for a section
           "items": [
             {
+              // we need id here. could be injected from the frontend
               "x": 0,
               "y": 0,
               "width": 6,
               "height": 6,
+              // how easy would it be to introduce more here? like maxW, minW, static, etc. Do we want to introduce those from the start?
+              // "moved" might need experimenting
               "content": {
                 "$ref": "#/spec/panels/24e2697b"
               }

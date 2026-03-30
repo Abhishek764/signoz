@@ -195,10 +195,10 @@ func AdjustedMetricTimeRange(start, end, step uint64, mq qbtypes.QueryBuilderQue
 // same bucket boundaries as the non-shifted series.
 func TimeIntervalExpr(col string, stepSec, shiftSec int64) string {
 	if shiftSec == 0 {
-		return fmt.Sprintf("toStartOfInterval(%s, INTERVAL %d SECOND)", col, stepSec)
+		return fmt.Sprintf("toStartOfInterval(%s, toIntervalSecond(%d))", col, stepSec)
 	}
 	return fmt.Sprintf(
-		"toStartOfInterval(%s + INTERVAL %d SECOND, INTERVAL %d SECOND) - INTERVAL %d SECOND",
+		"toStartOfInterval(%s + toIntervalSecond(%d), toIntervalSecond(%d)) - toIntervalSecond(%d)",
 		col, shiftSec, stepSec, shiftSec,
 	)
 }

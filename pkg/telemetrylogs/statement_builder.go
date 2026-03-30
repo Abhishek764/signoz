@@ -359,7 +359,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.SelectMore(fmt.Sprintf("%s AS ts",
-		querybuilder.TimeIntervalExpr("fromUnixTimestamp64Nano(timestamp)", int64(query.StepInterval.Seconds()), query.ShiftBy),
+		querybuilder.TimeIntervalExpr("fromUnixTimestamp64Nano(timestamp)", fmt.Sprintf("INTERVAL %d SECOND", int64(query.StepInterval.Seconds())), query.ShiftBy),
 	))
 
 	var allGroupByArgs []any

@@ -489,7 +489,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.SelectMore(fmt.Sprintf("%s AS ts",
-		querybuilder.TimeIntervalExpr("timestamp", int64(query.StepInterval.Seconds()), query.ShiftBy),
+		querybuilder.TimeIntervalExpr("timestamp", fmt.Sprintf("INTERVAL %d SECOND", int64(query.StepInterval.Seconds())), query.ShiftBy),
 	))
 
 	var allGroupByArgs []any

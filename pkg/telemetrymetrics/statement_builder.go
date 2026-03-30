@@ -214,7 +214,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.SelectMore(fmt.Sprintf("%s AS ts",
-		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", stepSec, query.ShiftBy),
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
@@ -350,7 +350,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 
 	sb.Select("fingerprint")
 	sb.SelectMore(fmt.Sprintf("%s AS ts",
-		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", stepSec, query.ShiftBy),
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
@@ -395,7 +395,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	baseSb := sqlbuilder.NewSelectBuilder()
 	baseSb.Select("fingerprint")
 	baseSb.SelectMore(fmt.Sprintf("%s AS ts",
-		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", stepSec, query.ShiftBy),
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		baseSb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
@@ -459,7 +459,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.SelectMore(fmt.Sprintf("%s AS ts",
-		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", stepSec, query.ShiftBy),
+		querybuilder.TimeIntervalExpr("toDateTime(intDiv(unix_milli, 1000))", fmt.Sprintf("toIntervalSecond(%d)", stepSec), query.ShiftBy),
 	))
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))

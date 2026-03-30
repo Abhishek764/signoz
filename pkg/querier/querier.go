@@ -435,14 +435,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
 	if qbResp != nil {
 		qbResp.QBEvent = event
-		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
+		if len(intervalWarnings) != 0 {
 			if qbResp.Warning == nil {
 				qbResp.Warning = &qbtypes.QueryWarnData{
-					Warnings: make([]qbtypes.QueryWarnDataAdditional, len(intervalWarnings)),
+					Warnings: make([]qbtypes.QueryWarnDataAdditional, 0, len(intervalWarnings)),
 				}
-				for idx := range intervalWarnings {
-					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
-				}
+			}
+			for _, w := range intervalWarnings {
+				qbResp.Warning.Warnings = append(qbResp.Warning.Warnings, qbtypes.QueryWarnDataAdditional{Message: w})
 			}
 		}
 	}

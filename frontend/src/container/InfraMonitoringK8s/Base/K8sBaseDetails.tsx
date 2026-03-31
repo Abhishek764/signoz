@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -33,6 +34,7 @@ import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
+	TagFilter,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -55,6 +57,7 @@ import {
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
+import LoadingContainer from '../LoadingContainer';
 
 import '../EntityDetailsUtils/entityDetails.styles.scss';
 
@@ -65,11 +68,24 @@ export interface K8sDetailsMetadataConfig<T> {
 	getValue: (entity: T) => string;
 }
 
+export interface K8sDetailsFilters {
+	filters: TagFilter;
+	start: number;
+	end: number;
+}
+
 export interface K8sBaseDetailsProps<T> {
-	entity: T | null;
+	selectedItemId: string | null;
 	onClose: () => void;
 	category: K8sCategory;
 	eventCategory: string;
+	// Data fetching configuration
+	getSelectedItemFilters: (selectedItemId: string) => TagFilter;
+	fetchEntityData: (
+		filters: K8sDetailsFilters,
+		signal?: AbortSignal,
+	) => Promise<{ data: T | null; error?: string | null }>;
+	// Entity configuration
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
 	getInitialEventsFilters: (entity: T) => TagFilterItem[];
@@ -106,11 +122,14 @@ export function createFilterItem(
 	};
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sBaseDetails<T>({
-	entity,
+	selectedItemId,
 	onClose,
 	category,
 	eventCategory,
+	getSelectedItemFilters,
+	fetchEntityData,
 	getEntityName,
 	getInitialLogTracesFilters,
 	getInitialEventsFilters,
@@ -158,6 +177,42 @@ function K8sBaseDetails<T>({
 		setEventsFiltersParam,
 	] = useInfraMonitoringEventsFilters();
 	const isDarkMode = useIsDarkMode();
+
+	// Fetch entity data based on selectedItemId
+	const entityQueryKey = useMemo(
+		() => [
+			`${queryKeyPrefix}EntityDetails`,
+			selectedItemId,
+			String(minTime),
+			String(maxTime),
+		],
+		[queryKeyPrefix, selectedItemId, minTime, maxTime],
+	);
+
+	const {
+		data: entityResponse,
+		isLoading: isEntityLoading,
+		isError: isEntityError,
+	} = useQuery({
+		queryKey: entityQueryKey,
+		queryFn: ({ signal }) => {
+			if (!selectedItemId) {
+				return { data: null };
+			}
+			const filters = getSelectedItemFilters(selectedItemId);
+			return fetchEntityData(
+				{
+					filters,
+					start: Math.floor(minTime / 1000000),
+					end: Math.floor(maxTime / 1000000),
+				},
+				signal,
+			);
+		},
+		enabled: !!selectedItemId,
+	});
+
+	const entity = entityResponse?.data ?? null;
 
 	const initialFilters = useMemo(() => {
 		const filters =
@@ -500,7 +555,7 @@ function K8sBaseDetails<T>({
 			}
 			placement="right"
 			onClose={handleClose}
-			open={!!entity}
+			open={!!selectedItemId}
 			style={{
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
@@ -509,7 +564,13 @@ function K8sBaseDetails<T>({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			{entity && (
+			{isEntityLoading && <LoadingContainer />}
+			{isEntityError && (
+				<Typography.Text type="danger">
+					{entityResponse?.error || 'Failed to load entity details'}
+				</Typography.Text>
+			)}
+			{entity && !isEntityLoading && (
 				<>
 					<div className="entity-detail-drawer__entity">
 						<div className="entity-details-grid">

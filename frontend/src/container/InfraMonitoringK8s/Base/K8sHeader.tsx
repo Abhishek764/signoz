@@ -145,7 +145,6 @@ function K8sHeader({
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
 			setGroupBy(newGroupBy);
-			// setExpandedRowKeys([]);
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,

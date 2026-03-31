@@ -16,7 +16,6 @@ import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
@@ -39,13 +38,17 @@ import {
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringLogFilters,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringQueryFilters,
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
 import LoadingContainer from '../LoadingContainer';
 import { OrderBySchemaType } from '../schemas';
 import { usePageSize } from '../utils';
-import K8sBaseDetails, { K8sDetailsMetadataConfig } from './K8sBaseDetails';
+import K8sBaseDetails, {
+	K8sDetailsFilters,
+	K8sDetailsMetadataConfig,
+} from './K8sBaseDetails';
 import K8sHeader from './K8sHeader';
 import { useInfraMonitoringTableColumnsForPage } from './useInfraMonitoringTableColumnsStore';
 
@@ -62,7 +65,14 @@ export type K8sBaseFilters = {
 };
 
 export type K8sRenderedRowData = {
+	/**
+	 * The unique ID for the row
+	 */
 	key: string;
+	/**
+	 * The ID to the selected item/data, same as the returned by getSelectedItemKey
+	 */
+	itemKey: string;
 	groupedByMeta: Record<string, string>;
 	[key: string]: unknown;
 };
@@ -84,10 +94,14 @@ export type K8sBaseListProps<T = unknown> = {
 		record: T,
 		groupBy: BaseAutocompleteData[],
 	) => K8sRenderedRowData;
-	getSelectedItemKey: (records: T) => string;
 
 	// Details drawer configuration
 	eventCategory: string;
+	getSelectedItemFilters: (selectedItemId: string) => TagFilter;
+	fetchEntityData: (
+		filters: K8sDetailsFilters,
+		signal?: AbortSignal,
+	) => Promise<{ data: T | null; error?: string | null }>;
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
 	getInitialEventsFilters: (entity: T) => TagFilterItem[];
@@ -106,14 +120,194 @@ export type K8sBaseListProps<T = unknown> = {
 	queryKeyPrefix: string;
 };
 
+export type K8sExpandedRowProps<T> = {
+	record: K8sRenderedRowData;
+	entity: K8sCategory;
+	tableColumns: ColumnType<K8sRenderedRowData>[];
+	fetchListData: K8sBaseListProps<T>['fetchListData'];
+	renderRowData: K8sBaseListProps<T>['renderRowData'];
+};
+
+function K8sExpandedRow<T>({
+	record,
+	entity,
+	tableColumns,
+	fetchListData,
+	renderRowData,
+}: K8sExpandedRowProps<T>): JSX.Element {
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
+	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
+	const [, setFilters] = useInfraMonitoringFilters();
+	const [, setSelectedItem] = useQueryState('selectedItem', parseAsString);
+
+	const queryFilters = useInfraMonitoringQueryFilters();
+
+	const [
+		columnsDefinitions,
+		columnsHidden,
+	] = useInfraMonitoringTableColumnsForPage(entity);
+
+	const hiddenColumnIdsForNested = useMemo(
+		() =>
+			columnsDefinitions
+				.filter((col) => col.behavior === 'hidden-on-collapse')
+				.map((col) => col.id),
+		[columnsDefinitions],
+	);
+
+	const nestedColumns = useMemo(
+		() =>
+			tableColumns.filter(
+				(c) =>
+					!columnsHidden.includes(c.key?.toString() || '') &&
+					!hiddenColumnIdsForNested.includes(c.key?.toString() || ''),
+			),
+		[tableColumns, columnsHidden, hiddenColumnIdsForNested],
+	);
+
+	const createFiltersForRecord = useCallback((): IBuilderQuery['filters'] => {
+		const baseFilters: IBuilderQuery['filters'] = {
+			items: [...queryFilters.items],
+			op: 'and',
+		};
+
+		const { groupedByMeta } = record;
+
+		for (const key of Object.keys(groupedByMeta)) {
+			baseFilters.items.push({
+				key: {
+					key,
+					type: null,
+				},
+				op: '=',
+				value: groupedByMeta[key],
+				id: key,
+			});
+		}
+
+		return baseFilters;
+	}, [queryFilters.items, record]);
+
+	const queryKey = useMemo(() => {
+		return [
+			'k8sExpandedRow',
+			record.key,
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			String(minTime),
+			String(maxTime),
+		];
+	}, [record.key, queryFilters, orderBy, minTime, maxTime]);
+
+	const { data, isFetching, isLoading, isError } = useQuery({
+		queryKey,
+		queryFn: ({ signal }) =>
+			fetchListData(
+				{
+					limit: 10,
+					offset: 0,
+					filters: createFiltersForRecord(),
+					start: Math.floor(minTime / 1000000),
+					end: Math.floor(maxTime / 1000000),
+					orderBy: orderBy || undefined,
+					groupBy: undefined,
+				},
+				signal,
+			),
+	});
+
+	const formattedData = useMemo(
+		() => data?.data?.map((item) => renderRowData(item, groupBy)),
+		[data?.data, renderRowData, groupBy],
+	);
+
+	const openRecordInNewTab = (rowRecord: K8sRenderedRowData): void => {
+		const newParams = new URLSearchParams(document.location.search);
+		newParams.set('selectedItem', rowRecord.itemKey);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
+	};
+
+	const handleViewAllClick = (): void => {
+		const filters = createFiltersForRecord();
+		setFilters(JSON.stringify(filters));
+		setCurrentPage(1);
+		setGroupBy([]);
+		setOrderBy(null);
+	};
+
+	return (
+		<div className="expanded-table-container">
+			{isError && (
+				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
+			)}
+
+			{isFetching || isLoading ? (
+				<LoadingContainer />
+			) : (
+				<div className="expanded-table">
+					<Table
+						columns={nestedColumns}
+						dataSource={formattedData}
+						pagination={false}
+						scroll={{ x: true }}
+						tableLayout="fixed"
+						showHeader={false}
+						loading={{
+							spinning: isFetching || isLoading,
+							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+						}}
+						onRow={(
+							rowRecord: K8sRenderedRowData,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (isModifierKeyPressed(event)) {
+									openRecordInNewTab(rowRecord);
+									return;
+								}
+								setSelectedItem(rowRecord.itemKey);
+							},
+							className: 'expanded-clickable-row',
+						})}
+					/>
+
+					{data?.total && data?.total > 10 && (
+						<div className="expanded-table-footer">
+							<Button
+								type="default"
+								size="small"
+								className="periscope-btn secondary"
+								onClick={handleViewAllClick}
+							>
+								<CornerDownRight size={14} />
+								View All
+							</Button>
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
 export function K8sBaseList<T>({
 	controlListPrefix,
 	entity,
 	tableColumns,
 	fetchListData,
 	renderRowData,
-	getSelectedItemKey,
 	eventCategory,
+	getSelectedItemFilters,
+	fetchEntityData,
 	getEntityName,
 	getInitialLogTracesFilters,
 	getInitialEventsFilters,
@@ -128,7 +322,7 @@ export function K8sBaseList<T>({
 	);
 
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
+	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 	const [initialOrderBy] = useState(orderBy);
 	const [selectedItem, setSelectedItem] = useQueryState(
@@ -136,27 +330,16 @@ export function K8sBaseList<T>({
 		parseAsString,
 	);
 	const [, setView] = useInfraMonitoringView();
-	const [, setFilters] = useInfraMonitoringFilters();
 	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
 	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
 	const [, setLogFilters] = useInfraMonitoringLogFilters();
 
-	const [
-		selectedRowData,
-		setSelectedRowData,
-	] = useState<K8sRenderedRowData | null>(null);
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+	useEffect(() => {
+		setExpandedRowKeys([]);
+	}, [groupBy, currentPage]);
 
-	const { currentQuery } = useQueryBuilder();
-
-	const queryFilters = useMemo(
-		() =>
-			currentQuery?.builder?.queryData[0]?.filters || {
-				items: [],
-				op: 'and',
-			},
-		[currentQuery?.builder?.queryData],
-	);
+	const queryFilters = useInfraMonitoringQueryFilters();
 
 	const { pageSize, setPageSize } = usePageSize(entity);
 
@@ -201,85 +384,12 @@ export function K8sBaseList<T>({
 		keepPreviousData: true,
 	});
 
-	const createFiltersForSelectedRowData = (
-		selectedRowData: K8sRenderedRowData,
-	): IBuilderQuery['filters'] => {
-		const baseFilters: IBuilderQuery['filters'] = {
-			items: [...queryFilters.items],
-			op: 'and',
-		};
-
-		if (!selectedRowData) {
-			return baseFilters;
-		}
-
-		const { groupedByMeta } = selectedRowData;
-
-		for (const key of Object.keys(groupedByMeta)) {
-			baseFilters.items.push({
-				key: {
-					key,
-					type: null,
-				},
-				op: '=',
-				value: groupedByMeta[key],
-				id: key,
-			});
-		}
-
-		return baseFilters;
-	};
-
-	const groupedByRowDataQueryKey = useMemo(() => {
-		// be careful with what you serialize from selectedRowData
-		// since it's react node, it could contain circular references
-		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
-		return [
-			'podList',
-			JSON.stringify(queryFilters),
-			JSON.stringify(orderBy),
-			selectedRowDataKey,
-			String(minTime),
-			String(maxTime),
-		];
-	}, [queryFilters, orderBy, minTime, maxTime, selectedRowData]);
-
-	const {
-		data: groupedByRowData,
-		isFetching: isFetchingGroupedByRowData,
-		isLoading: isLoadingGroupedByRowData,
-		isError: isErrorGroupedByRowData,
-		refetch: fetchGroupedByRowData,
-	} = useQuery({
-		queryKey: groupedByRowDataQueryKey,
-		queryFn: ({ signal }) =>
-			fetchListData(
-				{
-					limit: 10,
-					offset: 0,
-					filters: createFiltersForSelectedRowData(selectedRowData!),
-					start: Math.floor(minTime / 1000000),
-					end: Math.floor(maxTime / 1000000),
-					orderBy: orderBy || undefined,
-					groupBy: undefined,
-				},
-				signal,
-			),
-		enabled: !!selectedRowData,
-	});
-
 	const pageData = data?.data;
 	const totalCount = data?.total || 0;
-	const nestedPageData = groupedByRowData?.data;
 
 	const formattedPodsData = useMemo(
 		() => pageData?.map((item) => renderRowData(item, groupBy)),
 		[pageData, renderRowData, groupBy],
-	);
-
-	const formattedGroupedByPodsData = useMemo(
-		() => nestedPageData?.map((item) => renderRowData(item, groupBy)),
-		[nestedPageData, renderRowData, groupBy],
 	);
 
 	const handleTableChange: TableProps<K8sRenderedRowData>['onChange'] = useCallback(
@@ -320,32 +430,7 @@ export function K8sBaseList<T>({
 		});
 	}, [eventCategory, totalCount]);
 
-	const selectedPodData = useMemo(() => {
-		if (!selectedItem) {
-			return null;
-		}
-		if (groupBy.length > 0) {
-			// If grouped by, return the pod from the formatted grouped by pods data
-			return (
-				nestedPageData?.find((item) => getSelectedItemKey(item) === selectedItem) ||
-				null
-			);
-		}
-		// If not grouped by, return the node from the nodes data
-		return (
-			pageData?.find((item) => getSelectedItemKey(item) === selectedItem) || null
-		);
-	}, [
-		selectedItem,
-		getSelectedItemKey,
-		groupBy.length,
-		nestedPageData,
-		pageData,
-	]);
-
 	const handleGroupByRowClick = (record: K8sRenderedRowData): void => {
-		setSelectedRowData(record);
-
 		if (expandedRowKeys.includes(record.key)) {
 			setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.key));
 		} else {
@@ -353,15 +438,9 @@ export function K8sBaseList<T>({
 		}
 	};
 
-	useEffect(() => {
-		if (selectedRowData) {
-			fetchGroupedByRowData();
-		}
-	}, [selectedRowData, fetchGroupedByRowData]);
-
 	const openPodInNewTab = (record: K8sRenderedRowData): void => {
 		const newParams = new URLSearchParams(document.location.search);
-		newParams.set('selectedItem', record.key);
+		newParams.set('selectedItem', record.itemKey);
 		openInNewTab(
 			buildAbsolutePath({
 				relativePath: '',
@@ -379,8 +458,7 @@ export function K8sBaseList<T>({
 			return;
 		}
 		if (groupBy.length === 0) {
-			setSelectedItem(record.key);
-			setSelectedRowData(null);
+			setSelectedItem(record.itemKey);
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -417,14 +495,6 @@ export function K8sBaseList<T>({
 		[columnsDefinitions, groupBy?.length],
 	);
 
-	const hiddenColumnIdsForNested = useMemo(
-		() =>
-			columnsDefinitions
-				.filter((col) => col.behavior === 'hidden-on-collapse')
-				.map((col) => col.id),
-		[columnsDefinitions],
-	);
-
 	const mapDefaultSort = useCallback(
 		(
 			tableColumn: ColumnType<K8sRenderedRowData>,
@@ -453,87 +523,16 @@ export function K8sBaseList<T>({
 		[columnsHidden, hiddenColumnIdsOnList, mapDefaultSort, tableColumns],
 	);
 
-	const nestedColumns = useMemo(
-		() =>
-			tableColumns
-				.filter(
-					(c) =>
-						!columnsHidden.includes(c.key?.toString() || '') &&
-						!hiddenColumnIdsForNested.includes(c.key?.toString() || ''),
-				)
-				.map(mapDefaultSort),
-		[tableColumns, columnsHidden, hiddenColumnIdsForNested, mapDefaultSort],
-	);
-
 	const isGroupedByAttribute = groupBy.length > 0;
 
-	const handleExpandedRowViewAllClick = (): void => {
-		if (!selectedRowData) {
-			return;
-		}
-
-		const filters = createFiltersForSelectedRowData(selectedRowData);
-
-		setFilters(JSON.stringify(filters));
-		setCurrentPage(1);
-		setSelectedRowData(null);
-		setGroupBy([]);
-		setOrderBy(null);
-	};
-
-	const expandedRowRender = (): JSX.Element => (
-		<div className="expanded-table-container">
-			{isErrorGroupedByRowData && (
-				<Typography>
-					{groupedByRowData?.error?.toString() || 'Something went wrong'}
-				</Typography>
-			)}
-
-			{isFetchingGroupedByRowData || isLoadingGroupedByRowData ? (
-				<LoadingContainer />
-			) : (
-				<div className="expanded-table">
-					<Table
-						columns={nestedColumns}
-						dataSource={formattedGroupedByPodsData}
-						pagination={false}
-						scroll={{ x: true }}
-						tableLayout="fixed"
-						showHeader={false}
-						loading={{
-							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
-							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-						}}
-						onRow={(
-							record: K8sRenderedRowData,
-						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
-							onClick: (event: React.MouseEvent): void => {
-								if (isModifierKeyPressed(event)) {
-									openPodInNewTab(record);
-									return;
-								}
-								setSelectedItem(record.key);
-							},
-							className: 'expanded-clickable-row',
-						})}
-					/>
-
-					{groupedByRowData?.total && groupedByRowData?.total > 10 && (
-						<div className="expanded-table-footer">
-							<Button
-								type="default"
-								size="small"
-								className="periscope-btn secondary"
-								onClick={handleExpandedRowViewAllClick}
-							>
-								<CornerDownRight size={14} />
-								View All
-							</Button>
-						</div>
-					)}
-				</div>
-			)}
-		</div>
+	const expandedRowRender = (record: K8sRenderedRowData): JSX.Element => (
+		<K8sExpandedRow<T>
+			record={record}
+			entity={entity}
+			tableColumns={tableColumns}
+			fetchListData={fetchListData}
+			renderRowData={renderRowData}
+		/>
 	);
 
 	const expandRowIconRenderer = ({
@@ -593,7 +592,7 @@ export function K8sBaseList<T>({
 			<K8sHeader
 				controlListPrefix={controlListPrefix}
 				entity={entity}
-				showAutoRefresh={!selectedPodData}
+				showAutoRefresh={!selectedItem}
 			/>
 			{isError && (
 				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
@@ -650,22 +649,22 @@ export function K8sBaseList<T>({
 				}}
 			/>
 
-			{selectedPodData && (
-				<K8sBaseDetails<T>
-					entity={selectedPodData}
-					onClose={handleClosePodDetail}
-					category={entity}
-					eventCategory={eventCategory}
-					getEntityName={getEntityName}
-					getInitialLogTracesFilters={getInitialLogTracesFilters}
-					getInitialEventsFilters={getInitialEventsFilters}
-					primaryFilterKeys={primaryFilterKeys}
-					metadataConfig={metadataConfig}
-					entityWidgetInfo={entityWidgetInfo}
-					getEntityQueryPayload={getEntityQueryPayload}
-					queryKeyPrefix={queryKeyPrefix}
-				/>
-			)}
+			<K8sBaseDetails<T>
+				selectedItemId={selectedItem}
+				onClose={handleClosePodDetail}
+				category={entity}
+				eventCategory={eventCategory}
+				getSelectedItemFilters={getSelectedItemFilters}
+				fetchEntityData={fetchEntityData}
+				getEntityName={getEntityName}
+				getInitialLogTracesFilters={getInitialLogTracesFilters}
+				getInitialEventsFilters={getInitialEventsFilters}
+				primaryFilterKeys={primaryFilterKeys}
+				metadataConfig={metadataConfig}
+				entityWidgetInfo={entityWidgetInfo}
+				getEntityQueryPayload={getEntityQueryPayload}
+				queryKeyPrefix={queryKeyPrefix}
+			/>
 		</div>
 	);
 }

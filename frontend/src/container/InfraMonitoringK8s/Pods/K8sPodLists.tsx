@@ -2,8 +2,9 @@ import React, { useCallback, useEffect } from 'react';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { createFilterItem } from '../Base/K8sBaseDetails';
+import { createFilterItem, K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseFilters, K8sBaseList } from '../Base/K8sBaseList';
 import { useInfraMonitoringTableColumnsStore } from '../Base/useInfraMonitoringTableColumnsStore';
 import { K8sCategory } from '../constants';
@@ -49,7 +50,53 @@ function K8sPodsList({
 		[dotMetricsEnabled],
 	);
 
-	const getSelectedItemKey = useCallback((item: K8sPodsData) => item.podUID, []);
+	const getSelectedItemFilters = useCallback(
+		(selectedItemId: string): TagFilter => {
+			return {
+				op: 'AND',
+				items: [
+					{
+						id: 'k8s_pod_uid',
+						key: {
+							key: 'k8s_pod_uid',
+							type: null,
+						},
+						op: '=',
+						value: selectedItemId,
+					},
+				],
+			};
+		},
+		[],
+	);
+
+	const fetchEntityData = useCallback(
+		async (
+			filters: K8sDetailsFilters,
+			signal?: AbortSignal,
+		): Promise<{ data: K8sPodsData | null; error?: string | null }> => {
+			const response = await getK8sPodsList(
+				{
+					filters: filters.filters,
+					start: filters.start,
+					end: filters.end,
+					limit: 1,
+					offset: 0,
+				},
+				signal,
+				undefined,
+				dotMetricsEnabled,
+			);
+
+			const records = response.payload?.data.records || [];
+
+			return {
+				data: records.length > 0 ? records[0] : null,
+				error: response.error,
+			};
+		},
+		[dotMetricsEnabled],
+	);
 
 	const initializeTableColumns = useInfraMonitoringTableColumnsStore(
 		(state) => state.initializePageColumns,
@@ -66,9 +113,10 @@ function K8sPodsList({
 			tableColumns={k8sPodColumnsConfig}
 			fetchListData={fetchListData}
 			renderRowData={k8sPodRenderRowData}
-			getSelectedItemKey={getSelectedItemKey}
 			// Details drawer configuration
 			eventCategory={InfraMonitoringEvents.Pod}
+			getSelectedItemFilters={getSelectedItemFilters}
+			fetchEntityData={fetchEntityData}
 			getEntityName={(pod): string => pod.meta.k8s_pod_name}
 			getInitialLogTracesFilters={(pod): ReturnType<typeof createFilterItem>[] => [
 				createFilterItem(QUERY_KEYS.K8S_POD_NAME, pod.meta.k8s_pod_name),

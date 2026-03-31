@@ -40,7 +40,7 @@ type Email struct {
 	hostname string
 }
 
-var errNoAuthUserNameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
+var errNoAuthUsernameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
 
 // New returns a new Email notifier.
 func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
@@ -67,8 +67,8 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 	username := n.conf.AuthUsername
 
 	// If no username is set, return custom error which can be ignored if needed.
-	if n.conf.AuthUsername == "" {
-		return nil, errNoAuthUserNameConfigured
+	if strings.TrimSpace(username) == "" {
+		return nil, errNoAuthUsernameConfigured
 	}
 
 	err := &types.MultiError{}
@@ -110,10 +110,12 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 				continue
 			}
 			return LoginAuth(username, password), nil
+		default:
+			err.Add(errors.NewInternalf(errors.CodeUnsupported, "unknown auth mechanism: %s", mech))
 		}
 	}
 	if err.Len() == 0 {
-		err.Add(errors.NewInternalf(errors.CodeInternal, "unknown auth mechanism: %s", mechs))
+		return nil, errors.NewInternalf(errors.CodeInvalidInput, "empty auth mechanism")
 	}
 	return nil, err
 }
@@ -198,9 +200,9 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	if ok, mech := c.Extension("AUTH"); ok {
 		auth, err := n.auth(mech)
-		if err != nil && err != errNoAuthUserNameConfigured {
+		if err != nil && err != errNoAuthUsernameConfigured {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "find auth mechanism")
-		} else if err == errNoAuthUserNameConfigured {
+		} else if err == errNoAuthUsernameConfigured {
 			n.logger.DebugContext(ctx, "no auth username configured. Attempting to send email without authenticating")
 		}
 		if auth != nil {

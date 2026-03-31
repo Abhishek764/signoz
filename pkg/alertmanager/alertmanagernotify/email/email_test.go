@@ -641,7 +641,7 @@ func TestEmailNoUsernameCustomError(t *testing.T) {
 		conf: &config.EmailConfig{}, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
 	a, err := email.auth("CRAM-MD5")
-	require.ErrorIs(t, err, errNoAuthUserNameConfigured)
+	require.ErrorIs(t, err, errNoAuthUsernameConfigured)
 	require.Nil(t, a)
 }
 

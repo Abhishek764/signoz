@@ -84,7 +84,6 @@ type attachment struct {
 
 // Notify implements the Notifier interface.
 func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	var err error
 
 	key, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
@@ -225,7 +224,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	// Slack web API might return errors with a 200 response code.
-	// https://slack.dev/node-slack-sdk/web-api#handle-errors
+	// https://docs.slack.dev/tools/node-slack-sdk/web-api/#handle-errors
 	retry, err = checkResponseError(resp)
 	if err != nil {
 		err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)

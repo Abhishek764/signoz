@@ -26,13 +26,15 @@ const VARIANTS: Variant[] = [
 	{
 		id: 'v1',
 		label: 'V1 — Circuit Visor',
-		tagline: 'Bear face with filled visor + circuit-trace nodes. Current implementation.',
+		tagline:
+			'Bear face with filled visor + circuit-trace nodes. Current implementation.',
 		Component: AIAssistantIconV1,
 	},
 	{
 		id: 'v2',
 		label: 'V2 — Minimal Line',
-		tagline: 'Single-weight stroke outline. Inherits currentColor. Most versatile for theming.',
+		tagline:
+			'Single-weight stroke outline. Inherits currentColor. Most versatile for theming.',
 		Component: AIAssistantIconV2,
 	},
 	{
@@ -50,13 +52,15 @@ const VARIANTS: Variant[] = [
 	{
 		id: 'v5',
 		label: 'V5 — App Badge',
-		tagline: 'Dark-bg rounded-square badge. Best for product logo / nav-item contexts.',
+		tagline:
+			'Dark-bg rounded-square badge. Best for product logo / nav-item contexts.',
 		Component: AIAssistantIconV5,
 	},
 	{
 		id: 'v6',
 		label: 'V6 — Panda Bot ⭐',
-		tagline: 'Square geometric panda. Black ear patches at top corners, full-width HUD visor with red LED eyes, circuit traces, muzzle patch.',
+		tagline:
+			'Square geometric panda. Black ear patches at top corners, full-width HUD visor with red LED eyes, circuit traces, muzzle patch.',
 		Component: AIAssistantIconV6,
 	},
 ];
@@ -109,7 +113,9 @@ export default function AIAssistantIconPreview(): JSX.Element {
 
 						{/* ── In context: header button ── */}
 						<div className="icon-preview__surface icon-preview__surface--dark">
-							<span className="icon-preview__surface-label">In context — header button</span>
+							<span className="icon-preview__surface-label">
+								In context — header button
+							</span>
 							<div className="icon-preview__context-row">
 								<button type="button" className="icon-preview__mock-btn">
 									<Component size={18} />

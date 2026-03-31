@@ -5,6 +5,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
+import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { Group } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -12,6 +13,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { createFilterItem } from '../Base/K8sBaseDetails';
 import {
 	K8sBaseFilters,
 	K8sBaseList,
@@ -27,6 +29,8 @@ import {
 	ValidateColumnValueWrapper,
 } from '../commonUtils';
 import { K8sCategory } from '../constants';
+import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
 
 export interface TimeSeriesValue {
 	timestamp: number;
@@ -573,13 +577,40 @@ function K8sPodsList({
 	}, [initializeTableColumns]);
 
 	return (
-		<K8sBaseList
+		<K8sBaseList<K8sPodsData>
 			controlListPrefix={controlListPrefix}
 			entity={K8sCategory.PODS}
 			tableColumns={columnsConfig}
 			fetchListData={fetchListData}
 			renderColumn={formatDataForTable}
 			getSelectedItemKey={getSelectedItemKey}
+			// Details drawer configuration
+			eventCategory={InfraMonitoringEvents.Pod}
+			getEntityName={(pod): string => pod.meta.k8s_pod_name}
+			getInitialLogTracesFilters={(pod): ReturnType<typeof createFilterItem>[] => [
+				createFilterItem(QUERY_KEYS.K8S_POD_NAME, pod.meta.k8s_pod_name),
+				createFilterItem(
+					QUERY_KEYS.K8S_NAMESPACE_NAME,
+					pod.meta.k8s_namespace_name,
+				),
+			]}
+			getInitialEventsFilters={(pod): ReturnType<typeof createFilterItem>[] => [
+				createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Pod'),
+				createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, pod.meta.k8s_pod_name),
+			]}
+			primaryFilterKeys={[
+				QUERY_KEYS.K8S_POD_NAME,
+				QUERY_KEYS.K8S_CLUSTER_NAME,
+				QUERY_KEYS.K8S_NAMESPACE_NAME,
+			]}
+			metadataConfig={[
+				{ label: 'NAMESPACE', getValue: (p): string => p.meta.k8s_namespace_name },
+				{ label: 'Cluster Name', getValue: (p): string => p.meta.k8s_cluster_name },
+				{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
+			]}
+			entityWidgetInfo={podWidgetInfo}
+			getEntityQueryPayload={getPodMetricsQueryPayload}
+			queryKeyPrefix="pod"
 		/>
 	);
 }

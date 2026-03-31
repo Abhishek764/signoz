@@ -17,6 +17,7 @@ import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { AppState } from 'store/reducers';
@@ -24,6 +25,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderQuery,
 	TagFilter,
+	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
@@ -43,6 +45,7 @@ import {
 import LoadingContainer from '../LoadingContainer';
 import { OrderBySchemaType } from '../schemas';
 import { usePageSize } from '../utils';
+import K8sBaseDetails, { K8sDetailsMetadataConfig } from './K8sBaseDetails';
 import K8sHeader from './K8sHeader';
 import { useInfraMonitoringTableColumnsForPage } from './useInfraMonitoringTableColumnsStore';
 
@@ -65,6 +68,7 @@ export type K8sRenderedRowData = {
 };
 
 export type K8sBaseListProps<T = unknown> = {
+	// List configuration
 	controlListPrefix?: React.ReactNode;
 	entity: K8sCategory;
 	tableColumns: ColumnType<K8sRenderedRowData>[];
@@ -81,6 +85,25 @@ export type K8sBaseListProps<T = unknown> = {
 		groupBy: BaseAutocompleteData[],
 	) => K8sRenderedRowData;
 	getSelectedItemKey: (records: T) => string;
+
+	// Details drawer configuration
+	eventCategory: string;
+	getEntityName: (entity: T) => string;
+	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
+	getInitialEventsFilters: (entity: T) => TagFilterItem[];
+	primaryFilterKeys: string[];
+	metadataConfig: K8sDetailsMetadataConfig<T>[];
+	entityWidgetInfo: {
+		title: string;
+		yAxisUnit: string;
+	}[];
+	getEntityQueryPayload: (
+		entity: T,
+		start: number,
+		end: number,
+		dotMetricsEnabled: boolean,
+	) => GetQueryResultsProps[];
+	queryKeyPrefix: string;
 };
 
 export function K8sBaseList<T>({
@@ -90,6 +113,15 @@ export function K8sBaseList<T>({
 	fetchListData,
 	renderColumn,
 	getSelectedItemKey,
+	eventCategory,
+	getEntityName,
+	getInitialLogTracesFilters,
+	getInitialEventsFilters,
+	primaryFilterKeys,
+	metadataConfig,
+	entityWidgetInfo,
+	getEntityQueryPayload,
+	queryKeyPrefix,
 }: K8sBaseListProps<T>): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -263,7 +295,7 @@ export function K8sBaseList<T>({
 				logEvent(InfraMonitoringEvents.PageNumberChanged, {
 					entity: InfraMonitoringEvents.K8sEntity,
 					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Pod,
+					category: eventCategory,
 				});
 			}
 
@@ -276,17 +308,17 @@ export function K8sBaseList<T>({
 				setOrderBy(null);
 			}
 		},
-		[setCurrentPage, setOrderBy],
+		[eventCategory, setCurrentPage, setOrderBy],
 	);
 
 	useEffect(() => {
 		logEvent(InfraMonitoringEvents.PageVisited, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.ListPage,
-			category: InfraMonitoringEvents.Pod,
+			category: eventCategory,
 			total: totalCount,
 		});
-	}, [totalCount]);
+	}, [eventCategory, totalCount]);
 
 	const selectedPodData = useMemo(() => {
 		if (!selectedItem) {
@@ -356,7 +388,7 @@ export function K8sBaseList<T>({
 		logEvent(InfraMonitoringEvents.ItemClicked, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.ListPage,
-			category: InfraMonitoringEvents.Pod,
+			category: eventCategory,
 		});
 	};
 
@@ -618,15 +650,22 @@ export function K8sBaseList<T>({
 				}}
 			/>
 
-			{/*{selectedPodData && (*/}
-			{/*	<PodDetails*/}
-			{/*		pod={selectedPodData}*/}
-			{/*		isModalTimeSelection*/}
-			{/*		onClose={handleClosePodDetail}*/}
-			{/*	/>*/}
-			{/*)}*/}
+			{selectedPodData && (
+				<K8sBaseDetails<T>
+					entity={selectedPodData}
+					onClose={handleClosePodDetail}
+					category={entity}
+					eventCategory={eventCategory}
+					getEntityName={getEntityName}
+					getInitialLogTracesFilters={getInitialLogTracesFilters}
+					getInitialEventsFilters={getInitialEventsFilters}
+					primaryFilterKeys={primaryFilterKeys}
+					metadataConfig={metadataConfig}
+					entityWidgetInfo={entityWidgetInfo}
+					getEntityQueryPayload={getEntityQueryPayload}
+					queryKeyPrefix={queryKeyPrefix}
+				/>
+			)}
 		</div>
 	);
 }
-
-// export default K8sPodsList;

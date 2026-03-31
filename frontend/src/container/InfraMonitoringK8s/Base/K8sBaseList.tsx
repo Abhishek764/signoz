@@ -80,7 +80,7 @@ export type K8sBaseListProps<T = unknown> = {
 		total: number;
 		error?: string | null;
 	}>;
-	renderColumn: (
+	renderRowData: (
 		record: T,
 		groupBy: BaseAutocompleteData[],
 	) => K8sRenderedRowData;
@@ -111,7 +111,7 @@ export function K8sBaseList<T>({
 	entity,
 	tableColumns,
 	fetchListData,
-	renderColumn,
+	renderRowData,
 	getSelectedItemKey,
 	eventCategory,
 	getEntityName,
@@ -273,13 +273,13 @@ export function K8sBaseList<T>({
 	const nestedPageData = groupedByRowData?.data;
 
 	const formattedPodsData = useMemo(
-		() => pageData?.map((item) => renderColumn(item, groupBy)),
-		[pageData, renderColumn, groupBy],
+		() => pageData?.map((item) => renderRowData(item, groupBy)),
+		[pageData, renderRowData, groupBy],
 	);
 
 	const formattedGroupedByPodsData = useMemo(
-		() => nestedPageData?.map((item) => renderColumn(item, groupBy)),
-		[nestedPageData, renderColumn, groupBy],
+		() => nestedPageData?.map((item) => renderRowData(item, groupBy)),
+		[nestedPageData, renderRowData, groupBy],
 	);
 
 	const handleTableChange: TableProps<K8sRenderedRowData>['onChange'] = useCallback(

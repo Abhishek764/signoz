@@ -13,15 +13,17 @@ export interface DetailsHeaderProps {
 	title: string;
 	onClose: () => void;
 	actions?: HeaderAction[];
+	className?: string;
 }
 
 function DetailsHeader({
 	title,
 	onClose,
 	actions,
+	className,
 }: DetailsHeaderProps): JSX.Element {
 	return (
-		<div className="details-header">
+		<div className={`details-header ${className || ''}`}>
 			<Button
 				variant="ghost"
 				size="icon"

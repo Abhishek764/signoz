@@ -14,6 +14,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import dayjs from 'dayjs';
 import { noop } from 'lodash-es';
 import { DataViewer } from 'periscope/components/DataViewer';
+import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -24,9 +25,10 @@ import useSpanPercentile from './SpanPercentile/useSpanPercentile';
 
 import './SpanDetailsDrawer.styles.scss';
 
-interface SpanDetailsDrawerProps {
+interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
 	selectedSpan: Span | undefined;
+	variant?: 'drawer' | 'dialog';
 }
 
 const SPAN_HEADER_ACTIONS: HeaderAction[] = [
@@ -91,7 +93,6 @@ function SpanDetailsContent({
 	const keyAttributes = useMemo(() => {
 		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
 
-		// Merge all attribute sources into one lookup
 		const allAttrs: Record<string, string> = {
 			...selectedSpan.attributes_string,
 			...selectedSpan.resources_string,
@@ -146,7 +147,6 @@ function SpanDetailsContent({
 			<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
 			{/* Step 6: HighlightedOptions */}
-			{/* TODO: Drive this from a config file */}
 			<div className="span-details-drawer__highlighted-options">
 				<KeyValueLabel
 					badgeKey="SERVICE"
@@ -197,29 +197,55 @@ function SpanDetailsContent({
 	);
 }
 
-function SpanDetailsDrawer({
+function SpanDetailsPanel({
 	panelState,
 	selectedSpan,
-}: SpanDetailsDrawerProps): JSX.Element {
-	return (
-		<DetailsPanelDrawer
-			isOpen={panelState.isOpen}
-			onClose={panelState.close}
-			className="span-details-drawer"
-		>
+	variant = 'dialog',
+}: SpanDetailsPanelProps): JSX.Element {
+	const content = (
+		<>
 			<DetailsHeader
 				title="Span details"
 				onClose={panelState.close}
 				actions={SPAN_HEADER_ACTIONS}
+				className={variant === 'dialog' ? 'floating-panel__drag-handle' : ''}
 			/>
-
 			{selectedSpan && <SpanDetailsContent selectedSpan={selectedSpan} />}
-			{/* Step 6: HighlightedOptions */}
-			{/* Step 7: KeyAttributes */}
-			{/* Step 8: MiniTraceContext */}
-			{/* Step 9: ContentTabs + content area */}
-		</DetailsPanelDrawer>
+		</>
+	);
+
+	if (variant === 'drawer') {
+		return (
+			<DetailsPanelDrawer
+				isOpen={panelState.isOpen}
+				onClose={panelState.close}
+				className="span-details-drawer"
+			>
+				{content}
+			</DetailsPanelDrawer>
+		);
+	}
+
+	const PANEL_WIDTH = 600;
+	const PANEL_MARGIN_RIGHT = 20;
+	const PANEL_MARGIN_TOP = 25;
+	const PANEL_MARGIN_BOTTOM = 25;
+
+	return (
+		<FloatingPanel
+			isOpen={panelState.isOpen}
+			// onClose={panelState.close}
+			className="span-details-drawer"
+			width={PANEL_WIDTH}
+			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
+			defaultPosition={{
+				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
+				y: PANEL_MARGIN_TOP,
+			}}
+		>
+			{content}
+		</FloatingPanel>
 	);
 }
 
-export default SpanDetailsDrawer;
+export default SpanDetailsPanel;

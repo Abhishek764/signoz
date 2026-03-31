@@ -40,20 +40,15 @@
 		}
 	}
 
-	// Shared content container for both Pretty and JSON views
+	// Shared content container — no scroll, each view handles its own
 	&__content {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		overflow-y: auto;
 		border: 1px solid var(--l2-border);
 		border-radius: 4px;
 		padding: 8px;
 		min-height: 0;
-		scrollbar-width: none;
-
-		&::-webkit-scrollbar {
-			display: none;
-		}
+		overflow: hidden;
 	}
 }

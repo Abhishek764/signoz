@@ -12,7 +12,7 @@ import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 // TODO: Remove mock data when new API is available
 import { mockSpan } from './mockSpanDetailsData';
-import SpanDetailsDrawer from './SpanDetailsDrawer/SpanDetailsDrawer';
+import SpanDetailsPanel from './SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall, {
@@ -109,7 +109,11 @@ function TraceDetailsV3(): JSX.Element {
 					/>
 				</ResizablePanel>
 			</ResizablePanelGroup>
-			<SpanDetailsDrawer panelState={panelState} selectedSpan={enrichedSpan} />
+			<SpanDetailsPanel
+				panelState={panelState}
+				selectedSpan={enrichedSpan}
+				variant="dialog"
+			/>
 		</div>
 	);
 }

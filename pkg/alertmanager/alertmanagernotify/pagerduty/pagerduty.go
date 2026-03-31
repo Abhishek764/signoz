@@ -156,10 +156,15 @@ func (n *Notifier) notifyV1(
 	key notify.Key,
 	data *template.Data,
 	details map[string]any,
-	processedTitle string,
+	title string,
 ) (bool, error) {
 	var tmplErr error
 	tmpl := notify.TmplText(n.tmpl, data, &tmplErr)
+
+	description, truncated := notify.TruncateInRunes(title, maxV1DescriptionLenRunes)
+	if truncated {
+		n.logger.WarnContext(ctx, "Truncated description", slog.Any("key", key), slog.Int("max_runes", maxV1DescriptionLenRunes))
+	}
 
 	serviceKey := string(n.conf.ServiceKey)
 	if serviceKey == "" {
@@ -174,7 +179,7 @@ func (n *Notifier) notifyV1(
 		ServiceKey:  tmpl(serviceKey),
 		EventType:   eventType,
 		IncidentKey: key.Hash(),
-		Description: processedTitle,
+		Description: description,
 		Details:     details,
 	}
 
@@ -212,13 +217,18 @@ func (n *Notifier) notifyV2(
 	key notify.Key,
 	data *template.Data,
 	details map[string]any,
-	processedTitle string,
+	title string,
 ) (bool, error) {
 	var tmplErr error
 	tmpl := notify.TmplText(n.tmpl, data, &tmplErr)
 
 	if n.conf.Severity == "" {
 		n.conf.Severity = "error"
+	}
+
+	summary, truncated := notify.TruncateInRunes(title, maxV2SummaryLenRunes)
+	if truncated {
+		n.logger.WarnContext(ctx, "Truncated summary", slog.Any("key", key), slog.Int("max_runes", maxV2SummaryLenRunes))
 	}
 
 	routingKey := string(n.conf.RoutingKey)
@@ -239,7 +249,7 @@ func (n *Notifier) notifyV2(
 		Images:      make([]pagerDutyImage, 0, len(n.conf.Images)),
 		Links:       make([]pagerDutyLink, 0, len(n.conf.Links)),
 		Payload: &pagerDutyPayload{
-			Summary:       processedTitle,
+			Summary:       summary,
 			Source:        tmpl(n.conf.Source),
 			Severity:      tmpl(n.conf.Severity),
 			CustomDetails: details,
@@ -312,13 +322,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	if err != nil {
 		return "", err
 	}
-
-	title, truncated := notify.TruncateInRunes(result.Title, maxV1DescriptionLenRunes)
-	if truncated {
-		n.logger.WarnContext(ctx, "Truncated title", slog.Int("max_runes", maxV1DescriptionLenRunes))
-	}
-
-	return title, nil
+	return result.Title, nil
 }
 
 // Notify implements the Notifier interface.
@@ -352,7 +356,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		ctx = nfCtx
 	}
 
-	processedTitle, err := n.prepareContent(ctx, as)
+	title, err := n.prepareContent(ctx, as)
 	if err != nil {
 		return false, err
 	}
@@ -361,7 +365,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if n.apiV1 != "" {
 		nf = n.notifyV1
 	}
-	retry, err := nf(ctx, eventType, key, data, details, processedTitle)
+	retry, err := nf(ctx, eventType, key, data, details, title)
 	if err != nil {
 		if ctx.Err() != nil {
 			err = errors.WrapInternalf(err, errors.CodeInternal, "failed to notify PagerDuty: %v", context.Cause(ctx))

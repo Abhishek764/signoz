@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
 	"github.com/SigNoz/signoz/pkg/templating/slackmrkdwnrenderer"
+	"github.com/SigNoz/signoz/pkg/templating/templatingextensions"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
@@ -37,6 +38,7 @@ func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
 	htmlRenderer := goldmark.New(
 		// basic GitHub Flavored Markdown extensions
 		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(templatingextensions.EscapeNoValue),
 	)
 	slackBlockKitRenderer := goldmark.New(
 		goldmark.WithExtensions(slackblockkitrenderer.BlockKitV2),

@@ -161,7 +161,7 @@ func TestRenderHTML_BlockElements(t *testing.T) {
 | Label    | Value       |
 | -------- | ----------- |
 | service  | api-gateway |
-| severity | critical    |
+| severity | <no value>    |
 
 ` + "```promql\navg(rate(container_cpu_usage_seconds_total{service=\"api-gateway\"}[5m])) by (pod) > 0.9\n```"
 
@@ -175,7 +175,7 @@ func TestRenderHTML_BlockElements(t *testing.T) {
 		`<blockquote><p></p><p>This alert fires when CPU usage exceeds 90% for more than 5 minutes.</p><p></p></blockquote><p></p>` +
 		`<table><p></p><thead><p></p><tr><p></p><th>Label</th><p></p><th>Value</th><p></p></tr><p></p></thead><p></p>` +
 		`<tbody><p></p><tr><p></p><td>service</td><p></p><td>api-gateway</td><p></p></tr><p></p>` +
-		`<tr><p></p><td>severity</td><p></p><td>critical</td><p></p></tr><p></p></tbody><p></p></table><p></p>` +
+		`<tr><p></p><td>severity</td><p></p><td>&lt;no value&gt;</td><p></p></tr><p></p></tbody><p></p></table><p></p>` +
 		`<pre><code class="language-promql">avg(rate(container_cpu_usage_seconds_total{service=&quot;api-gateway&quot;}[5m])) by (pod) &gt; 0.9<p></p></code></pre><p></p>`
 
 	assert.Equal(t, expected, html)

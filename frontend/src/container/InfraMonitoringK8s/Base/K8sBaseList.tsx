@@ -410,8 +410,8 @@ export function K8sBaseList<T>({
 			columnsDefinitions
 				.filter(
 					(col) =>
-						(groupBy?.length > 0 && col.behaviour === 'hidden-on-expand') ||
-						(!groupBy?.length && col.behaviour === 'hidden-on-collapse'),
+						(groupBy?.length > 0 && col.behavior === 'hidden-on-expand') ||
+						(!groupBy?.length && col.behavior === 'hidden-on-collapse'),
 				)
 				.map((col) => col.id),
 		[columnsDefinitions, groupBy?.length],
@@ -420,7 +420,7 @@ export function K8sBaseList<T>({
 	const hiddenColumnIdsForNested = useMemo(
 		() =>
 			columnsDefinitions
-				.filter((col) => col.behaviour === 'hidden-on-collapse')
+				.filter((col) => col.behavior === 'hidden-on-collapse')
 				.map((col) => col.id),
 		[columnsDefinitions],
 	);

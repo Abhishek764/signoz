@@ -209,9 +209,11 @@ function K8sHeader({
 				</Button>
 			</div>
 
-			{isFiltersSidePanelOpen && (
-				<K8sFiltersSidePanel entity={entity} onClose={onClickOutside} />
-			)}
+			<K8sFiltersSidePanel
+				open={isFiltersSidePanelOpen}
+				entity={entity}
+				onClose={onClickOutside}
+			/>
 		</div>
 	);
 }

@@ -183,7 +183,7 @@ const columns: IEntityColumn[] = [
 		id: 'podGroup',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'hidden-on-collapse',
+		behavior: 'hidden-on-collapse',
 	},
 	{
 		label: 'Pod name',
@@ -191,7 +191,7 @@ const columns: IEntityColumn[] = [
 		id: 'podName',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'hidden-on-expand',
+		behavior: 'hidden-on-expand',
 	},
 	{
 		label: 'CPU Req Usage (%)',
@@ -199,7 +199,7 @@ const columns: IEntityColumn[] = [
 		id: 'cpu_request',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'CPU Limit Usage (%)',
@@ -207,7 +207,7 @@ const columns: IEntityColumn[] = [
 		id: 'cpu_limit',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'CPU Usage (cores)',
@@ -215,7 +215,7 @@ const columns: IEntityColumn[] = [
 		id: 'cpu',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'Mem Req Usage (%)',
@@ -223,7 +223,7 @@ const columns: IEntityColumn[] = [
 		id: 'memory_request',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'Mem Limit Usage (%)',
@@ -231,7 +231,7 @@ const columns: IEntityColumn[] = [
 		id: 'memory_limit',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'Mem Usage (WSS)',
@@ -239,7 +239,7 @@ const columns: IEntityColumn[] = [
 		id: 'memory',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'Namespace name',
@@ -247,7 +247,7 @@ const columns: IEntityColumn[] = [
 		id: 'namespace',
 		canBeHidden: true,
 		defaultVisibility: false,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'Node name',
@@ -255,7 +255,7 @@ const columns: IEntityColumn[] = [
 		id: 'node',
 		canBeHidden: true,
 		defaultVisibility: false,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'Cluster name',
@@ -263,7 +263,7 @@ const columns: IEntityColumn[] = [
 		id: 'cluster',
 		canBeHidden: true,
 		defaultVisibility: false,
-		behaviour: 'always-visible',
+		behavior: 'always-visible',
 	},
 	// TODO - Re-enable the column once backend issue is fixed
 	// {

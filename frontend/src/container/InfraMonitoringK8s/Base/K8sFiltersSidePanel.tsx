@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Button, Input } from 'antd';
-import { GripVertical, TableColumnsSplit, X } from 'lucide-react';
+import { useState } from 'react';
+import { Button, DrawerWrapper, Input } from '@signozhq/ui';
 
 import { K8sCategory } from '../constants';
 import {
@@ -8,12 +7,14 @@ import {
 	useInfraMonitoringTableColumnsStore,
 } from './useInfraMonitoringTableColumnsStore';
 
-import './K8sFiltersSidePanel.styles.scss';
+import styles from './K8sFiltersSidePanel.module.scss';
 
 function K8sFiltersSidePanel({
+	open,
 	onClose,
 	entity,
 }: {
+	open: boolean;
 	onClose: () => void;
 	entity: K8sCategory;
 }): JSX.Element {
@@ -27,117 +28,94 @@ function K8sFiltersSidePanel({
 	const [columns, columnsHidden] = useInfraMonitoringTableColumnsForPage(entity);
 
 	const [searchValue, setSearchValue] = useState('');
-	const sidePanelRef = useRef<HTMLDivElement>(null);
 
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
 	};
 
-	useEffect(() => {
-		if (sidePanelRef.current) {
-			sidePanelRef.current.focus();
-		}
-	}, [searchValue]);
+	const drawerContent = (
+		<>
+			<div className={styles.bodyHeader}>
+				<Input
+					autoFocus
+					placeholder="Search for a column ..."
+					value={searchValue}
+					onChange={handleSearchChange}
+				/>
+			</div>
 
-	// Close side panel when clicking outside of it
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent): void => {
-			if (
-				sidePanelRef.current &&
-				!sidePanelRef.current.contains(event.target as Node)
-			) {
-				onClose();
-			}
-		};
+			<div className={styles.columnsTitle}>Added Columns (Click to remove)</div>
 
-		document.addEventListener('mousedown', handleClickOutside);
+			<div className={styles.columnsList}>
+				{columns
+					.filter(
+						(column) =>
+							!columnsHidden.includes(column.id) &&
+							column.behavior !== 'hidden-on-collapse',
+					)
+					.filter((column) =>
+						column.label.toLowerCase().includes(searchValue.toLowerCase()),
+					)
+					.map((column) => (
+						<div className={styles.columnItem} key={column.value}>
+							{/*<GripVertical size={16} /> TODO: Add support back when update the table component */}
+							<Button
+								variant="ghost"
+								color="none"
+								className={styles.columnItem}
+								disabled={!column.canBeHidden}
+								onClick={(): void => removeColumn(entity, column.id)}
+							>
+								{column.label}
+							</Button>
+						</div>
+					))}
+			</div>
 
-		return (): void => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, [onClose]);
+			<div className={styles.horizontalDivider} />
+
+			<div className={styles.columnsTitle}>Other Columns (Click to add)</div>
+
+			<div className={styles.columnsList}>
+				{columns
+					.filter((column) => columnsHidden.includes(column.id))
+					.filter((column) =>
+						column.label.toLowerCase().includes(searchValue.toLowerCase()),
+					)
+					.map((column) => (
+						<div className={styles.columnItem} key={column.value}>
+							<Button
+								variant="ghost"
+								color="none"
+								className={styles.columnItem}
+								data-can-be-added="true"
+								onClick={(): void => addColumn(entity, column.id)}
+								tabIndex={0}
+							>
+								{column.label}
+							</Button>
+						</div>
+					))}
+			</div>
+		</>
+	);
 
 	return (
-		<div className="k8s-filters-side-panel-container">
-			<div className="k8s-filters-side-panel" ref={sidePanelRef}>
-				<div className="k8s-filters-side-panel-header">
-					<span className="k8s-filters-side-panel-header-title">
-						<TableColumnsSplit size={16} /> Columns
-					</span>
-
-					<Button
-						className="periscope-btn ghost"
-						icon={<X size={14} strokeWidth={1.5} onClick={onClose} />}
-					/>
-				</div>
-
-				<div className="k8s-filters-side-panel-body">
-					<div className="k8s-filters-side-panel-body-header">
-						<Input
-							autoFocus
-							className="periscope-input borderless"
-							placeholder="Search for a column ..."
-							value={searchValue}
-							onChange={handleSearchChange}
-						/>
-					</div>
-
-					<div className="k8s-filters-side-panel-body-content">
-						<div className="added-columns">
-							<div className="filter-columns-title">Added Columns</div>
-
-							<div className="added-columns-list">
-								{columns
-									.filter((column) => !columnsHidden.includes(column.id))
-									.filter((column) =>
-										column.label.toLowerCase().includes(searchValue.toLowerCase()),
-									)
-									.map((column) => (
-										<div className="added-column-item" key={column.value}>
-											<div className="added-column-item-content">
-												<GripVertical size={16} /> {column.label}
-											</div>
-
-											{column.canBeHidden && (
-												<X
-													size={14}
-													strokeWidth={1.5}
-													onClick={(): void => removeColumn(entity, column.id)}
-												/>
-											)}
-										</div>
-									))}
-							</div>
-						</div>
-
-						<div className="horizontal-divider" />
-
-						<div className="available-columns">
-							<div className="filter-columns-title">Other Columns</div>
-
-							<div className="available-columns-list">
-								{columns
-									.filter((column) => columnsHidden.includes(column.id))
-									.filter((column) =>
-										column.label.toLowerCase().includes(searchValue.toLowerCase()),
-									)
-									.map((column) => (
-										<div
-											className="available-column-item"
-											key={column.value}
-											onClick={(): void => addColumn(entity, column.id)}
-										>
-											<div className="available-column-item-content">
-												<GripVertical size={16} /> {column.label}
-											</div>
-										</div>
-									))}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+		<DrawerWrapper
+			open={open}
+			onOpenChange={(isOpen): void => {
+				if (!isOpen) {
+					onClose();
+				}
+			}}
+			title="Columns"
+			direction="right"
+			showCloseButton
+			showOverlay={false}
+			className={styles.drawer}
+		>
+			{drawerContent}
+		</DrawerWrapper>
 	);
 }
 

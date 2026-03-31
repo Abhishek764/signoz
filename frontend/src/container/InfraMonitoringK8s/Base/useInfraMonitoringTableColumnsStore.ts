@@ -7,7 +7,7 @@ export interface IEntityColumn {
 	id: string;
 	defaultVisibility: boolean;
 	canBeHidden: boolean;
-	behaviour: 'hidden-on-expand' | 'hidden-on-collapse' | 'always-visible';
+	behavior: 'hidden-on-expand' | 'hidden-on-collapse' | 'always-visible';
 }
 
 export interface IInfraMonitoringTableColumnsStore {
@@ -39,11 +39,11 @@ export const useInfraMonitoringTableColumnsStore = create<IInfraMonitoringTableC
 
 				const columnsHidden = state.columnsHidden[page];
 
-				if (!columnsHidden.includes(columnId)) {
+				if (columnsHidden.includes(columnId)) {
 					set({
 						columnsHidden: {
 							...state.columnsHidden,
-							[page]: [...columnsHidden, columnId],
+							[page]: columnsHidden.filter((id) => id !== columnId),
 						},
 					});
 				}
@@ -64,11 +64,11 @@ export const useInfraMonitoringTableColumnsStore = create<IInfraMonitoringTableC
 
 				const columnsHidden = state.columnsHidden[page];
 
-				if (columnsHidden.includes(columnId)) {
+				if (!columnsHidden.includes(columnId)) {
 					set({
 						columnsHidden: {
 							...state.columnsHidden,
-							[page]: columnsHidden.filter((id) => id !== columnId),
+							[page]: [...columnsHidden, columnId],
 						},
 					});
 				}

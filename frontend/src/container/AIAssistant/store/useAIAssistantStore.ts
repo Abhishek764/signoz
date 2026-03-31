@@ -17,6 +17,13 @@ interface AIAssistantStore {
 	streamingContent: string;
 	isStreaming: boolean;
 
+	/**
+	 * Persists the answered state for interactive blocks (ai-question, ai-confirm)
+	 * so that re-renders/remounts don't reset the answered UI.
+	 * Key: messageId, Value: the answer text (or "accepted"/"rejected" for confirms).
+	 */
+	answeredBlocks: Record<string, string>;
+
 	// Actions
 	openDrawer: () => void;
 	closeDrawer: () => void;
@@ -25,6 +32,7 @@ interface AIAssistantStore {
 	clearConversation: (id: string) => void;
 	deleteConversation: (id: string) => void;
 	renameConversation: (id: string, title: string) => void;
+	markBlockAnswered: (messageId: string, answer: string) => void;
 	sendMessage: (
 		text: string,
 		attachments?: MessageAttachment[],
@@ -44,6 +52,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 		conversations: {},
 		streamingContent: '',
 		isStreaming: false,
+		answeredBlocks: {},
 
 		openDrawer: (): void => {
 			set((state) => {
@@ -90,6 +99,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 		clearConversation: (id: string): void => {
 			set((state) => {
 				if (state.conversations[id]) {
+					// Remove answered-block entries for messages being cleared
+					const msgIds = state.conversations[id].messages.map((m) => m.id);
+					msgIds.forEach((mid) => {
+						delete state.answeredBlocks[mid];
+					});
 					state.conversations[id].messages = [];
 					state.conversations[id].title = undefined;
 					state.conversations[id].updatedAt = Date.now();
@@ -117,6 +131,12 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				if (state.conversations[id]) {
 					state.conversations[id].title = title.trim() || undefined;
 				}
+			});
+		},
+
+		markBlockAnswered: (messageId: string, answer: string): void => {
+			set((state) => {
+				state.answeredBlocks[messageId] = answer;
 			});
 		},
 

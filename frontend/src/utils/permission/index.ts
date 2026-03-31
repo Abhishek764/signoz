@@ -133,4 +133,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	PUBLIC_DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALERT_TYPE_SELECTION: ['ADMIN', 'EDITOR'],
 	AI_ASSISTANT: ['ADMIN', 'EDITOR', 'VIEWER'],
+	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

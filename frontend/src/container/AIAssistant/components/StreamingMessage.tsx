@@ -1,8 +1,20 @@
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { RichCodeBlock } from './blocks';
 
-const MD_COMPONENTS = { code: RichCodeBlock };
+function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
+	const childArr = React.Children.toArray(children);
+	if (childArr.length === 1) {
+		const child = childArr[0];
+		if (React.isValidElement(child) && child.type !== 'code') {
+			return <>{child}</>;
+		}
+	}
+	return <pre>{children}</pre>;
+}
+
+const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
 interface StreamingMessageProps {
 	content: string;

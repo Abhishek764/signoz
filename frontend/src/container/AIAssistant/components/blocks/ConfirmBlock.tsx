@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Check, X } from 'lucide-react';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
+import { useMessageContext } from '../MessageContext';
 
 export interface ConfirmData {
 	message?: string;
@@ -15,8 +15,6 @@ export interface ConfirmData {
 	/** Label shown on Reject button. Defaults to "Reject" */
 	rejectLabel?: string;
 }
-
-type State = 'pending' | 'accepted' | 'rejected';
 
 export default function ConfirmBlock({
 	data,
@@ -31,26 +29,35 @@ export default function ConfirmBlock({
 		rejectLabel = 'Reject',
 	} = data;
 
-	const [state, setState] = useState<State>('pending');
+	const { messageId } = useMessageContext();
+	const answeredBlocks = useAIAssistantStore((s) => s.answeredBlocks);
+	const markBlockAnswered = useAIAssistantStore((s) => s.markBlockAnswered);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 
+	// Durable answered state — survives re-renders/remounts
+	const answeredChoice = messageId ? answeredBlocks[messageId] : undefined;
+	const isAnswered = answeredChoice !== undefined;
+
 	const handle = (choice: 'accepted' | 'rejected'): void => {
-		setState(choice);
-		sendMessage(choice === 'accepted' ? acceptText : rejectText);
+		const responseText = choice === 'accepted' ? acceptText : rejectText;
+		if (messageId) {
+			markBlockAnswered(messageId, choice);
+		}
+		sendMessage(responseText);
 	};
 
-	if (state !== 'pending') {
-		const icon =
-			state === 'accepted' ? (
-				<Check size={13} className="ai-confirm__icon ai-confirm__icon--ok" />
-			) : (
-				<X size={13} className="ai-confirm__icon ai-confirm__icon--no" />
-			);
+	if (isAnswered) {
+		const wasAccepted = answeredChoice === 'accepted';
+		const icon = wasAccepted ? (
+			<Check size={13} className="ai-confirm__icon ai-confirm__icon--ok" />
+		) : (
+			<X size={13} className="ai-confirm__icon ai-confirm__icon--no" />
+		);
 		return (
 			<div className="ai-block ai-confirm ai-confirm--answered">
 				{icon}
 				<span className="ai-confirm__answer-text">
-					{state === 'accepted' ? acceptText : rejectText}
+					{wasAccepted ? acceptText : rejectText}
 				</span>
 			</div>
 		);

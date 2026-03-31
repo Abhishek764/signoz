@@ -441,9 +441,12 @@
 // ─── Interactive question ─────────────────────────────────────────────────────
 
 .ai-question__options {
-	display: flex;
-	flex-direction: column;
+	// Antd Radio.Group / Checkbox.Group renders as inline-block by default.
+	// Override so it fills the block and stacks options vertically.
+	display: flex !important;
+	flex-direction: column !important;
 	gap: 6px;
+	width: 100%;
 
 	// Checkbox variant stacks items vertically too
 	&.ai-question__options--checkbox {
@@ -455,6 +458,11 @@
 	// Ensure Antd Radio/Checkbox labels pick up the foreground token
 	color: var(--l1-foreground) !important;
 	font-size: 13px !important;
+	// Prevent long labels from overflowing the bubble
+	white-space: normal !important;
+	word-break: break-word;
+	display: flex !important;
+	align-items: flex-start !important;
 }
 
 .ai-question__submit {

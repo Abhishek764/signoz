@@ -1,8 +1,9 @@
+import { Checkbox, Radio } from 'antd';
 import { useState } from 'react';
 import { Button } from '@signozhq/button';
-import { Checkbox, Radio } from 'antd';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
+import { useMessageContext } from '../MessageContext';
 
 interface Option {
 	value: string;
@@ -27,25 +28,32 @@ export default function InteractiveQuestion({
 	const { question, type = 'radio', options } = data;
 	const normalized = options.map(normalizeOption);
 
-	const [selected, setSelected] = useState<string[]>([]);
-	const [submitted, setSubmitted] = useState(false);
-
+	const { messageId } = useMessageContext();
+	const answeredBlocks = useAIAssistantStore((s) => s.answeredBlocks);
+	const markBlockAnswered = useAIAssistantStore((s) => s.markBlockAnswered);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 
+	// Persist selected state locally only for the pending (not-yet-submitted) case
+	const [selected, setSelected] = useState<string[]>([]);
+
+	// Durable answered state from the store — survives re-renders/remounts
+	const answeredText = messageId ? answeredBlocks[messageId] : undefined;
+	const isAnswered = answeredText !== undefined;
+
 	const handleSubmit = (values: string[]): void => {
-		if (values.length === 0) {
-			return;
-		}
+		if (values.length === 0) return;
 		const answer = values.join(', ');
+		if (messageId) {
+			markBlockAnswered(messageId, answer);
+		}
 		sendMessage(answer);
-		setSubmitted(true);
 	};
 
-	if (submitted) {
+	if (isAnswered) {
 		return (
 			<div className="ai-block ai-question ai-question--answered">
 				<span className="ai-question__check">✓</span>
-				<span className="ai-question__answer-text">{selected.join(', ')}</span>
+				<span className="ai-question__answer-text">{answeredText}</span>
 			</div>
 		);
 	}
@@ -58,7 +66,6 @@ export default function InteractiveQuestion({
 				<Radio.Group
 					className="ai-question__options"
 					onChange={(e): void => {
-						// Auto-submit on radio select
 						setSelected([e.target.value]);
 						handleSubmit([e.target.value]);
 					}}

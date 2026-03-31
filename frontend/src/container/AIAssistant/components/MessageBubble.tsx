@@ -1,3 +1,4 @@
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 // Side-effect: registers all built-in block types into the BlockRegistry
@@ -5,12 +6,36 @@ import './blocks';
 
 import { Message } from '../types';
 import { RichCodeBlock } from './blocks';
+import { MessageContext } from './MessageContext';
 
 interface MessageBubbleProps {
 	message: Message;
 }
 
-const MD_COMPONENTS = { code: RichCodeBlock };
+/**
+ * react-markdown renders fenced code blocks as <pre><code>...</code></pre>.
+ * When RichCodeBlock replaces <code> with a custom AI block component, the
+ * block ends up wrapped in <pre> which forces monospace font and white-space:pre.
+ * This renderer detects that case and unwraps the <pre>.
+ */
+function SmartPre({
+	children,
+}: {
+	children?: React.ReactNode;
+}): JSX.Element {
+	const childArr = React.Children.toArray(children);
+	if (childArr.length === 1) {
+		const child = childArr[0];
+		// If the code component returned something other than a <code> element
+		// (i.e. a custom AI block), render without the <pre> wrapper.
+		if (React.isValidElement(child) && child.type !== 'code') {
+			return <>{child}</>;
+		}
+	}
+	return <pre>{children}</pre>;
+}
+
+const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
 export default function MessageBubble({
 	message,
@@ -46,9 +71,11 @@ export default function MessageBubble({
 				{isUser ? (
 					<p className="ai-message__text">{message.content}</p>
 				) : (
-					<ReactMarkdown className="ai-message__markdown" components={MD_COMPONENTS}>
-						{message.content}
-					</ReactMarkdown>
+					<MessageContext.Provider value={{ messageId: message.id }}>
+						<ReactMarkdown className="ai-message__markdown" components={MD_COMPONENTS}>
+							{message.content}
+						</ReactMarkdown>
+					</MessageContext.Provider>
 				)}
 			</div>
 		</div>

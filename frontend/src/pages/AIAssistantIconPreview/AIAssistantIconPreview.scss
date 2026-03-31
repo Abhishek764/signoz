@@ -1,0 +1,190 @@
+// AI Assistant Icon Preview — sign-off page styles
+
+.icon-preview {
+	min-height: 100vh;
+	background: #0f0f12;
+	color: #f0eee9;
+	font-family: 'Geist Sans', 'Inter', sans-serif;
+	padding: 40px 48px;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.icon-preview__header {
+	margin-bottom: 48px;
+	border-bottom: 1px solid #2a2a30;
+	padding-bottom: 24px;
+}
+
+.icon-preview__title {
+	font-size: 22px;
+	font-weight: 700;
+	margin: 0 0 6px;
+	color: #f0eee9;
+}
+
+.icon-preview__subtitle {
+	margin: 0;
+	font-size: 13px;
+	color: #888;
+}
+
+// ── Per-variant section ──────────────────────────────────────────────────────
+
+.icon-preview__variant {
+	margin-bottom: 56px;
+}
+
+.icon-preview__variant-meta {
+	margin-bottom: 16px;
+}
+
+.icon-preview__variant-label {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0 0 4px;
+	color: #f0eee9;
+}
+
+.icon-preview__variant-tagline {
+	font-size: 12px;
+	color: #888;
+	margin: 0;
+}
+
+// ── Surfaces ─────────────────────────────────────────────────────────────────
+
+.icon-preview__surfaces {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.icon-preview__surface {
+	border-radius: 10px;
+	padding: 16px 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	&--dark {
+		background: #1b1b1f;
+		border: 1px solid #2a2a30;
+	}
+
+	&--light {
+		background: #f5f4f0;
+		border: 1px solid #dddbd5;
+
+		.icon-preview__surface-label {
+			color: #666;
+		}
+
+		.icon-preview__size-label {
+			color: #999;
+		}
+	}
+}
+
+.icon-preview__surface-label {
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: #666;
+}
+
+// ── Size row ─────────────────────────────────────────────────────────────────
+
+.icon-preview__size-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+
+.icon-preview__size-cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+
+.icon-preview__size-label {
+	font-size: 9px;
+	color: #555;
+	font-variant-numeric: tabular-nums;
+}
+
+// ── In-context mock ───────────────────────────────────────────────────────────
+
+.icon-preview__context-row {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	flex-wrap: wrap;
+}
+
+.icon-preview__mock-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 6px;
+	border: 1px solid #2a2a30;
+	background: transparent;
+	cursor: pointer;
+	color: #f0eee9;
+	transition: background 0.12s;
+
+	&:hover {
+		background: #2a2a30;
+	}
+}
+
+.icon-preview__mock-panel-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #f0eee9;
+}
+
+// ── Side-by-side comparison ───────────────────────────────────────────────────
+
+.icon-preview__compare {
+	margin-top: 24px;
+}
+
+.icon-preview__compare-row {
+	display: flex;
+	gap: 32px;
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+
+.icon-preview__compare-cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	min-width: 64px;
+}
+
+.icon-preview__compare-badge {
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	color: #E8432D;
+	text-transform: uppercase;
+}
+
+.icon-preview__compare-name {
+	font-size: 10px;
+	color: #888;
+	text-align: center;
+	max-width: 80px;
+	line-height: 1.3;
+}

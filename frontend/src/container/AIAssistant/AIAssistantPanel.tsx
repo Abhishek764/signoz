@@ -7,11 +7,11 @@ import {
 	Eraser,
 	History,
 	Maximize2,
-	MessageSquare,
 	Plus,
 	X,
 } from 'lucide-react';
 
+import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
 import ConversationView from './ConversationView';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
@@ -71,7 +71,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		<div className="ai-assistant-panel">
 			<div className="ai-assistant-panel__header">
 				<div className="ai-assistant-panel__title">
-					<MessageSquare size={14} />
+					<AIAssistantIcon size={18} />
 					<span>AI Assistant</span>
 				</div>
 

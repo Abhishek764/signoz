@@ -3,10 +3,11 @@ import { useHistory, useParams } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Tooltip } from '@signozhq/tooltip';
 import ROUTES from 'constants/routes';
+import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';
 import ConversationView from 'container/AIAssistant/ConversationView';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
-import { Eraser, MessageSquare, Minimize2, Plus } from 'lucide-react';
+import { Eraser, Minimize2, Plus } from 'lucide-react';
 
 import 'container/AIAssistant/AIAssistant.styles.scss';
 
@@ -72,7 +73,7 @@ export default function AIAssistantPage(): JSX.Element {
 		<div className="ai-assistant-page">
 			<div className="ai-assistant-page__header">
 				<div className="ai-assistant-page__title">
-					<MessageSquare size={18} />
+					<AIAssistantIcon size={22} />
 					<span>AI Assistant</span>
 				</div>
 

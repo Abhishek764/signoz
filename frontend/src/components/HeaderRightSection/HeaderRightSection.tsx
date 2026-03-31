@@ -4,9 +4,10 @@ import { Button as PeriscopeButton } from '@signozhq/button';
 import { Tooltip as PeriscopeTooltip } from '@signozhq/tooltip';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Bot, Globe, Inbox, SquarePen } from 'lucide-react';
+import { Globe, Inbox, SquarePen } from 'lucide-react';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
@@ -80,7 +81,7 @@ function HeaderRightSection({
 					onClick={openAIAssistant}
 					aria-label="Open AI Assistant"
 				>
-					<Bot size={14} />
+					<AIAssistantIcon size={18} />
 				</PeriscopeButton>
 			</PeriscopeTooltip>
 

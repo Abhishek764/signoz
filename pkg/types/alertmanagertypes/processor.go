@@ -4,12 +4,17 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/prometheus/alertmanager/types"
 )
 
 // NotificationProcessor orchestrates template expansion and markdown rendering
 type NotificationProcessor interface {
 	ProcessAlertNotification(ctx context.Context, input NotificationProcessorInput, alerts []*types.Alert, rendererFormat markdownrenderer.OutputFormat) (*NotificationProcessorResult, error)
+	// RenderEmailNotification renders the given processor result into final HTML using
+	// the named layout template from the file template store.
+	// Returns an error if the template is not found.
+	RenderEmailNotification(ctx context.Context, templateName emailtypes.TemplateName, result *NotificationProcessorResult, alerts []*types.Alert) (string, error)
 }
 
 // NotificationProcessorInput carries the templates and rendering format for a notification

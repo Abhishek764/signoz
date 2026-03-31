@@ -19,6 +19,9 @@ type AlertManagerTemplater interface {
 	// ProcessTemplates expands the title and body templates from input
 	// against the provided alerts and returns the expanded templates.
 	ProcessTemplates(ctx context.Context, input TemplateInput, alerts []*types.Alert) (*ExpandedTemplates, error)
+	// BuildNotificationTemplateData builds the NotificationTemplateData from context and alerts.
+	// This exposes the structured alert data that gets used in the notification templates.
+	BuildNotificationTemplateData(ctx context.Context, alerts []*types.Alert) *NotificationTemplateData
 }
 
 type alertManagerTemplater struct {
@@ -87,6 +90,14 @@ func (at *alertManagerTemplater) ProcessTemplates(
 		MissingVars:            missingVarsList,
 		IsDefaultTemplatedBody: isDefaultTemplated,
 	}, nil
+}
+
+// BuildNotificationTemplateData builds the NotificationTemplateData from context and alerts.
+func (at *alertManagerTemplater) BuildNotificationTemplateData(
+	ctx context.Context,
+	alerts []*types.Alert,
+) *NotificationTemplateData {
+	return at.buildNotificationTemplateData(ctx, alerts)
 }
 
 // expandDefaultTemplate uses go-template to expand the default template.

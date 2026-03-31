@@ -12,13 +12,14 @@ import (
 var (
 	// Templates is a list of all the templates that are supported by the emailing service.
 	// This list should be updated whenever a new template is added.
-	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameResetPassword}
+	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameResetPassword, TemplateNameAlertEmailNotification}
 )
 
 var (
 	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation")}
 	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password")}
-	TemplateNameAPIKeyEvent     = TemplateName{valuer.NewString("api_key_event")}
+	TemplateNameAPIKeyEvent              = TemplateName{valuer.NewString("api_key_event")}
+	TemplateNameAlertEmailNotification = TemplateName{valuer.NewString("alert_email_notification")}
 )
 
 type TemplateName struct{ valuer.String }
@@ -31,6 +32,8 @@ func NewTemplateName(name string) (TemplateName, error) {
 		return TemplateNameResetPassword, nil
 	case TemplateNameAPIKeyEvent.StringValue():
 		return TemplateNameAPIKeyEvent, nil
+	case TemplateNameAlertEmailNotification.StringValue():
+		return TemplateNameAlertEmailNotification, nil
 	default:
 		return TemplateName{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid template name: %s", name)
 	}

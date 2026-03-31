@@ -36,6 +36,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -420,10 +421,26 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 
 	title := result.Title
 
-	// handle custom templating for body
+	// If custom templated, render via the HTML layout template
 	if result.IsCustomTemplated() {
-		// TODO: use notification processor to template this
-		// with signoz stored alert notification template
+		htmlContent, renderErr := n.processor.RenderEmailNotification(ctx, emailtypes.TemplateNameAlertEmailNotification, result, alerts)
+		if renderErr == nil {
+			return title, htmlContent, nil
+		}
+		n.logger.WarnContext(ctx, "custom email template rendering failed, falling back to default", errors.Attr(renderErr))
+	}
+
+	// Default templated body: use the HTML config template if available
+	if len(n.conf.HTML) > 0 {
+		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
+		if err != nil {
+			return "", "", errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
+		}
+		return title, body, nil
+	}
+
+	// No HTML template configured, fallback to plain HTML templating
+	if result.IsCustomTemplated() {
 		var b strings.Builder
 		for _, part := range result.Body {
 			b.WriteString("<div>")
@@ -431,14 +448,6 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 			b.WriteString("</div>")
 		}
 		return title, b.String(), nil
-	} else if len(n.conf.HTML) > 0 {
-		// if custom body template was not provided, use the default template
-		// specified in the email channel config
-		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
-		if err != nil {
-			return "", "", errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
-		}
-		return title, body, nil
 	}
 	return title, "", nil
 }

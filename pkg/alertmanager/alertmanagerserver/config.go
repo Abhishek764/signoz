@@ -28,6 +28,9 @@ type Config struct {
 
 	// Configuration for the notification log.
 	NFLog NFLogConfig `mapstructure:"nflog"`
+
+	// EmailTemplatesDirectory is the directory containing email layout templates (.gotmpl files).
+	EmailTemplatesDirectory string `mapstructure:"email_templates_directory"`
 }
 
 type AlertsConfig struct {
@@ -100,5 +103,6 @@ func NewConfig() Config {
 			MaintenanceInterval: 15 * time.Minute,
 			Retention:           120 * time.Hour,
 		},
+		EmailTemplatesDirectory: "/root/templates/email",
 	}
 }

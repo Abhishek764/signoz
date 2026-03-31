@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -26,9 +27,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 )
 
 var (
@@ -70,6 +72,7 @@ type Server struct {
 	marker              *alertmanagertypes.MemMarker
 	tmpl                *template.Template
 	processor           alertmanagertypes.NotificationProcessor
+	emailTemplateStore  emailtypes.TemplateStore
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
@@ -202,6 +205,12 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
+	emailTemplateStore, storeErr := filetemplatestore.NewStore(ctx, srvConfig.EmailTemplatesDirectory, emailtypes.Templates, server.logger)
+	if storeErr != nil {
+		server.logger.ErrorContext(ctx, "failed to create alert email template store, using empty store", errors.Attr(storeErr))
+		emailTemplateStore = filetemplatestore.NewEmptyStore()
+	}
+	server.emailTemplateStore = emailTemplateStore
 
 	return server, nil
 }
@@ -241,7 +250,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	// Construct the alert notification processor
 	templater := alertmanagertemplate.New(server.tmpl, server.logger)
 	renderer := markdownrenderer.NewMarkdownRenderer(server.logger)
-	server.processor = alertnotificationprocessor.New(templater, renderer, server.logger)
+	server.processor = alertnotificationprocessor.New(templater, renderer, server.emailTemplateStore, server.logger)
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)

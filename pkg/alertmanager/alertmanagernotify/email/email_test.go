@@ -44,6 +44,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
+	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -68,7 +69,7 @@ func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationPro
 	logger := slog.Default()
 	templater := alertmanagertemplate.New(tmpl, logger)
 	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, logger)
+	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
 }
 
 const (

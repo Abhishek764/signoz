@@ -3,14 +3,19 @@ package alertnotificationprocessor
 import (
 	"context"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"sort"
 	"testing"
 	"time"
 
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -32,7 +37,7 @@ func testSetup(t *testing.T) (alertmanagertypes.NotificationProcessor, context.C
 		"alertname": "TestAlert",
 		"severity":  "critical",
 	})
-	return New(templater, renderer, logger), ctx
+	return New(templater, renderer, filetemplatestore.NewEmptyStore(), logger), ctx
 }
 
 func createAlert(labels, annotations map[string]string, isFiring bool) *types.Alert {
@@ -275,4 +280,64 @@ func TestProcessAlertNotification(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRenderEmailNotification_TemplateNotFound(t *testing.T) {
+	processor, ctx := testSetup(t)
+
+	result := &alertmanagertypes.NotificationProcessorResult{
+		Title: "Test Alert",
+		Body:  []string{"alert body"},
+	}
+	alerts := []*types.Alert{
+		createAlert(map[string]string{ruletypes.LabelAlertName: "TestAlert"}, nil, true),
+	}
+
+	_, err := processor.RenderEmailNotification(ctx, emailtypes.TemplateNameAlertEmailNotification, result, alerts)
+	require.Error(t, err)
+	require.True(t, errors.Ast(err, errors.TypeNotFound))
+}
+
+func TestRenderEmailNotification_RendersTemplate(t *testing.T) {
+	// Create a temp dir with a test template
+	tmpDir := t.TempDir()
+	tmplContent := `<!DOCTYPE html><html><body><h1>{{.Title}}</h1><p>Status: {{.Status}}</p><p>Firing: {{.TotalFiring}}</p>{{range .Bodies}}<div>{{.}}</div>{{end}}{{range .Alerts}}<p>{{.AlertName}}</p>{{end}}</body></html>`
+	err := os.WriteFile(filepath.Join(tmpDir, "alert_email_notification.gotmpl"), []byte(tmplContent), 0644)
+	require.NoError(t, err)
+
+	tmpl := test.CreateTmpl(t)
+	logger := slog.New(slog.DiscardHandler)
+	templater := alertmanagertemplate.New(tmpl, logger)
+	renderer := markdownrenderer.NewMarkdownRenderer(logger)
+	store, err := filetemplatestore.NewStore(context.Background(), tmpDir, emailtypes.Templates, logger)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	ctx = notify.WithGroupKey(ctx, "test-group")
+	ctx = notify.WithReceiverName(ctx, "email")
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{
+		"alertname": "HighCPU",
+		"severity":  "critical",
+	})
+
+	processor := New(templater, renderer, store, logger)
+
+	result := &alertmanagertypes.NotificationProcessorResult{
+		Title:                  "HighCPU Alert",
+		Body:                   []string{"<strong>CPU is high</strong>", "<strong>CPU is low</strong>"},
+		IsDefaultTemplatedBody: false,
+	}
+	alerts := []*types.Alert{
+		createAlert(
+			map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"},
+			nil,
+			true,
+		),
+	}
+
+	html, err := processor.RenderEmailNotification(ctx, emailtypes.TemplateNameAlertEmailNotification, result, alerts)
+	require.NoError(t, err)
+	require.NotEmpty(t, html)
+	// the html template should be filled with go text templating
+	require.Equal(t, "<!DOCTYPE html><html><body><h1>HighCPU Alert</h1><p>Status: firing</p><p>Firing: 1</p><div><strong>CPU is high</strong></div><div><strong>CPU is low</strong></div><p>HighCPU</p></body></html>", html)
 }

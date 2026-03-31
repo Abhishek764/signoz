@@ -109,7 +109,6 @@ export function useNavigateToExplorer(): (
 					widgetConfig: {
 						query: preparedQuery,
 						panelTypes: PANEL_TYPES.TIME_SERIES,
-						// does this change at any time? How does it change if so?
 						timePreferance: 'GLOBAL_TIME',
 					},
 					selectedDashboard,

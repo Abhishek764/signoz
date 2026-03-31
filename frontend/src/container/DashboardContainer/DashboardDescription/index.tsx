@@ -577,12 +577,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				open={isPanelNameModalOpen}
 				title="New Section"
 				rootClassName="section-naming"
-				// This is not required on the specification of a custom footer
-				onOk={(): void => handleAddRow()}
-				onCancel={(): void => {
-					setIsPanelNameModalOpen(false);
-					setSectionName(DEFAULT_ROW_NAME);
-				}}
 				footer={
 					<div className="dashboard-rename">
 						<Button

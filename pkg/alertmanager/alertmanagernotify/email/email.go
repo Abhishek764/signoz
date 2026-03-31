@@ -1,3 +1,16 @@
+// Copyright 2019 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package email
 
 import (
@@ -44,7 +57,7 @@ type Email struct {
 	processor alertmanagertypes.NotificationProcessor
 }
 
-var errNoAuthUserNameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
+var errNoAuthUsernameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
 
 // New returns a new Email notifier.
 func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor) *Email {
@@ -71,21 +84,21 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 	username := n.conf.AuthUsername
 
 	// If no username is set, return custom error which can be ignored if needed.
-	if n.conf.AuthUsername == "" {
-		return nil, errNoAuthUserNameConfigured
+	if strings.TrimSpace(username) == "" {
+		return nil, errNoAuthUsernameConfigured
 	}
 
-	err := &types.MultiError{}
+	var errs error
 	for mech := range strings.SplitSeq(mechs, " ") {
 		switch mech {
 		case "CRAM-MD5":
 			secret, secretErr := n.getAuthSecret()
 			if secretErr != nil {
-				err.Add(secretErr)
+				errs = errors.Join(errs, secretErr)
 				continue
 			}
 			if secret == "" {
-				err.Add(errors.NewInternalf(errors.CodeInternal, "missing secret for CRAM-MD5 auth mechanism"))
+				errs = errors.Join(errs, errors.NewInternalf(errors.CodeInternal, "missing secret for CRAM-MD5 auth mechanism"))
 				continue
 			}
 			return smtp.CRAMMD5Auth(username, secret), nil
@@ -93,33 +106,30 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 		case "PLAIN":
 			password, passwordErr := n.getPassword()
 			if passwordErr != nil {
-				err.Add(passwordErr)
+				errs = errors.Join(errs, passwordErr)
 				continue
 			}
 			if password == "" {
-				err.Add(errors.NewInternalf(errors.CodeInternal, "missing password for PLAIN auth mechanism"))
+				errs = errors.Join(errs, errors.NewInternalf(errors.CodeInternal, "missing password for PLAIN auth mechanism"))
 				continue
 			}
-			identity := n.conf.AuthIdentity
-
-			return smtp.PlainAuth(identity, username, password, n.conf.Smarthost.Host), nil
+			return smtp.PlainAuth(n.conf.AuthIdentity, username, password, n.conf.Smarthost.Host), nil
 		case "LOGIN":
 			password, passwordErr := n.getPassword()
 			if passwordErr != nil {
-				err.Add(passwordErr)
+				errs = errors.Join(errs, passwordErr)
 				continue
 			}
 			if password == "" {
-				err.Add(errors.NewInternalf(errors.CodeInternal, "missing password for LOGIN auth mechanism"))
+				errs = errors.Join(errs, errors.NewInternalf(errors.CodeInternal, "missing password for LOGIN auth mechanism"))
 				continue
 			}
 			return LoginAuth(username, password), nil
+		default:
+			errs = errors.Join(errs, errors.NewInternalf(errors.CodeUnsupported, "unknown auth mechanism: %s", mech))
 		}
 	}
-	if err.Len() == 0 {
-		err.Add(errors.NewInternalf(errors.CodeInternal, "unknown auth mechanism: %s", mechs))
-	}
-	return nil, err
+	return nil, errs
 }
 
 // Notify implements the Notifier interface.
@@ -170,7 +180,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	defer func() {
 		// Try to clean up after ourselves but don't log anything if something has failed.
 		if err := c.Quit(); success && err != nil {
-			n.logger.WarnContext(ctx, "failed to close SMTP connection", "err", err)
+			n.logger.WarnContext(ctx, "failed to close SMTP connection", slog.Any("err", err))
 		}
 	}()
 
@@ -202,9 +212,9 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	if ok, mech := c.Extension("AUTH"); ok {
 		auth, err := n.auth(mech)
-		if err != nil && err != errNoAuthUserNameConfigured {
+		if err != nil && err != errNoAuthUsernameConfigured {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "find auth mechanism")
-		} else if err == errNoAuthUserNameConfigured {
+		} else if err == errNoAuthUsernameConfigured {
 			n.logger.DebugContext(ctx, "no auth username configured. Attempting to send email without authenticating")
 		}
 		if auth != nil {

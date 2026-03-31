@@ -1,3 +1,16 @@
+// Copyright 2019 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package pagerduty
 
 import (
@@ -126,7 +139,7 @@ func (n *Notifier) encodeMessage(ctx context.Context, msg *pagerDutyMessage) (by
 			msg.Payload.CustomDetails = map[string]any{"error": truncatedMsg}
 		}
 
-		n.logger.WarnContext(ctx, "Truncated Details because message of size exceeds limit", "message_size", units.MetricBytes(buf.Len()).String(), "max_size", units.MetricBytes(maxEventSize).String())
+		n.logger.WarnContext(ctx, "Truncated Details because message of size exceeds limit", slog.String("message_size", units.MetricBytes(buf.Len()).String()), slog.String("max_size", units.MetricBytes(maxEventSize).String()))
 
 		buf.Reset()
 		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
@@ -302,7 +315,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 
 	title, truncated := notify.TruncateInRunes(result.Title, maxV1DescriptionLenRunes)
 	if truncated {
-		n.logger.WarnContext(ctx, "Truncated title", "max_runes", maxV1DescriptionLenRunes)
+		n.logger.WarnContext(ctx, "Truncated title", slog.Int("max_runes", maxV1DescriptionLenRunes))
 	}
 
 	return title, nil
@@ -314,7 +327,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	logger := n.logger.With("group_key", key)
+	logger := n.logger.With(slog.Any("group_key", key))
 
 	var (
 		alerts    = types.Alerts(as...)
@@ -326,7 +339,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		eventType = pagerDutyEventResolve
 	}
 
-	logger.DebugContext(ctx, "extracted group key", "event_type", eventType)
+	logger.DebugContext(ctx, "extracted group key", slog.String("event_type", eventType))
 
 	details, err := n.renderDetails(data)
 	if err != nil {

@@ -155,7 +155,7 @@ Description: Request rate exceeded 10k/s`},
 		},
 		{
 			// Pod crash loop on multiple pods — body is expanded once per alert
-			// and joined with "<br><br>", with the pod name pulled from labels.
+			// and joined with "\n\n", with the pod name pulled from labels.
 			name: "new template: pod crash loop on multiple pods, body per-alert",
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-1"}, nil, true),

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
-import type { CollapseProps } from 'antd';
+import { Button, CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -16,6 +16,7 @@ import {
 	Computer,
 	Container,
 	FilePenLine,
+	Filter,
 	Group,
 	HardDrive,
 	Workflow,
@@ -67,9 +68,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const { currentQuery } = useQueryBuilder();
 
-	const handleFilterVisibilityChange = (): void => {
-		setShowFilters(!showFilters);
-	};
+	const handleFilterVisibilityChange = useCallback((): void => {
+		setShowFilters((show) => !show);
+	}, []);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -321,6 +322,25 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		}
 	};
 
+	const showFiltersComp = useMemo(() => {
+		return (
+			<>
+				{!showFilters && (
+					<div className="quick-filters-toggle-container">
+						<Button
+							className="periscope-btn ghost"
+							type="text"
+							size="small"
+							onClick={handleFilterVisibilityChange}
+						>
+							<Filter size={14} />
+						</Button>
+					</div>
+				)}
+			</>
+		);
+	}, [handleFilterVisibilityChange, showFilters]);
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="infra-monitoring-container">
@@ -355,11 +375,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 						}`}
 					>
 						{selectedCategory === K8sCategories.PODS && (
-							<K8sPodLists
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
+							<K8sPodLists controlListPrefix={showFiltersComp} />
 						)}
 
 						{selectedCategory === K8sCategories.NODES && (

@@ -76,7 +76,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		return false, err
 	}
 
-	logger := n.logger.With("group_key", groupKey)
+	logger := n.logger.With(slog.Any("group_key", groupKey))
 	logger.DebugContext(ctx, "extracted group key")
 
 	msg := &Message{

@@ -122,7 +122,7 @@ func (n *Notifier) encodeMessage(ctx context.Context, msg *pagerDutyMessage) (by
 			msg.Payload.CustomDetails = map[string]any{"error": truncatedMsg}
 		}
 
-		n.logger.WarnContext(ctx, "Truncated Details because message of size exceeds limit", "message_size", units.MetricBytes(buf.Len()).String(), "max_size", units.MetricBytes(maxEventSize).String())
+		n.logger.WarnContext(ctx, "Truncated Details because message of size exceeds limit", slog.String("message_size", units.MetricBytes(buf.Len()).String()), slog.String("max_size", units.MetricBytes(maxEventSize).String()))
 
 		buf.Reset()
 		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
@@ -145,7 +145,7 @@ func (n *Notifier) notifyV1(
 
 	description, truncated := notify.TruncateInRunes(tmpl(n.conf.Description), maxV1DescriptionLenRunes)
 	if truncated {
-		n.logger.WarnContext(ctx, "Truncated description", "key", key, "max_runes", maxV1DescriptionLenRunes)
+		n.logger.WarnContext(ctx, "Truncated description", slog.Any("key", key), slog.Int("max_runes", maxV1DescriptionLenRunes))
 	}
 
 	serviceKey := string(n.conf.ServiceKey)
@@ -209,7 +209,7 @@ func (n *Notifier) notifyV2(
 
 	summary, truncated := notify.TruncateInRunes(tmpl(n.conf.Description), maxV2SummaryLenRunes)
 	if truncated {
-		n.logger.WarnContext(ctx, "Truncated summary", "key", key, "max_runes", maxV2SummaryLenRunes)
+		n.logger.WarnContext(ctx, "Truncated summary", slog.Any("key", key), slog.Int("max_runes", maxV2SummaryLenRunes))
 	}
 
 	routingKey := string(n.conf.RoutingKey)
@@ -296,7 +296,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	logger := n.logger.With("group_key", key)
+	logger := n.logger.With(slog.Any("group_key", key))
 
 	var (
 		alerts    = types.Alerts(as...)
@@ -308,7 +308,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		eventType = pagerDutyEventResolve
 	}
 
-	logger.DebugContext(ctx, "extracted group key", "event_type", eventType)
+	logger.DebugContext(ctx, "extracted group key", slog.String("event_type", eventType))
 
 	details, err := n.renderDetails(data)
 	if err != nil {

@@ -125,7 +125,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	if err != nil {
 		return nil, false, err
 	}
-	logger := n.logger.With("group_key", key)
+	logger := n.logger.With(slog.Any("group_key", key))
 	logger.DebugContext(ctx, "extracted group key")
 
 	data := notify.GetTemplateData(ctx, n.tmpl, as, logger)
@@ -166,7 +166,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	default:
 		message, truncated := notify.TruncateInRunes(tmpl(n.conf.Message), maxMessageLenRunes)
 		if truncated {
-			logger.WarnContext(ctx, "Truncated message", "alert", key, "max_runes", maxMessageLenRunes)
+			logger.WarnContext(ctx, "Truncated message", slog.Any("alert", key), slog.Int("max_runes", maxMessageLenRunes))
 		}
 
 		createEndpointURL := n.conf.APIURL.Copy()

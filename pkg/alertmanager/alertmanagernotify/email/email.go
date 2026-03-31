@@ -168,7 +168,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	defer func() {
 		// Try to clean up after ourselves but don't log anything if something has failed.
 		if err := c.Quit(); success && err != nil {
-			n.logger.WarnContext(ctx, "failed to close SMTP connection", "err", err)
+			n.logger.WarnContext(ctx, "failed to close SMTP connection", slog.Any("err", err))
 		}
 	}()
 

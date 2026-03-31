@@ -89,7 +89,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return false, err
 	}
-	logger := n.logger.With("group_key", key)
+	logger := n.logger.With(slog.Any("group_key", key))
 	logger.DebugContext(ctx, "extracted group key")
 
 	var (
@@ -106,7 +106,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	title, truncated := notify.TruncateInRunes(tmplText(n.conf.Title), maxTitleLenRunes)
 	if truncated {
-		logger.WarnContext(ctx, "Truncated title", "max_runes", maxTitleLenRunes)
+		logger.WarnContext(ctx, "Truncated title", slog.Int("max_runes", maxTitleLenRunes))
 	}
 	att := &attachment{
 		Title:      title,

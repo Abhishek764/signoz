@@ -1,154 +1,155 @@
 .clickableRow {
-  cursor: pointer;
+	cursor: pointer;
 }
 
 .expandedClickableRow {
-  cursor: pointer;
+	cursor: pointer;
 }
 
 .expandedTableContainer {
-  border: 1px solid var(--l1-border);
-  overflow-x: auto;
-  padding-left: 48px;
+	border: 1px solid var(--l1-border);
+	overflow-x: auto;
+	padding-left: 48px;
 
-  :global(.ant-table-tbody > tr:hover > td) {
-    background: none !important;
-  }
+	:global(.ant-table-tbody > tr:hover > td) {
+		background: none !important;
+	}
 }
 
 .expandedTableFooter {
-  display: flex;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 8px;
-  padding-left: 42px;
-  margin-top: 8px;
+	display: flex;
+	justify-content: flex-start;
+	gap: 8px;
+	padding: 8px;
+	padding-left: 42px;
+	margin-top: 8px;
 }
 
 .viewAllButton {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
 }
 
 .k8sListTable {
-  :global(.ant-table) {
-    :global(.ant-table-thead > tr > th) {
-      padding: 12px;
-      font-weight: 500;
-      font-size: 12px;
-      line-height: 18px;
+	:global(.ant-table) {
+		:global(.ant-table-thead > tr > th) {
+			padding: 12px;
+			font-weight: 500;
+			font-size: 12px;
+			line-height: 18px;
 
-      border-bottom: none;
+			border-bottom: none;
 
-      color: var(--l2-foreground);
-      font-family: Inter;
-      font-size: 11px;
-      font-style: normal;
-      font-weight: 600;
-      line-height: 18px;
-      letter-spacing: 0.44px;
-      text-transform: uppercase;
-      background: var(--l1-background) !important;
+			color: var(--l2-foreground);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 600;
+			line-height: 18px;
+			letter-spacing: 0.44px;
+			text-transform: uppercase;
+			background: var(--l1-background) !important;
 
-      &::before {
-        background: transparent !important;
-      }
-    }
+			&::before {
+				background: transparent !important;
+			}
+		}
 
-    :global(.ant-table-cell) {
-      padding: 12px;
-      font-size: 13px;
-      line-height: 20px;
-      color: var(--l1-foreground);
-      background: var(--l1-background);
-      border-bottom: none;
+		:global(.ant-table-cell) {
+			padding: 12px;
+			font-size: 13px;
+			line-height: 20px;
+			color: var(--l1-foreground);
+			background: var(--l1-background);
+			border-bottom: none;
 
-      &:before, &:after {
-        display: none;
-      }
-    }
+			&:before,
+			&:after {
+				display: none;
+			}
+		}
 
-    :global(.hostname-column-value) {
-      color: var(--l1-foreground);
-      font-family: 'Geist Mono';
-      font-style: normal;
-      font-weight: 600;
-      line-height: 20px;
-      letter-spacing: -0.07px;
-    }
+		:global(.hostname-column-value) {
+			color: var(--l1-foreground);
+			font-family: 'Geist Mono';
+			font-style: normal;
+			font-weight: 600;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
 
-    :global(.progress-container) {
-      :global(.ant-progress-bg) {
-        height: 8px !important;
-        border-radius: 4px;
-      }
-    }
+		:global(.progress-container) {
+			:global(.ant-progress-bg) {
+				height: 8px !important;
+				border-radius: 4px;
+			}
+		}
 
-    :global(.ant-table-tbody > tr:hover > td) {
-      background: var(--l1-background);
-    }
+		:global(.ant-table-tbody > tr:hover > td) {
+			background: var(--l1-background);
+		}
 
-    :global(.ant-table-tbody > tr:not(.ant-table-expanded-row):hover > td) {
-      background: var(--l2-background);
-    }
+		:global(.ant-table-tbody > tr:not(.ant-table-expanded-row):hover > td) {
+			background: var(--l2-background);
+		}
 
-    :global(.ant-table-tbody > tr > td) {
-      border-bottom: none;
-    }
+		:global(.ant-table-tbody > tr > td) {
+			border-bottom: none;
+		}
 
-    :global(.ant-empty-normal) {
-      visibility: hidden;
-    }
-  }
+		:global(.ant-empty-normal) {
+			visibility: hidden;
+		}
+	}
 
-  :global(.ant-pagination) {
-    position: fixed;
-    bottom: 0;
-    width: calc(100% - 54px);
-    background: var(--l1-background);
-    padding: 16px;
-    margin: 0;
-    padding-right: 72px;
+	:global(.ant-pagination) {
+		position: fixed;
+		bottom: 0;
+		width: calc(100% - 54px);
+		background: var(--l1-background);
+		padding: 16px;
+		margin: 0;
+		padding-right: 72px;
 
-    :global(.ant-pagination-item) {
-      border-radius: 4px;
-    }
+		:global(.ant-pagination-item) {
+			border-radius: 4px;
+		}
 
-    :global(.ant-pagination-item-active) {
-      background: var(--l2-background);
-      border-color: var(--l2-border);
+		:global(.ant-pagination-item-active) {
+			background: var(--l2-background);
+			border-color: var(--l2-border);
 
-      a {
-        color: var(--l1-foreground) !important;
-      }
-    }
-  }
+			a {
+				color: var(--l1-foreground) !important;
+			}
+		}
+	}
 }
 
 .noFilteredHostsMessageContainer {
-  height: 30vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+	height: 30vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 }
 
 .noFilteredHostsMessageContent {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
 
-  width: fit-content;
-  padding: 24px;
+	width: fit-content;
+	padding: 24px;
 }
 
 .noFilteredHostsMessage {
-  margin-top: var(--spacing-4);
+	margin-top: var(--spacing-4);
 }
 
 .emptyStateSvg {
-  width: 32px;
-  max-width: 100%;
+	width: 32px;
+	max-width: 100%;
 }

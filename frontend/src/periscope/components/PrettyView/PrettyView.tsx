@@ -1,20 +1,27 @@
 import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
-import { Copy, Ellipsis } from '@signozhq/icons';
+import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
-// TODO: Replace antd Dropdown with @signozhq/ui DropdownMenu when moving to design library
+// TODO: Replace antd Dropdown with @signozhq/ui component when moving to design library
 import { Dropdown } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { darkTheme, lightTheme, themeExtension } from './constants';
-import useSearchFilter from './hooks/useSearchFilter';
-import { copyToClipboard } from './utils';
+import usePinnedFields from './hooks/usePinnedFields';
+import useSearchFilter, { filterTree } from './hooks/useSearchFilter';
+import {
+	copyToClipboard,
+	keyPathToDisplayString,
+	keyPathToForward,
+	serializeKeyPath,
+} from './utils';
 
 import './PrettyView.styles.scss';
 
 export interface FieldContext {
 	fieldKey: string;
+	fieldKeyPath: (string | number)[];
 	fieldValue: unknown;
 	isNested: boolean;
 }
@@ -31,15 +38,31 @@ export interface PrettyViewProps {
 	data: Record<string, any>;
 	actions?: PrettyViewAction[];
 	searchable?: boolean;
+	showPinned?: boolean;
+	drawerKey?: string;
 }
 
 function PrettyView({
 	data,
 	actions,
 	searchable = true,
+	showPinned = false,
+	drawerKey = 'default',
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { searchQuery, setSearchQuery, filteredData } = useSearchFilter(data);
+	const { isPinned, togglePin, pinnedEntries, pinnedData } = usePinnedFields(
+		data,
+		drawerKey,
+	);
+
+	const filteredPinnedData = useMemo(() => {
+		const trimmed = searchQuery.trim();
+		if (!trimmed) {
+			return pinnedData;
+		}
+		return filterTree(pinnedData, trimmed) || {};
+	}, [pinnedData, searchQuery]);
 
 	const theme = useMemo(
 		() => ({
@@ -60,6 +83,7 @@ function PrettyView({
 
 	const buildMenuItems = useCallback(
 		(context: FieldContext): MenuProps['items'] => {
+			// todo: drive dropdown through config.
 			const copyItem = {
 				key: 'copy',
 				label: 'Copy',
@@ -69,41 +93,63 @@ function PrettyView({
 				},
 			};
 
-			if (!actions || actions.length === 0) {
-				return [copyItem];
+			const items: NonNullable<MenuProps['items']> = [copyItem];
+
+			// Pin action only for leaf nodes
+			if (!context.isNested) {
+				const serialized = serializeKeyPath(context.fieldKeyPath);
+				const pinned = isPinned(serialized);
+
+				items.push({
+					key: 'pin',
+					label: pinned ? 'Unpin field' : 'Pin field',
+					icon: pinned ? <PinOff size={12} /> : <Pin size={12} />,
+					onClick: (): void => {
+						togglePin(context.fieldKeyPath);
+					},
+				});
 			}
 
-			const consumerItems = actions.map((action) => ({
-				key: action.key,
-				label: action.label,
-				icon: action.icon,
-				onClick: (): void => {
-					action.onClick(context);
-				},
-			}));
+			if (actions && actions.length > 0) {
+				//todo: why this divider?
+				items.push({ type: 'divider' as const, key: 'divider' });
+				actions.forEach((action) => {
+					items.push({
+						key: action.key,
+						label: action.label,
+						icon: action.icon,
+						onClick: (): void => {
+							action.onClick(context);
+						},
+					});
+				});
+			}
 
-			return [
-				copyItem,
-				{ type: 'divider' as const, key: 'divider' },
-				...consumerItems,
-			];
+			return items;
 		},
-		[actions],
+		[actions, isPinned, togglePin],
 	);
 
 	const renderWithActions = useCallback(
 		({
 			content,
 			fieldKey,
+			fieldKeyPath,
 			value,
 			isNested,
 		}: {
 			content: React.ReactNode;
 			fieldKey: string;
+			fieldKeyPath: (string | number)[];
 			value: unknown;
 			isNested: boolean;
 		}): React.ReactNode => {
-			const context: FieldContext = { fieldKey, fieldValue: value, isNested };
+			const context: FieldContext = {
+				fieldKey,
+				fieldKeyPath,
+				fieldValue: value,
+				isNested,
+			};
 			const menuItems = buildMenuItems(context);
 			return (
 				<span className="pretty-view__value-row">
@@ -143,17 +189,20 @@ function PrettyView({
 			itemType: React.ReactNode,
 			itemString: string,
 			keyPath: KeyPath,
-		): React.ReactNode =>
-			renderWithActions({
+		): React.ReactNode => {
+			const forwardPath = keyPathToForward(keyPath);
+			return renderWithActions({
 				content: (
 					<>
 						{itemType} {itemString}
 					</>
 				),
-				fieldKey: String(keyPath[0]),
+				fieldKey: keyPathToDisplayString(keyPath),
+				fieldKeyPath: forwardPath,
 				value: nodeData,
 				isNested: true,
-			}),
+			});
+		},
 		[renderWithActions],
 	);
 
@@ -162,14 +211,39 @@ function PrettyView({
 			valueAsString: unknown,
 			value: unknown,
 			...keyPath: KeyPath
-		): React.ReactNode =>
-			renderWithActions({
+		): React.ReactNode => {
+			const forwardPath = keyPathToForward(keyPath);
+			return renderWithActions({
 				content: String(valueAsString),
-				fieldKey: String(keyPath[0]),
+				fieldKey: keyPathToDisplayString(keyPath),
+				fieldKeyPath: forwardPath,
 				value,
 				isNested: typeof value === 'object' && value !== null,
-			}),
+			});
+		},
 		[renderWithActions],
+	);
+
+	const pinnedLabelRenderer = useCallback(
+		(keyPath: KeyPath): React.ReactNode => {
+			const displayKey = String(keyPath[0]);
+			const entry = pinnedEntries.find((e) => e.displayKey === displayKey);
+			return (
+				<span className="pretty-view__pinned-label">
+					<Pin
+						size={12}
+						className="pretty-view__pinned-icon"
+						onClick={(): void => {
+							if (entry) {
+								togglePin(entry.forwardPath);
+							}
+						}}
+					/>
+					<span>{displayKey}</span>
+				</span>
+			);
+		},
+		[togglePin, pinnedEntries],
 	);
 
 	return (
@@ -182,6 +256,23 @@ function PrettyView({
 					value={searchQuery}
 					onChange={(e): void => setSearchQuery(e.target.value)}
 				/>
+			)}
+
+			{showPinned && Object.keys(filteredPinnedData).length > 0 && (
+				<div className="pretty-view__pinned">
+					<div className="pretty-view__pinned-header">PINNED ITEMS</div>
+					<JSONTree
+						key={`pinned-${searchQuery}`}
+						data={filteredPinnedData}
+						theme={theme}
+						invertTheme={false}
+						hideRoot
+						shouldExpandNodeInitially={shouldExpandNodeInitially}
+						valueRenderer={valueRenderer}
+						getItemString={getItemString}
+						labelRenderer={pinnedLabelRenderer}
+					/>
+				</div>
 			)}
 
 			<JSONTree
@@ -199,8 +290,3 @@ function PrettyView({
 }
 
 export default PrettyView;
-
-//  Remaining for PrettyView:
-//   1. Pinned items — localStorage persistence, pin/unpin action in dropdown, "PINNED ITEMS" section at top
-//   2. JSON view — Monaco Editor mode (separate component but related)
-//   3. View mode switcher — Pretty/JSON toggle toolbar above the content

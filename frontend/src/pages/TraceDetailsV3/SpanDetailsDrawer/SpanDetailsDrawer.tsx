@@ -13,8 +13,8 @@ import { DetailsPanelState } from 'components/DetailsPanel/types';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import dayjs from 'dayjs';
 import { noop } from 'lodash-es';
+import { DataViewer } from 'periscope/components/DataViewer';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { PrettyView } from 'periscope/components/PrettyView';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import { KEY_ATTRIBUTE_KEYS } from './constants';
@@ -188,7 +188,11 @@ function SpanDetailsContent({
 			{/* Step 9: ContentTabs + content area */}
 
 			{/* Step 10: Pretty view */}
-			<PrettyView data={selectedSpan} />
+			<DataViewer
+				data={selectedSpan}
+				drawerKey="trace-details"
+				prettyViewProps={{ showPinned: true }}
+			/>
 		</div>
 	);
 }

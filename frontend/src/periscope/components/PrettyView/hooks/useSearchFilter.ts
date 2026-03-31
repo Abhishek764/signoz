@@ -37,7 +37,7 @@ function filterArray(arr: AnyValue[], query: string): AnyValue[] | null {
 }
 
 // Recursively filter the data tree, keeping only branches with matching keys or values
-function filterTree(obj: AnyRecord, query: string): AnyRecord | null {
+export function filterTree(obj: AnyRecord, query: string): AnyRecord | null {
 	const result: AnyRecord = {};
 	const lowerQuery = query.toLowerCase();
 	let hasMatch = false;

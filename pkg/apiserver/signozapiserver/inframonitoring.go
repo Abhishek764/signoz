@@ -16,7 +16,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			ID:                  "HostsList",
 			Tags:                []string{"infra-monitoring"},
 			Summary:             "List Hosts for Infra Monitoring",
-			Description:         "This endpoint returns a list of hosts matching the criteria for infrastructure monitoring.",
+			Description:         "This endpoint returns a list of hosts along with other information for each of them",
 			Request:             new(inframonitoringtypes.HostsListRequest),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.HostsListResponse),

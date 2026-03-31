@@ -1114,6 +1114,69 @@ components:
         enabled:
           type: boolean
       type: object
+    InframonitoringtypesHostRecord:
+      properties:
+        active:
+          type: boolean
+        cpu:
+          format: double
+          type: number
+        hostName:
+          type: string
+        load15:
+          format: double
+          type: number
+        memory:
+          format: double
+          type: number
+        meta:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        wait:
+          format: double
+          type: number
+      type: object
+    InframonitoringtypesHostsListRequest:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      type: object
+    InframonitoringtypesHostsListResponse:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        isSendingK8SAgentMetrics:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesHostRecord'
+          nullable: true
+          type: array
+        sentAnyMetricsData:
+          type: boolean
+        total:
+          type: integer
+        type:
+          type: string
+      type: object
     MetricsexplorertypesListMetric:
       properties:
         description:
@@ -7257,6 +7320,64 @@ paths:
       summary: Health check
       tags:
       - health
+  /api/v2/infra-monitoring/hosts/list:
+    post:
+      deprecated: false
+      description: This endpoint returns a list of hosts along with other information
+        for each of them
+      operationId: HostsList
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesHostsListRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesHostsListResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Hosts for Infra Monitoring
+      tags:
+      - infra-monitoring
   /api/v2/livez:
     get:
       deprecated: false

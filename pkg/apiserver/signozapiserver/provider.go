@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -47,6 +48,7 @@ type provider struct {
 	dashboardModule         dashboard.Module
 	dashboardHandler        dashboard.Handler
 	metricsExplorerHandler  metricsexplorer.Handler
+	infraMonitoringHandler  inframonitoring.Handler
 	gatewayHandler          gateway.Handler
 	fieldsHandler           fields.Handler
 	authzHandler            authz.Handler
@@ -73,6 +75,7 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
@@ -102,6 +105,7 @@ func NewFactory(
 			dashboardModule,
 			dashboardHandler,
 			metricsExplorerHandler,
+			infraMonitoringHandler,
 			gatewayHandler,
 			fieldsHandler,
 			authzHandler,
@@ -133,6 +137,7 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
@@ -162,6 +167,7 @@ func newProvider(
 		dashboardModule:         dashboardModule,
 		dashboardHandler:        dashboardHandler,
 		metricsExplorerHandler:  metricsExplorerHandler,
+		infraMonitoringHandler:  infraMonitoringHandler,
 		gatewayHandler:          gatewayHandler,
 		fieldsHandler:           fieldsHandler,
 		authzHandler:            authzHandler,
@@ -225,6 +231,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addMetricsExplorerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addInfraMonitoringRoutes(router); err != nil {
 		return err
 	}
 

@@ -1,29 +1,29 @@
-import { useRef } from 'react';
-import Draggable from 'react-draggable';
+import { createPortal } from 'react-dom';
+import { Rnd } from 'react-rnd';
 
 import './FloatingPanel.styles.scss';
 
 export interface FloatingPanelProps {
 	isOpen: boolean;
-	// onClose: () => void;
 	children: React.ReactNode;
 	defaultPosition?: { x: number; y: number };
 	width?: number;
 	height?: number;
+	minWidth?: number;
+	minHeight?: number;
 	className?: string;
 }
 
 function FloatingPanel({
 	isOpen,
-	// onClose,
 	children,
 	defaultPosition,
 	width = 560,
 	height = 600,
+	minWidth = 400,
+	minHeight = 300,
 	className,
 }: FloatingPanelProps): JSX.Element | null {
-	const nodeRef = useRef<HTMLDivElement>(null);
-
 	if (!isOpen) {
 		return null;
 	}
@@ -33,26 +33,32 @@ function FloatingPanel({
 		y: 80,
 	};
 
-	return (
-		<Draggable
-			handle=".floating-panel__drag-handle"
-			nodeRef={nodeRef}
-			defaultPosition={initialPosition}
-			bounds={{
-				left: -(width - 100),
-				top: 0,
-				right: window.innerWidth - 100,
-				bottom: window.innerHeight - 50,
+	return createPortal(
+		<Rnd
+			default={{
+				x: initialPosition.x,
+				y: initialPosition.y,
+				width,
+				height,
+			}}
+			dragHandleClassName="floating-panel__drag-handle"
+			minWidth={minWidth}
+			minHeight={minHeight}
+			className={`floating-panel ${className || ''}`}
+			enableResizing={{
+				top: true,
+				right: false,
+				bottom: true,
+				left: false,
+				topRight: false,
+				bottomRight: false,
+				bottomLeft: false,
+				topLeft: false,
 			}}
 		>
-			<div
-				ref={nodeRef}
-				className={`floating-panel ${className || ''}`}
-				style={{ width, height }}
-			>
-				{children}
-			</div>
-		</Draggable>
+			<div className="floating-panel__inner">{children}</div>
+		</Rnd>,
+		document.body,
 	);
 }
 

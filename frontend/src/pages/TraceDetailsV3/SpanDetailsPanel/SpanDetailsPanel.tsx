@@ -23,7 +23,7 @@ import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
 
-import './SpanDetailsDrawer.styles.scss';
+import './SpanDetailsPanel.styles.scss';
 
 interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
@@ -71,7 +71,7 @@ const SPAN_HEADER_ACTIONS: HeaderAction[] = [
 	{
 		key: 'nav',
 		component: (
-			<div className="span-details-drawer__header-nav">
+			<div className="span-details-panel__header-nav">
 				<Button variant="ghost" size="icon" color="secondary" onClick={noop}>
 					<ChevronUp size={14} />
 				</Button>
@@ -127,8 +127,8 @@ function SpanDetailsContent({
 	}, [selectedSpan]);
 
 	return (
-		<div className="span-details-drawer__body">
-			<div className="span-details-drawer__span-row">
+		<div className="span-details-panel__body">
+			<div className="span-details-panel__span-row">
 				<KeyValueLabel
 					badgeKey="Span name"
 					badgeValue={selectedSpan.name}
@@ -147,7 +147,7 @@ function SpanDetailsContent({
 			<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
 			{/* Step 6: HighlightedOptions */}
-			<div className="span-details-drawer__highlighted-options">
+			<div className="span-details-panel__highlighted-options">
 				<KeyValueLabel
 					badgeKey="SERVICE"
 					badgeValue={selectedSpan.serviceName}
@@ -172,11 +172,11 @@ function SpanDetailsContent({
 
 			{/* Step 7: KeyAttributes */}
 			{keyAttributes.length > 0 && (
-				<div className="span-details-drawer__key-attributes">
-					<div className="span-details-drawer__key-attributes-label">
+				<div className="span-details-panel__key-attributes">
+					<div className="span-details-panel__key-attributes-label">
 						KEY ATTRIBUTES
 					</div>
-					<div className="span-details-drawer__key-attributes-chips">
+					<div className="span-details-panel__key-attributes-chips">
 						{keyAttributes.map(({ key, value }) => (
 							<KeyValueLabel key={key} badgeKey={key} badgeValue={value} />
 						))}
@@ -219,7 +219,7 @@ function SpanDetailsPanel({
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
-				className="span-details-drawer"
+				className="span-details-panel"
 			>
 				{content}
 			</DetailsPanelDrawer>
@@ -235,7 +235,7 @@ function SpanDetailsPanel({
 		<FloatingPanel
 			isOpen={panelState.isOpen}
 			// onClose={panelState.close}
-			className="span-details-drawer"
+			className="span-details-panel"
 			width={PANEL_WIDTH}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 			defaultPosition={{

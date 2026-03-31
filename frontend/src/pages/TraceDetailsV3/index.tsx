@@ -12,7 +12,7 @@ import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 // TODO: Remove mock data when new API is available
 import { mockSpan } from './mockSpanDetailsData';
-import SpanDetailsPanel from './SpanDetailsDrawer/SpanDetailsDrawer';
+import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall, {

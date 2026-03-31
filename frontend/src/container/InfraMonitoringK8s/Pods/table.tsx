@@ -295,11 +295,57 @@ const getGroupByEle = (
 	);
 };
 
+const getGroupedByMeta = (
+	pod: K8sPodsData,
+	groupBy: BaseAutocompleteData[],
+): Record<string, string> => {
+	const result: Record<string, string> = {};
+
+	groupBy.forEach((group) => {
+		const rawKey = group.key as string;
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof pod.meta;
+		result[rawKey] = pod.meta[metaKey] ?? '';
+	});
+
+	return result;
+};
+
+const getRowKey = (
+	pod: K8sPodsData,
+	groupBy: BaseAutocompleteData[],
+): string => {
+	const podIdentifier =
+		pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
+
+	if (groupBy.length === 0) {
+		// When not grouped, use pod identifier or fallback to stringified meta
+		return podIdentifier || JSON.stringify(pod.meta);
+	}
+
+	const groupedMeta = getGroupedByMeta(pod, groupBy);
+	const groupKey = Object.values(groupedMeta).join('-');
+
+	// When grouped, combine group key with identifier for uniqueness
+	// Fall back to stringified meta if both are empty
+	if (groupKey && podIdentifier) {
+		return `${groupKey}-${podIdentifier}`;
+	}
+	if (groupKey) {
+		return groupKey;
+	}
+	if (podIdentifier) {
+		return podIdentifier;
+	}
+
+	return JSON.stringify(pod.meta);
+};
+
 export const k8sPodRenderRowData = (
 	pod: K8sPodsData,
 	groupBy: BaseAutocompleteData[],
 ): K8sRenderedRowData => ({
-	key: pod.podUID,
+	key: getRowKey(pod, groupBy),
+	itemKey: pod.podUID,
 	podName: (
 		<Tooltip title={pod.meta.k8s_pod_name || ''}>
 			{pod.meta.k8s_pod_name || ''}
@@ -371,5 +417,5 @@ export const k8sPodRenderRowData = (
 	meta: pod.meta,
 	podGroup: getGroupByEle(pod, groupBy),
 	...pod.meta,
-	groupedByMeta: pod.meta,
+	groupedByMeta: getGroupedByMeta(pod, groupBy),
 });

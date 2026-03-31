@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { VIEWS } from 'components/HostMetricsDetail/constants';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	Options,
 	parseAsInteger,
@@ -222,3 +224,16 @@ export const useInfraMonitoringVolumeUID = (): UseQueryStateReturn<
 		INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
 		parseAsString.withOptions(defaultNuqsOptions),
 	);
+
+export const useInfraMonitoringQueryFilters = (): TagFilter => {
+	const { currentQuery } = useQueryBuilder();
+
+	return useMemo(
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
+		[currentQuery?.builder?.queryData],
+	);
+};

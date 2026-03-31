@@ -84,17 +84,17 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 		return nil, errNoAuthUsernameConfigured
 	}
 
-	err := &types.MultiError{}
+	var errs error
 	for mech := range strings.SplitSeq(mechs, " ") {
 		switch mech {
 		case "CRAM-MD5":
 			secret, secretErr := n.getAuthSecret()
 			if secretErr != nil {
-				err.Add(secretErr)
+				errs = errors.Join(errs, secretErr)
 				continue
 			}
 			if secret == "" {
-				err.Add(errors.NewInternalf(errors.CodeInternal, "missing secret for CRAM-MD5 auth mechanism"))
+				errs = errors.Join(errs, errors.NewInternalf(errors.CodeInternal, "missing secret for CRAM-MD5 auth mechanism"))
 				continue
 			}
 			return smtp.CRAMMD5Auth(username, secret), nil
@@ -102,35 +102,30 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 		case "PLAIN":
 			password, passwordErr := n.getPassword()
 			if passwordErr != nil {
-				err.Add(passwordErr)
+				errs = errors.Join(errs, passwordErr)
 				continue
 			}
 			if password == "" {
-				err.Add(errors.NewInternalf(errors.CodeInternal, "missing password for PLAIN auth mechanism"))
+				errs = errors.Join(errs, errors.NewInternalf(errors.CodeInternal, "missing password for PLAIN auth mechanism"))
 				continue
 			}
-			identity := n.conf.AuthIdentity
-
-			return smtp.PlainAuth(identity, username, password, n.conf.Smarthost.Host), nil
+			return smtp.PlainAuth(n.conf.AuthIdentity, username, password, n.conf.Smarthost.Host), nil
 		case "LOGIN":
 			password, passwordErr := n.getPassword()
 			if passwordErr != nil {
-				err.Add(passwordErr)
+				errs = errors.Join(errs, passwordErr)
 				continue
 			}
 			if password == "" {
-				err.Add(errors.NewInternalf(errors.CodeInternal, "missing password for LOGIN auth mechanism"))
+				errs = errors.Join(errs, errors.NewInternalf(errors.CodeInternal, "missing password for LOGIN auth mechanism"))
 				continue
 			}
 			return LoginAuth(username, password), nil
 		default:
-			err.Add(errors.NewInternalf(errors.CodeUnsupported, "unknown auth mechanism: %s", mech))
+			errs = errors.Join(errs, errors.NewInternalf(errors.CodeUnsupported, "unknown auth mechanism: %s", mech))
 		}
 	}
-	if err.Len() == 0 {
-		return nil, errors.NewInternalf(errors.CodeInvalidInput, "empty auth mechanism")
-	}
-	return nil, err
+	return nil, errs
 }
 
 // Notify implements the Notifier interface.

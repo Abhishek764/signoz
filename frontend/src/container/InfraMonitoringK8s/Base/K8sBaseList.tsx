@@ -14,9 +14,7 @@ import {
 } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
-import classNames from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { AppState } from 'store/reducers';
@@ -24,7 +22,6 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderQuery,
 	TagFilter,
-	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
@@ -33,26 +30,22 @@ import { openInNewTab } from 'utils/navigation';
 import { K8sCategory } from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
-	useInfraMonitoringEventsFilters,
 	useInfraMonitoringFilters,
 	useInfraMonitoringGroupBy,
-	useInfraMonitoringLogFilters,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringQueryFilters,
-	useInfraMonitoringTracesFilters,
-	useInfraMonitoringView,
 } from '../hooks';
 import LoadingContainer from '../LoadingContainer';
 import { OrderBySchemaType } from '../schemas';
 import { usePageSize } from '../utils';
-import K8sBaseDetails, {
-	K8sDetailsFilters,
-	K8sDetailsMetadataConfig,
-} from './K8sBaseDetails';
 import K8sHeader from './K8sHeader';
-import { useInfraMonitoringTableColumnsForPage } from './useInfraMonitoringTableColumnsStore';
+import {
+	IEntityColumn,
+	useInfraMonitoringTableColumnsForPage,
+	useInfraMonitoringTableColumnsStore,
+} from './useInfraMonitoringTableColumnsStore';
 
-import '../InfraMonitoringK8s.styles.scss';
+import styles from './K8sBaseList.module.scss';
 
 export type K8sBaseFilters = {
 	filters?: TagFilter;
@@ -81,6 +74,7 @@ export type K8sBaseListProps<T = unknown> = {
 	// List configuration
 	controlListPrefix?: React.ReactNode;
 	entity: K8sCategory;
+	tableColumnsDefinitions: IEntityColumn[];
 	tableColumns: ColumnType<K8sRenderedRowData>[];
 	fetchListData: (
 		filters: K8sBaseFilters,
@@ -94,30 +88,7 @@ export type K8sBaseListProps<T = unknown> = {
 		record: T,
 		groupBy: BaseAutocompleteData[],
 	) => K8sRenderedRowData;
-
-	// Details drawer configuration
-	eventCategory: string;
-	getSelectedItemFilters: (selectedItemId: string) => TagFilter;
-	fetchEntityData: (
-		filters: K8sDetailsFilters,
-		signal?: AbortSignal,
-	) => Promise<{ data: T | null; error?: string | null }>;
-	getEntityName: (entity: T) => string;
-	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
-	getInitialEventsFilters: (entity: T) => TagFilterItem[];
-	primaryFilterKeys: string[];
-	metadataConfig: K8sDetailsMetadataConfig<T>[];
-	entityWidgetInfo: {
-		title: string;
-		yAxisUnit: string;
-	}[];
-	getEntityQueryPayload: (
-		entity: T,
-		start: number,
-		end: number,
-		dotMetricsEnabled: boolean,
-	) => GetQueryResultsProps[];
-	queryKeyPrefix: string;
+	eventCategory: InfraMonitoringEvents;
 };
 
 export type K8sExpandedRowProps<T> = {
@@ -246,7 +217,10 @@ function K8sExpandedRow<T>({
 	};
 
 	return (
-		<div className="expanded-table-container">
+		<div
+			className={styles.expandedTableContainer}
+			data-testid="expanded-table-container"
+		>
 			{isError && (
 				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
 			)}
@@ -254,7 +228,7 @@ function K8sExpandedRow<T>({
 			{isFetching || isLoading ? (
 				<LoadingContainer />
 			) : (
-				<div className="expanded-table">
+				<div data-testid="expanded-table">
 					<Table
 						columns={nestedColumns}
 						dataSource={formattedData}
@@ -276,16 +250,16 @@ function K8sExpandedRow<T>({
 								}
 								setSelectedItem(rowRecord.itemKey);
 							},
-							className: 'expanded-clickable-row',
+							className: styles.expandedClickableRow,
 						})}
 					/>
 
 					{data?.total && data?.total > 10 && (
-						<div className="expanded-table-footer">
+						<div className={styles.expandedTableFooter}>
 							<Button
 								type="default"
 								size="small"
-								className="periscope-btn secondary"
+								className={styles.viewAllButton}
 								onClick={handleViewAllClick}
 							>
 								<CornerDownRight size={14} />
@@ -302,25 +276,17 @@ function K8sExpandedRow<T>({
 export function K8sBaseList<T>({
 	controlListPrefix,
 	entity,
+	tableColumnsDefinitions,
 	tableColumns,
 	fetchListData,
 	renderRowData,
 	eventCategory,
-	getSelectedItemFilters,
-	fetchEntityData,
-	getEntityName,
-	getInitialLogTracesFilters,
-	getInitialEventsFilters,
-	primaryFilterKeys,
-	metadataConfig,
-	entityWidgetInfo,
-	getEntityQueryPayload,
-	queryKeyPrefix,
 }: K8sBaseListProps<T>): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
+	const queryFilters = useInfraMonitoringQueryFilters();
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
@@ -329,19 +295,19 @@ export function K8sBaseList<T>({
 		'selectedItem',
 		parseAsString,
 	);
-	const [, setView] = useInfraMonitoringView();
-	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
-	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
-	const [, setLogFilters] = useInfraMonitoringLogFilters();
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 	useEffect(() => {
 		setExpandedRowKeys([]);
 	}, [groupBy, currentPage]);
-
-	const queryFilters = useInfraMonitoringQueryFilters();
-
 	const { pageSize, setPageSize } = usePageSize(entity);
+
+	const initializeTableColumns = useInfraMonitoringTableColumnsStore(
+		(state) => state.initializePageColumns,
+	);
+	useEffect(() => {
+		initializeTableColumns(entity, tableColumnsDefinitions);
+	}, [initializeTableColumns, entity, tableColumnsDefinitions]);
 
 	const queryKey = useMemo(() => {
 		return [
@@ -387,7 +353,7 @@ export function K8sBaseList<T>({
 	const pageData = data?.data;
 	const totalCount = data?.total || 0;
 
-	const formattedPodsData = useMemo(
+	const formattedItemsData = useMemo(
 		() => pageData?.map((item) => renderRowData(item, groupBy)),
 		[pageData, renderRowData, groupBy],
 	);
@@ -438,7 +404,7 @@ export function K8sBaseList<T>({
 		}
 	};
 
-	const openPodInNewTab = (record: K8sRenderedRowData): void => {
+	const openItemInNewTab = (record: K8sRenderedRowData): void => {
 		const newParams = new URLSearchParams(document.location.search);
 		newParams.set('selectedItem', record.itemKey);
 		openInNewTab(
@@ -454,7 +420,7 @@ export function K8sBaseList<T>({
 		event: React.MouseEvent,
 	): void => {
 		if (event && isModifierKeyPressed(event)) {
-			openPodInNewTab(record);
+			openItemInNewTab(record);
 			return;
 		}
 		if (groupBy.length === 0) {
@@ -468,14 +434,6 @@ export function K8sBaseList<T>({
 			page: InfraMonitoringEvents.ListPage,
 			category: eventCategory,
 		});
-	};
-
-	const handleClosePodDetail = (): void => {
-		setSelectedItem(null);
-		setView(null);
-		setTracesFilters(null);
-		setEventsFilters(null);
-		setLogFilters(null);
 	};
 
 	const [
@@ -580,15 +538,15 @@ export function K8sBaseList<T>({
 		logEvent(InfraMonitoringEvents.PageNumberChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.ListPage,
-			category: InfraMonitoringEvents.Pod,
+			category: eventCategory,
 		});
 	};
 
 	const showTableLoadingState =
-		(isFetching || isLoading) && formattedPodsData?.length === 0;
+		(isFetching || isLoading) && formattedItemsData?.length === 0;
 
 	return (
-		<div className="k8s-list">
+		<>
 			<K8sHeader
 				controlListPrefix={controlListPrefix}
 				entity={entity}
@@ -599,10 +557,8 @@ export function K8sBaseList<T>({
 			)}
 
 			<Table
-				className={classNames('k8s-list-table', {
-					'expanded-k8s-list-table': isGroupedByAttribute,
-				})}
-				dataSource={showTableLoadingState ? [] : formattedPodsData}
+				className={styles.k8sListTable}
+				dataSource={showTableLoadingState ? [] : formattedItemsData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -618,15 +574,15 @@ export function K8sBaseList<T>({
 				}}
 				locale={{
 					emptyText: showTableLoadingState ? null : (
-						<div className="no-filtered-hosts-message-container">
-							<div className="no-filtered-hosts-message-content">
+						<div className={styles.noFilteredHostsMessageContainer}>
+							<div className={styles.noFilteredHostsMessageContent}>
 								<img
 									src="/Icons/emptyState.svg"
 									alt="thinking-emoji"
-									className="empty-state-svg"
+									className={styles.emptyStateSvg}
 								/>
 
-								<Typography.Text className="no-filtered-hosts-message">
+								<Typography.Text className={styles.noFilteredHostsMessage}>
 									This query had no results. Edit your query and try again!
 								</Typography.Text>
 							</div>
@@ -640,7 +596,7 @@ export function K8sBaseList<T>({
 					record,
 				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
 					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
-					className: 'clickable-row',
+					className: styles.clickableRow,
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
@@ -648,23 +604,6 @@ export function K8sBaseList<T>({
 					expandedRowKeys,
 				}}
 			/>
-
-			<K8sBaseDetails<T>
-				selectedItemId={selectedItem}
-				onClose={handleClosePodDetail}
-				category={entity}
-				eventCategory={eventCategory}
-				getSelectedItemFilters={getSelectedItemFilters}
-				fetchEntityData={fetchEntityData}
-				getEntityName={getEntityName}
-				getInitialLogTracesFilters={getInitialLogTracesFilters}
-				getInitialEventsFilters={getInitialEventsFilters}
-				primaryFilterKeys={primaryFilterKeys}
-				metadataConfig={metadataConfig}
-				entityWidgetInfo={entityWidgetInfo}
-				getEntityQueryPayload={getEntityQueryPayload}
-				queryKeyPrefix={queryKeyPrefix}
-			/>
-		</div>
+		</>
 	);
 }

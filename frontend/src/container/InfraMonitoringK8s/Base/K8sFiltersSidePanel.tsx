@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Button, DrawerWrapper, Input } from '@signozhq/ui';
+import { Button, DrawerWrapper } from '@signozhq/ui';
 
 import { K8sCategory } from '../constants';
 import {
@@ -27,23 +26,8 @@ function K8sFiltersSidePanel({
 
 	const [columns, columnsHidden] = useInfraMonitoringTableColumnsForPage(entity);
 
-	const [searchValue, setSearchValue] = useState('');
-
-	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setSearchValue(e.target.value);
-	};
-
 	const drawerContent = (
 		<>
-			<div className={styles.bodyHeader}>
-				<Input
-					autoFocus
-					placeholder="Search for a column ..."
-					value={searchValue}
-					onChange={handleSearchChange}
-				/>
-			</div>
-
 			<div className={styles.columnsTitle}>Added Columns (Click to remove)</div>
 
 			<div className={styles.columnsList}>
@@ -53,9 +37,6 @@ function K8sFiltersSidePanel({
 							!columnsHidden.includes(column.id) &&
 							column.behavior !== 'hidden-on-collapse',
 					)
-					.filter((column) =>
-						column.label.toLowerCase().includes(searchValue.toLowerCase()),
-					)
 					.map((column) => (
 						<div className={styles.columnItem} key={column.value}>
 							{/*<GripVertical size={16} /> TODO: Add support back when update the table component */}
@@ -64,6 +45,7 @@ function K8sFiltersSidePanel({
 								color="none"
 								className={styles.columnItem}
 								disabled={!column.canBeHidden}
+								data-testid={`remove-column-${column.id}`}
 								onClick={(): void => removeColumn(entity, column.id)}
 							>
 								{column.label}
@@ -79,9 +61,6 @@ function K8sFiltersSidePanel({
 			<div className={styles.columnsList}>
 				{columns
 					.filter((column) => columnsHidden.includes(column.id))
-					.filter((column) =>
-						column.label.toLowerCase().includes(searchValue.toLowerCase()),
-					)
 					.map((column) => (
 						<div className={styles.columnItem} key={column.value}>
 							<Button
@@ -89,6 +68,7 @@ function K8sFiltersSidePanel({
 								color="none"
 								className={styles.columnItem}
 								data-can-be-added="true"
+								data-testid={`add-column-${column.id}`}
 								onClick={(): void => addColumn(entity, column.id)}
 								tabIndex={0}
 							>

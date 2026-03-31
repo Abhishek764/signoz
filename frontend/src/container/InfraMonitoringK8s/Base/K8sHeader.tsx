@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button, Select } from 'antd';
+import { Button } from '@signozhq/button';
+import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
@@ -20,6 +21,8 @@ import {
 	useInfraMonitoringGroupBy,
 } from '../hooks';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel';
+
+import styles from './K8sHeader.module.scss';
 
 interface K8sHeaderProps {
 	controlListPrefix?: React.ReactNode;
@@ -160,11 +163,11 @@ function K8sHeader({
 	}, []);
 
 	return (
-		<div className="k8s-list-controls">
-			<div className="k8s-list-controls-left">
+		<div className={styles.k8sListControls}>
+			<div className={styles.k8sListControlsLeft}>
 				{controlListPrefix}
 
-				<div className="k8s-qb-search-container">
+				<div className={styles.k8sQbSearchContainer}>
 					<QueryBuilderSearch
 						query={query as IBuilderQuery}
 						onChange={handleChangeTagFilters}
@@ -174,10 +177,10 @@ function K8sHeader({
 					/>
 				</div>
 
-				<div className="k8s-attribute-search-container">
-					<div className="group-by-label"> Group by </div>
+				<div className={styles.k8sAttributeSearchContainer}>
+					<div className={styles.groupByLabel}> Group by </div>
 					<Select
-						className="group-by-select"
+						className={styles.groupBySelect}
 						loading={isLoadingGroupByFilters}
 						mode="multiple"
 						value={groupBy}
@@ -191,7 +194,7 @@ function K8sHeader({
 				</div>
 			</div>
 
-			<div className="k8s-list-controls-right">
+			<div className={styles.k8sListControlsRight}>
 				<DateTimeSelectionV2
 					showAutoRefresh={showAutoRefresh}
 					showRefreshText={false}
@@ -199,9 +202,12 @@ function K8sHeader({
 				/>
 
 				<Button
-					type="text"
-					className="periscope-btn ghost"
+					type="button"
+					variant="ghost"
+					size="icon"
+					color="none"
 					disabled={groupBy?.length > 0}
+					data-testid="k8s-list-filters-button"
 					onClick={(): void => setIsFiltersSidePanelOpen(true)}
 				>
 					<SlidersHorizontal size={14} />

@@ -2,9 +2,67 @@ import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
+
+import {
+	createFilterItem,
+	K8sDetailsMetadataConfig,
+} from '../Base/K8sBaseDetails';
+import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+
+export const k8sPodGetSelectedItemFilters = (
+	selectedItemId: string,
+): TagFilter => {
+	return {
+		op: 'AND',
+		items: [
+			{
+				id: 'k8s_pod_uid',
+				key: {
+					key: 'k8s_pod_uid',
+					type: null,
+				},
+				op: '=',
+				value: selectedItemId,
+			},
+		],
+	};
+};
+
+export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sPodsData>[] = [
+	{ label: 'NAMESPACE', getValue: (p): string => p.meta.k8s_namespace_name },
+	{
+		label: 'Cluster Name',
+		getValue: (p): string => p.meta.k8s_cluster_name,
+	},
+	{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
+];
+
+export const k8sPodInitialFilters = [
+	QUERY_KEYS.K8S_POD_NAME,
+	QUERY_KEYS.K8S_CLUSTER_NAME,
+	QUERY_KEYS.K8S_NAMESPACE_NAME,
+];
+
+export const k8sPodInitialEventsFilter = (
+	pod: K8sPodsData,
+): ReturnType<typeof createFilterItem>[] => [
+	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Pod'),
+	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, pod.meta.k8s_pod_name),
+];
+
+export const k8sPodInitialLogTracesFilter = (
+	pod: K8sPodsData,
+): ReturnType<typeof createFilterItem>[] => [
+	createFilterItem(QUERY_KEYS.K8S_POD_NAME, pod.meta.k8s_pod_name),
+	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, pod.meta.k8s_namespace_name),
+];
+
+export const k8sPodGetEntityName = (pod: K8sPodsData): string =>
+	pod.meta.k8s_pod_name;
 
 export const podWidgetInfo = [
 	{

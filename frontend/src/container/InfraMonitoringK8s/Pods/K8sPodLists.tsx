@@ -1,16 +1,29 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { createFilterItem, K8sDetailsFilters } from '../Base/K8sBaseDetails';
+import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseFilters, K8sBaseList } from '../Base/K8sBaseList';
-import { useInfraMonitoringTableColumnsStore } from '../Base/useInfraMonitoringTableColumnsStore';
 import { K8sCategory } from '../constants';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+import {
+	useInfraMonitoringEventsFilters,
+	useInfraMonitoringLogFilters,
+	useInfraMonitoringTracesFilters,
+	useInfraMonitoringView,
+} from '../hooks';
 import { getK8sPodsList, K8sPodsData } from './api';
-import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
+import {
+	getPodMetricsQueryPayload,
+	k8sPodDetailsMetadataConfig,
+	k8sPodGetEntityName,
+	k8sPodGetSelectedItemFilters,
+	k8sPodInitialEventsFilter,
+	k8sPodInitialFilters,
+	k8sPodInitialLogTracesFilter,
+	podWidgetInfo,
+} from './constants';
 import {
 	k8sPodColumns,
 	k8sPodColumnsConfig,
@@ -26,6 +39,11 @@ function K8sPodsList({
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
+
+	const [selectedItem, setSelectedItem] = useQueryState(
+		'selectedItem',
+		parseAsString,
+	);
 
 	const fetchListData = useCallback(
 		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
@@ -48,26 +66,6 @@ function K8sPodsList({
 			};
 		},
 		[dotMetricsEnabled],
-	);
-
-	const getSelectedItemFilters = useCallback(
-		(selectedItemId: string): TagFilter => {
-			return {
-				op: 'AND',
-				items: [
-					{
-						id: 'k8s_pod_uid',
-						key: {
-							key: 'k8s_pod_uid',
-							type: null,
-						},
-						op: '=',
-						value: selectedItemId,
-					},
-				],
-			};
-		},
-		[],
 	);
 
 	const fetchEntityData = useCallback(
@@ -98,51 +96,48 @@ function K8sPodsList({
 		[dotMetricsEnabled],
 	);
 
-	const initializeTableColumns = useInfraMonitoringTableColumnsStore(
-		(state) => state.initializePageColumns,
-	);
+	const [, setView] = useInfraMonitoringView();
+	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
+	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
+	const [, setLogFilters] = useInfraMonitoringLogFilters();
 
-	useEffect(() => {
-		initializeTableColumns(K8sCategory.PODS, k8sPodColumns);
-	}, [initializeTableColumns]);
+	const handleClosePodDetail = (): void => {
+		setSelectedItem(null);
+		setView(null);
+		setTracesFilters(null);
+		setEventsFilters(null);
+		setLogFilters(null);
+	};
 
 	return (
-		<K8sBaseList<K8sPodsData>
-			controlListPrefix={controlListPrefix}
-			entity={K8sCategory.PODS}
-			tableColumns={k8sPodColumnsConfig}
-			fetchListData={fetchListData}
-			renderRowData={k8sPodRenderRowData}
-			// Details drawer configuration
-			eventCategory={InfraMonitoringEvents.Pod}
-			getSelectedItemFilters={getSelectedItemFilters}
-			fetchEntityData={fetchEntityData}
-			getEntityName={(pod): string => pod.meta.k8s_pod_name}
-			getInitialLogTracesFilters={(pod): ReturnType<typeof createFilterItem>[] => [
-				createFilterItem(QUERY_KEYS.K8S_POD_NAME, pod.meta.k8s_pod_name),
-				createFilterItem(
-					QUERY_KEYS.K8S_NAMESPACE_NAME,
-					pod.meta.k8s_namespace_name,
-				),
-			]}
-			getInitialEventsFilters={(pod): ReturnType<typeof createFilterItem>[] => [
-				createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Pod'),
-				createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, pod.meta.k8s_pod_name),
-			]}
-			primaryFilterKeys={[
-				QUERY_KEYS.K8S_POD_NAME,
-				QUERY_KEYS.K8S_CLUSTER_NAME,
-				QUERY_KEYS.K8S_NAMESPACE_NAME,
-			]}
-			metadataConfig={[
-				{ label: 'NAMESPACE', getValue: (p): string => p.meta.k8s_namespace_name },
-				{ label: 'Cluster Name', getValue: (p): string => p.meta.k8s_cluster_name },
-				{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
-			]}
-			entityWidgetInfo={podWidgetInfo}
-			getEntityQueryPayload={getPodMetricsQueryPayload}
-			queryKeyPrefix="pod"
-		/>
+		<>
+			<K8sBaseList<K8sPodsData>
+				controlListPrefix={controlListPrefix}
+				entity={K8sCategory.PODS}
+				tableColumnsDefinitions={k8sPodColumns}
+				tableColumns={k8sPodColumnsConfig}
+				fetchListData={fetchListData}
+				renderRowData={k8sPodRenderRowData}
+				eventCategory={InfraMonitoringEvents.Pod}
+			/>
+
+			<K8sBaseDetails<K8sPodsData>
+				selectedItemId={selectedItem}
+				onClose={handleClosePodDetail}
+				category={K8sCategory.PODS}
+				eventCategory={InfraMonitoringEvents.Pod}
+				getSelectedItemFilters={k8sPodGetSelectedItemFilters}
+				fetchEntityData={fetchEntityData}
+				getEntityName={k8sPodGetEntityName}
+				getInitialLogTracesFilters={k8sPodInitialLogTracesFilter}
+				getInitialEventsFilters={k8sPodInitialEventsFilter}
+				primaryFilterKeys={k8sPodInitialFilters}
+				metadataConfig={k8sPodDetailsMetadataConfig}
+				entityWidgetInfo={podWidgetInfo}
+				getEntityQueryPayload={getPodMetricsQueryPayload}
+				queryKeyPrefix="pod"
+			/>
+		</>
 	);
 }
 

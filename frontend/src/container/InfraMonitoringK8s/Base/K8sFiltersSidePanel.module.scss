@@ -2,31 +2,28 @@
   --dialog-description-padding: 0px 0px var(--spacing-8) 0px;
 }
 
-.bodyHeader {
-  border-bottom: 1px solid var(--l2-border);
-  --input-focus-outline: none;
-}
-
 .columnItem {
   display: flex;
   align-items: center;
 }
 
 .columnsTitle {
-  color: var(--l1-foreground);
-  opacity: 0.6;
-  font-size: var(--periscope-font-size-small);
-  font-weight: var(--periscope-font-weight-medium);
+  color: var(--l2-foreground);
+  font-size: var(--periscope-font-size-small, 11px);
+  font-weight: var(--periscope-font-weight-medium, 500);
   text-transform: uppercase;
 
   padding: var(--spacing-4) var(--spacing-8);
-  margin-bottom: var(--spacing-4);
+  border-bottom: 1px solid var(--l2-border);
+
+  &:not(:first-of-type) {
+    border-top: 1px solid var(--l2-border);
+  }
 }
 
 .columnsList {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
 }
 
 .columnItem {

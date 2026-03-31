@@ -1,6 +1,3 @@
-.k8sList {
-}
-
 .clickableRow {
   cursor: pointer;
 }
@@ -31,7 +28,7 @@
 .viewAllButton {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-2);
 }
 
 .k8sListTable {
@@ -135,20 +132,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
 
-  .noFilteredHostsMessageContent {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
+.noFilteredHostsMessageContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
 
-    width: fit-content;
-    padding: 24px;
-  }
+  width: fit-content;
+  padding: 24px;
+}
 
-  .noFilteredHostsMessage {
-    margin-top: 8px;
-  }
+.noFilteredHostsMessage {
+  margin-top: var(--spacing-4);
 }
 
 .emptyStateSvg {

@@ -1,9 +1,0 @@
-{
-    "kind": "SigNozClickHouseSQL",
-    "spec": {
-        "name": "A",
-        "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, count() AS total FROM signoz_logs.distributed_logs GROUP BY ts ORDER BY ts",
-        "disabled": false,
-        "legend": "Log count"
-    }
-}

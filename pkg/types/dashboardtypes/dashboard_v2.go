@@ -20,7 +20,8 @@ type StorableDashboardV2 struct {
 	bun.BaseModel `bun:"table:dashboard,alias:dashboard"`
 
 	types.Identifiable
-	types.TimeAuditable
+	// TimeAuditable is not embedded here — CreatedAt/UpdatedAt live in
+	// Data.Metadata (Perses's ProjectMetadata) to avoid duplication.
 	types.UserAuditable
 	Data   StorableDashboardDataV2 `bun:"data,type:text,notnull"`
 	Locked bool                    `bun:"locked,notnull,default:false"`
@@ -28,7 +29,8 @@ type StorableDashboardV2 struct {
 }
 
 type DashboardV2 struct {
-	types.TimeAuditable
+	// TimeAuditable is not embedded here — CreatedAt/UpdatedAt live in
+	// Data.Metadata (Perses's ProjectMetadata) to avoid duplication.
 	types.UserAuditable
 
 	ID     string                  `json:"id"`
@@ -57,10 +59,6 @@ func NewStorableDashboardV2FromDashboard(dashboard *DashboardV2) (*StorableDashb
 		Identifiable: types.Identifiable{
 			ID: dashboardID,
 		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: dashboard.CreatedAt,
-			UpdatedAt: dashboard.UpdatedAt,
-		},
 		UserAuditable: types.UserAuditable{
 			CreatedBy: dashboard.CreatedBy,
 			UpdatedBy: dashboard.UpdatedBy,
@@ -73,13 +71,11 @@ func NewStorableDashboardV2FromDashboard(dashboard *DashboardV2) (*StorableDashb
 
 func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardDataV2) (*DashboardV2, error) {
 	currentTime := time.Now()
+	data.Metadata.CreatedAt = currentTime
+	data.Metadata.UpdatedAt = currentTime
 
 	return &DashboardV2{
 		ID: valuer.GenerateUUID().StringValue(),
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: currentTime,
-			UpdatedAt: currentTime,
-		},
 		UserAuditable: types.UserAuditable{
 			CreatedBy: createdBy,
 			UpdatedBy: createdBy,
@@ -93,10 +89,6 @@ func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardD
 func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2) *DashboardV2 {
 	return &DashboardV2{
 		ID: storableDashboard.ID.StringValue(),
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: storableDashboard.CreatedAt,
-			UpdatedAt: storableDashboard.UpdatedAt,
-		},
 		UserAuditable: types.UserAuditable{
 			CreatedBy: storableDashboard.CreatedBy,
 			UpdatedBy: storableDashboard.UpdatedBy,
@@ -130,7 +122,6 @@ func NewGettableDashboardsV2FromDashboards(dashboards []*DashboardV2) ([]*Gettab
 func NewGettableDashboardV2FromDashboard(dashboard *DashboardV2) (*GettableDashboardV2, error) {
 	return &GettableDashboardV2{
 		ID:            dashboard.ID,
-		TimeAuditable: dashboard.TimeAuditable,
 		UserAuditable: dashboard.UserAuditable,
 		OrgID:         dashboard.OrgID,
 		Data:          dashboard.Data,
@@ -143,7 +134,7 @@ func (dashboard *DashboardV2) UpdateV2(ctx context.Context, updatableDashboard U
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
 	dashboard.UpdatedBy = updatedBy
-	dashboard.UpdatedAt = time.Now()
+	updatableDashboard.Metadata.UpdatedAt = time.Now()
 	dashboard.Data = updatableDashboard
 	return nil
 }
@@ -154,7 +145,7 @@ func (dashboard *DashboardV2) LockUnlockV2(lock bool, role types.Role, updatedBy
 	}
 	dashboard.Locked = lock
 	dashboard.UpdatedBy = updatedBy
-	dashboard.UpdatedAt = time.Now()
+	dashboard.Data.Metadata.UpdatedAt = time.Now()
 	return nil
 }
 

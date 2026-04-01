@@ -105,10 +105,10 @@ type TimeSeriesVisualization struct {
 }
 
 type TimeSeriesChartAppearance struct {
-	LineInterpolation LineInterpolation `json:"lineInterpolation,omitempty"`
-	ShowPoints        bool              `json:"showPoints,omitempty"`
-	LineStyle         LineStyle         `json:"lineStyle,omitempty"`
-	FillMode          FillMode          `json:"fillMode,omitempty"`
+	LineInterpolation LineInterpolation `json:"lineInterpolation"`
+	ShowPoints        bool              `json:"showPoints"`
+	LineStyle         LineStyle         `json:"lineStyle"`
+	FillMode          FillMode          `json:"fillMode"`
 }
 
 type BarChartPanelSpec struct {

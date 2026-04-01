@@ -85,7 +85,11 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		query: { enabled: isLoggedIn },
 	});
 
-	const { data: orgData, isFetching: isFetchingOrgData } = useGetMyOrganization({
+	const {
+		data: orgData,
+		isFetching: isFetchingOrgData,
+		error: orgFetchDataError,
+	} = useGetMyOrganization({
 		query: { enabled: isLoggedIn },
 	});
 
@@ -100,7 +104,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	const isFetchingUser =
 		isFetchingUserData || isFetchingOrgData || isFetchingPermissions;
-	const userFetchError = userFetchDataError || errorOnPermissions;
+	const userFetchError =
+		userFetchDataError || orgFetchDataError || errorOnPermissions;
 
 	const userRole = useMemo(() => {
 		if (permissionsResult?.[IsAdminPermission]?.isGranted) {
@@ -151,10 +156,18 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					return [{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' }];
 				}
 				const orgIndex = prev.findIndex((e) => e.id === orgId);
+
+				if (orgIndex === -1) {
+					return [
+						...prev,
+						{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' },
+					];
+				}
+
 				const updatedOrg: Organization[] = [
 					...prev.slice(0, orgIndex),
 					{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' },
-					...prev.slice(orgIndex + 1, prev.length),
+					...prev.slice(orgIndex + 1),
 				];
 				return updatedOrg;
 			});
@@ -288,6 +301,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(orgId: string, updatedOrgName: string): void => {
 			if (org && org.length > 0) {
 				const orgIndex = org.findIndex((e) => e.id === orgId);
+				if (orgIndex === -1) {
+					return;
+				}
 				const updatedOrg: Organization[] = [
 					...org.slice(0, orgIndex),
 					{
@@ -295,7 +311,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 						id: orgId,
 						displayName: updatedOrgName,
 					},
-					...org.slice(orgIndex + 1, org.length),
+					...org.slice(orgIndex + 1),
 				];
 				setOrg(updatedOrg);
 				setDefaultUser((prev) => {

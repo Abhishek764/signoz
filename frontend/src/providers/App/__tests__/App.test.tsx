@@ -252,6 +252,19 @@ describe('AppProvider user and org data from v2 APIs', () => {
 					}),
 				),
 			),
+			rest.get(MY_ORG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ data: { id: 'org-abc', displayName: 'My Org' } }),
+				),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
 		);
 
 		const wrapper = createWrapper();
@@ -281,6 +294,19 @@ describe('AppProvider user and org data from v2 APIs', () => {
 					}),
 				),
 			),
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ data: { id: 'u-default', email: 'default@signoz.io' } }),
+				),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
 		);
 
 		const wrapper = createWrapper();
@@ -308,6 +334,13 @@ describe('AppProvider user and org data from v2 APIs', () => {
 					ctx.json({ data: { id: 'org-1', displayName: 'Org' } }),
 				),
 			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
 		);
 
 		const wrapper = createWrapper();

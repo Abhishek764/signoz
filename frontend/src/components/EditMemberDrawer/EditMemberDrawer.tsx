@@ -432,7 +432,10 @@ function EditMemberDrawer({
 						onChange={(roles): void => {
 							setLocalRoles(roles);
 							setSaveErrors((prev) =>
-								prev.filter((err) => err.context !== 'Role update'),
+								prev.filter(
+									(err) =>
+										err.context !== 'Roles update' && !err.context.startsWith("Role '"),
+								),
 							);
 						}}
 						className="edit-member-drawer__role-select"

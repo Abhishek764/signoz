@@ -413,7 +413,7 @@ export const k8sPodRenderRowData = (
 	),
 	namespace: pod.meta.k8s_namespace_name,
 	node: pod.meta.k8s_node_name,
-	cluster: pod.meta.k8s_job_name,
+	cluster: pod.meta.k8s_cluster_name,
 	meta: pod.meta,
 	podGroup: getGroupByEle(pod, groupBy),
 	...pod.meta,

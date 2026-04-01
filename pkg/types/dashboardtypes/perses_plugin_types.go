@@ -217,7 +217,7 @@ type ComparisonThreshold struct {
 // Constrained scalar types (enum validation via custom UnmarshalJSON)
 // ══════════════════════════════════════════════
 
-// TimePreference: "globalTime" | "last5Min" | "last15Min" | "last30Min" | "last1Hr" | "last6Hr" | "last1Day" | "last3Days" | "last1Week" | "last1Month"
+// TimePreference: "globalTime" | "last5Min" | "last15Min" | "last30Min" | "last1Hr" | "last6Hr" | "last1Day" | "last3Days" | "last1Week" | "last1Month".
 type TimePreference string
 
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
@@ -234,7 +234,7 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// LegendPosition: "bottom" | "right"
+// LegendPosition: "bottom" | "right".
 type LegendPosition string
 
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
@@ -251,7 +251,7 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// ThresholdFormat: "Text" | "Background"
+// ThresholdFormat: "Text" | "Background".
 type ThresholdFormat string
 
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {

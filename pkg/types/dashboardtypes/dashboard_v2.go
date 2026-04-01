@@ -203,12 +203,10 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 	for i, v := range d.Spec.Variables {
 		plugin, err := extractPluginFromVariable(v)
 		if err != nil {
-			return fmt.Errorf("spec.variables[%d]: %w", i, err)
+			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.variables[%d]", i)
 		}
-		if plugin != nil {
-			if err := validatePlugin(*plugin, variablePluginSpecs, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
-				return err
-			}
+		if err := validatePlugin(*plugin, variablePluginSpecs, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
+			return err
 		}
 	}
 
@@ -233,11 +231,11 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 
 func validatePlugin(plugin common.Plugin, specs map[string]func() any, path string) error {
 	if plugin.Kind == "" {
-		return fmt.Errorf("%s: plugin kind is required", path)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: plugin kind is required", path)
 	}
 	factory, ok := specs[plugin.Kind]
 	if !ok {
-		return fmt.Errorf("%s: unknown plugin kind %q", path, plugin.Kind)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: unknown plugin kind %q", path, plugin.Kind)
 	}
 	if plugin.Spec == nil {
 		return nil
@@ -249,11 +247,11 @@ func validatePlugin(plugin common.Plugin, specs map[string]func() any, path stri
 	// Re-marshal the spec and unmarshal into the typed struct.
 	specJSON, err := json.Marshal(plugin.Spec)
 	if err != nil {
-		return fmt.Errorf("%s.spec: %w", path, err)
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 	}
 	target := factory()
 	if err := json.Unmarshal(specJSON, target); err != nil {
-		return fmt.Errorf("%s.spec: %w", path, err)
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 	}
 	return nil
 }
@@ -270,9 +268,6 @@ func extractPluginFromVariable(v any) (*common.Plugin, error) {
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
-	}
-	if raw.Spec.Plugin.Kind == "" {
-		return nil, nil
 	}
 	return &raw.Spec.Plugin, nil
 }

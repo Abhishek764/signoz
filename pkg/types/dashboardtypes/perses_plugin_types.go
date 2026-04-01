@@ -32,6 +32,9 @@ type TextboxVariableSpec struct{}
 // ══════════════════════════════════════════════
 
 type (
+	MetricBuilderQuerySpec = qb.QueryBuilderQuery[qb.MetricAggregation]
+	LogBuilderQuerySpec    = qb.QueryBuilderQuery[qb.LogAggregation]
+	TraceBuilderQuerySpec  = qb.QueryBuilderQuery[qb.TraceAggregation]
 	CompositeQuerySpec     = qb.CompositeQuery
 	QueryEnvelope          = qb.QueryEnvelope
 	FormulaSpec            = qb.QueryBuilderFormula
@@ -39,6 +42,44 @@ type (
 	ClickHouseSQLQuerySpec = qb.ClickHouseQuery
 	TraceOperatorSpec      = qb.QueryBuilderTraceOperator
 )
+
+// BuilderQuerySpec dispatches to MetricBuilderQuerySpec, LogBuilderQuerySpec,
+// or TraceBuilderQuerySpec based on the signal field.
+type BuilderQuerySpec struct {
+	Spec any
+}
+
+func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
+	var peek struct {
+		Signal string `json:"signal"`
+	}
+	if err := json.Unmarshal(data, &peek); err != nil {
+		return err
+	}
+	switch peek.Signal {
+	case "metrics":
+		var spec MetricBuilderQuerySpec
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		b.Spec = spec
+	case "logs":
+		var spec LogBuilderQuerySpec
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		b.Spec = spec
+	case "traces":
+		var spec TraceBuilderQuerySpec
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return err
+		}
+		b.Spec = spec
+	default:
+		return fmt.Errorf("invalid signal %q: must be metrics, logs, or traces", peek.Signal)
+	}
+	return nil
+}
 
 // ══════════════════════════════════════════════
 // SigNoz panel plugin specs

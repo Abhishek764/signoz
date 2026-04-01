@@ -66,8 +66,7 @@ func TestValidateDashboardV2JSON_WithPanel(t *testing.T) {
 									"kind": "SigNozBuilderQuery",
 									"spec": {
 										"name": "A",
-										"signal": "metrics",
-										"expression": "A"
+										"signal": "metrics"
 									}
 								}
 							}
@@ -323,18 +322,23 @@ func TestValidateDashboardV2JSON_AllPanelPluginKinds(t *testing.T) {
 }
 
 func TestValidateDashboardV2JSON_AllQueryPluginKinds(t *testing.T) {
-	kinds := []string{
-		"SigNozBuilderQuery", "SigNozCompositeQuery", "SigNozFormula",
-		"SigNozPromQLQuery", "SigNozClickHouseSQL", "SigNozTraceOperator",
+	// Each kind needs a minimal valid spec.
+	cases := map[string]string{
+		"SigNozBuilderQuery":   `{"name": "A", "signal": "metrics"}`,
+		"SigNozCompositeQuery": `{"queries": []}`,
+		"SigNozFormula":        `{"name": "F1", "expression": "A + B"}`,
+		"SigNozPromQLQuery":    `{"name": "A", "query": "up"}`,
+		"SigNozClickHouseSQL":  `{"name": "A", "query": "SELECT 1"}`,
+		"SigNozTraceOperator":  `{"name": "T1", "expression": "A => B"}`,
 	}
-	for _, kind := range kinds {
+	for kind, spec := range cases {
 		data := []byte(`{
 			"kind": "Dashboard",
 			"metadata": {"name": "test", "project": "signoz"},
 			"spec": {
 				"panels": {"p1": {"kind": "Panel", "spec": {
 					"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + kind + `", "spec": {}}}}]
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + kind + `", "spec": ` + spec + `}}}]
 				}}},
 				"layouts": []
 			}
@@ -477,7 +481,7 @@ func TestValidateDashboardV2JSON_DatasourceAndVariableAndPanel(t *testing.T) {
 						"queries": [{
 							"kind": "TimeSeriesQuery",
 							"spec": {
-								"plugin": {"kind": "SigNozBuilderQuery", "spec": {"name": "A", "signal": "metrics", "expression": "A"}}
+								"plugin": {"kind": "SigNozBuilderQuery", "spec": {"name": "A", "signal": "metrics"}}
 							}
 						}]
 					}

@@ -173,7 +173,7 @@ var (
 		"SigNozListPanel":       func() any { return new(ListPanelSpec) },
 	}
 	queryPluginSpecs = map[string]func() any{
-		"SigNozBuilderQuery":   nil, // generic type, validated by CompositeQuery.UnmarshalJSON via signal dispatch
+		"SigNozBuilderQuery":   func() any { return new(BuilderQuerySpec) },
 		"SigNozCompositeQuery": func() any { return new(CompositeQuerySpec) },
 		"SigNozFormula":        func() any { return new(FormulaSpec) },
 		"SigNozPromQLQuery":    func() any { return new(PromQLQuerySpec) },
@@ -239,8 +239,11 @@ func validatePlugin(plugin common.Plugin, specs map[string]func() any, path stri
 	if !ok {
 		return fmt.Errorf("%s: unknown plugin kind %q", path, plugin.Kind)
 	}
+	if plugin.Spec == nil {
+		return nil
+	}
 	// If factory is nil, no spec validation needed for this kind.
-	if factory == nil || plugin.Spec == nil {
+	if factory == nil {
 		return nil
 	}
 	// Re-marshal the spec and unmarshal into the typed struct.

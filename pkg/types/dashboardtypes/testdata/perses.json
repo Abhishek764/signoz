@@ -147,33 +147,26 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "metrics",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "metrics",
-                                                    "aggregations": [
-                                                        {
-                                                            "metricName": "http.server.response.body.size.sum",
-                                                            "reduceTo": "sum",
-                                                            "spaceAggregation": "sum",
-                                                            "timeAggregation": "rate"
-                                                        }
-                                                    ],
-                                                    "filter": {
-                                                        "expression": "http.response.status_code IN $statusCodesFromQuery"
-                                                    },
-                                                    "groupBy": [
-                                                        {
-                                                            "name": "service.name",
-                                                            "fieldDataType": "string",
-                                                            "fieldContext": "tag"
-                                                        }
-                                                    ]
-                                                }
+                                                "metricName": "http.server.response.body.size.sum",
+                                                "reduceTo": "sum",
+                                                "spaceAggregation": "sum",
+                                                "timeAggregation": "rate"
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "http.response.status_code IN $statusCodesFromQuery"
+                                        },
+                                        "groupBy": [
+                                            {
+                                                "name": "service.name",
+                                                "fieldDataType": "string",
+                                                "fieldContext": "tag"
                                             }
                                         ]
                                     }
@@ -292,33 +285,26 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "metrics",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "metrics",
-                                                    "aggregations": [
-                                                        {
-                                                            "metricName": "http.server.response.body.size.sum",
-                                                            "reduceTo": "sum",
-                                                            "spaceAggregation": "sum",
-                                                            "timeAggregation": "rate"
-                                                        }
-                                                    ],
-                                                    "filter": {
-                                                        "expression": "http.response.status_code IN $statusCodesFromQuery"
-                                                    },
-                                                    "groupBy": [
-                                                        {
-                                                            "name": "service.name",
-                                                            "fieldDataType": "string",
-                                                            "fieldContext": "tag"
-                                                        }
-                                                    ]
-                                                }
+                                                "metricName": "http.server.response.body.size.sum",
+                                                "reduceTo": "sum",
+                                                "spaceAggregation": "sum",
+                                                "timeAggregation": "rate"
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "http.response.status_code IN $statusCodesFromQuery"
+                                        },
+                                        "groupBy": [
+                                            {
+                                                "name": "service.name",
+                                                "fieldDataType": "string",
+                                                "fieldContext": "tag"
                                             }
                                         ]
                                     }
@@ -364,25 +350,18 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "traces",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "traces",
-                                                    "aggregations": [
-                                                        {
-                                                            "expression": "count() "
-                                                        }
-                                                    ],
-                                                    "filter": {
-                                                        "expression": "service.name = $serviceName "
-                                                    }
-                                                }
+                                                "expression": "count() "
                                             }
-                                        ]
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName "
+                                        }
                                     }
                                 }
                             }
@@ -410,25 +389,18 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "logs",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "logs",
-                                                    "aggregations": [
-                                                        {
-                                                            "expression": "count() "
-                                                        }
-                                                    ],
-                                                    "filter": {
-                                                        "expression": "service.name = $serviceName "
-                                                    }
-                                                }
+                                                "expression": "count() "
                                             }
-                                        ]
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName "
+                                        }
                                     }
                                 }
                             }
@@ -462,33 +434,26 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "traces",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "traces",
-                                                    "aggregations": [
-                                                        {
-                                                            "expression": "count() "
-                                                        }
-                                                    ],
-                                                    "filter": {
-                                                        "expression": "service.name = $serviceName isEntryPoint = 'true'"
-                                                    },
-                                                    "groupBy": [
-                                                        {
-                                                            "name": "http.response.status_code",
-                                                            "fieldDataType": "float64",
-                                                            "fieldContext": "tag"
-                                                        }
-                                                    ],
-                                                    "legend": "\"{{http.response.status_code}}\""
-                                                }
+                                                "expression": "count() "
                                             }
-                                        ]
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName isEntryPoint = 'true'"
+                                        },
+                                        "groupBy": [
+                                            {
+                                                "name": "http.response.status_code",
+                                                "fieldDataType": "float64",
+                                                "fieldContext": "tag"
+                                            }
+                                        ],
+                                        "legend": "\"{{http.response.status_code}}\""
                                     }
                                 }
                             }
@@ -571,38 +536,31 @@
                             "kind": "LogQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "logs",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "logs",
-                                                    "aggregations": [
-                                                        {
-                                                            "expression": "count() "
-                                                        }
-                                                    ],
-                                                    "filter": {
-                                                        "expression": "service.name = $serviceName"
-                                                    },
-                                                    "groupBy": [],
-                                                    "order": [
-                                                        {
-                                                            "key": {
-                                                                "name": "timestamp"
-                                                            },
-                                                            "direction": "desc"
-                                                        },
-                                                        {
-                                                            "key": {
-                                                                "name": "id"
-                                                            },
-                                                            "direction": "desc"
-                                                        }
-                                                    ]
-                                                }
+                                                "expression": "count() "
+                                            }
+                                        ],
+                                        "filter": {
+                                            "expression": "service.name = $serviceName"
+                                        },
+                                        "groupBy": [],
+                                        "order": [
+                                            {
+                                                "key": {
+                                                    "name": "timestamp"
+                                                },
+                                                "direction": "desc"
+                                            },
+                                            {
+                                                "key": {
+                                                    "name": "id"
+                                                },
+                                                "direction": "desc"
                                             }
                                         ]
                                     }
@@ -632,23 +590,16 @@
                             "kind": "TimeSeriesQuery",
                             "spec": {
                                 "plugin": {
-                                    "kind": "SigNozCompositeQuery",
+                                    "kind": "SigNozBuilderQuery",
                                     "spec": {
-                                        "queries": [
+                                        "name": "A",
+                                        "signal": "metrics",
+                                        "aggregations": [
                                             {
-                                                "type": "builder_query",
-                                                "spec": {
-                                                    "name": "A",
-                                                    "signal": "metrics",
-                                                    "aggregations": [
-                                                        {
-                                                            "metricName": "http.server.response.body.size.bucket",
-                                                            "reduceTo": "avg",
-                                                            "spaceAggregation": "p90",
-                                                            "timeAggregation": "rate"
-                                                        }
-                                                    ]
-                                                }
+                                                "metricName": "http.server.response.body.size.bucket",
+                                                "reduceTo": "avg",
+                                                "spaceAggregation": "p90",
+                                                "timeAggregation": "rate"
                                             }
                                         ]
                                     }

@@ -220,13 +220,26 @@ type ComparisonThreshold struct {
 // TimePreference: "globalTime" | "last5Min" | "last15Min" | "last30Min" | "last1Hr" | "last6Hr" | "last1Day" | "last3Days" | "last1Week" | "last1Month".
 type TimePreference string
 
+const (
+	TimePreferenceGlobalTime TimePreference = "globalTime"
+	TimePreferenceLast5Min   TimePreference = "last5Min"
+	TimePreferenceLast15Min  TimePreference = "last15Min"
+	TimePreferenceLast30Min  TimePreference = "last30Min"
+	TimePreferenceLast1Hr    TimePreference = "last1Hr"
+	TimePreferenceLast6Hr    TimePreference = "last6Hr"
+	TimePreferenceLast1Day   TimePreference = "last1Day"
+	TimePreferenceLast3Days  TimePreference = "last3Days"
+	TimePreferenceLast1Week  TimePreference = "last1Week"
+	TimePreferenceLast1Month TimePreference = "last1Month"
+)
+
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch v {
-	case "globalTime", "last5Min", "last15Min", "last30Min", "last1Hr", "last6Hr", "last1Day", "last3Days", "last1Week", "last1Month":
+	switch TimePreference(v) {
+	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
 		*t = TimePreference(v)
 		return nil
 	default:
@@ -237,13 +250,18 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 // LegendPosition: "bottom" | "right".
 type LegendPosition string
 
+const (
+	LegendPositionBottom LegendPosition = "bottom"
+	LegendPositionRight  LegendPosition = "right"
+)
+
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch v {
-	case "bottom", "right":
+	switch LegendPosition(v) {
+	case LegendPositionBottom, LegendPositionRight:
 		*l = LegendPosition(v)
 		return nil
 	default:
@@ -254,13 +272,18 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 // ThresholdFormat: "Text" | "Background".
 type ThresholdFormat string
 
+const (
+	ThresholdFormatText       ThresholdFormat = "Text"
+	ThresholdFormatBackground ThresholdFormat = "Background"
+)
+
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch v {
-	case "Text", "Background":
+	switch ThresholdFormat(v) {
+	case ThresholdFormatText, ThresholdFormatBackground:
 		*f = ThresholdFormat(v)
 		return nil
 	default:
@@ -271,13 +294,21 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 // ComparisonOperator: ">" | "<" | ">=" | "<=" | "="
 type ComparisonOperator string
 
+const (
+	ComparisonOperatorGT  ComparisonOperator = ">"
+	ComparisonOperatorLT  ComparisonOperator = "<"
+	ComparisonOperatorGTE ComparisonOperator = ">="
+	ComparisonOperatorLTE ComparisonOperator = "<="
+	ComparisonOperatorEQ  ComparisonOperator = "="
+)
+
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch v {
-	case ">", "<", ">=", "<=", "=":
+	switch ComparisonOperator(v) {
+	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ:
 		*o = ComparisonOperator(v)
 		return nil
 	default:
@@ -290,6 +321,8 @@ type PrecisionOption struct {
 	value any
 }
 
+const PrecisionOptionFull = "full"
+
 func (p PrecisionOption) Value() any {
 	if p.value == nil {
 		return 2
@@ -300,8 +333,8 @@ func (p PrecisionOption) Value() any {
 func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
-		if s != "full" {
-			return fmt.Errorf("invalid precision option %q: string value must be \"full\"", s)
+		if s != PrecisionOptionFull {
+			return fmt.Errorf("invalid precision option %q: string value must be %q", s, PrecisionOptionFull)
 		}
 		p.value = s
 		return nil

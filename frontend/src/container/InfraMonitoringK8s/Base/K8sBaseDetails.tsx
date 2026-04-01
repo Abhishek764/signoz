@@ -76,7 +76,6 @@ export interface K8sDetailsFilters {
 }
 
 export interface K8sBaseDetailsProps<T> {
-	onClose: () => void;
 	category: K8sCategory;
 	eventCategory: string;
 	// Data fetching configuration
@@ -124,7 +123,6 @@ export function createFilterItem(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sBaseDetails<T>({
-	onClose,
 	category,
 	eventCategory,
 	getSelectedItemFilters,
@@ -138,7 +136,7 @@ function K8sBaseDetails<T>({
 	getEntityQueryPayload,
 	queryKeyPrefix,
 }: K8sBaseDetailsProps<T>): JSX.Element {
-	const [selectedItem] = useInfraMonitoringSelectedItem();
+	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -547,8 +545,12 @@ function K8sBaseDetails<T>({
 				endTime: Math.floor(maxTime / TimeRangeOffset),
 			});
 		}
-		setSelectedView(VIEW_TYPES.METRICS);
-		onClose();
+
+		setSelectedItem(null);
+		setSelectedView(null);
+		setTracesFiltersParam(null);
+		setEventsFiltersParam(null);
+		setLogFiltersParam(null);
 	};
 
 	const entityName = entity ? getEntityName(entity) : '';

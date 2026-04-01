@@ -21,6 +21,7 @@ export function useInfiniteHostMetricLogs({
 	isFetching: boolean;
 	isFetchingNextPage: boolean;
 	isError: boolean;
+	error?: unknown;
 	hasNextPage: boolean;
 	loadMoreLogs: () => void;
 } {
@@ -30,6 +31,7 @@ export function useInfiniteHostMetricLogs({
 		isFetching,
 		isFetchingNextPage,
 		isError,
+		error,
 		hasNextPage,
 		fetchNextPage,
 	} = useInfiniteQuery({
@@ -87,6 +89,7 @@ export function useInfiniteHostMetricLogs({
 		isFetching,
 		isFetchingNextPage,
 		isError,
+		error,
 		hasNextPage: !!hasNextPage,
 		loadMoreLogs,
 	};

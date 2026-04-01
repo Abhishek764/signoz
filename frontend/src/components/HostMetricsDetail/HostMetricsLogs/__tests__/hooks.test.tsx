@@ -1,62 +1,11 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
+import {
+	mockQueryRangeV5WithError,
+	mockQueryRangeV5WithLogsResponse,
+} from '__tests__/query_range_v5.utility';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { ENVIRONMENT } from 'constants/env';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
 
 import { useInfiniteHostMetricLogs } from '../hooks';
-
-const QUERY_RANGE_URL = `${ENVIRONMENT.baseURL}/api/v5/query_range`;
-
-const createLogsResponse = ({
-	offset = 0,
-	pageSize = 100,
-	hasMore = true,
-}: {
-	offset?: number;
-	pageSize?: number;
-	hasMore?: boolean;
-}): any => {
-	const itemsForThisPage = hasMore ? pageSize : pageSize / 2;
-
-	return {
-		data: {
-			type: 'raw',
-			data: {
-				results: [
-					{
-						queryName: 'A',
-						rows: Array.from({ length: itemsForThisPage }, (_, index) => {
-							const cumulativeIndex = offset + index;
-							return {
-								timestamp: new Date(Date.now() - cumulativeIndex * 1000).toISOString(),
-								data: {
-									body: `Log message ${cumulativeIndex}`,
-									id: `log-${cumulativeIndex}`,
-									severity_text: 'INFO',
-								},
-							};
-						}),
-					},
-				],
-			},
-		},
-	};
-};
-
-const createEmptyResponse = (): any => ({
-	data: {
-		type: 'raw',
-		data: {
-			results: [
-				{
-					queryName: 'A',
-					rows: [],
-				},
-			],
-		},
-	},
-});
 
 const createWrapper = (): React.FC<{ children: React.ReactNode }> => {
 	const queryClient = new QueryClient({
@@ -87,11 +36,9 @@ describe('useInfiniteHostMetricLogs', () => {
 
 	describe('initial state', () => {
 		it('should return initial loading state', () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.delay(100), ctx.status(200), ctx.json(createLogsResponse({}))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				delay: 100,
+			});
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),
@@ -107,11 +54,10 @@ describe('useInfiniteHostMetricLogs', () => {
 
 	describe('successful data fetching', () => {
 		it('should return logs after successful fetch', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				hasMore: true,
+			});
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),
@@ -124,19 +70,16 @@ describe('useInfiniteHostMetricLogs', () => {
 				expect(result.current.isLoading).toBe(false);
 			});
 
+			expect(result.current.error).toBeFalsy();
 			expect(result.current.logs.length).toBe(5);
 			expect(result.current.isError).toBe(false);
 		});
 
 		it('should set hasNextPage based on response size', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json(createLogsResponse({ pageSize: 100, hasMore: true })),
-					),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 100,
+				hasMore: true,
+			});
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),
@@ -153,14 +96,10 @@ describe('useInfiniteHostMetricLogs', () => {
 		});
 
 		it('should not have next page when response is smaller than page size', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json(createLogsResponse({ pageSize: 100, hasMore: false })),
-					),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 100,
+				hasMore: false,
+			});
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),
@@ -179,11 +118,10 @@ describe('useInfiniteHostMetricLogs', () => {
 
 	describe('empty state', () => {
 		it('should return empty logs array when no data', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createEmptyResponse())),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 0,
+				hasMore: false,
+			});
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),
@@ -203,11 +141,7 @@ describe('useInfiniteHostMetricLogs', () => {
 
 	describe('error handling', () => {
 		it('should set isError on API failure', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(500), ctx.json({ error: 'Internal Server Error' })),
-				),
-			);
+			mockQueryRangeV5WithError('Internal Server Error');
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),
@@ -228,12 +162,13 @@ describe('useInfiniteHostMetricLogs', () => {
 		it('should not fetch when expression is empty', async () => {
 			const requestCount = { count: 0 };
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 0,
+				hasMore: false,
+				onReceiveRequest: (): void => {
 					requestCount.count += 1;
-					return res(ctx.status(200), ctx.json(createLogsResponse({})));
-				}),
-			);
+				},
+			});
 
 			const { result } = renderHook(
 				() =>
@@ -260,26 +195,20 @@ describe('useInfiniteHostMetricLogs', () => {
 		it('should fetch next page when loadMoreLogs is called', async () => {
 			const requestCount = { count: 0 };
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 100,
+				offset: 0,
+				hasMore: true,
+				onReceiveRequest: () => {
 					requestCount.count += 1;
-					if (requestCount.count === 1) {
-						return res(
-							ctx.status(200),
-							ctx.json(
-								createLogsResponse({ offset: 0, pageSize: 100, hasMore: true }),
-							),
-						);
+
+					if (requestCount.count > 1) {
+						return { offset: 100, pageSize: 100, hasMore: false };
 					}
 
-					return res(
-						ctx.status(200),
-						ctx.json(
-							createLogsResponse({ offset: 100, pageSize: 100, hasMore: false }),
-						),
-					);
-				}),
-			);
+					return undefined;
+				},
+			});
 
 			const { result } = renderHook(
 				() => useInfiniteHostMetricLogs(defaultParams),

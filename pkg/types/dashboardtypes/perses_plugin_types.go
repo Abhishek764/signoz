@@ -32,9 +32,6 @@ type TextboxVariableSpec struct{}
 // ══════════════════════════════════════════════
 
 type (
-	MetricBuilderQuerySpec = qb.QueryBuilderQuery[qb.MetricAggregation]
-	LogBuilderQuerySpec    = qb.QueryBuilderQuery[qb.LogAggregation]
-	TraceBuilderQuerySpec  = qb.QueryBuilderQuery[qb.TraceAggregation]
 	CompositeQuerySpec     = qb.CompositeQuery
 	QueryEnvelope          = qb.QueryEnvelope
 	FormulaSpec            = qb.QueryBuilderFormula
@@ -45,6 +42,13 @@ type (
 
 // BuilderQuerySpec dispatches to MetricBuilderQuerySpec, LogBuilderQuerySpec,
 // or TraceBuilderQuerySpec based on the signal field.
+
+type (
+	MetricBuilderQuerySpec = qb.QueryBuilderQuery[qb.MetricAggregation]
+	LogBuilderQuerySpec    = qb.QueryBuilderQuery[qb.LogAggregation]
+	TraceBuilderQuerySpec  = qb.QueryBuilderQuery[qb.TraceAggregation]
+)
+
 type BuilderQuerySpec struct {
 	Spec any
 }
@@ -158,7 +162,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectedLogFields    []LogField          `json:"selectedLogFields"`
+	SelectedLogFields    []LogField                         `json:"selectedLogFields"`
 	SelectedTracesFields []telemetrytypes.TelemetryFieldKey `json:"selectedTracesFields"`
 }
 

@@ -182,10 +182,9 @@ function K8sBaseDetails<T>({
 		() => [
 			`${queryKeyPrefix}EntityDetails`,
 			selectedItem,
-			String(minTime),
-			String(maxTime),
+			...(selectedItem === 'custom' ? [minTime, maxTime] : [selectedTime]),
 		],
-		[queryKeyPrefix, selectedItem, minTime, maxTime],
+		[queryKeyPrefix, selectedItem, selectedTime, minTime, maxTime],
 	);
 
 	const {
@@ -199,11 +198,23 @@ function K8sBaseDetails<T>({
 				return { data: null };
 			}
 			const filters = getSelectedItemFilters(selectedItem);
+
+			// TODO: Replace this by the new GlobalTimeAdapter
+			let start, end;
+			if (selectedTime === 'custom') {
+				start = Math.floor(minTime / 1000000);
+				end = Math.floor(maxTime / 1000000);
+			} else {
+				const parsedSelectedTime = GetMinMax(selectedTime);
+				start = Math.floor(parsedSelectedTime.minTime / 1000000);
+				end = Math.floor(parsedSelectedTime.maxTime / 1000000);
+			}
+
 			return fetchEntityData(
 				{
 					filters,
-					start: Math.floor(minTime / 1000000),
-					end: Math.floor(maxTime / 1000000),
+					start,
+					end,
 				},
 				signal,
 			);

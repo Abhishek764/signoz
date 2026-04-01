@@ -16,14 +16,15 @@ import './AIAssistant.styles.scss';
  */
 export default function AIAssistantTrigger(): JSX.Element | null {
 	const { pathname } = useLocation();
-	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
+	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
+	const isModalOpen = useAIAssistantStore((s) => s.isModalOpen);
 
 	const isFullScreenPage = !!matchPath(pathname, {
 		path: ROUTES.AI_ASSISTANT,
 		exact: true,
 	});
 
-	if (isOpen || isFullScreenPage) {
+	if (isDrawerOpen || isModalOpen || isFullScreenPage) {
 		return null;
 	}
 

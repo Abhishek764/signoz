@@ -1,9 +1,11 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/button';
+import { Tooltip } from '@signozhq/tooltip';
 import type { UploadFile } from 'antd';
 import { Upload } from 'antd';
-import { Paperclip, Send, X } from 'lucide-react';
+import { Mic, MicOff, Paperclip, Send, X } from 'lucide-react';
 
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../types';
 
 interface ChatInputProps {
@@ -26,13 +28,18 @@ export default function ChatInput({
 }: ChatInputProps): JSX.Element {
 	const [text, setText] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
+	// Stores the already-committed final text so interim results don't overwrite it
+	const committedTextRef = useRef('');
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	// Focus the textarea when this component mounts (panel/modal open)
+	useEffect(() => {
+		textareaRef.current?.focus();
+	}, []);
 
 	const handleSend = useCallback(async () => {
 		const trimmed = text.trim();
-		if (!trimmed && pendingFiles.length === 0) {
-			return;
-		}
+		if (!trimmed && pendingFiles.length === 0) return;
 
 		const attachments: MessageAttachment[] = await Promise.all(
 			pendingFiles.map(async (f) => {
@@ -47,6 +54,7 @@ export default function ChatInput({
 
 		onSend(trimmed, attachments.length > 0 ? attachments : undefined);
 		setText('');
+		committedTextRef.current = '';
 		setPendingFiles([]);
 		textareaRef.current?.focus();
 	}, [text, pendingFiles, onSend]);
@@ -64,6 +72,32 @@ export default function ChatInput({
 	const removeFile = useCallback((uid: string) => {
 		setPendingFiles((prev) => prev.filter((f) => f.uid !== uid));
 	}, []);
+
+	// ── Voice input ────────────────────────────────────────────────────────────
+
+	const { isListening, isSupported, start, transcript, isFinal } = useSpeechRecognition();
+
+	// React to transcript changes from the speech recognition hook.
+	// Using useEffect on hook state avoids any callback/closure timing issues.
+	useEffect(() => {
+		if (!transcript) return;
+		if (isFinal) {
+			const separator = committedTextRef.current ? ' ' : '';
+			const next = committedTextRef.current + separator + transcript;
+			committedTextRef.current = next;
+			setText(next);
+		} else {
+			// Interim: show live text appended to committed text, but don't persist yet
+			const separator = committedTextRef.current ? ' ' : '';
+			setText(committedTextRef.current + separator + transcript);
+		}
+	}, [transcript, isFinal]);
+
+	const micTooltip = !isSupported
+		? 'Voice input not supported in this browser'
+		: isListening
+		? 'Listening… click to stop'
+		: 'Voice input';
 
 	return (
 		<div className="ai-assistant-input">
@@ -104,12 +138,7 @@ export default function ChatInput({
 						return false;
 					}}
 				>
-					<Button
-						variant="ghost"
-						size="xs"
-						disabled={disabled}
-						aria-label="Attach file"
-					>
+					<Button variant="ghost" size="xs" disabled={disabled} aria-label="Attach file">
 						<Paperclip size={14} />
 					</Button>
 				</Upload>
@@ -119,11 +148,28 @@ export default function ChatInput({
 					className="ai-assistant-input__textarea"
 					placeholder="Ask anything… (Shift+Enter for new line)"
 					value={text}
-					onChange={(e): void => setText(e.target.value)}
+					onChange={(e): void => {
+						setText(e.target.value);
+						// Keep committed text in sync when the user edits manually
+						committedTextRef.current = e.target.value;
+					}}
 					onKeyDown={handleKeyDown}
 					disabled={disabled}
 					rows={1}
 				/>
+
+				<Tooltip title={micTooltip}>
+					<Button
+						variant="ghost"
+						size="xs"
+						onClick={start}
+						disabled={disabled || !isSupported}
+						aria-label={micTooltip}
+						className={isListening ? 'ai-mic-btn ai-mic-btn--listening' : 'ai-mic-btn'}
+					>
+						{isListening ? <MicOff size={14} /> : <Mic size={14} />}
+					</Button>
+				</Tooltip>
 
 				<Button
 					variant="solid"

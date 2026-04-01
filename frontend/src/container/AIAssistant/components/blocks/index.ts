@@ -12,6 +12,7 @@
 // Side-effect: ensure Chart.js components are registered before any chart renders
 import './chartSetup';
 
+import ActionBlock from './ActionBlock';
 import BarChartBlock from './BarChartBlock';
 import { BlockRegistry } from './BlockRegistry';
 import ConfirmBlock from './ConfirmBlock';
@@ -30,6 +31,8 @@ BlockRegistry.register('piechart', PieChartBlock);
 // ai-linechart and ai-graph are aliases for the same component
 BlockRegistry.register('linechart', LineChartBlock);
 BlockRegistry.register('graph', LineChartBlock);
+// Page-aware action block
+BlockRegistry.register('action', ActionBlock);
 
 // ─── Public exports ───────────────────────────────────────────────────────────
 

@@ -3,11 +3,14 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
 import { mockAIStream } from '../mock/mockAIApi';
+import { PageActionRegistry } from '../pageActions/PageActionRegistry';
 import { Conversation, Message, MessageAttachment } from '../types';
 
 interface AIAssistantStore {
 	// UI state
 	isDrawerOpen: boolean;
+	/** Whether the global floating modal (Cmd+P) is open */
+	isModalOpen: boolean;
 	activeConversationId: string | null;
 
 	// Data
@@ -27,6 +30,10 @@ interface AIAssistantStore {
 	// Actions
 	openDrawer: () => void;
 	closeDrawer: () => void;
+	openModal: () => void;
+	closeModal: () => void;
+	/** Close the modal and open the side panel instead */
+	minimizeModal: () => void;
 	startNewConversation: () => string;
 	setActiveConversation: (id: string) => void;
 	clearConversation: (id: string) => void;
@@ -39,6 +46,38 @@ interface AIAssistantStore {
 	) => Promise<void>;
 }
 
+/**
+ * Builds a PAGE_CONTEXT prefix from whatever actions are currently registered.
+ * This prefix is prepended to the last user message in the API payload only —
+ * it is never stored in the conversation or shown in the UI.
+ */
+function buildContextPrefix(): string {
+	const descriptors = PageActionRegistry.snapshot();
+	if (descriptors.length === 0) return '';
+
+	const actionLines = descriptors
+		.map(
+			(a) =>
+				`  - id: ${a.id}\n    description: "${a.description}"\n    params: ${JSON.stringify(a.parameters.properties)}`,
+		)
+		.join('\n');
+
+	const contextEntries = descriptors
+		.filter((a) => a.context !== undefined)
+		.map((a) => `  ${a.id}: ${JSON.stringify(a.context)}`);
+
+	const lines = [
+		'[PAGE_CONTEXT]',
+		'actions:',
+		actionLines,
+		...(contextEntries.length > 0 ? ['state:', ...contextEntries] : []),
+		'[/PAGE_CONTEXT]',
+		'',
+	];
+
+	return lines.join('\n');
+}
+
 /** Derive a short title from the first user message. */
 function deriveTitle(text: string): string {
 	const trimmed = text.trim().replace(/\s+/g, ' ');
@@ -48,6 +87,7 @@ function deriveTitle(text: string): string {
 export const useAIAssistantStore = create<AIAssistantStore>()(
 	immer((set, get) => ({
 		isDrawerOpen: false,
+		isModalOpen: false,
 		activeConversationId: null,
 		conversations: {},
 		streamingContent: '',
@@ -73,6 +113,47 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 		closeDrawer: (): void => {
 			set((state) => {
 				state.isDrawerOpen = false;
+			});
+		},
+
+		openModal: (): void => {
+			set((state) => {
+				state.isModalOpen = true;
+				// Ensure there's an active conversation
+				if (!state.activeConversationId) {
+					const id = uuidv4();
+					state.conversations[id] = {
+						id,
+						messages: [],
+						createdAt: Date.now(),
+						updatedAt: Date.now(),
+					};
+					state.activeConversationId = id;
+				}
+			});
+		},
+
+		closeModal: (): void => {
+			set((state) => {
+				state.isModalOpen = false;
+			});
+		},
+
+		minimizeModal: (): void => {
+			set((state) => {
+				state.isModalOpen = false;
+				state.isDrawerOpen = true;
+				// Ensure there's an active conversation for the side panel
+				if (!state.activeConversationId) {
+					const id = uuidv4();
+					state.conversations[id] = {
+						id,
+						messages: [],
+						createdAt: Date.now(),
+						updatedAt: Date.now(),
+					};
+					state.activeConversationId = id;
+				}
 			});
 		},
 
@@ -173,11 +254,17 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			try {
 				const history = get().conversations[activeConversationId].messages;
 
+				// Prepend PAGE_CONTEXT to the last user message in the wire payload only.
+				// The stored message content is never modified.
+				const contextPrefix = buildContextPrefix();
 				const payload = {
 					conversationId: activeConversationId,
-					messages: history.map((m) => ({
+					messages: history.map((m, i) => ({
 						role: m.role,
-						content: m.content,
+						content:
+							contextPrefix && i === history.length - 1 && m.role === 'user'
+								? contextPrefix + m.content
+								: m.content,
 					})),
 				};
 
@@ -250,3 +337,12 @@ export const openAIAssistant = (): void =>
 
 export const closeAIAssistant = (): void =>
 	useAIAssistantStore.getState().closeDrawer();
+
+export const openAIAssistantModal = (): void =>
+	useAIAssistantStore.getState().openModal();
+
+export const closeAIAssistantModal = (): void =>
+	useAIAssistantStore.getState().closeModal();
+
+export const minimizeAIAssistantModal = (): void =>
+	useAIAssistantStore.getState().minimizeModal();

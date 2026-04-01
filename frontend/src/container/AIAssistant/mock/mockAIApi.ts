@@ -173,16 +173,98 @@ The error rate started climbing at **14:53** — coinciding with a config push t
   "rejectText": "No, don't create an alert."
 }
 \`\`\``,
+
+	actionRunQuery: `Sure! I'll update the log query to filter for ERROR-level logs from \`payment-svc\`.
+
+\`\`\`ai-action
+{
+  "actionId": "logs.runQuery",
+  "description": "Filter logs to ERROR level from payment-svc and re-run the query",
+  "parameters": {
+    "filters": [
+      { "key": "severity_text", "op": "=", "value": "ERROR" },
+      { "key": "service.name",  "op": "=", "value": "payment-svc" }
+    ]
+  }
+}
+\`\`\``,
+
+	actionAddFilter: `I'll add a filter for \`ERROR\` severity to your current query.
+
+\`\`\`ai-action
+{
+  "actionId": "logs.addFilter",
+  "description": "Add a severity_text = ERROR filter to the current query",
+  "parameters": {
+    "key": "severity_text",
+    "op": "=",
+    "value": "ERROR"
+  }
+}
+\`\`\``,
+
+	actionChangeView: `I'll switch the Logs Explorer to the timeseries view so you can see the log volume over time.
+
+\`\`\`ai-action
+{
+  "actionId": "logs.changeView",
+  "description": "Switch to the timeseries panel view",
+  "parameters": {
+    "view": "timeseries"
+  }
+}
+\`\`\``,
+
+	actionSaveView: `I can save your current query as a named view. What should it be called?
+
+\`\`\`ai-action
+{
+  "actionId": "logs.saveView",
+  "description": "Save the current log query as \\"Error Logs — Payment\\"",
+  "parameters": {
+    "name": "Error Logs — Payment"
+  }
+}
+\`\`\``,
 };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function pickResponse(messages: { role: string; content: string }[]): string {
-	const last =
+	const lastRaw =
 		[...messages]
 			.reverse()
-			.find((m) => m.role === 'user')
-			?.content.toLowerCase() ?? '';
+			.find((m) => m.role === 'user')?.content ?? '';
 
+	// Strip the PAGE_CONTEXT block if present — match against the user's actual text
+	const last = lastRaw
+		.replace(/\[PAGE_CONTEXT\][\s\S]*?\[\/PAGE_CONTEXT\]\n?/g, '')
+		.toLowerCase();
+
+	// ── Page action triggers ──────────────────────────────────────────────────
+	if (last.includes('save view') || last.includes('save this view') || last.includes('save query')) {
+		return CANNED_RESPONSES.actionSaveView;
+	}
+	if (last.includes('change view') || last.includes('switch to timeseries') || last.includes('timeseries view')) {
+		return CANNED_RESPONSES.actionChangeView;
+	}
+	if (
+		last.includes('add filter') ||
+		last.includes('filter for error') ||
+		last.includes('show only error')
+	) {
+		return CANNED_RESPONSES.actionAddFilter;
+	}
+	if (
+		last.includes('run query') ||
+		last.includes('update query') ||
+		last.includes('filter logs') ||
+		last.includes('search logs') ||
+		(last.includes('payment') && last.includes('error'))
+	) {
+		return CANNED_RESPONSES.actionRunQuery;
+	}
+
+	// ── Original triggers ─────────────────────────────────────────────────────
 	if (
 		last.includes('confirm') ||
 		last.includes('alert') ||

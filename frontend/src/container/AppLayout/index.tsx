@@ -37,6 +37,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
@@ -394,6 +395,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 
 	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
+	const isAIAssistantPage = pathname.startsWith('/ai-assistant/');
 
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
@@ -858,7 +860,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							<LayoutContent data-overlayscrollbars-initialize>
 								<OverlayScrollbar>
 									<ChildrenContainer>
-										{isToDisplayLayout && !renderFullScreen && <TopNav />}
+										{isToDisplayLayout && !renderFullScreen && !isAIAssistantPage && <TopNav />}
 										{children}
 									</ChildrenContainer>
 								</OverlayScrollbar>
@@ -867,6 +869,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</div>
 
 					<AIAssistantPanel />
+					<AIAssistantModal />
 				</Flex>
 
 				{showAddCreditCardModal && <ChatSupportGateway />}

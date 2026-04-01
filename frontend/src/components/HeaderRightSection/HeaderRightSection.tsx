@@ -5,7 +5,7 @@ import { Tooltip as PeriscopeTooltip } from '@signozhq/tooltip';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
-import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
+import { openAIAssistant, useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
 
@@ -71,19 +71,22 @@ function HeaderRightSection({
 	};
 
 	const isLicenseEnabled = isEnterpriseSelfHostedUser || isCloudUser;
+	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
 
 	return (
 		<div className="header-right-section-container">
-			<PeriscopeTooltip title="AI Assistant">
-				<PeriscopeButton
-					variant="ghost"
-					size="xs"
-					onClick={openAIAssistant}
-					aria-label="Open AI Assistant"
-				>
-					<AIAssistantIcon size={18} />
-				</PeriscopeButton>
-			</PeriscopeTooltip>
+			{!isDrawerOpen && (
+				<PeriscopeTooltip title="AI Assistant">
+					<PeriscopeButton
+						variant="ghost"
+						size="xs"
+						onClick={openAIAssistant}
+						aria-label="Open AI Assistant"
+					>
+						<AIAssistantIcon size={18} />
+					</PeriscopeButton>
+				</PeriscopeTooltip>
+			)}
 
 			{enableFeedback && isLicenseEnabled && (
 				<Popover

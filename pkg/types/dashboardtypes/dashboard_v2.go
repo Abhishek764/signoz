@@ -187,7 +187,7 @@ var (
 		"SigNozTextboxVariable": func() any { return new(TextboxVariableSpec) },
 	}
 	datasourcePluginSpecs = map[string]func() any{
-		"SigNozDatasource": nil, // empty spec, nothing to validate
+		"SigNozDatasource": func() any { return new(struct{}) },
 	}
 )
 

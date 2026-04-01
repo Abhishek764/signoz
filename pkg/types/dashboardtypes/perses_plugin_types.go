@@ -109,6 +109,7 @@ type TimeSeriesChartAppearance struct {
 	ShowPoints        bool              `json:"showPoints"`
 	LineStyle         LineStyle         `json:"lineStyle"`
 	FillMode          FillMode          `json:"fillMode"`
+	SpanGaps          SpanGaps          `json:"spanGaps"`
 }
 
 type BarChartPanelSpec struct {
@@ -434,6 +435,41 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("invalid comparison operator %q", v)
 	}
+}
+
+// SpanGaps: bool | number. Default is true.
+// When true, lines connect across null values. When false, lines break at nulls.
+// When a number, gaps smaller than that threshold (in seconds) are connected.
+type SpanGaps struct {
+	value any
+}
+
+func (sg SpanGaps) Value() any {
+	if sg.value == nil {
+		return true
+	}
+	return sg.value
+}
+
+func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
+	var b bool
+	if err := json.Unmarshal(data, &b); err == nil {
+		sg.value = b
+		return nil
+	}
+	var n float64
+	if err := json.Unmarshal(data, &n); err == nil {
+		if n < 0 {
+			return fmt.Errorf("invalid spanGaps %v: numeric value must be non-negative", n)
+		}
+		sg.value = n
+		return nil
+	}
+	return fmt.Errorf("invalid spanGaps: must be a bool or a non-negative number")
+}
+
+func (sg SpanGaps) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sg.Value())
 }
 
 // PrecisionOption: 0 | 1 | 2 | 3 | 4 | "full". Default is 2.

@@ -13,6 +13,8 @@ import (
 // ══════════════════════════════════════════════
 
 type DynamicVariableSpec struct {
+	// Name is the name of the attribute being fetched dynamically from the
+	// source. This could be extended to a richer selector in the future.
 	Name   string `json:"name"`
 	Source string `json:"source"`
 }
@@ -95,7 +97,6 @@ type TimeSeriesPanelSpec struct {
 	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance"`
 	Axes            Axes                      `json:"axes"`
 	Legend          Legend                    `json:"legend"`
-	ContextLinks    []ContextLinkProps        `json:"contextLinks"`
 	Thresholds      []ThresholdWithLabel      `json:"thresholds"`
 }
 
@@ -117,7 +118,6 @@ type BarChartPanelSpec struct {
 	Formatting    PanelFormatting       `json:"formatting"`
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
-	ContextLinks  []ContextLinkProps    `json:"contextLinks"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds"`
 }
 
@@ -130,7 +130,6 @@ type BarChartVisualization struct {
 type NumberPanelSpec struct {
 	Visualization BasicVisualization    `json:"visualization"`
 	Formatting    PanelFormatting       `json:"formatting"`
-	ContextLinks  []ContextLinkProps    `json:"contextLinks"`
 	Thresholds    []ComparisonThreshold `json:"thresholds"`
 }
 
@@ -138,13 +137,11 @@ type PieChartPanelSpec struct {
 	Visualization BasicVisualization `json:"visualization"`
 	Formatting    PanelFormatting    `json:"formatting"`
 	Legend        Legend             `json:"legend"`
-	ContextLinks  []ContextLinkProps `json:"contextLinks"`
 }
 
 type TablePanelSpec struct {
 	Visualization BasicVisualization `json:"visualization"`
 	Formatting    TableFormatting    `json:"formatting"`
-	ContextLinks  []ContextLinkProps `json:"contextLinks"`
 	Thresholds    []TableThreshold   `json:"thresholds"`
 }
 
@@ -159,9 +156,8 @@ type TableThreshold struct {
 }
 
 type HistogramPanelSpec struct {
-	HistogramBuckets HistogramBuckets   `json:"histogramBuckets"`
-	Legend           Legend             `json:"legend"`
-	ContextLinks     []ContextLinkProps `json:"contextLinks"`
+	HistogramBuckets HistogramBuckets `json:"histogramBuckets"`
+	Legend           Legend           `json:"legend"`
 }
 
 type HistogramBuckets struct {
@@ -184,11 +180,6 @@ type LogField struct {
 // ══════════════════════════════════════════════
 // Panel common types
 // ══════════════════════════════════════════════
-
-type ContextLinkProps struct {
-	URL   string `json:"url"`
-	Label string `json:"label"`
-}
 
 type Axes struct {
 	SoftMin    *float64 `json:"softMin"`

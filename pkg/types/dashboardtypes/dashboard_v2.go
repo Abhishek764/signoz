@@ -199,11 +199,14 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 		}
 	}
 
-	// Validate variable plugins.
+	// Validate variable plugins (only ListVariables have plugins; TextVariables do not).
 	for i, v := range d.Spec.Variables {
 		plugin, err := extractPluginFromVariable(v)
 		if err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.variables[%d]", i)
+		}
+		if plugin == nil {
+			continue
 		}
 		if err := validatePlugin(*plugin, variablePluginSpecs, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
 			return err
@@ -252,6 +255,8 @@ func validatePlugin(plugin common.Plugin, specs map[string]func() any, path stri
 	return nil
 }
 
+// extractPluginFromVariable extracts the plugin from a variable.
+// Returns nil if the variable has no plugin (e.g. TextVariable).
 func extractPluginFromVariable(v any) (*common.Plugin, error) {
 	data, err := json.Marshal(v)
 	if err != nil {
@@ -259,11 +264,11 @@ func extractPluginFromVariable(v any) (*common.Plugin, error) {
 	}
 	var raw struct {
 		Spec struct {
-			Plugin common.Plugin `json:"plugin"`
+			Plugin *common.Plugin `json:"plugin,omitempty"`
 		} `json:"spec"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
 	}
-	return &raw.Spec.Plugin, nil
+	return raw.Spec.Plugin, nil
 }

@@ -63,7 +63,7 @@ export type K8sRenderedRowData = {
 	 */
 	key: string;
 	/**
-	 * The ID to the selected item/data, same as the returned by getSelectedItemKey
+	 * The ID to the selectedItem
 	 */
 	itemKey: string;
 	groupedByMeta: Record<string, string>;
@@ -71,7 +71,6 @@ export type K8sRenderedRowData = {
 };
 
 export type K8sBaseListProps<T = unknown> = {
-	// List configuration
 	controlListPrefix?: React.ReactNode;
 	entity: K8sCategory;
 	tableColumnsDefinitions: IEntityColumn[];

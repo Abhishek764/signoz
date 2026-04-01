@@ -116,6 +116,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		}
 
 		totalSpans = uint64(len(spanItems))
+		spanIDToSpanNodeMap = make(map[string]*tracedetailtypes.Span, len(spanItems))
 
 		// Build span nodes
 		for _, item := range spanItems {
@@ -171,6 +172,11 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 			} else if !containsSpan(traceRoots, spanNode) {
 				traceRoots = append(traceRoots, spanNode)
 			}
+		}
+
+		// Sort children of each span for consistent ordering across requests.
+		for _, root := range traceRoots {
+			SortSpanChildren(root)
 		}
 
 		// Sort trace roots

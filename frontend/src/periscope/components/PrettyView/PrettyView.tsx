@@ -51,10 +51,13 @@ function PrettyView({
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { searchQuery, setSearchQuery, filteredData } = useSearchFilter(data);
-	const { isPinned, togglePin, pinnedEntries, pinnedData } = usePinnedFields(
-		data,
-		drawerKey,
-	);
+	const {
+		isPinned,
+		togglePin,
+		pinnedEntries,
+		pinnedData,
+		displayKeyToForwardPath,
+	} = usePinnedFields(data, drawerKey);
 
 	const filteredPinnedData = useMemo(() => {
 		const trimmed = searchQuery.trim();
@@ -97,7 +100,11 @@ function PrettyView({
 
 			// Pin action only for leaf nodes
 			if (!context.isNested) {
-				const serialized = serializeKeyPath(context.fieldKeyPath);
+				// Resolve the correct forward path — pinned tree uses display keys
+				// which don't match the original serialized path
+				const resolvedPath =
+					displayKeyToForwardPath[context.fieldKey] || context.fieldKeyPath;
+				const serialized = serializeKeyPath(resolvedPath);
 				const pinned = isPinned(serialized);
 
 				items.push({
@@ -105,7 +112,7 @@ function PrettyView({
 					label: pinned ? 'Unpin field' : 'Pin field',
 					icon: pinned ? <PinOff size={12} /> : <Pin size={12} />,
 					onClick: (): void => {
-						togglePin(context.fieldKeyPath);
+						togglePin(resolvedPath);
 					},
 				});
 			}
@@ -127,7 +134,7 @@ function PrettyView({
 
 			return items;
 		},
-		[actions, isPinned, togglePin],
+		[actions, isPinned, togglePin, displayKeyToForwardPath],
 	);
 
 	const renderWithActions = useCallback(

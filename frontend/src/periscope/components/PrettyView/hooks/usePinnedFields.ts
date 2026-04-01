@@ -37,6 +37,7 @@ export interface UsePinnedFieldsReturn {
 	togglePin: (forwardPath: (string | number)[]) => void;
 	pinnedEntries: PinnedEntry[];
 	pinnedData: AnyRecord;
+	displayKeyToForwardPath: Record<string, (string | number)[]>;
 }
 
 function usePinnedFields(
@@ -105,7 +106,22 @@ function usePinnedFields(
 		[pinnedEntries],
 	);
 
-	return { isPinned, togglePin, pinnedEntries, pinnedData };
+	// Map from display key to original forward path — for unpin from pinned tree
+	const displayKeyToForwardPath = useMemo(
+		(): Record<string, (string | number)[]> =>
+			Object.fromEntries(
+				pinnedEntries.map((entry) => [entry.displayKey, entry.forwardPath]),
+			),
+		[pinnedEntries],
+	);
+
+	return {
+		isPinned,
+		togglePin,
+		pinnedEntries,
+		pinnedData,
+		displayKeyToForwardPath,
+	};
 }
 
 export default usePinnedFields;

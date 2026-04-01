@@ -44,6 +44,12 @@ function FloatingPanel({
 			dragHandleClassName="floating-panel__drag-handle"
 			minWidth={minWidth}
 			minHeight={minHeight}
+			onDrag={(_e, d): void | false => {
+				// dont allow dragging the panel beyond the top of the viewport
+				if (d.y < 0) {
+					return false;
+				}
+			}}
 			className={`floating-panel ${className || ''}`}
 			enableResizing={{
 				top: true,

@@ -34,6 +34,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -62,6 +64,7 @@ type Handlers struct {
 	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
 	RuleStateHistory        rulestatehistory.Handler
+	TraceDetail             tracedetail.Handler
 }
 
 func NewHandlers(
@@ -99,5 +102,6 @@ func NewHandlers(
 		RegistryHandler:         registryHandler,
 		CloudIntegrationHandler: implcloudintegration.NewHandler(),
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
+		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 	}
 }

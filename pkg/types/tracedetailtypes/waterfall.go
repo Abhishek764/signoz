@@ -64,7 +64,7 @@ type WaterfallSpan struct {
 	Resources          map[string]string `json:"resources"`
 	ResponseStatusCode string            `json:"response_status_code"`
 	SpanID             string            `json:"span_id"`
-	StatusCode         int32             `json:"status_code"`
+	StatusCode         int16             `json:"status_code"`
 	StatusCodeString   string            `json:"status_code_string"`
 	StatusMessage      string            `json:"status_message"`
 	Timestamp          string            `json:"timestamp"`
@@ -117,7 +117,7 @@ type SpanModel struct {
 	Flags              uint32             `ch:"flags"`
 	IsRemote           string             `ch:"is_remote"`
 	TraceState         string             `ch:"trace_state"`
-	StatusCode         int32              `ch:"status_code"`
+	StatusCode         int16              `ch:"status_code"`
 	DBName             string             `ch:"db_name"`
 	DBOperation        string             `ch:"db_operation"`
 	HTTPMethod         string             `ch:"http_method"`

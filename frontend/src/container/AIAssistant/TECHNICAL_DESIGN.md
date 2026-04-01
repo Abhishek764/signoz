@@ -1,760 +1,911 @@
 # AI Assistant — Technical Design Document
 
-**Feature:** Conversational AI Assistant embedded in the SigNoz frontend  
-**Status:** In development (mock backend)  
-**Last updated:** 2026-03-31  
-**Author:** Engineering
+**Status:** In Progress  
+**Last Updated:** 2026-04-01  
+**Scope:** Frontend AI Assistant subsystem — UI, state management, API integration, page action system
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#1-overview)
-2. [Goals & Non-Goals](#2-goals--non-goals)
-3. [Architecture Overview](#3-architecture-overview)
-4. [Directory Structure](#4-directory-structure)
-5. [Data Model](#5-data-model)
-6. [State Management](#6-state-management)
-7. [UI Modes & Entry Points](#7-ui-modes--entry-points)
-8. [Component Hierarchy](#8-component-hierarchy)
-9. [Streaming Protocol](#9-streaming-protocol)
-10. [Rich Block System](#10-rich-block-system)
-11. [Interactive Blocks](#11-interactive-blocks)
-12. [Conversation History](#12-conversation-history)
-13. [Icon System](#13-icon-system)
-14. [Routing & Integration](#14-routing--integration)
-15. [Styling System](#15-styling-system)
-16. [Backend Integration Plan](#16-backend-integration-plan)
-17. [Security Considerations](#17-security-considerations)
-18. [Open Questions & Future Work](#18-open-questions--future-work)
+2. [Architecture Diagram](#2-architecture-diagram)
+3. [User Flows](#3-user-flows)
+4. [UI Modes and Transitions](#4-ui-modes-and-transitions)
+5. [Control Flow: UI → API → UI](#5-control-flow-ui--api--ui)
+6. [SSE Response Handling](#6-sse-response-handling)
+7. [Page Action System](#7-page-action-system)
+8. [Block Rendering System](#8-block-rendering-system)
+9. [State Management](#9-state-management)
+10. [Page-Specific Actions](#10-page-specific-actions)
+11. [Voice Input](#11-voice-input)
+12. [File Attachments](#12-file-attachments)
+13. [Development Mode (Mock)](#13-development-mode-mock)
+14. [Adding a New Page's Actions](#14-adding-a-new-pages-actions)
+15. [Adding a New Block Type](#15-adding-a-new-block-type)
+16. [Data Contracts](#16-data-contracts)
+17. [Key Design Decisions](#17-key-design-decisions)
 
 ---
 
 ## 1. Overview
 
-The AI Assistant is a conversational interface embedded in the SigNoz frontend that allows users to query observability data, get insights, and take actions — all in natural language. It renders rich, structured responses beyond plain text: charts, tables, and interactive confirmation flows powered by a pluggable block registry.
+The AI Assistant is an embedded chat interface inside SigNoz that understands the current page context and can execute actions on behalf of the user (e.g., filter logs, update queries, navigate views). It communicates with a backend AI service via Server-Sent Events (SSE) and renders structured responses as rich interactive blocks alongside plain markdown.
 
-It operates in two surface modes:
-
-- **Panel mode** — a 380px inline sidebar that shrinks the main content area without a modal overlay
-- **Full-screen page mode** — a dedicated route with a persistent history sidebar
-
-Both modes share the same Zustand store and conversation state, so switching between them is seamless.
-
----
-
-## 2. Goals & Non-Goals
-
-### Goals
-
-- Provide a persistent, context-aware conversational interface accessible from any page
-- Render AI responses as rich visual components (charts, tables, interactive questions) without custom parsing logic in each response
-- Support streaming responses with a live typing experience
-- Persist conversation history across page navigations within a session
-- Enable the AI to ask clarifying questions and await user confirmation before taking actions
-- Make the block system extensible so new response types can be added by registering a component — no changes to core chat code
-
-### Non-Goals
-
-- Backend AI model selection or prompt engineering (owned by the AI/backend team)
-- Persisting conversations to a database (current scope: in-memory Zustand store)
-- Multi-user / team shared conversations
-- Mobile-responsive layout optimisation (desktop-first for now)
+**Key goals:**
+- **Context-aware:** the AI always knows what page the user is on and what actions are available
+- **Streaming:** responses appear token-by-token, no waiting for a full response
+- **Actionable:** the AI can trigger page mutations (filter logs, switch views) without copy-paste
+- **Extensible:** new pages can register actions; new block types can be added independently
 
 ---
 
-## 3. Architecture Overview
+## 2. Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        AppLayout                            │
-│  ┌─────────────────────────┐   ┌─────────────────────────┐  │
-│  │     .app-content        │   │   AIAssistantPanel      │  │
-│  │  (flex: 1, min-width:0) │   │   (380px, flex-shrink:0)│  │
-│  │  shrinks when panel open│   │                         │  │
-│  └─────────────────────────┘   └─────────────────────────┘  │
-│                                                             │
-│  HeaderRightSection ──► openAIAssistant() ──► Zustand store │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│              Zustand Store (useAIAssistantStore)             │
-│                                                             │
-│  conversations: Record<id, Conversation>                    │
-│  activeConversationId: string | null                        │
-│  isDrawerOpen: boolean                                      │
-│  streamingContent: string                                   │
-│  isStreaming: boolean                                       │
-│  answeredBlocks: Record<messageId, answer>                  │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│                  Message Rendering Pipeline                 │
-│                                                             │
-│  Message.content (markdown string)                          │
-│       │                                                     │
-│       ▼                                                     │
-│  ReactMarkdown                                              │
-│       │  components={{ code: RichCodeBlock, pre: SmartPre }}│
-│       ▼                                                     │
-│  RichCodeBlock                                              │
-│       │  language = "ai-<type>"?                            │
-│       ├─── yes ──► BlockRegistry.get(type)                  │
-│       │                   │                                 │
-│       │                   ▼                                 │
-│       │           <BlockComponent data={parsedJSON} />      │
-│       │                                                     │
-│       └─── no  ──► <code>{children}</code>                  │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  User                                                               │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ types text / voice / file
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  UI Layer                                                           │
+│                                                                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────────────────────┐  │
+│  │  Panel      │  │  Modal      │  │  Full-Screen Page         │  │
+│  │  (drawer)   │  │  (Cmd+P)    │  │  /ai-assistant/:id        │  │
+│  └──────┬──────┘  └──────┬──────┘  └─────────────┬─────────────┘  │
+│         └────────────────┴─────────────────────────┘               │
+│                           │ all modes share                         │
+│                    ┌──────▼──────┐                                  │
+│                    │ConversationView│                               │
+│                    │  + ChatInput │                                  │
+│                    └──────┬──────┘                                  │
+└───────────────────────────┼─────────────────────────────────────────┘
+                            │ sendMessage()
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Zustand Store  (useAIAssistantStore)                               │
+│                                                                     │
+│  conversations{}          isStreaming                               │
+│  activeConversationId     streamingContent                          │
+│  isDrawerOpen             answeredBlocks{}                          │
+│  isModalOpen                                                        │
+│                                                                     │
+│  sendMessage()                                                      │
+│    1. push user message                                             │
+│    2. buildContextPrefix() ──► PageActionRegistry.snapshot()       │
+│    3. call streamChat(payload)  [or mockStreamChat in dev]          │
+│    4. accumulate chunks into streamingContent                       │
+│    5. on done: push assistant message with actions[]                │
+└──────────────────────────┬──────────────────────────────────────────┘
+                           │ POST /api/v1/assistant/threads
+                           │ (SSE response)
+                           ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  API Layer  (src/api/ai/chat.ts)                                    │
+│                                                                     │
+│  streamChat(payload) → AsyncGenerator<SSEEvent>                    │
+│  Parses  data: {...}\n\n  SSE frames                                │
+└─────────────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  Page Action System                                                 │
+│                                                                     │
+│  PageActionRegistry ◄──── usePageActions() hook                    │
+│  (module singleton)        (called by each page on mount)          │
+│                                                                     │
+│  Registry is read by buildContextPrefix() before every API call.   │
+│                                                                     │
+│  AI response → ai-action block → ActionBlock component             │
+│    → PageActionRegistry.get(actionId).execute(params)              │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 4. Directory Structure
+## 3. User Flows
+
+### 3.1 Basic Chat
 
 ```
-src/container/AIAssistant/
-├── TECHNICAL_DESIGN.md           ← this document
-├── AIAssistant.styles.scss       ← all styles (single file)
-├── AIAssistantPanel.tsx          ← inline side panel
-├── AIAssistantDrawer.tsx         ← Ant Design Drawer wrapper
-├── AIAssistantTrigger.tsx        ← floating action button (legacy)
-├── ConversationView.tsx          ← messages + input area
-├── types.ts                      ← shared TypeScript types
-│
-├── store/
-│   └── useAIAssistantStore.ts    ← Zustand + Immer store
-│
-├── mock/
-│   └── mockAIApi.ts              ← streaming mock, swappable with fetch()
-│
-└── components/
-    ├── ChatInput.tsx             ← textarea, file upload, send
-    ├── VirtualizedMessages.tsx   ← react-virtuoso list
-    ├── MessageBubble.tsx         ← committed message renderer
-    ├── StreamingMessage.tsx      ← live streaming renderer
-    ├── MessageContext.ts         ← React context: messageId → blocks
-    ├── HistorySidebar.tsx        ← grouped conversation list
-    ├── ConversationItem.tsx      ← single history row (rename, delete)
-    ├── AIAssistantIcon.tsx       ← active icon (V2 — Minimal Line)
-    ├── AIAssistantIconV2.tsx     ← Minimal Line (current active)
-    ├── AIAssistantIconV3.tsx     ← Eye Lens
-    ├── AIAssistantIconV4.tsx     ← Neural Spark
-    ├── AIAssistantIconV5.tsx     ← App Badge
-    ├── AIAssistantIconV6.tsx     ← Square Panda Bot (futuristic)
-    └── blocks/
-        ├── BlockRegistry.ts      ← Map<type, Component> singleton
-        ├── RichCodeBlock.tsx     ← react-markdown code renderer
-        ├── index.ts              ← registers all built-in blocks
-        ├── chartSetup.ts         ← Chart.js registration + palette
-        ├── InteractiveQuestion.tsx
-        ├── ConfirmBlock.tsx
-        ├── TimeseriesBlock.tsx
-        ├── BarChartBlock.tsx
-        ├── LineChartBlock.tsx
-        └── PieChartBlock.tsx
+User opens panel (header icon / Cmd+P / trigger button)
+  → Conversation created (or resumed from store)
+  → ChatInput focused automatically
 
-src/pages/AIAssistantPage/
-└── AIAssistantPage.tsx           ← full-screen route component
+User types message → presses Enter
+  → User message appended to conversation
+  → StreamingMessage (typing indicator) appears
+  → SSE stream opens: tokens arrive word-by-word
+  → StreamingMessage renders live content
+  → Stream ends: StreamingMessage replaced by MessageBubble
+  → Follow-up actions (if any) shown as chips on the message
+```
 
-src/pages/AIAssistantIconPreview/
-└── AIAssistantIconPreview.tsx    ← dev-only icon signoff page
+### 3.2 AI Applies a Page Action (autoApply)
+
+```
+User: "Filter logs for errors from payment-svc"
+  → PAGE_CONTEXT injected into wire payload
+      (includes registered action schemas + current query state)
+  → AI responds with plain text + ai-action block
+  → ActionBlock mounts with autoApply=true
+  → execute() fires immediately on mount — no user confirmation
+  → Logs Explorer query updated via redirectWithQueryBuilderData()
+  → URL reflects new filters, QueryBuilderV2 UI updates
+  → ActionBlock shows "Applied ✓" state (persisted in answeredBlocks)
+```
+
+### 3.3 AI Asks a Clarifying Question
+
+```
+AI responds with ai-question block
+  → InteractiveQuestion renders (radio or checkbox)
+  → User selects answer → sendMessage() called automatically
+  → Answer persisted in answeredBlocks (survives re-renders / mode switches)
+  → Block shows answered state on re-mount
+```
+
+### 3.4 AI Requests Confirmation
+
+```
+AI responds with ai-confirm block
+  → ConfirmBlock renders Accept / Reject buttons
+  → Accept → sendMessage(acceptText)
+  → Reject → sendMessage(rejectText)
+  → Block shows answered state, buttons disabled
+```
+
+### 3.5 Modal → Panel Minimize
+
+```
+User opens modal (Cmd+P), interacts with AI
+User clicks minimize button (−)
+  → minimizeModal(): isModalOpen=false, isDrawerOpen=true (atomic)
+  → Same conversation continues in the side panel
+  → No data loss, streaming state preserved
+```
+
+### 3.6 Panel → Full Screen Expand
+
+```
+User clicks Maximize in panel header
+  → closeDrawer() called
+  → navigate to /ai-assistant/:conversationId
+  → Full-screen page renders same conversation
+  → TopNav (timepicker header) hidden on this route
+  → SideNav remains visible
+```
+
+### 3.7 Voice Input
+
+```
+User clicks mic button in ChatInput
+  → SpeechRecognition.start()
+  → isListening=true (mic turns red, CSS pulse animation)
+  → Interim results: textarea updates live as user speaks
+  → Recognition ends (auto pause detection or manual click)
+  → Final transcript committed to committedTextRef
+  → User reviews / edits text, then sends normally
+```
+
+### 3.8 Resize Panel
+
+```
+User hovers over left edge of panel
+  → Resize handle highlights (purple line)
+User drags left/right
+  → panel width updates live (min 380px, max 800px)
+  → document.body.cursor = 'col-resize' during drag
+  → text selection disabled during drag
 ```
 
 ---
 
-## 5. Data Model
+## 4. UI Modes and Transitions
+
+```
+                    ┌──────────────────┐
+                    │   All Closed     │
+                    │  (trigger shown) │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
+        Click trigger    Cmd+P          navigate to
+              │              │          /ai-assistant/:id
+              ▼              ▼               ▼
+        ┌──────────┐   ┌──────────┐  ┌─────────────┐
+        │  Panel   │   │  Modal   │  │ Full-Screen │
+        │ (drawer) │   │ (portal) │  │    Page     │
+        └────┬─────┘   └────┬─────┘  └──────┬──────┘
+             │              │               │
+        ┌────▼──────────────▼───────────────▼────┐
+        │   ConversationView  (shared component)  │
+        └─────────────────────────────────────────┘
+
+Transitions:
+  Panel   → Full-Screen  :  Maximize → closeDrawer() + history.push()
+  Modal   → Panel        :  Minimize → minimizeModal()
+  Modal   → Full-Screen  :  Maximize → closeModal() + history.push()
+  Any     → Closed       :  X button or Escape key
+
+Visibility rules:
+  Header AI icon    : hidden when isDrawerOpen=true
+  Trigger button    : hidden when isDrawerOpen || isModalOpen || isFullScreenPage
+  TopNav (timepicker): hidden when pathname.startsWith('/ai-assistant/')
+```
+
+---
+
+## 5. Control Flow: UI → API → UI
+
+### 5.1 Message Send
+
+```
+ChatInput.handleSend()
+  ├── setText('')                         // clear textarea
+  ├── committedTextRef.current = ''       // clear voice accumulator
+  └── store.sendMessage(text, attachments)
+        │
+        ├── Push userMessage to conversations[id].messages
+        ├── set isStreaming=true, streamingContent=''
+        │
+        ├── buildContextPrefix()
+        │     └── PageActionRegistry.snapshot()
+        │           → returns PageActionDescriptor[] (ids, schemas, current context)
+        │           → serialized as [PAGE_CONTEXT]...[/PAGE_CONTEXT] string
+        │
+        ├── Build wire payload:
+        │     {
+        │       conversationId,
+        │       messages: history.map((m, i) => ({
+        │         role: m.role,
+        │         content: i === last && role==='user'
+        │           ? contextPrefix + m.content   // wire only, never stored
+        │           : m.content
+        │       }))
+        │     }
+        │
+        ├── for await (event of streamChat(payload)):
+        │     ├── streamingContent += event.content   // triggers StreamingMessage re-render
+        │     └── if event.done: finalActions = event.actions; break
+        │
+        ├── Push assistantMessage { id: serverMessageId, content, actions }
+        └── set isStreaming=false, streamingContent=''
+```
+
+### 5.2 Streaming Render Pipeline
+
+```
+streamingContent (Zustand state)
+  → StreamingMessage component  (rendered while isStreaming=true)
+      → react-markdown
+          → RichCodeBlock (custom code renderer)
+              → BlockRegistry.get(lang) → renders chart / table / action / etc.
+
+On stream end:
+  streamingContent → assistantMessage.content  (frozen in store)
+  StreamingMessage removed, MessageBubble added with same content
+  MessageBubble renders through identical markdown pipeline
+```
+
+### 5.3 PAGE_CONTEXT Wire Format
+
+The context prefix is prepended to the last user message in the API payload **only**. It is never stored in the conversation or shown in the UI.
+
+```
+[PAGE_CONTEXT]
+actions:
+  - id: logs.runQuery
+    description: "Replace all log filters and re-run the query"
+    params: {"filters": {"type": "array", "items": {...}}}
+  - id: logs.addFilter
+    description: "Append a single key/op/value filter"
+    params: {"key": {...}, "op": {...}, "value": {...}}
+state:
+  logs.runQuery: {"currentFilters": [...], "currentView": "list"}
+[/PAGE_CONTEXT]
+User's actual message text here
+```
+
+---
+
+## 6. SSE Response Handling
+
+### 6.1 Wire Format
+
+**Request:**
+```
+POST /api/v1/assistant/threads
+Content-Type: application/json
+
+{
+  "conversationId": "uuid",
+  "messages": [
+    { "role": "user", "content": "[PAGE_CONTEXT]...[/PAGE_CONTEXT]\nUser text" },
+    { "role": "assistant", "content": "Previous assistant turn" },
+    ...
+  ]
+}
+```
+
+**Response (SSE stream):**
+```
+data: {"type":"message","messageId":"srv-123","role":"assistant","content":"I'll ","done":false,"actions":[]}\n\n
+data: {"type":"message","messageId":"srv-123","role":"assistant","content":"update ","done":false,"actions":[]}\n\n
+data: {"type":"message","messageId":"srv-123","role":"assistant","content":"the query.","done":true,"actions":[
+  {"id":"act-1","label":"Add another filter","kind":"follow_up","payload":{},"expiresAt":null}
+]}\n\n
+```
+
+### 6.2 SSE Parsing (src/api/ai/chat.ts)
+
+```
+fetch() → ReadableStream → TextDecoder → string chunks
+  → lineBuffer accumulates across chunks (handles partial lines)
+  → split on '\n\n' (SSE event boundary)
+  → for each complete part:
+      find line starting with 'data: '
+      strip prefix → parse JSON → yield SSEEvent
+  → '[DONE]' sentinel → stop iteration
+  → malformed JSON → skip silently
+  → finally: reader.releaseLock()
+```
+
+### 6.3 Structured Content in the Stream
+
+The AI embeds block payloads as markdown fenced code blocks with `ai-*` language tags inside the `content` stream. These are parsed live as tokens arrive:
+
+````markdown
+Here are the results:
+
+```ai-graph
+{
+  "title": "p99 Latency",
+  "datasets": [...]
+}
+```
+
+The spike started at 14:45.
+````
+
+React-markdown renders the code block → `RichCodeBlock` detects the `ai-` prefix → looks up `BlockRegistry` → renders the chart/table/action component.
+
+### 6.4 actions[] Array
+
+Actions arrive on the **final** SSE event (`done: true`). They are stored on the `Message` object. Each action's `kind` determines UI behavior:
+
+| Kind | Behavior |
+|---|---|
+| `follow_up` | Rendered as suggestion chip; click sends as new message |
+| `open_resource` | Opens a SigNoz resource (trace, log, dashboard) |
+| `navigate` | Navigates to a SigNoz route |
+| `apply_filter` | Directly triggers a registered page action |
+| `open_docs` | Opens a documentation URL |
+| `undo` | Reverts the last page mutation |
+| `revert` | Reverts to a specified previous state |
+
+---
+
+## 7. Page Action System
+
+### 7.1 Concepts
+
+| Concept | Description |
+|---|---|
+| `PageAction<TParams>` | An action a page exposes to the AI: id, description, JSON Schema params, `execute()`, optional `getContext()`, optional `autoApply` |
+| `PageActionRegistry` | Module-level singleton (`Map<pageId, actions[]>` + `Map<actionId, action>`) |
+| `usePageActions(pageId, actions)` | React hook — registers on mount, unregisters on unmount |
+| `PageActionDescriptor` | Serializable version of `PageAction` (no functions) — sent to AI via PAGE_CONTEXT |
+| `AIActionBlock` | Shape the AI emits when invoking an action: `{ actionId, description, parameters }` |
+
+### 7.2 Lifecycle
+
+```
+Page component mounts
+  └── usePageActions('logs-explorer', actions)
+        └── PageActionRegistry.register('logs-explorer', actions)
+              → added to _byPage map (for bulk unregister)
+              → added to _byId map (for O(1) lookup by actionId)
+
+User sends any message
+  └── buildContextPrefix()
+        └── PageActionRegistry.snapshot()
+              → returns PageActionDescriptor[] with current context values
+
+AI response contains  ```ai-action  block
+  └── ActionBlock component mounts
+        ├── PageActionRegistry.get(actionId) → PageAction with execute()
+        └── if autoApply: execute(params) on mount
+            else: render confirmation card, execute on user click
+
+Page component unmounts
+  └── usePageActions cleanup
+        └── PageActionRegistry.unregister('logs-explorer')
+              → all actions for this page removed from both maps
+```
+
+### 7.3 ActionBlock State Machine
+
+**autoApply: true** (fires immediately on mount):
+```
+mount
+  → hasFired ref guard (prevents double-fire in React StrictMode)
+  → PageActionRegistry.get(actionId).execute(params)
+  → render: loading spinner
+  → success: "Applied ✓" state, markBlockAnswered(messageId, 'applied')
+  → error: error state with message, markBlockAnswered(messageId, 'error:...')
+```
+
+**autoApply: false** (user must confirm):
+```
+mount
+  → render: description + parameter summary + Apply / Dismiss buttons
+  → Apply clicked:
+      → execute(params) → loading → applied state
+      → markBlockAnswered(messageId, 'applied')
+  → Dismiss clicked:
+      → markBlockAnswered(messageId, 'dismissed')
+```
+
+**Re-mount (scroll / mode switch):**
+```
+mount
+  → answeredBlocks[messageId] exists
+  → render answered state directly (skip pending UI)
+```
+
+---
+
+## 8. Block Rendering System
+
+### 8.1 Registration
+
+`src/container/AIAssistant/components/blocks/index.ts` registers all built-in types at import time (side-effect import):
 
 ```typescript
-// types.ts
+BlockRegistry.register('action',     ActionBlock);
+BlockRegistry.register('question',   InteractiveQuestion);
+BlockRegistry.register('confirm',    ConfirmBlock);
+BlockRegistry.register('timeseries', TimeseriesBlock);
+BlockRegistry.register('barchart',   BarChartBlock);
+BlockRegistry.register('piechart',   PieChartBlock);
+BlockRegistry.register('linechart',  LineChartBlock);
+BlockRegistry.register('graph',      LineChartBlock);  // alias
+```
 
-interface MessageAttachment {
-  name: string;       // original filename
-  type: string;       // MIME type (e.g. "image/png", "application/pdf")
-  dataUrl: string;    // data: URI for inline display or download URL
-}
+### 8.2 Render Pipeline
 
-interface Message {
-  id: string;                        // uuid v4
-  role: 'user' | 'assistant';
-  content: string;                   // raw markdown; may contain ai-* blocks
-  attachments?: MessageAttachment[];
-  createdAt: number;                 // Unix ms
-}
+```
+MessageBubble (assistant message)
+  └── react-markdown
+        └── components={{ code: RichCodeBlock }}
+              └── RichCodeBlock
+                    ├── lang.startsWith('ai-') ?
+                    │     yes → BlockRegistry.get(lang.slice(3))
+                    │             → parse JSON content
+                    │             → render block component
+                    └── no  → render plain <code> element
+```
 
-interface Conversation {
-  id: string;                        // uuid v4
-  messages: Message[];
-  createdAt: number;
-  updatedAt?: number;                // updated on every new message
-  title?: string;                    // auto-derived from first user message
+### 8.3 Block Component Interface
+
+All block components receive:
+```typescript
+interface BlockProps {
+  content: string;  // raw JSON string from the fenced code block body
 }
 ```
 
-### Title Derivation
+Blocks access shared context via:
+```typescript
+const { messageId } = useContext(MessageContext);           // for answeredBlocks key
+const markBlockAnswered = useAIAssistantStore(s => s.markBlockAnswered);
+const sendMessage = useAIAssistantStore(s => s.sendMessage); // for interactive blocks
+```
 
-When the first user message is sent, `deriveTitle()` truncates it to 60 characters and stores it on the conversation. This removes the need for a separate naming step.
+### 8.4 Block Types Reference
+
+| Tag | Component | Purpose |
+|---|---|---|
+| `ai-action` | `ActionBlock` | Invokes a registered page action |
+| `ai-question` | `InteractiveQuestion` | Radio or checkbox user selection |
+| `ai-confirm` | `ConfirmBlock` | Binary accept / reject prompt |
+| `ai-timeseries` | `TimeseriesBlock` | Tabular data with rows and columns |
+| `ai-barchart` | `BarChartBlock` | Horizontal / vertical bar chart |
+| `ai-piechart` | `PieChartBlock` | Doughnut / pie chart |
+| `ai-linechart` | `LineChartBlock` | Multi-series line chart |
+| `ai-graph` | `LineChartBlock` | Alias for `ai-linechart` |
 
 ---
 
-## 6. State Management
+## 9. State Management
 
-### Store: `useAIAssistantStore`
-
-**Technology:** Zustand with Immer middleware (immutable updates via draft mutations).
+### 9.1 Store Shape (Zustand + Immer)
 
 ```typescript
 interface AIAssistantStore {
   // UI
   isDrawerOpen: boolean;
+  isModalOpen: boolean;
   activeConversationId: string | null;
 
   // Data
   conversations: Record<string, Conversation>;
 
   // Streaming
-  streamingContent: string;
+  streamingContent: string;   // accumulates token-by-token during SSE stream
   isStreaming: boolean;
 
-  // Interactive block persistence
-  answeredBlocks: Record<string, string>;  // messageId → answer
-
-  // Actions
-  openDrawer(): void;
-  closeDrawer(): void;
-  startNewConversation(): string;          // returns new id
-  setActiveConversation(id: string): void;
-  clearConversation(id: string): void;
-  deleteConversation(id: string): void;
-  renameConversation(id: string, title: string): void;
-  markBlockAnswered(messageId: string, answer: string): void;
-  sendMessage(text: string, attachments?: MessageAttachment[]): Promise<void>;
+  // Block answer persistence
+  answeredBlocks: Record<string, string>;  // messageId → answer string
 }
 ```
 
-### `sendMessage` flow
-
-```
-sendMessage(text, attachments)
-  │
-  ├─ 1. Append user Message to conversation
-  ├─ 2. Auto-title conversation (if first message)
-  ├─ 3. Set isStreaming = true, streamingContent = ""
-  ├─ 4. Call mockAIStream(payload) [→ real fetch when backend ready]
-  ├─ 5. ReadableStream reader loop:
-  │       while (!done) { streamingContent += chunk }
-  ├─ 6. Create assistant Message from final streamingContent
-  ├─ 7. Append to conversation, set isStreaming = false
-  └─ 8. On error: append error message, reset streaming state
-```
-
-### `answeredBlocks` — Interactive Block Persistence
-
-Stores answered state keyed by `messageId`. This survives component remounts caused by new messages arriving (which triggers a Zustand state update → list re-render → component lifecycle reset). Without this, interactive question/confirm blocks would reset to "pending" every time a new AI message arrived.
-
----
-
-## 7. UI Modes & Entry Points
-
-### Mode 1 — Panel (inline sidebar)
-
-- Triggered by the **header bot icon** (`HeaderRightSection`) or `openAIAssistant()` imperative export
-- `AIAssistantPanel` renders inside `AppLayout`'s flex row, to the right of `.app-content`
-- `.app-content` uses `flex: 1; min-width: 0` so it naturally shrinks when the panel opens — no JavaScript resize logic needed
-- Panel is 380px wide (`min: 320px`, `max: 480px`)
-- Suppressed when already on the full-screen page (`matchPath` check)
-
-### Mode 2 — Full-screen page
-
-- Route: `/ai-assistant/:conversationId`
-- `AIAssistantPage` is a two-column layout:
-  - Left: `HistorySidebar` (220px, fixed width)
-  - Right: `ConversationView` (flex: 1)
-- URL drives active conversation: `useParams<{ conversationId }>` syncs to the store via `useEffect`
-- If the `conversationId` param doesn't exist in the store, a new conversation is created and the user is redirected (`history.replace`)
-
-### Entry Point Summary
-
-| Surface | Component | Trigger |
-|---------|-----------|---------|
-| Header button | `HeaderRightSection` | Click → `openAIAssistant()` |
-| Full-screen URL | `AIAssistantPage` | Direct navigation to `/ai-assistant/:id` |
-| Panel expand | `AIAssistantPanel` maximize button | `history.push('/ai-assistant/:id')` |
-| Panel minimize | `AIAssistantPage` minimize button | `openDrawer()` + `history.goBack()` |
-
-### Pylon Chat Bubble
-
-The Pylon support chat bubble (`pylon-chat-bubble-frame`) is hidden when the user is on the AI Assistant page to avoid visual conflict. Controlled in `AppRoutes/index.tsx`:
+### 9.2 Conversation Structure
 
 ```typescript
-useEffect(() => {
-  if (
-    pathname === ROUTES.ONBOARDING ||
-    pathname.startsWith('/public/dashboard/') ||
-    pathname.startsWith('/ai-assistant/')   // ← added
-  ) {
-    window.Pylon?.('hideChatBubble');
-  } else {
-    window.Pylon?.('showChatBubble');
-  }
-}, [pathname]);
-```
+interface Conversation {
+  id: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt?: number;
+  title?: string;         // auto-derived from first user message (60 char max)
+}
 
----
-
-## 8. Component Hierarchy
-
-```
-AIAssistantPanel
-└── ConversationView (conversationId)
-    ├── VirtualizedMessages
-    │   ├── MessageBubble × N
-    │   │   └── ReactMarkdown
-    │   │       ├── SmartPre          ← unwraps <pre> for ai-* blocks
-    │   │       └── RichCodeBlock     ← dispatches to BlockRegistry
-    │   │           ├── InteractiveQuestion
-    │   │           ├── ConfirmBlock
-    │   │           ├── TimeseriesBlock
-    │   │           ├── BarChartBlock
-    │   │           ├── LineChartBlock
-    │   │           └── PieChartBlock
-    │   └── StreamingMessage (while isStreaming)
-    │       └── ReactMarkdown (same pipeline)
-    └── ChatInput
-        ├── Textarea (auto-expand, Enter to send)
-        └── Attachment chips
-
-AIAssistantPage
-├── Header (Clear, New, Minimize)
-└── Body (flex-row)
-    ├── HistorySidebar
-    │   ├── New button
-    │   └── ConversationItem × N (grouped by date)
-    └── ConversationView (same as above)
-```
-
-### Context: `MessageContext`
-
-`MessageBubble` wraps `ReactMarkdown` in a `MessageContext.Provider` that supplies the current `messageId`. Block components consume this via `useMessageContext()` to look up and persist answered state in the store.
-
-```
-MessageBubble (provides MessageContext: { messageId })
-    └── ReactMarkdown
-        └── RichCodeBlock
-            └── ConfirmBlock / InteractiveQuestion
-                └── useMessageContext() → messageId
-                └── answeredBlocks[messageId] → is answered?
-```
-
----
-
-## 9. Streaming Protocol
-
-### Current (mock)
-
-`mockAIStream()` in `mock/mockAIApi.ts` returns a `Response` object with a `ReadableStream<Uint8Array>` body, simulating a real streaming HTTP response. Words are emitted with 15–45ms random delays.
-
-### Real backend (swap point)
-
-Replace the single line in `useAIAssistantStore.ts`:
-
-```typescript
-// Current (mock):
-const response = mockAIStream(payload);
-
-// Replace with:
-const response = await fetch('/api/v1/ai/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload),
-});
-```
-
-The rest of the streaming loop (ReadableStream reader, TextDecoder, chunk accumulation) is identical. No other changes required.
-
-### Payload shape
-
-```typescript
-{
-  conversationId: string;
-  messages: Array<{
-    role: 'user' | 'assistant';
-    content: string;
-  }>;
+interface Message {
+  id: string;             // server messageId for assistant turns, uuidv4 for user
+  role: 'user' | 'assistant';
+  content: string;
+  attachments?: MessageAttachment[];
+  actions?: AssistantAction[];  // follow-up actions, present on final assistant message only
+  createdAt: number;
 }
 ```
 
-### Stream format
+### 9.3 Streaming State Machine
 
-Plain UTF-8 text chunks. The entire response is accumulated before being committed as a `Message`. This means partial markdown is rendered live via `StreamingMessage` but only committed once the stream closes.
+```
+idle
+  → sendMessage() called
+  → isStreaming=true, streamingContent=''
 
-> **Note:** If the backend emits structured SSE events (e.g. `data: {...}`) rather than raw text, the chunk accumulation logic in `sendMessage` will need a parser.
+streaming
+  → each SSE chunk: streamingContent += event.content  (triggers StreamingMessage re-render)
+  → done event: isStreaming=false, streamingContent=''
+  → assistant message pushed to conversation
+
+idle (settled)
+  → MessageBubble renders final frozen content
+  → ChatInput re-enabled (disabled={isStreaming})
+```
+
+### 9.4 Answered Block Persistence
+
+Interactive blocks call `markBlockAnswered(messageId, answer)` on completion. On re-mount, blocks check `answeredBlocks[messageId]` and render the answered state directly. This ensures:
+- Scrolling away and back does not reset blocks
+- Switching UI modes (panel → full-screen) does not reset blocks
+- Blocks cannot be answered twice
 
 ---
 
-## 10. Rich Block System
+## 10. Page-Specific Actions
 
-### Motivation
+### 10.1 Logs Explorer
 
-AI responses can contain more than text. Rather than building bespoke markdown extensions or client-side JSON parsers, we leverage standard fenced code blocks with a custom language tag: ` ```ai-<type> `. This is valid markdown, renders gracefully in any markdown viewer as a code block, and is intercepted by our custom `code` renderer.
+**File:** `src/pages/LogsExplorer/aiActions.ts`  
+**Registered in:** `src/pages/LogsExplorer/index.tsx` via `usePageActions('logs-explorer', aiActions)`
 
-### Block Registry
+| Action ID | autoApply | Description |
+|---|---|---|
+| `logs.runQuery` | `true` | Replace all filters in the query builder and re-run |
+| `logs.addFilter` | `true` | Append a single `key / op / value` filter |
+| `logs.changeView` | `true` | Switch between list / timeseries / table views |
+| `logs.saveView` | `false` | Save current query as a named view (requires confirmation) |
 
-A singleton `Map<string, React.ComponentType<{ data: unknown }>>` in `BlockRegistry.ts`:
+**Critical implementation detail:** All query mutations use `redirectWithQueryBuilderData()`, not `handleSetQueryData`. The Logs Explorer's `QueryBuilderV2` is URL-driven — `compositeQuery` in the URL is the source of truth for displayed filters. `handleSetQueryData` updates React state only; `redirectWithQueryBuilderData` syncs the URL, making changes visible in the UI.
 
+**Context shape provided to AI:**
 ```typescript
-// Register
-BlockRegistry.register('timeseries', TimeseriesBlock);
-
-// Retrieve
-const Component = BlockRegistry.get('timeseries');
-
-// Enumerate
-BlockRegistry.types(); // ['question', 'confirm', 'timeseries', ...]
+getContext: () => ({
+  currentFilters: currentQuery.builder.queryData[0].filters.items,
+  currentView:    currentView,   // 'list' | 'timeseries' | 'table'
+})
 ```
 
-### Rendering Pipeline
+---
 
-1. `ReactMarkdown` processes the assistant's markdown content
-2. For fenced blocks (` ```lang `), it calls the custom `code` component (`RichCodeBlock`)
-3. `RichCodeBlock` inspects the language tag:
-   - If it starts with `ai-`, strip the prefix → look up in `BlockRegistry`
-   - If a component is found, parse the block body as JSON → render `<Component data={...} />`
-   - If JSON is invalid or type is unknown → fall back to `<code>` (graceful degradation)
-4. `SmartPre` wraps the `code` renderer — it detects when `RichCodeBlock` returned a custom component (not a `<code>` element) and strips the `<pre>` wrapper that would otherwise force monospace font
+## 11. Voice Input
 
-### Built-in Block Types
+### 11.1 Hook: useSpeechRecognition
 
-| Tag | Component | Use Case |
-|-----|-----------|----------|
-| `ai-question` | `InteractiveQuestion` | Radio or checkbox question |
-| `ai-confirm` | `ConfirmBlock` | Yes/No action confirmation |
-| `ai-timeseries` | `TimeseriesBlock` | Scrollable data table |
-| `ai-barchart` | `BarChartBlock` | Horizontal/vertical bar chart |
-| `ai-piechart` | `PieChartBlock` | Doughnut/pie chart |
-| `ai-linechart` | `LineChartBlock` | Line or area chart |
-| `ai-graph` | `LineChartBlock` | Alias for `ai-linechart` |
-
-### Adding a New Block Type
+**File:** `src/container/AIAssistant/hooks/useSpeechRecognition.ts`
 
 ```typescript
-// 1. Create the component
-export default function MyBlock({ data }: { data: MyData }): JSX.Element { ... }
+const { isListening, isSupported, start, stop, transcript, isFinal } =
+  useSpeechRecognition({ lang: 'en-US', onError });
+```
 
-// 2. Register in blocks/index.ts
+Exposes `transcript` and `isFinal` as React state (not callbacks) so `ChatInput` reacts via `useEffect([transcript, isFinal])`, eliminating stale closure issues.
+
+### 11.2 Interim vs Final Handling
+
+```
+onresult (isFinal=false)  → pendingInterim = text  → setTranscript(text), setIsFinal(false)
+onresult (isFinal=true)   → pendingInterim = ''    → setTranscript(text), setIsFinal(true)
+onend    (pendingInterim) → setTranscript(pendingInterim), setIsFinal(true)
+  ↑ fallback: Chrome often skips the final onresult when stop() is called manually
+```
+
+### 11.3 Text Accumulation in ChatInput
+
+```
+committedTextRef.current = ''     // tracks finalized text (typed + confirmed speech)
+
+isFinal=false (interim):
+  setText(committedTextRef.current + ' ' + transcript)
+  // textarea shows live speech; committedTextRef unchanged
+
+isFinal=true (final):
+  committedTextRef.current += ' ' + transcript
+  setText(committedTextRef.current)
+  // both textarea and ref updated — text is now "committed"
+
+User types manually:
+  setText(e.target.value)
+  committedTextRef.current = e.target.value
+  // keeps both in sync so next speech session appends correctly
+```
+
+---
+
+## 12. File Attachments
+
+`ChatInput` uses Ant Design `Upload` with `beforeUpload` returning `false` (prevents auto-upload). Files accumulate in `pendingFiles: UploadFile[]` state. On send, files are converted to data URIs (`fileToDataUrl`) and stored on the `Message` as `attachments[]`.
+
+**Accepted types:** `image/*`, `.pdf`, `.txt`, `.log`, `.csv`, `.json`
+
+**Rendered in MessageBubble:**
+- Images → inline `<img>` preview
+- Other files → file badge chip (name + type)
+
+---
+
+## 13. Development Mode (Mock)
+
+Set `VITE_AI_MOCK=true` in `.env.local` to use the mock API instead of the real SSE endpoint.
+
+```typescript
+// store/useAIAssistantStore.ts
+const USE_MOCK_AI = import.meta.env.VITE_AI_MOCK === 'true';
+const chat = USE_MOCK_AI ? mockStreamChat : streamChat;
+```
+
+`mockStreamChat` implements the same `AsyncGenerator<SSEEvent>` interface as `streamChat`. It selects canned responses from keyword matching on the last user message and simulates word-by-word streaming with 15–45ms random delays.
+
+**Trigger keywords:**
+
+| Keyword(s) | Response type |
+|---|---|
+| `filter logs`, `payment` + `error` | `ai-action`: logs.runQuery |
+| `add filter` | `ai-action`: logs.addFilter |
+| `change view` / `timeseries view` | `ai-action`: logs.changeView |
+| `save view` | `ai-action`: logs.saveView |
+| `error` / `exception` | Error rates table + trace snippet |
+| `latency` / `p99` / `graph` | Line chart (p99 latency) |
+| `bar` / `top service` | Bar chart (error count) |
+| `pie` / `distribution` | Pie / doughnut chart |
+| `timeseries` / `table` | Timeseries data table |
+| `log` | Top log errors summary |
+| `confirm` / `alert` / `anomal` | `ai-confirm` block |
+| `environment` / `question` | `ai-question` (radio) |
+| `level` / `select` / `filter` | `ai-question` (checkbox) |
+
+---
+
+## 14. Adding a New Page's Actions
+
+### Step 1 — Create an aiActions file
+
+```typescript
+// src/pages/TracesExplorer/aiActions.ts
+import { PageAction } from 'container/AIAssistant/pageActions/types';
+
+interface FilterTracesParams {
+  service: string;
+  minDurationMs?: number;
+}
+
+export function tracesFilterAction(deps: {
+  currentQuery: Query;
+  redirectWithQueryBuilderData: (q: Query) => void;
+}): PageAction<FilterTracesParams> {
+  return {
+    id: 'traces.filter',           // globally unique: pageName.actionName
+    description: 'Filter traces by service name and minimum duration',
+    autoApply: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        service:       { type: 'string',  description: 'Service name to filter by' },
+        minDurationMs: { type: 'number',  description: 'Minimum span duration in ms' },
+      },
+      required: ['service'],
+    },
+    execute: async ({ service, minDurationMs }) => {
+      // Build updated query and redirect
+      deps.redirectWithQueryBuilderData(buildUpdatedQuery(service, minDurationMs));
+      return { summary: `Filtered traces for ${service}` };
+    },
+    getContext: () => ({
+      currentFilters: deps.currentQuery.builder.queryData[0].filters.items,
+    }),
+  };
+}
+```
+
+### Step 2 — Register in the page component
+
+```typescript
+// src/pages/TracesExplorer/index.tsx
+import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import { tracesFilterAction } from './aiActions';
+
+function TracesExplorer() {
+  const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+
+  const aiActions = useMemo(() => [
+    tracesFilterAction({ currentQuery, redirectWithQueryBuilderData }),
+  ], [currentQuery, redirectWithQueryBuilderData]);
+
+  usePageActions('traces-explorer', aiActions);
+
+  // ... rest of component
+}
+```
+
+**Rules:**
+- `pageId` must be unique across pages (kebab-case convention)
+- `actionId` must be globally unique — use `pageName.actionName` convention
+- `actions` array **must be memoized** (`useMemo`) — identity change triggers re-registration
+- For URL-driven state (QueryBuilder), always use the URL-sync API; never use `handleSetQueryData` alone
+- `getContext()` should return only what the AI needs to make decisions — keep it minimal
+
+---
+
+## 15. Adding a New Block Type
+
+### Step 1 — Create the component
+
+```typescript
+// src/container/AIAssistant/components/blocks/MyBlock.tsx
+import { useContext } from 'react';
+import MessageContext from '../MessageContext';
+import { useAIAssistantStore } from '../../store/useAIAssistantStore';
+
+interface MyBlockPayload {
+  title: string;
+  items: string[];
+}
+
+export default function MyBlock({ content }: { content: string }): JSX.Element {
+  const payload = JSON.parse(content) as MyBlockPayload;
+  const { messageId } = useContext(MessageContext);
+  const markBlockAnswered = useAIAssistantStore(s => s.markBlockAnswered);
+  const answered = useAIAssistantStore(s => s.answeredBlocks[messageId]);
+
+  if (answered) return <div className="ai-block--answered">Done</div>;
+
+  return (
+    <div>
+      <h4>{payload.title}</h4>
+      {/* ... */}
+    </div>
+  );
+}
+```
+
+### Step 2 — Register in index.ts
+
+```typescript
+// src/container/AIAssistant/components/blocks/index.ts
 import MyBlock from './MyBlock';
-BlockRegistry.register('mytype', MyBlock);
-
-// 3. The AI can now use:
-// ```ai-mytype
-// { ...json payload... }
-// ```
+BlockRegistry.register('myblock', MyBlock);
 ```
 
-No changes to `RichCodeBlock`, `MessageBubble`, or the store are needed.
-
-### Chart Setup (`chartSetup.ts`)
-
-Registers all Chart.js elements once as a side effect. Provides:
-
-- `CHART_PALETTE` — 8 SigNoz brand colours (hex)
-- `CHART_PALETTE_ALPHA` — same colours at 20% opacity (for fill areas)
-- `getChartTheme()` — reads `document.body.classList.contains('dark')` at render time and returns axis/grid colours appropriate for dark or light mode
-
-> **Why hex, not CSS variables?** The Chart.js canvas context cannot read CSS custom properties (`var(--token)`). Colours must be resolved to hex/rgb at render time.
-
----
-
-## 11. Interactive Blocks
-
-### InteractiveQuestion
-
-Renders radio buttons (auto-submit on selection) or checkboxes (requires a Confirm button).
-
-```typescript
-interface QuestionData {
-  question?: string;
-  type?: 'radio' | 'checkbox';   // default: 'radio'
-  options: (string | { value: string; label: string })[];
-}
-```
-
-### ConfirmBlock
-
-Renders Accept/Reject buttons with configurable labels and response text.
-
-```typescript
-interface ConfirmData {
-  message?: string;
-  acceptText?: string;    // text sent to AI when accepted (default: "Yes, proceed.")
-  rejectText?: string;    // text sent to AI when rejected (default: "No, cancel.")
-  acceptLabel?: string;   // button label (default: "Accept")
-  rejectLabel?: string;   // button label (default: "Reject")
-}
-```
-
-### Answered State Persistence
-
-**Problem:** Interactive blocks hold their "submitted" state in local React component state. When `sendMessage()` is called, the Zustand store changes, the message list re-renders, and the component can remount — resetting `submitted` to `false`. The question re-appears as interactive even though it was already answered.
-
-**Solution:** Move answered state into the Zustand store, keyed by `messageId`.
-
-```
-User clicks answer
-    │
-    ├─ 1. markBlockAnswered(messageId, answer)   ← store update
-    ├─ 2. sendMessage(answer)                    ← triggers AI response
-    │
-    └─ On next render:
-           answeredBlocks[messageId] !== undefined
-           → render answered state (✓ + answer text)
-           → interactive controls hidden permanently
-```
-
-The `messageId` flows from `MessageBubble` via `MessageContext` — blocks do not receive it as a prop, keeping the block data schema clean.
-
----
-
-## 12. Conversation History
-
-### Grouping Logic
-
-Conversations are sorted by `updatedAt` (descending) and grouped into date buckets:
-
-| Group | Condition |
-|-------|-----------|
-| Today | `age < 24h` |
-| Yesterday | `24h ≤ age < 48h` |
-| Last 7 days | `48h ≤ age < 7d` |
-| Last 30 days | `7d ≤ age < 30d` |
-| Older | `age ≥ 30d` |
-
-### Rename
-
-Inline rename: click the pencil icon → input appears in place of the title → `Enter` or blur commits, `Escape` cancels. Calls `renameConversation(id, title)`.
-
-### Delete
-
-Click the trash icon → `deleteConversation(id)`. If the deleted conversation was active, the store automatically switches `activeConversationId` to the most recently updated remaining conversation (or `null` if none remain).
-
-### Clear
-
-`clearConversation(id)` empties `messages`, resets `title`, and clears any `answeredBlocks` entries for messages in that conversation. Streaming state is also reset.
-
----
-
-## 13. Icon System
-
-Six SVG icon variants were designed for the AI Assistant button, all in `src/container/AIAssistant/components/`. The active icon (`AIAssistantIcon.tsx`) is currently **V2 — Minimal Line**.
-
-| Variant | File | Design | Notes |
-|---------|------|---------|-------|
-| V1 | `AIAssistantIcon.tsx` (original) | Circuit Visor — bear + filled red visor + circuit trace | Replaced by V2 |
-| V2 | `AIAssistantIconV2.tsx` | **Minimal Line** — stroke outline, red eye bar | **Active** |
-| V3 | `AIAssistantIconV3.tsx` | Eye Lens — SigNoz eye inside bear silhouette | Brand-first |
-| V4 | `AIAssistantIconV4.tsx` | Neural Spark — bear + 6-point asterisk | Expressive |
-| V5 | `AIAssistantIconV5.tsx` | App Badge — bear in dark rounded-square | Product logo weight |
-| V6 | `AIAssistantIconV6.tsx` | Square Panda Bot — geometric panda, HUD visor, LED eyes | Futuristic |
-
-**Design constraints:**
-- All icons use `currentColor` for strokes/fills where possible → inherit the parent's text colour automatically on both dark and light surfaces
-- SigNoz red (`#E8432D`) is used only as a single accent (the eye/visor) — never for structural elements
-- All icons work from 16px to 64px. V2 is the most readable at 16px (pure silhouette)
-
-A sign-off preview page is available at `/ai-assistant-icon-preview` (dev only) showing all variants at 6 sizes on dark and light backgrounds.
-
----
-
-## 14. Routing & Integration
-
-### Routes
-
-```typescript
-// constants/routes.ts
-ROUTES.AI_ASSISTANT              = '/ai-assistant/:conversationId'
-ROUTES.AI_ASSISTANT_ICON_PREVIEW = '/ai-assistant-icon-preview'  // dev only
-```
-
-### AppLayout integration
-
-`AIAssistantPanel` is rendered directly inside `AppLayout`'s flex row — after the main `<LayoutContent>` but inside the same flex container. This gives it the "panel pushes content" behaviour without an overlay:
-
-```tsx
-<Flex style={{ flex: 1, overflow: 'hidden' }}>
-  <LayoutContent>...</LayoutContent>
-  <AIAssistantPanel />   {/* ← appended to flex row */}
-</Flex>
-```
-
-`.app-content` uses `flex: 1; min-width: 0` (not a fixed `width: calc(100% - 54px)`). This means it naturally yields space to the panel without JavaScript.
-
-### Imperative API
-
-Two standalone exports allow any module to open/close the assistant without importing the full component:
-
-```typescript
-import { openAIAssistant, closeAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
-
-openAIAssistant();   // opens panel, creates conversation if none exists
-closeAIAssistant();  // closes panel
-```
-
----
-
-## 15. Styling System
-
-All styles live in a single file: `AIAssistant.styles.scss`.
-
-### Design Tokens Used
-
-| Token | Usage |
-|-------|-------|
-| `--l1-background` | Panel/page background |
-| `--l2-background` | Message bubbles, input area |
-| `--l3-background` | Code blocks, table headers |
-| `--l1-foreground` | Primary text |
-| `--l2-foreground` | Secondary text (timestamps, labels) |
-| `--l1-border` / `--l2-border` | Dividers, block borders |
-| `--primary` | Button accents (falls back to `--bg-robin-500`) |
-| `--bg-cherry-500` | Rejection / error states |
-| `--bg-forest-500` | Acceptance / success states |
-
-### Key Layout Rules
-
-- `.app-content { flex: 1; min-width: 0 }` — allows shrinking when panel opens
-- `.ai-assistant-panel { flex-shrink: 0; width: 380px }` — fixed width, never wraps
-- `.ai-assistant-page__body { flex-direction: row }` — sidebar + chat side by side
-- `.ai-history { width: 220px; flex-shrink: 0 }` in page context
-
-### Scrollbar Mixin
-
-A custom `@mixin ai-scrollbar($width)` provides thin, hidden-until-hover scrollbars with CSS `scrollbar-color` for Firefox and `::-webkit-scrollbar-*` for Chrome/Safari.
-
----
-
-## 16. Backend Integration Plan
-
-### Swap Point
-
-The entire backend integration is contained in a single line of `useAIAssistantStore.ts`. Replace:
-
-```typescript
-const response = mockAIStream(payload);
-```
-
-with:
-
-```typescript
-const response = await fetch('/api/v1/ai/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload),
-});
-```
-
-### Expected API Contract
-
-**Request:**
-```http
-POST /api/v1/ai/chat
-Content-Type: application/json
-
-{
-  "conversationId": "uuid",
-  "messages": [
-    { "role": "user",      "content": "Show me error rates" },
-    { "role": "assistant", "content": "Here are the errors..." },
-    { "role": "user",      "content": "Which service is worst?" }
-  ]
-}
-```
-
-**Response:**
-```http
-HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
-Transfer-Encoding: chunked
-
-I found several issues...
-
-```ai-timeseries
-{ "title": "Errors", "columns": [...], "rows": [...] }
-```
-```
-
-The response is a UTF-8 text stream. The client accumulates chunks until the stream closes, then commits the full markdown as an assistant message.
-
-### Rich Block Authoring (Backend)
-
-The AI model produces rich blocks as standard fenced code blocks. Example:
+### Step 3 — AI emits the block tag
 
 ````markdown
-Which environment would you like to investigate?
-
-```ai-question
+```ai-myblock
 {
-  "question": "Select environment:",
-  "type": "radio",
-  "options": ["Production", "Staging", "Development"]
+  "title": "Something",
+  "items": ["a", "b"]
 }
 ```
 ````
 
-The block body must be valid JSON. Invalid JSON falls back to rendering as a plain code block — the UI never crashes.
+---
 
-### Conversation Persistence
+## 16. Data Contracts
 
-Currently all state is in-memory (Zustand). When the page is refreshed, all conversations are lost. Future persistence options:
+### 16.1 API Request
 
-1. **`localStorage`** — add `persist` middleware to Zustand. Zero backend changes, survives refresh, limited to ~5MB.
-2. **Server-side** — store conversations in the SigNoz backend, fetch on load. Enables cross-device history.
+```typescript
+POST /api/v1/assistant/threads
+{
+  conversationId: string,
+  messages: Array<{
+    role: 'user' | 'assistant',
+    content: string   // last user message includes [PAGE_CONTEXT]...[/PAGE_CONTEXT] prefix
+  }>
+}
+```
+
+### 16.2 SSE Event Schema
+
+```typescript
+interface SSEEvent {
+  type: 'message';
+  messageId: string;       // server-assigned; consistent across all chunks of one turn
+  role: 'assistant';
+  content: string;         // incremental chunk — NOT cumulative
+  done: boolean;           // true on the last event of a turn
+  actions: Array<{
+    id: string;
+    label: string;
+    kind: 'follow_up' | 'open_resource' | 'navigate' | 'apply_filter' | 'open_docs' | 'undo' | 'revert';
+    payload: Record<string, unknown>;
+    expiresAt: string | null;  // ISO-8601 or null
+  }>;
+}
+```
+
+### 16.3 ai-action Block Payload (embedded in content stream)
+
+```typescript
+{
+  actionId: string,          // must match a registered PageAction.id
+  description: string,       // shown in the confirmation card (autoApply=false)
+  parameters: Record<string, unknown>  // must conform to the action's JSON Schema
+}
+```
+
+### 16.4 PageAction Interface
+
+```typescript
+interface PageAction<TParams = Record<string, any>> {
+  id: string;
+  description: string;
+  parameters: JSONSchemaObject;
+  execute: (params: TParams) => Promise<{ summary: string; data?: unknown }>;
+  getContext?: () => unknown;   // called on every sendMessage() to populate PAGE_CONTEXT
+  autoApply?: boolean;          // default false
+}
+```
 
 ---
 
-## 17. Security Considerations
+## 17. Key Design Decisions
 
-- **XSS via AI content:** AI responses are rendered via `react-markdown`, which does not execute arbitrary HTML by default. The `rehypeRaw` plugin is not used, so `<script>` tags in AI output are escaped.
-- **JSON injection in blocks:** Block payloads are parsed with `JSON.parse()`. A parse error silently falls back to a code block — no user-visible error and no execution of arbitrary code.
-- **File attachments:** Files are read as data URIs client-side (`FileReader.readAsDataURL`). They are included in the message payload sent to the backend. The backend must validate file types and sizes before processing.
-- **Attachment display:** Images are rendered as `<img src={dataUrl}>` elements. Only `image/*` MIME types are displayed inline; all others render as a filename chip.
+### Context injection is wire-only
+PAGE_CONTEXT is injected into the wire payload but never stored or shown in the UI. This keeps conversations readable, avoids polluting history with system context, and ensures the AI always gets fresh page state on every message rather than stale state from when the conversation started.
 
----
+### URL-driven query builders require URL-sync APIs
+Pages that use URL-driven state (e.g., `QueryBuilderV2` with `compositeQuery` URL param) **must** use the URL-sync API (`redirectWithQueryBuilderData`) when actions mutate query state. Using React `setState` alone does not update the URL, so the displayed filters do not change. This was the root cause of the first major bug in the Logs Explorer integration.
 
-## 18. Open Questions & Future Work
+### autoApply co-located with action definition
+The `autoApply` flag lives on the `PageAction` definition, not in the UI layer. The page that owns the action knows whether it is safe to apply without confirmation. Additive / reversible actions use `autoApply: true`. Actions that create persistent artifacts (saved views, alert rules) use `autoApply: false`.
 
-### Near-term
+### Transcript-as-state for voice input
+`useSpeechRecognition` exposes `transcript` and `isFinal` as React state rather than using an `onTranscript` callback. The callback approach had a race condition: recognition events could fire before the `useEffect` that wired up the callback had run, leaving `onTranscriptRef.current` unset. State-based approach uses normal React reactivity with no timing dependency.
 
-| Item | Priority | Notes |
-|------|----------|-------|
-| Connect to real backend | High | Single line swap in `sendMessage` |
-| Persist conversations to localStorage | Medium | Add Zustand `persist` middleware |
-| Error states for failed blocks | Medium | Currently silently falls back to `<code>` |
-| Keyboard shortcut to open assistant | Low | e.g. `⌘K` → AI or dedicated hotkey |
+### Block answer persistence across re-mounts
+Interactive blocks persist their answered state to `answeredBlocks[messageId]` in the Zustand store. Without this, switching UI modes or scrolling away and back would reset blocks to their unanswered state, allowing the user to re-submit answers and send duplicate messages to the AI.
 
-### Streaming protocol
+### Panel resize is not persisted
+Panel width resets to 380px on close/reopen. If persistence is needed, save `panelWidth` to `localStorage` in the drag `onMouseUp` handler and initialize `useState` from it.
 
-The current implementation accumulates the full response before committing it as a message. If the backend emits structured SSE events (e.g. `event: block_start / data: {...}`), the store's reader loop needs a line parser. This would also enable streaming individual block renders as they complete.
-
-### Conversation persistence
-
-- Current: in-memory Zustand (lost on refresh)
-- Option A: `zustand/middleware/persist` → localStorage (simple, no backend)
-- Option B: Backend API for conversation CRUD (multi-device, teams)
-
-### Multi-turn context window
-
-The full message history is sent to the backend on every turn. As conversations grow, this will hit token limits. A sliding window or summarisation strategy will be needed.
-
-### Block streaming
-
-Currently, blocks are only rendered after the full assistant message is received. For long responses, this means a user waits for the entire response before seeing any charts. A future improvement is to stream block rendering progressively — render text as it arrives, then render blocks as their closing ` ``` ` tag is detected.
-
-### Accessibility
-
-- Interactive question/confirm blocks need ARIA `role="group"` and `aria-labelledby` for screen reader support
-- The streaming indicator (3-dot animation) needs `aria-live="polite"` or `role="status"`
-- Focus management when opening/closing the panel needs review
-
-### Agent actions
-
-The confirm block (`ai-confirm`) currently sends the user's decision as a text message. Future work includes a structured action protocol: the backend registers named actions, the frontend executes them (e.g. "create alert rule", "open trace"), and confirmation is a proper action dispatch rather than a freeform message.
+### Mock API shares the same interface
+`mockStreamChat` implements the same `AsyncGenerator<SSEEvent>` interface as `streamChat`. The store switches between them via `VITE_AI_MOCK=true`. This means the mock exercises the exact same store code path as production — no separate code branch to maintain.

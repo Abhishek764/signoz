@@ -332,31 +332,27 @@ function pickResponse(messages: { role: string; content: string }[]): string {
 	return CANNED_RESPONSES.default;
 }
 
-interface MockPayload {
-	messages: { role: string; content: string }[];
-}
+import { ChatPayload, SSEEvent } from '../../../api/ai/chat';
 
-export function mockAIStream(payload: MockPayload): Response {
+export async function* mockStreamChat(
+	payload: ChatPayload,
+): AsyncGenerator<SSEEvent> {
 	const text = pickResponse(payload.messages);
 	const words = text.split(/(?<=\s)/);
+	const messageId = `mock-${Date.now()}`;
 
-	const stream = new ReadableStream<Uint8Array>({
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		async start(controller) {
-			const encoder = new TextEncoder();
-			for (let i = 0; i < words.length; i++) {
-				// eslint-disable-next-line no-await-in-loop
-				await new Promise<void>((resolve) => {
-					setTimeout(resolve, 15 + Math.random() * 30);
-				});
-				controller.enqueue(encoder.encode(words[i]));
-			}
-			controller.close();
-		},
-	});
-
-	return new Response(stream, {
-		status: 200,
-		headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-	});
+	for (let i = 0; i < words.length; i++) {
+		// eslint-disable-next-line no-await-in-loop
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 15 + Math.random() * 30);
+		});
+		yield {
+			type: 'message',
+			messageId,
+			role: 'assistant',
+			content: words[i],
+			done: i === words.length - 1,
+			actions: [],
+		};
+	}
 }

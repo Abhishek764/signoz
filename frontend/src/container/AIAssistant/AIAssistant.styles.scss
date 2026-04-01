@@ -478,7 +478,7 @@
 
 .ai-assistant-input__row {
 	display: flex;
-	align-items: flex-end;
+	align-items: center;
 	gap: 8px;
 }
 
@@ -513,27 +513,82 @@
 
 .ai-mic-btn {
 	flex-shrink: 0;
-	position: relative;
+}
 
-	&--listening {
-		color: var(--bg-cherry-500, #ef4444) !important;
+// ─── Active recording indicator (pill) ───────────────────────────────────────
 
-		// Pulsing ring to signal active recording
-		&::after {
-			content: '';
-			position: absolute;
-			inset: -3px;
-			border-radius: 50%;
-			border: 2px solid var(--bg-cherry-500, #ef4444);
-			opacity: 0.6;
-			animation: mic-pulse 1.2s ease-in-out infinite;
-		}
+.ai-mic-recording {
+	display: flex;
+	align-items: center;
+	background: var(--l3-background);
+	border-radius: 999px;
+	padding: 2px;
+	gap: 0;
+	flex-shrink: 0;
+}
+
+.ai-mic-recording__discard,
+.ai-mic-recording__stop {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: none;
+	cursor: pointer;
+}
+
+.ai-mic-recording__discard {
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	transition: color 0.12s;
+
+	&:hover {
+		color: var(--l1-foreground);
 	}
 }
 
-@keyframes mic-pulse {
-	0%, 100% { transform: scale(1);   opacity: 0.6; }
-	50%       { transform: scale(1.3); opacity: 0; }
+.ai-mic-recording__waves {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	height: 20px;
+	padding: 0 6px;
+
+	span {
+		display: block;
+		width: 2px;
+		border-radius: 2px;
+		background: var(--l1-foreground);
+		animation: ai-voice-wave 0.9s ease-in-out infinite;
+
+		&:nth-child(1) { animation-delay: 0.00s; }
+		&:nth-child(2) { animation-delay: 0.10s; }
+		&:nth-child(3) { animation-delay: 0.20s; }
+		&:nth-child(4) { animation-delay: 0.30s; }
+		&:nth-child(5) { animation-delay: 0.40s; }
+		&:nth-child(6) { animation-delay: 0.30s; }
+		&:nth-child(7) { animation-delay: 0.20s; }
+		&:nth-child(8) { animation-delay: 0.10s; }
+	}
+}
+
+@keyframes ai-voice-wave {
+	0%, 100% { height: 2px;  opacity: 0.4; }
+	50%       { height: 12px; opacity: 1;   }
+}
+
+.ai-mic-recording__stop {
+	background: var(--bg-cherry-500, #ef4444);
+	color: #fff;
+	transition: opacity 0.12s;
+
+	&:hover {
+		opacity: 0.85;
+	}
 }
 
 // ─── Rich blocks (ai-* fenced code blocks) ───────────────────────────────────

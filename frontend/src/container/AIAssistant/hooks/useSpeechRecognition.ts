@@ -55,34 +55,47 @@ export type SpeechRecognitionError =
 
 interface UseSpeechRecognitionOptions {
 	onError?: (error: SpeechRecognitionError) => void;
+	/**
+	 * Called directly from browser recognition events — no React state intermediary.
+	 * `isFinal=false` → interim (live preview), `isFinal=true` → committed text.
+	 */
+	onTranscript?: (text: string, isFinal: boolean) => void;
 	lang?: string;
 }
 
 interface UseSpeechRecognitionReturn {
 	isListening: boolean;
 	isSupported: boolean;
-	/** Current transcript text (interim or final). Empty string between sessions. */
-	transcript: string;
-	/** True when the current transcript is a final (committed) result. */
-	isFinal: boolean;
 	start: () => void;
 	stop: () => void;
+	/** Stop recognition and discard any pending interim text (no onTranscript call). */
+	discard: () => void;
 }
 
 export function useSpeechRecognition({
 	onError,
+	onTranscript,
 	lang = 'en-US',
 }: UseSpeechRecognitionOptions = {}): UseSpeechRecognitionReturn {
 	const [isListening, setIsListening] = useState(false);
-	const [transcript, setTranscript] = useState('');
-	const [isFinal, setIsFinal] = useState(false);
 	const recognitionRef = useRef<ISpeechRecognition | null>(null);
+	const isDiscardingRef = useRef(false);
 	const isSupported = SpeechRecognitionAPI !== null;
 
+	// Always-current refs — updated synchronously on every render so closures
+	// inside recognition event handlers always call the latest version.
 	const onErrorRef = useRef(onError);
 	onErrorRef.current = onError;
 
+	const onTranscriptRef = useRef(onTranscript);
+	onTranscriptRef.current = onTranscript;
+
 	const stop = useCallback(() => {
+		recognitionRef.current?.stop();
+	}, []);
+
+	const discard = useCallback(() => {
+		isDiscardingRef.current = true;
 		recognitionRef.current?.stop();
 	}, []);
 
@@ -101,7 +114,7 @@ export function useSpeechRecognition({
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const recognition = new SpeechRecognitionAPI!();
 		recognition.lang = lang;
-		recognition.continuous = false;    // auto-stops after a pause
+		recognition.continuous = true;     // keep listening until user clicks stop
 		recognition.interimResults = true; // live updates while speaking
 
 		// Track the last interim text so we can commit it as final in onend —
@@ -110,8 +123,6 @@ export function useSpeechRecognition({
 
 		recognition.onstart = (): void => {
 			setIsListening(true);
-			setTranscript('');
-			setIsFinal(false);
 		};
 
 		recognition.onresult = (event): void => {
@@ -129,12 +140,10 @@ export function useSpeechRecognition({
 
 			if (finalText) {
 				pendingInterim = '';
-				setTranscript(finalText);
-				setIsFinal(true);
+				onTranscriptRef.current?.(finalText, true);
 			} else if (interim) {
 				pendingInterim = interim;
-				setTranscript(interim);
-				setIsFinal(false);
+				onTranscriptRef.current?.(interim, false);
 			}
 		};
 
@@ -152,13 +161,15 @@ export function useSpeechRecognition({
 		};
 
 		recognition.onend = (): void => {
-			// Commit any interim text that never received a final result
-			// (happens when stop() is called manually before the browser finalizes).
-			if (pendingInterim) {
-				setTranscript(pendingInterim);
-				setIsFinal(true);
+			// Commit any interim text that never received a final result,
+			// unless the session was explicitly discarded.
+			if (!isDiscardingRef.current && pendingInterim) {
+				const committed = pendingInterim;
 				pendingInterim = '';
+				onTranscriptRef.current?.(committed, true);
 			}
+			isDiscardingRef.current = false;
+			pendingInterim = '';
 			setIsListening(false);
 			recognitionRef.current = null;
 		};
@@ -175,5 +186,5 @@ export function useSpeechRecognition({
 		[],
 	);
 
-	return { isListening, isSupported, start, stop, transcript, isFinal };
+	return { isListening, isSupported, start, stop, discard };
 }

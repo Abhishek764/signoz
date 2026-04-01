@@ -3,7 +3,7 @@ import { Button } from '@signozhq/button';
 import { Tooltip } from '@signozhq/tooltip';
 import type { UploadFile } from 'antd';
 import { Upload } from 'antd';
-import { Mic, MicOff, Paperclip, Send, X } from 'lucide-react';
+import { Mic, Paperclip, Send, Square, X } from 'lucide-react';
 
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../types';
@@ -39,7 +39,9 @@ export default function ChatInput({
 
 	const handleSend = useCallback(async () => {
 		const trimmed = text.trim();
-		if (!trimmed && pendingFiles.length === 0) return;
+		if (!trimmed && pendingFiles.length === 0) {
+			return;
+		}
 
 		const attachments: MessageAttachment[] = await Promise.all(
 			pendingFiles.map(async (f) => {
@@ -75,29 +77,37 @@ export default function ChatInput({
 
 	// ── Voice input ────────────────────────────────────────────────────────────
 
-	const { isListening, isSupported, start, transcript, isFinal } = useSpeechRecognition();
+	const { isListening, isSupported, start, discard } = useSpeechRecognition({
+		onTranscript: (transcriptText, isFinal) => {
+			if (isFinal) {
+				// Commit: append to whatever the user has already typed
+				const separator = committedTextRef.current ? ' ' : '';
+				const next = committedTextRef.current + separator + transcriptText;
+				committedTextRef.current = next;
+				setText(next);
+			} else {
+				// Interim: live preview appended to committed text, not yet persisted
+				const separator = committedTextRef.current ? ' ' : '';
+				setText(committedTextRef.current + separator + transcriptText);
+			}
+		},
+	});
 
-	// React to transcript changes from the speech recognition hook.
-	// Using useEffect on hook state avoids any callback/closure timing issues.
-	useEffect(() => {
-		if (!transcript) return;
-		if (isFinal) {
-			const separator = committedTextRef.current ? ' ' : '';
-			const next = committedTextRef.current + separator + transcript;
-			committedTextRef.current = next;
-			setText(next);
-		} else {
-			// Interim: show live text appended to committed text, but don't persist yet
-			const separator = committedTextRef.current ? ' ' : '';
-			setText(committedTextRef.current + separator + transcript);
-		}
-	}, [transcript, isFinal]);
+	// Stop recording and immediately send whatever is in the textarea.
+	const handleStopAndSend = useCallback(async () => {
+		// Promote the displayed text (interim included) to committed so handleSend sees it.
+		committedTextRef.current = text;
+		// Stop recognition without triggering onTranscript again (would double-append).
+		discard();
+		await handleSend();
+	}, [text, discard, handleSend]);
 
-	const micTooltip = !isSupported
-		? 'Voice input not supported in this browser'
-		: isListening
-		? 'Listening… click to stop'
-		: 'Voice input';
+	// Stop recording and revert the textarea to what it was before voice started.
+	const handleDiscard = useCallback(() => {
+		discard();
+		setText(committedTextRef.current);
+		textareaRef.current?.focus();
+	}, [discard]);
 
 	return (
 		<div className="ai-assistant-input">
@@ -138,7 +148,12 @@ export default function ChatInput({
 						return false;
 					}}
 				>
-					<Button variant="ghost" size="xs" disabled={disabled} aria-label="Attach file">
+					<Button
+						variant="ghost"
+						size="xs"
+						disabled={disabled}
+						aria-label="Attach file"
+					>
 						<Paperclip size={14} />
 					</Button>
 				</Upload>
@@ -158,24 +173,61 @@ export default function ChatInput({
 					rows={1}
 				/>
 
-				<Tooltip title={micTooltip}>
-					<Button
-						variant="ghost"
-						size="xs"
-						onClick={start}
-						disabled={disabled || !isSupported}
-						aria-label={micTooltip}
-						className={isListening ? 'ai-mic-btn ai-mic-btn--listening' : 'ai-mic-btn'}
+				{isListening ? (
+					<div className="ai-mic-recording">
+						<button
+							type="button"
+							className="ai-mic-recording__discard"
+							onClick={handleDiscard}
+							aria-label="Discard recording"
+						>
+							<X size={12} />
+						</button>
+						<span className="ai-mic-recording__waves" aria-hidden="true">
+							<span />
+							<span />
+							<span />
+							<span />
+							<span />
+							<span />
+							<span />
+							<span />
+						</span>
+						<button
+							type="button"
+							className="ai-mic-recording__stop"
+							onClick={handleStopAndSend}
+							aria-label="Stop and send"
+						>
+							<Square size={9} fill="currentColor" strokeWidth={0} />
+						</button>
+					</div>
+				) : (
+					<Tooltip
+						title={
+							!isSupported
+								? 'Voice input not supported in this browser'
+								: 'Voice input'
+						}
 					>
-						{isListening ? <MicOff size={14} /> : <Mic size={14} />}
-					</Button>
-				</Tooltip>
+						<Button
+							variant="ghost"
+							size="xs"
+							onClick={start}
+							disabled={disabled || !isSupported}
+							aria-label="Start voice input"
+							className="ai-mic-btn"
+						>
+							<Mic size={14} />
+						</Button>
+					</Tooltip>
+				)}
 
 				<Button
 					variant="solid"
 					size="xs"
 					className="ai-assistant-input__send-btn"
-					onClick={handleSend}
+					onClick={isListening ? handleStopAndSend : handleSend}
 					disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
 					aria-label="Send message"
 				>

@@ -2,9 +2,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
-import { mockAIStream } from '../mock/mockAIApi';
+import { streamChat } from '../../../api/ai/chat';
+import { mockStreamChat } from '../mock/mockAIApi';
 import { PageActionRegistry } from '../pageActions/PageActionRegistry';
-import { Conversation, Message, MessageAttachment } from '../types';
+import {
+	AssistantAction,
+	Conversation,
+	Message,
+	MessageAttachment,
+} from '../types';
+
+const USE_MOCK_AI = import.meta.env.VITE_AI_MOCK === 'true';
+const chat = USE_MOCK_AI ? mockStreamChat : streamChat;
 
 interface AIAssistantStore {
 	// UI state
@@ -53,12 +62,16 @@ interface AIAssistantStore {
  */
 function buildContextPrefix(): string {
 	const descriptors = PageActionRegistry.snapshot();
-	if (descriptors.length === 0) return '';
+	if (descriptors.length === 0) {
+		return '';
+	}
 
 	const actionLines = descriptors
 		.map(
 			(a) =>
-				`  - id: ${a.id}\n    description: "${a.description}"\n    params: ${JSON.stringify(a.parameters.properties)}`,
+				`  - id: ${a.id}\n    description: "${
+					a.description
+				}"\n    params: ${JSON.stringify(a.parameters.properties)}`,
 		)
 		.join('\n');
 
@@ -243,7 +256,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				const conv = state.conversations[activeConversationId];
 				conv.messages.push(userMessage);
 				conv.updatedAt = Date.now();
-				// Auto-title from the first user message
 				if (!conv.title && text.trim()) {
 					conv.title = deriveTitle(text);
 				}
@@ -255,12 +267,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				const history = get().conversations[activeConversationId].messages;
 
 				// Prepend PAGE_CONTEXT to the last user message in the wire payload only.
-				// The stored message content is never modified.
 				const contextPrefix = buildContextPrefix();
 				const payload = {
 					conversationId: activeConversationId,
 					messages: history.map((m, i) => ({
-						role: m.role,
+						role: m.role as 'user' | 'assistant',
 						content:
 							contextPrefix && i === history.length - 1 && m.role === 'user'
 								? contextPrefix + m.content
@@ -268,39 +279,30 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					})),
 				};
 
-				// TODO: replace mockAIStream with the real fetch call when backend is ready:
-				// const response = await fetch('/api/v1/ai/chat', {
-				//   method: 'POST',
-				//   headers: { 'Content-Type': 'application/json' },
-				//   body: JSON.stringify(payload),
-				// });
-				const response = mockAIStream(payload);
+				// messageId comes from the first SSE event; reuse across all chunks
+				// for the same assistant turn.
+				let serverMessageId: string | null = null;
+				let finalActions: AssistantAction[] = [];
 
-				if (!response.ok || !response.body) {
-					throw new Error(`Request failed: ${response.status}`);
-				}
+				for await (const event of chat(payload)) {
+					serverMessageId = serverMessageId ?? event.messageId;
 
-				const reader = response.body.getReader();
-				const decoder = new TextDecoder();
+					set((state) => {
+						state.streamingContent += event.content;
+					});
 
-				// eslint-disable-next-line no-constant-condition
-				while (true) {
-					// eslint-disable-next-line no-await-in-loop
-					const { done, value } = await reader.read();
-					if (done) {
+					if (event.done) {
+						finalActions = event.actions ?? [];
 						break;
 					}
-					const chunk = decoder.decode(value, { stream: true });
-					set((state) => {
-						state.streamingContent += chunk;
-					});
 				}
 
 				const finalContent = get().streamingContent;
 				const assistantMessage: Message = {
-					id: uuidv4(),
+					id: serverMessageId ?? uuidv4(),
 					role: 'assistant',
 					content: finalContent,
+					actions: finalActions.length > 0 ? finalActions : undefined,
 					createdAt: Date.now(),
 				};
 

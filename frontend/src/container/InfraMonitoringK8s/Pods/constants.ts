@@ -1,4 +1,3 @@
-import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -12,6 +11,7 @@ import {
 	K8sDetailsMetadataConfig,
 } from '../Base/K8sBaseDetails';
 import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+import { K8sPodsData } from './api';
 
 export const k8sPodGetSelectedItemFilters = (
 	selectedItemId: string,

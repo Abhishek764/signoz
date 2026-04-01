@@ -52,7 +52,7 @@ func NewLogQueryStatementBuilder(
 	}
 }
 
-// Build builds a SQL query for logs based on the given parameters
+// Build builds a SQL query for logs based on the given parameters.
 func (b *logQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
@@ -234,7 +234,7 @@ func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldK
 	return querybuilder.AdjustKey(key, keys, nil)
 }
 
-// buildListQuery builds a query for list panel type
+// buildListQuery builds a query for list panel type.
 func (b *logQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -283,7 +283,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, &query.SelectFields[index], keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &query.SelectFields[index], keys)
 			if err != nil {
 				return nil, err
 			}
@@ -292,7 +292,6 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
-
 	// Add filter conditions
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 
@@ -302,7 +301,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, &orderBy.Key.TelemetryFieldKey, keys)
+
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -368,22 +368,22 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
 	}
 
 	// Aggregations
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-			ctx, agg.Expression,
+			ctx, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
 		)
@@ -487,7 +487,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	return stmt, nil
 }
 
-// buildScalarQuery builds a query for scalar panel type
+// buildScalarQuery builds a query for scalar panel type.
 func (b *logQueryStatementBuilder) buildScalarQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -515,12 +515,12 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
 		if err != nil {
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -533,7 +533,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
 			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
-				ctx, aggExpr.Expression,
+				ctx, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
 			)
@@ -603,9 +603,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	return stmt, nil
 }
 
-// buildFilterCondition builds SQL condition from filter expression
+// buildFilterCondition builds SQL condition from filter expression.
 func (b *logQueryStatementBuilder) addFilterCondition(
-	_ context.Context,
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
@@ -619,6 +619,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:            ctx,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
@@ -627,7 +628,9 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
-		}, start, end)
+			StartNs:            start,
+			EndNs:              end,
+		})
 
 		if err != nil {
 			return nil, err

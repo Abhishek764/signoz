@@ -51,6 +51,14 @@ type DeprecatedUser struct {
 	Role Role `json:"role"`
 }
 
+type UpdatableUser struct {
+	DisplayName string `json:"displayName" required:"true"`
+}
+
+type PostableRole struct {
+	Name string `json:"name" required:"true"`
+}
+
 type PostableRegisterOrgAndAdmin struct {
 	Name           string       `json:"name"`
 	Email          valuer.Email `json:"email"`
@@ -191,7 +199,7 @@ func (u *User) ErrIfRoot() error {
 }
 
 // ErrIfDeleted returns an error if the user is in deleted state.
-// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf.
 func (u *User) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
@@ -200,7 +208,7 @@ func (u *User) ErrIfDeleted() error {
 }
 
 // ErrIfPending returns an error if the user is in pending invite state.
-// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf.
 func (u *User) ErrIfPending() error {
 	if u.Status == UserStatusPendingInvite {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")
@@ -281,14 +289,6 @@ type UserStore interface {
 	DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error
 	UpdatePassword(ctx context.Context, password *FactorPassword) error
 
-	// API KEY
-	CreateAPIKey(ctx context.Context, apiKey *StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *StorableAPIKey, updaterID valuer.UUID) error
-	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*StorableAPIKeyUser, error)
-	RevokeAPIKey(ctx context.Context, id valuer.UUID, revokedByUserID valuer.UUID) error
-	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
-	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
-
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
@@ -297,6 +297,9 @@ type UserStore interface {
 
 	// Get user by reset password token
 	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
+
+	// Get users having role by org id and role id
+	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*User, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

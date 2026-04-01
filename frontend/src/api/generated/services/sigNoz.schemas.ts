@@ -425,6 +425,39 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
+export interface AuthtypesStorableRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -435,6 +468,74 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUserRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role?: AuthtypesStorableRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	userId?: string;
+}
+
+export interface AuthtypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	userRoles?: AuthtypesUserRoleDTO[] | null;
 }
 
 export interface CloudintegrationtypesAWSAccountConfigDTO {
@@ -1262,6 +1363,32 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface MetricsexplorertypesInspectMetricsRequestDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface MetricsexplorertypesInspectMetricsResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	series: Querybuildertypesv5TimeSeriesDTO[] | null;
+}
+
 export interface MetricsexplorertypesListMetricDTO {
 	/**
 	 * @type string
@@ -1405,6 +1532,13 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 	 * @type string
 	 */
 	unit: string;
+}
+
+export interface MetricsexplorertypesMetricsOnboardingResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	hasMetrics: boolean;
 }
 
 export interface MetricsexplorertypesStatDTO {
@@ -2576,7 +2710,140 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export interface ServiceaccounttypesFactorAPIKeyDTO {
+export enum RulestatehistorytypesAlertStateDTO {
+	inactive = 'inactive',
+	pending = 'pending',
+	recovering = 'recovering',
+	firing = 'firing',
+	nodata = 'nodata',
+	disabled = 'disabled',
+}
+export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	fingerprint: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	labels: Querybuildertypesv5LabelDTO[] | null;
+	overallState: RulestatehistorytypesAlertStateDTO;
+	/**
+	 * @type boolean
+	 */
+	overallStateChanged: boolean;
+	/**
+	 * @type string
+	 */
+	ruleID: string;
+	/**
+	 * @type string
+	 */
+	ruleName: string;
+	state: RulestatehistorytypesAlertStateDTO;
+	/**
+	 * @type boolean
+	 */
+	stateChanged: boolean;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	unixMilli: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export interface RulestatehistorytypesGettableRuleStateHistoryContributorDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	count: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	fingerprint: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	labels: Querybuildertypesv5LabelDTO[] | null;
+	/**
+	 * @type string
+	 */
+	relatedLogsLink?: string;
+	/**
+	 * @type string
+	 */
+	relatedTracesLink?: string;
+}
+
+export interface RulestatehistorytypesGettableRuleStateHistoryStatsDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	currentAvgResolutionTime: number;
+	currentAvgResolutionTimeSeries: Querybuildertypesv5TimeSeriesDTO;
+	currentTriggersSeries: Querybuildertypesv5TimeSeriesDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	pastAvgResolutionTime: number;
+	pastAvgResolutionTimeSeries: Querybuildertypesv5TimeSeriesDTO;
+	pastTriggersSeries: Querybuildertypesv5TimeSeriesDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalCurrentTriggers: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalPastTriggers: number;
+}
+
+export interface RulestatehistorytypesGettableRuleStateTimelineDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: RulestatehistorytypesGettableRuleStateHistoryDTO[] | null;
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface RulestatehistorytypesGettableRuleStateWindowDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+	state: RulestatehistorytypesAlertStateDTO;
+}
+
+export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2591,10 +2858,6 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	key: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2642,15 +2905,14 @@ export interface ServiceaccounttypesPostableServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	email: string;
+	name: string;
+}
+
+export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
 	 */
-	name: string;
-	/**
-	 * @type array
-	 */
-	roles: string[];
+	id: string;
 }
 
 export interface ServiceaccounttypesServiceAccountDTO {
@@ -2661,9 +2923,63 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	createdAt?: Date;
 	/**
 	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
 	 * @format date-time
 	 */
-	deletedAt: Date;
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesServiceAccountRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role: AuthtypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesServiceAccountWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
 	/**
 	 * @type string
 	 */
@@ -2682,8 +2998,9 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	orgId: string;
 	/**
 	 * @type array
+	 * @nullable true
 	 */
-	roles: string[];
+	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -2705,28 +3022,6 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	 * @type string
 	 */
 	name: string;
-}
-
-export interface ServiceaccounttypesUpdatableServiceAccountDTO {
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type array
-	 */
-	roles: string[];
-}
-
-export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
-	/**
-	 * @type string
-	 */
-	status: string;
 }
 
 export enum TelemetrytypesFieldContextDTO {
@@ -2872,63 +3167,6 @@ export interface TypesDeprecatedUserDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesGettableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	createdByUser?: TypesUserDTO;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresAt?: number;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	lastUsed?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	updatedByUser?: TypesUserDTO;
-	/**
-	 * @type string
-	 */
-	userId?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
@@ -3011,22 +3249,6 @@ export interface TypesOrganizationDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesPostableAPIKeyDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresInDays?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableBulkInviteRequestDTO {
 	/**
 	 * @type array
@@ -3079,6 +3301,13 @@ export interface TypesPostableResetPasswordDTO {
 	token?: string;
 }
 
+export interface TypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
@@ -3099,49 +3328,11 @@ export interface TypesResetPasswordTokenDTO {
 	token?: string;
 }
 
-export interface TypesStorableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
+export interface TypesUpdatableUserDTO {
 	/**
 	 * @type string
 	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
+	displayName: string;
 }
 
 export interface TypesUserDTO {
@@ -3675,31 +3866,6 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
-export type ListAPIKeys200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesGettableAPIKeyDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateAPIKey201 = {
-	data: TypesGettableAPIKeyDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type RevokeAPIKeyPathParameters = {
-	id: string;
-};
-export type UpdateAPIKeyPathParameters = {
-	id: string;
-};
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
 };
@@ -3804,7 +3970,7 @@ export type GetServiceAccountPathParameters = {
 	id: string;
 };
 export type GetServiceAccount200 = {
-	data: ServiceaccounttypesServiceAccountDTO;
+	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**
 	 * @type string
 	 */
@@ -3821,7 +3987,7 @@ export type ListServiceAccountKeys200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesFactorAPIKeyDTO[];
+	data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	/**
 	 * @type string
 	 */
@@ -3847,10 +4013,45 @@ export type UpdateServiceAccountKeyPathParameters = {
 	id: string;
 	fid: string;
 };
-export type UpdateServiceAccountStatusPathParameters = {
+export type GetServiceAccountRolesPathParameters = {
 	id: string;
 };
-export type ListUsers200 = {
+export type GetServiceAccountRoles200 = {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	data: AuthtypesRoleDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccountRolePathParameters = {
+	id: string;
+};
+export type CreateServiceAccountRole201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteServiceAccountRolePathParameters = {
+	id: string;
+	rid: string;
+};
+export type GetMyServiceAccount200 = {
+	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
 	 */
@@ -3864,10 +4065,10 @@ export type ListUsers200 = {
 export type DeleteUserPathParameters = {
 	id: string;
 };
-export type GetUserPathParameters = {
+export type GetUserDeprecatedPathParameters = {
 	id: string;
 };
-export type GetUser200 = {
+export type GetUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3875,10 +4076,10 @@ export type GetUser200 = {
 	status: string;
 };
 
-export type UpdateUserPathParameters = {
+export type UpdateUserDeprecatedPathParameters = {
 	id: string;
 };
-export type UpdateUser200 = {
+export type UpdateUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3886,7 +4087,7 @@ export type UpdateUser200 = {
 	status: string;
 };
 
-export type GetMyUser200 = {
+export type GetMyUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -4143,6 +4344,22 @@ export type GetMetricMetadata200 = {
 export type UpdateMetricMetadataPathParameters = {
 	metricName: string;
 };
+export type InspectMetrics200 = {
+	data: MetricsexplorertypesInspectMetricsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricsOnboardingStatus200 = {
+	data: MetricsexplorertypesMetricsOnboardingResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetMetricsStats200 = {
 	data: MetricsexplorertypesStatsResponseDTO;
 	/**
@@ -4183,6 +4400,280 @@ export type Readyz503 = {
 	status: string;
 };
 
+export type GetUsersByRoleIDPathParameters = {
+	id: string;
+};
+export type GetUsersByRoleID200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRuleHistoryFilterKeysPathParameters = {
+	id: string;
+};
+export type GetRuleHistoryFilterKeysParams = {
+	/**
+	 * @description undefined
+	 */
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @description undefined
+	 */
+	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+};
+
+export type GetRuleHistoryFilterKeys200 = {
+	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRuleHistoryFilterValuesPathParameters = {
+	id: string;
+};
+export type GetRuleHistoryFilterValuesParams = {
+	/**
+	 * @description undefined
+	 */
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @description undefined
+	 */
+	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
+};
+
+export type GetRuleHistoryFilterValues200 = {
+	data: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRuleHistoryOverallStatusPathParameters = {
+	id: string;
+};
+export type GetRuleHistoryOverallStatusParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	start: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	end: number;
+};
+
+export type GetRuleHistoryOverallStatus200 = {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	data: RulestatehistorytypesGettableRuleStateWindowDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRuleHistoryStatsPathParameters = {
+	id: string;
+};
+export type GetRuleHistoryStatsParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	start: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	end: number;
+};
+
+export type GetRuleHistoryStats200 = {
+	data: RulestatehistorytypesGettableRuleStateHistoryStatsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRuleHistoryTimelinePathParameters = {
+	id: string;
+};
+export type GetRuleHistoryTimelineParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	start: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	end: number;
+	/**
+	 * @description undefined
+	 */
+	state?: RulestatehistorytypesAlertStateDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	filterExpression?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @description undefined
+	 */
+	order?: Querybuildertypesv5OrderDirectionDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	cursor?: string;
+};
+
+export type GetRuleHistoryTimeline200 = {
+	data: RulestatehistorytypesGettableRuleStateTimelineDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetRuleHistoryTopContributorsPathParameters = {
+	id: string;
+};
+export type GetRuleHistoryTopContributorsParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	start: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	end: number;
+};
+
+export type GetRuleHistoryTopContributors200 = {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	data: RulestatehistorytypesGettableRuleStateHistoryContributorDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**
@@ -4201,6 +4692,60 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListUsers200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetUserPathParameters = {
+	id: string;
+};
+export type GetUser200 = {
+	data: AuthtypesUserWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateUserPathParameters = {
+	id: string;
+};
+export type GetRolesByUserIDPathParameters = {
+	id: string;
+};
+export type GetRolesByUserID200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesRoleDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type SetRoleByUserIDPathParameters = {
+	id: string;
+};
+export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
+	id: string;
+	roleId: string;
+};
+export type GetMyUser200 = {
+	data: AuthtypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */

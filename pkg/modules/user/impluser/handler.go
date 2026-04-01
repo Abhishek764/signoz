@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,7 +12,6 @@ import (
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -43,7 +41,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invites, err := h.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
+	invites, err := h.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
@@ -76,7 +74,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &req)
+	_, err = h.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -85,7 +83,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, nil)
 }
 
-func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetUserDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -106,7 +104,39 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, user)
 }
 
-func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userRoles, err := h.getter.GetRolesByUserID(ctx, user.ID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userWithRoles := &authtypes.UserWithRoles{
+		User:      user,
+		UserRoles: userRoles,
+	}
+
+	render.Success(w, http.StatusOK, userWithRoles)
+}
+
+func (h *handler) GetMyUserDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -125,6 +155,80 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, user)
 }
 
+func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userRoles, err := h.getter.GetRolesByUserID(ctx, user.ID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userWithRoles := &authtypes.UserWithRoles{
+		User:      user,
+		UserRoles: userRoles,
+	}
+
+	render.Success(w, http.StatusOK, userWithRoles)
+}
+
+func (h *handler) UpdateMyUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	updatableUser := new(types.UpdatableUser)
+	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	_, err = h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), updatableUser)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
+}
+
+func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	users, err := h.getter.ListDeprecatedUsersByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, users)
+}
+
 func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -135,7 +239,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	users, err := h.getter.ListUsersByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -144,7 +248,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, users)
 }
 
-func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UpdateUserDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -162,13 +266,45 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedUser, err := h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), id, &user, claims.UserID)
+	updatedUser, err := h.setter.UpdateUserDeprecated(ctx, valuer.MustNewUUID(claims.OrgID), id, &user)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	render.Success(w, http.StatusOK, updatedUser)
+}
+
+func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if userID == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
+	}
+
+	updatableUser := new(types.UpdatableUser)
+	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	_, err = h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), updatableUser)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +319,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.setter.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
+	if err := h.setter.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.IdentityID()); err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -275,9 +411,11 @@ func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
-func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetRolesByUserID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
+
+	userID := mux.Vars(r)["id"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -285,42 +423,31 @@ func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(types.PostableAPIKey)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
-		return
-	}
-
-	apiKey, err := types.NewStorableAPIKey(
-		req.Name,
-		valuer.MustNewUUID(claims.UserID),
-		req.Role,
-		req.ExpiresInDays,
-	)
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID))
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	err = h.setter.CreateAPIKey(ctx, apiKey)
+	userRoles, err := h.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	createdApiKey, err := h.setter.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), apiKey.ID)
-	if err != nil {
-		render.Error(w, err)
-		return
+	roles := make([]*authtypes.Role, len(userRoles))
+	for idx, userRole := range userRoles {
+		roles[idx] = authtypes.NewRoleFromStorableRole(userRole.Role)
 	}
 
-	// just corrected the status code, response is same,
-	render.Success(w, http.StatusCreated, createdApiKey)
+	render.Success(w, http.StatusOK, roles)
 }
 
-func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
+func (h *handler) SetRoleByUserID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
+
+	userID := mux.Vars(r)["id"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -328,30 +455,36 @@ func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiKeys, err := h.setter.ListAPIKeys(ctx, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
+	if userID == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
+	}
+
+	postableRole := new(types.PostableRole)
+	if err := json.NewDecoder(r.Body).Decode(postableRole); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	// for backward compatibility
-	if len(apiKeys) == 0 {
-		render.Success(w, http.StatusOK, []types.GettableAPIKey{})
+	if postableRole.Name == "" {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role name is required"))
 		return
 	}
 
-	result := make([]*types.GettableAPIKey, len(apiKeys))
-	for i, apiKey := range apiKeys {
-		result[i] = types.NewGettableAPIKeyFromStorableAPIKey(apiKey)
+	if err := h.setter.AddUserRole(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), postableRole.Name); err != nil {
+		render.Error(w, err)
+		return
 	}
 
-	render.Success(w, http.StatusOK, result)
-
+	render.Success(w, http.StatusOK, nil)
 }
 
-func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
+func (h *handler) RemoveUserRoleByRoleID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+	roleID := mux.Vars(r)["roleId"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -359,40 +492,12 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := types.StorableAPIKey{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
+	if userID == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
 		return
 	}
 
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
-		return
-	}
-
-	//get the API Key
-	existingAPIKey, err := h.setter.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// get the user
-	createdByUser, err := h.getter.Get(ctx, existingAPIKey.UserID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(createdByUser.Email.String())) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
-		return
-	}
-
-	err = h.setter.UpdateAPIKey(ctx, id, &req, valuer.MustNewUUID(claims.UserID))
-	if err != nil {
+	if err := h.setter.RemoveUserRole(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), valuer.MustNewUUID(roleID)); err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -400,9 +505,11 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
-func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetUsersByRoleID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
+
+	roleID := mux.Vars(r)["id"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -410,36 +517,11 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
-		return
-	}
-
-	//get the API Key
-	existingAPIKey, err := h.setter.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	users, err := h.getter.GetUsersByOrgIDAndRoleID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(roleID))
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	// get the user
-	createdByUser, err := h.getter.Get(ctx, existingAPIKey.UserID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(createdByUser.Email.String())) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
-		return
-	}
-
-	if err := h.setter.RevokeAPIKey(ctx, id, valuer.MustNewUUID(claims.UserID)); err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusNoContent, nil)
+	render.Success(w, http.StatusOK, users)
 }

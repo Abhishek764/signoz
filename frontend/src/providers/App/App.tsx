@@ -12,8 +12,9 @@ import {
 import { useQuery } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { useGetMyOrganization } from 'api/generated/services/orgs';
+import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
-import get from 'api/v1/user/me/get';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -40,7 +41,9 @@ import {
 	UserPreference,
 } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
+import { UserResponse } from 'types/api/user/getUser';
 import { ROLES, USER_ROLES } from 'types/roles';
+import { toISOString } from 'utils/app';
 
 import { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
@@ -71,17 +74,19 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
-	// fetcher for user
+	// fetcher for current user
 	// user will only be fetched if the user id and token is present
 	// if logged out and trying to hit any route none of these calls will trigger
 	const {
 		data: userData,
 		isFetching: isFetchingUserData,
 		error: userFetchDataError,
-	} = useQuery({
-		queryFn: get,
-		queryKey: ['/api/v1/user/me'],
-		enabled: isLoggedIn,
+	} = useGetMyUser({
+		query: { enabled: isLoggedIn },
+	});
+
+	const { data: orgData, isFetching: isFetchingOrgData } = useGetMyOrganization({
+		query: { enabled: isLoggedIn },
 	});
 
 	const {
@@ -93,7 +98,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		enabled: isLoggedIn,
 	});
 
-	const isFetchingUser = isFetchingUserData || isFetchingPermissions;
+	const isFetchingUser =
+		isFetchingUserData || isFetchingOrgData || isFetchingPermissions;
 	const userFetchError = userFetchDataError || errorOnPermissions;
 
 	const userRole = useMemo(() => {
@@ -118,38 +124,47 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [defaultUser, userRole]);
 
 	useEffect(() => {
-		if (!isFetchingUser && userData && userData.data) {
-			setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, userData.data.email);
+		if (!isFetchingUserData && userData?.data) {
+			setLocalStorageApi(
+				LOCALSTORAGE.LOGGED_IN_USER_EMAIL,
+				userData.data.email ?? '',
+			);
 			setDefaultUser((prev) => ({
 				...prev,
-				...userData.data,
+				id: userData.data.id,
+				displayName: userData.data.displayName ?? prev.displayName,
+				email: userData.data.email ?? prev.email,
+				orgId: userData.data.orgId ?? prev.orgId,
+				isRoot: userData.data.isRoot,
+				status: userData.data.status as UserResponse['status'],
+				createdAt: toISOString(userData.data.createdAt) ?? prev.createdAt,
+				updatedAt: toISOString(userData.data.updatedAt) ?? prev.updatedAt,
 			}));
+		}
+	}, [userData, isFetchingUserData]);
+
+	useEffect(() => {
+		if (!isFetchingOrgData && orgData?.data) {
+			const { id: orgId, displayName: orgDisplayName } = orgData.data;
 			setOrg((prev) => {
 				if (!prev) {
-					// if no org is present enter a new entry
-					return [
-						{
-							createdAt: 0,
-							id: userData.data.orgId,
-							displayName: userData.data.organization,
-						},
-					];
+					return [{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' }];
 				}
-				// else mutate the existing entry
-				const orgIndex = prev.findIndex((e) => e.id === userData.data.orgId);
+				const orgIndex = prev.findIndex((e) => e.id === orgId);
 				const updatedOrg: Organization[] = [
 					...prev.slice(0, orgIndex),
-					{
-						createdAt: 0,
-						id: userData.data.orgId,
-						displayName: userData.data.organization,
-					},
+					{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' },
 					...prev.slice(orgIndex + 1, prev.length),
 				];
 				return updatedOrg;
 			});
+
+			setDefaultUser((prev) => ({
+				...prev,
+				organization: orgDisplayName ?? prev.organization,
+			}));
 		}
-	}, [userData, isFetchingUser]);
+	}, [orgData, isFetchingOrgData]);
 
 	// fetcher for licenses v3
 	const {

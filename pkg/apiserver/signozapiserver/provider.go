@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -59,6 +60,7 @@ type provider struct {
 	cloudIntegrationHandler cloudintegration.Handler
 	ruleStateHistoryHandler rulestatehistory.Handler
 	alertmanagerHandler     alertmanager.Handler
+	traceDetailHandler      tracedetail.Handler
 }
 
 func NewFactory(
@@ -86,6 +88,7 @@ func NewFactory(
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	traceDetailHandler tracedetail.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -116,6 +119,7 @@ func NewFactory(
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
 			alertmanagerHandler,
+			traceDetailHandler,
 		)
 	})
 }
@@ -148,6 +152,7 @@ func newProvider(
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	traceDetailHandler tracedetail.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -178,6 +183,7 @@ func newProvider(
 		cloudIntegrationHandler: cloudIntegrationHandler,
 		ruleStateHistoryHandler: ruleStateHistoryHandler,
 		alertmanagerHandler:     alertmanagerHandler,
+		traceDetailHandler:      traceDetailHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -279,6 +285,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addAlertmanagerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addTraceDetailRoutes(router); err != nil {
 		return err
 	}
 

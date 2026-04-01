@@ -10,7 +10,6 @@ import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useAppContext } from 'providers/App/App';
 import { toISOString } from 'utils/app';
 
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
@@ -20,7 +19,6 @@ import './MembersSettings.styles.scss';
 const PAGE_SIZE = 20;
 
 function MembersSettings(): JSX.Element {
-	const { org } = useAppContext();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
@@ -33,9 +31,7 @@ function MembersSettings(): JSX.Element {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
-	const { data: usersData, isLoading, refetch: refetchUsers } = useListUsers({
-		query: { queryKey: ['getOrgUser', org?.[0]?.id] },
-	});
+	const { data: usersData, isLoading, refetch: refetchUsers } = useListUsers();
 
 	const allMembers = useMemo(
 		(): MemberRow[] =>

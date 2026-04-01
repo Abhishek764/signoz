@@ -10,8 +10,12 @@ import {
 	useUpdateMyUserV2,
 	useUpdateUser,
 } from 'api/generated/services/users';
-import { useRoles } from 'components/RolesSelect';
 import { MemberStatus } from 'container/MembersSettings/utils';
+import {
+	listRolesSuccessResponse,
+	managedRoles,
+} from 'mocks-server/__mockdata__/roles';
+import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
@@ -56,32 +60,6 @@ jest.mock('api/generated/services/users', () => ({
 	getResetPasswordToken: jest.fn(),
 }));
 
-jest.mock('components/RolesSelect', () => ({
-	__esModule: true,
-	default: ({
-		value,
-		onChange,
-	}: {
-		value?: string[];
-		onChange?: (v: string[]) => void;
-	}): JSX.Element => (
-		<select
-			data-testid="roles-select"
-			multiple
-			value={value}
-			onChange={(e): void => {
-				const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-				onChange?.(selected);
-			}}
-		>
-			<option value="role-admin">signoz-admin</option>
-			<option value="role-editor">signoz-editor</option>
-			<option value="role-viewer">signoz-viewer</option>
-		</select>
-	),
-	useRoles: jest.fn(),
-}));
-
 jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 	convertToApiError: jest.fn(),
 }));
@@ -91,29 +69,6 @@ jest.mock('@signozhq/sonner', () => ({
 		success: jest.fn(),
 		error: jest.fn(),
 	},
-}));
-
-jest.mock('utils/errorUtils', () => ({
-	toAPIError: jest.fn().mockReturnValue({
-		getErrorMessage: (): string => 'An error occurred',
-	}),
-}));
-
-// Render SaveErrorItem minimally to avoid deep dependency chain in tests
-jest.mock('components/ServiceAccountDrawer/SaveErrorItem', () => ({
-	__esModule: true,
-	default: ({
-		context,
-		apiError,
-	}: {
-		context: string;
-		apiError: { getErrorMessage: () => string };
-		onRetry?: () => void;
-	}): JSX.Element => (
-		<div data-testid="save-error-item">
-			{context}: {apiError.getErrorMessage()}
-		</div>
-	),
 }));
 
 const mockCopyToClipboard = jest.fn();
@@ -126,14 +81,10 @@ jest.mock('react-use', () => ({
 	],
 }));
 
+const ROLES_ENDPOINT = '*/api/v1/roles';
+
 const mockDeleteMutate = jest.fn();
 const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
-
-const mockAvailableRoles = [
-	{ id: 'role-admin', name: 'signoz-admin' },
-	{ id: 'role-editor', name: 'signoz-editor' },
-	{ id: 'role-viewer', name: 'signoz-viewer' },
-];
 
 const mockFetchedUser = {
 	data: {
@@ -144,8 +95,8 @@ const mockFetchedUser = {
 		userRoles: [
 			{
 				id: 'ur-1',
-				roleId: 'role-admin',
-				role: { id: 'role-admin', name: 'signoz-admin' },
+				roleId: managedRoles[0].id,
+				role: managedRoles[0], // signoz-admin
 			},
 		],
 	},
@@ -185,13 +136,11 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		(useRoles as jest.Mock).mockReturnValue({
-			roles: mockAvailableRoles,
-			isLoading: false,
-			isError: false,
-			error: undefined,
-			refetch: jest.fn(),
-		});
+		server.use(
+			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+		);
 		(useGetUser as jest.Mock).mockReturnValue({
 			data: mockFetchedUser,
 			isLoading: false,
@@ -217,6 +166,10 @@ describe('EditMemberDrawer', () => {
 			mutate: mockDeleteMutate,
 			isLoading: false,
 		});
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
 	});
 
 	it('renders active member details and disables Save when form is not dirty', () => {
@@ -294,9 +247,9 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Add editor role alongside existing admin
-		const rolesSelect = screen.getByTestId('roles-select');
-		await user.selectOptions(rolesSelect, ['role-editor']);
+		// Open the roles dropdown and select signoz-editor
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-editor'));
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
@@ -323,18 +276,20 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Deselect the existing admin role
-		const rolesSelect = screen.getByTestId('roles-select');
-		await user.deselectOptions(rolesSelect, ['role-admin']);
+		// Wait for the signoz-admin tag to appear, then click its remove button
+		const adminTag = await screen.findByTitle('signoz-admin');
+		const removeBtn = adminTag.querySelector(
+			'.ant-select-selection-item-remove',
+		) as Element;
+		await user.click(removeBtn);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			// roleId is the role entity id (ur.role?.id ?? ur.roleId)
 			expect(mockRemove).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1', roleId: 'role-admin' },
+				pathParams: { id: 'user-1', roleId: managedRoles[0].id },
 			});
 			expect(onComplete).toHaveBeenCalled();
 		});
@@ -430,8 +385,8 @@ describe('EditMemberDrawer', () => {
 					userRoles: [
 						{
 							id: 'ur-2',
-							roleId: 'role-viewer',
-							role: { id: 'role-viewer', name: 'signoz-viewer' },
+							roleId: managedRoles[2].id,
+							role: managedRoles[2], // signoz-viewer
 						},
 					],
 				},

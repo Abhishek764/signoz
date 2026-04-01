@@ -79,7 +79,6 @@ function EditMemberDrawer({
 	const isInvited = member?.status === MemberStatus.Invited;
 	const isSelf = !!member?.id && member.id === currentUser?.id;
 
-	// Fetch fresh user data from v2 when drawer opens
 	const {
 		data: fetchedUser,
 		isLoading: isFetchingUser,
@@ -89,7 +88,6 @@ function EditMemberDrawer({
 		{ query: { enabled: open && !!member?.id } },
 	);
 
-	// Available roles from the roles API (same source as SA drawer)
 	const {
 		roles: availableRoles,
 		isLoading: rolesLoading,
@@ -106,7 +104,6 @@ function EditMemberDrawer({
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
 
-	// Initialise local form state when fetched data arrives
 	useEffect(() => {
 		if (fetchedUser?.data) {
 			setLocalDisplayName(fetchedUser.data.displayName ?? member?.name ?? '');
@@ -121,7 +118,6 @@ function EditMemberDrawer({
 		(localDisplayName !== fetchedDisplayName ||
 			!areSortedArraysEqual(localRoles, fetchedRoleIds));
 
-	// v2 mutations
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 	const { mutateAsync: updateUser } = useUpdateUser();
 

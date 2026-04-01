@@ -38,6 +38,7 @@ jest.mock('utils/navigation', () => ({
 const openInNewTabMock = openInNewTab as jest.Mock;
 
 // Mock DrawerWrapper to avoid CSS issues with jsdom
+// SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
 jest.mock('@signozhq/ui', () => ({
 	...jest.requireActual('@signozhq/ui'),
 	DrawerWrapper: ({

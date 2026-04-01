@@ -2,9 +2,11 @@ package implinframonitoring
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"strings"
+	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -48,5 +50,107 @@ func NewModule(
 }
 
 func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "not implemented")
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.HostsListResponse{}
+
+	// default to cpu order by
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: "cpu",
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	// Inject the agent-ignore filter so every downstream query/method gets it automatically.
+	if req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != "" {
+		req.Filter.Expression = fmt.Sprintf("(%s) AND (%s)", agentIgnoreFilterExpr, req.Filter.Expression)
+	} else {
+		req.Filter = &qbtypes.Filter{
+			Expression: agentIgnoreFilterExpr,
+		}
+	}
+
+	// default to host name group by
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{hostNameGroupByKey}
+		resp.Type = ResponseTypeList
+	} else {
+		resp.Type = ResponseTypeGroupedList
+	}
+
+	// don't fail the request if we can't get these values
+	if clusterNames, nodeNames, err := m.isSendingK8sAgentMetrics(ctx, hostsTableMetricNamesList, agentNameToMatch); err == nil {
+		resp.K8sAgentMetrics.IsSending = len(clusterNames) > 0 || len(nodeNames) > 0
+		resp.K8sAgentMetrics.ClusterNames = clusterNames
+		resp.K8sAgentMetrics.NodeNames = nodeNames
+	}
+
+	// 1. Check if any host metrics exist and get earliest retention time.
+	// If no host metrics exist, return early — the UI shows the onboarding guide.
+	// 2. If metrics exist but req.End is before the earliest reported time, convey retention boundary.
+	if count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []inframonitoringtypes.HostRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []inframonitoringtypes.HostRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+	}
+
+	// Determine active hosts: those with metrics reported in the last 10 minutes.
+	tenMinAgo := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, tenMinAgo)
+	if err != nil {
+		return nil, err
+	}
+
+	if m.applyHostsActiveStatusFilter(req, activeHostsMap) {
+		resp.Records = []inframonitoringtypes.HostRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+
+	metadataMap, err := m.getHostsTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if metadataMap == nil {
+		metadataMap = make(map[string]map[string]string)
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopHostGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.HostRecord{}
+		return resp, nil
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, req.Filter.Expression, req.GroupBy, pageGroups, m.newHostsTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = m.buildHostRecords(queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap)
+
+	return resp, nil
 }

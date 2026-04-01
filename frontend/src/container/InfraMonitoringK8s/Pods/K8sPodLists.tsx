@@ -6,13 +6,6 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseFilters, K8sBaseList } from '../Base/K8sBaseList';
 import { K8sCategory } from '../constants';
-import {
-	useInfraMonitoringEventsFilters,
-	useInfraMonitoringLogFilters,
-	useInfraMonitoringSelectedItem,
-	useInfraMonitoringTracesFilters,
-	useInfraMonitoringView,
-} from '../hooks';
 import { getK8sPodsList, K8sPodsData } from './api';
 import {
 	getPodMetricsQueryPayload,
@@ -39,8 +32,6 @@ function K8sPodsList({
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
-
-	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
 
 	const fetchListData = useCallback(
 		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
@@ -93,19 +84,6 @@ function K8sPodsList({
 		[dotMetricsEnabled],
 	);
 
-	const [, setView] = useInfraMonitoringView();
-	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
-	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
-	const [, setLogFilters] = useInfraMonitoringLogFilters();
-
-	const handleClosePodDetail = (): void => {
-		setSelectedItem(null);
-		setView(null);
-		setTracesFilters(null);
-		setEventsFilters(null);
-		setLogFilters(null);
-	};
-
 	return (
 		<>
 			<K8sBaseList<K8sPodsData>
@@ -119,7 +97,6 @@ function K8sPodsList({
 			/>
 
 			<K8sBaseDetails<K8sPodsData>
-				onClose={handleClosePodDetail}
 				category={K8sCategory.PODS}
 				eventCategory={InfraMonitoringEvents.Pod}
 				getSelectedItemFilters={k8sPodGetSelectedItemFilters}

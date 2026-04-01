@@ -240,10 +240,6 @@ func validatePlugin(plugin common.Plugin, specs map[string]func() any, path stri
 	if plugin.Spec == nil {
 		return nil
 	}
-	// If factory is nil, no spec validation needed for this kind.
-	if factory == nil {
-		return nil
-	}
 	// Re-marshal the spec and unmarshal into the typed struct.
 	specJSON, err := json.Marshal(plugin.Spec)
 	if err != nil {

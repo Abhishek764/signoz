@@ -103,14 +103,19 @@ function EditMemberDrawer({
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
+	const fetchedUserId = fetchedUser?.data?.id;
+	const fetchedUserDisplayName = fetchedUser?.data?.displayName;
 
 	useEffect(() => {
-		if (fetchedUser?.data) {
-			setLocalDisplayName(fetchedUser.data.displayName ?? member?.name ?? '');
-			setLocalRoles(fetchedRoleIds);
-			setSaveErrors([]);
+		if (fetchedUserId) {
+			setLocalDisplayName(fetchedUserDisplayName ?? member?.name ?? '');
 		}
-	}, [fetchedUser, fetchedRoleIds, member?.name]);
+		setSaveErrors([]);
+	}, [fetchedUserId, fetchedUserDisplayName, member?.name]);
+
+	useEffect(() => {
+		setLocalRoles(fetchedRoleIds);
+	}, [fetchedRoleIds]);
 
 	const isDirty =
 		member !== null &&
@@ -153,6 +158,7 @@ function EditMemberDrawer({
 			try {
 				await rawRetry();
 				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+				refetchUser();
 			} catch (err) {
 				setSaveErrors((prev) =>
 					prev.map((e) =>
@@ -161,7 +167,7 @@ function EditMemberDrawer({
 				);
 			}
 		},
-		[],
+		[refetchUser],
 	);
 
 	const retryNameUpdate = useCallback(async (): Promise<void> => {
@@ -242,6 +248,7 @@ function EditMemberDrawer({
 								}),
 							];
 						});
+						refetchUser();
 					},
 				});
 			} else {

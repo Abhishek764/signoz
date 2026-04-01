@@ -1,0 +1,32 @@
+.entityGroupHeader {
+	padding-left: 12px;
+}
+
+.podGroup {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-wrap: wrap;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.podGroupTagItem {
+	border-radius: 2px;
+	font-size: 12px;
+	font-weight: 400;
+	background: var(--columnHeaderbg-slate-400);
+	color: var(--bg-vanilla-400);
+
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.progressBar {
+  display: flex;
+  justify-content: start;
+}

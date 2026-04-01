@@ -15,6 +15,8 @@ import {
 import { K8sCategory } from '../constants';
 import { K8sPodsData } from './api';
 
+import styles from './table.module.scss';
+
 export interface K8sPodsRowData {
 	key: string;
 	podName: React.ReactNode;
@@ -28,8 +30,6 @@ export interface K8sPodsRowData {
 	restarts: React.ReactNode;
 	groupedByMeta?: any;
 }
-
-const columnProgressBarClassName = 'column-progress-bar';
 
 export const k8sPodColumns: IEntityColumn[] = [
 	{
@@ -132,7 +132,7 @@ export const k8sPodColumns: IEntityColumn[] = [
 export const k8sPodColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	{
 		title: (
-			<div className="column-header entity-group-header">
+			<div className={styles.entityGroupHeader}>
 				<Group size={14} /> POD GROUP
 			</div>
 		),
@@ -141,102 +141,91 @@ export const k8sPodColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		ellipsis: true,
 		width: 180,
 		sorter: false,
-		className: 'column entity-group-header',
 	},
 	{
-		title: <div className="column-header pod-name-header">Pod Name</div>,
+		title: <div>Pod Name</div>,
 		dataIndex: 'podName',
 		key: 'podName',
 		width: 180,
 		ellipsis: true,
 		sorter: false,
-		className: 'column column-pod-name',
 	},
 	{
-		title: <div className="column-header med-col">CPU Req Usage (%)</div>,
+		title: <div>CPU Req Usage (%)</div>,
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
 		width: 180,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header med-col">CPU Limit Usage (%)</div>,
+		title: <div>CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
 		width: 120,
 		sorter: true,
 		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">CPU Usage (cores)</div>,
+		title: <div>CPU Usage (cores)</div>,
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 80,
 		sorter: true,
 		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-heade med-col">Mem Req Usage (%)</div>,
+		title: <div>Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
 		width: 120,
 		sorter: true,
 		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header med-col">Mem Limit Usage (%)</div>,
+		title: <div>Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
 		width: 120,
 		sorter: true,
 		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header med-col">Mem Usage (WSS)</div>,
+		title: <div>Mem Usage (WSS)</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 120,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Namespace</div>,
+		title: <div>Namespace</div>,
 		dataIndex: 'namespace',
 		key: 'namespace',
 		width: 100,
 		sorter: false,
 		ellipsis: true,
 		align: 'left',
-		className: 'column column-namespace',
 	},
 	{
-		title: <div className="column-header">Node</div>,
+		title: <div>Node</div>,
 		dataIndex: 'node',
 		key: 'node',
 		width: 100,
 		sorter: false,
 		ellipsis: true,
 		align: 'left',
-		className: 'column column-node',
 	},
 	{
-		title: <div className="column-header">Cluster</div>,
+		title: <div>Cluster</div>,
 		dataIndex: 'cluster',
 		key: 'cluster',
 		width: 100,
 		sorter: false,
 		ellipsis: true,
 		align: 'left',
-		className: 'column column-cluster',
 	},
 	// TODO - Re-enable the column once backend issue is fixed
 	// {
@@ -285,9 +274,13 @@ const getGroupByEle = (
 	});
 
 	return (
-		<div className="pod-group">
+		<div className={styles.podGroup}>
 			{groupByValues.map((value) => (
-				<Tag key={value} color={Color.BG_SLATE_400} className="pod-group-tag-item">
+				<Tag
+					key={value}
+					color={Color.BG_SLATE_400}
+					className={styles.podGroupTagItem}
+				>
 					{value === '' ? '<no-value>' : value}
 				</Tag>
 			))}
@@ -358,7 +351,7 @@ export const k8sPodRenderRowData = (
 			entity={K8sCategory.PODS}
 			attribute="CPU Request"
 		>
-			<div className="progress-container">
+			<div className={styles.progressBar}>
 				<EntityProgressBar value={pod.podCPURequest} type="request" />
 			</div>
 		</ValidateColumnValueWrapper>
@@ -369,7 +362,7 @@ export const k8sPodRenderRowData = (
 			entity={K8sCategory.PODS}
 			attribute="CPU Limit"
 		>
-			<div className="progress-container">
+			<div className={styles.progressBar}>
 				<EntityProgressBar value={pod.podCPULimit} type="limit" />
 			</div>
 		</ValidateColumnValueWrapper>
@@ -385,7 +378,7 @@ export const k8sPodRenderRowData = (
 			entity={K8sCategory.PODS}
 			attribute="Memory Request"
 		>
-			<div className="progress-container">
+			<div className={styles.progressBar}>
 				<EntityProgressBar value={pod.podMemoryRequest} type="request" />
 			</div>
 		</ValidateColumnValueWrapper>
@@ -396,7 +389,7 @@ export const k8sPodRenderRowData = (
 			entity={K8sCategory.PODS}
 			attribute="Memory Limit"
 		>
-			<div className="progress-container">
+			<div className={styles.progressBar}>
 				<EntityProgressBar value={pod.podMemoryLimit} type="limit" />
 			</div>
 		</ValidateColumnValueWrapper>

@@ -34,6 +34,7 @@ import {
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringQueryFilters,
+	useInfraMonitoringSelectedItem,
 } from '../hooks';
 import LoadingContainer from '../LoadingContainer';
 import { OrderBySchemaType } from '../schemas';
@@ -113,7 +114,7 @@ function K8sExpandedRow<T>({
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [, setFilters] = useInfraMonitoringFilters();
-	const [, setSelectedItem] = useQueryState('selectedItem', parseAsString);
+	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
 
 	const queryFilters = useInfraMonitoringQueryFilters();
 

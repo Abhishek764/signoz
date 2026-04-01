@@ -237,3 +237,13 @@ export const useInfraMonitoringQueryFilters = (): TagFilter => {
 		[currentQuery?.builder?.queryData],
 	);
 };
+
+export const useInfraMonitoringSelectedItem = (): UseQueryStateReturn<
+	string,
+	string | undefined
+> => {
+	return useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
+		parseAsString,
+	);
+};

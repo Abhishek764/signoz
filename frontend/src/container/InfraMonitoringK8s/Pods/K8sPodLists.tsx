@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
-import { parseAsString, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
@@ -10,6 +9,7 @@ import { K8sCategory } from '../constants';
 import {
 	useInfraMonitoringEventsFilters,
 	useInfraMonitoringLogFilters,
+	useInfraMonitoringSelectedItem,
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
@@ -40,10 +40,7 @@ function K8sPodsList({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const [selectedItem, setSelectedItem] = useQueryState(
-		'selectedItem',
-		parseAsString,
-	);
+	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
 
 	const fetchListData = useCallback(
 		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
@@ -122,7 +119,6 @@ function K8sPodsList({
 			/>
 
 			<K8sBaseDetails<K8sPodsData>
-				selectedItemId={selectedItem}
 				onClose={handleClosePodDetail}
 				category={K8sCategory.PODS}
 				eventCategory={InfraMonitoringEvents.Pod}

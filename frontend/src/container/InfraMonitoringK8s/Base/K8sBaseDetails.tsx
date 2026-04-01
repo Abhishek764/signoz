@@ -54,6 +54,7 @@ import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
 import {
 	useInfraMonitoringEventsFilters,
 	useInfraMonitoringLogFilters,
+	useInfraMonitoringSelectedItem,
 	useInfraMonitoringTracesFilters,
 	useInfraMonitoringView,
 } from '../hooks';
@@ -75,12 +76,11 @@ export interface K8sDetailsFilters {
 }
 
 export interface K8sBaseDetailsProps<T> {
-	selectedItemId: string | null;
 	onClose: () => void;
 	category: K8sCategory;
 	eventCategory: string;
 	// Data fetching configuration
-	getSelectedItemFilters: (selectedItemId: string) => TagFilter;
+	getSelectedItemFilters: (selectedItem: string) => TagFilter;
 	fetchEntityData: (
 		filters: K8sDetailsFilters,
 		signal?: AbortSignal,
@@ -124,7 +124,6 @@ export function createFilterItem(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sBaseDetails<T>({
-	selectedItemId,
 	onClose,
 	category,
 	eventCategory,
@@ -139,6 +138,8 @@ function K8sBaseDetails<T>({
 	getEntityQueryPayload,
 	queryKeyPrefix,
 }: K8sBaseDetailsProps<T>): JSX.Element {
+	const [selectedItem] = useInfraMonitoringSelectedItem();
+
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -178,15 +179,15 @@ function K8sBaseDetails<T>({
 	] = useInfraMonitoringEventsFilters();
 	const isDarkMode = useIsDarkMode();
 
-	// Fetch entity data based on selectedItemId
+	// Fetch entity data based on selectedItem
 	const entityQueryKey = useMemo(
 		() => [
 			`${queryKeyPrefix}EntityDetails`,
-			selectedItemId,
+			selectedItem,
 			String(minTime),
 			String(maxTime),
 		],
-		[queryKeyPrefix, selectedItemId, minTime, maxTime],
+		[queryKeyPrefix, selectedItem, minTime, maxTime],
 	);
 
 	const {
@@ -196,10 +197,10 @@ function K8sBaseDetails<T>({
 	} = useQuery({
 		queryKey: entityQueryKey,
 		queryFn: ({ signal }) => {
-			if (!selectedItemId) {
+			if (!selectedItem) {
 				return { data: null };
 			}
-			const filters = getSelectedItemFilters(selectedItemId);
+			const filters = getSelectedItemFilters(selectedItem);
 			return fetchEntityData(
 				{
 					filters,
@@ -209,7 +210,7 @@ function K8sBaseDetails<T>({
 				signal,
 			);
 		},
-		enabled: !!selectedItemId,
+		enabled: !!selectedItem,
 	});
 
 	const entity = entityResponse?.data ?? null;
@@ -563,7 +564,7 @@ function K8sBaseDetails<T>({
 			}
 			placement="right"
 			onClose={handleClose}
-			open={!!selectedItemId}
+			open={!!selectedItem}
 			style={{
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,

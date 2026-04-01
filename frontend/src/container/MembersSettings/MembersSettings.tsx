@@ -143,7 +143,6 @@ function MembersSettings(): JSX.Element {
 
 	const handleMemberEditComplete = useCallback((): void => {
 		refetchUsers();
-		setSelectedMember(null);
 	}, [refetchUsers]);
 
 	return (

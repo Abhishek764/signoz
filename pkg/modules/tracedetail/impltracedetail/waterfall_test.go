@@ -79,6 +79,7 @@ func buildSpanMap(roots ...*tracedetailtypes.Span) map[string]*tracedetailtypes.
 		}
 	}
 	for _, r := range roots {
+		SortSpanChildren(r)
 		walk(r)
 	}
 	return m

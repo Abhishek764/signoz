@@ -33,14 +33,6 @@ func traverseTrace(
 	preOrderTraversal := []*tracedetailtypes.Span{}
 	autoExpandedSpans := []string{}
 
-	// Sort children for consistent ordering across requests
-	sort.Slice(span.Children, func(i, j int) bool {
-		if span.Children[i].TimeUnixNano == span.Children[j].TimeUnixNano {
-			return span.Children[i].Name < span.Children[j].Name
-		}
-		return span.Children[i].TimeUnixNano < span.Children[j].TimeUnixNano
-	})
-
 	span.SubTreeNodeCount = 0
 	nodeWithoutChildren := span.CopyWithoutChildren(level, hasSibling)
 
@@ -183,4 +175,19 @@ func findIndexForSelectedSpan(spans []*tracedetailtypes.Span, selectedSpanID str
 		}
 	}
 	return -1
+}
+
+// SortSpanChildren recursively sorts children of each span by TimeUnixNano then Name.
+// Must be called once after the span tree is fully built so that traverseTrace
+// sees a consistent ordering without needing to re-sort on every call.
+func SortSpanChildren(span *tracedetailtypes.Span) {
+	sort.Slice(span.Children, func(i, j int) bool {
+		if span.Children[i].TimeUnixNano == span.Children[j].TimeUnixNano {
+			return span.Children[i].Name < span.Children[j].Name
+		}
+		return span.Children[i].TimeUnixNano < span.Children[j].TimeUnixNano
+	})
+	for _, child := range span.Children {
+		SortSpanChildren(child)
+	}
 }

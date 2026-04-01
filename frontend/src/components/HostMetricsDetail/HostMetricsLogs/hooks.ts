@@ -62,7 +62,7 @@ export function useInfiniteHostMetricLogs({
 		}
 
 		return data.pages.flatMap((page) => {
-			const list = page?.payload?.data?.newResult?.data?.result?.[0]?.list;
+			const list = page.payload.data.newResult.data.result?.[0]?.list;
 			if (!list) {
 				return [];
 			}

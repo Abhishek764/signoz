@@ -325,8 +325,7 @@ function K8sBaseDetails<T>({
 				view: selectedView,
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[eventCategory],
+		[eventCategory, selectedView],
 	);
 
 	const handleChangeLogFilters = useCallback(
@@ -370,8 +369,13 @@ function K8sBaseDetails<T>({
 				return updatedFilters;
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[primaryFilterKeys, eventCategory],
+		[
+			setLogFiltersParam,
+			setSelectedView,
+			primaryFilterKeys,
+			eventCategory,
+			selectedView,
+		],
 	);
 
 	const handleChangeTracesFilters = useCallback(
@@ -408,8 +412,13 @@ function K8sBaseDetails<T>({
 				return updatedFilters;
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[primaryFilterKeys, eventCategory],
+		[
+			setTracesFiltersParam,
+			setSelectedView,
+			primaryFilterKeys,
+			eventCategory,
+			selectedView,
+		],
 	);
 
 	const handleChangeEventsFilters = useCallback(
@@ -452,8 +461,7 @@ function K8sBaseDetails<T>({
 				return updatedFilters;
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[eventCategory],
+		[eventCategory, selectedView, setEventsFiltersParam, setSelectedView],
 	);
 
 	const handleExplorePagesRedirect = (): void => {

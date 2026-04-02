@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import type { RadioChangeEvent } from 'antd/lib';
@@ -30,7 +29,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -41,9 +39,17 @@ import {
 	LogsAggregatorOperator,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+	isCustomTimeRange,
+	useGlobalTimeStore,
+} from '../../../store/globalTime';
+import {
+	getAutoRefreshQueryKey,
+	NANO_SECOND_MULTIPLIER,
+} from '../../../store/globalTime/utils';
+import { DEFAULT_TIME_RANGE } from '../../TopNav/DateTimeSelectionV2/constants';
 import { filterDuplicateFilters } from '../commonUtils';
 import { K8sCategory } from '../constants';
 import EntityEvents from '../EntityDetailsUtils/EntityEvents';
@@ -136,21 +142,17 @@ function K8sBaseDetails<T>({
 	getEntityQueryPayload,
 	queryKeyPrefix,
 }: K8sBaseDetailsProps<T>): JSX.Element {
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
 
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const { startMs, endMs } = useMemo(() => {
+		const { minTime: startNs, maxTime: endNs } = getMinMaxTime(selectedTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
-		maxTime,
-	]);
-
-	const urlQuery = useUrlQuery();
+		return {
+			startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
+		};
+	}, [getMinMaxTime, selectedTime]);
 
 	const [modalTimeRange, setModalTimeRange] = useState(() => ({
 		startTime: startMs,
@@ -158,11 +160,12 @@ function K8sBaseDetails<T>({
 	}));
 
 	const lastSelectedInterval = useRef<Time | null>(null);
-
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
 		lastSelectedInterval.current
 			? lastSelectedInterval.current
-			: (selectedTime as Time),
+			: isCustomTimeRange(selectedTime)
+			? DEFAULT_TIME_RANGE
+			: selectedTime,
 	);
 
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
@@ -177,14 +180,17 @@ function K8sBaseDetails<T>({
 	] = useInfraMonitoringEventsFilters();
 	const isDarkMode = useIsDarkMode();
 
-	// Fetch entity data based on selectedItem
+	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const urlQuery = useUrlQuery();
+
 	const entityQueryKey = useMemo(
-		() => [
-			`${queryKeyPrefix}EntityDetails`,
-			selectedItem,
-			...(selectedItem === 'custom' ? [minTime, maxTime] : [selectedTime]),
-		],
-		[queryKeyPrefix, selectedItem, selectedTime, minTime, maxTime],
+		() =>
+			getAutoRefreshQueryKey(
+				selectedTime,
+				`${queryKeyPrefix}EntityDetails`,
+				selectedItem,
+			),
+		[queryKeyPrefix, selectedItem, selectedTime],
 	);
 
 	const {
@@ -198,23 +204,13 @@ function K8sBaseDetails<T>({
 				return { data: null };
 			}
 			const filters = getSelectedItemFilters(selectedItem);
-
-			// TODO: Replace this by the new GlobalTimeAdapter
-			let start, end;
-			if (selectedTime === 'custom') {
-				start = Math.floor(minTime / 1000000);
-				end = Math.floor(maxTime / 1000000);
-			} else {
-				const parsedSelectedTime = GetMinMax(selectedTime);
-				start = Math.floor(parsedSelectedTime.minTime / 1000000);
-				end = Math.floor(parsedSelectedTime.maxTime / 1000000);
-			}
+			const { minTime, maxTime } = getMinMaxTime();
 
 			return fetchEntityData(
 				{
 					filters,
-					start,
-					end,
+					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 				},
 				signal,
 			);
@@ -283,17 +279,16 @@ function K8sBaseDetails<T>({
 
 	useEffect(() => {
 		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
-		setSelectedInterval(currentSelectedInterval as Time);
-
-		if (currentSelectedInterval !== 'custom') {
-			const { maxTime, minTime } = GetMinMax(currentSelectedInterval);
+		if (!isCustomTimeRange(currentSelectedInterval)) {
+			setSelectedInterval(currentSelectedInterval);
+			const { minTime, maxTime } = getMinMaxTime();
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: minTime / TimeRangeOffset,
+				endTime: maxTime / TimeRangeOffset,
 			});
 		}
-	}, [selectedTime, minTime, maxTime]);
+	}, [getMinMaxTime, selectedTime]);
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);

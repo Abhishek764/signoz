@@ -100,11 +100,6 @@ type TimeSeriesPanelSpec struct {
 	Thresholds      []ThresholdWithLabel      `json:"thresholds"`
 }
 
-type TimeSeriesVisualization struct {
-	TimePreference TimePreference `json:"timePreference"`
-	FillSpans      bool           `json:"fillSpans"`
-}
-
 type TimeSeriesChartAppearance struct {
 	LineInterpolation LineInterpolation `json:"lineInterpolation"`
 	ShowPoints        bool              `json:"showPoints"`
@@ -119,12 +114,6 @@ type BarChartPanelSpec struct {
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds"`
-}
-
-type BarChartVisualization struct {
-	TimePreference  TimePreference `json:"timePreference"`
-	FillSpans       bool           `json:"fillSpans"`
-	StackedBarChart bool           `json:"stackedBarChart"`
 }
 
 type NumberPanelSpec struct {
@@ -143,16 +132,6 @@ type TablePanelSpec struct {
 	Visualization BasicVisualization `json:"visualization"`
 	Formatting    TableFormatting    `json:"formatting"`
 	Thresholds    []TableThreshold   `json:"thresholds"`
-}
-
-type TableFormatting struct {
-	ColumnUnits      map[string]string `json:"columnUnits"`
-	DecimalPrecision PrecisionOption   `json:"decimalPrecision"`
-}
-
-type TableThreshold struct {
-	ComparisonThreshold
-	TableOptions string `json:"tableOptions"`
 }
 
 type HistogramPanelSpec struct {
@@ -191,9 +170,25 @@ type BasicVisualization struct {
 	TimePreference TimePreference `json:"timePreference"`
 }
 
+type TimeSeriesVisualization struct {
+	TimePreference TimePreference `json:"timePreference"`
+	FillSpans      bool           `json:"fillSpans"`
+}
+
+type BarChartVisualization struct {
+	TimePreference  TimePreference `json:"timePreference"`
+	FillSpans       bool           `json:"fillSpans"`
+	StackedBarChart bool           `json:"stackedBarChart"`
+}
+
 type PanelFormatting struct {
 	Unit             string          `json:"unit"`
 	DecimalPrecision PrecisionOption `json:"decimalPrecision"`
+}
+
+type TableFormatting struct {
+	ColumnUnits      map[string]string `json:"columnUnits"`
+	DecimalPrecision PrecisionOption   `json:"decimalPrecision"`
 }
 
 type Legend struct {
@@ -202,11 +197,10 @@ type Legend struct {
 }
 
 type ThresholdWithLabel struct {
-	Value  float64         `json:"value"`
-	Unit   string          `json:"unit"`
-	Color  string          `json:"color"`
-	Format ThresholdFormat `json:"format"`
-	Label  string          `json:"label"`
+	Value float64 `json:"value"`
+	Unit  string  `json:"unit"`
+	Color string  `json:"color"`
+	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
@@ -215,6 +209,11 @@ type ComparisonThreshold struct {
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color"`
 	Format   ThresholdFormat    `json:"format"`
+}
+
+type TableThreshold struct {
+	ComparisonThreshold
+	TableOptions string `json:"tableOptions"`
 }
 
 // ══════════════════════════════════════════════

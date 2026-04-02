@@ -10,12 +10,7 @@
 }
 
 .itemDataGroupTagItem {
-	border-radius: 2px;
-	font-size: 12px;
-	font-weight: 400;
-	background: var(--bg-slate-400);
-	color: var(--bg-vanilla-400);
-
+	display: block !important;
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;

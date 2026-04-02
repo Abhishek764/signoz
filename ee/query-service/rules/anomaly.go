@@ -410,8 +410,23 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		annotations := make(labels.Labels, 0, len(r.Annotations().Map()))
 		for name, value := range r.Annotations().Map() {
+			// no need to expand custom templating annotations — they get expanded in the notifier layer
+			if ruletypes.IsCustomTemplatingAnnotation(name) {
+				annotations = append(annotations, labels.Label{Name: name, Value: value})
+				continue
+			}
 			annotations = append(annotations, labels.Label{Name: name, Value: expand(value)})
 		}
+		// Add values to be used in notifier layer for notification templates
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationValue, Value: value})
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold})
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationCompareOp, Value: smpl.CompareOp.String()})
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationMatchType, Value: smpl.MatchType.String()})
+
+		if smpl.IsRecovering {
+			lb.Set(ruletypes.LabelIsRecovering, "true")
+		}
+
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(labels.NoDataLabel, "true")

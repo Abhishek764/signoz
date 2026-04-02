@@ -658,8 +658,23 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		annotations := make(labels.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
+			// no need to expand custom templating annotations — they get expanded in the notifier layer
+			if ruletypes.IsCustomTemplatingAnnotation(name) {
+				annotations = append(annotations, labels.Label{Name: name, Value: value})
+				continue
+			}
 			annotations = append(annotations, labels.Label{Name: name, Value: expand(value)})
 		}
+		// Add values to be used in notifier layer for notification templates
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationValue, Value: value})
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold})
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationCompareOp, Value: smpl.CompareOp.String()})
+		annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationMatchType, Value: smpl.MatchType.String()})
+
+		if smpl.IsRecovering {
+			lb.Set(ruletypes.LabelIsRecovering, "true")
+		}
+
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(labels.NoDataLabel, "true")
@@ -673,13 +688,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				r.logger.InfoContext(ctx, "adding traces link to annotations", "link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
-				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+				annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationRelatedTraces, Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
 		case ruletypes.AlertTypeLogs:
 			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
 				r.logger.InfoContext(ctx, "adding logs link to annotations", "link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
-				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+				annotations = append(annotations, labels.Label{Name: ruletypes.AnnotationRelatedLogs, Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
 			}
 		}
 

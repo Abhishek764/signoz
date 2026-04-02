@@ -26,6 +26,11 @@ type Sample struct {
 	RecoveryTarget *float64
 
 	TargetUnit string
+
+	// CompareOp and MatchType carry the threshold evaluation context
+	// so the rule layer can set them as annotations for the notifier.
+	CompareOp CompareOp
+	MatchType MatchType
 }
 
 func (s Sample) String() string {

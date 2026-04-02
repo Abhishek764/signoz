@@ -94,6 +94,29 @@ const (
 	ValueOutsideBounds CompareOp = "7"
 )
 
+// String returns a human-readable string for the comparison operator.
+// TODO: replace with String literals once the Refactor PR is merged
+func (c CompareOp) String() string {
+	switch c {
+	case ValueIsAbove:
+		return "above"
+	case ValueIsBelow:
+		return "below"
+	case ValueIsEq:
+		return "equal to"
+	case ValueIsNotEq:
+		return "not equal to"
+	case ValueAboveOrEq:
+		return "above or equal to"
+	case ValueBelowOrEq:
+		return "below or equal to"
+	case ValueOutsideBounds:
+		return "outside bounds"
+	default:
+		return string(c)
+	}
+}
+
 type MatchType string
 
 const (
@@ -104,6 +127,25 @@ const (
 	InTotal       MatchType = "4"
 	Last          MatchType = "5"
 )
+
+// String returns a human-readable string for the match type.
+// TODO: replace with String literals once the Refactor PR is merged
+func (m MatchType) String() string {
+	switch m {
+	case AtleastOnce:
+		return "at least once"
+	case AllTheTimes:
+		return "all the times"
+	case OnAverage:
+		return "on average"
+	case InTotal:
+		return "in total"
+	case Last:
+		return "last"
+	default:
+		return string(m)
+	}
+}
 
 type RuleCondition struct {
 	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty"`

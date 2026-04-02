@@ -134,6 +134,8 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 				smpl.RecoveryTarget = threshold.RecoveryTarget
 			}
 			smpl.TargetUnit = threshold.TargetUnit
+			smpl.CompareOp = threshold.CompareOp
+			smpl.MatchType = threshold.MatchType
 			resultVector = append(resultVector, smpl)
 			continue
 		} else if evalData.SendUnmatched {
@@ -148,6 +150,8 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 				Metric:     PrepareSampleLabelsForRule(series.Labels, threshold.Name),
 				Target:     *threshold.TargetValue,
 				TargetUnit: threshold.TargetUnit,
+				CompareOp:  threshold.CompareOp,
+				MatchType:  threshold.MatchType,
 			}
 			if threshold.RecoveryTarget != nil {
 				smpl.RecoveryTarget = threshold.RecoveryTarget
@@ -169,6 +173,8 @@ func (r BasicRuleThresholds) Eval(series v3.Series, unit string, evalData EvalDa
 				smpl.Target = *threshold.TargetValue
 				smpl.RecoveryTarget = threshold.RecoveryTarget
 				smpl.TargetUnit = threshold.TargetUnit
+				smpl.CompareOp = threshold.CompareOp
+				smpl.MatchType = threshold.MatchType
 				// IsRecovering to notify that metrics is in recovery stage
 				smpl.IsRecovering = true
 				resultVector = append(resultVector, smpl)

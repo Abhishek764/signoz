@@ -286,11 +286,12 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		LogLink:       annotations[ruletypes.AnnotationRelatedLogs],
 		TraceLink:     annotations[ruletypes.AnnotationRelatedTraces],
 		Value:         annotations[ruletypes.AnnotationValue],
-		Threshold:     annotations[ruletypes.AnnotationThreshold],
+		Threshold:     annotations[ruletypes.AnnotationThresholdValue],
 		CompareOp:     annotations[ruletypes.AnnotationCompareOp],
 		MatchType:     annotations[ruletypes.AnnotationMatchType],
 		IsFiring:      isFiring,
 		IsResolved:    isResolved,
 		IsMissingData: isMissingData,
+		IsRecovering:  labels[ruletypes.LabelIsRecovering] == "true",
 	}
 }

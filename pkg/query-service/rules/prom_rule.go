@@ -252,8 +252,23 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
+			// no need to expand custom templating annotations — they get expanded in the notifier layer
+			if ruletypes.IsCustomTemplatingAnnotation(name) {
+				annotations = append(annotations, qslabels.Label{Name: name, Value: value})
+				continue
+			}
 			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
 		}
+		// Add values to be used in notifier layer for notification templates
+		annotations = append(annotations, qslabels.Label{Name: ruletypes.AnnotationValue, Value: valueFormatter.Format(result.V, r.Unit())})
+		annotations = append(annotations, qslabels.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold})
+		annotations = append(annotations, qslabels.Label{Name: ruletypes.AnnotationCompareOp, Value: result.CompareOp.String()})
+		annotations = append(annotations, qslabels.Label{Name: ruletypes.AnnotationMatchType, Value: result.MatchType.String()})
+
+		if result.IsRecovering {
+			lb.Set(ruletypes.LabelIsRecovering, "true")
+		}
+
 		if result.IsMissing {
 			lb.Set(qslabels.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(qslabels.NoDataLabel, "true")

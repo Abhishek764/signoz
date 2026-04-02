@@ -102,7 +102,7 @@ func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 		}
 		b.Spec = spec
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid signal %q: must be metrics, logs, or traces", peek.Signal)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q: must be metrics, logs, or traces", peek.Signal)
 	}
 	return nil
 }
@@ -287,7 +287,7 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 		li.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid line interpolation %q: must be linear, spline, stepAfter, or stepBefore", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be linear, spline, stepAfter, or stepBefore", v)
 	}
 }
 
@@ -322,7 +322,7 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 		ls.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid line style %q: must be solid or dashed", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be solid or dashed", v)
 	}
 }
 
@@ -358,7 +358,7 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		fm.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid fill mode %q: must be solid, gradient, or none", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be solid, gradient, or none", v)
 	}
 }
 
@@ -392,7 +392,7 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 		*t = TimePreference(v)
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid timePreference %q", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q", v)
 	}
 }
 
@@ -414,7 +414,7 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		*l = LegendPosition(v)
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid legend position %q: must be bottom or right", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be bottom or right", v)
 	}
 }
 
@@ -436,11 +436,11 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 		*f = ThresholdFormat(v)
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid threshold format %q: must be Text or Background", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be Text or Background", v)
 	}
 }
 
-// ComparisonOperator: ">" | "<" | ">=" | "<=" | "="
+// ComparisonOperator: ">" | "<" | ">=" | "<=" | "=".
 type ComparisonOperator string
 
 const (
@@ -461,7 +461,7 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 		*o = ComparisonOperator(v)
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid comparison operator %q", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q", v)
 	}
 }
 
@@ -488,12 +488,12 @@ func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
 	var n float64
 	if err := json.Unmarshal(data, &n); err == nil {
 		if n < 0 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid spanGaps %v: numeric value must be non-negative", n)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid spanGaps %v: numeric value must be non-negative", n)
 		}
 		sg.value = n
 		return nil
 	}
-	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid spanGaps: must be a bool or a non-negative number")
+	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid spanGaps: must be a bool or a non-negative number")
 }
 
 func (sg SpanGaps) MarshalJSON() ([]byte, error) {
@@ -518,7 +518,7 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
 		if s != PrecisionOptionFull {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid precision option %q: string value must be %q", s, PrecisionOptionFull)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: string value must be %q", s, PrecisionOptionFull)
 		}
 		p.value = s
 		return nil
@@ -530,10 +530,10 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 			p.value = n
 			return nil
 		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid precision option %d: must be 0, 1, 2, 3, or 4", n)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d: must be 0, 1, 2, 3, or 4", n)
 		}
 	}
-	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,"invalid precision option: must be an int (0-4) or \"full\"")
+	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option: must be an int (0-4) or \"full\"")
 }
 
 func (p PrecisionOption) MarshalJSON() ([]byte, error) {

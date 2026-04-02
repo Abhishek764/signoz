@@ -54,8 +54,24 @@ func parseAndSortGroups(
 		return nil
 	}
 
-	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
-	if !ok || sd == nil || len(sd.Data) == 0 {
+	// Find the ScalarData that contains the ranking column.
+	var sd *qbtypes.ScalarData
+	for _, r := range resp.Data.Results {
+		candidate, ok := r.(*qbtypes.ScalarData)
+		if !ok || candidate == nil {
+			continue
+		}
+		for _, col := range candidate.Columns {
+			if col.Type == qbtypes.ColumnTypeAggregation && col.QueryName == rankingQueryName {
+				sd = candidate
+				break
+			}
+		}
+		if sd != nil {
+			break
+		}
+	}
+	if sd == nil || len(sd.Data) == 0 {
 		return nil
 	}
 
@@ -208,6 +224,8 @@ func buildFullQueryRequest(
 
 // parseFullQueryResponse extracts per-group metric values from the full
 // composite query response. Returns compositeKey -> (queryName -> value).
+// Each enabled query/formula produces its own ScalarData entry in Results,
+// so we iterate over all of them and merge metrics per composite key.
 func parseFullQueryResponse(
 	resp *qbtypes.QueryRangeResponse,
 	groupBy []qbtypes.GroupByKey,
@@ -217,40 +235,43 @@ func parseFullQueryResponse(
 		return result
 	}
 
-	sd, ok := resp.Data.Results[0].(*qbtypes.ScalarData)
-	if !ok || sd == nil {
-		return result
-	}
-
-	groupColIndices := make(map[string]int)
-	aggCols := make(map[int]string) // col index -> query name
-	for i, col := range sd.Columns {
-		if col.Type == qbtypes.ColumnTypeGroup {
-			groupColIndices[col.Name] = i
+	for _, r := range resp.Data.Results {
+		sd, ok := r.(*qbtypes.ScalarData)
+		if !ok || sd == nil {
+			continue
 		}
-		if col.Type == qbtypes.ColumnTypeAggregation {
-			aggCols[i] = col.QueryName
-		}
-	}
 
-	for _, row := range sd.Data {
-		labels := make(map[string]string, len(groupBy))
-		for _, key := range groupBy {
-			if idx, ok := groupColIndices[key.Name]; ok && idx < len(row) {
-				labels[key.Name] = fmt.Sprintf("%v", row[idx])
+		groupColIndices := make(map[string]int)
+		aggCols := make(map[int]string) // col index -> query name
+		for i, col := range sd.Columns {
+			if col.Type == qbtypes.ColumnTypeGroup {
+				groupColIndices[col.Name] = i
+			}
+			if col.Type == qbtypes.ColumnTypeAggregation {
+				aggCols[i] = col.QueryName
 			}
 		}
-		compositeKey := compositeKeyFromLabels(labels, groupBy)
 
-		metrics := make(map[string]float64)
-		for idx, queryName := range aggCols {
-			if idx < len(row) {
-				if v, ok := row[idx].(float64); ok {
-					metrics[queryName] = v
+		for _, row := range sd.Data {
+			labels := make(map[string]string, len(groupBy))
+			for _, key := range groupBy {
+				if idx, ok := groupColIndices[key.Name]; ok && idx < len(row) {
+					labels[key.Name] = fmt.Sprintf("%v", row[idx])
+				}
+			}
+			compositeKey := compositeKeyFromLabels(labels, groupBy)
+
+			if result[compositeKey] == nil {
+				result[compositeKey] = make(map[string]float64)
+			}
+			for idx, queryName := range aggCols {
+				if idx < len(row) {
+					if v, ok := row[idx].(float64); ok {
+						result[compositeKey][queryName] = v
+					}
 				}
 			}
 		}
-		result[compositeKey] = metrics
 	}
 	return result
 }

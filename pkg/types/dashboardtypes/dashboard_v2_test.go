@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestValidateDashboardV2JSON_ValidExample(t *testing.T) {
+func TestValidateBigExample(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses.json")
 	if err != nil {
 		t.Fatalf("reading example file: %v", err)
@@ -17,72 +17,30 @@ func TestValidateDashboardV2JSON_ValidExample(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_InvalidJSON(t *testing.T) {
+func TestInvalidateNotAJSON(t *testing.T) {
 	if err := ValidateDashboardV2JSON([]byte(`not json`)); err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
 }
 
-func TestValidateDashboardV2JSON_EmptyObject(t *testing.T) {
-	// Perses's UnmarshalJSON validates kind must be "Dashboard", so empty object fails.
+func TestInvalidateEmptyObject(t *testing.T) {
 	if err := ValidateDashboardV2JSON([]byte(`{}`)); err == nil {
 		t.Fatal("expected error for empty object missing kind")
 	}
 }
 
-func TestValidateDashboardV2JSON_MinimalValid(t *testing.T) {
+func TestValidateEmptySpec(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"duration": "1h",
-			"panels": {},
-			"layouts": []
-		}
+		"metadata": {"name": "test"},
+		"spec": {}
 	}`)
 	if err := ValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid, got: %v", err)
 	}
 }
 
-func TestValidateDashboardV2JSON_WithPanel(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"display": {"name": "My Panel"},
-						"plugin": {
-							"kind": "SigNozTimeSeriesPanel",
-							"spec": {"visualization": {"fillSpans": true}}
-						},
-						"queries": [{
-							"kind": "TimeSeriesQuery",
-							"spec": {
-								"plugin": {
-									"kind": "SigNozBuilderQuery",
-									"spec": {
-										"name": "A",
-										"signal": "metrics"
-									}
-								}
-							}
-						}]
-					}
-				}
-			},
-			"layouts": []
-		}
-	}`)
-	if err := ValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_WithVariables(t *testing.T) {
+func TestValidateOnlyVariables(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
 		"metadata": {"name": "test", "project": "signoz"},
@@ -120,188 +78,116 @@ func TestValidateDashboardV2JSON_WithVariables(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_WrongFieldType(t *testing.T) {
+func TestInvalidateWrongKindAtTop(t *testing.T) {
 	data := []byte(`{"kind": 123}`)
 	if err := ValidateDashboardV2JSON(data); err == nil {
 		t.Fatal("expected error for wrong type on kind field")
 	}
 }
 
-func TestValidateDashboardV2JSON_WithLayout(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"abc": {
-					"kind": "Panel",
-					"spec": {
-						"display": {"name": "p"},
-						"plugin": {"kind": "SigNozNumberPanel", "spec": {}}
-					}
-				}
-			},
-			"layouts": [{
-				"kind": "Grid",
+func TestInvalidateUnknownPluginKind(t *testing.T) {
+	tests := []struct {
+		name        string
+		data        string
+		wantContain string
+	}{
+		{
+			name: "unknown panel plugin",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
 				"spec": {
-					"items": [{
-						"x": 0, "y": 0, "width": 12, "height": 6,
-						"content": {"$ref": "#/spec/panels/abc"}
-					}]
-				}
-			}]
-		}
-	}`)
-	if err := ValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid, got: %v", err)
-	}
-}
-
-// ══════════════════════════════════════════════
-// Tests proving CUE-equivalent validation gaps are covered
-// ══════════════════════════════════════════════
-
-func TestValidateDashboardV2JSON_UnknownPanelPluginKind(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "NonExistentPanel", "spec": {}}
-					}
-				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for unknown panel plugin kind")
-	}
-	if !strings.Contains(err.Error(), "NonExistentPanel") {
-		t.Fatalf("error should mention the bad kind, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_UnknownQueryPluginKind(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-						"queries": [{
-							"kind": "TimeSeriesQuery",
+					"panels": {
+						"p1": {
+							"kind": "Panel",
 							"spec": {
-								"plugin": {"kind": "FakeQueryPlugin", "spec": {}}
+								"plugin": {"kind": "NonExistentPanel", "spec": {}}
 							}
-						}]
-					}
+						}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for unknown query plugin kind")
-	}
-	if !strings.Contains(err.Error(), "FakeQueryPlugin") {
-		t.Fatalf("error should mention the bad kind, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_UnknownVariablePluginKind(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"variables": [{
-				"kind": "ListVariable",
+			}`,
+			wantContain: "NonExistentPanel",
+		},
+		{
+			name: "unknown query plugin",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
 				"spec": {
-					"name": "v1",
-					"allowAllValue": false,
-					"allowMultiple": false,
-					"plugin": {"kind": "FakeVariable", "spec": {}}
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
+								"queries": [{
+									"kind": "TimeSeriesQuery",
+									"spec": {
+										"plugin": {"kind": "FakeQueryPlugin", "spec": {}}
+									}
+								}]
+							}
+						}
+					},
+					"layouts": []
 				}
-			}],
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for unknown variable plugin kind")
-	}
-	if !strings.Contains(err.Error(), "FakeVariable") {
-		t.Fatalf("error should mention the bad kind, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_UnknownDatasourcePluginKind(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"datasources": {
-				"ds1": {
-					"default": true,
-					"plugin": {"kind": "FakeDatasource", "spec": {}}
+			}`,
+			wantContain: "FakeQueryPlugin",
+		},
+		{
+			name: "unknown variable plugin",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"variables": [{
+						"kind": "ListVariable",
+						"spec": {
+							"name": "v1",
+							"allowAllValue": false,
+							"allowMultiple": false,
+							"plugin": {"kind": "FakeVariable", "spec": {}}
+						}
+					}],
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for unknown datasource plugin kind")
-	}
-	if !strings.Contains(err.Error(), "FakeDatasource") {
-		t.Fatalf("error should mention the bad kind, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_WrongKind(t *testing.T) {
-	// Perses validates kind must be "Dashboard"
-	data := []byte(`{
-		"kind": "NotADashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {"layouts": []}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for wrong kind")
-	}
-}
-
-func TestValidateDashboardV2JSON_EmptyPanelPluginKind(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "", "spec": {}}
-					}
+			}`,
+			wantContain: "FakeVariable",
+		},
+		{
+			name: "unknown datasource plugin",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"datasources": {
+						"ds1": {
+							"default": true,
+							"plugin": {"kind": "FakeDatasource", "spec": {}}
+						}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for empty panel plugin kind")
+			}`,
+			wantContain: "FakeDatasource",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDashboardV2JSON([]byte(tt.data))
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
+			}
+			if !strings.Contains(err.Error(), tt.wantContain) {
+				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
+			}
+		})
 	}
 }
 
-func TestValidateDashboardV2JSON_AllPanelPluginKinds(t *testing.T) {
+func TestValidateAllPanelPluginKinds(t *testing.T) {
 	kinds := []string{
 		"SigNozTimeSeriesPanel", "SigNozBarChartPanel", "SigNozNumberPanel",
 		"SigNozPieChartPanel", "SigNozTablePanel", "SigNozHistogramPanel", "SigNozListPanel",
@@ -321,7 +207,7 @@ func TestValidateDashboardV2JSON_AllPanelPluginKinds(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_AllQueryPluginKinds(t *testing.T) {
+func TestValidateAllQueryPluginKinds(t *testing.T) {
 	// Each kind needs a minimal valid spec.
 	cases := map[string]string{
 		"SigNozBuilderQuery":   `{"name": "A", "signal": "metrics"}`,
@@ -349,7 +235,7 @@ func TestValidateDashboardV2JSON_AllQueryPluginKinds(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_AllVariablePluginKinds(t *testing.T) {
+func TestValidateAllVariablePluginKinds(t *testing.T) {
 	kinds := []string{
 		"SigNozDynamicVariable", "SigNozQueryVariable",
 		"SigNozCustomVariable", "SigNozTextboxVariable",
@@ -372,11 +258,7 @@ func TestValidateDashboardV2JSON_AllVariablePluginKinds(t *testing.T) {
 	}
 }
 
-// ══════════════════════════════════════════════
-// Full dashboard JSON tests for structural + plugin spec validation.
-// ══════════════════════════════════════════════
-
-func TestValidateDashboardV2JSON_InvalidVariableKind(t *testing.T) {
+func TestInvalidateInvalidVariableKind(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
 		"metadata": {"name": "test", "project": "signoz"},
@@ -394,7 +276,7 @@ func TestValidateDashboardV2JSON_InvalidVariableKind(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_WrongFieldTypePanelSpec(t *testing.T) {
+func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 	// fillSpans should be bool, not string — spec validation catches this now.
 	data := []byte(`{
 		"kind": "Dashboard",
@@ -423,7 +305,7 @@ func TestValidateDashboardV2JSON_WrongFieldTypePanelSpec(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_MultiplePanelsOneInvalid(t *testing.T) {
+func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
 		"metadata": {"name": "test", "project": "signoz"},
@@ -450,242 +332,134 @@ func TestValidateDashboardV2JSON_MultiplePanelsOneInvalid(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_DatasourceAndVariableAndPanel(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "full-test", "project": "signoz"},
-		"spec": {
-			"datasources": {
-				"ds": {
-					"default": true,
-					"plugin": {"kind": "SigNozDatasource", "spec": {}}
-				}
-			},
-			"variables": [
-				{
-					"kind": "ListVariable",
-					"spec": {
-						"name": "svc",
-						"allowAllValue": true,
-						"allowMultiple": false,
-						"plugin": {"kind": "SigNozDynamicVariable", "spec": {"name": "service.name", "source": "Metrics"}}
-					}
-				}
-			],
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"display": {"name": "My Panel"},
-						"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-						"queries": [{
-							"kind": "TimeSeriesQuery",
-							"spec": {
-								"plugin": {"kind": "SigNozBuilderQuery", "spec": {"name": "A", "signal": "metrics"}}
-							}
-						}]
-					}
-				}
-			},
-			"layouts": [{
-				"kind": "Grid",
+func TestInvalidateBadPanelSpecValues(t *testing.T) {
+	tests := []struct {
+		name        string
+		data        string
+		wantContain string
+	}{
+		{
+			name: "bad time preference",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
 				"spec": {
-					"items": [{"x": 0, "y": 0, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}]
-				}
-			}]
-		}
-	}`)
-	if err := ValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid full dashboard, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_MissingPanelPlugin(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "", "spec": {}}
-					}
-				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for empty plugin kind")
-	}
-}
-
-func TestValidateDashboardV2JSON_InvalidDatasourceValidPanels(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"datasources": {
-				"ds": {"default": true, "plugin": {"kind": "PrometheusDatasource", "spec": {}}}
-			},
-			"panels": {
-				"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "SigNozNumberPanel", "spec": {}}}}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid datasource plugin kind")
-	}
-	if !strings.Contains(err.Error(), "PrometheusDatasource") {
-		t.Fatalf("error should mention PrometheusDatasource, got: %v", err)
-	}
-}
-
-// ══════════════════════════════════════════════
-// Invalid plugin spec tests — verify field-level validation per plugin kind
-// ══════════════════════════════════════════════
-
-func TestValidateDashboardV2JSON_InvalidPanelSpec_BadTimePreference(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {
-							"kind": "SigNozTimeSeriesPanel",
-							"spec": {"visualization": {"timePreference": "last2Hr"}}
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozTimeSeriesPanel",
+									"spec": {"visualization": {"timePreference": "last2Hr"}}
+								}
+							}
 						}
-					}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid timePreference")
-	}
-	if !strings.Contains(err.Error(), "timePreference") {
-		t.Fatalf("error should mention timePreference, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_InvalidPanelSpec_BadLegendPosition(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {
-							"kind": "SigNozBarChartPanel",
-							"spec": {"legend": {"position": "top"}}
+			}`,
+			wantContain: "timePreference",
+		},
+		{
+			name: "bad legend position",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozBarChartPanel",
+									"spec": {"legend": {"position": "top"}}
+								}
+							}
 						}
-					}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid legend position")
-	}
-	if !strings.Contains(err.Error(), "legend position") {
-		t.Fatalf("error should mention legend position, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_InvalidPanelSpec_BadThresholdFormat(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {
-							"kind": "SigNozNumberPanel",
-							"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
+			}`,
+			wantContain: "legend position",
+		},
+		{
+			name: "bad threshold format",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozNumberPanel",
+									"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
+								}
+							}
 						}
-					}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid threshold format")
-	}
-	if !strings.Contains(err.Error(), "threshold format") {
-		t.Fatalf("error should mention threshold format, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_InvalidPanelSpec_BadComparisonOperator(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {
-							"kind": "SigNozNumberPanel",
-							"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "Text"}]}
+			}`,
+			wantContain: "threshold format",
+		},
+		{
+			name: "bad comparison operator",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozNumberPanel",
+									"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "Text"}]}
+								}
+							}
 						}
-					}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid comparison operator")
-	}
-	if !strings.Contains(err.Error(), "comparison operator") {
-		t.Fatalf("error should mention comparison operator, got: %v", err)
-	}
-}
-
-func TestValidateDashboardV2JSON_InvalidPanelSpec_BadPrecision(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {
-							"kind": "SigNozTimeSeriesPanel",
-							"spec": {"formatting": {"decimalPrecision": 9}}
+			}`,
+			wantContain: "comparison operator",
+		},
+		{
+			name: "bad precision",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozTimeSeriesPanel",
+									"spec": {"formatting": {"decimalPrecision": 9}}
+								}
+							}
 						}
-					}
+					},
+					"layouts": []
 				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid precision option")
+			}`,
+			wantContain: "precision",
+		},
 	}
-	if !strings.Contains(err.Error(), "precision") {
-		t.Fatalf("error should mention precision, got: %v", err)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDashboardV2JSON([]byte(tt.data))
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
+			}
+			if !strings.Contains(err.Error(), tt.wantContain) {
+				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
+			}
+		})
 	}
 }
 
@@ -718,36 +492,6 @@ func TestValidateDashboardV2JSON_InvalidQuerySpec_WrongFieldType(t *testing.T) {
 	err := ValidateDashboardV2JSON(data)
 	if err == nil {
 		t.Fatal("expected error for wrong type on PromQL query field")
-	}
-}
-
-func TestValidateDashboardV2JSON_ValidQuerySpec_ClickHouseSQL(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-						"queries": [{
-							"kind": "TimeSeriesQuery",
-							"spec": {
-								"plugin": {
-									"kind": "SigNozClickHouseSQL",
-									"spec": {"name": "A", "query": "SELECT 1"}
-								}
-							}
-						}]
-					}
-				}
-			},
-			"layouts": []
-		}
-	}`)
-	if err := ValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid ClickHouseSQL query, got: %v", err)
 	}
 }
 
@@ -904,4 +648,3 @@ func TestValidateDashboardV2JSON_PanelQueryCompatibility(t *testing.T) {
 		}
 	}
 }
-

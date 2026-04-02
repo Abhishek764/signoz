@@ -276,35 +276,6 @@ func TestInvalidateInvalidVariableKind(t *testing.T) {
 	}
 }
 
-func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
-	// fillSpans should be bool, not string — spec validation catches this now.
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {
-							"kind": "SigNozTimeSeriesPanel",
-							"spec": {"visualization": {"fillSpans": "notabool"}}
-						}
-					}
-				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for wrong type on fillSpans")
-	}
-	if !strings.Contains(err.Error(), "fillSpans") {
-		t.Fatalf("error should mention fillSpans, got: %v", err)
-	}
-}
-
 func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
@@ -329,6 +300,100 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "FakePanel") {
 		t.Fatalf("error should mention FakePanel, got: %v", err)
+	}
+}
+
+func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
+	tests := []struct {
+		name        string
+		data        string
+		wantContain string
+	}{
+		{
+			name: "wrong type on panel plugin field",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozTimeSeriesPanel",
+									"spec": {"visualization": {"fillSpans": "notabool"}}
+								}
+							}
+						}
+					},
+					"layouts": []
+				}
+			}`,
+			wantContain: "fillSpans",
+		},
+		{
+			name: "wrong type on query plugin field",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
+								"queries": [{
+									"kind": "TimeSeriesQuery",
+									"spec": {
+										"plugin": {
+											"kind": "SigNozPromQLQuery",
+											"spec": {"name": "A", "query": 123}
+										}
+									}
+								}]
+							}
+						}
+					},
+					"layouts": []
+				}
+			}`,
+			wantContain: "",
+		},
+		{
+			name: "wrong type on variable plugin field",
+			data: `{
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"variables": [{
+						"kind": "ListVariable",
+						"spec": {
+							"name": "v",
+							"allowAllValue": false,
+							"allowMultiple": false,
+							"plugin": {
+								"kind": "SigNozDynamicVariable",
+								"spec": {"name": 123, "source": "Metrics"}
+							}
+						}
+					}],
+					"layouts": []
+				}
+			}`,
+			wantContain: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDashboardV2JSON([]byte(tt.data))
+			if err == nil {
+				t.Fatal("expected validation error")
+			}
+			if tt.wantContain != "" && !strings.Contains(err.Error(), tt.wantContain) {
+				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
+			}
+		})
 	}
 }
 
@@ -463,38 +528,6 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_InvalidQuerySpec_WrongFieldType(t *testing.T) {
-	// query should be string, not number
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-						"queries": [{
-							"kind": "TimeSeriesQuery",
-							"spec": {
-								"plugin": {
-									"kind": "SigNozPromQLQuery",
-									"spec": {"name": "A", "query": 123}
-								}
-							}
-						}]
-					}
-				}
-			},
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for wrong type on PromQL query field")
-	}
-}
-
 func TestValidateDashboardV2JSON_InvalidVariableSpec_MissingName(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
@@ -523,34 +556,9 @@ func TestValidateDashboardV2JSON_InvalidVariableSpec_MissingName(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_InvalidVariableSpec_WrongFieldType(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"variables": [{
-				"kind": "ListVariable",
-				"spec": {
-					"name": "v",
-					"allowAllValue": false,
-					"allowMultiple": false,
-					"plugin": {
-						"kind": "SigNozDynamicVariable",
-						"spec": {"name": 123, "source": "Metrics"}
-					}
-				}
-			}],
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for wrong type on variable plugin name field")
-	}
-}
 
-func TestValidateDashboardV2JSON_PrecisionDefaultsTo2(t *testing.T) {
-	// When decimalPrecision is absent, it should default to 2 when read back.
+
+func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
 		"metadata": {"name": "test", "project": "signoz"},
@@ -561,7 +569,7 @@ func TestValidateDashboardV2JSON_PrecisionDefaultsTo2(t *testing.T) {
 					"spec": {
 						"plugin": {
 							"kind": "SigNozTimeSeriesPanel",
-							"spec": {"formatting": {"unit": "bytes"}}
+							"spec": {}
 						}
 					}
 				}
@@ -579,16 +587,25 @@ func TestValidateDashboardV2JSON_PrecisionDefaultsTo2(t *testing.T) {
 	if err := json.Unmarshal(specJSON, &spec); err != nil {
 		t.Fatalf("unmarshal spec failed: %v", err)
 	}
+
 	if spec.Formatting.DecimalPrecision.Value() != 2 {
-		t.Fatalf("expected default precision 2, got %v", spec.Formatting.DecimalPrecision.Value())
+		t.Fatalf("expected DecimalPrecision default 2, got %v", spec.Formatting.DecimalPrecision.Value())
+	}
+	if spec.ChartAppearance.LineInterpolation.Value() != "spline" {
+		t.Fatalf("expected LineInterpolation default spline, got %v", spec.ChartAppearance.LineInterpolation.Value())
+	}
+	if spec.ChartAppearance.LineStyle.Value() != "solid" {
+		t.Fatalf("expected LineStyle default solid, got %v", spec.ChartAppearance.LineStyle.Value())
+	}
+	if spec.ChartAppearance.FillMode.Value() != "solid" {
+		t.Fatalf("expected FillMode default solid, got %v", spec.ChartAppearance.FillMode.Value())
+	}
+	if spec.ChartAppearance.SpanGaps.Value() != true {
+		t.Fatalf("expected SpanGaps default true, got %v", spec.ChartAppearance.SpanGaps.Value())
 	}
 }
 
-// ══════════════════════════════════════════════
-// Panel–query compatibility tests
-// ══════════════════════════════════════════════
-
-func TestValidateDashboardV2JSON_PanelQueryCompatibility(t *testing.T) {
+func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
 		return []byte(`{
 			"kind": "Dashboard",

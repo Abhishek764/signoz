@@ -12,6 +12,15 @@ import (
 // SigNoz variable plugin specs
 // ══════════════════════════════════════════════
 
+type VariablePluginKind = string
+
+const (
+	VariableKindDynamic VariablePluginKind = "SigNozDynamicVariable"
+	VariableKindQuery   VariablePluginKind = "SigNozQueryVariable"
+	VariableKindCustom  VariablePluginKind = "SigNozCustomVariable"
+	VariableKindTextbox VariablePluginKind = "SigNozTextboxVariable"
+)
+
 type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// source. This could be extended to a richer selector in the future.
@@ -32,6 +41,17 @@ type TextboxVariableSpec struct{}
 // ══════════════════════════════════════════════
 // SigNoz query plugin specs — aliased from querybuildertypesv5
 // ══════════════════════════════════════════════
+
+type QueryPluginKind = string
+
+const (
+	QueryKindBuilder       QueryPluginKind = "SigNozBuilderQuery"
+	QueryKindComposite     QueryPluginKind = "SigNozCompositeQuery"
+	QueryKindFormula       QueryPluginKind = "SigNozFormula"
+	QueryKindPromQL        QueryPluginKind = "SigNozPromQLQuery"
+	QueryKindClickHouseSQL QueryPluginKind = "SigNozClickHouseSQL"
+	QueryKindTraceOperator QueryPluginKind = "SigNozTraceOperator"
+)
 
 type (
 	CompositeQuerySpec     = qb.CompositeQuery
@@ -90,6 +110,24 @@ func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 // ══════════════════════════════════════════════
 // SigNoz panel plugin specs
 // ══════════════════════════════════════════════
+
+type PanelPluginKind = string
+
+const (
+	PanelKindTimeSeries PanelPluginKind = "SigNozTimeSeriesPanel"
+	PanelKindBarChart   PanelPluginKind = "SigNozBarChartPanel"
+	PanelKindNumber     PanelPluginKind = "SigNozNumberPanel"
+	PanelKindPieChart   PanelPluginKind = "SigNozPieChartPanel"
+	PanelKindTable      PanelPluginKind = "SigNozTablePanel"
+	PanelKindHistogram  PanelPluginKind = "SigNozHistogramPanel"
+	PanelKindList       PanelPluginKind = "SigNozListPanel"
+)
+
+type DatasourcePluginKind = string
+
+const (
+	DatasourceKindSigNoz DatasourcePluginKind = "SigNozDatasource"
+)
 
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`

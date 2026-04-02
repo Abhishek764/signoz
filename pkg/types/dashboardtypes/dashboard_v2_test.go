@@ -840,3 +840,68 @@ func TestValidateDashboardV2JSON_PrecisionDefaultsTo2(t *testing.T) {
 	}
 }
 
+// ══════════════════════════════════════════════
+// Panel–query compatibility tests
+// ══════════════════════════════════════════════
+
+func TestValidateDashboardV2JSON_PanelQueryCompatibility(t *testing.T) {
+	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
+		return []byte(`{
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"panels": {"p1": {"kind": "Panel", "spec": {
+					"plugin": {"kind": "` + panelKind + `", "spec": {}},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
+				}}},
+				"layouts": []
+			}
+		}`)
+	}
+	mkComposite := func(panelKind, subType, subSpec string) []byte {
+		return []byte(`{
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"panels": {"p1": {"kind": "Panel", "spec": {
+					"plugin": {"kind": "` + panelKind + `", "spec": {}},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "SigNozCompositeQuery", "spec": {
+						"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
+					}}}}]
+				}}},
+				"layouts": []
+			}
+		}`)
+	}
+
+	cases := []struct {
+		name    string
+		data    []byte
+		wantErr bool
+	}{
+		// Top-level: allowed
+		{"TimeSeries+PromQL", mkQuery("SigNozTimeSeriesPanel", "SigNozPromQLQuery", `{"name":"A","query":"up"}`), false},
+		{"Table+ClickHouse", mkQuery("SigNozTablePanel", "SigNozClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
+		{"List+Builder", mkQuery("SigNozListPanel", "SigNozBuilderQuery", `{"name":"A","signal":"logs"}`), false},
+		// Top-level: rejected
+		{"Table+PromQL", mkQuery("SigNozTablePanel", "SigNozPromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"List+ClickHouse", mkQuery("SigNozListPanel", "SigNozClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
+		{"List+PromQL", mkQuery("SigNozListPanel", "SigNozPromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"List+Composite", mkQuery("SigNozListPanel", "SigNozCompositeQuery", `{"queries":[]}`), true},
+		{"List+Formula", mkQuery("SigNozListPanel", "SigNozFormula", `{"name":"F1","expression":"A+B"}`), true},
+		// Composite sub-queries
+		{"Table+Composite(promql)", mkComposite("SigNozTablePanel", "promql", `{"name":"A","query":"up"}`), true},
+		{"Table+Composite(clickhouse)", mkComposite("SigNozTablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+	}
+
+	for _, tc := range cases {
+		err := ValidateDashboardV2JSON(tc.data)
+		if tc.wantErr && err == nil {
+			t.Fatalf("%s: expected error, got nil", tc.name)
+		}
+		if !tc.wantErr && err != nil {
+			t.Fatalf("%s: expected valid, got: %v", tc.name, err)
+		}
+	}
+}
+

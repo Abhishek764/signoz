@@ -17,6 +17,16 @@ func TestValidateBigExample(t *testing.T) {
 	}
 }
 
+func TestValidateDashboardWithSections(t *testing.T) {
+	data, err := os.ReadFile("testdata/perses_with_sections.json")
+	if err != nil {
+		t.Fatalf("reading example file: %v", err)
+	}
+	if err := ValidateDashboardV2JSON(data); err != nil {
+		t.Fatalf("expected valid dashboard, got error: %v", err)
+	}
+}
+
 func TestInvalidateNotAJSON(t *testing.T) {
 	if err := ValidateDashboardV2JSON([]byte("not json")); err == nil {
 		t.Fatal("expected error for invalid JSON")

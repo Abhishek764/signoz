@@ -108,7 +108,7 @@ type K8sAgentMetrics struct {
 
 type HostRecord struct {
 	HostName  string                 `json:"hostName"`
-	Active    bool                   `json:"active"`
+	Status    string                 `json:"status"`
 	CPU       float64                `json:"cpu"`
 	Memory    float64                `json:"memory"`
 	Wait      float64                `json:"wait"`

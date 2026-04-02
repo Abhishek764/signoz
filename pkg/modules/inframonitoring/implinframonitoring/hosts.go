@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-
 var (
 	agentIgnoreFilterExpr = "host.name NOT LIKE '%k8s-infra-otel-agent%'"
 	agentNameToMatch      = "%-otel-agent%" // TODO(nikhilmantri0902): should above and below be the same?
@@ -381,9 +380,18 @@ func (m *module) buildHostRecords(
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
 		hostName := labels[hostNameAttrKey]
 
+		var activeStatus string
+		if isActive, known := activeHostsMap[hostName]; known {
+			if isActive {
+				activeStatus = inframonitoringtypes.HostStatusActive.StringValue()
+			} else {
+				activeStatus = inframonitoringtypes.HostStatusInactive.StringValue()
+			}
+		}
+
 		record := inframonitoringtypes.HostRecord{
 			HostName:  hostName,
-			Active:    activeHostsMap[hostName],
+			Status:    activeStatus,
 			CPU:       -1,
 			Memory:    -1,
 			Wait:      -1,

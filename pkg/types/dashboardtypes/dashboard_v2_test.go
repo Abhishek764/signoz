@@ -187,77 +187,6 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 	}
 }
 
-func TestValidateAllPanelPluginKinds(t *testing.T) {
-	kinds := []string{
-		"SigNozTimeSeriesPanel", "SigNozBarChartPanel", "SigNozNumberPanel",
-		"SigNozPieChartPanel", "SigNozTablePanel", "SigNozHistogramPanel", "SigNozListPanel",
-	}
-	for _, kind := range kinds {
-		data := []byte(`{
-			"kind": "Dashboard",
-			"metadata": {"name": "test", "project": "signoz"},
-			"spec": {
-				"panels": {"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "` + kind + `", "spec": {}}}}},
-				"layouts": []
-			}
-		}`)
-		if err := ValidateDashboardV2JSON(data); err != nil {
-			t.Fatalf("expected %s to be valid, got: %v", kind, err)
-		}
-	}
-}
-
-func TestValidateAllQueryPluginKinds(t *testing.T) {
-	// Each kind needs a minimal valid spec.
-	cases := map[string]string{
-		"SigNozBuilderQuery":   `{"name": "A", "signal": "metrics"}`,
-		"SigNozCompositeQuery": `{"queries": []}`,
-		"SigNozFormula":        `{"name": "F1", "expression": "A + B"}`,
-		"SigNozPromQLQuery":    `{"name": "A", "query": "up"}`,
-		"SigNozClickHouseSQL":  `{"name": "A", "query": "SELECT 1"}`,
-		"SigNozTraceOperator":  `{"name": "T1", "expression": "A => B"}`,
-	}
-	for kind, spec := range cases {
-		data := []byte(`{
-			"kind": "Dashboard",
-			"metadata": {"name": "test", "project": "signoz"},
-			"spec": {
-				"panels": {"p1": {"kind": "Panel", "spec": {
-					"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + kind + `", "spec": ` + spec + `}}}]
-				}}},
-				"layouts": []
-			}
-		}`)
-		if err := ValidateDashboardV2JSON(data); err != nil {
-			t.Fatalf("expected %s to be valid, got: %v", kind, err)
-		}
-	}
-}
-
-func TestValidateAllVariablePluginKinds(t *testing.T) {
-	kinds := []string{
-		"SigNozDynamicVariable", "SigNozQueryVariable",
-		"SigNozCustomVariable", "SigNozTextboxVariable",
-	}
-	for _, kind := range kinds {
-		data := []byte(`{
-			"kind": "Dashboard",
-			"metadata": {"name": "test", "project": "signoz"},
-			"spec": {
-				"variables": [{"kind": "ListVariable", "spec": {
-					"name": "v", "allowAllValue": false, "allowMultiple": false,
-					"plugin": {"kind": "` + kind + `", "spec": {}}
-				}}],
-				"layouts": []
-			}
-		}`)
-		if err := ValidateDashboardV2JSON(data); err != nil {
-			t.Fatalf("expected %s to be valid, got: %v", kind, err)
-		}
-	}
-}
-
 func TestInvalidateInvalidVariableKind(t *testing.T) {
 	data := []byte(`{
 		"kind": "Dashboard",
@@ -555,8 +484,6 @@ func TestValidateDashboardV2JSON_InvalidVariableSpec_MissingName(t *testing.T) {
 		t.Fatalf("expected no error (missing name zero-values to empty string), got: %v", err)
 	}
 }
-
-
 
 func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{

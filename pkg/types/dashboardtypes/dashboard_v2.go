@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/go-playground/validator/v10"
 	"github.com/SigNoz/signoz/pkg/types"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/go-playground/validator/v10"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/uptrace/bun"
@@ -26,9 +26,13 @@ type StorableDashboardV2 struct {
 	// TimeAuditable is not embedded here — CreatedAt/UpdatedAt live in
 	// Data.Metadata (Perses's ProjectMetadata) to avoid duplication.
 	types.UserAuditable
-	Data   StorableDashboardDataV2 `bun:"data,type:text,notnull"`
-	Locked bool                    `bun:"locked,notnull,default:false"`
-	OrgID  valuer.UUID             `bun:"org_id,notnull"`
+	Data            StorableDashboardDataV2 `bun:"data,type:text,notnull"`
+	Locked          bool                    `bun:"locked,notnull,default:false"`
+	OrgID           valuer.UUID             `bun:"org_id,notnull"`
+	Image           string                  `bun:"image"`
+	Tags            []string                `bun:"tags,array"`
+	UploadedGrafana bool                    `bun:"uploaded_grafana,notnull,default:false"`
+	Version         string                  `bun:"version"`
 }
 
 type DashboardV2 struct {
@@ -36,10 +40,14 @@ type DashboardV2 struct {
 	// Data.Metadata (Perses's ProjectMetadata) to avoid duplication.
 	types.UserAuditable
 
-	ID     string                  `json:"id"`
-	Data   StorableDashboardDataV2 `json:"data"`
-	Locked bool                    `json:"locked"`
-	OrgID  valuer.UUID             `json:"org_id"`
+	ID              string                  `json:"id"`
+	Data            StorableDashboardDataV2 `json:"data"`
+	Locked          bool                    `json:"locked"`
+	OrgID           valuer.UUID             `json:"org_id"`
+	Image           string                  `json:"image,omitempty"`
+	Tags            []string                `json:"tags,omitempty"`
+	UploadedGrafana bool                    `json:"uploadedGrafana,omitempty"`
+	Version         string                  `json:"version,omitempty"`
 }
 
 type (
@@ -52,7 +60,7 @@ type (
 	ListableDashboardV2 []*GettableDashboardV2
 )
 
-func NewStorableDashboardV2FromDashboard(dashboard *DashboardV2) (*StorableDashboardV2, error) {
+func NewStorableDashboardV2FromDashboardV2(dashboard *DashboardV2) (*StorableDashboardV2, error) {
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid")
@@ -66,9 +74,13 @@ func NewStorableDashboardV2FromDashboard(dashboard *DashboardV2) (*StorableDashb
 			CreatedBy: dashboard.CreatedBy,
 			UpdatedBy: dashboard.UpdatedBy,
 		},
-		OrgID:  dashboard.OrgID,
-		Data:   dashboard.Data,
-		Locked: dashboard.Locked,
+		OrgID:           dashboard.OrgID,
+		Data:            dashboard.Data,
+		Locked:          dashboard.Locked,
+		Image:           dashboard.Image,
+		Tags:            dashboard.Tags,
+		UploadedGrafana: dashboard.UploadedGrafana,
+		Version:         dashboard.Version,
 	}, nil
 }
 
@@ -83,9 +95,10 @@ func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardD
 			CreatedBy: createdBy,
 			UpdatedBy: createdBy,
 		},
-		OrgID:  orgID,
-		Data:   data,
-		Locked: false,
+		OrgID:   orgID,
+		Data:    data,
+		Locked:  false,
+		Version: "v6",
 	}, nil
 }
 
@@ -96,9 +109,13 @@ func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2)
 			CreatedBy: storableDashboard.CreatedBy,
 			UpdatedBy: storableDashboard.UpdatedBy,
 		},
-		OrgID:  storableDashboard.OrgID,
-		Data:   storableDashboard.Data,
-		Locked: storableDashboard.Locked,
+		OrgID:           storableDashboard.OrgID,
+		Data:            storableDashboard.Data,
+		Locked:          storableDashboard.Locked,
+		Image:           storableDashboard.Image,
+		Tags:            storableDashboard.Tags,
+		UploadedGrafana: storableDashboard.UploadedGrafana,
+		Version:         storableDashboard.Version,
 	}
 }
 
@@ -124,15 +141,19 @@ func NewGettableDashboardsV2FromDashboards(dashboards []*DashboardV2) ([]*Gettab
 
 func NewGettableDashboardV2FromDashboard(dashboard *DashboardV2) (*GettableDashboardV2, error) {
 	return &GettableDashboardV2{
-		ID:            dashboard.ID,
-		UserAuditable: dashboard.UserAuditable,
-		OrgID:         dashboard.OrgID,
-		Data:          dashboard.Data,
-		Locked:        dashboard.Locked,
+		ID:              dashboard.ID,
+		UserAuditable:   dashboard.UserAuditable,
+		OrgID:           dashboard.OrgID,
+		Data:            dashboard.Data,
+		Locked:          dashboard.Locked,
+		Image:           dashboard.Image,
+		Tags:            dashboard.Tags,
+		UploadedGrafana: dashboard.UploadedGrafana,
+		Version:         dashboard.Version,
 	}, nil
 }
 
-func (dashboard *DashboardV2) UpdateV2(ctx context.Context, updatableDashboard UpdatableDashboardV2, updatedBy string) error {
+func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard UpdatableDashboardV2, updatedBy string) error {
 	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
@@ -142,7 +163,7 @@ func (dashboard *DashboardV2) UpdateV2(ctx context.Context, updatableDashboard U
 	return nil
 }
 
-func (dashboard *DashboardV2) LockUnlockV2(lock bool, role types.Role, updatedBy string) error {
+func (dashboard *DashboardV2) LockUnlock(lock bool, role types.Role, updatedBy string) error {
 	if dashboard.CreatedBy != updatedBy && role != types.RoleAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}

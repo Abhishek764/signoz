@@ -1,12 +1,11 @@
 import React from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
+import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { K8sRenderedRowData } from '../Base/K8sBaseList';
 import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
+import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
 import {
 	EntityProgressBar,
 	formatBytes,
@@ -244,100 +243,15 @@ export const k8sPodColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	// },
 ];
 
-const dotToUnder: Record<string, keyof K8sPodsData['meta']> = {
-	'k8s.cronjob.name': 'k8s_cronjob_name',
-	'k8s.daemonset.name': 'k8s_daemonset_name',
-	'k8s.deployment.name': 'k8s_deployment_name',
-	'k8s.job.name': 'k8s_job_name',
-	'k8s.namespace.name': 'k8s_namespace_name',
-	'k8s.node.name': 'k8s_node_name',
-	'k8s.pod.name': 'k8s_pod_name',
-	'k8s.pod.uid': 'k8s_pod_uid',
-	'k8s.statefulset.name': 'k8s_statefulset_name',
-	'k8s.cluster.name': 'k8s_cluster_name',
-};
-
-const getGroupByEle = (
-	pod: K8sPodsData,
-	groupBy: IBuilderQuery['groupBy'],
-): React.ReactNode => {
-	const groupByValues: string[] = [];
-
-	groupBy.forEach((group) => {
-		const rawKey = group.key as string;
-
-		// Choose mapped key if present, otherwise use rawKey
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof pod.meta;
-		const value = pod.meta[metaKey];
-
-		groupByValues.push(value);
-	});
-
-	return (
-		<div className={styles.podGroup}>
-			{groupByValues.map((value) => (
-				<Tag
-					key={value}
-					color={Color.BG_SLATE_400}
-					className={styles.podGroupTagItem}
-				>
-					{value === '' ? '<no-value>' : value}
-				</Tag>
-			))}
-		</div>
-	);
-};
-
-const getGroupedByMeta = (
-	pod: K8sPodsData,
-	groupBy: BaseAutocompleteData[],
-): Record<string, string> => {
-	const result: Record<string, string> = {};
-
-	groupBy.forEach((group) => {
-		const rawKey = group.key as string;
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof pod.meta;
-		result[rawKey] = pod.meta[metaKey] ?? '';
-	});
-
-	return result;
-};
-
-const getRowKey = (
-	pod: K8sPodsData,
-	groupBy: BaseAutocompleteData[],
-): string => {
-	const podIdentifier =
-		pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
-
-	if (groupBy.length === 0) {
-		// When not grouped, use pod identifier or fallback to stringified meta
-		return podIdentifier || JSON.stringify(pod.meta);
-	}
-
-	const groupedMeta = getGroupedByMeta(pod, groupBy);
-	const groupKey = Object.values(groupedMeta).join('-');
-
-	// When grouped, combine group key with identifier for uniqueness
-	// Fall back to stringified meta if both are empty
-	if (groupKey && podIdentifier) {
-		return `${groupKey}-${podIdentifier}`;
-	}
-	if (groupKey) {
-		return groupKey;
-	}
-	if (podIdentifier) {
-		return podIdentifier;
-	}
-
-	return JSON.stringify(pod.meta);
-};
-
 export const k8sPodRenderRowData = (
 	pod: K8sPodsData,
 	groupBy: BaseAutocompleteData[],
 ): K8sRenderedRowData => ({
-	key: getRowKey(pod, groupBy),
+	key: getRowKey(
+		pod,
+		() => pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name,
+		groupBy,
+	),
 	itemKey: pod.podUID,
 	podName: (
 		<Tooltip title={pod.meta.k8s_pod_name || ''}>
@@ -408,7 +322,7 @@ export const k8sPodRenderRowData = (
 	node: pod.meta.k8s_node_name,
 	cluster: pod.meta.k8s_cluster_name,
 	meta: pod.meta,
-	podGroup: getGroupByEle(pod, groupBy),
+	podGroup: getGroupByEl(pod, groupBy),
 	...pod.meta,
 	groupedByMeta: getGroupedByMeta(pod, groupBy),
 });

@@ -47,10 +47,11 @@ var hostAttrKeysForMetadata = []string{
 // orderByToHostsQueryNames maps the orderBy column to the query/formula names
 // from HostsTableListQuery used for ranking host groups.
 var orderByToHostsQueryNames = map[string][]string{
-	"cpu":    {"A", "B", "F1"},
-	"memory": {"C", "D", "F2"},
-	"wait":   {"E", "F", "F3"},
-	"load15": {"G"},
+	"cpu":        {"A", "B", "F1"},
+	"memory":     {"C", "D", "F2"},
+	"wait":       {"E", "F", "F3"},
+	"disk_usage": {"H", "I", "F4"},
+	"load15":     {"G"},
 }
 
 func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
@@ -385,13 +386,14 @@ func (m *module) buildHostRecords(
 		hostName := labels[hostNameAttrKey]
 
 		record := inframonitoringtypes.HostRecord{
-			HostName: hostName,
-			Active:   activeHostsMap[hostName],
-			CPU:      -1,
-			Memory:   -1,
-			Wait:     -1,
-			Load15:   -1,
-			Meta:     map[string]interface{}{},
+			HostName:  hostName,
+			Active:    activeHostsMap[hostName],
+			CPU:       -1,
+			Memory:    -1,
+			Wait:      -1,
+			Load15:    -1,
+			DiskUsage: -1,
+			Meta:      map[string]interface{}{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -403,6 +405,9 @@ func (m *module) buildHostRecords(
 			}
 			if v, exists := metrics["F3"]; exists {
 				record.Wait = v
+			}
+			if v, exists := metrics["F4"]; exists {
+				record.DiskUsage = v
 			}
 			if v, exists := metrics["G"]; exists {
 				record.Load15 = v

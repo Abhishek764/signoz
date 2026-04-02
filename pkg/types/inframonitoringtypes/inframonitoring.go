@@ -86,11 +86,12 @@ type K8sAgentMetrics struct {
 }
 
 type HostRecord struct {
-	HostName string                 `json:"hostName"`
-	Active   bool                   `json:"active"`
-	CPU      float64                `json:"cpu"`
-	Memory   float64                `json:"memory"`
-	Wait     float64                `json:"wait"`
-	Load15   float64                `json:"load15"`
-	Meta     map[string]interface{} `json:"meta"`
+	HostName  string                 `json:"hostName"`
+	Active    bool                   `json:"active"`
+	CPU       float64                `json:"cpu"`
+	Memory    float64                `json:"memory"`
+	Wait      float64                `json:"wait"`
+	Load15    float64                `json:"load15"`
+	DiskUsage float64                `json:"diskUsage"`
+	Meta      map[string]interface{} `json:"meta"`
 }

@@ -171,14 +171,14 @@ type BasicVisualization struct {
 }
 
 type TimeSeriesVisualization struct {
-	TimePreference TimePreference `json:"timePreference"`
-	FillSpans      bool           `json:"fillSpans"`
+	BasicVisualization
+	FillSpans bool `json:"fillSpans"`
 }
 
 type BarChartVisualization struct {
-	TimePreference  TimePreference `json:"timePreference"`
-	FillSpans       bool           `json:"fillSpans"`
-	StackedBarChart bool           `json:"stackedBarChart"`
+	BasicVisualization
+	FillSpans       bool `json:"fillSpans"`
+	StackedBarChart bool `json:"stackedBarChart"`
 }
 
 type PanelFormatting struct {

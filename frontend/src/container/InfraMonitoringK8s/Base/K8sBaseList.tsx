@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -17,13 +16,16 @@ import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { AppState } from 'store/reducers';
+import { useGlobalTimeStore } from 'store/globalTime';
+import {
+	getAutoRefreshQueryKey,
+	NANO_SECOND_MULTIPLIER,
+} from 'store/globalTime/utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
@@ -106,10 +108,6 @@ function K8sExpandedRow<T>({
 	fetchListData,
 	renderRowData,
 }: K8sExpandedRowProps<T>): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
 	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
@@ -164,21 +162,26 @@ function K8sExpandedRow<T>({
 		return baseFilters;
 	}, [queryFilters.items, record]);
 
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
+	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
+	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+
 	const queryKey = useMemo(() => {
-		return [
+		return getAutoRefreshQueryKey(selectedTime, [
 			'k8sExpandedRow',
 			record.key,
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-			String(minTime),
-			String(maxTime),
-		];
-	}, [record.key, queryFilters, orderBy, minTime, maxTime]);
+		]);
+	}, [selectedTime, record.key, queryFilters, orderBy]);
 
 	const { data, isFetching, isLoading, isError } = useQuery({
 		queryKey,
-		queryFn: ({ signal }) =>
-			fetchListData(
+		queryFn: ({ signal }) => {
+			const { minTime, maxTime } = getMinMaxTime();
+
+			return fetchListData(
 				{
 					limit: 10,
 					offset: 0,
@@ -189,7 +192,9 @@ function K8sExpandedRow<T>({
 					groupBy: undefined,
 				},
 				signal,
-			),
+			);
+		},
+		refetchInterval: isRefreshEnabled ? refreshInterval : false,
 	});
 
 	const formattedData = useMemo(
@@ -282,10 +287,6 @@ export function K8sBaseList<T>({
 	renderRowData,
 	eventCategory,
 }: K8sBaseListProps<T>): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
 	const queryFilters = useInfraMonitoringQueryFilters();
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [groupBy] = useInfraMonitoringGroupBy();
@@ -309,8 +310,14 @@ export function K8sBaseList<T>({
 		initializeTableColumns(entity, tableColumnsDefinitions);
 	}, [initializeTableColumns, entity, tableColumnsDefinitions]);
 
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
+	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
+	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+
 	const queryKey = useMemo(() => {
-		return [
+		return getAutoRefreshQueryKey(
+			selectedTime,
 			'k8sBaseList',
 			entity,
 			String(pageSize),
@@ -318,35 +325,36 @@ export function K8sBaseList<T>({
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
 			JSON.stringify(groupBy),
-			String(minTime),
-			String(maxTime),
-		];
+		);
 	}, [
+		selectedTime,
 		entity,
 		pageSize,
 		currentPage,
 		queryFilters,
 		orderBy,
 		groupBy,
-		minTime,
-		maxTime,
 	]);
 
 	const { data, isFetching, isLoading, isError } = useQuery({
 		queryKey,
-		queryFn: ({ signal }) =>
-			fetchListData(
+		queryFn: ({ signal }) => {
+			const { minTime, maxTime } = getMinMaxTime();
+
+			return fetchListData(
 				{
 					limit: pageSize,
 					offset: (currentPage - 1) * pageSize,
 					filters: queryFilters,
-					start: Math.floor(minTime / 1000000),
-					end: Math.floor(maxTime / 1000000),
+					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 					orderBy: orderBy || undefined,
 					groupBy: groupBy?.length > 0 ? groupBy : undefined,
 				},
 				signal,
-			),
+			);
+		},
+		refetchInterval: isRefreshEnabled ? refreshInterval : false,
 		keepPreviousData: true,
 	});
 

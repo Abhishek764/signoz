@@ -24,16 +24,16 @@ const (
 type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// source. This could be extended to a richer selector in the future.
-	Name   string `json:"name"`
-	Source string `json:"source"`
+	Name   string `json:"name" validate:"required"`
+	Source string `json:"source" validate:"required"`
 }
 
 type QueryVariableSpec struct {
-	QueryValue string `json:"queryValue"`
+	QueryValue string `json:"queryValue" validate:"required"`
 }
 
 type CustomVariableSpec struct {
-	CustomValue string `json:"customValue"`
+	CustomValue string `json:"customValue" validate:"required"`
 }
 
 type TextboxVariableSpec struct{}
@@ -135,7 +135,7 @@ type TimeSeriesPanelSpec struct {
 	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance"`
 	Axes            Axes                      `json:"axes"`
 	Legend          Legend                    `json:"legend"`
-	Thresholds      []ThresholdWithLabel      `json:"thresholds"`
+	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive"`
 }
 
 type TimeSeriesChartAppearance struct {
@@ -151,13 +151,13 @@ type BarChartPanelSpec struct {
 	Formatting    PanelFormatting       `json:"formatting"`
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
-	Thresholds    []ThresholdWithLabel  `json:"thresholds"`
+	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
 }
 
 type NumberPanelSpec struct {
 	Visualization BasicVisualization    `json:"visualization"`
 	Formatting    PanelFormatting       `json:"formatting"`
-	Thresholds    []ComparisonThreshold `json:"thresholds"`
+	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive"`
 }
 
 type PieChartPanelSpec struct {
@@ -169,7 +169,7 @@ type PieChartPanelSpec struct {
 type TablePanelSpec struct {
 	Visualization BasicVisualization `json:"visualization"`
 	Formatting    TableFormatting    `json:"formatting"`
-	Thresholds    []TableThreshold   `json:"thresholds"`
+	Thresholds    []TableThreshold   `json:"thresholds" validate:"dive"`
 }
 
 type HistogramPanelSpec struct {
@@ -184,12 +184,12 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectedLogFields    []LogField                         `json:"selectedLogFields"`
+	SelectedLogFields    []LogField                         `json:"selectedLogFields" validate:"dive"`
 	SelectedTracesFields []telemetrytypes.TelemetryFieldKey `json:"selectedTracesFields"`
 }
 
 type LogField struct {
-	Name     string `json:"name"`
+	Name     string `json:"name" validate:"required"`
 	Type     string `json:"type"`
 	DataType string `json:"dataType"`
 }
@@ -237,21 +237,21 @@ type Legend struct {
 type ThresholdWithLabel struct {
 	Value float64 `json:"value"`
 	Unit  string  `json:"unit"`
-	Color string  `json:"color"`
-	Label string  `json:"label"`
+	Color string  `json:"color" validate:"required"`
+	Label string  `json:"label" validate:"required"`
 }
 
 type ComparisonThreshold struct {
 	Value    float64            `json:"value"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
-	Color    string             `json:"color"`
+	Color    string             `json:"color" validate:"required"`
 	Format   ThresholdFormat    `json:"format"`
 }
 
 type TableThreshold struct {
 	ComparisonThreshold
-	TableOptions string `json:"tableOptions"`
+	ColumnName string `json:"columnName" validate:"required"`
 }
 
 // ══════════════════════════════════════════════

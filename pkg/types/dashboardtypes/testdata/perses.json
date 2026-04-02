@@ -479,7 +479,7 @@
                                     "unit": "min",
                                     "color": "Red",
                                     "format": "Text",
-                                    "tableOptions": "A"
+                                    "columnName": "A"
                                 }
                             ]
                         }

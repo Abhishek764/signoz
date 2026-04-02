@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/go-playground/validator/v10"
 	"github.com/SigNoz/signoz/pkg/types"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -280,6 +281,9 @@ func validatePlugin(plugin common.Plugin, specs map[string]func() any, path stri
 	}
 	target := factory()
 	if err := json.Unmarshal(specJSON, target); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
+	}
+	if err := validator.New().Struct(target); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 	}
 	return nil

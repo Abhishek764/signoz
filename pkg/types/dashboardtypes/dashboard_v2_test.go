@@ -18,18 +18,19 @@ func TestValidateBigExample(t *testing.T) {
 }
 
 func TestInvalidateNotAJSON(t *testing.T) {
-	if err := ValidateDashboardV2JSON([]byte(`not json`)); err == nil {
+	if err := ValidateDashboardV2JSON([]byte("not json")); err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
 }
 
 func TestInvalidateEmptyObject(t *testing.T) {
-	if err := ValidateDashboardV2JSON([]byte(`{}`)); err == nil {
+	if err := ValidateDashboardV2JSON([]byte("{}")); err == nil {
 		t.Fatal("expected error for empty object missing kind")
 	}
 }
 
 func TestValidateEmptySpec(t *testing.T) {
+	// no variables no panels
 	data := []byte(`{
 		"kind": "Dashboard",
 		"metadata": {"name": "test"},
@@ -184,24 +185,6 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
 			}
 		})
-	}
-}
-
-func TestInvalidateInvalidVariableKind(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"variables": [{
-				"kind": "UnknownVariableKind",
-				"spec": {"name": "v"}
-			}],
-			"layouts": []
-		}
-	}`)
-	err := ValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for unknown variable kind")
 	}
 }
 
@@ -457,31 +440,105 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 	}
 }
 
-func TestValidateDashboardV2JSON_InvalidVariableSpec_MissingName(t *testing.T) {
-	data := []byte(`{
-		"kind": "Dashboard",
-		"metadata": {"name": "test", "project": "signoz"},
-		"spec": {
-			"variables": [{
-				"kind": "ListVariable",
-				"spec": {
-					"name": "v",
-					"allowAllValue": false,
-					"allowMultiple": false,
-					"plugin": {
-						"kind": "SigNozDynamicVariable",
-						"spec": {"source": "Metrics"}
+func TestValidateRequiredFields(t *testing.T) {
+	wrapVariable := func(pluginKind, pluginSpec string) string {
+		return `{
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"variables": [{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "v",
+						"allowAllValue": false,
+						"allowMultiple": false,
+						"plugin": {"kind": "` + pluginKind + `", "spec": ` + pluginSpec + `}
 					}
-				}
-			}],
-			"layouts": []
-		}
-	}`)
-	// DynamicVariableSpec requires name — but since Go's json.Unmarshal zero-values
-	// missing fields, "name": "" is accepted. This is a known limitation.
-	err := ValidateDashboardV2JSON(data)
-	if err != nil {
-		t.Fatalf("expected no error (missing name zero-values to empty string), got: %v", err)
+				}],
+				"layouts": []
+			}
+		}`
+	}
+	wrapPanel := func(panelKind, panelSpec string) string {
+		return `{
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "` + panelKind + `", "spec": ` + panelSpec + `}
+						}
+					}
+				},
+				"layouts": []
+			}
+		}`
+	}
+
+	tests := []struct {
+		name        string
+		data        string
+		wantContain string
+	}{
+		{
+			name:        "DynamicVariable missing name",
+			data:        wrapVariable("SigNozDynamicVariable", `{"source": "Metrics"}`),
+			wantContain: "Name",
+		},
+		{
+			name:        "DynamicVariable missing source",
+			data:        wrapVariable("SigNozDynamicVariable", `{"name": "http.method"}`),
+			wantContain: "Source",
+		},
+		{
+			name:        "QueryVariable missing queryValue",
+			data:        wrapVariable("SigNozQueryVariable", `{}`),
+			wantContain: "QueryValue",
+		},
+		{
+			name:        "CustomVariable missing customValue",
+			data:        wrapVariable("SigNozCustomVariable", `{}`),
+			wantContain: "CustomValue",
+		},
+		{
+			name:        "ThresholdWithLabel missing color",
+			data:        wrapPanel("SigNozTimeSeriesPanel", `{"thresholds": [{"value": 100, "label": "high", "color": ""}]}`),
+			wantContain: "Color",
+		},
+		{
+			name:        "ThresholdWithLabel missing label",
+			data:        wrapPanel("SigNozTimeSeriesPanel", `{"thresholds": [{"value": 100, "color": "Red", "label": ""}]}`),
+			wantContain: "Label",
+		},
+		{
+			name:        "ComparisonThreshold missing color",
+			data:        wrapPanel("SigNozNumberPanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "Text", "color": ""}]}`),
+			wantContain: "Color",
+		},
+		{
+			name:        "TableThreshold missing columnName",
+			data:        wrapPanel("SigNozTablePanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "Text", "color": "Red", "columnName": ""}]}`),
+			wantContain: "ColumnName",
+		},
+		{
+			name:        "LogField missing name",
+			data:        wrapPanel("SigNozListPanel", `{"selectedLogFields": [{"name": "", "type": "log", "dataType": "string"}]}`),
+			wantContain: "Name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateDashboardV2JSON([]byte(tt.data))
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
+			}
+			if !strings.Contains(err.Error(), tt.wantContain) {
+				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
+			}
+		})
 	}
 }
 

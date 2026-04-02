@@ -615,8 +615,8 @@ func TestValidateDashboardV2JSON_InvalidPanelSpec_BadThresholdFormat(t *testing.
 					"kind": "Panel",
 					"spec": {
 						"plugin": {
-							"kind": "SigNozTimeSeriesPanel",
-							"spec": {"thresholds": [{"value": 100, "color": "Red", "format": "Color"}]}
+							"kind": "SigNozNumberPanel",
+							"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
 						}
 					}
 				}

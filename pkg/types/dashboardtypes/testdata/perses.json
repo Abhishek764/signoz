@@ -123,14 +123,12 @@
                                     "value": 1024,
                                     "unit": "By",
                                     "color": "Red",
-                                    "format": "Text",
                                     "label": "upper limit"
                                 },
                                 {
                                     "value": 100,
                                     "unit": "By",
                                     "color": "Orange",
-                                    "format": "Text",
                                     "label": "kinda bad"
                                 }
                             ]
@@ -196,7 +194,6 @@
                                 {
                                     "value": 1,
                                     "color": "Blue",
-                                    "format": "Background",
                                     "label": "max possible"
                                 }
                             ]

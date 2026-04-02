@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
@@ -425,4 +428,45 @@ func (m *module) buildHostRecords(
 		records = append(records, record)
 	}
 	return records
+}
+
+// getActiveHosts returns a set of host names that have reported metrics recently (since sinceUnixMilli).
+// It queries distributed_metadata for hosts where last_reported_unix_milli >= sinceUnixMilli.
+func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string) (map[string]bool, error) {
+	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Distinct()
+	sb.Select("attr_string_value")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
+		sb.E("attr_name", hostNameAttr),
+		sb.GE("last_reported_unix_milli", sinceUnixMilli),
+	)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	activeHosts := make(map[string]bool)
+	for rows.Next() {
+		var hostName string
+		if err := rows.Scan(&hostName); err != nil {
+			return nil, err
+		}
+		if hostName != "" {
+			activeHosts[hostName] = true
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return activeHosts, nil
 }

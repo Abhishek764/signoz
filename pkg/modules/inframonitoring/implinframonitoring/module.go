@@ -3,7 +3,6 @@ package implinframonitoring
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
@@ -94,8 +93,7 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
-	tenMinAgo := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
-	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, tenMinAgo)
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey)
 	if err != nil {
 		return nil, err
 	}

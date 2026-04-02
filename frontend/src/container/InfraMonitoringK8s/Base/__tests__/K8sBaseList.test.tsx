@@ -379,7 +379,7 @@ describe('K8sBaseList', () => {
 			await user.click(row);
 
 			await waitFor(() => {
-				expect(fetchListDataMock).toHaveBeenCalledTimes(5);
+				expect(fetchListDataMock).toHaveBeenCalledTimes(4);
 			});
 
 			const [filters] = fetchListDataMock.mock.calls.find((c) => !c[0].groupBy)!;

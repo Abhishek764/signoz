@@ -2,9 +2,7 @@ package implinframonitoring
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -68,28 +66,12 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		}
 	}
 
-	// Inject the agent-ignore filter so every downstream query/method gets it automatically.
-	if req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != "" {
-		req.Filter.Expression = fmt.Sprintf("(%s) AND (%s)", agentIgnoreFilterExpr, req.Filter.Expression)
-	} else {
-		req.Filter = &qbtypes.Filter{
-			Expression: agentIgnoreFilterExpr,
-		}
-	}
-
 	// default to host name group by
 	if len(req.GroupBy) == 0 {
 		req.GroupBy = []qbtypes.GroupByKey{hostNameGroupByKey}
 		resp.Type = ResponseTypeList
 	} else {
 		resp.Type = ResponseTypeGroupedList
-	}
-
-	// don't fail the request if we can't get these values
-	if clusterNames, nodeNames, err := m.isSendingK8sAgentMetrics(ctx, hostsTableMetricNamesList, agentNameToMatch); err == nil {
-		resp.K8sAgentMetrics.IsSending = len(clusterNames) > 0 || len(nodeNames) > 0
-		resp.K8sAgentMetrics.ClusterNames = clusterNames
-		resp.K8sAgentMetrics.NodeNames = nodeNames
 	}
 
 	// 1. Check if any host metrics exist and get earliest retention time.

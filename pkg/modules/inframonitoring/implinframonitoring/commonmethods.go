@@ -60,58 +60,6 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClause.WhereClause, nil
 }
 
-func (m *module) isSendingK8sAgentMetrics(ctx context.Context, metricNames []string, agentMatchString string) ([]string, []string, error) {
-	if len(metricNames) == 0 {
-		return nil, nil, nil
-	}
-
-	// CTE 1: recent fingerprints from samples table (last 5 mins)
-	recentFingerprintsSB := sqlbuilder.NewSelectBuilder()
-	recentFingerprintsSB.Distinct()
-	recentFingerprintsSB.Select("fingerprint")
-	recentFingerprintsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4TableName))
-	recentFingerprintsSB.Where(
-		recentFingerprintsSB.In("metric_name", sqlbuilder.List(metricNames)),
-		"unix_milli >= toUnixTimestamp(now() - INTERVAL 5 MINUTE) * 1000",
-	)
-
-	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("__recent_fingerprints").As(recentFingerprintsSB),
-	)
-
-	finalSB := cteBuilder.Select(
-		"groupUniqArray(nullIf(JSONExtractString(labels, 'k8s.cluster.name'), '')) AS cluster_names",
-		"groupUniqArray(nullIf(JSONExtractString(labels, 'k8s.node.name'), ''))    AS node_names",
-	)
-	finalSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4TableName))
-	finalSB.Where(
-		finalSB.In("metric_name", sqlbuilder.List(metricNames)),
-		"unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000",
-		finalSB.Like("JSONExtractString(labels, 'host.name')", agentMatchString),
-		finalSB.In("fingerprint", "__recent_fingerprints"),
-	)
-
-	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer rows.Close()
-
-	var clusterNames, nodeNames []string
-	if rows.Next() {
-		if err := rows.Scan(&clusterNames, &nodeNames); err != nil {
-			return nil, nil, err
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, err
-	}
-
-	return clusterNames, nodeNames, nil
-}
-
 // getMetricsExistenceAndEarliestTime checks whether any of the given metric names
 // have been reported, and returns the total count and the earliest first-reported timestamp.
 // When count is 0, minFirstReportedUnixMilli is 0.

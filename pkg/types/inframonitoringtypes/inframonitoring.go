@@ -93,17 +93,11 @@ func (req *HostsListRequest) UnmarshalJSON(data []byte) error {
 }
 
 type HostsListResponse struct {
-	Type                   string          `json:"type"` // TODO(nikhilmantri0902): should this also be changed to valuer.string?
-	Records                []HostRecord    `json:"records"`
-	Total                  int             `json:"total"`
-	SentAnyMetricsData     bool            `json:"sentAnyMetricsData"`
-	EndTimeBeforeRetention bool            `json:"endTimeBeforeRetention"`
-	K8sAgentMetrics        K8sAgentMetrics `json:"k8sAgentMetrics"`
-}
-type K8sAgentMetrics struct {
-	IsSending    bool     `json:"isSending"`
-	ClusterNames []string `json:"clusterNames"`
-	NodeNames    []string `json:"nodeNames"`
+	Type                   string       `json:"type"` // TODO(nikhilmantri0902): should this also be changed to valuer.string?
+	Records                []HostRecord `json:"records"`
+	Total                  int          `json:"total"`
+	SentAnyMetricsData     bool         `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool         `json:"endTimeBeforeRetention"`
 }
 
 type HostRecord struct {

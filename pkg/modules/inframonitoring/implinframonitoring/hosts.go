@@ -14,9 +14,7 @@ import (
 )
 
 var (
-	agentIgnoreFilterExpr = "host.name NOT LIKE '%k8s-infra-otel-agent%'"
-	agentNameToMatch      = "%-otel-agent%" // TODO(nikhilmantri0902): should above and below be the same?
-	hostNameAttrKey       = "host.name"
+	hostNameAttrKey = "host.name"
 )
 
 // Helper group-by key used across all queries

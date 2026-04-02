@@ -46,8 +46,8 @@ func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, 
 func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.WaterfallResponse, error) {
 	response := new(tracedetailtypes.WaterfallResponse)
 	var startTime, endTime, durationNano, totalErrorSpans, totalSpans uint64
-	var spanIDToSpanNodeMap = map[string]*tracedetailtypes.Span{}
-	var traceRoots []*tracedetailtypes.Span
+	var spanIDToSpanNodeMap = map[string]*tracedetailtypes.WaterfallSpan{}
+	var traceRoots []*tracedetailtypes.WaterfallSpan
 	var serviceNameToTotalDurationMap = map[string]uint64{}
 	var serviceNameIntervalMap = map[string][]tracedetailv2.Interval{}
 	var hasMissingSpans bool
@@ -116,7 +116,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		}
 
 		totalSpans = uint64(len(spanItems))
-		spanIDToSpanNodeMap = make(map[string]*tracedetailtypes.Span, len(spanItems))
+		spanIDToSpanNodeMap = make(map[string]*tracedetailtypes.WaterfallSpan, len(spanItems))
 
 		// Build span nodes
 		for _, item := range spanItems {
@@ -153,16 +153,16 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 					parentNode.Children = append(parentNode.Children, spanNode)
 				} else {
 					// Insert missing span
-					missingSpan := &tracedetailtypes.Span{
+					missingSpan := &tracedetailtypes.WaterfallSpan{
 						SpanID:       spanNode.ParentSpanID,
 						TraceID:      spanNode.TraceID,
 						Name:         "Missing Span",
 						TimeUnixNano: spanNode.TimeUnixNano,
 						DurationNano: spanNode.DurationNano,
 						Events:       make([]tracedetailtypes.Event, 0),
-						Children:     make([]*tracedetailtypes.Span, 0),
+						Children:     make([]*tracedetailtypes.WaterfallSpan, 0),
 						Attributes:   make(map[string]any),
-						Resources:    make(map[string]string),
+						Resource:     make(map[string]string),
 					}
 					missingSpan.Children = append(missingSpan.Children, spanNode)
 					spanIDToSpanNodeMap[missingSpan.SpanID] = missingSpan
@@ -212,7 +212,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 	selectAllSpans := totalSpans <= uint64(limit)
 
 	var (
-		selectedSpans                          []*tracedetailtypes.Span
+		selectedSpans                          []*tracedetailtypes.WaterfallSpan
 		uncollapsedSpans                       []string
 		rootServiceName, rootServiceEntryPoint string
 	)
@@ -220,7 +220,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		selectedSpans, rootServiceName, rootServiceEntryPoint = GetAllSpans(traceRoots)
 	} else {
 		selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint = GetSelectedSpans(
-			req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIDToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed,
+			req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIDToSpanNodeMap,
 		)
 	}
 
@@ -262,7 +262,7 @@ func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID st
 	return cachedData, nil
 }
 
-func containsSpan(spans []*tracedetailtypes.Span, target *tracedetailtypes.Span) bool {
+func containsSpan(spans []*tracedetailtypes.WaterfallSpan, target *tracedetailtypes.WaterfallSpan) bool {
 	for _, s := range spans {
 		if s.SpanID == target.SpanID {
 			return true

@@ -61,10 +61,10 @@ type WaterfallSpan struct {
 	Links              string            `json:"links"`
 	Name               string            `json:"name"`
 	ParentSpanID       string            `json:"parent_span_id"`
-	Resources          map[string]string `json:"resources"`
+	Resource           map[string]string `json:"resource"`
 	ResponseStatusCode string            `json:"response_status_code"`
 	SpanID             string            `json:"span_id"`
-	StatusCode         int16             `json:"status_code"`
+	StatusCode         int32             `json:"status_code"`
 	StatusCodeString   string            `json:"status_code_string"`
 	StatusMessage      string            `json:"status_message"`
 	Timestamp          string            `json:"timestamp"`
@@ -117,7 +117,7 @@ type SpanModel struct {
 	Flags              uint32             `ch:"flags"`
 	IsRemote           string             `ch:"is_remote"`
 	TraceState         string             `ch:"trace_state"`
-	StatusCode         int16              `ch:"status_code"`
+	StatusCode         int32              `ch:"status_code"`
 	DBName             string             `ch:"db_name"`
 	DBOperation        string             `ch:"db_operation"`
 	HTTPMethod         string             `ch:"http_method"`
@@ -173,7 +173,7 @@ func (item *SpanModel) ToSpan() *WaterfallSpan {
 		Links:              item.References,
 		Name:               item.Name,
 		ParentSpanID:       item.ParentSpanID,
-		Resources:          resources,
+		Resource:           resources,
 		ResponseStatusCode: item.ResponseStatusCode,
 		SpanID:             item.SpanID,
 		StatusCode:         item.StatusCode,

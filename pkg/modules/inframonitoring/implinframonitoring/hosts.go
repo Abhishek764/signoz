@@ -13,10 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const (
-	HostActive   = "ACTIVE"
-	HostInactive = "INACTIVE"
-)
 
 var (
 	agentIgnoreFilterExpr = "host.name NOT LIKE '%k8s-infra-otel-agent%'"
@@ -333,7 +329,7 @@ func (m *module) getTopHostGroups(
 // Returns true if the caller should short-circuit with an empty result (ACTIVE
 // requested but no hosts are active).
 func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsListRequest, activeHostsMap map[string]bool) (shouldShortCircuit bool) {
-	if req.FilterByStatus != HostActive && req.FilterByStatus != HostInactive {
+	if req.FilterByStatus != inframonitoringtypes.HostStatusActive && req.FilterByStatus != inframonitoringtypes.HostStatusInactive {
 		return false
 	}
 
@@ -343,11 +339,11 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsLis
 	}
 
 	if len(activeHosts) == 0 {
-		return req.FilterByStatus == HostActive
+		return req.FilterByStatus == inframonitoringtypes.HostStatusActive
 	}
 
 	op := "IN"
-	if req.FilterByStatus == HostInactive {
+	if req.FilterByStatus == inframonitoringtypes.HostStatusInactive {
 		op = "NOT IN"
 	}
 	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))

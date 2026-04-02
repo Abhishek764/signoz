@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -115,6 +116,49 @@ func TestHostsListRequest_Validate(t *testing.T) {
 				End:    2000,
 				Limit:  100,
 				Offset: -5,
+			},
+			wantErr: true,
+		},
+		{
+			name: "filter by status ACTIVE",
+			req: &HostsListRequest{
+				Start:          1000,
+				End:            2000,
+				Limit:          100,
+				Offset:         0,
+				FilterByStatus: HostStatusActive,
+			},
+			wantErr: false,
+		},
+		{
+			name: "filter by status INACTIVE",
+			req: &HostsListRequest{
+				Start:          1000,
+				End:            2000,
+				Limit:          100,
+				Offset:         0,
+				FilterByStatus: HostStatusInactive,
+			},
+			wantErr: false,
+		},
+		{
+			name: "filter by status empty (zero value)",
+			req: &HostsListRequest{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "filter by status invalid value",
+			req: &HostsListRequest{
+				Start:          1000,
+				End:            2000,
+				Limit:          100,
+				Offset:         0,
+				FilterByStatus: HostStatus{valuer.NewString("UNKNOWN")},
 			},
 			wantErr: true,
 		},

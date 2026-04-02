@@ -5,13 +5,30 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+type HostStatus struct {
+	valuer.String
+}
+
+var (
+	HostStatusActive   = HostStatus{valuer.NewString("active")}
+	HostStatusInactive = HostStatus{valuer.NewString("inactive")}
+)
+
+func (HostStatus) Enum() []any {
+	return []any{
+		HostStatusActive,
+		HostStatusInactive,
+	}
+}
 
 type HostsListRequest struct {
 	Start          int64                `json:"start"`
 	End            int64                `json:"end"`
 	Filter         *qbtypes.Filter      `json:"filter"`
-	FilterByStatus string               `json:"filterByStatus"` // TODO (nikhilmantri0902): change to valuer.string
+	FilterByStatus HostStatus           `json:"filterByStatus"`
 	GroupBy        []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy        *qbtypes.OrderBy     `json:"orderBy"`
 	Offset         int                  `json:"offset"`
@@ -55,6 +72,10 @@ func (req *HostsListRequest) Validate() error {
 
 	if req.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	if !req.FilterByStatus.IsZero() && req.FilterByStatus != HostStatusActive && req.FilterByStatus != HostStatusInactive {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by status: %s", req.FilterByStatus)
 	}
 
 	return nil

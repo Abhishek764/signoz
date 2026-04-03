@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
 import { javascript } from '@codemirror/lang-javascript';
 import { Button } from '@signozhq/button';
@@ -71,6 +72,7 @@ function CodeBlock({
 }: CodeBlockProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [isCopied, setIsCopied] = useState(false);
+	const [, copyToClipboard] = useCopyToClipboard();
 
 	const resolvedDark = themeProp === 'auto' ? isDarkMode : themeProp === 'dark';
 	const theme = resolvedDark ? dracula : githubLight;
@@ -86,12 +88,11 @@ function CodeBlock({
 	}, [language]);
 
 	const handleCopy = useCallback((): void => {
-		navigator.clipboard.writeText(value).then(() => {
-			setIsCopied(true);
-			onCopy?.(value);
-			setTimeout(() => setIsCopied(false), 2000);
-		});
-	}, [value, onCopy]);
+		copyToClipboard(value);
+		setIsCopied(true);
+		onCopy?.(value);
+		setTimeout(() => setIsCopied(false), 2000);
+	}, [value, onCopy, copyToClipboard]);
 
 	return (
 		<div className={cx('code-block-container', className)}>

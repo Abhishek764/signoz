@@ -1363,6 +1363,105 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+/**
+ * @nullable
+ */
+export type InframonitoringtypesHostRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesHostRecordDTO {
+	/**
+	 * @type boolean
+	 */
+	active?: boolean;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpu?: number;
+	/**
+	 * @type string
+	 */
+	hostName?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	load15?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memory?: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta?: InframonitoringtypesHostRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	wait?: number;
+}
+
+export interface InframonitoringtypesHostsListRequestDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end?: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start?: number;
+}
+
+export interface InframonitoringtypesHostsListResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention?: boolean;
+	/**
+	 * @type boolean
+	 */
+	isSendingK8SAgentMetrics?: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records?: InframonitoringtypesHostRecordDTO[] | null;
+	/**
+	 * @type boolean
+	 */
+	sentAnyMetricsData?: boolean;
+	/**
+	 * @type integer
+	 */
+	total?: number;
+	/**
+	 * @type string
+	 */
+	type?: string;
+}
+
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -4299,6 +4398,14 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type HostsList200 = {
+	data: InframonitoringtypesHostsListResponseDTO;
 	/**
 	 * @type string
 	 */

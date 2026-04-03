@@ -104,12 +104,13 @@
 	}
 
 	:global(.ant-pagination) {
+		width: 100%;
 		position: fixed;
 		bottom: 0;
-		width: calc(100% - 54px);
-		background: var(--bg-ink-500);
+		right: 0;
 		padding: 16px;
-		margin: 0;
+		background-color: var(--bg-ink-500);
+		margin: 0 !important;
 		padding-right: 72px;
 
 		:global(.ant-pagination-item) {

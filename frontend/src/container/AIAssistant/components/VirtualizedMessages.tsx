@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
+import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { Message } from '../types';
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
@@ -16,7 +17,16 @@ export default function VirtualizedMessages({
 	isStreaming,
 	streamingContent,
 }: VirtualizedMessagesProps): JSX.Element {
+	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
+
+	// Find the last user message to re-send on regenerate
+	const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+	const handleRegenerate = useCallback((): void => {
+		if (lastUserMessage && !isStreaming) {
+			sendMessage(lastUserMessage.content, lastUserMessage.attachments);
+		}
+	}, [lastUserMessage, isStreaming, sendMessage]);
 
 	// Scroll to bottom whenever a new message is added or streaming progresses
 	useEffect(() => {
@@ -46,7 +56,18 @@ export default function VirtualizedMessages({
 			initialTopMostItemIndex={Math.max(0, totalCount - 1)}
 			itemContent={(index): JSX.Element => {
 				if (index < messages.length) {
-					return <MessageBubble message={messages[index]} />;
+					const msg = messages[index];
+					const isLastAssistant =
+						msg.role === 'assistant' &&
+						messages.slice(index + 1).every((m) => m.role !== 'assistant');
+					return (
+						<MessageBubble
+							message={msg}
+							onRegenerate={
+								isLastAssistant && !isStreaming ? handleRegenerate : undefined
+							}
+						/>
+					);
 				}
 				// Last slot is the live streaming bubble
 				return <StreamingMessage content={streamingContent} />;

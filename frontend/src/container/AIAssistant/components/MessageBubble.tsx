@@ -7,9 +7,11 @@ import './blocks';
 import { Message } from '../types';
 import { RichCodeBlock } from './blocks';
 import { MessageContext } from './MessageContext';
+import MessageFeedback from './MessageFeedback';
 
 interface MessageBubbleProps {
 	message: Message;
+	onRegenerate?: () => void;
 }
 
 /**
@@ -18,11 +20,7 @@ interface MessageBubbleProps {
  * block ends up wrapped in <pre> which forces monospace font and white-space:pre.
  * This renderer detects that case and unwraps the <pre>.
  */
-function SmartPre({
-	children,
-}: {
-	children?: React.ReactNode;
-}): JSX.Element {
+function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 	const childArr = React.Children.toArray(children);
 	if (childArr.length === 1) {
 		const child = childArr[0];
@@ -39,6 +37,7 @@ const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
 export default function MessageBubble({
 	message,
+	onRegenerate,
 }: MessageBubbleProps): JSX.Element {
 	const isUser = message.role === 'user';
 
@@ -47,35 +46,44 @@ export default function MessageBubble({
 			className={`ai-message ai-message--${isUser ? 'user' : 'assistant'}`}
 			data-testid={`ai-message-${message.id}`}
 		>
-			<div className="ai-message__bubble">
-				{message.attachments && message.attachments.length > 0 && (
-					<div className="ai-message__attachments">
-						{message.attachments.map((att) => {
-							const isImage = att.type.startsWith('image/');
-							return isImage ? (
-								<img
-									key={att.name}
-									src={att.dataUrl}
-									alt={att.name}
-									className="ai-message__attachment-image"
-								/>
-							) : (
-								<div key={att.name} className="ai-message__attachment-file">
-									{att.name}
-								</div>
-							);
-						})}
-					</div>
-				)}
+			<div className="ai-message__body">
+				<div className="ai-message__bubble">
+					{message.attachments && message.attachments.length > 0 && (
+						<div className="ai-message__attachments">
+							{message.attachments.map((att) => {
+								const isImage = att.type.startsWith('image/');
+								return isImage ? (
+									<img
+										key={att.name}
+										src={att.dataUrl}
+										alt={att.name}
+										className="ai-message__attachment-image"
+									/>
+								) : (
+									<div key={att.name} className="ai-message__attachment-file">
+										{att.name}
+									</div>
+								);
+							})}
+						</div>
+					)}
 
-				{isUser ? (
-					<p className="ai-message__text">{message.content}</p>
-				) : (
-					<MessageContext.Provider value={{ messageId: message.id }}>
-						<ReactMarkdown className="ai-message__markdown" components={MD_COMPONENTS}>
-							{message.content}
-						</ReactMarkdown>
-					</MessageContext.Provider>
+					{isUser ? (
+						<p className="ai-message__text">{message.content}</p>
+					) : (
+						<MessageContext.Provider value={{ messageId: message.id }}>
+							<ReactMarkdown
+								className="ai-message__markdown"
+								components={MD_COMPONENTS}
+							>
+								{message.content}
+							</ReactMarkdown>
+						</MessageContext.Provider>
+					)}
+				</div>
+
+				{!isUser && (
+					<MessageFeedback message={message} onRegenerate={onRegenerate} />
 				)}
 			</div>
 		</div>

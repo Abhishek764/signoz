@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
 import { streamChat } from '../../../api/ai/chat';
@@ -98,20 +99,82 @@ function deriveTitle(text: string): string {
 }
 
 export const useAIAssistantStore = create<AIAssistantStore>()(
-	immer((set, get) => ({
-		isDrawerOpen: false,
-		isModalOpen: false,
-		activeConversationId: null,
-		conversations: {},
-		streamingContent: '',
-		isStreaming: false,
-		answeredBlocks: {},
+	persist(
+		immer((set, get) => ({
+			isDrawerOpen: false,
+			isModalOpen: false,
+			activeConversationId: null,
+			conversations: {},
+			streamingContent: '',
+			isStreaming: false,
+			answeredBlocks: {},
 
-		openDrawer: (): void => {
-			set((state) => {
-				state.isDrawerOpen = true;
-				if (!state.activeConversationId) {
-					const id = uuidv4();
+			openDrawer: (): void => {
+				set((state) => {
+					state.isDrawerOpen = true;
+					if (!state.activeConversationId) {
+						const id = uuidv4();
+						state.conversations[id] = {
+							id,
+							messages: [],
+							createdAt: Date.now(),
+							updatedAt: Date.now(),
+						};
+						state.activeConversationId = id;
+					}
+				});
+			},
+
+			closeDrawer: (): void => {
+				set((state) => {
+					state.isDrawerOpen = false;
+				});
+			},
+
+			openModal: (): void => {
+				set((state) => {
+					state.isModalOpen = true;
+					// Ensure there's an active conversation
+					if (!state.activeConversationId) {
+						const id = uuidv4();
+						state.conversations[id] = {
+							id,
+							messages: [],
+							createdAt: Date.now(),
+							updatedAt: Date.now(),
+						};
+						state.activeConversationId = id;
+					}
+				});
+			},
+
+			closeModal: (): void => {
+				set((state) => {
+					state.isModalOpen = false;
+				});
+			},
+
+			minimizeModal: (): void => {
+				set((state) => {
+					state.isModalOpen = false;
+					state.isDrawerOpen = true;
+					// Ensure there's an active conversation for the side panel
+					if (!state.activeConversationId) {
+						const id = uuidv4();
+						state.conversations[id] = {
+							id,
+							messages: [],
+							createdAt: Date.now(),
+							updatedAt: Date.now(),
+						};
+						state.activeConversationId = id;
+					}
+				});
+			},
+
+			startNewConversation: (): string => {
+				const id = uuidv4();
+				set((state) => {
 					state.conversations[id] = {
 						id,
 						messages: [],
@@ -119,218 +182,168 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						updatedAt: Date.now(),
 					};
 					state.activeConversationId = id;
-				}
-			});
-		},
+				});
+				return id;
+			},
 
-		closeDrawer: (): void => {
-			set((state) => {
-				state.isDrawerOpen = false;
-			});
-		},
-
-		openModal: (): void => {
-			set((state) => {
-				state.isModalOpen = true;
-				// Ensure there's an active conversation
-				if (!state.activeConversationId) {
-					const id = uuidv4();
-					state.conversations[id] = {
-						id,
-						messages: [],
-						createdAt: Date.now(),
-						updatedAt: Date.now(),
-					};
+			setActiveConversation: (id: string): void => {
+				set((state) => {
 					state.activeConversationId = id;
+				});
+			},
+
+			clearConversation: (id: string): void => {
+				set((state) => {
+					if (state.conversations[id]) {
+						// Remove answered-block entries for messages being cleared
+						const msgIds = state.conversations[id].messages.map((m) => m.id);
+						msgIds.forEach((mid) => {
+							delete state.answeredBlocks[mid];
+						});
+						state.conversations[id].messages = [];
+						state.conversations[id].title = undefined;
+						state.conversations[id].updatedAt = Date.now();
+					}
+					state.streamingContent = '';
+					state.isStreaming = false;
+				});
+			},
+
+			deleteConversation: (id: string): void => {
+				set((state) => {
+					delete state.conversations[id];
+					if (state.activeConversationId === id) {
+						// Switch to the most recent remaining conversation, or null
+						const remaining = Object.values(state.conversations).sort(
+							(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
+						);
+						state.activeConversationId = remaining[0]?.id ?? null;
+					}
+				});
+			},
+
+			renameConversation: (id: string, title: string): void => {
+				set((state) => {
+					if (state.conversations[id]) {
+						state.conversations[id].title = title.trim() || undefined;
+					}
+				});
+			},
+
+			markBlockAnswered: (messageId: string, answer: string): void => {
+				set((state) => {
+					state.answeredBlocks[messageId] = answer;
+				});
+			},
+
+			sendMessage: async (
+				text: string,
+				attachments?: MessageAttachment[],
+				// eslint-disable-next-line sonarjs/cognitive-complexity
+			): Promise<void> => {
+				const { activeConversationId, conversations } = get();
+
+				if (!activeConversationId || !conversations[activeConversationId]) {
+					return;
 				}
-			});
-		},
 
-		closeModal: (): void => {
-			set((state) => {
-				state.isModalOpen = false;
-			});
-		},
-
-		minimizeModal: (): void => {
-			set((state) => {
-				state.isModalOpen = false;
-				state.isDrawerOpen = true;
-				// Ensure there's an active conversation for the side panel
-				if (!state.activeConversationId) {
-					const id = uuidv4();
-					state.conversations[id] = {
-						id,
-						messages: [],
-						createdAt: Date.now(),
-						updatedAt: Date.now(),
-					};
-					state.activeConversationId = id;
-				}
-			});
-		},
-
-		startNewConversation: (): string => {
-			const id = uuidv4();
-			set((state) => {
-				state.conversations[id] = {
-					id,
-					messages: [],
+				const userMessage: Message = {
+					id: uuidv4(),
+					role: 'user',
+					content: text,
+					attachments,
 					createdAt: Date.now(),
-					updatedAt: Date.now(),
-				};
-				state.activeConversationId = id;
-			});
-			return id;
-		},
-
-		setActiveConversation: (id: string): void => {
-			set((state) => {
-				state.activeConversationId = id;
-			});
-		},
-
-		clearConversation: (id: string): void => {
-			set((state) => {
-				if (state.conversations[id]) {
-					// Remove answered-block entries for messages being cleared
-					const msgIds = state.conversations[id].messages.map((m) => m.id);
-					msgIds.forEach((mid) => {
-						delete state.answeredBlocks[mid];
-					});
-					state.conversations[id].messages = [];
-					state.conversations[id].title = undefined;
-					state.conversations[id].updatedAt = Date.now();
-				}
-				state.streamingContent = '';
-				state.isStreaming = false;
-			});
-		},
-
-		deleteConversation: (id: string): void => {
-			set((state) => {
-				delete state.conversations[id];
-				if (state.activeConversationId === id) {
-					// Switch to the most recent remaining conversation, or null
-					const remaining = Object.values(state.conversations).sort(
-						(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
-					);
-					state.activeConversationId = remaining[0]?.id ?? null;
-				}
-			});
-		},
-
-		renameConversation: (id: string, title: string): void => {
-			set((state) => {
-				if (state.conversations[id]) {
-					state.conversations[id].title = title.trim() || undefined;
-				}
-			});
-		},
-
-		markBlockAnswered: (messageId: string, answer: string): void => {
-			set((state) => {
-				state.answeredBlocks[messageId] = answer;
-			});
-		},
-
-		sendMessage: async (
-			text: string,
-			attachments?: MessageAttachment[],
-		): Promise<void> => {
-			const { activeConversationId, conversations } = get();
-
-			if (!activeConversationId || !conversations[activeConversationId]) {
-				return;
-			}
-
-			const userMessage: Message = {
-				id: uuidv4(),
-				role: 'user',
-				content: text,
-				attachments,
-				createdAt: Date.now(),
-			};
-
-			set((state) => {
-				const conv = state.conversations[activeConversationId];
-				conv.messages.push(userMessage);
-				conv.updatedAt = Date.now();
-				if (!conv.title && text.trim()) {
-					conv.title = deriveTitle(text);
-				}
-				state.isStreaming = true;
-				state.streamingContent = '';
-			});
-
-			try {
-				const history = get().conversations[activeConversationId].messages;
-
-				// Prepend PAGE_CONTEXT to the last user message in the wire payload only.
-				const contextPrefix = buildContextPrefix();
-				const payload = {
-					conversationId: activeConversationId,
-					messages: history.map((m, i) => ({
-						role: m.role as 'user' | 'assistant',
-						content:
-							contextPrefix && i === history.length - 1 && m.role === 'user'
-								? contextPrefix + m.content
-								: m.content,
-					})),
 				};
 
-				// messageId comes from the first SSE event; reuse across all chunks
-				// for the same assistant turn.
-				let serverMessageId: string | null = null;
-				let finalActions: AssistantAction[] = [];
+				set((state) => {
+					const conv = state.conversations[activeConversationId];
+					conv.messages.push(userMessage);
+					conv.updatedAt = Date.now();
+					if (!conv.title && text.trim()) {
+						conv.title = deriveTitle(text);
+					}
+					state.isStreaming = true;
+					state.streamingContent = '';
+				});
 
-				for await (const event of chat(payload)) {
-					serverMessageId = serverMessageId ?? event.messageId;
+				try {
+					const history = get().conversations[activeConversationId].messages;
+
+					// Prepend PAGE_CONTEXT to the last user message in the wire payload only.
+					const contextPrefix = buildContextPrefix();
+					const payload = {
+						conversationId: activeConversationId,
+						messages: history.map((m, i) => ({
+							role: m.role as 'user' | 'assistant',
+							content:
+								contextPrefix && i === history.length - 1 && m.role === 'user'
+									? contextPrefix + m.content
+									: m.content,
+						})),
+					};
+
+					// messageId comes from the first SSE event; reuse across all chunks
+					// for the same assistant turn.
+					let serverMessageId: string | null = null;
+					let finalActions: AssistantAction[] = [];
+
+					for await (const event of chat(payload)) {
+						serverMessageId = serverMessageId ?? event.messageId;
+
+						set((state) => {
+							state.streamingContent += event.content;
+						});
+
+						if (event.done) {
+							finalActions = event.actions ?? [];
+							break;
+						}
+					}
+
+					const finalContent = get().streamingContent;
+					const assistantMessage: Message = {
+						id: serverMessageId ?? uuidv4(),
+						role: 'assistant',
+						content: finalContent,
+						actions: finalActions.length > 0 ? finalActions : undefined,
+						createdAt: Date.now(),
+					};
 
 					set((state) => {
-						state.streamingContent += event.content;
+						const conv = state.conversations[activeConversationId];
+						conv.messages.push(assistantMessage);
+						conv.updatedAt = Date.now();
+						state.streamingContent = '';
+						state.isStreaming = false;
 					});
-
-					if (event.done) {
-						finalActions = event.actions ?? [];
-						break;
-					}
+				} catch (err) {
+					const errorMessage: Message = {
+						id: uuidv4(),
+						role: 'assistant',
+						content:
+							'Something went wrong while fetching the response. Please try again.',
+						createdAt: Date.now(),
+					};
+					set((state) => {
+						const conv = state.conversations[activeConversationId];
+						conv.messages.push(errorMessage);
+						conv.updatedAt = Date.now();
+						state.streamingContent = '';
+						state.isStreaming = false;
+					});
 				}
-
-				const finalContent = get().streamingContent;
-				const assistantMessage: Message = {
-					id: serverMessageId ?? uuidv4(),
-					role: 'assistant',
-					content: finalContent,
-					actions: finalActions.length > 0 ? finalActions : undefined,
-					createdAt: Date.now(),
-				};
-
-				set((state) => {
-					const conv = state.conversations[activeConversationId];
-					conv.messages.push(assistantMessage);
-					conv.updatedAt = Date.now();
-					state.streamingContent = '';
-					state.isStreaming = false;
-				});
-			} catch (err) {
-				const errorMessage: Message = {
-					id: uuidv4(),
-					role: 'assistant',
-					content:
-						'Something went wrong while fetching the response. Please try again.',
-					createdAt: Date.now(),
-				};
-				set((state) => {
-					const conv = state.conversations[activeConversationId];
-					conv.messages.push(errorMessage);
-					conv.updatedAt = Date.now();
-					state.streamingContent = '';
-					state.isStreaming = false;
-				});
-			}
+			},
+		})),
+		{
+			name: 'ai-assistant-store',
+			partialize: (state) => ({
+				isDrawerOpen: state.isDrawerOpen,
+				activeConversationId: state.activeConversationId,
+				conversations: state.conversations,
+				answeredBlocks: state.answeredBlocks,
+			}),
 		},
-	})),
+	),
 );
 
 // Standalone imperative accessors

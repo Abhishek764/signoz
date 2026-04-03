@@ -12,20 +12,26 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import {
+	ICurrentQueryData,
+	useHandleExplorerTabChange,
+} from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { explorerViewToPanelType } from 'utils/explorerUtils';
 import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
 import TimeSeries from './TimeSeries';
-import { ExplorerTabs } from './types';
 import {
 	getMetricUnits,
 	splitQueryIntoOneChartPerQuery,
@@ -42,15 +48,20 @@ function Explorer(): JSX.Element {
 		stagedQuery,
 		updateAllQueriesOperators,
 		currentQuery,
+		handleSetConfig,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 
 	const metricNames = useMemo(() => {
 		const currentMetricNames: string[] = [];
 		stagedQuery?.builder.queryData.forEach((query) => {
-			if (query.aggregateAttribute?.key) {
-				currentMetricNames.push(query.aggregateAttribute?.key);
+			const metricName =
+				query.aggregateAttribute?.key ||
+				(query.aggregations?.[0] as MetricAggregation | undefined)?.metricName;
+			if (metricName) {
+				currentMetricNames.push(metricName);
 			}
 		});
 		return currentMetricNames;
@@ -69,7 +80,7 @@ function Explorer(): JSX.Element {
 			!isMetricUnitsLoading &&
 			!isMetricUnitsError &&
 			units.length > 0 &&
-			units.every((unit) => unit && unit === units[0]),
+			units.every((unit) => unit === units[0]),
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
@@ -83,7 +94,6 @@ function Explorer(): JSX.Element {
 	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
 		false,
 	);
-	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);
@@ -175,6 +185,16 @@ function Explorer(): JSX.Element {
 	}, [currentQuery, updateAllQueriesOperators, yAxisUnit]);
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
+
+	const handleChangeSelectedView = useCallback(
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
+			const nextPanelType =
+				explorerViewToPanelType[view] || PANEL_TYPES.TIME_SERIES;
+			handleSetConfig(nextPanelType, DataSource.METRICS);
+			handleExplorerTabChange(nextPanelType, querySearchParameters);
+		},
+		[handleSetConfig, handleExplorerTabChange],
+	);
 
 	const handleExport = useCallback(
 		(
@@ -297,48 +317,21 @@ function Explorer(): JSX.Element {
 					showFunctions={false}
 					version="v3"
 				/>
-				{/* TODO: Enable once we have resolved all related metrics issues */}
-				{/* <Button.Group className="explore-tabs">
-					<Button
-						value={ExplorerTabs.TIME_SERIES}
-						className={classNames('tab', {
-							'selected-view': selectedTab === ExplorerTabs.TIME_SERIES,
-						})}
-						onClick={(): void => setSelectedTab(ExplorerTabs.TIME_SERIES)}
-					>
-						<Typography.Text>Time series</Typography.Text>
-					</Button>
-					<Button
-						value={ExplorerTabs.RELATED_METRICS}
-						className={classNames('tab', {
-							'selected-view': selectedTab === ExplorerTabs.RELATED_METRICS,
-						})}
-						onClick={(): void => setSelectedTab(ExplorerTabs.RELATED_METRICS)}
-					>
-						<Typography.Text>Related</Typography.Text>
-					</Button>
-				</Button.Group> */}
 				<div className="explore-content">
-					{selectedTab === ExplorerTabs.TIME_SERIES && (
-						<TimeSeries
-							showOneChartPerQuery={showOneChartPerQuery}
-							setWarning={setWarning}
-							areAllMetricUnitsSame={areAllMetricUnitsSame}
-							isMetricUnitsLoading={isMetricUnitsLoading}
-							isMetricUnitsError={isMetricUnitsError}
-							metricUnits={units}
-							metricNames={metricNames}
-							metrics={metrics}
-							handleOpenMetricDetails={handleOpenMetricDetails}
-							yAxisUnit={yAxisUnit}
-							setYAxisUnit={setYAxisUnit}
-							showYAxisUnitSelector={showYAxisUnitSelector}
-						/>
-					)}
-					{/* TODO: Enable once we have resolved all related metrics issues */}
-					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
-						<RelatedMetrics metricNames={metricNames} />
-					)} */}
+					<TimeSeries
+						showOneChartPerQuery={showOneChartPerQuery}
+						setWarning={setWarning}
+						areAllMetricUnitsSame={areAllMetricUnitsSame}
+						isMetricUnitsLoading={isMetricUnitsLoading}
+						isMetricUnitsError={isMetricUnitsError}
+						metricUnits={units}
+						metricNames={metricNames}
+						metrics={metrics}
+						handleOpenMetricDetails={handleOpenMetricDetails}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						showYAxisUnitSelector={showYAxisUnitSelector}
+					/>
 				</div>
 			</div>
 			<ExplorerOptionWrapper
@@ -348,6 +341,7 @@ function Explorer(): JSX.Element {
 				onExport={handleExport}
 				isOneChartPerQuery={showOneChartPerQuery}
 				splitedQueries={splitedQueries}
+				handleChangeSelectedView={handleChangeSelectedView}
 			/>
 			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails

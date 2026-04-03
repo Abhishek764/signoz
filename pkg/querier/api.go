@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -15,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -33,6 +33,10 @@ func NewHandler(set factory.ProviderSettings, querier Querier, analytics analyti
 
 func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "querier",
+		instrumentationtypes.CodeFunctionName: "QueryRange",
+	})
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -45,26 +49,6 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			handler.set.Logger.ErrorContext(ctx, "panic in QueryRange",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
@@ -146,26 +130,6 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			handler.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
-
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
 		render.Error(rw, err)
@@ -218,7 +182,7 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 }
 
 // TODO(srikanthccv): everything done here can be done on frontend as well
-// For the time being I am adding a helper function
+// For the time being I am adding a helper function.
 func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
@@ -277,7 +241,7 @@ func (handler *handler) logEvent(ctx context.Context, referrer string, event *qb
 		return
 	}
 
-	if !(event.LogsUsed || event.MetricsUsed || event.TracesUsed) {
+	if !event.LogsUsed && !event.MetricsUsed && !event.TracesUsed {
 		return
 	}
 
@@ -304,9 +268,9 @@ func (handler *handler) logEvent(ctx context.Context, referrer string, event *qb
 	}
 
 	if !event.HasData {
-		handler.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		handler.analytics.TrackUser(ctx, claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Empty", properties)
 		return
 	}
 
-	handler.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+	handler.analytics.TrackUser(ctx, claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Results", properties)
 }

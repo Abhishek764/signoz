@@ -3,6 +3,7 @@ package metrictypes
 import (
 	"database/sql/driver"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -135,6 +136,10 @@ func (t *Type) Scan(src interface{}) error {
 	return nil
 }
 
+func (t Type) IsPercentileSpaceAggregationAllowed() bool {
+	return t == HistogramType || t == ExpHistogramType || t == SummaryType
+}
+
 var (
 	GaugeType        = Type{valuer.NewString("gauge")}
 	SumType          = Type{valuer.NewString("sum")}
@@ -185,6 +190,10 @@ func (TimeAggregation) Enum() []any {
 	}
 }
 
+func (t TimeAggregation) IsValid() bool {
+	return slices.ContainsFunc(t.Enum(), func(v any) bool { return v == t })
+}
+
 type SpaceAggregation struct {
 	valuer.String
 }
@@ -218,6 +227,10 @@ func (SpaceAggregation) Enum() []any {
 	}
 }
 
+func (s SpaceAggregation) IsValid() bool {
+	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
+}
+
 func (s SpaceAggregation) IsPercentile() bool {
 	return s == SpaceAggregationPercentile50 ||
 		s == SpaceAggregationPercentile75 ||
@@ -244,7 +257,7 @@ func (s SpaceAggregation) Percentile() float64 {
 }
 
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
-// from the start and end time, for internal use only when we need to override the derived tables
+// from the start and end time, for internal use only when we need to override the derived tables.
 type MetricTableHints struct {
 	TimeSeriesTableName string
 	SamplesTableName    string

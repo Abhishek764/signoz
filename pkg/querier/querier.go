@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	gomaps "maps"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dustin/go-humanize"
+	"golang.org/x/exp/maps"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -16,9 +20,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"golang.org/x/exp/maps"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -39,7 +44,7 @@ type querier struct {
 	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 	bucketCache              BucketCache
-	liveDataRefreshSeconds   time.Duration
+	liveDataRefresh          time.Duration
 }
 
 var _ Querier = (*querier)(nil)
@@ -68,11 +73,11 @@ func New(
 		meterStmtBuilder:         meterStmtBuilder,
 		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
-		liveDataRefreshSeconds:   5,
+		liveDataRefresh:          5 * time.Second,
 	}
 }
 
-// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present
+// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present.
 func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int64 {
 	for _, fn := range spec.Functions {
 		if fn.Name == qbtypes.FunctionNameTimeShift && len(fn.Args) > 0 {
@@ -93,7 +98,7 @@ func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int6
 	return 0
 }
 
-// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function
+// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function.
 func adjustTimeRangeForShift[T any](spec qbtypes.QueryBuilderQuery[T], tr qbtypes.TimeRange, kind qbtypes.RequestType) qbtypes.TimeRange {
 	// Only apply time shift for time series and scalar queries
 	// Raw/list queries don't support timeshift
@@ -156,7 +161,8 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	metricNames := make([]string, 0)
 	for idx, query := range req.CompositeQuery.Queries {
 		event.QueryType = query.Type.StringValue()
-		if query.Type == qbtypes.QueryTypeBuilder {
+		switch query.Type {
+		case qbtypes.QueryTypeBuilder:
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]); ok {
 				for _, agg := range spec.Aggregations {
 					if agg.MetricName != "" {
@@ -181,7 +187,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
-					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -198,7 +204,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
-					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -228,13 +234,13 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						newStep := qbtypes.Step{
 							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
 						}
-						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 						spec.StepInterval = newStep
 					}
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
-		} else if query.Type == qbtypes.QueryTypePromQL {
+		case qbtypes.QueryTypePromQL:
 			event.MetricsUsed = true
 			switch spec := query.Spec.(type) {
 			case qbtypes.PromQuery:
@@ -245,7 +251,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
 			}
-		} else if query.Type == qbtypes.QueryTypeClickHouseSQL {
+		case qbtypes.QueryTypeClickHouseSQL:
 			switch spec := query.Spec.(type) {
 			case qbtypes.ClickHouseQuery:
 				if strings.TrimSpace(spec.Query) != "" {
@@ -254,7 +260,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					event.TracesUsed = strings.Contains(spec.Query, "signoz_traces")
 				}
 			}
-		} else if query.Type == qbtypes.QueryTypeTraceOperator {
+		case qbtypes.QueryTypeTraceOperator:
 			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
 				if spec.StepInterval.Seconds() == 0 {
 					spec.StepInterval = qbtypes.Step{
@@ -266,7 +272,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
-					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -274,23 +280,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 
-	// Fetch temporality for all metrics at once
-	var metricTemporality map[string]metrictypes.Temporality
-	var metricTypes map[string]metrictypes.Type
-	if len(metricNames) > 0 {
-		var err error
-		metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
-		if err != nil {
-			q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
-			// Continue without temporality - statement builder will handle unspecified
-			metricTemporality = make(map[string]metrictypes.Temporality)
-			metricTypes = make(map[string]metrictypes.Type)
-		}
-		q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
-	}
-
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
+	missingMetrics := []string{}
+	missingMetricQueries := []string{}
 
 	for _, query := range req.CompositeQuery.Queries {
 		var queryName string
@@ -362,42 +355,59 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				bq := newBuilderQuery(q.logger, q.telemetryStore, q.traceStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+				bq := newBuilderQuery(q.logger, q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				var metricTemporality map[string]metrictypes.Temporality
+				var metricTypes map[string]metrictypes.Type
+				if len(metricNames) > 0 {
+					var err error
+					metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
+					if err != nil {
+						q.logger.WarnContext(ctx, "failed to fetch metric temporality", errors.Attr(err), slog.Any("metrics", metricNames))
+						return nil, errors.NewInternalf(errors.CodeInternal, "failed to fetch metrics temporality")
+					}
+					q.logger.DebugContext(ctx, "fetched metric temporalities and types", slog.Any("metric_temporality", metricTemporality), slog.Any("metric_types", metricTypes))
+				}
+				presentAggregations := []qbtypes.MetricAggregation{}
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
 							spec.Aggregations[i].Temporality = temp
 						}
 					}
-					// TODO(srikanthccv): warn when the metric is missing
 					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
-						spec.Aggregations[i].Temporality = metrictypes.Unspecified
+						missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
+						continue
 					}
-
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 							spec.Aggregations[i].Type = foundMetricType
 						}
 					}
+					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 				}
+				if len(presentAggregations) == 0 {
+					missingMetricQueries = append(missingMetricQueries, spec.Name)
+					continue
+				}
+				spec.Aggregations = presentAggregations
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
 
 				if spec.Source == telemetrytypes.SourceMeter {
 					event.Source = telemetrytypes.SourceMeter.StringValue()
-					bq = newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+					bq = newBuilderQuery(q.logger, q.telemetryStore, q.meterStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				} else {
-					bq = newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
+					bq = newBuilderQuery(q.logger, q.telemetryStore, q.metricStmtBuilder, spec, timeRange, req.RequestType, tmplVars)
 				}
 
 				queries[spec.Name] = bq
@@ -407,7 +417,50 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 		}
 	}
-	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
+	nonExistentMetrics := []string{}
+	var dormantMetricsWarningMsg string
+	if len(missingMetrics) > 0 {
+		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
+		for _, missingMetricName := range missingMetrics {
+			if ts, ok := lastSeenInfo[missingMetricName]; ok && ts > 0 {
+				continue
+			}
+			nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
+		}
+		if len(nonExistentMetrics) == 1 {
+			return nil, errors.NewNotFoundf(errors.CodeNotFound, "could not find the metric %s", nonExistentMetrics[0])
+		} else if len(nonExistentMetrics) > 1 {
+			return nil, errors.NewNotFoundf(errors.CodeNotFound, "the following metrics were not found: %s", strings.Join(nonExistentMetrics, ", "))
+		}
+		lastSeenStr := func(name string) string {
+			if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
+				ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
+				return fmt.Sprintf("%s (last seen %s)", name, ago)
+			}
+			return name // this case won't come cuz lastSeenStr is never called for metrics in nonExistentMetrics
+		}
+		if len(missingMetrics) == 1 {
+			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
+		} else {
+			parts := make([]string, len(missingMetrics))
+			for i, m := range missingMetrics {
+				parts[i] = lastSeenStr(m)
+			}
+			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
+		}
+	}
+	preseededResults := make(map[string]any)
+	for _, name := range missingMetricQueries { // at this point missing metrics will not have any non existent metrics, only normal ones
+		switch req.RequestType {
+		case qbtypes.RequestTypeTimeSeries:
+			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
+		case qbtypes.RequestTypeScalar:
+			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
+		case qbtypes.RequestTypeRaw:
+			preseededResults[name] = &qbtypes.RawData{QueryName: name}
+		}
+	}
+	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
 	if qbResp != nil {
 		qbResp.QBEvent = event
 		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
@@ -419,6 +472,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
 				}
 			}
+		}
+		if dormantMetricsWarningMsg != "" {
+			if qbResp.Warning == nil {
+				qbResp.Warning = &qbtypes.QueryWarnData{}
+			}
+			qbResp.Warning.Warnings = append(qbResp.Warning.Warnings, qbtypes.QueryWarnDataAdditional{
+				Message: dormantMetricsWarningMsg,
+			})
 		}
 	}
 	return qbResp, qbErr
@@ -468,7 +529,7 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 	}
 	updatedLogID := ""
 
-	ticker := time.NewTicker(time.Duration(q.liveDataRefreshSeconds) * time.Second)
+	ticker := time.NewTicker(q.liveDataRefresh)
 	defer ticker.Stop()
 
 	// we are creating a custom ticker wrapper to trigger it instantly
@@ -489,14 +550,14 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 		case <-tick:
 			// timestamp end is not specified here
 			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: tsStart}, req.RequestType)
-			bq := newBuilderQuery(q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
+			bq := newBuilderQuery(q.logger, q.telemetryStore, q.logStmtBuilder, spec, timeRange, req.RequestType, map[string]qbtypes.VariableItem{
 				"id": {
 					Value: updatedLogID,
 				},
 			})
 			queries[spec.Name] = bq
 
-			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event)
+			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event, nil)
 			if qbErr != nil {
 				client.Error <- qbErr
 				return
@@ -525,7 +586,13 @@ func (q *querier) run(
 	req *qbtypes.QueryRangeRequest,
 	steps map[string]qbtypes.Step,
 	qbEvent *qbtypes.QBEvent,
+	preseededResults map[string]any,
 ) (*qbtypes.QueryRangeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.PanelType: qbEvent.PanelType,
+		instrumentationtypes.QueryType: qbEvent.QueryType,
+	})
+
 	results := make(map[string]any)
 	warnings := make([]string, 0)
 	warningsDocURL := ""
@@ -566,9 +633,9 @@ func (q *querier) run(
 		// Skip cache if NoCache is set, or if cache is not available
 		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
 			if req.NoCache {
-				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", "query", name)
+				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", slog.String("query", name))
 			} else {
-				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", "fingerprint", query.Fingerprint())
+				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
 			}
 			result, err := query.Execute(ctx)
 			qbEvent.HasData = qbEvent.HasData || hasData(result)
@@ -605,6 +672,7 @@ func (q *querier) run(
 		}
 	}
 
+	gomaps.Copy(results, preseededResults)
 	processedResults, err := q.postProcessResults(ctx, results, req)
 	if err != nil {
 		return nil, err
@@ -614,7 +682,7 @@ func (q *querier) run(
 	// or go to related logs/traces from a point in line/bar chart with correct time range
 	stepIntervals := make(map[string]uint64, len(steps))
 	for name, step := range steps {
-		stepIntervals[name] = uint64(step.Duration.Seconds())
+		stepIntervals[name] = uint64(step.Seconds())
 	}
 	for _, query := range req.CompositeQuery.Queries {
 		if query.Type == qbtypes.QueryTypeFormula {
@@ -655,8 +723,8 @@ func (q *querier) run(
 	return resp, nil
 }
 
-// executeWithCache executes a query using the bucket cache
-func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step, noCache bool) (*qbtypes.Result, error) {
+// executeWithCache executes a query using the bucket cache.
+func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step, _ bool) (*qbtypes.Result, error) {
 	// Get cached data and missing ranges
 	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
 
@@ -685,8 +753,8 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	totalStats := qbtypes.ExecStats{}
 
 	q.logger.DebugContext(ctx, "executing queries for missing ranges",
-		"missing_ranges_count", len(missingRanges),
-		"ranges", missingRanges)
+		slog.Int("missing_ranges_count", len(missingRanges)),
+		slog.Any("ranges", missingRanges))
 
 	sem := make(chan struct{}, 4)
 	var wg sync.WaitGroup
@@ -724,7 +792,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	for _, err := range errs {
 		if err != nil {
 			// If any query failed, fall back to full execution
-			q.logger.ErrorContext(ctx, "parallel query execution failed", "error", err)
+			q.logger.ErrorContext(ctx, "parallel query execution failed", errors.Attr(err))
 			result, err := query.Execute(ctx)
 			if err != nil {
 				return nil, err
@@ -758,7 +826,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	return mergedResult, nil
 }
 
-// createRangedQuery creates a copy of the query with a different time range
+// createRangedQuery creates a copy of the query with a different time range.
 func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
 	// this is called in a goroutine, so we create a copy of the query to avoid race conditions
 	switch qt := originalQuery.(type) {
@@ -776,22 +844,22 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 		specCopy := qt.spec.Copy()
 		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.traceStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+		return newBuilderQuery(q.logger, q.telemetryStore, q.traceStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 
 	case *builderQuery[qbtypes.LogAggregation]:
 		specCopy := qt.spec.Copy()
 		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		return newBuilderQuery(q.telemetryStore, q.logStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+		return newBuilderQuery(q.logger, q.telemetryStore, q.logStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 
 	case *builderQuery[qbtypes.MetricAggregation]:
 		specCopy := qt.spec.Copy()
 		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
 		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		if qt.spec.Source == telemetrytypes.SourceMeter {
-			return newBuilderQuery(q.telemetryStore, q.meterStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+			return newBuilderQuery(q.logger, q.telemetryStore, q.meterStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 		}
-		return newBuilderQuery(q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
+		return newBuilderQuery(q.logger, q.telemetryStore, q.metricStmtBuilder, specCopy, adjustedTimeRange, qt.kind, qt.variables)
 	case *traceOperatorQuery:
 		specCopy := qt.spec.Copy()
 		return &traceOperatorQuery{
@@ -808,7 +876,7 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 	}
 }
 
-// mergeResults merges cached result with fresh results
+// mergeResults merges cached result with fresh results.
 func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) *qbtypes.Result {
 	if cached == nil {
 		if len(fresh) == 1 {
@@ -872,7 +940,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	return merged
 }
 
-// mergeTimeSeriesResults merges time series data
+// mergeTimeSeriesResults merges time series data.
 func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
 
 	// Map to store merged series by aggregation index and series key

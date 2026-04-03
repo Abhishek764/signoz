@@ -18,8 +18,7 @@ import {
 	TowerControl,
 	Workflow,
 } from 'lucide-react';
-
-export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
+import { ROLES } from 'types/roles';
 
 export type CmdAction = {
 	id: string;
@@ -28,7 +27,7 @@ export type CmdAction = {
 	keywords?: string;
 	section?: string;
 	icon?: React.ReactNode;
-	roles?: UserRole[];
+	roles?: ROLES[];
 	perform: () => void;
 };
 
@@ -250,14 +249,34 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			perform: (): void => navigate(ROUTES.BILLING),
 		},
 		{
-			id: 'my-settings-api-keys',
-			name: 'Go to Account Settings API Keys',
-			shortcut: [GlobalShortcutsName.NavigateToSettingsAPIKeys],
-			keywords: 'account settings api keys',
+			id: 'my-settings-service-accounts',
+			name: 'Go to Service Accounts',
+			shortcut: [GlobalShortcutsName.NavigateToSettingsServiceAccounts],
+			keywords: 'settings service accounts',
 			section: 'Settings',
 			icon: <Settings size={14} />,
-			roles: ['ADMIN', 'EDITOR'],
-			perform: (): void => navigate(ROUTES.API_KEYS),
+			roles: ['ADMIN'],
+			perform: (): void => navigate(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+		},
+		{
+			id: 'my-settings-roles',
+			name: 'Go to Roles',
+			shortcut: [GlobalShortcutsName.NavigateToSettingsRoles],
+			keywords: 'settings roles',
+			section: 'Settings',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN'],
+			perform: (): void => navigate(ROUTES.ROLES_SETTINGS),
+		},
+		{
+			id: 'my-settings-members',
+			name: 'Go to Members',
+			shortcut: [GlobalShortcutsName.NavigateToSettingsMembers],
+			keywords: 'settings members',
+			section: 'Settings',
+			icon: <Settings size={14} />,
+			roles: ['ADMIN'],
+			perform: (): void => navigate(ROUTES.MEMBERS_SETTINGS),
 		},
 	];
 }

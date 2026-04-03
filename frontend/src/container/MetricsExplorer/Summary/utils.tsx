@@ -1,12 +1,11 @@
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 import {
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
 	MetricsexplorertypesTreemapModeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { MetricsListPayload } from 'api/metricsExplorer/getMetricsList';
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
@@ -75,14 +74,6 @@ export const getMetricsTableColumns = (
 		sorter: true,
 	},
 ];
-
-export const getMetricsListQuery = (): MetricsListPayload => ({
-	filters: {
-		items: [],
-		op: 'and',
-	},
-	orderBy: { columnName: 'metric_name', order: 'asc' },
-});
 
 function ValidateRowValueWrapper({
 	value,

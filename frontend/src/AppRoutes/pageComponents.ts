@@ -157,17 +157,8 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
-export const APIKeys = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
-);
-
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
-);
-
-export const CustomDomainSettings = Loadable(
-	() =>
-		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
 );
 
 export const Logs = Loadable(

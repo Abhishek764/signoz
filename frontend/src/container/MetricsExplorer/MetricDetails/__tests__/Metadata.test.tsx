@@ -5,7 +5,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
@@ -180,7 +179,10 @@ describe('Metadata', () => {
 
 		const temporalitySelect = screen.getByTestId('temporality-select');
 		expect(temporalitySelect).toBeInTheDocument();
-		await userEvent.selectOptions(temporalitySelect, Temporality.CUMULATIVE);
+		await userEvent.selectOptions(
+			temporalitySelect,
+			MetrictypesTemporalityDTO.cumulative,
+		);
 
 		const unitSelect = screen.getByTestId('unit-select');
 		expect(unitSelect).toBeInTheDocument();
@@ -322,6 +324,22 @@ describe('Metadata', () => {
 
 		const editButton2 = screen.getByText('Edit');
 		expect(editButton2).toBeInTheDocument();
+	});
+
+	it('should show section header with disabled edit while loading', () => {
+		render(
+			<Metadata
+				metricName={MOCK_METRIC_NAME}
+				metadata={null}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata
+				refetchMetricMetadata={mockRefetchMetricMetadata}
+			/>,
+		);
+
+		expect(screen.getByText('Metadata')).toBeInTheDocument();
+		const editButton = screen.getByText('Edit').closest('button');
+		expect(editButton).toBeDisabled();
 	});
 
 	it('should not allow editing of unit if it is already set', async () => {

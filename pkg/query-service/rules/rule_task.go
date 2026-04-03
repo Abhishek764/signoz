@@ -2,17 +2,19 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"log/slog"
+
 	opentracing "github.com/opentracing/opentracing-go"
-	"go.uber.org/zap"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // RuleTask holds a rule (with composite queries)
@@ -23,6 +25,7 @@ type RuleTask struct {
 	frequency          time.Duration
 	rules              []Rule
 	opts               *ManagerOptions
+	logger             *slog.Logger
 	mtx                sync.Mutex
 	evaluationDuration time.Duration
 	evaluationTime     time.Duration
@@ -46,7 +49,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
-	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
+	opts.Logger.Info("initiating a new rule task", "name", name, "frequency", frequency)
 
 	return &RuleTask{
 		name:             name,
@@ -55,6 +58,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		frequency:        frequency,
 		rules:            rules,
 		opts:             opts,
+		logger:           opts.Logger,
 		done:             make(chan struct{}),
 		terminated:       make(chan struct{}),
 		notify:           notify,
@@ -89,7 +93,7 @@ func (g *RuleTask) Pause(b bool) {
 
 type QueryOrigin struct{}
 
-func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) context.Context {
+func NewQueryOriginContext(ctx context.Context, data map[string]any) context.Context {
 	return context.WithValue(ctx, QueryOrigin{}, data)
 }
 
@@ -98,14 +102,14 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
+	g.logger.DebugContext(ctx, "group run to begin at", "eval_timestamp", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
 		return
 	}
 
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+	ctx = NewQueryOriginContext(ctx, map[string]any{
 		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
@@ -157,8 +161,8 @@ func (g *RuleTask) Stop() {
 }
 
 func (g *RuleTask) hash() uint64 {
-	l := labels.New(
-		labels.Label{Name: "name", Value: g.name},
+	l := ruletypes.New(
+		ruletypes.Label{Name: "name", Value: g.name},
 	)
 	return l.Hash()
 }
@@ -174,7 +178,7 @@ func (g *RuleTask) ThresholdRules() []*ThresholdRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -259,7 +263,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
-		return fmt.Errorf("invalid from task for copy")
+		return errors.NewInternalf(errors.CodeInternal, "invalid from task for copy")
 	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation
@@ -304,16 +308,16 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("panic during threshold rule evaluation", zap.Any("panic", r))
+			g.logger.ErrorContext(ctx, "panic during threshold rule evaluation", "panic", r)
 		}
 	}()
 
-	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
+	g.logger.DebugContext(ctx, "rule task eval started", "name", g.name, "start_time", ts)
 
 	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
 
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
+		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
 	}
 
 	for i, rule := range g.rules {
@@ -323,7 +327,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", slog.String("rule.id", rule.ID()), slog.Any("maintenance", m))
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -331,7 +335,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			g.logger.InfoContext(ctx, "rule should be skipped", slog.String("rule.id", rule.ID()))
 			continue
 		}
 
@@ -355,7 +359,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			comment := ctxtypes.CommentFromContext(ctx)
 			comment.Set("rule_id", rule.ID())
-			comment.Set("auth_type", "internal")
+			comment.Set("identn_provider", authtypes.IdentNProviderInternal.StringValue())
 			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
@@ -363,7 +367,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

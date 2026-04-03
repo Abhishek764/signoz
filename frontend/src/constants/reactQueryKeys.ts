@@ -14,6 +14,13 @@ export const REACT_QUERY_KEY = {
 		'CLOUD_INTEGRATION_GET_CONNECTION_PARAMS',
 	CLOUD_INTEGRATION_GET_DEPLOYMENT_COMMANDS:
 		'CLOUD_INTEGRATION_GET_DEPLOYMENT_COMMANDS',
+	/**
+	 * For any query that should support AutoRefresh and min/max time is from DateTimeSelectionV2
+	 * You can prefix the query with this KEY, it will allow the queries to be automatically refreshed
+	 * when the user clicks in the refresh button, or alert the user when the data is being refreshed.
+	 */
+	AUTO_REFRESH_QUERY: 'AUTO_REFRESH_QUERY',
+
 	GET_PUBLIC_DASHBOARD: 'GET_PUBLIC_DASHBOARD',
 	GET_PUBLIC_DASHBOARD_META: 'GET_PUBLIC_DASHBOARD_META',
 	GET_PUBLIC_DASHBOARD_WIDGET_DATA: 'GET_PUBLIC_DASHBOARD_WIDGET_DATA',
@@ -64,7 +71,6 @@ export const REACT_QUERY_KEY = {
 
 	// Metrics Explorer Query Keys
 	GET_METRICS_LIST: 'GET_METRICS_LIST',
-	GET_METRICS_TREE_MAP: 'GET_METRICS_TREE_MAP',
 	GET_METRICS_LIST_FILTER_KEYS: 'GET_METRICS_LIST_FILTER_KEYS',
 	GET_METRICS_LIST_FILTER_VALUES: 'GET_METRICS_LIST_FILTER_VALUES',
 	GET_METRIC_DETAILS: 'GET_METRIC_DETAILS',
@@ -112,4 +118,7 @@ export const REACT_QUERY_KEY = {
 
 	// Span Percentiles Query Keys
 	GET_SPAN_PERCENTILES: 'GET_SPAN_PERCENTILES',
+
+	// Dashboard Grid Card Query Keys
+	DASHBOARD_GRID_CARD_QUERY_RANGE: 'DASHBOARD_GRID_CARD_QUERY_RANGE',
 } as const;

@@ -1,10 +1,9 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Tooltip, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
@@ -15,6 +14,7 @@ import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
+import { InspectMetricsSeries } from './types';
 import {
 	ExpandedViewProps,
 	InspectionStep,
@@ -42,7 +42,8 @@ function ExpandedView({
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.InspectPointClicked, {
 			[MetricsExplorerEventKeys.Modal]: 'inspect',
-			[MetricsExplorerEventKeys.Filters]: metricInspectionAppliedOptions.filters,
+			[MetricsExplorerEventKeys.Filters]:
+				metricInspectionAppliedOptions.filterExpression,
 			[MetricsExplorerEventKeys.TimeAggregationInterval]:
 				metricInspectionAppliedOptions.timeAggregationInterval,
 			[MetricsExplorerEventKeys.TimeAggregationOption]:

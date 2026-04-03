@@ -14,6 +14,10 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
+import {
+	useGlobalTimeQueryInvalidate,
+	useIsGlobalTimeQueryRefreshing,
+} from 'hooks/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -30,6 +34,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
+import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -234,20 +239,7 @@ function DateTimeSelection({
 
 	const updateLocalStorageForRoutes = useCallback(
 		(value: Time | string): void => {
-			const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-			if (preRoutes !== null) {
-				const preRoutesObject = JSON.parse(preRoutes);
-
-				const preRoute = {
-					...preRoutesObject,
-				};
-				preRoute[location.pathname] = value;
-
-				setLocalStorageKey(
-					LOCALSTORAGE.METRICS_TIME_IN_DURATION,
-					JSON.stringify(preRoute),
-				);
-			}
+			persistTimeDurationForRoute(location.pathname, String(value));
 		},
 		[location.pathname],
 	);
@@ -364,7 +356,10 @@ function DateTimeSelection({
 		],
 	);
 
+	const isRefreshingQueries = useIsGlobalTimeQueryRefreshing();
+	const invalidateQueries = useGlobalTimeQueryInvalidate();
 	const onRefreshHandler = (): void => {
+		invalidateQueries();
 		onSelectHandler(selectedTime);
 		onLastRefreshHandler();
 	};
@@ -738,12 +733,17 @@ function DateTimeSelection({
 						showRecentlyUsed={showRecentlyUsed}
 						minTime={minTimeForDateTimePicker}
 						maxTime={maxTimeForDateTimePicker}
+						isModalTimeSelection={isModalTimeSelection}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+								<Button
+									icon={<SyncOutlined />}
+									loading={!!isRefreshingQueries}
+									onClick={onRefreshHandler}
+								/>
 							</FormItem>
 
 							<FormItem>

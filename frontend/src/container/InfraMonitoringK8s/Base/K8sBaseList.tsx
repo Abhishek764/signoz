@@ -336,7 +336,7 @@ export function K8sBaseList<T>({
 		groupBy,
 	]);
 
-	const { data, isFetching, isLoading, isError } = useQuery({
+	const { data, isLoading, isError } = useQuery({
 		queryKey,
 		queryFn: ({ signal }) => {
 			const { minTime, maxTime } = getMinMaxTime();
@@ -355,7 +355,6 @@ export function K8sBaseList<T>({
 			);
 		},
 		refetchInterval: isRefreshEnabled ? refreshInterval : false,
-		keepPreviousData: true,
 	});
 
 	const pageData = data?.data;
@@ -550,8 +549,7 @@ export function K8sBaseList<T>({
 		});
 	};
 
-	const showTableLoadingState =
-		(isFetching || isLoading) && formattedItemsData?.length === 0;
+	const showTableLoadingState = isLoading;
 
 	return (
 		<>

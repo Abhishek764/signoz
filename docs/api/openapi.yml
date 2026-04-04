@@ -1116,9 +1116,10 @@ components:
       type: object
     InframonitoringtypesHostRecord:
       properties:
-        active:
-          type: boolean
         cpu:
+          format: double
+          type: number
+        diskUsage:
           format: double
           type: number
         hostName:
@@ -1133,11 +1134,90 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+        status:
+          type: string
         wait:
           format: double
           type: number
       type: object
+    InframonitoringtypesHostStatus:
+      enum:
+      - active
+      - inactive
+      type: string
     InframonitoringtypesHostsListRequest:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        filterByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesHostStatus'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      type: object
+    InframonitoringtypesHostsListResponse:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesHostRecord'
+          nullable: true
+          type: array
+        sentAnyMetricsData:
+          type: boolean
+        total:
+          type: integer
+        type:
+          type: string
+      type: object
+    InframonitoringtypesPodRecord:
+      properties:
+        meta:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        podAge:
+          format: int64
+          type: integer
+        podCPU:
+          format: double
+          type: number
+        podCPULimit:
+          format: double
+          type: number
+        podCPURequest:
+          format: double
+          type: number
+        podMemory:
+          format: double
+          type: number
+        podMemoryLimit:
+          format: double
+          type: number
+        podMemoryRequest:
+          format: double
+          type: number
+        podPhase:
+          type: string
+        podUID:
+          type: string
+      type: object
+    InframonitoringtypesPodsListRequest:
       properties:
         end:
           format: int64
@@ -1159,15 +1239,13 @@ components:
           format: int64
           type: integer
       type: object
-    InframonitoringtypesHostsListResponse:
+    InframonitoringtypesPodsListResponse:
       properties:
         endTimeBeforeRetention:
           type: boolean
-        isSendingK8SAgentMetrics:
-          type: boolean
         records:
           items:
-            $ref: '#/components/schemas/InframonitoringtypesHostRecord'
+            $ref: '#/components/schemas/InframonitoringtypesPodRecord'
           nullable: true
           type: array
         sentAnyMetricsData:
@@ -7410,6 +7488,64 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Hosts for Infra Monitoring
+      tags:
+      - infra-monitoring
+  /api/v2/infra-monitoring/pods/list:
+    post:
+      deprecated: false
+      description: This endpoint returns a list of pods along with metrics and metadata
+        for each of them
+      operationId: PodsList
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPodsListRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesPodsListResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Pods for Infra Monitoring
       tags:
       - infra-monitoring
   /api/v2/livez:

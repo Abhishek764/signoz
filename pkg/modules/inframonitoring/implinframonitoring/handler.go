@@ -47,3 +47,27 @@ func (h *handler) HostsList(rw http.ResponseWriter, req *http.Request) {
 
 	render.Success(rw, http.StatusOK, result)
 }
+
+func (h *handler) PodsList(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	var parsedReq inframonitoringtypes.PodsListRequest
+	if err := binding.JSON.BindBody(req.Body, &parsedReq); err != nil {
+		render.Error(rw, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse request body"))
+		return
+	}
+
+	result, err := h.module.PodsList(context.Background(), orgID, &parsedReq)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}

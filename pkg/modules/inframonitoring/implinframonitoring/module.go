@@ -138,3 +138,79 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 
 	return resp, nil
 }
+
+func (m *module) PodsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.PodsListResponse{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: "cpu",
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if err := m.validateOrderBy(req.OrderBy, orderByToPodsQueryNames); err != nil {
+		return nil, err
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{podUIDGroupByKey}
+		resp.Type = ResponseTypeList
+	} else {
+		resp.Type = ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []inframonitoringtypes.PodRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []inframonitoringtypes.PodRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+	}
+
+	metadataMap, err := m.getPodsTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if metadataMap == nil {
+		metadataMap = make(map[string]map[string]string)
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopPodGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		return resp, nil
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, req.Filter.Expression, req.GroupBy, pageGroups, m.newPodsTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = m.buildPodRecords(queryResp, pageGroups, req.GroupBy, metadataMap, req.End)
+
+	return resp, nil
+}

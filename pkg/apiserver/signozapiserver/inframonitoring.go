@@ -29,5 +29,24 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/infra-monitoring/pods/list", handler.New(
+		provider.authZ.ViewAccess(provider.infraMonitoringHandler.PodsList),
+		handler.OpenAPIDef{
+			ID:                  "PodsList",
+			Tags:                []string{"infra-monitoring"},
+			Summary:             "List Pods for Infra Monitoring",
+			Description:         "This endpoint returns a list of pods along with metrics and metadata for each of them",
+			Request:             new(inframonitoringtypes.PodsListRequest),
+			RequestContentType:  "application/json",
+			Response:            new(inframonitoringtypes.PodsListResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

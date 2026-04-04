@@ -110,3 +110,88 @@ type HostRecord struct {
 	DiskUsage float64                `json:"diskUsage"`
 	Meta      map[string]interface{} `json:"meta"`
 }
+
+// PodsListRequest is the request body for the v2 pods list API.
+type PodsListRequest struct {
+	Start   int64                `json:"start"`
+	End     int64                `json:"end"`
+	Filter  *qbtypes.Filter      `json:"filter"`
+	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
+	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
+	Offset  int                  `json:"offset"`
+	Limit   int                  `json:"limit"`
+}
+
+// Validate ensures PodsListRequest contains acceptable values.
+func (req *PodsListRequest) Validate() error {
+	if req == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.Start <= 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid start time %d: start must be greater than 0",
+			req.Start,
+		)
+	}
+
+	if req.End <= 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid end time %d: end must be greater than 0",
+			req.End,
+		)
+	}
+
+	if req.Start >= req.End {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid time range: start (%d) must be less than end (%d)",
+			req.Start,
+			req.End,
+		)
+	}
+
+	if req.Limit < 1 || req.Limit > 5000 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be between 1 and 5000")
+	}
+
+	if req.Offset < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	return nil
+}
+
+// UnmarshalJSON validates input immediately after decoding.
+func (req *PodsListRequest) UnmarshalJSON(data []byte) error {
+	type raw PodsListRequest
+	var decoded raw
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*req = PodsListRequest(decoded)
+	return req.Validate()
+}
+
+type PodsListResponse struct {
+	Type                   string      `json:"type"`
+	Records                []PodRecord `json:"records"`
+	Total                  int         `json:"total"`
+	SentAnyMetricsData     bool        `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool        `json:"endTimeBeforeRetention"`
+}
+
+type PodRecord struct {
+	PodUID           string                 `json:"podUID,omitempty"`
+	PodCPU           float64                `json:"podCPU"`
+	PodCPURequest    float64                `json:"podCPURequest"`
+	PodCPULimit      float64                `json:"podCPULimit"`
+	PodMemory        float64                `json:"podMemory"`
+	PodMemoryRequest float64                `json:"podMemoryRequest"`
+	PodMemoryLimit   float64                `json:"podMemoryLimit"`
+	PodPhase         string                 `json:"podPhase"`
+	PodAge           int64                  `json:"podAge"`
+	Meta             map[string]interface{} `json:"meta"`
+}

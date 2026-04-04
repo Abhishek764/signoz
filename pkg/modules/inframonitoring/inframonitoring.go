@@ -10,8 +10,10 @@ import (
 
 type Handler interface {
 	HostsList(http.ResponseWriter, *http.Request)
+	PodsList(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
 	HostsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error)
+	PodsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error)
 }

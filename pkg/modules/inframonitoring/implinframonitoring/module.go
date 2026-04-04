@@ -128,7 +128,11 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	fullQueryReq := buildFullQueryRequest(req.Start, req.End, req.Filter.Expression, req.GroupBy, pageGroups, m.newHostsTableListQuery())
+	hostsFilterExpr := ""
+	if req.Filter != nil {
+		hostsFilterExpr = req.Filter.Expression
+	}
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newHostsTableListQuery())
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err

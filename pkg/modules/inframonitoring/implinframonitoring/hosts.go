@@ -308,7 +308,11 @@ func (m *module) getTopHostGroups(
 			if f := copied.GetFilter(); f != nil {
 				existingExpr = f.Expression
 			}
-			merged := mergeFilterExpressions(existingExpr, req.Filter.Expression)
+			reqFilterExpr := ""
+			if req.Filter != nil {
+				reqFilterExpr = req.Filter.Expression
+			}
+			merged := mergeFilterExpressions(existingExpr, reqFilterExpr)
 			copied.SetFilter(&qbtypes.Filter{Expression: merged})
 			copied.SetGroupBy(req.GroupBy)
 		}
@@ -345,6 +349,9 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsLis
 	op := "IN"
 	if req.FilterByStatus == inframonitoringtypes.HostStatusInactive {
 		op = "NOT IN"
+	}
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
 	}
 	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))
 	req.Filter.Expression = fmt.Sprintf("(%s) AND (%s)", req.Filter.Expression, statusClause)

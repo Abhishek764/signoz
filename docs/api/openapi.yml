@@ -1116,9 +1116,10 @@ components:
       type: object
     InframonitoringtypesHostRecord:
       properties:
-        active:
-          type: boolean
         cpu:
+          format: double
+          type: number
+        diskUsage:
           format: double
           type: number
         hostName:
@@ -1133,10 +1134,17 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+        status:
+          type: string
         wait:
           format: double
           type: number
       type: object
+    InframonitoringtypesHostStatus:
+      enum:
+      - active
+      - inactive
+      type: string
     InframonitoringtypesHostsListRequest:
       properties:
         end:
@@ -1144,6 +1152,8 @@ components:
           type: integer
         filter:
           $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        filterByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesHostStatus'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -1162,8 +1172,6 @@ components:
     InframonitoringtypesHostsListResponse:
       properties:
         endTimeBeforeRetention:
-          type: boolean
-        isSendingK8SAgentMetrics:
           type: boolean
         records:
           items:

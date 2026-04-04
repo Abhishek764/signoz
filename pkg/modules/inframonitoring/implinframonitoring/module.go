@@ -204,7 +204,11 @@ func (m *module) PodsList(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return resp, nil
 	}
 
-	fullQueryReq := buildFullQueryRequest(req.Start, req.End, req.Filter.Expression, req.GroupBy, pageGroups, m.newPodsTableListQuery())
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery())
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err

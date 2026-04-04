@@ -239,7 +239,11 @@ func (m *module) getTopPodGroups(
 			if f := copied.GetFilter(); f != nil {
 				existingExpr = f.Expression
 			}
-			merged := mergeFilterExpressions(existingExpr, req.Filter.Expression)
+			reqFilterExpr := ""
+			if req.Filter != nil {
+				reqFilterExpr = req.Filter.Expression
+			}
+			merged := mergeFilterExpressions(existingExpr, reqFilterExpr)
 			copied.SetFilter(&qbtypes.Filter{Expression: merged})
 			copied.SetGroupBy(req.GroupBy)
 		}

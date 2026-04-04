@@ -325,9 +325,6 @@ func (m *module) buildPodRecords(
 				}
 			}
 			for k, v := range attrs {
-				if k == podStartTimeAttrKey {
-					continue
-				}
 				record.Meta[k] = v
 			}
 		}

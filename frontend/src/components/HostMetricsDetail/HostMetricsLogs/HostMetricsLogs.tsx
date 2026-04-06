@@ -116,6 +116,21 @@ function HostMetricsLogs({
 		setInputExpression(expression);
 	}, []);
 
+	const {
+		logs,
+		loadMoreLogs,
+		hasNextPage,
+		isFetchingNextPage,
+		isLoading,
+		isFetching,
+		isError,
+		refetch,
+	} = useInfiniteHostMetricLogs({
+		expression: debouncedFilterExpression,
+		startTime: timeRange.startTime,
+		endTime: timeRange.endTime,
+	});
+
 	const handleRunQuery = useCallback(
 		(updatedExpression?: string): void => {
 			const validation = validateQuery(updatedExpression || inputExpression);
@@ -127,9 +142,11 @@ function HostMetricsLogs({
 					view: InfraMonitoringEvents.LogsView,
 					page: InfraMonitoringEvents.DetailedPage,
 				});
+
+				refetch();
 			}
 		},
-		[inputExpression, setFilterExpression],
+		[inputExpression, refetch, setFilterExpression],
 	);
 
 	const queryData = useMemo(
@@ -143,20 +160,6 @@ function HostMetricsLogs({
 			}).queryData,
 		[timeRange.startTime, timeRange.endTime, inputExpression],
 	);
-
-	const {
-		logs,
-		loadMoreLogs,
-		hasNextPage,
-		isFetchingNextPage,
-		isLoading,
-		isFetching,
-		isError,
-	} = useInfiniteHostMetricLogs({
-		expression: debouncedFilterExpression,
-		startTime: timeRange.startTime,
-		endTime: timeRange.endTime,
-	});
 
 	const handleScrollToLog = useScrollToLog({
 		logs,
@@ -247,7 +250,7 @@ function HostMetricsLogs({
 				/>
 				<RunQueryBtn
 					isLoadingQueries={isLoading || isFetching}
-					onStageRunQuery={handleRunQuery}
+					onStageRunQuery={(): void => handleRunQuery()}
 				/>
 			</div>
 

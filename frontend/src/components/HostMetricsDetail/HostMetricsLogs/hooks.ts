@@ -25,6 +25,7 @@ export function useInfiniteHostMetricLogs({
 	error?: unknown;
 	hasNextPage: boolean;
 	loadMoreLogs: () => void;
+	refetch: () => void;
 } {
 	const {
 		data,
@@ -35,6 +36,7 @@ export function useInfiniteHostMetricLogs({
 		error,
 		hasNextPage,
 		fetchNextPage,
+		refetch,
 	} = useInfiniteQuery({
 		queryKey: ['hostMetricsLogs', startTime, endTime, expression],
 		queryFn: async ({ pageParam = 0 }) => {
@@ -93,6 +95,7 @@ export function useInfiniteHostMetricLogs({
 		error,
 		hasNextPage: !!hasNextPage,
 		loadMoreLogs,
+		refetch,
 	};
 }
 

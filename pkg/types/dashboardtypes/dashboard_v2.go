@@ -150,10 +150,23 @@ func NewGettableDashboardV2FromDashboard(dashboard *DashboardV2) (*GettableDashb
 	}, nil
 }
 
-func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard UpdatableDashboardV2, updatedBy string) error {
+func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard UpdatableDashboardV2, updatedBy string, diff int) error {
 	if dashboard.Data.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
+
+	if diff > 0 {
+		deleted := 0
+		for key := range dashboard.Data.Spec.Panels {
+			if _, exists := updatableDashboard.Spec.Panels[key]; !exists {
+				deleted++
+			}
+		}
+		if deleted > diff {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "deleting more than %d panel(s) is not supported", diff)
+		}
+	}
+
 	dashboard.UpdatedBy = updatedBy
 	updatableDashboard.Metadata.UpdatedAt = time.Now()
 	dashboard.Data = updatableDashboard

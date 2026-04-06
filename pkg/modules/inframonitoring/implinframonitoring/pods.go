@@ -88,6 +88,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.cpu.usage",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -106,6 +107,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.cpu_request_utilization",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationAvg,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -124,6 +126,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.cpu_limit_utilization",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationAvg,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -142,6 +145,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.memory.working_set",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -160,6 +164,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.memory_request_utilization",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationAvg,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -178,6 +183,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.memory_limit_utilization",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationAvg,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -196,6 +202,7 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "k8s.pod.phase",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationLatest,
 								SpaceAggregation: metrictypes.SpaceAggregationMax,
 								ReduceTo:         qbtypes.ReduceToLast,

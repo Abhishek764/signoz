@@ -37,6 +37,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -423,6 +424,18 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 
 	// If custom templated, render via the HTML layout template
 	if result.IsCustomTemplated() {
+		// Add buttons to each of the bodies if the related logs and traces links are present in annotations
+		for i := range result.Body {
+			relatedLogsLink := alerts[i].Annotations[ruletypes.AnnotationRelatedLogs]
+			relatedTracesLink := alerts[i].Annotations[ruletypes.AnnotationRelatedTraces]
+			if relatedLogsLink != "" {
+				result.Body[i] += htmlButton("View Related Logs", string(relatedLogsLink))
+			}
+			if relatedTracesLink != "" {
+				result.Body[i] += htmlButton("View Related Traces", string(relatedTracesLink))
+			}
+		}
+
 		htmlContent, renderErr := n.processor.RenderEmailNotification(ctx, emailtypes.TemplateNameAlertEmailNotification, result, alerts)
 		if renderErr == nil {
 			return title, htmlContent, nil
@@ -450,6 +463,29 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 		return title, b.String(), nil
 	}
 	return title, "", nil
+}
+
+func htmlButton(text, url string) string {
+	return fmt.Sprintf(`
+	<a href="%s" target="_blank" style="text-decoration: none;">
+<button style="
+    padding: 6px 16px;
+    /* Default System Font */
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    /* Light Theme & Dynamic Background (Solid) */
+    color: #111827;
+    background-color: #f9fafb;
+    /* Static Outline */
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+">
+  %s
+</button>
+</a>`, url, text)
 }
 
 type loginAuth struct {

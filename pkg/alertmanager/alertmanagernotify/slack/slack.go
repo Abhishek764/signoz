@@ -27,6 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -254,10 +255,30 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 			color = colorGreen // green for resolved
 		}
 
+		// If alert has related logs and traces, add them to the attachment as action buttons
+		var actionButtons []config.SlackAction
+		relatedLogsLink := alerts[i].Annotations[ruletypes.AnnotationRelatedLogs]
+		relatedTracesLink := alerts[i].Annotations[ruletypes.AnnotationRelatedTraces]
+		if relatedLogsLink != "" {
+			actionButtons = append(actionButtons, config.SlackAction{
+				Type: "button",
+				Text: "View Related Logs",
+				URL:  string(relatedLogsLink),
+			})
+		}
+		if relatedTracesLink != "" {
+			actionButtons = append(actionButtons, config.SlackAction{
+				Type: "button",
+				Text: "View Related Traces",
+				URL:  string(relatedTracesLink),
+			})
+		}
+
 		attachments = append(attachments, attachment{
 			Text:     body,
 			Color:    color,
 			MrkdwnIn: []string{"text"},
+			Actions:  actionButtons,
 		})
 	}
 

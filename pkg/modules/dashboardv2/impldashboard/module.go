@@ -42,3 +42,32 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 
 	return dashboard, nil
 }
+
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboardV2, diff int) (*dashboardtypes.DashboardV2, error) {
+	// Fetch current state to validate lock status and panel diff before updating.
+	// This lives in the module layer (not pushed into a conditional SQL update)
+	// to keep business logic out of the store.
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.Update(ctx, data, updatedBy, diff)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}

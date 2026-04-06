@@ -5,6 +5,7 @@ import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
+import { mockQueryRangeV5WithLogsResponse } from '../../../../__tests__/query_range_v5.util';
 import HostMetricsLogs from '../HostMetricsLogs';
 
 jest.mock('react-virtuoso', () => {
@@ -47,82 +48,6 @@ jest.mock('react-virtuoso', () => {
 const QUERY_RANGE_URL = `${ENVIRONMENT.baseURL}/api/v5/query_range`;
 const FIELDS_KEYS_URL = `${ENVIRONMENT.baseURL}/api/v1/fields/keys`;
 const FIELDS_VALUES_URL = `${ENVIRONMENT.baseURL}/api/v1/fields/values`;
-
-// Creates a V5 API response structure for raw logs data
-// The API response is wrapped in { data: { type: '...', data: { results: [...] } } }
-const createLogsResponse = ({
-	offset = 0,
-	pageSize = 100,
-	hasMore = true,
-}: {
-	offset?: number;
-	pageSize?: number;
-	hasMore?: boolean;
-}): any => {
-	const itemsForThisPage = hasMore ? pageSize : Math.min(pageSize / 2, 10);
-
-	return {
-		data: {
-			type: 'raw',
-			data: {
-				results: [
-					{
-						queryName: 'A',
-						rows: Array.from({ length: itemsForThisPage }, (_, index) => {
-							const cumulativeIndex = offset + index;
-							const baseTimestamp = new Date('2024-02-15T21:20:22Z').getTime();
-							const currentTimestamp = new Date(
-								baseTimestamp - cumulativeIndex * 1000,
-							);
-							const timestampString = currentTimestamp.toISOString();
-							const id = `log-id-${cumulativeIndex}`;
-							const logLevel = ['INFO', 'WARN', 'ERROR'][cumulativeIndex % 3];
-							const service = ['frontend', 'backend', 'database'][cumulativeIndex % 3];
-
-							return {
-								timestamp: timestampString,
-								data: {
-									attributes_bool: {},
-									attributes_float64: {},
-									attributes_int64: {},
-									attributes_string: {
-										host_name: 'test-host',
-										log_level: logLevel,
-										service,
-									},
-									body: `${timestampString} ${logLevel} ${service} Log message ${cumulativeIndex}`,
-									id,
-									resources_string: {
-										'host.name': 'test-host',
-									},
-									severity_number: [9, 13, 17][cumulativeIndex % 3],
-									severity_text: logLevel,
-									span_id: `span-${cumulativeIndex}`,
-									trace_flags: 0,
-									trace_id: `trace-${cumulativeIndex}`,
-								},
-							};
-						}),
-					},
-				],
-			},
-		},
-	};
-};
-
-const createEmptyLogsResponse = (): any => ({
-	data: {
-		type: 'raw',
-		data: {
-			results: [
-				{
-					queryName: 'A',
-					rows: [],
-				},
-			],
-		},
-	},
-});
 
 const defaultProps = {
 	initialExpression: 'host_name = "test-host"',
@@ -214,20 +139,19 @@ describe('HostMetricsLogs', () => {
 	describe('loading state', () => {
 		it('should show loading state while fetching logs', async () => {
 			let resolveRequest: (value: any) => void;
-			const pendingPromise = new Promise((resolve) => {
+			const pendingPromise = new Promise<void>((resolve) => {
 				resolveRequest = resolve;
 			});
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (_, res, ctx) => {
-					await pendingPromise;
-					return res(ctx.status(200), ctx.json(createLogsResponse({})));
-				}),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async () => await pendingPromise,
+			});
 
 			renderComponent();
 
-			expect(screen.getByText('pending_data_placeholder')).toBeInTheDocument();
+			expect(
+				await screen.findByText('pending_data_placeholder'),
+			).toBeInTheDocument();
 
 			act(() => {
 				resolveRequest!(true);
@@ -237,17 +161,15 @@ describe('HostMetricsLogs', () => {
 
 	describe('empty state', () => {
 		it('should show no logs message when no logs are returned', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createEmptyLogsResponse())),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 0,
+			});
 
 			renderComponent();
 
-			await waitFor(() => {
+			await waitFor(async () => {
 				expect(
-					screen.getByText(/No logs found for this host/i),
+					await screen.findByText(/No logs found for this host/i),
 				).toBeInTheDocument();
 			});
 		});
@@ -263,33 +185,31 @@ describe('HostMetricsLogs', () => {
 
 			renderComponent();
 
-			await waitFor(() => {
-				expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(
+					await screen.findByText(/Something went wrong/i),
+				).toBeInTheDocument();
 			});
 		});
 	});
 
 	describe('success state', () => {
 		it('should render logs when API returns data', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+			});
 
 			renderComponent();
 
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText(/Log message 0/)).toBeInTheDocument();
 			});
 		});
 
 		it('should render initial expression in QuerySearch editor', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+			});
 
 			renderComponent();
 
@@ -302,11 +222,9 @@ describe('HostMetricsLogs', () => {
 		});
 
 		it('should render the filter section', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+			});
 
 			renderComponent();
 
@@ -318,11 +236,9 @@ describe('HostMetricsLogs', () => {
 		});
 
 		it('should render date time selection component', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+			});
 
 			renderComponent();
 
@@ -337,26 +253,21 @@ describe('HostMetricsLogs', () => {
 		it('should send correct offset for pagination', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
 					const querySpec = payload.compositeQuery?.queries?.[0]?.spec;
 					const offset = querySpec?.offset ?? 0;
 
-					return res(
-						ctx.status(200),
-						ctx.json(
-							createLogsResponse({
-								offset,
-								pageSize: 100,
-								hasMore: offset === 0,
-							}),
-						),
-					);
-				}),
-			);
+					return {
+						offset,
+						pageSize: 100,
+						hasMore: offset === 0,
+					};
+				},
+			});
 
 			renderComponent();
 
@@ -372,31 +283,26 @@ describe('HostMetricsLogs', () => {
 		it('should fetch next page when virtuoso endReached is triggered', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
 					const querySpec = payload.compositeQuery?.queries?.[0]?.spec;
 					const offset = querySpec?.offset ?? 0;
 
-					return res(
-						ctx.status(200),
-						ctx.json(
-							createLogsResponse({
-								offset,
-								pageSize: 100,
-								hasMore: offset === 0,
-							}),
-						),
-					);
-				}),
-			);
+					return {
+						offset,
+						pageSize: 100,
+						hasMore: offset === 0,
+					};
+				},
+			});
 
 			renderComponent();
 
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText(/Log message 0/)).toBeInTheDocument();
 			});
 
 			expect(requestPayloads[0]?.compositeQuery?.queries?.[0]?.spec?.offset).toBe(
@@ -419,14 +325,17 @@ describe('HostMetricsLogs', () => {
 		it('should include initial expression in the query', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			renderComponent();
 
@@ -443,26 +352,18 @@ describe('HostMetricsLogs', () => {
 		it('should load expression from URL and persist it in the query', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					const querySpec = payload.compositeQuery?.queries?.[0]?.spec;
-					const offset = querySpec?.offset ?? 0;
-
-					return res(
-						ctx.status(200),
-						ctx.json(
-							createLogsResponse({
-								offset,
-								pageSize: 100,
-								hasMore: offset === 0,
-							}),
-						),
-					);
-				}),
-			);
+					return {
+						pageSize: 100,
+						offset: 0,
+						hasMore: true,
+					};
+				},
+			});
 
 			const urlExpression = 'service = "from-url"';
 
@@ -490,14 +391,17 @@ describe('HostMetricsLogs', () => {
 		it('should use custom expression when provided', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			const customExpression = 'service = "custom-service"';
 
@@ -524,14 +428,17 @@ describe('HostMetricsLogs', () => {
 		it('should include correct time range in the query', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			const customTimeRange = {
 				startTime: 1700000000,
@@ -559,14 +466,17 @@ describe('HostMetricsLogs', () => {
 		it('should send correct query structure to the API', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			renderComponent();
 
@@ -591,14 +501,17 @@ describe('HostMetricsLogs', () => {
 		it('should send request type as raw for logs list', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			renderComponent();
 
@@ -613,14 +526,17 @@ describe('HostMetricsLogs', () => {
 		it('should include pageSize in the query', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
 
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			renderComponent();
 
@@ -639,11 +555,10 @@ describe('HostMetricsLogs', () => {
 
 	describe('component props', () => {
 		it('should render datetime section with isModalTimeSelection', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				offset: 0,
+			});
 
 			renderComponent({
 				...defaultProps,
@@ -658,11 +573,10 @@ describe('HostMetricsLogs', () => {
 		it('should render component with handleTimeChange', async () => {
 			const mockHandleTimeChange = jest.fn();
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				offset: 0,
+			});
 
 			renderComponent({
 				...defaultProps,
@@ -677,50 +591,48 @@ describe('HostMetricsLogs', () => {
 
 	describe('log detail interactions', () => {
 		it('should open log detail drawer when clicking on a log', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				offset: 0,
+			});
 
 			renderComponent();
 
 			// Wait for logs to render
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText(/Log message 0/)).toBeInTheDocument();
 			});
 
 			// Click on the first log
-			const logElement = screen.getByText(/Log message 0/);
+			const logElement = await screen.findByText(/Log message 0/);
 			await userEvent.click(logElement);
 
 			// Log detail drawer should open - it contains "Log details" title
-			await waitFor(() => {
-				expect(screen.getByText('Log details')).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText('Log details')).toBeInTheDocument();
 			});
 		});
 
 		it('should close log detail drawer when clicking on the same log again', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				offset: 0,
+			});
 
 			renderComponent();
 
 			// Wait for logs to render
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText(/Log message 0/)).toBeInTheDocument();
 			});
 
 			// Click on the first log to open
-			const logElement = screen.getByText(/Log message 0/);
+			const logElement = await screen.findByText(/Log message 0/);
 			await userEvent.click(logElement);
 
 			// Wait for drawer to open
-			await waitFor(() => {
-				expect(screen.getByText('Log details')).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText('Log details')).toBeInTheDocument();
 			});
 
 			// Click on the same log to close (through the close button)
@@ -736,37 +648,36 @@ describe('HostMetricsLogs', () => {
 		});
 
 		it('should display log body in detail drawer', async () => {
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				offset: 0,
+			});
 
 			renderComponent();
 
 			// Wait for logs to render
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText(/Log message 0/)).toBeInTheDocument();
 			});
 
 			// Click on the first log to open drawer
-			const logElement = screen.getByText(/Log message 0/);
+			const logElement = await screen.findByText(/Log message 0/);
 			await userEvent.click(logElement);
 
 			// Wait for drawer to open
-			await waitFor(() => {
-				expect(screen.getByText('Log details')).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText('Log details')).toBeInTheDocument();
 			});
 
 			// Verify the drawer tabs are displayed
 			// The drawer should show the Overview tab
-			await waitFor(() => {
-				expect(screen.getByText('Overview')).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText('Overview')).toBeInTheDocument();
 			});
 
 			// Verify other tabs are present
-			expect(screen.getByText('JSON')).toBeInTheDocument();
-			expect(screen.getByText('Context')).toBeInTheDocument();
+			expect(await screen.findByText('JSON')).toBeInTheDocument();
+			expect(await screen.findByText('Context')).toBeInTheDocument();
 		});
 	});
 
@@ -774,24 +685,28 @@ describe('HostMetricsLogs', () => {
 		it('should apply filter-in from log detail and close the drawer', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			renderComponent();
 
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText(/Log message 0/)).toBeInTheDocument();
 			});
 
-			await userEvent.click(screen.getByText(/Log message 0/));
+			await userEvent.click(await screen.findByText(/Log message 0/));
 
-			await waitFor(() => {
-				expect(screen.getByText('Log details')).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText('Log details')).toBeInTheDocument();
 			});
 
 			const serviceRow = await waitFor(() => {
@@ -838,24 +753,30 @@ describe('HostMetricsLogs', () => {
 		it('should apply filter-out from log detail and close the drawer', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			renderComponent();
 
-			await waitFor(() => {
-				expect(screen.getByText(/Log message 0/)).toBeInTheDocument();
+			await waitFor(async () => {
+				const el = await screen.findByText(/Log message 0/);
+
+				expect(el).toBeInTheDocument();
 			});
 
-			await userEvent.click(screen.getByText(/Log message 0/));
+			await userEvent.click(await screen.findByText(/Log message 0/));
 
-			await waitFor(() => {
-				expect(screen.getByText('Log details')).toBeInTheDocument();
+			await waitFor(async () => {
+				expect(await screen.findByText('Log details')).toBeInTheDocument();
 			});
 
 			const serviceRow = await waitFor(() => {
@@ -905,13 +826,17 @@ describe('HostMetricsLogs', () => {
 		it('should use different time ranges for different renders', async () => {
 			const requestPayloads: any[] = [];
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			mockQueryRangeV5WithLogsResponse({
+				onReceiveRequest: async (req) => {
 					const payload = await req.json();
 					requestPayloads.push(payload);
-					return res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 })));
-				}),
-			);
+
+					return {
+						pageSize: 5,
+						offset: 0,
+					};
+				},
+			});
 
 			// First render with initial time range
 			const { unmount } = renderComponent();
@@ -949,11 +874,10 @@ describe('HostMetricsLogs', () => {
 		it('should call handleTimeChange callback when time picker is clicked', async () => {
 			const mockHandleTimeChange = jest.fn();
 
-			server.use(
-				rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json(createLogsResponse({ pageSize: 5 }))),
-				),
-			);
+			mockQueryRangeV5WithLogsResponse({
+				pageSize: 5,
+				offset: 0,
+			});
 
 			renderComponent({
 				...defaultProps,

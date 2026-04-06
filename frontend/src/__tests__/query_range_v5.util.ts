@@ -13,7 +13,12 @@ export type MockLogsOptions = {
 	delay?: number;
 	onReceiveRequest?: (
 		req: RestRequest,
-	) => undefined | void | Omit<MockLogsOptions, 'onReceiveRequest'>;
+	) =>
+		| undefined
+		| void
+		| Omit<MockLogsOptions, 'onReceiveRequest'>
+		| Promise<Omit<MockLogsOptions, 'onReceiveRequest'>>
+		| Promise<void>;
 };
 
 const createLogsResponse = ({
@@ -32,12 +37,36 @@ const createLogsResponse = ({
 						queryName: 'A',
 						rows: Array.from({ length: itemsForThisPage }, (_, index) => {
 							const cumulativeIndex = offset + index;
+							const baseTimestamp = new Date('2024-02-15T21:20:22Z').getTime();
+							const currentTimestamp = new Date(
+								baseTimestamp - cumulativeIndex * 1000,
+							);
+							const timestampString = currentTimestamp.toISOString();
+							const id = `log-id-${cumulativeIndex}`;
+							const logLevel = ['INFO', 'WARN', 'ERROR'][cumulativeIndex % 3];
+							const service = ['frontend', 'backend', 'database'][cumulativeIndex % 3];
+
 							return {
-								timestamp: new Date(Date.now() - cumulativeIndex * 1000).toISOString(),
+								timestamp: timestampString,
 								data: {
-									body: `Log message ${cumulativeIndex}`,
-									id: `log-${cumulativeIndex}`,
-									severity_text: 'INFO',
+									attributes_bool: {},
+									attributes_float64: {},
+									attributes_int64: {},
+									attributes_string: {
+										host_name: 'test-host',
+										log_level: logLevel,
+										service,
+									},
+									body: `${timestampString} ${logLevel} ${service} Log message ${cumulativeIndex}`,
+									id,
+									resources_string: {
+										'host.name': 'test-host',
+									},
+									severity_number: [9, 13, 17][cumulativeIndex % 3],
+									severity_text: logLevel,
+									span_id: `span-${cumulativeIndex}`,
+									trace_flags: 0,
+									trace_id: `trace-${cumulativeIndex}`,
 								},
 							};
 						}),
@@ -62,13 +91,13 @@ export function mockQueryRangeV5WithLogsResponse({
 	onReceiveRequest,
 }: MockLogsOptions = {}): void {
 	server.use(
-		rest.post(QUERY_RANGE_URL, (req, res, ctx) =>
+		rest.post(QUERY_RANGE_URL, async (req, res, ctx) =>
 			res(
 				...(delay ? [ctx.delay(delay)] : []),
 				ctx.status(200),
 				ctx.json(
 					createLogsResponse(
-						onReceiveRequest?.(req) ?? {
+						(await onReceiveRequest?.(req)) ?? {
 							hasMore,
 							pageSize,
 							offset,

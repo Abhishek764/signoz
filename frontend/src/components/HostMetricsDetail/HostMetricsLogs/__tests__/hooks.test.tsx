@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
+
 import {
 	mockQueryRangeV5WithError,
 	mockQueryRangeV5WithLogsResponse,
-} from '__tests__/query_range_v5.utility';
-import { act, renderHook, waitFor } from '@testing-library/react';
-
+} from '../../../../__tests__/query_range_v5.util';
 import { useInfiniteHostMetricLogs } from '../hooks';
 
 const createWrapper = (): React.FC<{ children: React.ReactNode }> => {

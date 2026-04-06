@@ -659,6 +659,7 @@ def test_non_existent_metrics_returns_404(
         == "could not find the metric whatevergoennnsgoeshere"
     )
 
+
 def test_non_existent__internal_metrics_returns_warning(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

@@ -67,9 +67,12 @@ jest.mock('hooks/useGetTenantLicense', () => ({
 
 // Mock react-query for users fetch
 let mockUsersData: { email: string }[] = [];
-jest.mock('api/v1/user/get', () => ({
-	__esModule: true,
-	default: jest.fn(() => Promise.resolve({ data: mockUsersData })),
+jest.mock('api/generated/services/users', () => ({
+	...jest.requireActual('api/generated/services/users'),
+	useListUsers: jest.fn(() => ({
+		data: { data: mockUsersData },
+		isFetching: false,
+	})),
 }));
 
 const queryClient = new QueryClient({
@@ -306,11 +309,19 @@ describe('PrivateRoute', () => {
 			);
 		});
 
-		it('should redirect /settings/access-tokens to /settings/api-keys', () => {
+		it('should redirect /settings/access-tokens to /settings/service-accounts', () => {
 			renderPrivateRoute({ initialRoute: '/settings/access-tokens' });
 
 			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/settings/api-keys',
+				'/settings/service-accounts',
+			);
+		});
+
+		it('should redirect /settings/api-keys to /settings/service-accounts', () => {
+			renderPrivateRoute({ initialRoute: '/settings/api-keys' });
+
+			expect(screen.getByTestId('location-display')).toHaveTextContent(
+				'/settings/service-accounts',
 			);
 		});
 

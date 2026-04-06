@@ -1,5 +1,38 @@
 import ROUTES from 'constants/routes';
 
+import azureAksUrl from '@/assets/Logos/azure-aks.svg';
+import azureAppServiceUrl from '@/assets/Logos/azure-app-service.svg';
+import azureBlobStorageUrl from '@/assets/Logos/azure-blob-storage.svg';
+import azureContainerAppsUrl from '@/assets/Logos/azure-container-apps.svg';
+import azureFunctionsUrl from '@/assets/Logos/azure-functions.svg';
+import azureSqlDatabaseMetricsUrl from '@/assets/Logos/azure-sql-database-metrics.svg';
+import azureVmUrl from '@/assets/Logos/azure-vm.svg';
+import cloudwatchUrl from '@/assets/Logos/cloudwatch.png';
+import cmdTerminalUrl from '@/assets/Logos/cmd-terminal.svg';
+import dockerUrl from '@/assets/Logos/docker.svg';
+import dotnetUrl from '@/assets/Logos/dotnet.png';
+import ec2Url from '@/assets/Logos/ec2.svg';
+import ecsUrl from '@/assets/Logos/ecs.svg';
+import eksUrl from '@/assets/Logos/eks.svg';
+import elixirUrl from '@/assets/Logos/elixir.png';
+import fluentBitUrl from '@/assets/Logos/fluent-bit.png';
+import fluentdUrl from '@/assets/Logos/fluentd.png';
+import goUrl from '@/assets/Logos/go.png';
+import herokuUrl from '@/assets/Logos/heroku.png';
+import httpUrl from '@/assets/Logos/http.png';
+import javaUrl from '@/assets/Logos/java.png';
+import javascriptUrl from '@/assets/Logos/javascript.png';
+import kubernetesUrl from '@/assets/Logos/kubernetes.svg';
+import logstashUrl from '@/assets/Logos/logstash.svg';
+import phpUrl from '@/assets/Logos/php.png';
+import pythonUrl from '@/assets/Logos/python.png';
+import railsUrl from '@/assets/Logos/rails.png';
+import rustUrl from '@/assets/Logos/rust.png';
+import softwareWindowUrl from '@/assets/Logos/software-window.svg';
+import swiftUrl from '@/assets/Logos/swift.png';
+import syslogsUrl from '@/assets/Logos/syslogs.svg';
+import vercelUrl from '@/assets/Logos/vercel.png';
+
 import { ModuleProps } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
 
@@ -89,230 +122,230 @@ export const frameworksMap = {
 export const defaultApplicationDataSource = {
 	name: 'java',
 	id: 'java',
-	imgURL: `Logos/java.png`,
+	imgURL: javaUrl,
 };
 
 const supportedLanguages = [
 	{
 		name: 'java',
 		id: 'java',
-		imgURL: `/Logos/java.png`,
+		imgURL: javaUrl,
 	},
 	{
 		name: 'python',
 		id: 'python',
-		imgURL: `/Logos/python.png`,
+		imgURL: pythonUrl,
 	},
 	{
 		name: 'go',
 		id: 'go',
-		imgURL: `/Logos/go.png`,
+		imgURL: goUrl,
 	},
 	{
 		name: 'javascript',
 		id: 'javascript',
-		imgURL: `/Logos/javascript.png`,
+		imgURL: javascriptUrl,
 	},
 	{
 		name: 'rails',
 		id: 'rails',
-		imgURL: `/Logos/rails.png`,
+		imgURL: railsUrl,
 	},
 	{
 		name: '.NET',
 		id: 'dotnet',
-		imgURL: `/Logos/dotnet.png`,
+		imgURL: dotnetUrl,
 	},
 	{
 		name: 'rust',
 		id: 'rust',
-		imgURL: `/Logos/rust.png`,
+		imgURL: rustUrl,
 	},
 	{
 		name: 'elixir',
 		id: 'elixir',
-		imgURL: `/Logos/elixir.png`,
+		imgURL: elixirUrl,
 	},
 	{
 		name: 'swift',
 		id: 'swift',
-		imgURL: `/Logos/swift.png`,
+		imgURL: swiftUrl,
 	},
 	{
 		name: 'php',
 		id: 'php',
-		imgURL: `/Logos/php.png`,
+		imgURL: phpUrl,
 	},
 ];
 
 export const defaultLogsType = {
 	name: 'Kubernetes Pod Logs',
 	id: 'kubernetes',
-	imgURL: `/Logos/kubernetes.svg`,
+	imgURL: kubernetesUrl,
 };
 
 const supportedLogsTypes = [
 	{
 		name: 'Kubernetes Pod Logs',
 		id: 'kubernetes',
-		imgURL: `/Logos/kubernetes.svg`,
+		imgURL: kubernetesUrl,
 	},
 	{
 		name: 'Docker Container Logs',
 		id: 'docker',
-		imgURL: `/Logos/docker.svg`,
+		imgURL: dockerUrl,
 	},
 	{
 		name: 'SysLogs',
 		id: 'syslogs',
-		imgURL: `/Logos/syslogs.svg`,
+		imgURL: syslogsUrl,
 	},
 	{
 		name: 'Application Logs',
 		id: 'application_logs',
-		imgURL: `/Logos/software-window.svg`,
+		imgURL: softwareWindowUrl,
 	},
 	{
 		name: 'FluentBit',
 		id: 'fluentBit',
-		imgURL: `/Logos/fluent-bit.png`,
+		imgURL: fluentBitUrl,
 	},
 	{
 		name: 'FluentD',
 		id: 'fluentD',
-		imgURL: `/Logos/fluentd.png`,
+		imgURL: fluentdUrl,
 	},
 	{
 		name: 'LogStash',
 		id: 'logStash',
-		imgURL: `/Logos/logstash.svg`,
+		imgURL: logstashUrl,
 	},
 	{
 		name: 'Heroku',
 		id: 'heroku',
-		imgURL: `/Logos/heroku.png`,
+		imgURL: herokuUrl,
 	},
 	{
 		name: 'Vercel',
 		id: 'vercel',
-		imgURL: `/Logos/vercel.png`,
+		imgURL: vercelUrl,
 	},
 	{
 		name: 'HTTP',
 		id: 'http',
-		imgURL: `/Logos/http.png`,
+		imgURL: httpUrl,
 	},
 	{
 		name: 'Cloudwatch',
 		id: 'cloudwatch',
-		imgURL: `/Logos/cloudwatch.png`,
+		imgURL: cloudwatchUrl,
 	},
 ];
 
 export const defaultInfraMetricsType = {
 	name: 'Kubernetes Infra Metrics',
 	id: 'kubernetesInfraMetrics',
-	imgURL: `/Logos/kubernetes.svg`,
+	imgURL: kubernetesUrl,
 };
 
 const supportedInfraMetrics = [
 	{
 		name: 'Kubernetes Infra Metrics',
 		id: 'kubernetesInfraMetrics',
-		imgURL: `/Logos/kubernetes.svg`,
+		imgURL: kubernetesUrl,
 	},
 	{
 		name: 'HostMetrics',
 		id: 'hostMetrics',
-		imgURL: `/Logos/software-window.svg`,
+		imgURL: softwareWindowUrl,
 	},
 	{
 		name: 'Other Metrics',
 		id: 'otherMetrics',
-		imgURL: `/Logos/cmd-terminal.svg`,
+		imgURL: cmdTerminalUrl,
 	},
 ];
 
 export const defaultAwsServices = {
 	name: 'EC2 - App/Server Logs',
 	id: 'awsEc2ApplicationLogs',
-	imgURL: `/Logos/ec2.svg`,
+	imgURL: ec2Url,
 };
 
 const supportedAwsServices = [
 	{
 		name: 'EC2 - App/Server Logs',
 		id: 'awsEc2ApplicationLogs',
-		imgURL: `/Logos/ec2.svg`,
+		imgURL: ec2Url,
 	},
 	{
 		name: 'EC2 - Infra Metrics',
 		id: 'awsEc2InfrastructureMetrics',
-		imgURL: `/Logos/ec2.svg`,
+		imgURL: ec2Url,
 	},
 	{
 		name: 'ECS - EC2',
 		id: 'awsEcsEc2',
-		imgURL: `/Logos/ecs.svg`,
+		imgURL: ecsUrl,
 	},
 	{
 		name: 'ECS - Fargate',
 		id: 'awsEcsFargate',
-		imgURL: `/Logos/ecs.svg`,
+		imgURL: ecsUrl,
 	},
 	{
 		name: 'ECS - External',
 		id: 'awsEcsExternal',
-		imgURL: `/Logos/ecs.svg`,
+		imgURL: ecsUrl,
 	},
 	{
 		name: 'EKS',
 		id: 'awsEks',
-		imgURL: `/Logos/eks.svg`,
+		imgURL: eksUrl,
 	},
 ];
 
 export const defaultAzureServices = {
 	name: 'VM',
 	id: 'azureVm',
-	imgURL: `/Logos/azure-vm.svg`,
+	imgURL: azureVmUrl,
 };
 
 const supportedAzureServices = [
 	{
 		name: 'VM',
 		id: 'azureVm',
-		imgURL: `/Logos/azure-vm.svg`,
+		imgURL: azureVmUrl,
 	},
 	{
 		name: 'App Service',
 		id: 'azureAppService',
-		imgURL: `/Logos/azure-app-service.svg`,
+		imgURL: azureAppServiceUrl,
 	},
 	{
 		name: 'AKS',
 		id: 'azureAks',
-		imgURL: `/Logos/azure-aks.svg`,
+		imgURL: azureAksUrl,
 	},
 	{
 		name: 'Azure Functions',
 		id: 'azureFunctions',
-		imgURL: `/Logos/azure-functions.svg`,
+		imgURL: azureFunctionsUrl,
 	},
 	{
 		name: 'Azure Container Apps',
 		id: 'azureContainerApps',
-		imgURL: `/Logos/azure-container-apps.svg`,
+		imgURL: azureContainerAppsUrl,
 	},
 	{
 		name: 'SQL Database Metrics',
 		id: 'azureSQLDatabaseMetrics',
-		imgURL: `/Logos/azure-sql-database-metrics.svg`,
+		imgURL: azureSqlDatabaseMetricsUrl,
 	},
 	{
 		name: 'Azure Blob Storage',
 		id: 'azureBlobStorage',
-		imgURL: `/Logos/azure-blob-storage.svg`,
+		imgURL: azureBlobStorageUrl,
 	},
 ];
 

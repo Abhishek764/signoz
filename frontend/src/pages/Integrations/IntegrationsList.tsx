@@ -6,6 +6,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
 
 import './Integrations.styles.scss';
@@ -60,11 +62,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 			{!loading && isError && (
 				<div className="error-container">
 					<div className="error-content">
-						<img
-							src="/Icons/awwSnap.svg"
-							alt="error-emoji"
-							className="error-state-svg"
-						/>
+						<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
 						<Typography.Text>
 							Something went wrong :/ Please retry or contact support.
 						</Typography.Text>

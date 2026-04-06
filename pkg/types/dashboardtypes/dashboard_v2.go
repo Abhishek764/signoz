@@ -20,7 +20,7 @@ import (
 type StorableDashboardDataV2 = v1.Dashboard
 
 type StorableDashboardV2 struct {
-	bun.BaseModel `bun:"table:dashboard,alias:dashboard"`
+	bun.BaseModel `bun:"table:dashboard_v2,alias:dashboard_v2"`
 
 	types.Identifiable
 	// TimeAuditable is not embedded here — CreatedAt/UpdatedAt live in
@@ -173,14 +173,17 @@ func (dashboard *DashboardV2) LockUnlock(lock bool, role types.Role, updatedBy s
 	return nil
 }
 
-// ValidateDashboardV2JSON validates a dashboard v2 JSON by unmarshalling into typed structs
-// and then validating plugin kinds and specs.
-func ValidateDashboardV2JSON(data []byte) error {
+// UnmarshalAndValidateDashboardV2JSON unmarshals the JSON into a StorableDashboardDataV2
+// and validates plugin kinds and specs.
+func UnmarshalAndValidateDashboardV2JSON(data []byte) (*StorableDashboardDataV2, error) {
 	var d StorableDashboardDataV2
 	if err := json.Unmarshal(data, &d); err != nil {
-		return err
+		return nil, err
 	}
-	return validateDashboardV2(d)
+	if err := validateDashboardV2(d); err != nil {
+		return nil, err
+	}
+	return &d, nil
 }
 
 // Plugin kind → spec type factory. Each value is a pointer to the zero value of the
@@ -363,4 +366,39 @@ func extractPluginFromVariable(v any) (*common.Plugin, error) {
 		return nil, err
 	}
 	return raw.Spec.Plugin, nil
+}
+
+func NewStatsFromStorableDashboardsV2(dashboards []*StorableDashboardV2) map[string]any {
+	stats := make(map[string]any)
+	stats["dashboard.panels.count"] = int64(0)
+	stats["dashboard.panels.traces.count"] = int64(0)
+	stats["dashboard.panels.metrics.count"] = int64(0)
+	stats["dashboard.panels.logs.count"] = int64(0)
+	for _, dashboard := range dashboards {
+		for _, panel := range dashboard.Data.Spec.Panels {
+			if panel == nil {
+				continue
+			}
+			stats["dashboard.panels.count"] = stats["dashboard.panels.count"].(int64) + 1
+			for _, query := range panel.Spec.Queries {
+				if query.Spec.Plugin.Kind != QueryKindBuilder {
+					continue
+				}
+				spec, ok := query.Spec.Plugin.Spec.(*BuilderQuerySpec)
+				if !ok {
+					continue
+				}
+				switch spec.Spec.(type) {
+				case MetricBuilderQuerySpec:
+					stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
+				case LogBuilderQuerySpec:
+					stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
+				case TraceBuilderQuerySpec:
+					stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
+				}
+			}
+		}
+	}
+	stats["dashboard.count"] = int64(len(dashboards))
+	return stats
 }

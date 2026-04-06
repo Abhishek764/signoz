@@ -12,7 +12,7 @@ func TestValidateBigExample(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading example file: %v", err)
 	}
-	if err := ValidateDashboardV2JSON(data); err != nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid dashboard, got error: %v", err)
 	}
 }
@@ -22,19 +22,19 @@ func TestValidateDashboardWithSections(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reading example file: %v", err)
 	}
-	if err := ValidateDashboardV2JSON(data); err != nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid dashboard, got error: %v", err)
 	}
 }
 
 func TestInvalidateNotAJSON(t *testing.T) {
-	if err := ValidateDashboardV2JSON([]byte("not json")); err == nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON([]byte("not json")); err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
 }
 
 func TestInvalidateEmptyObject(t *testing.T) {
-	if err := ValidateDashboardV2JSON([]byte("{}")); err == nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON([]byte("{}")); err == nil {
 		t.Fatal("expected error for empty object missing kind")
 	}
 }
@@ -46,7 +46,7 @@ func TestValidateEmptySpec(t *testing.T) {
 		"metadata": {"name": "test"},
 		"spec": {}
 	}`)
-	if err := ValidateDashboardV2JSON(data); err != nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid, got: %v", err)
 	}
 }
@@ -84,14 +84,14 @@ func TestValidateOnlyVariables(t *testing.T) {
 			"layouts": []
 		}
 	}`)
-	if err := ValidateDashboardV2JSON(data); err != nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid, got: %v", err)
 	}
 }
 
 func TestInvalidateWrongKindAtTop(t *testing.T) {
 	data := []byte(`{"kind": 123}`)
-	if err := ValidateDashboardV2JSON(data); err == nil {
+	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err == nil {
 		t.Fatal("expected error for wrong type on kind field")
 	}
 }
@@ -187,7 +187,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateDashboardV2JSON([]byte(tt.data))
+			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
 			if err == nil {
 				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
 			}
@@ -216,7 +216,7 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 			"layouts": []
 		}
 	}`)
-	err := ValidateDashboardV2JSON(data)
+	_, err := UnmarshalAndValidateDashboardV2JSON(data)
 	if err == nil {
 		t.Fatal("expected error for invalid panel plugin kind")
 	}
@@ -308,7 +308,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateDashboardV2JSON([]byte(tt.data))
+			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
 			if err == nil {
 				t.Fatal("expected validation error")
 			}
@@ -439,7 +439,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateDashboardV2JSON([]byte(tt.data))
+			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
 			if err == nil {
 				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
 			}
@@ -541,7 +541,7 @@ func TestValidateRequiredFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateDashboardV2JSON([]byte(tt.data))
+			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
 			if err == nil {
 				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
 			}
@@ -650,7 +650,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := ValidateDashboardV2JSON(tc.data)
+		_, err := UnmarshalAndValidateDashboardV2JSON(tc.data)
 		if tc.wantErr && err == nil {
 			t.Fatalf("%s: expected error, got nil", tc.name)
 		}

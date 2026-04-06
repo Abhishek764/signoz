@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -21,8 +20,6 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { getFiltersFromParams } from 'container/InfraMonitoringK8s/commonUtils';
-import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -39,7 +36,6 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
-import { parseAsString, useQueryState } from 'nuqs';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -53,11 +49,15 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+	useInfraMonitoringTracesFilters,
+	useInfraMonitoringView,
+} from '../../container/InfraMonitoringK8s/hooks';
 import { convertFiltersToExpression } from '../QueryBuilderV2/utils';
 import { VIEW_TYPES, VIEWS } from './constants';
 import Containers from './Containers/Containers';
 import { HostDetailProps } from './HostMetricDetail.interfaces';
-import { HOST_METRICS_LOGS_EXPR_QUERY_KEY } from './HostMetricsLogs/constants';
+import { useInfraMonitoringHostLogsExpression } from './HostMetricsLogs/hooks';
 import HostMetricsLogs from './HostMetricsLogs/HostMetricsLogs';
 import HostMetricTraces from './HostMetricTraces/HostMetricTraces';
 import Metrics from './Metrics/Metrics';
@@ -75,8 +75,6 @@ function HostMetricsDetails({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const [searchParams, setSearchParams] = useSearchParams();
-
 	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
 	]);
@@ -99,23 +97,14 @@ function HostMetricsDetails({
 			: (selectedTime as Time),
 	);
 
-	const [selectedView, setSelectedView] = useState<VIEWS>(
-		(searchParams.get('view') as VIEWS) || VIEWS.METRICS,
-	);
+	const [selectedView, setSelectedView] = useInfraMonitoringView();
+	const [traceFilters, setTraceFilters] = useInfraMonitoringTracesFilters();
+	const [, setHostMetricLogExpression] = useInfraMonitoringHostLogsExpression();
+
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(() => {
-		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
-		const queryKey =
-			urlView === VIEW_TYPES.LOGS
-				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
-				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
-		const filters = getFiltersFromParams(searchParams, queryKey);
-		if (filters) {
-			return filters;
-		}
-
-		return {
+	const [initialFilters] = useState(
+		traceFilters || {
 			op: 'AND',
 			items: [
 				{
@@ -130,8 +119,8 @@ function HostMetricsDetails({
 					value: host?.hostName || '',
 				},
 			],
-		};
-	}, [host?.hostName, searchParams]);
+		},
+	);
 
 	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
 		initialFilters,
@@ -168,11 +157,7 @@ function HostMetricsDetails({
 		setSelectedView(e.target.value);
 		if (host?.hostName) {
 			setSelectedView(e.target.value);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
-			});
+			setTraceFilters(null);
 		}
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.HostEntity,
@@ -229,13 +214,11 @@ function HostMetricsDetails({
 		[host?.hostName],
 	);
 
-	const [hostMetricLogsExpr] = useQueryState(
-		HOST_METRICS_LOGS_EXPR_QUERY_KEY,
-		parseAsString,
-	);
+	const [hostMetricLogsExpr] = useInfraMonitoringHostLogsExpression();
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
+			setSelectedView(view);
 			setTracesFilters((prevFilters) => {
 				const hostNameFilter = prevFilters?.items?.find(
 					(item) => item.key?.key === 'host.name',
@@ -249,27 +232,16 @@ function HostMetricsDetails({
 					});
 				}
 
-				const updatedFilters = {
+				return {
 					op: 'AND',
 					items: [
 						hostNameFilter,
 						...(value?.items?.filter((item) => item.key?.key !== 'host.name') || []),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
-
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
-				});
-
-				return updatedFilters;
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
+		[setSelectedView],
 	);
 
 	const handleExplorePagesRedirect = (): void => {
@@ -341,7 +313,9 @@ function HostMetricsDetails({
 	const handleClose = (): void => {
 		setSelectedInterval(selectedTime as Time);
 		lastSelectedInterval.current = null;
-		setSearchParams({});
+		setSelectedView(null);
+		setTraceFilters(null);
+		setHostMetricLogExpression(null);
 
 		if (selectedTime !== 'custom') {
 			const { maxTime, minTime } = GetMinMax(selectedTime);

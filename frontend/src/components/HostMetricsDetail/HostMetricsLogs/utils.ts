@@ -84,5 +84,3 @@ export const getHostLogsQueryPayload = ({
 		queryData,
 	};
 };
-
-export const HOST_METRICS_LOGS_EXPR_QUERY_KEY = 'hostMetricsLogsExpr';

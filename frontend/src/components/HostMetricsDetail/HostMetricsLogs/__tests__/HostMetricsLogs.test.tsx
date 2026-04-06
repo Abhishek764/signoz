@@ -466,7 +466,7 @@ describe('HostMetricsLogs', () => {
 
 			const urlExpression = 'service = "from-url"';
 
-			renderComponent(defaultProps, { hostMetricsLogsExpr: urlExpression });
+			renderComponent(defaultProps, { hostMetricsLogsExpression: urlExpression });
 
 			await waitFor(() => {
 				expect(requestPayloads.length).toBeGreaterThanOrEqual(1);

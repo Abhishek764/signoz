@@ -3,9 +3,10 @@ import { useInfiniteQuery } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { parseAsString, useQueryState, UseQueryStateReturn } from 'nuqs';
 import { ILog } from 'types/api/logs/log';
 
-import { getHostLogsQueryPayload } from './constants';
+import { getHostLogsQueryPayload } from './utils';
 
 export function useInfiniteHostMetricLogs({
 	expression,
@@ -93,4 +94,11 @@ export function useInfiniteHostMetricLogs({
 		hasNextPage: !!hasNextPage,
 		loadMoreLogs,
 	};
+}
+
+export function useInfraMonitoringHostLogsExpression(): UseQueryStateReturn<
+	string,
+	undefined
+> {
+	return useQueryState('hostMetricsLogsExpression', parseAsString);
 }

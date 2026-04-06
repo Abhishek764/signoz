@@ -20,17 +20,16 @@ import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import useDebounce from 'hooks/useDebounce';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import { parseAsString, useQueryState } from 'nuqs';
 import { ILog } from 'types/api/logs/log';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import {
-	getHostLogsQueryPayload,
-	HOST_METRICS_LOGS_EXPR_QUERY_KEY,
-} from './constants';
-import { useInfiniteHostMetricLogs } from './hooks';
+	useInfiniteHostMetricLogs,
+	useInfraMonitoringHostLogsExpression,
+} from './hooks';
 import NoLogsContainer from './NoLogsContainer';
+import { getHostLogsQueryPayload } from './utils';
 
 import styles from './HostMetricLogs.module.scss';
 
@@ -59,10 +58,10 @@ function HostMetricsLogs({
 }: Props): JSX.Element {
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 
-	const [filterExpression, setFilterExpression] = useQueryState(
-		HOST_METRICS_LOGS_EXPR_QUERY_KEY,
-		parseAsString,
-	);
+	const [
+		filterExpression,
+		setFilterExpression,
+	] = useInfraMonitoringHostLogsExpression();
 
 	const [inputExpression, setInputExpression] = useState(
 		filterExpression || initialExpression,

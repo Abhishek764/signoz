@@ -17,37 +17,51 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type StorableDashboardDataV2 = v1.Dashboard
+// StorableDashboardDataV2 wraps v1.Dashboard with additional SigNoz-specific fields.
+//
+// The following v1 request fields map to locations inside v1.Dashboard:
+//   - title       → Spec.Display.Name          (common.Display)
+//   - description → Spec.Display.Description   (common.Display)
+//   - tags        → Metadata.Tags              (v1.Metadata)
+//   - version     → Metadata.Version           (v1.Metadata)
+//
+// Metadata.Name is Perses's unique resource identifier within a project.
+// We ignore it because SigNoz uses a UUID (StorableDashboardV2.ID) for
+// dashboard identity instead.
+//
+// Metadata.Project is Perses's namespace/grouping mechanism — dashboards,
+// datasources, and variables all belong to a project for multi-tenancy.
+// In SigNoz, this role is served by StorableDashboardV2.OrgID.
+//
+// CreatedAt/UpdatedAt live in Metadata (Perses's ProjectMetadata),
+// so TimeAuditable is not used on StorableDashboardV2 or DashboardV2.
+//
+// Fields that have no Perses equivalent live on this wrapper:
+//   - image           → Image
+//   - locked          → Locked
+//   - uploadedGrafana → UploadedGrafana
+type StorableDashboardDataV2 struct {
+	v1.Dashboard
+	Image           string `json:"image,omitempty"`
+	Locked          bool   `json:"locked"`
+	UploadedGrafana bool   `json:"uploadedGrafana,omitempty"`
+}
 
 type StorableDashboardV2 struct {
 	bun.BaseModel `bun:"table:dashboard_v2,alias:dashboard_v2"`
 
 	types.Identifiable
-	// TimeAuditable is not embedded here — CreatedAt/UpdatedAt live in
-	// Data.Metadata (Perses's ProjectMetadata) to avoid duplication.
 	types.UserAuditable
-	Data            StorableDashboardDataV2 `bun:"data,type:text,notnull"`
-	Locked          bool                    `bun:"locked,notnull,default:false"`
-	OrgID           valuer.UUID             `bun:"org_id,notnull"`
-	Image           string                  `bun:"image"`
-	Tags            []string                `bun:"tags,array"`
-	UploadedGrafana bool                    `bun:"uploaded_grafana,notnull,default:false"`
-	Version         string                  `bun:"version"`
+	Data  StorableDashboardDataV2 `bun:"data,type:text,notnull"`
+	OrgID valuer.UUID             `bun:"org_id,notnull"`
 }
 
 type DashboardV2 struct {
-	// TimeAuditable is not embedded here — CreatedAt/UpdatedAt live in
-	// Data.Metadata (Perses's ProjectMetadata) to avoid duplication.
 	types.UserAuditable
 
-	ID              string                  `json:"id"`
-	Data            StorableDashboardDataV2 `json:"data"`
-	Locked          bool                    `json:"locked"`
-	OrgID           valuer.UUID             `json:"org_id"`
-	Image           string                  `json:"image,omitempty"`
-	Tags            []string                `json:"tags,omitempty"`
-	UploadedGrafana bool                    `json:"uploadedGrafana,omitempty"`
-	Version         string                  `json:"version,omitempty"`
+	ID    string                  `json:"id"`
+	Data  StorableDashboardDataV2 `json:"data"`
+	OrgID valuer.UUID             `json:"org_id"`
 }
 
 type (
@@ -74,17 +88,12 @@ func NewStorableDashboardV2FromDashboardV2(dashboard *DashboardV2) (*StorableDas
 			CreatedBy: dashboard.CreatedBy,
 			UpdatedBy: dashboard.UpdatedBy,
 		},
-		OrgID:           dashboard.OrgID,
-		Data:            dashboard.Data,
-		Locked:          dashboard.Locked,
-		Image:           dashboard.Image,
-		Tags:            dashboard.Tags,
-		UploadedGrafana: dashboard.UploadedGrafana,
-		Version:         dashboard.Version,
+		OrgID: dashboard.OrgID,
+		Data:  dashboard.Data,
 	}, nil
 }
 
-func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardDataV2) (*DashboardV2, error) {
+func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardDataV2) *DashboardV2 {
 	currentTime := time.Now()
 	data.Metadata.CreatedAt = currentTime
 	data.Metadata.UpdatedAt = currentTime
@@ -95,11 +104,9 @@ func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardD
 			CreatedBy: createdBy,
 			UpdatedBy: createdBy,
 		},
-		OrgID:   orgID,
-		Data:    data,
-		Locked:  false,
-		Version: "v6",
-	}, nil
+		OrgID: orgID,
+		Data:  data,
+	}
 }
 
 func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2) *DashboardV2 {
@@ -109,13 +116,8 @@ func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2)
 			CreatedBy: storableDashboard.CreatedBy,
 			UpdatedBy: storableDashboard.UpdatedBy,
 		},
-		OrgID:           storableDashboard.OrgID,
-		Data:            storableDashboard.Data,
-		Locked:          storableDashboard.Locked,
-		Image:           storableDashboard.Image,
-		Tags:            storableDashboard.Tags,
-		UploadedGrafana: storableDashboard.UploadedGrafana,
-		Version:         storableDashboard.Version,
+		OrgID: storableDashboard.OrgID,
+		Data:  storableDashboard.Data,
 	}
 }
 
@@ -141,20 +143,15 @@ func NewGettableDashboardsV2FromDashboards(dashboards []*DashboardV2) ([]*Gettab
 
 func NewGettableDashboardV2FromDashboard(dashboard *DashboardV2) (*GettableDashboardV2, error) {
 	return &GettableDashboardV2{
-		ID:              dashboard.ID,
-		UserAuditable:   dashboard.UserAuditable,
-		OrgID:           dashboard.OrgID,
-		Data:            dashboard.Data,
-		Locked:          dashboard.Locked,
-		Image:           dashboard.Image,
-		Tags:            dashboard.Tags,
-		UploadedGrafana: dashboard.UploadedGrafana,
-		Version:         dashboard.Version,
+		ID:            dashboard.ID,
+		UserAuditable: dashboard.UserAuditable,
+		OrgID:         dashboard.OrgID,
+		Data:          dashboard.Data,
 	}, nil
 }
 
 func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard UpdatableDashboardV2, updatedBy string) error {
-	if dashboard.Locked {
+	if dashboard.Data.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
 	dashboard.UpdatedBy = updatedBy
@@ -167,14 +164,14 @@ func (dashboard *DashboardV2) LockUnlock(lock bool, role types.Role, updatedBy s
 	if dashboard.CreatedBy != updatedBy && role != types.RoleAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
-	dashboard.Locked = lock
+	dashboard.Data.Locked = lock
 	dashboard.UpdatedBy = updatedBy
 	dashboard.Data.Metadata.UpdatedAt = time.Now()
 	return nil
 }
 
 // UnmarshalAndValidateDashboardV2JSON unmarshals the JSON into a StorableDashboardDataV2
-// and validates plugin kinds and specs.
+// (= PostableDashboardV2 = UpdatableDashboardV2) and validates plugin kinds and specs.
 func UnmarshalAndValidateDashboardV2JSON(data []byte) (*StorableDashboardDataV2, error) {
 	var d StorableDashboardDataV2
 	if err := json.Unmarshal(data, &d); err != nil {

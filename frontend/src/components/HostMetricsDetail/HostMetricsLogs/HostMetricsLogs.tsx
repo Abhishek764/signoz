@@ -10,6 +10,7 @@ import { InfraMonitoringEvents } from 'constants/events';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -111,13 +112,15 @@ function HostMetricsLogs({
 		[inputExpression, setFilterExpression, handleCloseLogDetail],
 	);
 
-	const handleFilterChange = useCallback(
-		(expression: string): void => {
-			setInputExpression(expression);
+	const handleFilterChange = useCallback((expression: string): void => {
+		setInputExpression(expression);
+	}, []);
 
-			const validation = validateQuery(expression);
+	const handleRunQuery = useCallback(
+		(updatedExpression?: string): void => {
+			const validation = validateQuery(updatedExpression || inputExpression);
 			if (validation.isValid) {
-				setFilterExpression(expression);
+				setFilterExpression(updatedExpression || inputExpression);
 
 				logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.HostEntity,
@@ -126,7 +129,7 @@ function HostMetricsLogs({
 				});
 			}
 		},
-		[setFilterExpression],
+		[inputExpression, setFilterExpression],
 	);
 
 	const queryData = useMemo(
@@ -242,12 +245,17 @@ function HostMetricsLogs({
 					modalInitialStartTime={timeRange.startTime * 1000}
 					modalInitialEndTime={timeRange.endTime * 1000}
 				/>
+				<RunQueryBtn
+					isLoadingQueries={isLoading || isFetching}
+					onStageRunQuery={handleRunQuery}
+				/>
 			</div>
 
 			<QuerySearch
 				queryData={queryData}
 				onChange={handleFilterChange}
 				dataSource={DataSource.LOGS}
+				onRun={handleRunQuery}
 			/>
 
 			<div className={styles.logs}>

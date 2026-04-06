@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Tooltip } from '@signozhq/tooltip';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 
-import { Message } from '../types';
+import { useAIAssistantStore } from '../store/useAIAssistantStore';
+import { FeedbackRating, Message } from '../types';
 
 interface MessageFeedbackProps {
 	message: Message;
 	onRegenerate?: () => void;
+	isLastAssistant?: boolean;
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -39,12 +43,33 @@ function formatRelativeTime(timestamp: number): string {
 export default function MessageFeedback({
 	message,
 	onRegenerate,
+	isLastAssistant = false,
 }: MessageFeedbackProps): JSX.Element {
 	const [copied, setCopied] = useState(false);
 	const [, copyToClipboard] = useCopyToClipboard();
-	const [vote, setVote] = useState<'up' | 'down' | null>(null);
+	const submitMessageFeedback = useAIAssistantStore(
+		(s) => s.submitMessageFeedback,
+	);
+
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	// Local vote state — initialised from persisted feedbackRating, updated
+	// immediately on click so the UI responds without waiting for the API.
+	const [vote, setVote] = useState<FeedbackRating | null>(
+		message.feedbackRating ?? null,
+	);
+
 	const [relativeTime, setRelativeTime] = useState(() =>
 		formatRelativeTime(message.createdAt),
+	);
+
+	const absoluteTime = useMemo(
+		() =>
+			formatTimezoneAdjustedTimestamp(
+				message.createdAt,
+				DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
+			),
+		[message.createdAt, formatTimezoneAdjustedTimestamp],
 	);
 
 	// Tick relative time every 30 s
@@ -61,12 +86,23 @@ export default function MessageFeedback({
 		setTimeout(() => setCopied(false), 1500);
 	}, [copyToClipboard, message.content]);
 
-	const handleVote = useCallback((next: 'up' | 'down'): void => {
-		setVote((prev) => (prev === next ? null : next));
-	}, []);
+	const handleVote = useCallback(
+		(rating: FeedbackRating): void => {
+			if (vote === rating) {
+				return;
+			}
+			setVote(rating);
+			submitMessageFeedback(message.id, rating);
+		},
+		[vote, message.id, submitMessageFeedback],
+	);
+
+	const feedbackClass = `ai-message-feedback${
+		isLastAssistant ? ' ai-message-feedback--visible' : ''
+	}`;
 
 	return (
-		<div className="ai-message-feedback">
+		<div className={feedbackClass}>
 			<div className="ai-message-feedback__actions">
 				<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 					<Button
@@ -84,11 +120,11 @@ export default function MessageFeedback({
 				<Tooltip title="Good response">
 					<Button
 						className={`ai-message-feedback__btn${
-							vote === 'up' ? ' ai-message-feedback__btn--voted-up' : ''
+							vote === 'positive' ? ' ai-message-feedback__btn--voted-up' : ''
 						}`}
 						size="xs"
 						variant="ghost"
-						onClick={(): void => handleVote('up')}
+						onClick={(): void => handleVote('positive')}
 					>
 						<ThumbsUp size={12} />
 					</Button>
@@ -97,11 +133,11 @@ export default function MessageFeedback({
 				<Tooltip title="Bad response">
 					<Button
 						className={`ai-message-feedback__btn${
-							vote === 'down' ? ' ai-message-feedback__btn--voted-down' : ''
+							vote === 'negative' ? ' ai-message-feedback__btn--voted-down' : ''
 						}`}
 						size="xs"
 						variant="ghost"
-						onClick={(): void => handleVote('down')}
+						onClick={(): void => handleVote('negative')}
 					>
 						<ThumbsDown size={12} />
 					</Button>
@@ -121,7 +157,9 @@ export default function MessageFeedback({
 				)}
 			</div>
 
-			<span className="ai-message-feedback__time">{relativeTime}</span>
+			<span className="ai-message-feedback__time">
+				{relativeTime} · {absoluteTime}
+			</span>
 		</div>
 	);
 }

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Button } from '@signozhq/button';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { Conversation } from '../types';
@@ -52,14 +52,22 @@ export default function HistorySidebar({
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
+	const isLoadingThreads = useAIAssistantStore((s) => s.isLoadingThreads);
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
 	const setActiveConversation = useAIAssistantStore(
 		(s) => s.setActiveConversation,
 	);
+	const loadThread = useAIAssistantStore((s) => s.loadThread);
+	const fetchThreads = useAIAssistantStore((s) => s.fetchThreads);
 	const deleteConversation = useAIAssistantStore((s) => s.deleteConversation);
 	const renameConversation = useAIAssistantStore((s) => s.renameConversation);
+
+	// Fetch thread history from backend on mount
+	useEffect(() => {
+		fetchThreads();
+	}, [fetchThreads]);
 
 	const sorted = useMemo(
 		() =>
@@ -72,7 +80,13 @@ export default function HistorySidebar({
 	const groups = useMemo(() => groupByDate(sorted), [sorted]);
 
 	const handleSelect = (id: string): void => {
-		setActiveConversation(id);
+		const conv = conversations[id];
+		// If the conversation has a threadId but no messages loaded, fetch from backend
+		if (conv?.threadId && conv.messages.length === 0) {
+			loadThread(conv.threadId);
+		} else {
+			setActiveConversation(id);
+		}
 		onSelect?.(id);
 	};
 
@@ -98,7 +112,14 @@ export default function HistorySidebar({
 			</div>
 
 			<div className="ai-history__list">
-				{groups.length === 0 && (
+				{isLoadingThreads && groups.length === 0 && (
+					<div className="ai-history__loading">
+						<Loader2 size={16} className="ai-history__spinner" />
+						Loading conversations…
+					</div>
+				)}
+
+				{!isLoadingThreads && groups.length === 0 && (
 					<p className="ai-history__empty">No conversations yet.</p>
 				)}
 

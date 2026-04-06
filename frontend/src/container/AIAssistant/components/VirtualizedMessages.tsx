@@ -84,6 +84,7 @@ export default function VirtualizedMessages({
 							onRegenerate={
 								isLastAssistant && !showStreamingSlot ? handleRegenerate : undefined
 							}
+							isLastAssistant={isLastAssistant}
 						/>
 					);
 				}

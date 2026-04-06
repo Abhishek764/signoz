@@ -24,6 +24,8 @@ export interface AssistantAction {
 	expiresAt: string | null;
 }
 
+export type FeedbackRating = 'positive' | 'negative';
+
 export interface Message {
 	id: string;
 	role: MessageRole;
@@ -31,6 +33,8 @@ export interface Message {
 	attachments?: MessageAttachment[];
 	/** Suggested follow-up actions returned by the assistant (final message only). */
 	actions?: AssistantAction[];
+	/** Persisted feedback rating — set after user votes and the API confirms. */
+	feedbackRating?: FeedbackRating | null;
 	createdAt: number;
 }
 

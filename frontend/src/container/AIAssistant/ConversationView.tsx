@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 
 import ChatInput from './components/ChatInput';
 import VirtualizedMessages from './components/VirtualizedMessages';
@@ -16,6 +17,7 @@ export default function ConversationView({
 		(s) => s.conversations[conversationId],
 	);
 	const isStreaming = useAIAssistantStore((s) => s.isStreaming);
+	const isLoadingThread = useAIAssistantStore((s) => s.isLoadingThread);
 	const pendingApproval = useAIAssistantStore((s) => s.pendingApproval);
 	const pendingClarification = useAIAssistantStore(
 		(s) => s.pendingClarification,
@@ -31,7 +33,24 @@ export default function ConversationView({
 
 	const messages = conversation?.messages ?? [];
 	const inputDisabled =
-		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
+		isStreaming ||
+		isLoadingThread ||
+		Boolean(pendingApproval) ||
+		Boolean(pendingClarification);
+
+	if (isLoadingThread && messages.length === 0) {
+		return (
+			<div className="ai-conversation">
+				<div className="ai-conversation__loading">
+					<Loader2 size={20} className="ai-history__spinner" />
+					Loading conversation…
+				</div>
+				<div className="ai-conversation__input-wrapper">
+					<ChatInput onSend={handleSend} disabled />
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="ai-conversation">

@@ -13,6 +13,7 @@ import MessageFeedback from './MessageFeedback';
 interface MessageBubbleProps {
 	message: Message;
 	onRegenerate?: () => void;
+	isLastAssistant?: boolean;
 }
 
 /**
@@ -40,6 +41,7 @@ const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 export default function MessageBubble({
 	message,
 	onRegenerate,
+	isLastAssistant = false,
 }: MessageBubbleProps): JSX.Element {
 	const isUser = message.role === 'user';
 
@@ -86,7 +88,11 @@ export default function MessageBubble({
 				</div>
 
 				{!isUser && (
-					<MessageFeedback message={message} onRegenerate={onRegenerate} />
+					<MessageFeedback
+						message={message}
+						onRegenerate={onRegenerate}
+						isLastAssistant={isLastAssistant}
+					/>
 				)}
 			</div>
 		</div>

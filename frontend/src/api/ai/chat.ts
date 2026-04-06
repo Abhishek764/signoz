@@ -105,6 +105,111 @@ export interface ClarificationFieldRaw {
 // POST /api/v1/assistant/threads → { threadId }
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Thread listing & detail
+// ---------------------------------------------------------------------------
+
+export interface ThreadSummary {
+	threadId: string;
+	title: string | null;
+	state: string | null;
+	activeExecutionId: string | null;
+	archived: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ThreadListResponse {
+	threads: ThreadSummary[];
+	nextCursor: string | null;
+	hasMore: boolean;
+}
+
+export interface MessageSummary {
+	messageId: string;
+	role: string;
+	contentType: string;
+	content: string | null;
+	complete: boolean;
+	toolCalls: Record<string, unknown>[] | null;
+	actions: unknown[] | null;
+	feedbackRating: 'positive' | 'negative' | null;
+	feedbackComment: string | null;
+	executionId: string | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ThreadDetailResponse {
+	threadId: string;
+	title: string | null;
+	state: string | null;
+	activeExecutionId: string | null;
+	archived: boolean;
+	createdAt: string;
+	updatedAt: string;
+	messages: MessageSummary[];
+	pendingApproval: unknown | null;
+	pendingClarification: unknown | null;
+}
+
+export async function listThreads(
+	cursor?: string | null,
+	limit = 20,
+): Promise<ThreadListResponse> {
+	const params = new URLSearchParams({ limit: String(limit) });
+	if (cursor) {
+		params.set('cursor', cursor);
+	}
+	const res = await fetch(`${BASE}/threads?${params.toString()}`, {
+		headers: { ...authHeaders() },
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to list threads: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	return res.json();
+}
+
+export async function updateThread(
+	threadId: string,
+	update: { title?: string | null; archived?: boolean | null },
+): Promise<ThreadSummary> {
+	const res = await fetch(`${BASE}/threads/${threadId}`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify(update),
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to update thread: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	return res.json();
+}
+
+export async function getThreadDetail(
+	threadId: string,
+): Promise<ThreadDetailResponse> {
+	const res = await fetch(`${BASE}/threads/${threadId}`, {
+		headers: { ...authHeaders() },
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to get thread: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Thread creation
+// ---------------------------------------------------------------------------
+
 export async function createThread(signal?: AbortSignal): Promise<string> {
 	const res = await fetch(`${BASE}/threads`, {
 		method: 'POST',
@@ -316,6 +421,30 @@ export async function cancelExecution(
 		const body = await res.text().catch(() => '');
 		throw new Error(
 			`Failed to cancel: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------------------
+
+export type FeedbackRating = 'positive' | 'negative';
+
+export async function submitFeedback(
+	messageId: string,
+	rating: FeedbackRating,
+	comment?: string,
+): Promise<void> {
+	const res = await fetch(`${BASE}/messages/${messageId}/feedback`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ rating, comment: comment ?? null }),
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to submit feedback: ${res.status} ${res.statusText} — ${body}`,
 		);
 	}
 }

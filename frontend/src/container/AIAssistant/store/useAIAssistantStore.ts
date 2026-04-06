@@ -7,10 +7,15 @@ import {
 	approveExecution,
 	clarifyExecution,
 	createThread,
+	getThreadDetail,
+	listThreads,
+	MessageSummary,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
 	SSEEvent,
 	streamEvents,
+	submitFeedback,
+	updateThread,
 } from '../../../api/ai/chat';
 import { mockStreamChat } from '../mock/mockAIApi';
 import { PageActionRegistry } from '../pageActions/PageActionRegistry';
@@ -320,12 +325,18 @@ interface AIAssistantStore {
 	 */
 	answeredBlocks: Record<string, string>;
 
+	// Loading state
+	isLoadingThreads: boolean;
+	isLoadingThread: boolean;
+
 	// Actions
 	openDrawer: () => void;
 	closeDrawer: () => void;
 	openModal: () => void;
 	closeModal: () => void;
 	minimizeModal: () => void;
+	fetchThreads: () => Promise<void>;
+	loadThread: (threadId: string) => Promise<void>;
 	startNewConversation: () => string;
 	setActiveConversation: (id: string) => void;
 	clearConversation: (id: string) => void;
@@ -342,6 +353,24 @@ interface AIAssistantStore {
 		clarificationId: string,
 		answers: Record<string, unknown>,
 	) => Promise<void>;
+	submitMessageFeedback: (
+		messageId: string,
+		rating: 'positive' | 'negative',
+	) => Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// Server → client converters
+// ---------------------------------------------------------------------------
+
+function toMessage(m: MessageSummary): Message {
+	return {
+		id: m.messageId,
+		role: m.role as 'user' | 'assistant',
+		content: m.content ?? '',
+		feedbackRating: m.feedbackRating ?? undefined,
+		createdAt: new Date(m.createdAt).getTime(),
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -396,6 +425,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			conversations: {},
 			streamingContent: '',
 			isStreaming: false,
+			isLoadingThreads: false,
+			isLoadingThread: false,
 			streamingStatus: '',
 			streamingEvents: [],
 			streamingMessageId: null,
@@ -464,6 +495,73 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 			},
 
+			fetchThreads: async (): Promise<void> => {
+				if (USE_MOCK_AI) {
+					return;
+				}
+				set((s) => {
+					s.isLoadingThreads = true;
+				});
+				try {
+					const data = await listThreads();
+					set((s) => {
+						for (const thread of data.threads) {
+							// Only add threads not already loaded in this session
+							const existing = Object.values(s.conversations).find(
+								(c) => c.threadId === thread.threadId,
+							);
+							if (!existing) {
+								s.conversations[thread.threadId] = {
+									id: thread.threadId,
+									threadId: thread.threadId,
+									title: thread.title ?? undefined,
+									messages: [],
+									createdAt: new Date(thread.createdAt).getTime(),
+									updatedAt: new Date(thread.updatedAt).getTime(),
+								};
+							}
+						}
+						s.isLoadingThreads = false;
+					});
+				} catch (err) {
+					console.error('[AIAssistant] fetchThreads failed:', err);
+					set((s) => {
+						s.isLoadingThreads = false;
+					});
+				}
+			},
+
+			loadThread: async (threadId: string): Promise<void> => {
+				if (USE_MOCK_AI) {
+					return;
+				}
+				set((s) => {
+					s.isLoadingThread = true;
+				});
+				try {
+					const detail = await getThreadDetail(threadId);
+					set((s) => {
+						s.conversations[threadId] = {
+							id: threadId,
+							threadId: detail.threadId,
+							title: detail.title ?? undefined,
+							messages: detail.messages.map(toMessage),
+							createdAt: new Date(detail.createdAt).getTime(),
+							updatedAt: new Date(detail.updatedAt).getTime(),
+						};
+						s.activeConversationId = threadId;
+						s.pendingApproval = null;
+						s.pendingClarification = null;
+						s.isLoadingThread = false;
+					});
+				} catch (err) {
+					console.error('[AIAssistant] loadThread failed:', err);
+					set((s) => {
+						s.isLoadingThread = false;
+					});
+				}
+			},
+
 			startNewConversation: (): string => {
 				const id = uuidv4();
 				set((state) => {
@@ -509,6 +607,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			},
 
 			deleteConversation: (id: string): void => {
+				const conv = get().conversations[id];
+				// Optimistically remove from UI
 				set((state) => {
 					delete state.conversations[id];
 					if (state.activeConversationId === id) {
@@ -518,14 +618,28 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						state.activeConversationId = remaining[0]?.id ?? null;
 					}
 				});
+				// Archive on the backend (soft-delete)
+				if (conv?.threadId && !USE_MOCK_AI) {
+					updateThread(conv.threadId, { archived: true }).catch((err) => {
+						console.error('[AIAssistant] archiveThread failed:', err);
+					});
+				}
 			},
 
 			renameConversation: (id: string, title: string): void => {
+				const trimmed = title.trim() || undefined;
 				set((state) => {
 					if (state.conversations[id]) {
-						state.conversations[id].title = title.trim() || undefined;
+						state.conversations[id].title = trimmed;
 					}
 				});
+				// Sync rename to the backend
+				const conv = get().conversations[id];
+				if (conv?.threadId && !USE_MOCK_AI) {
+					updateThread(conv.threadId, { title: trimmed ?? null }).catch((err) => {
+						console.error('[AIAssistant] renameThread failed:', err);
+					});
+				}
 			},
 
 			markBlockAnswered: (messageId: string, answer: string): void => {
@@ -664,6 +778,35 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 			},
 
+			submitMessageFeedback: async (
+				messageId: string,
+				rating: 'positive' | 'negative',
+			): Promise<void> => {
+				const { activeConversationId } = get();
+				if (!activeConversationId) {
+					return;
+				}
+
+				// Optimistically update the message
+				set((s) => {
+					const conv = s.conversations[activeConversationId];
+					if (!conv) {
+						return;
+					}
+					const msg = conv.messages.find((m) => m.id === messageId);
+					if (msg) {
+						msg.feedbackRating = rating;
+					}
+				});
+
+				try {
+					await submitFeedback(messageId, rating);
+				} catch (err) {
+					// Keep the optimistic update — feedback is non-critical
+					console.error('[AIAssistant] submitMessageFeedback failed:', err);
+				}
+			},
+
 			submitClarification: async (
 				clarificationId: string,
 				answers: Record<string, unknown>,
@@ -703,7 +846,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			partialize: (state) => ({
 				isDrawerOpen: state.isDrawerOpen,
 				activeConversationId: state.activeConversationId,
-				conversations: state.conversations,
 				answeredBlocks: state.answeredBlocks,
 			}),
 		},

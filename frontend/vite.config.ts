@@ -83,6 +83,7 @@ export default defineConfig(
 			plugins,
 			resolve: {
 				alias: {
+					'@': resolve(__dirname, './src'),
 					utils: resolve(__dirname, './src/utils'),
 					types: resolve(__dirname, './src/types'),
 					constants: resolve(__dirname, './src/constants'),
@@ -123,6 +124,7 @@ export default defineConfig(
 				'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 				'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			},
+			base: mode === 'production' ? './' : '/',
 			build: {
 				sourcemap: true,
 				outDir: 'build',

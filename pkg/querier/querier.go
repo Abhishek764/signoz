@@ -418,20 +418,16 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 	nonExistentMetrics := []string{}
-	nonExistentInternalMetrics := []string{}
 	var dormantMetricsWarningMsg string
 	// question: should we maintain a list of all internal metrics, cuz what if a user defines a metric with these prefixes?
 	isInternalMetric := func(n string) bool { return strings.HasPrefix(n, "signoz.") || strings.HasPrefix(n, "signoz_") }
 	if len(missingMetrics) > 0 {
 		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
 		for _, missingMetricName := range missingMetrics {
-			if ts, ok := lastSeenInfo[missingMetricName]; ok && ts > 0 {
+			if ts, ok := lastSeenInfo[missingMetricName]; (ok && ts > 0) || isInternalMetric(missingMetricName) {
 				continue
-			} else if isInternalMetric(missingMetricName) {
-				nonExistentInternalMetrics = append(nonExistentInternalMetrics, missingMetricName)
-			} else {
-				nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
 			}
+			nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
 		}
 		if len(nonExistentMetrics) == 1 {
 			return nil, errors.NewNotFoundf(errors.CodeNotFound, "could not find the metric %s", nonExistentMetrics[0])

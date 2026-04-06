@@ -276,7 +276,7 @@
 
 .ai-message {
 	display: flex;
-	padding: 6px 16px;
+	padding: 8px 16px;
 
 	&--user {
 		justify-content: flex-end;
@@ -289,14 +289,14 @@
 
 // Tighter padding in the narrow panel
 .ai-assistant-panel .ai-message {
-	padding: 4px 12px;
+	padding: 6px 12px;
 }
 
 .ai-message__bubble {
 	border-radius: 12px;
 	padding: 10px 14px;
 	font-size: 13px;
-	line-height: 1.55;
+	line-height: 1.6;
 
 	.ai-message--user & {
 		background: var(--primary, var(--bg-robin-500));
@@ -305,12 +305,16 @@
 	}
 
 	.ai-message--assistant & {
+		// Flex column so text blocks, tool steps and cards space evenly
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
 		border-bottom-left-radius: 3px;
 	}
 }
-
 
 .ai-message__text {
 	margin: 0;
@@ -318,27 +322,114 @@
 	word-break: break-word;
 }
 
-.ai-message__markdown {
-	p,
-	ul,
-	ol,
-	pre,
-	blockquote {
-		margin-top: 0;
-		margin-bottom: 0.5em;
+// ─── Markdown body ────────────────────────────────────────────────────────────
 
-		&:last-child {
+.ai-message__markdown {
+	// Let the markdown content fill the bubble width
+	width: 100%;
+	word-break: break-word;
+
+	// Block spacing — paragraphs, lists, code blocks
+	p {
+		margin: 0 0 0.65em;
+
+		&:last-child { margin-bottom: 0; }
+	}
+
+	ul,
+	ol {
+		margin: 0 0 0.65em;
+		padding-left: 1.5em;
+
+		&:last-child { margin-bottom: 0; }
+	}
+
+	li {
+		margin-bottom: 0.3em;
+
+		&:last-child { margin-bottom: 0; }
+
+		// Nested lists
+		ul,
+		ol {
+			margin-top: 0.25em;
 			margin-bottom: 0;
 		}
 	}
 
+	// Headings
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-weight: 600;
+		line-height: 1.35;
+		margin: 0.9em 0 0.4em;
+		color: var(--l1-foreground);
+
+		&:first-child { margin-top: 0; }
+
+		&:last-child { margin-bottom: 0; }
+	}
+
+	h1 { font-size: 1.15em; }
+	h2 { font-size: 1.08em; }
+	h3 { font-size: 1em; }
+	h4,
+	h5,
+	h6 { font-size: 0.95em; }
+
+	// Inline emphasis
+	strong { font-weight: 600; }
+	em { font-style: italic; }
+
+	// Links
+	a {
+		color: var(--primary, var(--bg-robin-500));
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		text-decoration-thickness: 1px;
+
+		&:hover { opacity: 0.8; }
+	}
+
+	// Blockquote
+	blockquote {
+		border-left: 3px solid var(--l2-border);
+		padding: 0.1em 0 0.1em 0.8em;
+		color: var(--l2-foreground);
+		font-style: italic;
+		margin: 0 0 0.65em;
+
+		&:last-child { margin-bottom: 0; }
+
+		p { margin-bottom: 0; }
+	}
+
+	// Horizontal rule
+	hr {
+		border: none;
+		border-top: 1px solid var(--l2-border);
+		margin: 0.75em 0;
+	}
+
+	// Inline code
 	code {
 		font-family: 'Geist Mono', 'Fira Code', monospace;
-		font-size: 12px;
+		font-size: 11.5px;
 		border-radius: 3px;
 		padding: 1px 4px;
 		background: var(--l3-background);
 		color: var(--l1-foreground);
+	}
+
+	// Code block
+	pre {
+		margin: 0 0 0.65em;
+
+		&:last-child { margin-bottom: 0; }
 	}
 
 	pre code {
@@ -346,17 +437,23 @@
 		padding: 10px;
 		overflow-x: auto;
 		border-radius: 6px;
+		white-space: pre;
 	}
 
+	// Tables
 	table {
 		border-collapse: collapse;
 		font-size: 12px;
-		margin: 0.5em 0;
+		margin: 0 0 0.65em;
+		width: 100%;
+
+		&:last-child { margin-bottom: 0; }
 
 		th,
 		td {
-			padding: 4px 10px;
+			padding: 5px 10px;
 			border: 1px solid var(--l2-border);
+			text-align: left;
 		}
 
 		th {
@@ -365,9 +462,7 @@
 			font-weight: 600;
 		}
 
-		td {
-			color: var(--l1-foreground);
-		}
+		td { color: var(--l1-foreground); }
 	}
 }
 
@@ -1131,4 +1226,359 @@
 .ai-panel-btn--active {
 	background: var(--l2-background) !important;
 	color: var(--primary, var(--bg-robin-500)) !important;
+}
+
+// ─── Streaming status pill ────────────────────────────────────────────────────
+
+.ai-streaming-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 12px;
+	font-style: italic;
+	color: var(--l3-foreground, #6b7280);
+	margin-bottom: 6px;
+}
+
+// ─── Tool call steps ──────────────────────────────────────────────────────────
+
+.ai-tool-step {
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	overflow: hidden;
+	font-size: 12px;
+	// Fill bubble width so tool steps align with the text above/below
+	width: 100%;
+
+	&--running {
+		opacity: 0.85;
+	}
+}
+
+.ai-tool-step__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 6px 10px;
+	background: var(--l1-background);
+	border: none;
+	cursor: pointer;
+	text-align: left;
+	color: var(--l1-foreground);
+
+	&:hover {
+		background: var(--l2-background);
+	}
+}
+
+.ai-tool-step__icon {
+	flex-shrink: 0;
+	color: var(--l3-foreground, #6b7280);
+
+	&--spin {
+		color: var(--primary, var(--bg-robin-500));
+		animation: ai-spin 1s linear infinite;
+	}
+
+	&--done {
+		color: var(--bg-forest-500, #22c55e);
+	}
+}
+
+@keyframes ai-spin {
+	from { transform: rotate(0deg); }
+	to   { transform: rotate(360deg); }
+}
+
+.ai-tool-step__label {
+	font-weight: 500;
+	color: var(--l1-foreground);
+}
+
+.ai-tool-step__tool-name {
+	font-family: var(--font-mono, monospace);
+	font-size: 11px;
+	color: var(--l3-foreground, #6b7280);
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ai-tool-step__chevron {
+	flex-shrink: 0;
+	color: var(--l3-foreground, #6b7280);
+}
+
+.ai-tool-step__body {
+	padding: 6px 8px 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l1-background);
+}
+
+.ai-tool-step__section {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.ai-tool-step__section-label {
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--l3-foreground, #6b7280);
+}
+
+.ai-tool-step__json {
+	font-family: var(--font-mono, monospace);
+	font-size: 11px;
+	color: var(--l2-foreground);
+	background: var(--l2-background);
+	border-radius: 4px;
+	padding: 5px 7px;
+	margin: 0;
+	overflow-x: auto;
+	white-space: pre;
+	max-height: 160px;
+}
+
+// ─── Approval card ────────────────────────────────────────────────────────────
+
+.ai-approval {
+	border: 1px solid var(--bg-amber-500, #f59e0b);
+	border-radius: 8px;
+	padding: 10px 12px;
+	background: rgba(245, 158, 11, 0.05);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+
+	&--decided {
+		border-color: var(--l2-border);
+		background: transparent;
+		flex-direction: row;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 10px;
+	}
+}
+
+.ai-approval__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.ai-approval__shield-icon {
+	flex-shrink: 0;
+	color: var(--bg-amber-500, #f59e0b);
+}
+
+.ai-approval__header-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.ai-approval__resource-badge {
+	margin-left: auto;
+	font-size: 10px;
+	font-family: var(--font-mono, monospace);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	padding: 1px 5px;
+	color: var(--l2-foreground);
+}
+
+.ai-approval__summary {
+	font-size: 13px;
+	color: var(--l1-foreground);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.ai-approval__diff {
+	display: flex;
+	gap: 8px;
+}
+
+.ai-approval__diff-block {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+
+	&--before .ai-approval__diff-label { color: var(--bg-cherry-500, #ef4444); }
+	&--after  .ai-approval__diff-label { color: var(--bg-forest-500, #22c55e); }
+}
+
+.ai-approval__diff-label {
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.ai-approval__diff-json {
+	font-family: var(--font-mono, monospace);
+	font-size: 11px;
+	background: var(--l2-background);
+	border-radius: 4px;
+	padding: 5px 7px;
+	margin: 0;
+	overflow-x: auto;
+	white-space: pre;
+	max-height: 140px;
+	color: var(--l2-foreground);
+}
+
+.ai-approval__actions {
+	display: flex;
+	gap: 6px;
+}
+
+.ai-approval__status-icon {
+	flex-shrink: 0;
+	&--ok { color: var(--bg-forest-500, #22c55e); }
+	&--no { color: var(--l3-foreground, #6b7280); }
+}
+
+.ai-approval__status-text {
+	font-size: 13px;
+	color: var(--l2-foreground);
+}
+
+// ─── Clarification form ───────────────────────────────────────────────────────
+
+.ai-clarification {
+	border: 1px solid var(--l2-border);
+	border-radius: 8px;
+	padding: 10px 12px;
+	background: var(--l2-background);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+
+	&--submitted {
+		border-color: var(--l2-border);
+		background: transparent;
+		flex-direction: row;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 10px;
+	}
+}
+
+.ai-clarification__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.ai-clarification__header-icon {
+	flex-shrink: 0;
+	color: var(--primary, var(--bg-robin-500));
+}
+
+.ai-clarification__header-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.ai-clarification__message {
+	font-size: 13px;
+	color: var(--l1-foreground);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.ai-clarification__icon {
+	color: var(--bg-forest-500, #22c55e);
+	flex-shrink: 0;
+}
+
+.ai-clarification__status-text {
+	font-size: 13px;
+	color: var(--l2-foreground);
+}
+
+.ai-clarification__fields {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ai-clarification__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.ai-clarification__label {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--l2-foreground);
+}
+
+.ai-clarification__required {
+	color: var(--bg-cherry-500, #ef4444);
+	margin-left: 2px;
+}
+
+.ai-clarification__input,
+.ai-clarification__select {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 5px;
+	padding: 5px 8px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	outline: none;
+	transition: border-color 0.12s;
+
+	&:focus {
+		border-color: var(--primary, var(--bg-robin-500));
+	}
+}
+
+.ai-clarification__select {
+	cursor: pointer;
+}
+
+.ai-clarification__radio-group,
+.ai-clarification__checkbox-group {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.ai-clarification__radio-label,
+.ai-clarification__checkbox-label {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	cursor: pointer;
+}
+
+.ai-clarification__radio,
+.ai-clarification__checkbox {
+	accent-color: var(--primary, var(--bg-robin-500));
+	cursor: pointer;
+}
+
+.ai-clarification__actions {
+	display: flex;
+	gap: 6px;
 }

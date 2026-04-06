@@ -152,6 +152,7 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "rehype-raw": "7.0.0",
+    "remark-gfm": "^3.0.1",
     "rollup-plugin-visualizer": "7.0.0",
     "rrule": "2.8.1",
     "stream": "^0.0.2",

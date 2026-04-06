@@ -3,23 +3,296 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-import { streamChat } from '../../../api/ai/chat';
+import {
+	approveExecution,
+	clarifyExecution,
+	createThread,
+	rejectExecution,
+	sendMessage as sendMessageToThread,
+	SSEEvent,
+	streamEvents,
+} from '../../../api/ai/chat';
 import { mockStreamChat } from '../mock/mockAIApi';
 import { PageActionRegistry } from '../pageActions/PageActionRegistry';
 import {
-	AssistantAction,
 	Conversation,
 	Message,
 	MessageAttachment,
+	PendingApproval,
+	PendingClarification,
+	StreamingEventItem,
 } from '../types';
 
 const USE_MOCK_AI = import.meta.env.VITE_AI_MOCK === 'true';
-const chat = USE_MOCK_AI ? mockStreamChat : streamChat;
+
+// ---------------------------------------------------------------------------
+// Types used by module-level helpers
+// ---------------------------------------------------------------------------
+
+type StoreSetter = (fn: (s: AIAssistantStore) => void) => void;
+type StoreGetter = () => AIAssistantStore;
+
+interface SSEStreamCtx {
+	conversationId: string;
+	set: StoreSetter;
+}
+
+// ---------------------------------------------------------------------------
+// Module-level helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Drips a text chunk word-by-word with small random delays to produce a
+ * smooth typing effect when large SSE deltas arrive all at once.
+ */
+async function animateDelta(
+	delta: string,
+	onWord: (word: string) => void,
+): Promise<void> {
+	const words = delta.split(/(?<=\s)/);
+	for (const word of words) {
+		// eslint-disable-next-line no-await-in-loop
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 12 + Math.random() * 18);
+		});
+		onWord(word);
+	}
+}
+
+/**
+ * Appends one text chunk to both streamingContent (used for finalization) and
+ * streamingEvents (used for ordered rendering). When the last event is a tool
+ * call, a new text event is opened so the text renders after the tool step.
+ * Also captures the server messageId on the first call.
+ */
+function appendTextToStream(
+	s: AIAssistantStore,
+	messageId: string,
+	chunk: string,
+): void {
+	if (!s.streamingMessageId) {
+		s.streamingMessageId = messageId;
+	}
+	s.streamingContent += chunk;
+	const last = s.streamingEvents[s.streamingEvents.length - 1];
+	if (last?.kind === 'text') {
+		last.content += chunk;
+	} else {
+		s.streamingEvents.push({ kind: 'text', content: chunk });
+	}
+}
+
+// Extracted to keep runStreamingLoop complexity under the 15-branch limit.
+
+function applyToolResult(
+	event: Extract<SSEEvent, { type: 'tool_result' }>,
+	set: StoreSetter,
+): void {
+	set((s) => {
+		// Find the most recent incomplete tool event with the matching name
+		const toolEvent = [...s.streamingEvents]
+			.reverse()
+			.find(
+				(e) =>
+					e.kind === 'tool' &&
+					e.toolCall.toolName === event.toolName &&
+					!e.toolCall.done,
+			);
+		if (toolEvent?.kind === 'tool') {
+			toolEvent.toolCall.result = event.result;
+			toolEvent.toolCall.done = true;
+		}
+	});
+}
+
+function applyApprovalEvent(
+	event: Extract<SSEEvent, { type: 'approval' }>,
+	set: StoreSetter,
+): void {
+	set((s) => {
+		s.pendingApproval = {
+			approvalId: event.approvalId,
+			executionId: event.executionId,
+			actionType: event.actionType,
+			resourceType: event.resourceType,
+			summary: event.summary,
+			diff: event.diff,
+		};
+		s.streamingStatus = 'awaiting_approval';
+	});
+}
+
+function applyClarificationEvent(
+	event: Extract<SSEEvent, { type: 'clarification' }>,
+	set: StoreSetter,
+): void {
+	set((s) => {
+		s.pendingClarification = {
+			clarificationId: event.clarificationId,
+			executionId: event.executionId,
+			message: event.message,
+			discoveredContext: event.discoveredContext,
+			fields: event.fields,
+		};
+		s.streamingStatus = 'awaiting_clarification';
+	});
+}
+
+/**
+ * Runs one SSE execution stream, updating store state as events arrive.
+ *
+ * Returns the server-assigned messageId for the assistant reply (if any).
+ * Breaks early and sets pendingApproval / pendingClarification when the
+ * agent needs user input before it can continue.
+ *
+ * Throws on `error` events — the caller's catch block handles UI feedback.
+ */
+// eslint-disable-next-line sonarjs/cognitive-complexity
+async function runStreamingLoop(
+	executionId: string,
+	ctx: SSEStreamCtx,
+): Promise<void> {
+	const { conversationId, set } = ctx;
+
+	for await (const event of streamEvents(executionId)) {
+		if (event.type === 'status') {
+			set((s) => {
+				s.streamingStatus = event.state;
+			});
+		} else if (event.type === 'message') {
+			if (event.delta) {
+				// eslint-disable-next-line no-await-in-loop
+				await animateDelta(event.delta, (word) => {
+					set((s) => appendTextToStream(s, event.messageId, word));
+				});
+			}
+			if (event.done) {
+				break;
+			}
+		} else if (event.type === 'tool_call') {
+			set((s) => {
+				s.streamingEvents.push({
+					kind: 'tool',
+					toolCall: {
+						toolName: event.toolName,
+						input: event.toolInput,
+						done: false,
+					},
+				});
+			});
+		} else if (event.type === 'tool_result') {
+			applyToolResult(event, set);
+		} else if (event.type === 'approval') {
+			applyApprovalEvent(event, set);
+			break;
+		} else if (event.type === 'clarification') {
+			applyClarificationEvent(event, set);
+			break;
+		} else if (event.type === 'error') {
+			throw Object.assign(new Error(event.error.message), {
+				retryAction: event.retryAction,
+			});
+		} else if (event.type === 'conversation' && event.title) {
+			set((s) => {
+				s.conversations[conversationId].title = event.title;
+			});
+		} else if (event.type === 'done') {
+			break;
+		}
+	}
+}
+
+/**
+ * Commits the accumulated streamingContent as a new assistant message and
+ * resets transient streaming state. Does NOT clear pendingApproval /
+ * pendingClarification — those are cleared by their respective actions.
+ */
+function finalizeStreamingMessage(
+	conversationId: string,
+	set: StoreSetter,
+	get: StoreGetter,
+): void {
+	const { streamingMessageId, streamingContent } = get();
+	set((s) => {
+		const conv = s.conversations[conversationId];
+		if (streamingContent.trim()) {
+			conv.messages.push({
+				id: streamingMessageId ?? uuidv4(),
+				role: 'assistant',
+				content: streamingContent,
+				createdAt: Date.now(),
+			});
+			conv.updatedAt = Date.now();
+		}
+		s.streamingContent = '';
+		s.streamingStatus = '';
+		s.streamingEvents = [];
+		s.streamingMessageId = null;
+	});
+}
+
+/**
+ * Commits an error message and resets all streaming state.
+ * Extracted to avoid duplicate implementations across approve/clarify actions.
+ */
+function finalizeStreamingError(
+	conversationId: string,
+	errorContent: string,
+	set: StoreSetter,
+): void {
+	set((s) => {
+		s.conversations[conversationId].messages.push({
+			id: uuidv4(),
+			role: 'assistant',
+			content: errorContent,
+			createdAt: Date.now(),
+		});
+		s.conversations[conversationId].updatedAt = Date.now();
+		s.streamingContent = '';
+		s.isStreaming = false;
+		s.streamingStatus = '';
+		s.streamingEvents = [];
+	});
+}
+
+/** Shared mock streaming path for sendMessage. */
+async function runMockStream(
+	payload: {
+		conversationId: string;
+		messages: { role: 'user' | 'assistant'; content: string }[];
+	},
+	set: StoreSetter,
+): Promise<void> {
+	for await (const event of mockStreamChat(payload)) {
+		if (event.type === 'message') {
+			if (event.delta) {
+				set((s) => appendTextToStream(s, event.messageId, event.delta));
+			}
+			if (event.done) {
+				break;
+			}
+		} else if (event.type === 'done') {
+			break;
+		}
+	}
+}
+
+/** Reset all transient streaming state at the start of a new streaming turn. */
+function resetStreamingState(s: AIAssistantStore): void {
+	s.isStreaming = true;
+	s.streamingContent = '';
+	s.streamingStatus = '';
+	s.streamingEvents = [];
+	s.streamingMessageId = null;
+}
+
+// ---------------------------------------------------------------------------
+// Store interface
+// ---------------------------------------------------------------------------
 
 interface AIAssistantStore {
 	// UI state
 	isDrawerOpen: boolean;
-	/** Whether the global floating modal (Cmd+P) is open */
 	isModalOpen: boolean;
 	activeConversationId: string | null;
 
@@ -29,11 +302,21 @@ interface AIAssistantStore {
 	// Streaming state
 	streamingContent: string;
 	isStreaming: boolean;
+	streamingStatus: string;
+	/**
+	 * Ordered sequence of text and tool-call events in arrival order.
+	 * Replaces the old separate streamingContent (rendering) + streamingEvents.
+	 * streamingContent is still kept internally for message finalization.
+	 */
+	streamingEvents: StreamingEventItem[];
+	/** Server-assigned messageId for the assistant message being built. */
+	streamingMessageId: string | null;
+	pendingApproval: PendingApproval | null;
+	pendingClarification: PendingClarification | null;
 
 	/**
-	 * Persists the answered state for interactive blocks (ai-question, ai-confirm)
-	 * so that re-renders/remounts don't reset the answered UI.
-	 * Key: messageId, Value: the answer text (or "accepted"/"rejected" for confirms).
+	 * Persists answered state for interactive blocks (ai-question, ai-confirm)
+	 * so re-renders/remounts don't reset the answered UI.
 	 */
 	answeredBlocks: Record<string, string>;
 
@@ -42,7 +325,6 @@ interface AIAssistantStore {
 	closeDrawer: () => void;
 	openModal: () => void;
 	closeModal: () => void;
-	/** Close the modal and open the side panel instead */
 	minimizeModal: () => void;
 	startNewConversation: () => string;
 	setActiveConversation: (id: string) => void;
@@ -54,13 +336,18 @@ interface AIAssistantStore {
 		text: string,
 		attachments?: MessageAttachment[],
 	) => Promise<void>;
+	approveAction: (approvalId: string) => Promise<void>;
+	rejectAction: (approvalId: string) => Promise<void>;
+	submitClarification: (
+		clarificationId: string,
+		answers: Record<string, unknown>,
+	) => Promise<void>;
 }
 
-/**
- * Builds a PAGE_CONTEXT prefix from whatever actions are currently registered.
- * This prefix is prepended to the last user message in the API payload only —
- * it is never stored in the conversation or shown in the UI.
- */
+// ---------------------------------------------------------------------------
+// Misc store helpers
+// ---------------------------------------------------------------------------
+
 function buildContextPrefix(): string {
 	const descriptors = PageActionRegistry.snapshot();
 	if (descriptors.length === 0) {
@@ -88,15 +375,17 @@ function buildContextPrefix(): string {
 		'[/PAGE_CONTEXT]',
 		'',
 	];
-
 	return lines.join('\n');
 }
 
-/** Derive a short title from the first user message. */
 function deriveTitle(text: string): string {
 	const trimmed = text.trim().replace(/\s+/g, ' ');
 	return trimmed.length > 60 ? `${trimmed.slice(0, 60)}…` : trimmed;
 }
+
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
 
 export const useAIAssistantStore = create<AIAssistantStore>()(
 	persist(
@@ -107,6 +396,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			conversations: {},
 			streamingContent: '',
 			isStreaming: false,
+			streamingStatus: '',
+			streamingEvents: [],
+			streamingMessageId: null,
+			pendingApproval: null,
+			pendingClarification: null,
 			answeredBlocks: {},
 
 			openDrawer: (): void => {
@@ -134,7 +428,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			openModal: (): void => {
 				set((state) => {
 					state.isModalOpen = true;
-					// Ensure there's an active conversation
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -158,7 +451,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				set((state) => {
 					state.isModalOpen = false;
 					state.isDrawerOpen = true;
-					// Ensure there's an active conversation for the side panel
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -182,6 +474,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						updatedAt: Date.now(),
 					};
 					state.activeConversationId = id;
+					state.pendingApproval = null;
+					state.pendingClarification = null;
 				});
 				return id;
 			},
@@ -195,17 +489,22 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			clearConversation: (id: string): void => {
 				set((state) => {
 					if (state.conversations[id]) {
-						// Remove answered-block entries for messages being cleared
-						const msgIds = state.conversations[id].messages.map((m) => m.id);
-						msgIds.forEach((mid) => {
-							delete state.answeredBlocks[mid];
-						});
+						state.conversations[id].messages
+							.map((m) => m.id)
+							.forEach((mid) => {
+								delete state.answeredBlocks[mid];
+							});
 						state.conversations[id].messages = [];
 						state.conversations[id].title = undefined;
+						state.conversations[id].threadId = undefined;
 						state.conversations[id].updatedAt = Date.now();
 					}
 					state.streamingContent = '';
 					state.isStreaming = false;
+					state.streamingStatus = '';
+					state.streamingEvents = [];
+					state.pendingApproval = null;
+					state.pendingClarification = null;
 				});
 			},
 
@@ -213,7 +512,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				set((state) => {
 					delete state.conversations[id];
 					if (state.activeConversationId === id) {
-						// Switch to the most recent remaining conversation, or null
 						const remaining = Object.values(state.conversations).sort(
 							(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
 						);
@@ -236,13 +534,12 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 			},
 
+			// eslint-disable-next-line sonarjs/cognitive-complexity
 			sendMessage: async (
 				text: string,
 				attachments?: MessageAttachment[],
-				// eslint-disable-next-line sonarjs/cognitive-complexity
 			): Promise<void> => {
 				const { activeConversationId, conversations } = get();
-
 				if (!activeConversationId || !conversations[activeConversationId]) {
 					return;
 				}
@@ -262,75 +559,142 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					if (!conv.title && text.trim()) {
 						conv.title = deriveTitle(text);
 					}
-					state.isStreaming = true;
-					state.streamingContent = '';
+					resetStreamingState(state);
 				});
 
 				try {
-					const history = get().conversations[activeConversationId].messages;
-
-					// Prepend PAGE_CONTEXT to the last user message in the wire payload only.
-					const contextPrefix = buildContextPrefix();
-					const payload = {
-						conversationId: activeConversationId,
-						messages: history.map((m, i) => ({
-							role: m.role as 'user' | 'assistant',
-							content:
-								contextPrefix && i === history.length - 1 && m.role === 'user'
-									? contextPrefix + m.content
-									: m.content,
-						})),
-					};
-
-					// messageId comes from the first SSE event; reuse across all chunks
-					// for the same assistant turn.
-					let serverMessageId: string | null = null;
-					let finalActions: AssistantAction[] = [];
-
-					for await (const event of chat(payload)) {
-						serverMessageId = serverMessageId ?? event.messageId;
-
-						set((state) => {
-							state.streamingContent += event.content;
-						});
-
-						if (event.done) {
-							finalActions = event.actions ?? [];
-							break;
+					if (USE_MOCK_AI) {
+						const history = get().conversations[activeConversationId].messages;
+						const contextPrefix = buildContextPrefix();
+						await runMockStream(
+							{
+								conversationId: activeConversationId,
+								messages: history.map((m, i) => ({
+									role: m.role as 'user' | 'assistant',
+									content:
+										contextPrefix && i === history.length - 1 && m.role === 'user'
+											? contextPrefix + m.content
+											: m.content,
+								})),
+							},
+							set,
+						);
+					} else {
+						let { threadId } = get().conversations[activeConversationId];
+						if (!threadId) {
+							threadId = await createThread();
+							const resolvedId = threadId;
+							set((s) => {
+								s.conversations[activeConversationId].threadId = resolvedId;
+							});
 						}
+						const contextPrefix = buildContextPrefix();
+						const executionId = await sendMessageToThread(
+							threadId,
+							contextPrefix + text,
+						);
+						await runStreamingLoop(executionId, {
+							conversationId: activeConversationId,
+							set,
+						});
 					}
 
-					const finalContent = get().streamingContent;
-					const assistantMessage: Message = {
-						id: serverMessageId ?? uuidv4(),
-						role: 'assistant',
-						content: finalContent,
-						actions: finalActions.length > 0 ? finalActions : undefined,
-						createdAt: Date.now(),
-					};
-
-					set((state) => {
-						const conv = state.conversations[activeConversationId];
-						conv.messages.push(assistantMessage);
-						conv.updatedAt = Date.now();
-						state.streamingContent = '';
-						state.isStreaming = false;
+					// Finalize: commit any streamed text as a message, then mark done.
+					// If approval/clarification was triggered, pendingApproval/pendingClarification
+					// are already set; isStreaming = false lets the user interact with the card.
+					finalizeStreamingMessage(activeConversationId, set, get);
+					set((s) => {
+						s.isStreaming = false;
 					});
 				} catch (err) {
-					const errorMessage: Message = {
-						id: uuidv4(),
-						role: 'assistant',
-						content:
-							'Something went wrong while fetching the response. Please try again.',
-						createdAt: Date.now(),
-					};
-					set((state) => {
-						const conv = state.conversations[activeConversationId];
-						conv.messages.push(errorMessage);
-						conv.updatedAt = Date.now();
-						state.streamingContent = '';
-						state.isStreaming = false;
+					console.error('[AIAssistant] sendMessage failed:', err);
+					finalizeStreamingError(
+						activeConversationId,
+						'Something went wrong while fetching the response. Please try again.',
+						set,
+					);
+				}
+			},
+
+			approveAction: async (approvalId: string): Promise<void> => {
+				const { activeConversationId } = get();
+				if (!activeConversationId) {
+					return;
+				}
+
+				set((s) => {
+					s.pendingApproval = null;
+					resetStreamingState(s);
+				});
+
+				try {
+					const executionId = await approveExecution(approvalId);
+					await runStreamingLoop(executionId, {
+						conversationId: activeConversationId,
+						set,
 					});
+					finalizeStreamingMessage(activeConversationId, set, get);
+					set((s) => {
+						s.isStreaming = false;
+					});
+				} catch (err) {
+					console.error('[AIAssistant] approveAction failed:', err);
+					finalizeStreamingError(
+						activeConversationId,
+						'Something went wrong while processing the approval. Please try again.',
+						set,
+					);
+				}
+			},
+
+			rejectAction: async (approvalId: string): Promise<void> => {
+				const { activeConversationId } = get();
+				if (!activeConversationId) {
+					return;
+				}
+
+				try {
+					await rejectExecution(approvalId);
+				} catch (err) {
+					console.error('[AIAssistant] rejectAction failed:', err);
+				}
+				set((s) => {
+					s.pendingApproval = null;
+					s.streamingStatus = '';
+				});
+			},
+
+			submitClarification: async (
+				clarificationId: string,
+				answers: Record<string, unknown>,
+			): Promise<void> => {
+				const { activeConversationId } = get();
+				if (!activeConversationId) {
+					return;
+				}
+
+				set((s) => {
+					s.pendingClarification = null;
+					resetStreamingState(s);
+				});
+
+				try {
+					const executionId = await clarifyExecution(clarificationId, answers);
+					await runStreamingLoop(executionId, {
+						conversationId: activeConversationId,
+						set,
+					});
+					finalizeStreamingMessage(activeConversationId, set, get);
+					set((s) => {
+						s.isStreaming = false;
+					});
+				} catch (err) {
+					console.error('[AIAssistant] submitClarification failed:', err);
+					finalizeStreamingError(
+						activeConversationId,
+						'Something went wrong while processing your answers. Please try again.',
+						set,
+					);
 				}
 			},
 		})),
@@ -349,15 +713,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 // Standalone imperative accessors
 export const openAIAssistant = (): void =>
 	useAIAssistantStore.getState().openDrawer();
-
 export const closeAIAssistant = (): void =>
 	useAIAssistantStore.getState().closeDrawer();
-
 export const openAIAssistantModal = (): void =>
 	useAIAssistantStore.getState().openModal();
-
 export const closeAIAssistantModal = (): void =>
 	useAIAssistantStore.getState().closeModal();
-
 export const minimizeAIAssistantModal = (): void =>
 	useAIAssistantStore.getState().minimizeModal();

@@ -1,105 +1,321 @@
-import apiV1 from 'api/apiV1';
-import { AssistantAction } from 'container/AIAssistant/types';
-
-const ENDPOINT = `${apiV1}assistant/threads`;
-
-export interface ChatMessage {
-	role: 'user' | 'assistant';
-	content: string;
-}
-
-export interface ChatPayload {
-	conversationId: string;
-	messages: ChatMessage[];
-}
-
-/** A single SSE event parsed from the wire. */
-export interface SSEEvent {
-	type: 'message';
-	messageId: string;
-	role: 'assistant';
-	/** Incremental text chunk for the current token. */
-	content: string;
-	done: boolean;
-	actions: AssistantAction[];
-}
-
 /**
- * Opens a streaming SSE connection to the AI assistant endpoint.
- * Returns an async generator that yields parsed SSE events.
+ * AI Assistant API client.
  *
- * Usage:
- *   for await (const event of streamChat(payload, signal)) { ... }
+ * Flow:
+ *   1. POST /api/v1/assistant/threads                                           → { threadId }
+ *   2. POST /api/v1/assistant/threads/{threadId}/messages                       → { executionId }
+ *   3. GET  /api/v1/assistant/executions/{executionId}/events                    → SSE stream (closes on 'done')
+ *
+ * For subsequent messages in the same thread, repeat steps 2–3.
+ * Approval/clarification events pause the stream; use approveExecution/clarifyExecution
+ * to resume, which each return a new executionId to open a fresh SSE stream.
  */
-export async function* streamChat(
-	payload: ChatPayload,
-	signal?: AbortSignal,
-): AsyncGenerator<SSEEvent> {
-	const response = await fetch(ENDPOINT, {
+
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import { LOCALSTORAGE } from 'constants/localStorage';
+
+// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env to override.
+const AI_BACKEND =
+	import.meta.env.VITE_AI_BACKEND_URL || 'http://localhost:8001';
+const BASE = `${AI_BACKEND}/api/v1/assistant`;
+
+function authHeaders(): Record<string, string> {
+	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
+	return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// ---------------------------------------------------------------------------
+// SSE event types
+// ---------------------------------------------------------------------------
+
+export type SSEEvent =
+	| { type: 'status'; executionId: string; state: string; eventId: number }
+	| {
+			type: 'message';
+			executionId: string;
+			messageId: string;
+			delta: string;
+			done: boolean;
+			actions: unknown[] | null;
+			eventId: number;
+	  }
+	| {
+			type: 'tool_call';
+			executionId: string;
+			toolName: string;
+			toolInput: unknown;
+			eventId: number;
+	  }
+	| {
+			type: 'tool_result';
+			executionId: string;
+			toolName: string;
+			result: unknown;
+			eventId: number;
+	  }
+	| {
+			type: 'approval';
+			executionId: string;
+			approvalId: string;
+			actionType: string;
+			resourceType: string;
+			summary: string;
+			diff: { before: unknown; after: unknown } | null;
+			eventId: number;
+	  }
+	| {
+			type: 'clarification';
+			executionId: string;
+			clarificationId: string;
+			message: string;
+			discoveredContext: Record<string, unknown> | null;
+			fields: ClarificationFieldRaw[];
+			eventId: number;
+	  }
+	| {
+			type: 'error';
+			executionId: string;
+			error: { type: string; code: string; message: string; details: unknown };
+			retryAction: 'auto' | 'manual' | 'none';
+			eventId: number;
+	  }
+	| { type: 'conversation'; threadId: string; title: string; eventId: number }
+	| {
+			type: 'done';
+			executionId: string;
+			tokenInput: number;
+			tokenOutput: number;
+			latencyMs: number;
+			toolCallCount?: number;
+			retryCount?: number;
+			eventId: number;
+	  };
+
+export interface ClarificationFieldRaw {
+	id: string;
+	type: string;
+	label: string;
+	required?: boolean;
+	options?: string[] | null;
+	default?: string | string[] | null;
+}
+
+// ---------------------------------------------------------------------------
+// Step 1 — Create thread
+// POST /api/v1/assistant/threads → { threadId }
+// ---------------------------------------------------------------------------
+
+export async function createThread(signal?: AbortSignal): Promise<string> {
+	const res = await fetch(`${BASE}/threads`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(payload),
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({}),
+		signal,
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to create thread: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	const data: { threadId: string } = await res.json();
+	return data.threadId;
+}
+
+// ---------------------------------------------------------------------------
+// Step 2 — Send message
+// POST /api/v1/assistant/threads/{threadId}/messages → { executionId }
+// ---------------------------------------------------------------------------
+
+/** Fetches the thread's active executionId for reconnect on thread_busy (409). */
+async function getActiveExecutionId(threadId: string): Promise<string | null> {
+	const res = await fetch(`${BASE}/threads/${threadId}`, {
+		headers: { ...authHeaders() },
+	});
+	if (!res.ok) {
+		return null;
+	}
+	const data: { activeExecutionId?: string | null } = await res.json();
+	return data.activeExecutionId ?? null;
+}
+
+export async function sendMessage(
+	threadId: string,
+	content: string,
+	signal?: AbortSignal,
+): Promise<string> {
+	const res = await fetch(`${BASE}/threads/${threadId}/messages`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ content }),
 		signal,
 	});
 
-	if (!response.ok || !response.body) {
-		throw new Error(`AI chat request failed: ${response.status} ${response.statusText}`);
+	if (res.status === 409) {
+		// Thread has an active execution — reconnect to it instead of failing.
+		const executionId = await getActiveExecutionId(threadId);
+		if (executionId) {
+			return executionId;
+		}
 	}
 
-	const reader = response.body.getReader();
-	const decoder = new TextDecoder();
-	// Buffer for incomplete lines across chunks
-	let lineBuffer = '';
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to send message: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	const data: { executionId: string } = await res.json();
+	return data.executionId;
+}
 
+// ---------------------------------------------------------------------------
+// Step 3 — Stream execution events
+// GET /api/v1/assistant/executions/{executionId}/events → SSE
+// ---------------------------------------------------------------------------
+
+function parseSSELine(line: string): SSEEvent | null {
+	if (!line.startsWith('data: ')) {
+		return null;
+	}
+	const json = line.slice('data: '.length).trim();
+	if (!json || json === '[DONE]') {
+		return null;
+	}
+	try {
+		return JSON.parse(json) as SSEEvent;
+	} catch {
+		return null;
+	}
+}
+
+function parseSSEChunk(chunk: string): SSEEvent[] {
+	return chunk
+		.split('\n\n')
+		.map((part) => part.split('\n').find((l) => l.startsWith('data: ')) ?? '')
+		.map(parseSSELine)
+		.filter((e): e is SSEEvent => e !== null);
+}
+
+async function* readSSEReader(
+	reader: ReadableStreamDefaultReader<Uint8Array>,
+): AsyncGenerator<SSEEvent> {
+	const decoder = new TextDecoder();
+	let lineBuffer = '';
 	try {
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			// eslint-disable-next-line no-await-in-loop
 			const { done, value } = await reader.read();
-			if (done) break;
-
+			if (done) {
+				break;
+			}
 			lineBuffer += decoder.decode(value, { stream: true });
-
-			// SSE events are separated by double newlines; process complete events
 			const parts = lineBuffer.split('\n\n');
-			// The last part may be incomplete — keep it in the buffer
 			lineBuffer = parts.pop() ?? '';
-
-			for (const part of parts) {
-				const dataLine = part
-					.split('\n')
-					.find((line) => line.startsWith('data: '));
-				if (!dataLine) continue;
-
-				const json = dataLine.slice('data: '.length).trim();
-				if (!json || json === '[DONE]') continue;
-
-				try {
-					const event = JSON.parse(json) as SSEEvent;
-					yield event;
-				} catch {
-					// Malformed JSON — skip
-				}
-			}
+			yield* parts.flatMap(parseSSEChunk);
 		}
-
-		// Flush any remaining buffer content
-		if (lineBuffer.trim()) {
-			const dataLine = lineBuffer
-				.split('\n')
-				.find((line) => line.startsWith('data: '));
-			if (dataLine) {
-				const json = dataLine.slice('data: '.length).trim();
-				if (json && json !== '[DONE]') {
-					try {
-						yield JSON.parse(json) as SSEEvent;
-					} catch {
-						// Malformed JSON — skip
-					}
-				}
-			}
-		}
+		yield* parseSSEChunk(lineBuffer);
 	} finally {
 		reader.releaseLock();
+	}
+}
+
+export async function* streamEvents(
+	executionId: string,
+	signal?: AbortSignal,
+): AsyncGenerator<SSEEvent> {
+	const res = await fetch(`${BASE}/executions/${executionId}/events`, {
+		headers: { ...authHeaders() },
+		signal,
+	});
+	if (!res.ok || !res.body) {
+		throw new Error(`SSE stream failed: ${res.status} ${res.statusText}`);
+	}
+	yield* readSSEReader(res.body.getReader());
+}
+
+// ---------------------------------------------------------------------------
+// Approval / Clarification / Cancel actions
+// ---------------------------------------------------------------------------
+
+/** Approve a pending action. Returns a new executionId — open a fresh SSE stream for it. */
+export async function approveExecution(
+	approvalId: string,
+	signal?: AbortSignal,
+): Promise<string> {
+	const res = await fetch(`${BASE}/approve`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ approvalId }),
+		signal,
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to approve: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	const data: { executionId: string } = await res.json();
+	return data.executionId;
+}
+
+/** Reject a pending action. */
+export async function rejectExecution(
+	approvalId: string,
+	signal?: AbortSignal,
+): Promise<void> {
+	const res = await fetch(`${BASE}/reject`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ approvalId }),
+		signal,
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to reject: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+}
+
+/** Submit clarification answers. Returns a new executionId — open a fresh SSE stream for it. */
+export async function clarifyExecution(
+	clarificationId: string,
+	answers: Record<string, unknown>,
+	signal?: AbortSignal,
+): Promise<string> {
+	const res = await fetch(`${BASE}/clarify`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ clarificationId, answers }),
+		signal,
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to clarify: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	const data: { executionId: string } = await res.json();
+	return data.executionId;
+}
+
+/** Cancel the active execution on a thread. */
+export async function cancelExecution(
+	threadId: string,
+	signal?: AbortSignal,
+): Promise<void> {
+	const res = await fetch(`${BASE}/cancel`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ threadId }),
+		signal,
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to cancel: ${res.status} ${res.statusText} — ${body}`,
+		);
 	}
 }

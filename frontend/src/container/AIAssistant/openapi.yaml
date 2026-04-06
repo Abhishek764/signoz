@@ -1,0 +1,673 @@
+openapi: 3.1.0
+info:
+ title: SigNoz AI Assistant API
+ description: AI-powered assistant for SigNoz observability platform.
+ version: 0.1.0
+paths:
+ /health:
+  get:
+   tags: [Health]
+   summary: Health
+   operationId: health_health_get
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/HealthResponse' }
+ /ready:
+  get:
+   tags: [Health]
+   summary: Ready
+   operationId: ready_ready_get
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ReadinessResponse' }
+    '503':
+     description: One or more checks failed
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ReadinessResponse' }
+ /api/v1/assistant/threads:
+  post:
+   tags: [Threads]
+   summary: Create a new thread
+   operationId: create_thread_api_v1_assistant_threads_post
+   requestBody:
+    content:
+     application/json:
+      schema:
+       anyOf:
+        - { $ref: '#/components/schemas/CreateThreadRequest' }
+        - { type: 'null' }
+   responses:
+    '201':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/CreateThreadResponse' }
+    '403':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ErrorResponse' }
+  get:
+   tags: [Threads]
+   summary: List threads
+   description: Cursor-based pagination, sorted by updatedAt desc.
+   operationId: list_threads_api_v1_assistant_threads_get
+   parameters:
+    - name: archived
+      in: query
+      schema: { type: string, enum: ['true', 'false', all], default: 'false' }
+    - name: limit
+      in: query
+      schema: { type: integer, maximum: 50, minimum: 1, default: 20 }
+    - name: cursor
+      in: query
+      schema: { anyOf: [{ type: string }, { type: 'null' }] }
+    - name: sort
+      in: query
+      schema: { type: string, const: updated_desc, default: updated_desc }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ThreadListResponse' }
+ /api/v1/assistant/threads/{thread_id}:
+  get:
+   tags: [Threads]
+   summary: Get thread with full conversation state
+   description: Cold-start reconstruction. Returns all messages, pending approval/clarification, and active execution.
+   operationId: get_thread_api_v1_assistant_threads__thread_id__get
+   parameters:
+    - name: thread_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ThreadDetailResponse' }
+    '404':
+     description: thread_not_found
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ErrorResponse' }
+  patch:
+   tags: [Threads]
+   summary: Update thread (rename or archive/unarchive)
+   operationId: update_thread_api_v1_assistant_threads__thread_id__patch
+   parameters:
+    - name: thread_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/UpdateThreadRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ThreadSummary' }
+    '409':
+     description: thread_has_active_execution
+ /api/v1/assistant/threads/{thread_id}/messages:
+  post:
+   tags: [Messages]
+   summary: Send a message and start execution
+   description: Persists the user message, creates an execution (state queued), kicks off agent loop async, returns immediately. Open GET /executions/{executionId}/events for SSE.
+   operationId: create_message_api_v1_assistant_threads__thread_id__messages_post
+   parameters:
+    - name: thread_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/CreateMessageRequest' }
+   responses:
+    '201':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/CreateMessageResponse' }
+    '400':
+     description: invalid_content_length / invalid_fork_target
+    '409':
+     description: thread_busy
+    '429':
+     description: hourly_message_limit / daily_message_limit / daily_token_limit
+     headers:
+      Retry-After:
+       schema: { type: integer, minimum: 1 }
+ /api/v1/assistant/executions/{execution_id}/events:
+  get:
+   tags: [Messages]
+   summary: Subscribe to execution events (SSE)
+   description: Opens a Server-Sent Events stream. Pass Last-Event-ID header to replay missed events on reconnect.
+   operationId: execution_events_api_v1_assistant_executions__execution_id__events_get
+   parameters:
+    - name: execution_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    - name: Last-Event-ID
+      in: header
+      required: false
+      schema: { anyOf: [{ type: integer }, { type: 'null' }] }
+   responses:
+    '200':
+     description: SSE event stream
+     content:
+      text/event-stream: {}
+    '404':
+     description: Execution not found
+ /api/v1/assistant/messages/{message_id}/regenerate:
+  post:
+   tags: [Messages]
+   summary: Regenerate assistant response
+   operationId: regenerate_message_api_v1_assistant_messages__message_id__regenerate_post
+   parameters:
+    - name: message_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+   responses:
+    '201':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/RegenerateResponse' }
+    '409':
+     description: thread_busy
+ /api/v1/assistant/approve:
+  post:
+   tags: [Actions]
+   summary: Approve a pending action
+   description: Triggers replay execution with stored tool call params. Returns new executionId — open SSE for that execution.
+   operationId: approve_api_v1_assistant_approve_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/ApproveRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ApproveResponse' }
+    '409':
+     description: approval_superseded
+ /api/v1/assistant/reject:
+  post:
+   tags: [Actions]
+   summary: Reject a pending action
+   operationId: reject_api_v1_assistant_reject_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/RejectRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/RejectResponse' }
+    '409':
+     description: approval_superseded
+ /api/v1/assistant/clarify:
+  post:
+   tags: [Actions]
+   summary: Submit clarification answers
+   operationId: clarify_api_v1_assistant_clarify_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/ClarifyRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ClarifyResponse' }
+    '409':
+     description: clarification_superseded
+ /api/v1/assistant/cancel:
+  post:
+   tags: [Actions]
+   summary: Cancel the active execution on a thread
+   operationId: cancel_api_v1_assistant_cancel_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/CancelRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/CancelResponse' }
+    '409':
+     description: no_active_execution
+ /api/v1/assistant/undo:
+  post:
+   tags: [Actions]
+   summary: Undo a create action
+   operationId: undo_api_v1_assistant_undo_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/UndoRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ActionResultResponse' }
+    '409':
+     description: undo_conflict
+ /api/v1/assistant/revert:
+  post:
+   tags: [Actions]
+   summary: Revert a modify action
+   operationId: revert_api_v1_assistant_revert_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/RevertRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ActionResultResponse' }
+    '409':
+     description: revert_conflict
+    '410':
+     description: revert_expired
+ /api/v1/assistant/restore:
+  post:
+   tags: [Actions]
+   summary: Restore a deleted resource
+   operationId: restore_api_v1_assistant_restore_post
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/RestoreRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/ActionResultResponse' }
+    '410':
+     description: restore_expired
+ /api/v1/assistant/messages/{message_id}/feedback:
+  post:
+   tags: [Feedback]
+   summary: Submit feedback on an assistant message
+   operationId: submit_feedback_api_v1_assistant_messages__message_id__feedback_post
+   parameters:
+    - name: message_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema: { $ref: '#/components/schemas/FeedbackRequest' }
+   responses:
+    '200':
+     content:
+      application/json:
+       schema: { $ref: '#/components/schemas/FeedbackResponse' }
+    '404':
+     description: message_not_found
+components:
+ schemas:
+  ActionResultResponse:
+   type: object
+   required: [resourceType, resourceId, action]
+   properties:
+    success: { type: boolean, default: true }
+    resourceType: { type: string }
+    resourceId: { type: string }
+    action: { type: string }
+  ApprovalSummary:
+   type: object
+   required:
+    [
+     approvalId,
+     executionId,
+     sourceMessageId,
+     state,
+     actionType,
+     resourceType,
+     summary,
+     createdAt,
+    ]
+   properties:
+    approvalId: { type: string, format: uuid }
+    executionId: { type: string, format: uuid }
+    sourceMessageId: { type: string, format: uuid }
+    state: { type: string }
+    actionType: { type: string }
+    resourceType: { type: string }
+    summary: { type: string }
+    diff:
+     { anyOf: [{ additionalProperties: true, type: object }, { type: 'null' }] }
+    createdAt: { type: string, format: date-time }
+  ApproveRequest:
+   type: object
+   required: [approvalId]
+   properties:
+    approvalId: { type: string, format: uuid }
+  ApproveResponse:
+   type: object
+   required: [executionId]
+   properties:
+    executionId: { type: string, format: uuid }
+  CancelRequest:
+   type: object
+   required: [threadId]
+   properties:
+    threadId: { type: string, format: uuid }
+  CancelResponse:
+   type: object
+   required: [executionId, previousState, state]
+   properties:
+    executionId: { type: string, format: uuid }
+    previousState: { type: string }
+    state: { type: string }
+  ClarificationField:
+   type: object
+   required: [id, type, label]
+   properties:
+    id: { type: string }
+    type: { type: string }
+    label: { type: string }
+    required: { type: boolean, default: false }
+    options:
+     { anyOf: [{ items: { type: string }, type: array }, { type: 'null' }] }
+    default:
+     {
+      anyOf:
+       [
+        { type: string },
+        { items: { type: string }, type: array },
+        { type: 'null' },
+       ],
+     }
+  ClarificationSummary:
+   type: object
+   required:
+    [clarificationId, executionId, sourceMessageId, state, message, createdAt]
+   properties:
+    clarificationId: { type: string, format: uuid }
+    executionId: { type: string, format: uuid }
+    sourceMessageId: { type: string, format: uuid }
+    state: { type: string }
+    message: { type: string }
+    discoveredContext:
+     { anyOf: [{ additionalProperties: true, type: object }, { type: 'null' }] }
+    fields:
+     {
+      items: { $ref: '#/components/schemas/ClarificationField' },
+      type: array,
+      default: [],
+     }
+    createdAt: { type: string, format: date-time }
+  ClarifyRequest:
+   type: object
+   required: [clarificationId, answers]
+   properties:
+    clarificationId: { type: string, format: uuid }
+    answers: { additionalProperties: true, type: object }
+  ClarifyResponse:
+   type: object
+   required: [executionId]
+   properties:
+    executionId: { type: string, format: uuid }
+  CreateMessageRequest:
+   type: object
+   required: [content]
+   properties:
+    content: { type: string, maxLength: 10000, minLength: 1 }
+    contexts:
+     anyOf:
+      - { items: { $ref: '#/components/schemas/MessageContext' }, type: array }
+      - { type: 'null' }
+    forkFromMessageId:
+     { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
+  CreateMessageResponse:
+   type: object
+   required: [executionId]
+   properties:
+    executionId: { type: string, format: uuid }
+  CreateThreadRequest:
+   type: object
+   properties:
+    title: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+  CreateThreadResponse:
+   type: object
+   required: [threadId]
+   properties:
+    threadId: { type: string, format: uuid }
+  ErrorBody:
+   type: object
+   required: [code, message]
+   properties:
+    code: { type: string, pattern: '^[a-z_]+$' }
+    message: { type: string }
+    errors:
+     {
+      anyOf:
+       [
+        {
+         items: { $ref: '#/components/schemas/ErrorResponseAdditional' },
+         type: array,
+        },
+        { type: 'null' },
+       ],
+     }
+    url: { anyOf: [{ type: string }, { type: 'null' }] }
+  ErrorResponse:
+   type: object
+   required: [error]
+   properties:
+    status: { type: string, default: error }
+    error: { $ref: '#/components/schemas/ErrorBody' }
+  ErrorResponseAdditional:
+   type: object
+   required: [message]
+   properties:
+    message: { type: string }
+  FeedbackRating:
+   type: string
+   enum: [positive, negative]
+  FeedbackRequest:
+   type: object
+   required: [rating]
+   properties:
+    rating: { $ref: '#/components/schemas/FeedbackRating' }
+    comment: { anyOf: [{ type: string, maxLength: 2000 }, { type: 'null' }] }
+  FeedbackResponse:
+   type: object
+   properties: {}
+  HealthResponse:
+   type: object
+   required: [status]
+   properties:
+    status: { type: string, const: ok }
+  MessageAction:
+   type: object
+   required: [kind, actionMetadataId, resourceType, resourceId, label]
+   properties:
+    kind: { type: string }
+    actionMetadataId: { type: string, format: uuid }
+    resourceType: { type: string }
+    resourceId: { type: string }
+    label: { type: string }
+  MessageContext:
+   type: object
+   required: [source, type, resourceId]
+   properties:
+    source: { type: string }
+    type: { type: string }
+    resourceId: { type: string }
+    resourceName: { anyOf: [{ type: string }, { type: 'null' }] }
+    metadata:
+     { anyOf: [{ additionalProperties: true, type: object }, { type: 'null' }] }
+  MessageSummary:
+   type: object
+   required: [messageId, role, createdAt, updatedAt]
+   properties:
+    messageId: { type: string, format: uuid }
+    role: { type: string }
+    contentType: { type: string, default: markdown }
+    content: { anyOf: [{ type: string }, { type: 'null' }] }
+    complete: { type: boolean, default: true }
+    toolCalls:
+     {
+      anyOf:
+       [
+        { items: { additionalProperties: true, type: object }, type: array },
+        { type: 'null' },
+       ],
+     }
+    contexts:
+     {
+      anyOf:
+       [
+        { items: { additionalProperties: true, type: object }, type: array },
+        { type: 'null' },
+       ],
+     }
+    actions:
+     {
+      anyOf:
+       [
+        { items: { $ref: '#/components/schemas/MessageAction' }, type: array },
+        { type: 'null' },
+       ],
+     }
+    feedbackRating:
+     {
+      anyOf:
+       [{ $ref: '#/components/schemas/FeedbackRating' }, { type: 'null' }],
+     }
+    feedbackComment: { anyOf: [{ type: string }, { type: 'null' }] }
+    executionId: { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
+    createdAt: { type: string, format: date-time }
+    updatedAt: { type: string, format: date-time }
+  ReadinessChecks:
+   type: object
+   required: [database, redis]
+   properties:
+    database: { type: string, enum: [ok, failed] }
+    redis: { type: string, enum: [ok, failed] }
+  ReadinessResponse:
+   type: object
+   required: [status, checks]
+   properties:
+    status: { type: string, enum: [ok, degraded] }
+    checks: { $ref: '#/components/schemas/ReadinessChecks' }
+  RegenerateResponse:
+   type: object
+   required: [executionId]
+   properties:
+    executionId: { type: string, format: uuid }
+  RejectRequest:
+   type: object
+   required: [approvalId]
+   properties:
+    approvalId: { type: string, format: uuid }
+  RejectResponse:
+   type: object
+   properties: {}
+  RestoreRequest:
+   type: object
+   required: [actionMetadataId]
+   properties:
+    actionMetadataId: { type: string, format: uuid }
+  RevertRequest:
+   type: object
+   required: [actionMetadataId]
+   properties:
+    actionMetadataId: { type: string, format: uuid }
+  ThreadDetailResponse:
+   type: object
+   required: [threadId, createdAt, updatedAt]
+   properties:
+    threadId: { type: string, format: uuid }
+    title: { anyOf: [{ type: string }, { type: 'null' }] }
+    state: { anyOf: [{ type: string }, { type: 'null' }] }
+    activeExecutionId:
+     { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
+    archived: { type: boolean, default: false }
+    createdAt: { type: string, format: date-time }
+    updatedAt: { type: string, format: date-time }
+    messages:
+     {
+      items: { $ref: '#/components/schemas/MessageSummary' },
+      type: array,
+      default: [],
+     }
+    pendingApproval:
+     {
+      anyOf:
+       [{ $ref: '#/components/schemas/ApprovalSummary' }, { type: 'null' }],
+     }
+    pendingClarification:
+     {
+      anyOf:
+       [
+        { $ref: '#/components/schemas/ClarificationSummary' },
+        { type: 'null' },
+       ],
+     }
+  ThreadListResponse:
+   type: object
+   required: [threads]
+   properties:
+    threads:
+     { items: { $ref: '#/components/schemas/ThreadSummary' }, type: array }
+    nextCursor: { anyOf: [{ type: string }, { type: 'null' }] }
+    hasMore: { type: boolean, default: false }
+  ThreadSummary:
+   type: object
+   required: [threadId, createdAt, updatedAt]
+   properties:
+    threadId: { type: string, format: uuid }
+    title: { anyOf: [{ type: string }, { type: 'null' }] }
+    state: { anyOf: [{ type: string }, { type: 'null' }] }
+    activeExecutionId:
+     { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
+    archived: { type: boolean, default: false }
+    createdAt: { type: string, format: date-time }
+    updatedAt: { type: string, format: date-time }
+  UndoRequest:
+   type: object
+   required: [actionMetadataId]
+   properties:
+    actionMetadataId: { type: string, format: uuid }
+  UpdateThreadRequest:
+   type: object
+   properties:
+    title: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+    archived: { anyOf: [{ type: boolean }, { type: 'null' }] }
+  ValidationError:
+   type: object
+   required: [loc, msg, type]
+   properties:
+    loc:
+     { items: { anyOf: [{ type: string }, { type: integer }] }, type: array }
+    msg: { type: string }
+    type: { type: string }
+    input: {}
+    ctx: { type: object }

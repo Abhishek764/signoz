@@ -16,7 +16,10 @@ export default function ConversationView({
 		(s) => s.conversations[conversationId],
 	);
 	const isStreaming = useAIAssistantStore((s) => s.isStreaming);
-	const streamingContent = useAIAssistantStore((s) => s.streamingContent);
+	const pendingApproval = useAIAssistantStore((s) => s.pendingApproval);
+	const pendingClarification = useAIAssistantStore(
+		(s) => s.pendingClarification,
+	);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 
 	const handleSend = useCallback(
@@ -27,16 +30,14 @@ export default function ConversationView({
 	);
 
 	const messages = conversation?.messages ?? [];
+	const inputDisabled =
+		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
 
 	return (
 		<div className="ai-conversation">
-			<VirtualizedMessages
-				messages={messages}
-				isStreaming={isStreaming}
-				streamingContent={streamingContent}
-			/>
+			<VirtualizedMessages messages={messages} isStreaming={isStreaming} />
 			<div className="ai-conversation__input-wrapper">
-				<ChatInput onSend={handleSend} disabled={isStreaming} />
+				<ChatInput onSend={handleSend} disabled={inputDisabled} />
 			</div>
 		</div>
 	);

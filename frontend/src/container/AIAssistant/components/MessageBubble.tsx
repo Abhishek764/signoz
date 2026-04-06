@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Side-effect: registers all built-in block types into the BlockRegistry
 import './blocks';
@@ -33,6 +34,7 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 	return <pre>{children}</pre>;
 }
 
+const MD_PLUGINS = [remarkGfm];
 const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
 export default function MessageBubble({
@@ -74,6 +76,7 @@ export default function MessageBubble({
 						<MessageContext.Provider value={{ messageId: message.id }}>
 							<ReactMarkdown
 								className="ai-message__markdown"
+								remarkPlugins={MD_PLUGINS}
 								components={MD_COMPONENTS}
 							>
 								{message.content}

@@ -36,8 +36,63 @@ export interface Message {
 
 export interface Conversation {
 	id: string;
+	/** Opaque thread ID assigned by the backend after first message. */
+	threadId?: string;
 	messages: Message[];
 	createdAt: number;
 	updatedAt?: number;
 	title?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Streaming-only types — live during an active SSE stream, never persisted
+// ---------------------------------------------------------------------------
+
+/** A single tool invocation tracked during streaming. */
+export interface StreamingToolCall {
+	/** Matches the toolName field in SSE tool_call / tool_result events. */
+	toolName: string;
+	input: unknown;
+	result?: unknown;
+	/** True once the corresponding tool_result event has been received. */
+	done: boolean;
+}
+
+/**
+ * An ordered item in the streaming event timeline.
+ * Text and tool calls are interleaved in arrival order so the UI renders
+ * them chronologically rather than grouping all tools above all text.
+ */
+export type StreamingEventItem =
+	| { kind: 'text'; content: string }
+	| { kind: 'tool'; toolCall: StreamingToolCall };
+
+/** Data from an SSE `approval` event — user must approve or reject before the stream continues. */
+export interface PendingApproval {
+	approvalId: string;
+	executionId: string;
+	actionType: string;
+	resourceType: string;
+	summary: string;
+	diff: { before: unknown; after: unknown } | null;
+}
+
+/** A single field in a clarification form. */
+export interface ClarificationField {
+	id: string;
+	/** 'text' | 'number' | 'select' | 'checkbox' | 'radio' */
+	type: string;
+	label: string;
+	required?: boolean;
+	options?: string[] | null;
+	default?: string | string[] | null;
+}
+
+/** Data from an SSE `clarification` event — user must submit answers before the stream continues. */
+export interface PendingClarification {
+	clarificationId: string;
+	executionId: string;
+	message: string;
+	discoveredContext: Record<string, unknown> | null;
+	fields: ClarificationField[];
 }

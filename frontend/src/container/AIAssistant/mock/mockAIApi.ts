@@ -231,9 +231,7 @@ The error rate started climbing at **14:53** — coinciding with a config push t
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function pickResponse(messages: { role: string; content: string }[]): string {
 	const lastRaw =
-		[...messages]
-			.reverse()
-			.find((m) => m.role === 'user')?.content ?? '';
+		[...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
 
 	// Strip the PAGE_CONTEXT block if present — match against the user's actual text
 	const last = lastRaw
@@ -241,10 +239,18 @@ function pickResponse(messages: { role: string; content: string }[]): string {
 		.toLowerCase();
 
 	// ── Page action triggers ──────────────────────────────────────────────────
-	if (last.includes('save view') || last.includes('save this view') || last.includes('save query')) {
+	if (
+		last.includes('save view') ||
+		last.includes('save this view') ||
+		last.includes('save query')
+	) {
 		return CANNED_RESPONSES.actionSaveView;
 	}
-	if (last.includes('change view') || last.includes('switch to timeseries') || last.includes('timeseries view')) {
+	if (
+		last.includes('change view') ||
+		last.includes('switch to timeseries') ||
+		last.includes('timeseries view')
+	) {
 		return CANNED_RESPONSES.actionChangeView;
 	}
 	if (
@@ -332,14 +338,20 @@ function pickResponse(messages: { role: string; content: string }[]): string {
 	return CANNED_RESPONSES.default;
 }
 
-import { ChatPayload, SSEEvent } from '../../../api/ai/chat';
+import { SSEEvent } from '../../../api/ai/chat';
+
+interface MockChatPayload {
+	conversationId: string;
+	messages: { role: 'user' | 'assistant'; content: string }[];
+}
 
 export async function* mockStreamChat(
-	payload: ChatPayload,
+	payload: MockChatPayload,
 ): AsyncGenerator<SSEEvent> {
 	const text = pickResponse(payload.messages);
 	const words = text.split(/(?<=\s)/);
 	const messageId = `mock-${Date.now()}`;
+	const executionId = `mock-exec-${Date.now()}`;
 
 	for (let i = 0; i < words.length; i++) {
 		// eslint-disable-next-line no-await-in-loop
@@ -348,11 +360,32 @@ export async function* mockStreamChat(
 		});
 		yield {
 			type: 'message',
+			executionId,
 			messageId,
-			role: 'assistant',
-			content: words[i],
-			done: i === words.length - 1,
-			actions: [],
+			delta: words[i],
+			done: false,
+			actions: null,
+			eventId: i + 1,
 		};
 	}
+
+	// Final message event with done: true
+	yield {
+		type: 'message',
+		executionId,
+		messageId,
+		delta: '',
+		done: true,
+		actions: null,
+		eventId: words.length + 1,
+	};
+
+	yield {
+		type: 'done',
+		executionId,
+		tokenInput: 0,
+		tokenOutput: words.length,
+		latencyMs: 0,
+		eventId: words.length + 2,
+	};
 }

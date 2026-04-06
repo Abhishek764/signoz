@@ -64,6 +64,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.cpu.time",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationRate,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -85,6 +86,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.cpu.time",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationRate,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -113,6 +115,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.memory.usage",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -134,6 +137,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.memory.usage",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -162,6 +166,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.cpu.time",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationRate,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -183,6 +188,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.cpu.time",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationRate,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -212,6 +218,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.cpu.load_average.15m",
+								Temporality:      metrictypes.Unspecified,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -230,6 +237,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.filesystem.usage",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,
@@ -251,6 +259,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 						Aggregations: []qbtypes.MetricAggregation{
 							{
 								MetricName:       "system.filesystem.usage",
+								Temporality:      metrictypes.Cumulative,
 								TimeAggregation:  metrictypes.TimeAggregationAvg,
 								SpaceAggregation: metrictypes.SpaceAggregationSum,
 								ReduceTo:         qbtypes.ReduceToAvg,

@@ -26,10 +26,7 @@ func NewModule(store *store, settings factory.ProviderSettings, analytics analyt
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
-	dashboard, err := dashboardtypes.NewDashboardV2(orgID, createdBy, data)
-	if err != nil {
-		return nil, err
-	}
+	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, data)
 
 	storable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
 	if err != nil {

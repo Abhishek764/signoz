@@ -306,7 +306,7 @@ func AdjustKeysForAliasExpressions[T any](query *qbtypes.QueryBuilderQuery[T], r
 // 3 cases:
 // 1. log.timestamp:number in select fields; we skip
 // 2. timestamp is present in select fields; we skip
-// 3. attribute.timestamp in select fields; we add it
+// 3. attribute.timestamp in select fields; we add it.
 func MaybeAddDefaultSelectFields[T any](
 	query *qbtypes.QueryBuilderQuery[T],
 	defaultSelectFields []telemetrytypes.TelemetryFieldKey,

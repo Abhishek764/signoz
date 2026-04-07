@@ -385,10 +385,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.CanonicalName())
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.CanonicalName())
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.CanonicalName()))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.CanonicalName()))
 	}
 
 	// Aggregations
@@ -466,7 +466,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ts")
 		for _, gb := range query.GroupBy {
-			sb.GroupBy(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.CanonicalName()))
+			sb.GroupBy(fmt.Sprintf("`%s`", gb.CanonicalName()))
 		}
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
@@ -540,7 +540,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.CanonicalName())
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.CanonicalName())
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}

@@ -4,36 +4,49 @@ import './ResizableBox.styles.scss';
 
 export interface ResizableBoxProps {
 	children: React.ReactNode;
-	defaultHeight: number;
+	direction?: 'vertical' | 'horizontal';
+	defaultHeight?: number;
 	minHeight?: number;
 	maxHeight?: number;
-	direction?: 'vertical';
+	defaultWidth?: number;
+	minWidth?: number;
+	maxWidth?: number;
+	onResize?: (size: number) => void;
+	disabled?: boolean;
 	className?: string;
 }
 
 function ResizableBox({
 	children,
-	defaultHeight,
+	direction = 'vertical',
+	defaultHeight = 200,
 	minHeight = 50,
 	maxHeight = Infinity,
+	defaultWidth = 200,
+	minWidth = 50,
+	maxWidth = Infinity,
+	onResize,
+	disabled = false,
 	className,
 }: ResizableBoxProps): JSX.Element {
-	const [height, setHeight] = useState(defaultHeight);
+	const isHorizontal = direction === 'horizontal';
+	const [size, setSize] = useState(isHorizontal ? defaultWidth : defaultHeight);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const handleMouseDown = useCallback(
 		(e: React.MouseEvent): void => {
 			e.preventDefault();
-			const startY = e.clientY;
-			const startHeight = height;
+			const startPos = isHorizontal ? e.clientX : e.clientY;
+			const startSize = size;
+			const min = isHorizontal ? minWidth : minHeight;
+			const max = isHorizontal ? maxWidth : maxHeight;
 
 			const onMouseMove = (moveEvent: MouseEvent): void => {
-				const delta = moveEvent.clientY - startY;
-				const newHeight = Math.min(
-					maxHeight,
-					Math.max(minHeight, startHeight + delta),
-				);
-				setHeight(newHeight);
+				const currentPos = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
+				const delta = currentPos - startPos;
+				const newSize = Math.min(max, Math.max(min, startSize + delta));
+				setSize(newSize);
+				onResize?.(newSize);
 			};
 
 			const onMouseUp = (): void => {
@@ -43,22 +56,31 @@ function ResizableBox({
 				document.body.style.userSelect = '';
 			};
 
-			document.body.style.cursor = 'row-resize';
+			document.body.style.cursor = isHorizontal ? 'col-resize' : 'row-resize';
 			document.body.style.userSelect = 'none';
 			document.addEventListener('mousemove', onMouseMove);
 			document.addEventListener('mouseup', onMouseUp);
 		},
-		[height, minHeight, maxHeight],
+		[size, isHorizontal, minWidth, maxWidth, minHeight, maxHeight, onResize],
 	);
+
+	const containerStyle = disabled
+		? undefined
+		: isHorizontal
+		? { width: size }
+		: { height: size };
+	const handleClass = `resizable-box__handle resizable-box__handle--${direction}`;
 
 	return (
 		<div
 			ref={containerRef}
-			className={`resizable-box ${className || ''}`}
-			style={{ height }}
+			className={`resizable-box ${disabled ? 'resizable-box--disabled' : ''} ${
+				className || ''
+			}`}
+			style={containerStyle}
 		>
 			<div className="resizable-box__content">{children}</div>
-			<div className="resizable-box__handle" onMouseDown={handleMouseDown} />
+			{!disabled && <div className={handleClass} onMouseDown={handleMouseDown} />}
 		</div>
 	);
 }

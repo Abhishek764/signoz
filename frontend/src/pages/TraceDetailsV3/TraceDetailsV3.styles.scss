@@ -10,8 +10,29 @@
 		overflow: hidden;
 	}
 
-	&__flame-collapse {
+	&__flame-collapse,
+	&__waterfall-collapse {
+		border: none;
 		border-radius: 0;
+		background: transparent;
+
+		.ant-collapse-item {
+			border: none;
+		}
+
+		.ant-collapse-header {
+			border: 1px solid var(--l2-border);
+		}
+
+		.ant-collapse-content {
+			background: transparent;
+			border-top: none;
+			// Disable collapse animation — virtualizer and canvas flicker during height transitions
+			transition: none !important;
+		}
+	}
+
+	&__flame-collapse {
 		flex-shrink: 0;
 
 		.ant-collapse-content-box {
@@ -20,7 +41,6 @@
 	}
 
 	&__waterfall-collapse {
-		border-radius: 0;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -61,12 +81,6 @@
 				display: block;
 			}
 		}
-	}
-
-	&__waterfall-content {
-		flex: 1;
-		overflow: hidden;
-		min-height: 0;
 	}
 
 	&__docked-span-details {

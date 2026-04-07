@@ -31,6 +31,7 @@ import {
 	Link,
 	ListPlus,
 } from 'lucide-react';
+import { ResizableBox } from 'periscope/components/ResizableBox';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
@@ -43,7 +44,7 @@ import Filters from './Filters/Filters';
 import './Success.styles.scss';
 
 // css config
-const CONNECTOR_WIDTH = 28;
+const CONNECTOR_WIDTH = 20;
 const VERTICAL_CONNECTOR_WIDTH = 1;
 
 interface ITraceMetadata {
@@ -58,7 +59,6 @@ interface ISuccessProps {
 	interestedSpanId: IInterestedSpan;
 	uncollapsedNodes: string[];
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
-	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 	hoveredSpanId: string | null;
@@ -126,11 +126,18 @@ function SpanOverview({
 						const lvl = i + 1;
 						const xPos = (lvl - 1) * CONNECTOR_WIDTH + 9;
 						if (lvl < span.level) {
+							// Stop the line at 50% for the last child's parent level
+							const isLastChildParentLine = !span.hasSibling && lvl === span.level - 1;
 							return (
 								<div
 									key={lvl}
 									className="tree-line"
-									style={{ left: xPos, top: 0, width: 1, height: '100%' }}
+									style={{
+										left: xPos,
+										top: 0,
+										width: 1,
+										height: isLastChildParentLine ? '50%' : '100%',
+									}}
 								/>
 							);
 						}
@@ -331,7 +338,6 @@ function Success(props: ISuccessProps): JSX.Element {
 		interestedSpanId,
 		uncollapsedNodes,
 		setInterestedSpanId,
-		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
 		selectedSpan,
 		hoveredSpanId,
@@ -506,34 +512,6 @@ function Success(props: ISuccessProps): JSX.Element {
 		virtualizerRef.current = virtualizer;
 	}, [virtualizer]);
 
-	// Sync sidebar width with flamegraph stats panel
-	useEffect(() => {
-		setTraceFlamegraphStatsWidth(sidebarWidth);
-	}, [sidebarWidth, setTraceFlamegraphStatsWidth]);
-
-	// Resize handle drag logic
-	const handleResizeMouseDown = useCallback(
-		(e: React.MouseEvent) => {
-			e.preventDefault();
-			const startX = e.clientX;
-			const startWidth = sidebarWidth;
-			const onMouseMove = (moveEvent: MouseEvent): void => {
-				const newWidth = Math.max(
-					MIN_SIDEBAR_WIDTH,
-					Math.min(MAX_SIDEBAR_WIDTH, startWidth + (moveEvent.clientX - startX)),
-				);
-				setSidebarWidth(newWidth);
-			};
-			const onMouseUp = (): void => {
-				document.removeEventListener('mousemove', onMouseMove);
-				document.removeEventListener('mouseup', onMouseUp);
-			};
-			document.addEventListener('mousemove', onMouseMove);
-			document.addEventListener('mouseup', onMouseUp);
-		},
-		[sidebarWidth],
-	);
-
 	// Compute max content width for sidebar horizontal scroll
 	const maxContentWidth = useMemo(() => {
 		if (spans.length === 0) {
@@ -628,13 +606,18 @@ function Success(props: ISuccessProps): JSX.Element {
 				<div
 					className="waterfall-split-body"
 					style={{
-						height: virtualizer.getTotalSize(),
+						minHeight: virtualizer.getTotalSize(),
+						height: '100%',
 					}}
 				>
 					{/* Left panel - table with horizontal scroll */}
-					<div
+					<ResizableBox
+						direction="horizontal"
+						defaultWidth={DEFAULT_SIDEBAR_WIDTH}
+						minWidth={MIN_SIDEBAR_WIDTH}
+						maxWidth={MAX_SIDEBAR_WIDTH}
+						onResize={setSidebarWidth}
 						className="waterfall-sidebar"
-						style={{ width: sidebarWidth, flexShrink: 0 }}
 					>
 						<table className="span-tree-table" style={{ width: maxContentWidth }}>
 							<tbody>
@@ -668,15 +651,7 @@ function Success(props: ISuccessProps): JSX.Element {
 								})}
 							</tbody>
 						</table>
-					</div>
-
-					{/* Resize handle */}
-					<div
-						className="sidebar-resize-handle"
-						onMouseDown={handleResizeMouseDown}
-						role="separator"
-						aria-orientation="vertical"
-					/>
+					</ResizableBox>
 
 					{/* Right panel - timeline bars */}
 					<div className="waterfall-timeline">

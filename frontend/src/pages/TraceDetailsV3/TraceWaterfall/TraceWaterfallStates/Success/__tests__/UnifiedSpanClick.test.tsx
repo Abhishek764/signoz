@@ -182,7 +182,6 @@ function TestComponent(): JSX.Element {
 			interestedSpanId={{ spanId: '', isUncollapsed: false }}
 			uncollapsedNodes={mockSpans.map((s) => s.spanId)}
 			setInterestedSpanId={jest.fn()}
-			setTraceFlamegraphStatsWidth={jest.fn()}
 			selectedSpan={selectedSpan}
 			setSelectedSpan={setSelectedSpan}
 			hoveredSpanId={null}
@@ -216,7 +215,6 @@ describe('Span Click User Flows', () => {
 				interestedSpanId={{ spanId: '', isUncollapsed: false }}
 				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
 				setInterestedSpanId={jest.fn()}
-				setTraceFlamegraphStatsWidth={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
 				hoveredSpanId={null}
@@ -396,7 +394,6 @@ describe('Span Click User Flows', () => {
 				interestedSpanId={{ spanId: '', isUncollapsed: false }}
 				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
 				setInterestedSpanId={jest.fn()}
-				setTraceFlamegraphStatsWidth={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
 				hoveredSpanId={null}

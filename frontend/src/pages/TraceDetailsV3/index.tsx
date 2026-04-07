@@ -28,10 +28,6 @@ function TraceDetailsV3(): JSX.Element {
 			isUncollapsed: urlQuery.get('spanId') !== '',
 		}),
 	);
-	const [
-		_traceFlamegraphStatsWidth,
-		setTraceFlamegraphStatsWidth,
-	] = useState<number>(450);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
 	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
@@ -74,16 +70,30 @@ function TraceDetailsV3(): JSX.Element {
 		}
 	}, [traceData]);
 
-	// Collapse state
-	const [flameActiveKey, setFlameActiveKey] = useState<string[]>(['flame']);
-	const [waterfallActiveKey, setWaterfallActiveKey] = useState<string[]>([
-		'waterfall',
-	]);
+	// Collapse state — at least one must remain open
+	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
+
+	const handleCollapseChange = (key: string): void => {
+		setActiveKeys((prev) => {
+			const next = prev.includes(key)
+				? prev.filter((k) => k !== key)
+				: [...prev, key];
+			// Don't allow collapsing the last open section
+			if (next.length === 0) {
+				return prev;
+			}
+			return next;
+		});
+	};
 
 	const isWaterfallDocked = panelState.isOpen;
 
-	const waterfallChildren = isWaterfallDocked ? (
-		<ResizableBox defaultHeight={300} minHeight={150}>
+	const waterfallChildren = (
+		<ResizableBox
+			defaultHeight={300}
+			minHeight={150}
+			disabled={!isWaterfallDocked}
+		>
 			<TraceWaterfall
 				traceData={traceData}
 				isFetchingTraceData={isFetchingTraceData}
@@ -92,30 +102,12 @@ function TraceDetailsV3(): JSX.Element {
 				interestedSpanId={interestedSpanId}
 				setInterestedSpanId={setInterestedSpanId}
 				uncollapsedNodes={uncollapsedNodes}
-				setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 				selectedSpan={selectedSpan}
 				setSelectedSpan={setSelectedSpan}
 				hoveredSpanId={hoveredSpanId}
 				setHoveredSpanId={setHoveredSpanId}
 			/>
 		</ResizableBox>
-	) : (
-		<div className="trace-details-v3__waterfall-content">
-			<TraceWaterfall
-				traceData={traceData}
-				isFetchingTraceData={isFetchingTraceData}
-				errorFetchingTraceData={errorFetchingTraceData}
-				traceId={traceId || ''}
-				interestedSpanId={interestedSpanId}
-				setInterestedSpanId={setInterestedSpanId}
-				uncollapsedNodes={uncollapsedNodes}
-				setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
-				selectedSpan={selectedSpan}
-				setSelectedSpan={setSelectedSpan}
-				hoveredSpanId={hoveredSpanId}
-				setHoveredSpanId={setHoveredSpanId}
-			/>
-		</div>
 	);
 
 	return (
@@ -124,8 +116,8 @@ function TraceDetailsV3(): JSX.Element {
 
 			<div className="trace-details-v3__content">
 				<Collapse
-					activeKey={flameActiveKey}
-					onChange={(keys): void => setFlameActiveKey(keys as string[])}
+					activeKey={activeKeys.filter((k) => k === 'flame')}
+					onChange={(): void => handleCollapseChange('flame')}
 					size="small"
 					className="trace-details-v3__flame-collapse"
 					items={[
@@ -142,8 +134,8 @@ function TraceDetailsV3(): JSX.Element {
 				/>
 
 				<Collapse
-					activeKey={waterfallActiveKey}
-					onChange={(keys): void => setWaterfallActiveKey(keys as string[])}
+					activeKey={activeKeys.filter((k) => k === 'waterfall')}
+					onChange={(): void => handleCollapseChange('waterfall')}
 					size="small"
 					className={`trace-details-v3__waterfall-collapse${
 						isWaterfallDocked ? ' trace-details-v3__waterfall-collapse--docked' : ''

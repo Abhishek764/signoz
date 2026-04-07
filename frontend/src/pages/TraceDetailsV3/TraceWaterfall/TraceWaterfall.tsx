@@ -28,7 +28,6 @@ interface ITraceWaterfallProps {
 	errorFetchingTraceData: unknown;
 	interestedSpanId: IInterestedSpan;
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
-	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 	hoveredSpanId: string | null;
@@ -44,7 +43,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		traceId,
 		uncollapsedNodes,
 		setInterestedSpanId,
-		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
 		selectedSpan,
 		hoveredSpanId,
@@ -110,7 +108,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
 						setInterestedSpanId={setInterestedSpanId}
-						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
 						hoveredSpanId={hoveredSpanId}
@@ -126,7 +123,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		selectedSpan,
 		setInterestedSpanId,
 		setSelectedSpan,
-		setTraceFlamegraphStatsWidth,
 		spans,
 		traceData?.payload?.endTimestampMillis,
 		traceData?.payload?.hasMissingSpans,

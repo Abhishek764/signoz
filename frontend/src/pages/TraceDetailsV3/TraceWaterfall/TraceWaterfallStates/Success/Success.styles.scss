@@ -66,7 +66,7 @@
 		min-height: 0;
 		overflow-y: auto;
 		overflow-x: hidden;
-		padding: 0px 20px 20px 20px;
+		padding: 0px 20px 0px 20px;
 
 		&::-webkit-scrollbar {
 			width: 0.1rem;
@@ -204,7 +204,7 @@
 
 		.tree-connector {
 			position: absolute;
-			width: 19px;
+			width: 11px;
 			height: 50%;
 			border-left: 1px solid var(--bg-slate-400);
 			border-bottom: 1px solid var(--bg-slate-400);
@@ -464,7 +464,11 @@
 			}
 
 			.span-row-actions {
-				background: linear-gradient(to left, var(--bg-vanilla-100) 60%, transparent);
+				background: linear-gradient(
+					to left,
+					var(--bg-vanilla-100) 60%,
+					transparent
+				);
 
 				.span-action-btn {
 					color: var(--bg-ink-400);

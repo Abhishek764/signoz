@@ -16,6 +16,12 @@ type Module interface {
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) (*dashboardtypes.DashboardV2, error)
+
+	UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, name string) (*dashboardtypes.DashboardV2, error)
+
+	UpdateDescription(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, description string) (*dashboardtypes.DashboardV2, error)
+
+	UpdateTags(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, tags []string) (*dashboardtypes.DashboardV2, error)
 }
 
 type Handler interface {
@@ -26,4 +32,10 @@ type Handler interface {
 	Delete(http.ResponseWriter, *http.Request)
 
 	LockUnlock(http.ResponseWriter, *http.Request)
+
+	UpdateName(http.ResponseWriter, *http.Request)
+
+	UpdateDescription(http.ResponseWriter, *http.Request)
+
+	UpdateTags(http.ResponseWriter, *http.Request)
 }

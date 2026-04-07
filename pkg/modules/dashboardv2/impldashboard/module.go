@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/perses/common/set"
 )
 
 type module struct {
@@ -101,6 +102,84 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	}
 
 	err = dashboard.LockUnlock(lock, role, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, name string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.UpdateName(name, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) UpdateDescription(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, description string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.UpdateDescription(description, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) UpdateTags(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, tags []string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.UpdateTags(set.New(tags...), updatedBy)
 	if err != nil {
 		return nil, err
 	}

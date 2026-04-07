@@ -399,12 +399,10 @@ func (m *module) buildHostRecords(
 
 		var activeStatus string
 		if hostName != "" {
-			if isActive, known := activeHostsMap[hostName]; known {
-				if isActive {
-					activeStatus = inframonitoringtypes.HostStatusActive.StringValue()
-				} else {
-					activeStatus = inframonitoringtypes.HostStatusInactive.StringValue()
-				}
+			if activeHostsMap[hostName] {
+				activeStatus = inframonitoringtypes.HostStatusActive.StringValue()
+			} else {
+				activeStatus = inframonitoringtypes.HostStatusInactive.StringValue()
 			}
 		}
 

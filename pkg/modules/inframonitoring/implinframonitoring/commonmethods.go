@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -110,6 +111,25 @@ func (m *module) getMetadata(
 		uint64(startMs), uint64(endMs), nil,
 	)
 
+	// Build a fingerprint subquery against the samples table using the original
+	// (non-adjusted) time range. The time_series tables are ReplacingMergeTrees
+	// with bucketed granularity, so WhichTSTableToUse widens the window — this
+	// subquery restricts to fingerprints actually active in the requested range.
+	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
+		uint64(startMs), uint64(endMs),
+		metrictypes.UnspecifiedType,
+		metrictypes.TimeAggregationUnspecified,
+		nil,
+	)
+	fpSB := sqlbuilder.NewSelectBuilder()
+	fpSB.Select("DISTINCT fingerprint")
+	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTableName))
+	fpSB.Where(
+		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
+		fpSB.GE("unix_milli", startMs),
+		fpSB.L("unix_milli", endMs),
+	)
+
 	// Flatten groupBy keys to string names for SQL expressions and result scanning.
 	groupByCols := make([]string, len(groupBy))
 	for i, key := range groupBy {
@@ -144,6 +164,7 @@ func (m *module) getMetadata(
 		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
 		innerSB.GE("unix_milli", adjustedStart),
 		innerSB.L("unix_milli", adjustedEnd),
+		fmt.Sprintf("fingerprint GLOBAL IN (%s)", innerSB.Var(fpSB)), // TODO(nikhilmantri0902): check if this can be modified to be used with local table.
 	)
 
 	// Apply optional filter expression

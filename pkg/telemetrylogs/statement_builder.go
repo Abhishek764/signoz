@@ -576,7 +576,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	// Group by dimensions
 	for _, gb := range query.GroupBy {
-		sb.GroupBy(fmt.Sprintf("`%s`", gb.TelemetryFieldKey.CanonicalName()))
+		sb.GroupBy(fmt.Sprintf("`%s`", gb.CanonicalName()))
 	}
 
 	// Add having clause if needed

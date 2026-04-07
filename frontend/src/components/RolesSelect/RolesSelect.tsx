@@ -34,7 +34,7 @@ export function useRoles(): {
 export function getRoleOptions(roles: AuthtypesRoleDTO[]): RoleOption[] {
 	return roles.map((role) => ({
 		label: role.name ?? '',
-		value: role.name ?? '',
+		value: role.id ?? '',
 	}));
 }
 
@@ -158,10 +158,10 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 	return (
 		<Select
 			id={id}
-			value={value}
+			value={value || undefined}
 			onChange={onChange}
 			placeholder={placeholder}
-			className={cx('roles-select', className)}
+			className={cx('roles-single-select', className)}
 			loading={loading}
 			notFoundContent={notFoundContent}
 			options={options}

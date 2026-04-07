@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render } from '@testing-library/react';
-import * as useGetHostListHooks from 'hooks/infraMonitoring/useGetHostList';
+import { render, waitFor } from '@testing-library/react';
+import * as getHostListsApi from 'api/infraMonitoring/getHostLists';
+import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
 import * as appContextHooks from 'providers/App/App';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
@@ -18,6 +19,20 @@ jest.mock('lib/getMinMax', () => ({
 		maxTime: 1713738000000,
 		isValidShortHandDateTimeFormat: jest.fn().mockReturnValue(true),
 	})),
+	getMinMaxForSelectedTime: jest.fn().mockReturnValue({
+		minTime: 1713734400000000000,
+		maxTime: 1713738000000000000,
+	}),
+}));
+jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+	__esModule: true,
+	default: (): JSX.Element => (
+		<div data-testid="date-time-selection">Date Time</div>
+	),
+}));
+jest.mock('components/HostMetricsDetail', () => ({
+	__esModule: true,
+	default: (): null => null,
 }));
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
@@ -30,7 +45,13 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	),
 }));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			retry: false,
+		},
+	},
+});
 
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
@@ -55,19 +76,6 @@ jest.mock('react-router-dom', () => {
 		}),
 	};
 });
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
-	return {
-		...actual,
-		useSearchParams: jest
-			.fn()
-			.mockReturnValue([
-				{ get: jest.fn(), entries: jest.fn().mockReturnValue([]) },
-				jest.fn(),
-			]),
-		useNavigationType: (): any => 'PUSH',
-	};
-});
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: jest.fn(),
@@ -82,27 +90,40 @@ jest.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
 		offset: 0,
 	},
 } as any);
-jest.spyOn(useGetHostListHooks, 'useGetHostList').mockReturnValue({
-	data: {
-		payload: {
-			data: {
-				records: [
-					{
-						hostName: 'test-host',
-						active: true,
-						cpu: 0.75,
-						memory: 0.65,
-						wait: 0.03,
-					},
-				],
-				isSendingK8SAgentMetrics: false,
-				sentAnyHostMetricsData: true,
-			},
+
+jest.spyOn(getHostListsApi, 'getHostLists').mockResolvedValue({
+	statusCode: 200,
+	error: null,
+	message: 'Success',
+	payload: {
+		status: 'success',
+		data: {
+			type: 'list',
+			records: [
+				{
+					hostName: 'test-host',
+					active: true,
+					os: 'linux',
+					cpu: 0.75,
+					cpuTimeSeries: { labels: {}, labelsArray: [], values: [] },
+					memory: 0.65,
+					memoryTimeSeries: { labels: {}, labelsArray: [], values: [] },
+					wait: 0.03,
+					waitTimeSeries: { labels: {}, labelsArray: [], values: [] },
+					load15: 0.5,
+					load15TimeSeries: { labels: {}, labelsArray: [], values: [] },
+				},
+			],
+			groups: null,
+			total: 1,
+			sentAnyHostMetricsData: true,
+			isSendingK8SAgentMetrics: false,
+			endTimeBeforeRetention: false,
 		},
 	},
-	isLoading: false,
-	isError: false,
-} as any);
+	params: {} as any,
+});
+
 jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
@@ -127,30 +148,44 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
+const Wrapper = withNuqsTestingAdapter({ searchParams: {} });
+
 describe('HostsList', () => {
-	it('renders hosts list table', () => {
-		const { container } = render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<HostsList />
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
-		);
-		expect(container.querySelector('.hosts-list-table')).toBeInTheDocument();
+	beforeEach(() => {
+		queryClient.clear();
 	});
 
-	it('renders filters', () => {
+	it('renders hosts list table', async () => {
 		const { container } = render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<HostsList />
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter>
+						<Provider store={store}>
+							<HostsList />
+						</Provider>
+					</MemoryRouter>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
-		expect(container.querySelector('.filters')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(container.querySelector('.hosts-list-table')).toBeInTheDocument();
+		});
+	});
+
+	it('renders filters', async () => {
+		const { container } = render(
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter>
+						<Provider store={store}>
+							<HostsList />
+						</Provider>
+					</MemoryRouter>
+				</QueryClientProvider>
+			</Wrapper>,
+		);
+		await waitFor(() => {
+			expect(container.querySelector('.filters')).toBeInTheDocument();
+		});
 	});
 });

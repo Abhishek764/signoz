@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -10,7 +10,10 @@ import {
 } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { InfraMonitoringEvents } from 'constants/events';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {
@@ -24,9 +27,40 @@ import {
 function EmptyOrLoadingView(
 	viewState: EmptyOrLoadingViewProps,
 ): React.ReactNode {
-	const { isError, errorMessage } = viewState;
-	if (isError) {
-		return <Typography>{errorMessage || 'Something went wrong'}</Typography>;
+	if (viewState.showTableLoadingState) {
+		return (
+			<div className="hosts-list-loading-state">
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+			</div>
+		);
+	}
+	const { isError, data } = viewState;
+	if (isError || data?.error || (data?.statusCode || 0) >= 300) {
+		return (
+			<ErrorContent
+				error={{
+					code: data?.statusCode || 500,
+					message: data?.error || 'Something went wrong',
+				}}
+			/>
+		);
 	}
 	if (viewState.showHostsEmptyState) {
 		return (
@@ -74,30 +108,6 @@ function EmptyOrLoadingView(
 			</div>
 		);
 	}
-	if (viewState.showTableLoadingState) {
-		return (
-			<div className="hosts-list-loading-state">
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-			</div>
-		);
-	}
 	return null;
 }
 
@@ -114,8 +124,12 @@ export default function HostsListTable({
 	pageSize,
 	setOrderBy,
 	setPageSize,
+	orderBy,
 }: HostsListTableProps): JSX.Element {
-	const columns = useMemo(() => getHostsListColumns(), []);
+	const [defaultOrderBy] = useState(orderBy);
+	const columns = useMemo(() => getHostsListColumns(defaultOrderBy), [
+		defaultOrderBy,
+	]);
 
 	const sentAnyHostMetricsData = useMemo(
 		() => data?.payload?.data?.sentAnyHostMetricsData || false,
@@ -162,7 +176,16 @@ export default function HostsListTable({
 		[],
 	);
 
-	const handleRowClick = (record: HostRowData): void => {
+	const handleRowClick = (
+		record: HostRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (isModifierKeyPressed(event)) {
+			const params = new URLSearchParams(window.location.search);
+			params.set('hostName', record.hostName);
+			openInNewTab(`${window.location.pathname}?${params.toString()}`);
+			return;
+		}
 		onHostClick(record.hostName);
 		logEvent(InfraMonitoringEvents.ItemClicked, {
 			entity: InfraMonitoringEvents.HostEntity,
@@ -175,7 +198,8 @@ export default function HostsListTable({
 		!isLoading &&
 		formattedHostMetricsData.length === 0 &&
 		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
-		!filters.items.length;
+		!filters.items.length &&
+		!endTimeBeforeRetention;
 
 	const showEndTimeBeforeRetentionMessage =
 		!isFetching &&
@@ -196,7 +220,7 @@ export default function HostsListTable({
 
 	const emptyOrLoadingView = EmptyOrLoadingView({
 		isError,
-		errorMessage: data?.error ?? '',
+		data,
 		showHostsEmptyState,
 		sentAnyHostMetricsData,
 		isSendingIncorrectK8SAgentMetrics,
@@ -235,8 +259,8 @@ export default function HostsListTable({
 				(record as HostRowData & { key: string }).key ?? record.hostName
 			}
 			onChange={handleTableChange}
-			onRow={(record): { onClick: () => void; className: string } => ({
-				onClick: (): void => handleRowClick(record),
+			onRow={(record: HostRowData): Record<string, unknown> => ({
+				onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 				className: 'clickable-row',
 			})}
 		/>

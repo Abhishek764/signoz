@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
@@ -18,7 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 )
 
-// NewFactory creates a new factory for the signoz querier provider
+// NewFactory creates a new factory for the signoz querier provider.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
@@ -66,20 +65,12 @@ func newProvider(
 		telemetrylogs.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
+		telemetrymetadata.ColumnEvolutionMetadataTableName,
 	)
 
 	// Create trace statement builder
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
-
-	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
-	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
-	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
-		settings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		telemetryMetadataStore,
-	)
 
 	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
@@ -87,7 +78,6 @@ func newProvider(
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		resourceFilterStmtBuilder,
 		traceAggExprRewriter,
 		telemetryStore,
 	)
@@ -98,22 +88,13 @@ func newProvider(
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		traceStmtBuilder,          // Pass the regular trace statement builder
-		resourceFilterStmtBuilder, // Pass the resource filter statement builder
+		traceStmtBuilder, // Pass the regular trace statement builder
 		traceAggExprRewriter,
 	)
 
 	// Create log statement builder
 	logFieldMapper := telemetrylogs.NewFieldMapper()
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
-	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		settings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		telemetryMetadataStore,
-		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
-	)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		settings,
 		telemetrylogs.DefaultFullTextColumn,
@@ -126,7 +107,6 @@ func newProvider(
 		telemetryMetadataStore,
 		logFieldMapper,
 		logConditionBuilder,
-		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,

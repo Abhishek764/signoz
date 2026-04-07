@@ -34,12 +34,21 @@ func mergeFilterExpressions(queryFilterExpr, reqFilterExpr string) string {
 	return fmt.Sprintf("(%s) AND (%s)", queryFilterExpr, reqFilterExpr)
 }
 
+// compositeKeyFromList builds a composite key by joining the given parts
+// with a null byte separator. This is the canonical way to construct
+// composite keys for group identification across the infra monitoring module.
+func compositeKeyFromList(parts []string) string {
+	return strings.Join(parts, "\x00")
+}
+
+// compositeKeyFromLabels builds a composite key from a label map by extracting
+// the value for each groupBy key in order and joining them via compositeKeyFromList.
 func compositeKeyFromLabels(labels map[string]string, groupBy []qbtypes.GroupByKey) string {
 	parts := make([]string, len(groupBy))
 	for i, key := range groupBy {
 		parts[i] = labels[key.Name]
 	}
-	return strings.Join(parts, "\x00")
+	return compositeKeyFromList(parts)
 }
 
 // parseAndSortGroups extracts group label maps from a ScalarData response and

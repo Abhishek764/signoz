@@ -14,6 +14,8 @@ type Module interface {
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboardV2, diff int) (*dashboardtypes.DashboardV2, error)
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) (*dashboardtypes.DashboardV2, error)
 }
 
 type Handler interface {
@@ -22,4 +24,6 @@ type Handler interface {
 	Update(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
+
+	LockUnlock(http.ResponseWriter, *http.Request)
 }

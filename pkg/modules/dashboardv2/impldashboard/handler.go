@@ -2,10 +2,12 @@ package impldashboard
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
@@ -17,10 +19,11 @@ import (
 
 type handler struct {
 	module dashboardv2.Module
+	authz  authz.AuthZ
 }
 
-func NewHandler(module dashboardv2.Module) dashboardv2.Handler {
-	return &handler{module: module}
+func NewHandler(module dashboardv2.Module, authz authz.AuthZ) dashboardv2.Handler {
+	return &handler{module: module, authz: authz}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -157,4 +160,63 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(dashboardtypes.LockUnlockDashboard)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	isAdmin := false
+	selectors := []authtypes.Selector{
+		authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+	}
+	err = handler.authz.CheckWithTupleCreation(
+		ctx,
+		claims,
+		valuer.MustNewUUID(claims.OrgID),
+		authtypes.RelationAssignee,
+		authtypes.TypeableRole,
+		selectors,
+		selectors,
+	)
+	if err == nil {
+		isAdmin = true
+	}
+
+	dashboard, err := handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, isAdmin, *req.Locked)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
 }

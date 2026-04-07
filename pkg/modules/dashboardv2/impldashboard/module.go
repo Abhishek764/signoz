@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -84,4 +85,35 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	role := types.RoleViewer
+	if isAdmin {
+		role = types.RoleAdmin
+	}
+
+	err = dashboard.LockUnlock(lock, role, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
 }

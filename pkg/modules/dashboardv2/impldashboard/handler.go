@@ -18,12 +18,13 @@ import (
 )
 
 type handler struct {
-	module dashboardv2.Module
-	authz  authz.AuthZ
+	module       dashboardv2.Module
+	authz        authz.AuthZ
+	integrations dashboardv2.IntegrationDashboardProvider
 }
 
-func NewHandler(module dashboardv2.Module, authz authz.AuthZ) dashboardv2.Handler {
-	return &handler{module: module, authz: authz}
+func NewHandler(module dashboardv2.Module, authz authz.AuthZ, integrations dashboardv2.IntegrationDashboardProvider) dashboardv2.Handler {
+	return &handler{module: module, authz: authz, integrations: integrations}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -67,6 +68,63 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusCreated, gettable)
+}
+
+func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+
+	if handler.integrations.IsCloudIntegrationDashboard(id) {
+		dashboard, err := handler.integrations.GetCloudIntegrationDashboard(ctx, orgID, id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		render.Success(rw, http.StatusOK, dashboard)
+		return
+	}
+
+	if handler.integrations.IsInstalledIntegrationDashboard(id) {
+		dashboard, err := handler.integrations.GetInstalledIntegrationDashboard(ctx, orgID, id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		render.Success(rw, http.StatusOK, dashboard)
+		return
+	}
+
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {

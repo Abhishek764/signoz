@@ -63,3 +63,19 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *das
 
 	return nil
 }
+
+func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDB().
+		NewDelete().
+		Model(new(dashboardtypes.StorableDashboardV2)).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
+	}
+
+	return nil
+}

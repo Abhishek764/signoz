@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -70,4 +71,17 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return dashboard, nil
+}
+
+func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	if storable.Data.Locked {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to delete it")
+	}
+
+	return module.store.Delete(ctx, orgID, id)
 }

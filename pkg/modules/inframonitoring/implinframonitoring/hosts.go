@@ -20,7 +20,7 @@ var (
 	hostNameAttrKey = "host.name"
 )
 
-// Helper group-by key used across all queries
+// Helper group-by key used across all queries.
 var hostNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
 		Name:          hostNameAttrKey,

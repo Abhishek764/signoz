@@ -98,8 +98,11 @@ func (m *module) getMetadata(
 	filter *qbtypes.Filter,
 	startMs, endMs int64,
 ) (map[string]map[string]string, error) {
-	if len(metricNames) == 0 || len(groupBy) == 0 {
-		return nil, nil
+	if len(metricNames) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricNames must not be empty")
+	}
+	if len(groupBy) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "groupBy must not be empty")
 	}
 
 	// Pick the optimal timeseries table based on time range; also get adjusted start.

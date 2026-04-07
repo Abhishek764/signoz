@@ -1,7 +1,6 @@
 package implinframonitoring
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -39,7 +38,7 @@ func (h *handler) HostsList(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := h.module.HostsList(context.Background(), orgID, &parsedReq)
+	result, err := h.module.HostsList(req.Context(), orgID, &parsedReq)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -80,20 +80,22 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	// 1. Check if any host metrics exist and get earliest retention time.
 	// If no host metrics exist, return early — the UI shows the onboarding guide.
 	// 2. If metrics exist but req.End is before the earliest reported time, convey retention boundary.
-	if count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList); err == nil {
-		if count == 0 {
-			resp.SentAnyMetricsData = false
-			resp.Records = []inframonitoringtypes.HostRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		resp.SentAnyMetricsData = true
-		if req.End < int64(minFirstReportedUnixMilli) {
-			resp.EndTimeBeforeRetention = true
-			resp.Records = []inframonitoringtypes.HostRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
+	count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		resp.SentAnyMetricsData = false
+		resp.Records = []inframonitoringtypes.HostRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.SentAnyMetricsData = true
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.HostRecord{}
+		resp.Total = 0
+		return resp, nil
 	}
 
 	// Determine active hosts: those with metrics reported in the last 10 minutes.

@@ -363,7 +363,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsLis
 		req.Filter = &qbtypes.Filter{}
 	}
 	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))
-	req.Filter.Expression = fmt.Sprintf("(%s) AND (%s)", req.Filter.Expression, statusClause)
+	req.Filter.Expression = mergeFilterExpressions(req.Filter.Expression, statusClause)
 	return false
 }
 

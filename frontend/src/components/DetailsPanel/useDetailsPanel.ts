@@ -4,6 +4,7 @@ import { DetailsPanelState, UseDetailsPanelOptions } from './types';
 
 function useDetailsPanel({
 	entityId,
+	onClose,
 }: UseDetailsPanelOptions): DetailsPanelState {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const prevEntityIdRef = useRef<string>('');
@@ -17,7 +18,10 @@ function useDetailsPanel({
 	}, [entityId]);
 
 	const open = useCallback(() => setIsOpen(true), []);
-	const close = useCallback(() => setIsOpen(false), []);
+	const close = useCallback(() => {
+		setIsOpen(false);
+		onClose?.();
+	}, [onClose]);
 
 	return { isOpen, open, close };
 }

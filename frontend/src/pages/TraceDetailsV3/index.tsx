@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
@@ -33,7 +34,17 @@ function TraceDetailsV3(): JSX.Element {
 	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
 
 	const selectedSpanId = urlQuery.get('spanId') || undefined;
-	const panelState = useDetailsPanel({ entityId: selectedSpanId });
+	const { safeNavigate } = useSafeNavigate();
+
+	const handleSpanDetailsClose = useCallback((): void => {
+		urlQuery.delete('spanId');
+		safeNavigate({ search: urlQuery.toString() });
+	}, [urlQuery, safeNavigate]);
+
+	const panelState = useDetailsPanel({
+		entityId: selectedSpanId,
+		onClose: handleSpanDetailsClose,
+	});
 
 	// TODO: Remove mock enrichment when new API is available
 	const enrichedSpan = useMemo(() => {

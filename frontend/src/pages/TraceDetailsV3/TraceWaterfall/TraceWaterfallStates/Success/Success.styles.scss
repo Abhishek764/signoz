@@ -108,6 +108,17 @@
 		flex-shrink: 0;
 		border-right: 1px solid var(--bg-slate-400);
 
+		.resizable-box__content {
+			overflow-x: auto;
+			overflow-y: hidden;
+
+			&::-webkit-scrollbar {
+				height: 0;
+			}
+
+			scrollbar-width: none;
+		}
+
 		&::-webkit-scrollbar {
 			height: 0.3rem;
 		}

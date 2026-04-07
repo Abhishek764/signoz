@@ -6,4 +6,5 @@ export interface DetailsPanelState {
 
 export interface UseDetailsPanelOptions {
 	entityId: string | undefined;
+	onClose?: () => void;
 }

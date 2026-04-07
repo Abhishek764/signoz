@@ -104,6 +104,7 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		return nil, err
 	}
 
+	// this check below modifies req.Filter by adding `AND active hosts filter` if req.FilterByStatus is set.
 	if m.applyHostsActiveStatusFilter(req, activeHostsMap) {
 		resp.Records = []inframonitoringtypes.HostRecord{}
 		resp.Total = 0

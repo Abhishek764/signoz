@@ -62,7 +62,7 @@ func (h *handler) PodsList(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := h.module.PodsList(context.Background(), orgID, &parsedReq)
+	result, err := h.module.PodsList(req.Context(), orgID, &parsedReq)
 	if err != nil {
 		render.Error(rw, err)
 		return

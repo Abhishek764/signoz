@@ -174,20 +174,22 @@ func (m *module) PodsList(ctx context.Context, orgID valuer.UUID, req *inframoni
 		resp.Type = ResponseTypeGroupedList
 	}
 
-	if count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList); err == nil {
-		if count == 0 {
-			resp.SentAnyMetricsData = false
-			resp.Records = []inframonitoringtypes.PodRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
-		resp.SentAnyMetricsData = true
-		if req.End < int64(minFirstReportedUnixMilli) {
-			resp.EndTimeBeforeRetention = true
-			resp.Records = []inframonitoringtypes.PodRecord{}
-			resp.Total = 0
-			return resp, nil
-		}
+	count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		resp.SentAnyMetricsData = false
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.SentAnyMetricsData = true
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
 	}
 
 	metadataMap, err := m.getPodsTableMetadata(ctx, req)

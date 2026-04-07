@@ -1,26 +1,61 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { Activity, AlertTriangle, BarChart3, Search, Zap } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
-import { Message } from '../types';
+import { Message, StreamingEventItem } from '../types';
+import AIAssistantIcon from './AIAssistantIcon';
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
 
+const SUGGESTIONS = [
+	{
+		icon: AlertTriangle,
+		text: 'Show me the top errors in the last hour',
+	},
+	{
+		icon: Activity,
+		text: 'What services have the highest latency?',
+	},
+	{
+		icon: BarChart3,
+		text: 'Give me an overview of system health',
+	},
+	{
+		icon: Search,
+		text: 'Find slow database queries',
+	},
+	{
+		icon: Zap,
+		text: 'Which endpoints have the most 5xx errors?',
+	},
+];
+
+const EMPTY_EVENTS: StreamingEventItem[] = [];
+
 interface VirtualizedMessagesProps {
+	conversationId: string;
 	messages: Message[];
 	isStreaming: boolean;
 }
 
 export default function VirtualizedMessages({
+	conversationId,
 	messages,
 	isStreaming,
 }: VirtualizedMessagesProps): JSX.Element {
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
-	const streamingStatus = useAIAssistantStore((s) => s.streamingStatus);
-	const streamingEvents = useAIAssistantStore((s) => s.streamingEvents);
-	const pendingApproval = useAIAssistantStore((s) => s.pendingApproval);
+	const streamingStatus = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.streamingStatus ?? '',
+	);
+	const streamingEvents = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.streamingEvents ?? EMPTY_EVENTS,
+	);
+	const pendingApproval = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.pendingApproval ?? null,
+	);
 	const pendingClarification = useAIAssistantStore(
-		(s) => s.pendingClarification,
+		(s) => s.streams[conversationId]?.pendingClarification ?? null,
 	);
 
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -58,7 +93,28 @@ export default function VirtualizedMessages({
 	if (messages.length === 0 && !showStreamingSlot) {
 		return (
 			<div className="ai-messages__empty">
-				<p>Ask me anything about your observability data.</p>
+				<div className="ai-empty__icon">
+					<AIAssistantIcon size={40} />
+				</div>
+				<h3 className="ai-empty__title">SigNoz AI Assistant</h3>
+				<p className="ai-empty__subtitle">
+					Ask questions about your traces, logs, metrics, and infrastructure.
+				</p>
+				<div className="ai-empty__suggestions">
+					{SUGGESTIONS.map((s) => (
+						<button
+							key={s.text}
+							type="button"
+							className="ai-empty__chip"
+							onClick={(): void => {
+								sendMessage(s.text);
+							}}
+						>
+							<s.icon size={14} />
+							{s.text}
+						</button>
+					))}
+				</div>
 			</div>
 		);
 	}
@@ -90,6 +146,7 @@ export default function VirtualizedMessages({
 				}
 				return (
 					<StreamingMessage
+						conversationId={conversationId}
 						events={streamingEvents}
 						status={streamingStatus}
 						pendingApproval={pendingApproval}

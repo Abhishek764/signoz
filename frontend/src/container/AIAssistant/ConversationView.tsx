@@ -16,13 +16,18 @@ export default function ConversationView({
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],
 	);
-	const isStreaming = useAIAssistantStore((s) => s.isStreaming);
+	const isStreamingHere = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.isStreaming ?? false,
+	);
 	const isLoadingThread = useAIAssistantStore((s) => s.isLoadingThread);
-	const pendingApproval = useAIAssistantStore((s) => s.pendingApproval);
-	const pendingClarification = useAIAssistantStore(
-		(s) => s.pendingClarification,
+	const pendingApprovalHere = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.pendingApproval ?? null,
+	);
+	const pendingClarificationHere = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.pendingClarification ?? null,
 	);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
+	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
 
 	const handleSend = useCallback(
 		(text: string, attachments?: MessageAttachment[]) => {
@@ -31,12 +36,16 @@ export default function ConversationView({
 		[sendMessage],
 	);
 
+	const handleCancel = useCallback(() => {
+		cancelStream(conversationId);
+	}, [cancelStream, conversationId]);
+
 	const messages = conversation?.messages ?? [];
 	const inputDisabled =
-		isStreaming ||
+		isStreamingHere ||
 		isLoadingThread ||
-		Boolean(pendingApproval) ||
-		Boolean(pendingClarification);
+		Boolean(pendingApprovalHere) ||
+		Boolean(pendingClarificationHere);
 
 	if (isLoadingThread && messages.length === 0) {
 		return (
@@ -54,9 +63,18 @@ export default function ConversationView({
 
 	return (
 		<div className="ai-conversation">
-			<VirtualizedMessages messages={messages} isStreaming={isStreaming} />
+			<VirtualizedMessages
+				conversationId={conversationId}
+				messages={messages}
+				isStreaming={isStreamingHere}
+			/>
 			<div className="ai-conversation__input-wrapper">
-				<ChatInput onSend={handleSend} disabled={inputDisabled} />
+				<ChatInput
+					onSend={handleSend}
+					onCancel={handleCancel}
+					disabled={inputDisabled}
+					isStreaming={isStreamingHere}
+				/>
 			</div>
 		</div>
 	);

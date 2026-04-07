@@ -36,6 +36,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 interface StreamingMessageProps {
+	conversationId: string;
 	/** Ordered timeline of text and tool-call events in arrival order. */
 	events: StreamingEventItem[];
 	status?: string;
@@ -44,6 +45,7 @@ interface StreamingMessageProps {
 }
 
 export default function StreamingMessage({
+	conversationId,
 	events,
 	status = '',
 	pendingApproval = null,
@@ -88,9 +90,14 @@ export default function StreamingMessage({
 				{/* eslint-enable react/no-array-index-key */}
 
 				{/* Approval / clarification cards appended after any streamed text */}
-				{pendingApproval && <ApprovalCard approval={pendingApproval} />}
+				{pendingApproval && (
+					<ApprovalCard conversationId={conversationId} approval={pendingApproval} />
+				)}
 				{pendingClarification && (
-					<ClarificationForm clarification={pendingClarification} />
+					<ClarificationForm
+						conversationId={conversationId}
+						clarification={pendingClarification}
+					/>
 				)}
 			</div>
 		</div>

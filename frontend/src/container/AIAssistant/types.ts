@@ -100,3 +100,14 @@ export interface PendingClarification {
 	discoveredContext: Record<string, unknown> | null;
 	fields: ClarificationField[];
 }
+
+/** Per-conversation streaming state. Present in the store's `streams` map only while active. */
+export interface ConversationStreamState {
+	isStreaming: boolean;
+	streamingContent: string;
+	streamingStatus: string;
+	streamingEvents: StreamingEventItem[];
+	streamingMessageId: string | null;
+	pendingApproval: PendingApproval | null;
+	pendingClarification: PendingClarification | null;
+}

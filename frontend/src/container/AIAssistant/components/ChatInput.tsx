@@ -10,7 +10,9 @@ import { MessageAttachment } from '../types';
 
 interface ChatInputProps {
 	onSend: (text: string, attachments?: MessageAttachment[]) => void;
+	onCancel?: () => void;
 	disabled?: boolean;
+	isStreaming?: boolean;
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -24,7 +26,9 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export default function ChatInput({
 	onSend,
+	onCancel,
 	disabled,
+	isStreaming = false,
 }: ChatInputProps): JSX.Element {
 	const [text, setText] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
@@ -223,16 +227,30 @@ export default function ChatInput({
 					</Tooltip>
 				)}
 
-				<Button
-					variant="solid"
-					size="xs"
-					className="ai-assistant-input__send-btn"
-					onClick={isListening ? handleStopAndSend : handleSend}
-					disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
-					aria-label="Send message"
-				>
-					<Send size={14} />
-				</Button>
+				{isStreaming && onCancel ? (
+					<Tooltip title="Stop generating">
+						<Button
+							variant="solid"
+							size="xs"
+							className="ai-assistant-input__send-btn ai-assistant-input__send-btn--stop"
+							onClick={onCancel}
+							aria-label="Stop generating"
+						>
+							<Square size={10} fill="currentColor" strokeWidth={0} />
+						</Button>
+					</Tooltip>
+				) : (
+					<Button
+						variant="solid"
+						size="xs"
+						className="ai-assistant-input__send-btn"
+						onClick={isListening ? handleStopAndSend : handleSend}
+						disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
+						aria-label="Send message"
+					>
+						<Send size={14} />
+					</Button>
+				)}
 			</div>
 		</div>
 	);

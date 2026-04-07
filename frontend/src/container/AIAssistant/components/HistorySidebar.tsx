@@ -81,10 +81,12 @@ export default function HistorySidebar({
 
 	const handleSelect = (id: string): void => {
 		const conv = conversations[id];
-		// If the conversation has a threadId but no messages loaded, fetch from backend
-		if (conv?.threadId && conv.messages.length === 0) {
+		if (conv?.threadId) {
+			// Always load from backend — refreshes messages and reconnects
+			// to active execution if the thread is still busy.
 			loadThread(conv.threadId);
 		} else {
+			// Local-only conversation (no backend thread yet)
 			setActiveConversation(id);
 		}
 		onSelect?.(id);

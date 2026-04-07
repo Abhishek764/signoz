@@ -6,6 +6,7 @@ import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { ClarificationField, PendingClarification } from '../types';
 
 interface ClarificationFormProps {
+	conversationId: string;
 	clarification: PendingClarification;
 }
 
@@ -15,10 +16,13 @@ interface ClarificationFormProps {
  * submits answers to resume the agent on a new execution.
  */
 export default function ClarificationForm({
+	conversationId,
 	clarification,
 }: ClarificationFormProps): JSX.Element {
 	const submitClarification = useAIAssistantStore((s) => s.submitClarification);
-	const isStreaming = useAIAssistantStore((s) => s.isStreaming);
+	const isStreaming = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.isStreaming ?? false,
+	);
 
 	const initialAnswers = Object.fromEntries(
 		clarification.fields.map((f) => [f.id, f.default ?? '']),
@@ -34,7 +38,11 @@ export default function ClarificationForm({
 
 	const handleSubmit = async (): Promise<void> => {
 		setSubmitted(true);
-		await submitClarification(clarification.clarificationId, answers);
+		await submitClarification(
+			conversationId,
+			clarification.clarificationId,
+			answers,
+		);
 	};
 
 	if (submitted) {

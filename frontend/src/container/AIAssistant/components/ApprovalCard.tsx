@@ -6,6 +6,7 @@ import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { PendingApproval } from '../types';
 
 interface ApprovalCardProps {
+	conversationId: string;
 	approval: PendingApproval;
 }
 
@@ -15,22 +16,25 @@ interface ApprovalCardProps {
  * before the stream resumes on a new execution.
  */
 export default function ApprovalCard({
+	conversationId,
 	approval,
 }: ApprovalCardProps): JSX.Element {
 	const approveAction = useAIAssistantStore((s) => s.approveAction);
 	const rejectAction = useAIAssistantStore((s) => s.rejectAction);
-	const isStreaming = useAIAssistantStore((s) => s.isStreaming);
+	const isStreaming = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.isStreaming ?? false,
+	);
 
 	const [decided, setDecided] = useState<'approved' | 'rejected' | null>(null);
 
 	const handleApprove = async (): Promise<void> => {
 		setDecided('approved');
-		await approveAction(approval.approvalId);
+		await approveAction(conversationId, approval.approvalId);
 	};
 
 	const handleReject = async (): Promise<void> => {
 		setDecided('rejected');
-		await rejectAction(approval.approvalId);
+		await rejectAction(conversationId, approval.approvalId);
 	};
 
 	// After decision the card shows a compact confirmation row

@@ -200,7 +200,7 @@ func (m *module) getMetadata(
 			return nil, err
 		}
 
-		compositeKey := strings.Join(row[:len(groupByCols)], "\x00")
+		compositeKey := compositeKeyFromList(row[:len(groupByCols)])
 
 		attrMap := make(map[string]string, len(allCols))
 		for i, col := range allCols {

@@ -164,6 +164,55 @@ func TestMergeFilterExpressions(t *testing.T) {
 	}
 }
 
+func TestCompositeKeyFromList(t *testing.T) {
+	tests := []struct {
+		name     string
+		parts    []string
+		expected string
+	}{
+		{
+			name:     "single part",
+			parts:    []string{"web-1"},
+			expected: "web-1",
+		},
+		{
+			name:     "multiple parts joined with null separator",
+			parts:    []string{"web-1", "linux", "us-east"},
+			expected: "web-1\x00linux\x00us-east",
+		},
+		{
+			name:     "empty slice returns empty string",
+			parts:    []string{},
+			expected: "",
+		},
+		{
+			name:     "nil slice returns empty string",
+			parts:    nil,
+			expected: "",
+		},
+		{
+			name:     "parts with empty strings",
+			parts:    []string{"web-1", "", "us-east"},
+			expected: "web-1\x00\x00us-east",
+		},
+		{
+			name:     "all empty strings",
+			parts:    []string{"", ""},
+			expected: "\x00",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := compositeKeyFromList(tt.parts)
+			if got != tt.expected {
+				t.Errorf("compositeKeyFromList(%v) = %q, want %q",
+					tt.parts, got, tt.expected)
+			}
+		})
+	}
+}
+
 func TestCompositeKeyFromLabels(t *testing.T) {
 	tests := []struct {
 		name     string

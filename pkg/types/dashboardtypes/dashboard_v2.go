@@ -12,6 +12,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-playground/validator/v10"
+	"github.com/perses/common/set"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/uptrace/bun"
@@ -170,6 +171,42 @@ func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard Upd
 	dashboard.UpdatedBy = updatedBy
 	updatableDashboard.Metadata.UpdatedAt = time.Now()
 	dashboard.Data = updatableDashboard
+	return nil
+}
+
+func (dashboard *DashboardV2) UpdateName(name string, updatedBy string) error {
+	if dashboard.Data.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	if dashboard.Data.Spec.Display == nil {
+		dashboard.Data.Spec.Display = &common.Display{}
+	}
+	dashboard.Data.Spec.Display.Name = name
+	dashboard.UpdatedBy = updatedBy
+	dashboard.Data.Metadata.UpdatedAt = time.Now()
+	return nil
+}
+
+func (dashboard *DashboardV2) UpdateDescription(description string, updatedBy string) error {
+	if dashboard.Data.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	if dashboard.Data.Spec.Display == nil {
+		dashboard.Data.Spec.Display = &common.Display{}
+	}
+	dashboard.Data.Spec.Display.Description = description
+	dashboard.UpdatedBy = updatedBy
+	dashboard.Data.Metadata.UpdatedAt = time.Now()
+	return nil
+}
+
+func (dashboard *DashboardV2) UpdateTags(tags set.Set[string], updatedBy string) error {
+	if dashboard.Data.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	dashboard.Data.Metadata.Tags = tags
+	dashboard.UpdatedBy = updatedBy
+	dashboard.Data.Metadata.UpdatedAt = time.Now()
 	return nil
 }
 

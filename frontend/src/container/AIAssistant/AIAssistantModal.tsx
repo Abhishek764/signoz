@@ -4,14 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Tooltip } from '@signozhq/tooltip';
 import ROUTES from 'constants/routes';
-import {
-	Eraser,
-	History,
-	Maximize2,
-	Minus,
-	Plus,
-	X,
-} from 'lucide-react';
+import { Eraser, History, Maximize2, Minus, Plus, X } from 'lucide-react';
 
 import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
@@ -28,6 +21,7 @@ import './AIAssistant.styles.scss';
  * - The − (minimize) button collapses to the side panel
  * - Mounted once in AppLayout; always in the DOM, conditionally visible
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
 	const history = useHistory();
 	const [showHistory, setShowHistory] = useState(false);
@@ -52,7 +46,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 			if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
 				// Don't intercept Cmd+P inside input/textarea — those are for the user
 				const tag = (e.target as HTMLElement).tagName;
-				if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+				if (tag === 'INPUT' || tag === 'TEXTAREA') {
+					return;
+				}
 
 				e.preventDefault(); // stop browser print dialog
 				if (isOpen) {
@@ -76,7 +72,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 	// ── Handlers ────────────────────────────────────────────────────────────────
 
 	const handleExpand = useCallback(() => {
-		if (!activeConversationId) return;
+		if (!activeConversationId) {
+			return;
+		}
 		closeModal();
 		history.push(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
@@ -115,7 +113,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 	// ── Render ──────────────────────────────────────────────────────────────────
 
-	if (!isOpen) return null;
+	if (!isOpen) {
+		return null;
+	}
 
 	return createPortal(
 		<div

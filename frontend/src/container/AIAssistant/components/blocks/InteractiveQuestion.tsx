@@ -1,6 +1,6 @@
-import { Checkbox, Radio } from 'antd';
 import { useState } from 'react';
 import { Button } from '@signozhq/button';
+import { Checkbox, Radio } from 'antd';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { useMessageContext } from '../MessageContext';
@@ -41,7 +41,9 @@ export default function InteractiveQuestion({
 	const isAnswered = answeredText !== undefined;
 
 	const handleSubmit = (values: string[]): void => {
-		if (values.length === 0) return;
+		if (values.length === 0) {
+			return;
+		}
 		const answer = values.join(', ');
 		if (messageId) {
 			markBlockAnswered(messageId, answer);

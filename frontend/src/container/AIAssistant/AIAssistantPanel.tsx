@@ -3,13 +3,7 @@ import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Tooltip } from '@signozhq/tooltip';
 import ROUTES from 'constants/routes';
-import {
-	Eraser,
-	History,
-	Maximize2,
-	Plus,
-	X,
-} from 'lucide-react';
+import { Eraser, History, Maximize2, Plus, X } from 'lucide-react';
 
 import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
@@ -68,30 +62,33 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const dragStartX = useRef(0);
 	const dragStartWidth = useRef(0);
 
-	const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
-		e.preventDefault();
-		dragStartX.current = e.clientX;
-		dragStartWidth.current = panelWidth;
+	const handleResizeMouseDown = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			dragStartX.current = e.clientX;
+			dragStartWidth.current = panelWidth;
 
-		const onMouseMove = (ev: MouseEvent): void => {
-			// Panel is on the right; dragging left (lower clientX) increases width
-			const delta = dragStartX.current - ev.clientX;
-			const next = Math.min(Math.max(dragStartWidth.current + delta, 380), 800);
-			setPanelWidth(next);
-		};
+			const onMouseMove = (ev: MouseEvent): void => {
+				// Panel is on the right; dragging left (lower clientX) increases width
+				const delta = dragStartX.current - ev.clientX;
+				const next = Math.min(Math.max(dragStartWidth.current + delta, 380), 800);
+				setPanelWidth(next);
+			};
 
-		const onMouseUp = (): void => {
-			document.removeEventListener('mousemove', onMouseMove);
-			document.removeEventListener('mouseup', onMouseUp);
-			document.body.style.cursor = '';
-			document.body.style.userSelect = '';
-		};
+			const onMouseUp = (): void => {
+				document.removeEventListener('mousemove', onMouseMove);
+				document.removeEventListener('mouseup', onMouseUp);
+				document.body.style.cursor = '';
+				document.body.style.userSelect = '';
+			};
 
-		document.body.style.cursor = 'col-resize';
-		document.body.style.userSelect = 'none';
-		document.addEventListener('mousemove', onMouseMove);
-		document.addEventListener('mouseup', onMouseUp);
-	}, [panelWidth]);
+			document.body.style.cursor = 'col-resize';
+			document.body.style.userSelect = 'none';
+			document.addEventListener('mousemove', onMouseMove);
+			document.addEventListener('mouseup', onMouseUp);
+		},
+		[panelWidth],
+	);
 
 	if (!isOpen || isFullScreenPage) {
 		return null;
@@ -100,7 +97,10 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	return (
 		<div className="ai-assistant-panel" style={{ width: panelWidth }}>
 			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-			<div className="ai-assistant-panel__resize-handle" onMouseDown={handleResizeMouseDown} />
+			<div
+				className="ai-assistant-panel__resize-handle"
+				onMouseDown={handleResizeMouseDown}
+			/>
 			<div className="ai-assistant-panel__header">
 				<div className="ai-assistant-panel__title">
 					<AIAssistantIcon size={18} />

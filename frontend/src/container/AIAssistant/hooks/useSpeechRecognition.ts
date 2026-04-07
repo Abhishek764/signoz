@@ -43,7 +43,9 @@ type SpeechRecognitionConstructor = new () => ISpeechRecognition;
 const SpeechRecognitionAPI: SpeechRecognitionConstructor | null =
 	typeof window !== 'undefined'
 		? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-		  (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition ?? null
+		  (window as any).SpeechRecognition ??
+		  (window as any).webkitSpeechRecognition ??
+		  null
 		: null;
 
 export type SpeechRecognitionError =
@@ -99,6 +101,7 @@ export function useSpeechRecognition({
 		recognitionRef.current?.stop();
 	}, []);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const start = useCallback(() => {
 		if (!isSupported) {
 			onErrorRef.current?.('not-supported');
@@ -114,7 +117,7 @@ export function useSpeechRecognition({
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const recognition = new SpeechRecognitionAPI!();
 		recognition.lang = lang;
-		recognition.continuous = true;     // keep listening until user clicks stop
+		recognition.continuous = true; // keep listening until user clicks stop
 		recognition.interimResults = true; // live updates while speaking
 
 		// Track the last interim text so we can commit it as final in onend —

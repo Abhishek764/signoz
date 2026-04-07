@@ -322,10 +322,3 @@ export const AIAssistantPage = Loadable(
 			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
 		),
 );
-
-export const AIAssistantIconPreview = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "AI Assistant Icon Preview" */ 'pages/AIAssistantIconPreview/AIAssistantIconPreview'
-		),
-);

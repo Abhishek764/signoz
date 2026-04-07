@@ -1,6 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { AlertCircle, Check, Loader2, X, Zap } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 
 import { PageActionRegistry } from '../../pageActions/PageActionRegistry';
 import { AIActionBlock } from '../../pageActions/types';
@@ -26,17 +26,29 @@ type BlockState = 'pending' | 'loading' | 'applied' | 'dismissed' | 'error';
  *
  * Persists answered state via answeredBlocks so re-mounts don't reset UI.
  */
-export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Element {
+export default function ActionBlock({
+	data,
+}: {
+	data: AIActionBlock;
+}): JSX.Element {
 	const { messageId } = useMessageContext();
 	const answeredBlocks = useAIAssistantStore((s) => s.answeredBlocks);
 	const markBlockAnswered = useAIAssistantStore((s) => s.markBlockAnswered);
 
 	const [localState, setLocalState] = useState<BlockState>(() => {
-		if (!messageId) return 'pending';
+		if (!messageId) {
+			return 'pending';
+		}
 		const saved = answeredBlocks[messageId];
-		if (!saved) return 'pending';
-		if (saved === 'dismissed') return 'dismissed';
-		if (saved.startsWith('error:')) return 'error';
+		if (!saved) {
+			return 'pending';
+		}
+		if (saved === 'dismissed') {
+			return 'dismissed';
+		}
+		if (saved.startsWith('error:')) {
+			return 'error';
+		}
 		return 'applied';
 	});
 	const [resultSummary, setResultSummary] = useState<string>('');
@@ -53,7 +65,9 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 			const msg = `Action "${actionId}" is not available on the current page.`;
 			setErrorMessage(msg);
 			setLocalState('error');
-			if (messageId) markBlockAnswered(messageId, `error:${msg}`);
+			if (messageId) {
+				markBlockAnswered(messageId, `error:${msg}`);
+			}
 			return;
 		}
 
@@ -63,12 +77,16 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 			const result = await action.execute(parameters as never);
 			setResultSummary(result.summary);
 			setLocalState('applied');
-			if (messageId) markBlockAnswered(messageId, `applied:${result.summary}`);
+			if (messageId) {
+				markBlockAnswered(messageId, `applied:${result.summary}`);
+			}
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'Unknown error';
 			setErrorMessage(msg);
 			setLocalState('error');
-			if (messageId) markBlockAnswered(messageId, `error:${msg}`);
+			if (messageId) {
+				markBlockAnswered(messageId, `error:${msg}`);
+			}
 		}
 	};
 
@@ -79,10 +97,14 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 	useEffect(() => {
 		// Only auto-apply once, and only when the block hasn't been answered yet
 		// (i.e. this is a fresh render, not a remount of an already-answered block).
-		if (autoApplyFired.current || localState !== 'pending') return;
+		if (autoApplyFired.current || localState !== 'pending') {
+			return;
+		}
 
 		const action = PageActionRegistry.get(actionId);
-		if (!action?.autoApply) return;
+		if (!action?.autoApply) {
+			return;
+		}
 
 		autoApplyFired.current = true;
 		execute();
@@ -91,7 +113,9 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 
 	const handleDismiss = (): void => {
 		setLocalState('dismissed');
-		if (messageId) markBlockAnswered(messageId, 'dismissed');
+		if (messageId) {
+			markBlockAnswered(messageId, 'dismissed');
+		}
 	};
 
 	// ── Terminal states ──────────────────────────────────────────────────────────
@@ -99,7 +123,10 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 	if (localState === 'applied') {
 		return (
 			<div className="ai-block ai-action ai-action--applied">
-				<Check size={13} className="ai-action__status-icon ai-action__status-icon--ok" />
+				<Check
+					size={13}
+					className="ai-action__status-icon ai-action__status-icon--ok"
+				/>
 				<span className="ai-action__status-text">
 					{resultSummary || 'Applied.'}
 				</span>
@@ -110,7 +137,10 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 	if (localState === 'dismissed') {
 		return (
 			<div className="ai-block ai-action ai-action--dismissed">
-				<X size={13} className="ai-action__status-icon ai-action__status-icon--no" />
+				<X
+					size={13}
+					className="ai-action__status-icon ai-action__status-icon--no"
+				/>
 				<span className="ai-action__status-text">Dismissed.</span>
 			</div>
 		);
@@ -119,7 +149,10 @@ export default function ActionBlock({ data }: { data: AIActionBlock }): JSX.Elem
 	if (localState === 'error') {
 		return (
 			<div className="ai-block ai-action ai-action--error">
-				<AlertCircle size={13} className="ai-action__status-icon ai-action__status-icon--err" />
+				<AlertCircle
+					size={13}
+					className="ai-action__status-icon ai-action__status-icon--err"
+				/>
 				<span className="ai-action__status-text">{errorMessage}</span>
 			</div>
 		);

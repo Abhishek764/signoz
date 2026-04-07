@@ -448,6 +448,10 @@ func (m *module) buildHostRecords(
 
 // getActiveHosts returns a set of host names that have reported metrics recently (since sinceUnixMilli).
 // It queries distributed_metadata for hosts where last_reported_unix_milli >= sinceUnixMilli.
+// TODO(nikhilmantri0902): This method does not return active hosts numbers based on custom grouping by. So
+// if we have a different group by key than host.name in the API, then this method's response, will be useless technically, because
+// with a group-by different from host.name, we should show count of active-inactive hosts in that group.
+// We should have a way to determine active groups based on the group by keys in the request.
 func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string) (map[string]bool, error) {
 	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
 

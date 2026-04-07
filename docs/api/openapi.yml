@@ -1128,6 +1128,7 @@ components:
       enum:
       - active
       - inactive
+      - ""
       type: string
     InframonitoringtypesHostsListRequest:
       properties:

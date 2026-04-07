@@ -1339,14 +1339,15 @@ export type InframonitoringtypesHostRecordDTOMeta = {
 
 export interface InframonitoringtypesHostRecordDTO {
 	/**
-	 * @type boolean
-	 */
-	active?: boolean;
-	/**
 	 * @type number
 	 * @format double
 	 */
 	cpu?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	diskUsage?: number;
 	/**
 	 * @type string
 	 */
@@ -1367,12 +1368,21 @@ export interface InframonitoringtypesHostRecordDTO {
 	 */
 	meta?: InframonitoringtypesHostRecordDTOMeta;
 	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
 	 * @type number
 	 * @format double
 	 */
 	wait?: number;
 }
 
+export enum InframonitoringtypesHostStatusDTO {
+	active = 'active',
+	inactive = 'inactive',
+	'' = '',
+}
 export interface InframonitoringtypesHostsListRequestDTO {
 	/**
 	 * @type integer
@@ -1380,6 +1390,7 @@ export interface InframonitoringtypesHostsListRequestDTO {
 	 */
 	end?: number;
 	filter?: Querybuildertypesv5FilterDTO;
+	filterByStatus?: InframonitoringtypesHostStatusDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -1406,10 +1417,6 @@ export interface InframonitoringtypesHostsListResponseDTO {
 	 * @type boolean
 	 */
 	endTimeBeforeRetention?: boolean;
-	/**
-	 * @type boolean
-	 */
-	isSendingK8SAgentMetrics?: boolean;
 	/**
 	 * @type array
 	 * @nullable true

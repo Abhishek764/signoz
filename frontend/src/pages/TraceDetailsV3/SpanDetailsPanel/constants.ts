@@ -1,3 +1,9 @@
+export enum SpanDetailVariant {
+	DRAWER = 'drawer',
+	DIALOG = 'dialog',
+	DOCKED = 'docked',
+}
+
 export const KEY_ATTRIBUTE_KEYS: Record<string, string[]> = {
 	traces: [
 		'service.name',

@@ -18,7 +18,7 @@ import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Span } from 'types/api/trace/getTraceV2';
 
-import { KEY_ATTRIBUTE_KEYS } from './constants';
+import { KEY_ATTRIBUTE_KEYS, SpanDetailVariant } from './constants';
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
@@ -28,7 +28,7 @@ import './SpanDetailsPanel.styles.scss';
 interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
 	selectedSpan: Span | undefined;
-	variant?: 'drawer' | 'dialog';
+	variant?: SpanDetailVariant;
 }
 
 const SPAN_HEADER_ACTIONS: HeaderAction[] = [
@@ -200,7 +200,7 @@ function SpanDetailsContent({
 function SpanDetailsPanel({
 	panelState,
 	selectedSpan,
-	variant = 'dialog',
+	variant = SpanDetailVariant.DIALOG,
 }: SpanDetailsPanelProps): JSX.Element {
 	const content = (
 		<>
@@ -208,13 +208,19 @@ function SpanDetailsPanel({
 				title="Span details"
 				onClose={panelState.close}
 				actions={SPAN_HEADER_ACTIONS}
-				className={variant === 'dialog' ? 'floating-panel__drag-handle' : ''}
+				className={
+					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
+				}
 			/>
 			{selectedSpan && <SpanDetailsContent selectedSpan={selectedSpan} />}
 		</>
 	);
 
-	if (variant === 'drawer') {
+	if (variant === SpanDetailVariant.DOCKED) {
+		return <div className="span-details-panel">{content}</div>;
+	}
+
+	if (variant === SpanDetailVariant.DRAWER) {
 		return (
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}

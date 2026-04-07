@@ -24,16 +24,16 @@ const (
 type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// source. This could be extended to a richer selector in the future.
-	Name   string `json:"name" validate:"required"`
-	Source string `json:"source" validate:"required"`
+	Name   string `json:"name" validate:"required" required:"true"`
+	Source string `json:"source" validate:"required" required:"true"`
 }
 
 type QueryVariableSpec struct {
-	QueryValue string `json:"queryValue" validate:"required"`
+	QueryValue string `json:"queryValue" validate:"required" required:"true"`
 }
 
 type CustomVariableSpec struct {
-	CustomValue string `json:"customValue" validate:"required"`
+	CustomValue string `json:"customValue" validate:"required" required:"true"`
 }
 
 type TextboxVariableSpec struct{}
@@ -189,7 +189,7 @@ type ListPanelSpec struct {
 }
 
 type LogField struct {
-	Name     string `json:"name" validate:"required"`
+	Name     string `json:"name" validate:"required" required:"true"`
 	Type     string `json:"type"`
 	DataType string `json:"dataType"`
 }
@@ -237,21 +237,21 @@ type Legend struct {
 type ThresholdWithLabel struct {
 	Value float64 `json:"value"`
 	Unit  string  `json:"unit"`
-	Color string  `json:"color" validate:"required"`
-	Label string  `json:"label" validate:"required"`
+	Color string  `json:"color" validate:"required" required:"true"`
+	Label string  `json:"label" validate:"required" required:"true"`
 }
 
 type ComparisonThreshold struct {
 	Value    float64            `json:"value"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
-	Color    string             `json:"color" validate:"required"`
+	Color    string             `json:"color" validate:"required" required:"true"`
 	Format   ThresholdFormat    `json:"format"`
 }
 
 type TableThreshold struct {
 	ComparisonThreshold
-	ColumnName string `json:"columnName" validate:"required"`
+	ColumnName string `json:"columnName" validate:"required" required:"true"`
 }
 
 // ══════════════════════════════════════════════

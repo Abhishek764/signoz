@@ -187,6 +187,8 @@ function TraceDetailsV3(): JSX.Element {
 							selectedSpan={enrichedSpan}
 							variant={SpanDetailVariant.DOCKED}
 							onVariantChange={handleVariantChange}
+							traceStartTime={traceData?.payload?.startTimestampMillis}
+							traceEndTime={traceData?.payload?.endTimestampMillis}
 						/>
 					</div>
 				)}
@@ -198,6 +200,8 @@ function TraceDetailsV3(): JSX.Element {
 					selectedSpan={enrichedSpan}
 					variant={SpanDetailVariant.DIALOG}
 					onVariantChange={handleVariantChange}
+					traceStartTime={traceData?.payload?.startTimestampMillis}
+					traceEndTime={traceData?.payload?.endTimestampMillis}
 				/>
 			)}
 		</div>

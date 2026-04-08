@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
-import { ChartBar, Dock, Ellipsis, PanelBottom } from '@signozhq/icons';
+import {
+	CalendarClock,
+	ChartBar,
+	Dock,
+	Ellipsis,
+	Link2,
+	PanelBottom,
+	Timer,
+} from '@signozhq/icons';
 import { Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
@@ -16,6 +24,11 @@ import { Span } from 'types/api/trace/getTraceV2';
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
 import { KEY_ATTRIBUTE_KEYS, SpanDetailVariant } from './constants';
+import {
+	LinkedSpansPanel,
+	LinkedSpansToggle,
+	useLinkedSpans,
+} from './LinkedSpans/LinkedSpans';
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
@@ -27,14 +40,21 @@ interface SpanDetailsPanelProps {
 	selectedSpan: Span | undefined;
 	variant?: SpanDetailVariant;
 	onVariantChange?: (variant: SpanDetailVariant) => void;
+	traceStartTime?: number;
+	traceEndTime?: number;
 }
 
 function SpanDetailsContent({
 	selectedSpan,
+	traceStartTime,
+	traceEndTime,
 }: {
 	selectedSpan: Span;
+	traceStartTime?: number;
+	traceEndTime?: number;
 }): JSX.Element {
 	const percentile = useSpanPercentile(selectedSpan);
+	const linkedSpans = useLinkedSpans(selectedSpan.references);
 
 	const keyAttributes = useMemo(() => {
 		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
@@ -92,6 +112,48 @@ function SpanDetailsContent({
 
 			<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
+			{/* Span info: exec time + start time */}
+			<div className="span-details-panel__span-info">
+				<div className="span-details-panel__span-info-item">
+					<Timer size={14} />
+					<span>
+						{getYAxisFormattedValue(`${selectedSpan.durationNano / 1000000}`, 'ms')}
+						{traceStartTime && traceEndTime && traceEndTime > traceStartTime && (
+							<>
+								{' — '}
+								<strong>
+									{(
+										(selectedSpan.durationNano * 100) /
+										((traceEndTime - traceStartTime) * 1e6)
+									).toFixed(2)}
+									%
+								</strong>
+								{' of total exec time'}
+							</>
+						)}
+					</span>
+				</div>
+				<div className="span-details-panel__span-info-item">
+					<CalendarClock size={14} />
+					<span>
+						{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
+					</span>
+				</div>
+				<div className="span-details-panel__span-info-item">
+					<Link2 size={14} />
+					<LinkedSpansToggle
+						count={linkedSpans.count}
+						isOpen={linkedSpans.isOpen}
+						toggleOpen={linkedSpans.toggleOpen}
+					/>
+				</div>
+			</div>
+
+			<LinkedSpansPanel
+				linkedSpans={linkedSpans.linkedSpans}
+				isOpen={linkedSpans.isOpen}
+			/>
+
 			{/* Step 6: HighlightedOptions */}
 			<div className="span-details-panel__highlighted-options">
 				{HIGHLIGHTED_OPTIONS.map((option) => {
@@ -142,6 +204,8 @@ function SpanDetailsPanel({
 	selectedSpan,
 	variant = SpanDetailVariant.DIALOG,
 	onVariantChange,
+	traceStartTime,
+	traceEndTime,
 }: SpanDetailsPanelProps): JSX.Element {
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
@@ -231,7 +295,13 @@ function SpanDetailsPanel({
 					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
 				}
 			/>
-			{selectedSpan && <SpanDetailsContent selectedSpan={selectedSpan} />}
+			{selectedSpan && (
+				<SpanDetailsContent
+					selectedSpan={selectedSpan}
+					traceStartTime={traceStartTime}
+					traceEndTime={traceEndTime}
+				/>
+			)}
 		</>
 	);
 

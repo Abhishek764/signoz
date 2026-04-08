@@ -568,7 +568,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/dashboards/{id}/lock", am.EditAccess(aH.DashboardV2Handler.LockUnlock)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v2/dashboards/{id}/name", am.EditAccess(aH.DashboardV2Handler.UpdateName)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v2/dashboards/{id}/description", am.EditAccess(aH.DashboardV2Handler.UpdateDescription)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v2/dashboards/{id}/tags", am.EditAccess(aH.DashboardV2Handler.UpdateTags)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 

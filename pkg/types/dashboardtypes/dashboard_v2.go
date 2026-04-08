@@ -13,45 +13,33 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-playground/validator/v10"
-	"github.com/perses/common/set"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/uptrace/bun"
 )
 
 var (
-	TypeableMetaResourceDashboardV2  = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard_v2"))
-	TypeableMetaResourcesDashboardV2 = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards_v2"))
+	TypeableMetaResourceDashboardV2  = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard-vtwo"))
+	TypeableMetaResourcesDashboardV2 = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards-vtwo"))
 )
 
-// StorableDashboardDataV2 wraps v1.Dashboard with additional SigNoz-specific fields.
+// StorableDashboardDataV2 wraps v1.DashboardSpec (Perses) with additional SigNoz-specific fields.
 //
-// The following v1 request fields map to locations inside v1.Dashboard:
-//   - title       → Spec.Display.Name          (common.Display)
-//   - description → Spec.Display.Description   (common.Display)
-//   - tags        → Metadata.Tags              (v1.Metadata)
-//   - version     → Metadata.Version           (v1.Metadata)
+// We embed DashboardSpec (not v1.Dashboard) to avoid carrying Perses's Metadata
+// (Name, Project, CreatedAt, UpdatedAt, Tags, Version) and Kind field. SigNoz
+// manages identity (ID), timestamps (TimeAuditable), and multi-tenancy (OrgID)
+// separately on StorableDashboardV2/DashboardV2.
 //
-// Metadata.Name is Perses's unique resource identifier within a project.
-// In SigNoz, Metadata.Name is set to the same value as the dashboard ID
-// (StorableDashboardV2.ID / DashboardV2.ID) for both user-created and
-// bundled integration dashboards.
-//
-// Metadata.Project is Perses's namespace/grouping mechanism — dashboards,
-// datasources, and variables all belong to a project for multi-tenancy.
-// In SigNoz, this role is served by StorableDashboardV2.OrgID.
-//
-// CreatedAt/UpdatedAt live in Metadata (Perses's ProjectMetadata),
-// so TimeAuditable is not used on StorableDashboardV2 or DashboardV2.
+// The following v1 request fields map to locations inside v1.DashboardSpec:
+//   - title       → Display.Name          (common.Display)
+//   - description → Display.Description   (common.Display)
 //
 // Fields that have no Perses equivalent live on this wrapper:
 //   - image           → Image
-//   - locked          → Locked
 //   - uploadedGrafana → UploadedGrafana
 type StorableDashboardDataV2 struct {
-	v1.Dashboard
+	v1.DashboardSpec
 	Image           string `json:"image,omitempty"`
-	Locked          bool   `json:"locked"`
 	UploadedGrafana bool   `json:"uploadedGrafana,omitempty"`
 }
 
@@ -59,17 +47,22 @@ type StorableDashboardV2 struct {
 	bun.BaseModel `bun:"table:dashboard_v2,alias:dashboard_v2"`
 
 	types.Identifiable
+	types.TimeAuditable
 	types.UserAuditable
-	Data  StorableDashboardDataV2 `bun:"data,type:text,notnull"`
-	OrgID valuer.UUID             `bun:"org_id,notnull"`
+	Data   StorableDashboardDataV2 `bun:"data,type:text,notnull"`
+	Locked bool                    `bun:"locked,notnull,default:false"`
+	OrgID  valuer.UUID             `bun:"org_id,notnull"`
 }
 
+// TODO: tags are yet to be figured out for v2 dashboards.
 type DashboardV2 struct {
+	types.TimeAuditable
 	types.UserAuditable
 
-	ID    string                  `json:"id"`
-	Data  StorableDashboardDataV2 `json:"data"`
-	OrgID valuer.UUID             `json:"org_id"`
+	ID     string                  `json:"id"`
+	Data   StorableDashboardDataV2 `json:"data"`
+	Locked bool                    `json:"locked"`
+	OrgID  valuer.UUID             `json:"org_id"`
 }
 
 type (
@@ -92,42 +85,52 @@ func NewStorableDashboardV2FromDashboardV2(dashboard *DashboardV2) (*StorableDas
 		Identifiable: types.Identifiable{
 			ID: dashboardID,
 		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: dashboard.CreatedAt,
+			UpdatedAt: dashboard.UpdatedAt,
+		},
 		UserAuditable: types.UserAuditable{
 			CreatedBy: dashboard.CreatedBy,
 			UpdatedBy: dashboard.UpdatedBy,
 		},
-		OrgID: dashboard.OrgID,
-		Data:  dashboard.Data,
+		OrgID:  dashboard.OrgID,
+		Data:   dashboard.Data,
+		Locked: dashboard.Locked,
 	}, nil
 }
 
 func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardDataV2) *DashboardV2 {
-	id := valuer.GenerateUUID().StringValue()
 	currentTime := time.Now()
-	data.Metadata.CreatedAt = currentTime
-	data.Metadata.UpdatedAt = currentTime
-	data.Metadata.Name = id
-
 	return &DashboardV2{
-		ID: id,
+		ID: valuer.GenerateUUID().StringValue(),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: currentTime,
+			UpdatedAt: currentTime,
+		},
 		UserAuditable: types.UserAuditable{
 			CreatedBy: createdBy,
 			UpdatedBy: createdBy,
 		},
-		OrgID: orgID,
-		Data:  data,
+		OrgID:  orgID,
+		Data:   data,
+		Locked: false,
 	}
 }
 
 func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2) *DashboardV2 {
 	return &DashboardV2{
 		ID: storableDashboard.ID.StringValue(),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: storableDashboard.CreatedAt,
+			UpdatedAt: storableDashboard.UpdatedAt,
+		},
 		UserAuditable: types.UserAuditable{
 			CreatedBy: storableDashboard.CreatedBy,
 			UpdatedBy: storableDashboard.UpdatedBy,
 		},
-		OrgID: storableDashboard.OrgID,
-		Data:  storableDashboard.Data,
+		OrgID:  storableDashboard.OrgID,
+		Data:   storableDashboard.Data,
+		Locked: storableDashboard.Locked,
 	}
 }
 
@@ -154,21 +157,23 @@ func NewGettableDashboardsV2FromDashboards(dashboards []*DashboardV2) ([]*Gettab
 func NewGettableDashboardV2FromDashboard(dashboard *DashboardV2) (*GettableDashboardV2, error) {
 	return &GettableDashboardV2{
 		ID:            dashboard.ID,
+		TimeAuditable: dashboard.TimeAuditable,
 		UserAuditable: dashboard.UserAuditable,
 		OrgID:         dashboard.OrgID,
 		Data:          dashboard.Data,
+		Locked:        dashboard.Locked,
 	}, nil
 }
 
 func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard UpdatableDashboardV2, updatedBy string, diff int) error {
-	if dashboard.Data.Locked {
+	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
 
 	if diff > 0 {
 		deleted := 0
-		for key := range dashboard.Data.Spec.Panels {
-			if _, exists := updatableDashboard.Spec.Panels[key]; !exists {
+		for key := range dashboard.Data.Panels {
+			if _, exists := updatableDashboard.Panels[key]; !exists {
 				deleted++
 			}
 		}
@@ -178,45 +183,34 @@ func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard Upd
 	}
 
 	dashboard.UpdatedBy = updatedBy
-	updatableDashboard.Metadata.UpdatedAt = time.Now()
-	updatableDashboard.Metadata.Name = dashboard.ID
+	dashboard.UpdatedAt = time.Now()
 	dashboard.Data = updatableDashboard
 	return nil
 }
 
 func (dashboard *DashboardV2) UpdateName(name string, updatedBy string) error {
-	if dashboard.Data.Locked {
+	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
-	if dashboard.Data.Spec.Display == nil {
-		dashboard.Data.Spec.Display = &common.Display{}
+	if dashboard.Data.Display == nil {
+		dashboard.Data.Display = &common.Display{}
 	}
-	dashboard.Data.Spec.Display.Name = name
+	dashboard.Data.Display.Name = name
 	dashboard.UpdatedBy = updatedBy
-	dashboard.Data.Metadata.UpdatedAt = time.Now()
+	dashboard.UpdatedAt = time.Now()
 	return nil
 }
 
 func (dashboard *DashboardV2) UpdateDescription(description string, updatedBy string) error {
-	if dashboard.Data.Locked {
+	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
-	if dashboard.Data.Spec.Display == nil {
-		dashboard.Data.Spec.Display = &common.Display{}
+	if dashboard.Data.Display == nil {
+		dashboard.Data.Display = &common.Display{}
 	}
-	dashboard.Data.Spec.Display.Description = description
+	dashboard.Data.Display.Description = description
 	dashboard.UpdatedBy = updatedBy
-	dashboard.Data.Metadata.UpdatedAt = time.Now()
-	return nil
-}
-
-func (dashboard *DashboardV2) UpdateTags(tags set.Set[string], updatedBy string) error {
-	if dashboard.Data.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
-	}
-	dashboard.Data.Metadata.Tags = tags
-	dashboard.UpdatedBy = updatedBy
-	dashboard.Data.Metadata.UpdatedAt = time.Now()
+	dashboard.UpdatedAt = time.Now()
 	return nil
 }
 
@@ -224,9 +218,9 @@ func (dashboard *DashboardV2) LockUnlock(lock bool, role types.Role, updatedBy s
 	if dashboard.CreatedBy != updatedBy && role != types.RoleAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
-	dashboard.Data.Locked = lock
+	dashboard.Locked = lock
 	dashboard.UpdatedBy = updatedBy
-	dashboard.Data.Metadata.UpdatedAt = time.Now()
+	dashboard.UpdatedAt = time.Now()
 	return nil
 }
 
@@ -300,32 +294,32 @@ var (
 
 func validateDashboardV2(d StorableDashboardDataV2) error {
 	// Validate datasource plugins.
-	for name, ds := range d.Spec.Datasources {
-		if err := validatePlugin(ds.Plugin, datasourcePluginSpecs, fmt.Sprintf("spec.datasources.%s.plugin", name)); err != nil {
+	for name, ds := range d.Datasources {
+		if err := validatePlugin(ds.Plugin, datasourcePluginSpecs, fmt.Sprintf("datasources.%s.plugin", name)); err != nil {
 			return err
 		}
 	}
 
 	// Validate variable plugins (only ListVariables have plugins; TextVariables do not).
-	for i, v := range d.Spec.Variables {
+	for i, v := range d.Variables {
 		plugin, err := extractPluginFromVariable(v)
 		if err != nil {
-			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.variables[%d]", i)
+			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "variables[%d]", i)
 		}
 		if plugin == nil {
 			continue
 		}
-		if err := validatePlugin(*plugin, variablePluginSpecs, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
+		if err := validatePlugin(*plugin, variablePluginSpecs, fmt.Sprintf("variables[%d].spec.plugin", i)); err != nil {
 			return err
 		}
 	}
 
 	// Validate panel and query plugins.
-	for key, panel := range d.Spec.Panels {
+	for key, panel := range d.Panels {
 		if panel == nil {
 			continue
 		}
-		path := fmt.Sprintf("spec.panels.%s", key)
+		path := fmt.Sprintf("panels.%s", key)
 		if err := validatePlugin(panel.Spec.Plugin, panelPluginSpecs, path+".spec.plugin"); err != nil {
 			return err
 		}
@@ -432,7 +426,7 @@ func NewStatsFromStorableDashboardsV2(dashboards []*StorableDashboardV2) map[str
 	stats["dashboard.panels.metrics.count"] = int64(0)
 	stats["dashboard.panels.logs.count"] = int64(0)
 	for _, dashboard := range dashboards {
-		for _, panel := range dashboard.Data.Spec.Panels {
+		for _, panel := range dashboard.Data.Panels {
 			if panel == nil {
 				continue
 			}

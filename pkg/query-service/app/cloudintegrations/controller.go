@@ -627,10 +627,9 @@ func (c *Controller) IsCloudIntegrationDashboardUuid(dashboardUuid string) bool 
 // GetDashboardV2ById and AvailableDashboardsV2ForCloudProvider assume that
 // integration dashboard definitions have been migrated to the v2 (Perses) schema.
 // The bundled asset definitions (svc.Assets.Dashboards) must produce
-// StorableDashboardDataV2 with a populated v1.Dashboard for this to work correctly.
-// Locked, CreatedAt, and UpdatedAt are set at Get time (not stored in the definition)
-// since integration dashboards are always locked and their timestamps come from
-// the account creation time.
+// StorableDashboardDataV2 with a populated v1.DashboardSpec for this to work correctly.
+// Locked is set at Get time (not stored in the definition) since integration
+// dashboards are always locked.
 func (c *Controller) GetDashboardV2ById(ctx context.Context, orgID valuer.UUID, dashboardUuid string) (*dashboardtypes.DashboardV2, *model.ApiError) {
 	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
@@ -687,18 +686,19 @@ func (c *Controller) AvailableDashboardsV2ForCloudProvider(ctx context.Context, 
 		if serviceDashboardsCreatedAt != nil {
 			for _, d := range svc.Assets.Dashboards {
 				author := fmt.Sprintf("%s-integration", cloudProvider)
-				data := *d.DefinitionV2
-				data.Locked = true
-				data.Metadata.CreatedAt = *serviceDashboardsCreatedAt
-				data.Metadata.UpdatedAt = *serviceDashboardsCreatedAt
 				svcDashboards = append(svcDashboards, &dashboardtypes.DashboardV2{
 					ID: c.dashboardUuid(cloudProvider, svc.Id, d.Id),
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: *serviceDashboardsCreatedAt,
+						UpdatedAt: *serviceDashboardsCreatedAt,
+					},
 					UserAuditable: types.UserAuditable{
 						CreatedBy: author,
 						UpdatedBy: author,
 					},
-					OrgID: orgID,
-					Data:  data,
+					OrgID:  orgID,
+					Data:   *d.DefinitionV2,
+					Locked: true,
 				})
 			}
 			servicesWithAvailableMetrics[svc.Id] = nil

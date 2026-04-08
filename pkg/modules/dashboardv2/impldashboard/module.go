@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/common/set"
 )
 
 type module struct {
@@ -91,7 +90,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	if storable.Data.Locked {
+	if storable.Locked {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to delete it")
 	}
 
@@ -164,32 +163,6 @@ func (module *module) UpdateDescription(ctx context.Context, orgID valuer.UUID, 
 	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
 
 	err = dashboard.UpdateDescription(description, updatedBy)
-	if err != nil {
-		return nil, err
-	}
-
-	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
-	if err != nil {
-		return nil, err
-	}
-
-	err = module.store.Update(ctx, orgID, updatedStorable)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboard, nil
-}
-
-func (module *module) UpdateTags(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, tags []string) (*dashboardtypes.DashboardV2, error) {
-	storable, err := module.store.Get(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
-
-	err = dashboard.UpdateTags(set.New(tags...), updatedBy)
 	if err != nil {
 		return nil, err
 	}

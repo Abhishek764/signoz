@@ -37,11 +37,9 @@ type IntegrationAssets struct {
 	Dashboards []dashboardtypes.StorableDashboardData `json:"dashboards"`
 	// TODO: populate DashboardsV2 from bundled asset files once integration
 	// dashboard definitions are migrated to the v2 (Perses) schema.
-	// Convention: Metadata.Name must be set to the integration dashboard ID
-	// so that lookups by dashboard ID work correctly.
-	// Locked, CreatedAt, and UpdatedAt should NOT be set in the definition —
-	// they are set at Get time by the controller.
-	DashboardsV2 []dashboardtypes.StorableDashboardDataV2 `json:"dashboards_v2"`
+	// Map key is the integration dashboard ID.
+	// Locked should NOT be set in the definition — it is set at Get time.
+	DashboardsV2 map[string]dashboardtypes.StorableDashboardDataV2 `json:"dashboards_v2"`
 
 	Alerts []ruletypes.PostableRule `json:"alerts"`
 }
@@ -367,11 +365,9 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 }
 
 // GetInstalledIntegrationDashboardV2ById assumes that integration dashboard
-// definitions have been migrated to the v2 (Perses) schema. The bundled asset
-// definitions must produce StorableDashboardDataV2 with a populated v1.Dashboard.
-// Locked, CreatedAt, and UpdatedAt are set at Get time (not stored in the definition)
-// since integration dashboards are always locked and their timestamps come from
-// the installation time.
+// definitions have been migrated to the v2 (Perses) schema.
+// Locked is set at Get time (not stored in the definition) since integration
+// dashboards are always locked.
 func (m *Manager) GetInstalledIntegrationDashboardV2ById(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -393,27 +389,28 @@ func (m *Manager) GetInstalledIntegrationDashboardV2ById(
 		))
 	}
 
-	for _, dd := range integration.IntegrationDetails.Assets.DashboardsV2 {
-		if dd.Metadata.Name == dashboardId {
-			author := "integration"
-			dd.Locked = true
-			dd.Metadata.CreatedAt = integration.Installation.InstalledAt
-			dd.Metadata.UpdatedAt = integration.Installation.InstalledAt
-			return &dashboardtypes.DashboardV2{
-				ID: m.dashboardUuid(integrationId, dashboardId),
-				UserAuditable: types.UserAuditable{
-					CreatedBy: author,
-					UpdatedBy: author,
-				},
-				OrgID: orgID,
-				Data:  dd,
-			}, nil
-		}
+	dd, ok := integration.IntegrationDetails.Assets.DashboardsV2[dashboardId]
+	if !ok {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"integration dashboard with id %s not found", dashboardUuid,
+		))
 	}
 
-	return nil, model.NotFoundError(fmt.Errorf(
-		"integration dashboard with id %s not found", dashboardUuid,
-	))
+	author := "integration"
+	return &dashboardtypes.DashboardV2{
+		ID: m.dashboardUuid(integrationId, dashboardId),
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: integration.Installation.InstalledAt,
+			UpdatedAt: integration.Installation.InstalledAt,
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: author,
+			UpdatedBy: author,
+		},
+		OrgID:  orgID,
+		Data:   dd,
+		Locked: true,
+	}, nil
 }
 
 func (m *Manager) GetDashboardsForInstalledIntegrations(

@@ -39,8 +39,6 @@ type Module interface {
 
 	UpdateDescription(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, description string) (*dashboardtypes.DashboardV2, error)
 
-	UpdateTags(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, tags []string) (*dashboardtypes.DashboardV2, error)
-
 	authz.RegisterTypeable
 }
 
@@ -58,6 +56,4 @@ type Handler interface {
 	UpdateName(http.ResponseWriter, *http.Request)
 
 	UpdateDescription(http.ResponseWriter, *http.Request)
-
-	UpdateTags(http.ResponseWriter, *http.Request)
 }

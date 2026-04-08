@@ -90,9 +90,6 @@ type Dashboard struct {
 	Definition  *dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 	// TODO: populate DefinitionV2 from bundled asset files once integration
 	// dashboard definitions are migrated to the v2 (Perses) schema.
-	// Convention: Metadata.Name must be set to the dashboard ID so that
-	// lookups by dashboard ID work correctly.
-	// Locked, CreatedAt, and UpdatedAt should NOT be set in the definition —
-	// they are set at Get time by the controller.
+	// Locked should NOT be set in the definition — it is set at Get time.
 	DefinitionV2 *dashboardtypes.StorableDashboardDataV2 `json:"definition_v2,omitempty"`
 }

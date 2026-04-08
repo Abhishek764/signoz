@@ -187,14 +187,14 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 	for _, channel := range channels {
 		var receiver config.Receiver
 		if err := json.Unmarshal([]byte(channel.Data), &receiver); err != nil {
-			m.logger.WarnContext(ctx, "skipping notification_channel: failed to unmarshal data",
-				"id", channel.ID, "name", channel.Name, "org_id", channel.OrgID, "error", err)
+			m.logger.WarnContext(ctx, "skipping notification_channel update: failed to unmarshal data",
+				slog.String("id", channel.ID), slog.String("name", channel.Name), slog.String("org_id", channel.OrgID), slog.Any("error", err))
 			continue
 		}
 
 		if !patchReceiver(&receiver) {
-			m.logger.InfoContext(ctx, "notification_channel template up-to-date, skipping",
-				"id", channel.ID, "name", channel.Name, "org_id", channel.OrgID)
+			m.logger.InfoContext(ctx, "notification_channel template modified, skipping",
+				slog.String("id", channel.ID), slog.String("name", channel.Name), slog.String("org_id", channel.OrgID))
 			continue
 		}
 
@@ -216,7 +216,7 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 		}
 
 		m.logger.InfoContext(ctx, "patched notification_channel",
-			"id", channel.ID, "name", channel.Name, "org_id", channel.OrgID)
+			slog.String("id", channel.ID), slog.String("name", channel.Name), slog.String("org_id", channel.OrgID))
 	}
 
 	// Update the embedded receivers in alertmanager_config
@@ -229,7 +229,7 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 		var alertmanagerConfig config.Config
 		if err := json.Unmarshal([]byte(row.Config), &alertmanagerConfig); err != nil {
 			m.logger.WarnContext(ctx, "skipping alertmanager_config: failed to unmarshal config",
-				"id", row.ID, "org_id", row.OrgID, "error", err)
+				slog.String("id", row.ID), slog.String("org_id", row.OrgID), slog.Any("error", err))
 			continue
 		}
 
@@ -242,7 +242,7 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 
 		if !changed {
 			m.logger.InfoContext(ctx, "alertmanager_config template up-to-date, skipping",
-				"id", row.ID, "org_id", row.OrgID)
+				slog.String("id", row.ID), slog.String("org_id", row.OrgID))
 			continue
 		}
 
@@ -266,7 +266,7 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 		}
 
 		m.logger.InfoContext(ctx, "patched alertmanager_config",
-			"id", row.ID, "org_id", row.OrgID)
+			slog.String("id", row.ID), slog.String("org_id", row.OrgID))
 	}
 
 	return tx.Commit()

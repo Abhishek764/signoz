@@ -35,6 +35,13 @@ type IntegrationSummary struct {
 type IntegrationAssets struct {
 	Logs       LogsAssets                             `json:"logs"`
 	Dashboards []dashboardtypes.StorableDashboardData `json:"dashboards"`
+	// TODO: populate DashboardsV2 from bundled asset files once integration
+	// dashboard definitions are migrated to the v2 (Perses) schema.
+	// Convention: Metadata.Name must be set to the integration dashboard ID
+	// so that lookups by dashboard ID work correctly.
+	// Locked, CreatedAt, and UpdatedAt should NOT be set in the definition —
+	// they are set at Get time by the controller.
+	DashboardsV2 []dashboardtypes.StorableDashboardDataV2 `json:"dashboards_v2"`
 
 	Alerts []ruletypes.PostableRule `json:"alerts"`
 }
@@ -351,6 +358,56 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 					OrgID: orgId,
 				}, nil
 			}
+		}
+	}
+
+	return nil, model.NotFoundError(fmt.Errorf(
+		"integration dashboard with id %s not found", dashboardUuid,
+	))
+}
+
+// GetInstalledIntegrationDashboardV2ById assumes that integration dashboard
+// definitions have been migrated to the v2 (Perses) schema. The bundled asset
+// definitions must produce StorableDashboardDataV2 with a populated v1.Dashboard.
+// Locked, CreatedAt, and UpdatedAt are set at Get time (not stored in the definition)
+// since integration dashboards are always locked and their timestamps come from
+// the installation time.
+func (m *Manager) GetInstalledIntegrationDashboardV2ById(
+	ctx context.Context,
+	orgID valuer.UUID,
+	dashboardUuid string,
+) (*dashboardtypes.DashboardV2, *model.ApiError) {
+	integrationId, dashboardId, apiErr := m.parseDashboardUuid(dashboardUuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	integration, apiErr := m.GetIntegration(ctx, orgID.StringValue(), integrationId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	if integration.Installation == nil {
+		return nil, model.BadRequest(fmt.Errorf(
+			"integration with id %s is not installed", integrationId,
+		))
+	}
+
+	for _, dd := range integration.IntegrationDetails.Assets.DashboardsV2 {
+		if dd.Metadata.Name == dashboardId {
+			author := "integration"
+			dd.Locked = true
+			dd.Metadata.CreatedAt = integration.Installation.InstalledAt
+			dd.Metadata.UpdatedAt = integration.Installation.InstalledAt
+			return &dashboardtypes.DashboardV2{
+				ID: m.dashboardUuid(integrationId, dashboardId),
+				UserAuditable: types.UserAuditable{
+					CreatedBy: author,
+					UpdatedBy: author,
+				},
+				OrgID: orgID,
+				Data:  dd,
+			}, nil
 		}
 	}
 

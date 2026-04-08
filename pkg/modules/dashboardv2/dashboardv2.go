@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -39,6 +40,8 @@ type Module interface {
 	UpdateDescription(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, description string) (*dashboardtypes.DashboardV2, error)
 
 	UpdateTags(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, tags []string) (*dashboardtypes.DashboardV2, error)
+
+	authz.RegisterTypeable
 }
 
 type Handler interface {

@@ -121,3 +121,7 @@ func (c *Controller) GetInstalledIntegrationDashboardById(ctx context.Context, o
 func (c *Controller) IsInstalledIntegrationDashboardID(dashboardUuid string) bool {
 	return c.mgr.IsInstalledIntegrationDashboardUuid(dashboardUuid)
 }
+
+func (c *Controller) GetInstalledIntegrationDashboardV2ById(ctx context.Context, orgID valuer.UUID, dashboardUuid string) (*dashboardtypes.DashboardV2, *model.ApiError) {
+	return c.mgr.GetInstalledIntegrationDashboardV2ById(ctx, orgID, dashboardUuid)
+}

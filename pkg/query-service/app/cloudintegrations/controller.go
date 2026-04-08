@@ -623,3 +623,87 @@ func (c *Controller) IsCloudIntegrationDashboardUuid(dashboardUuid string) bool 
 	_, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
 	return apiErr == nil
 }
+
+// GetDashboardV2ById and AvailableDashboardsV2ForCloudProvider assume that
+// integration dashboard definitions have been migrated to the v2 (Perses) schema.
+// The bundled asset definitions (svc.Assets.Dashboards) must produce
+// StorableDashboardDataV2 with a populated v1.Dashboard for this to work correctly.
+// Locked, CreatedAt, and UpdatedAt are set at Get time (not stored in the definition)
+// since integration dashboards are always locked and their timestamps come from
+// the account creation time.
+func (c *Controller) GetDashboardV2ById(ctx context.Context, orgID valuer.UUID, dashboardUuid string) (*dashboardtypes.DashboardV2, *model.ApiError) {
+	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	allDashboards, apiErr := c.AvailableDashboardsV2ForCloudProvider(ctx, orgID, cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list available dashboards")
+	}
+
+	for _, d := range allDashboards {
+		if d.ID == dashboardUuid {
+			return d, nil
+		}
+	}
+
+	return nil, model.NotFoundError(fmt.Errorf("couldn't find dashboard with uuid: %s", dashboardUuid))
+}
+
+func (c *Controller) AvailableDashboardsV2ForCloudProvider(ctx context.Context, orgID valuer.UUID, cloudProvider string) ([]*dashboardtypes.DashboardV2, *model.ApiError) {
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID.StringValue(), cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
+	}
+
+	servicesWithAvailableMetrics := map[string]*time.Time{}
+
+	for _, ar := range accountRecords {
+		if ar.AccountID != nil {
+			configsBySvcId, apiErr := c.serviceConfigRepo.getAllForAccount(
+				ctx, orgID.StringValue(), ar.ID.StringValue(),
+			)
+			if apiErr != nil {
+				return nil, apiErr
+			}
+
+			for svcId, config := range configsBySvcId {
+				if config.Metrics != nil && config.Metrics.Enabled {
+					servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
+				}
+			}
+		}
+	}
+
+	allServices, apiErr := services.List(cloudProvider)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	svcDashboards := []*dashboardtypes.DashboardV2{}
+	for _, svc := range allServices {
+		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
+		if serviceDashboardsCreatedAt != nil {
+			for _, d := range svc.Assets.Dashboards {
+				author := fmt.Sprintf("%s-integration", cloudProvider)
+				data := *d.DefinitionV2
+				data.Locked = true
+				data.Metadata.CreatedAt = *serviceDashboardsCreatedAt
+				data.Metadata.UpdatedAt = *serviceDashboardsCreatedAt
+				svcDashboards = append(svcDashboards, &dashboardtypes.DashboardV2{
+					ID: c.dashboardUuid(cloudProvider, svc.Id, d.Id),
+					UserAuditable: types.UserAuditable{
+						CreatedBy: author,
+						UpdatedBy: author,
+					},
+					OrgID: orgID,
+					Data:  data,
+				})
+			}
+			servicesWithAvailableMetrics[svc.Id] = nil
+		}
+	}
+
+	return svcDashboards, nil
+}

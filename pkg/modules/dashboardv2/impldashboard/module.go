@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/common/set"
@@ -204,4 +205,12 @@ func (module *module) UpdateTags(ctx context.Context, orgID valuer.UUID, id valu
 	}
 
 	return dashboard, nil
+}
+
+func (module *module) MustGetTypeables() []authtypes.Typeable {
+	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboardV2, dashboardtypes.TypeableMetaResourcesDashboardV2}
+}
+
+func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
+	return nil
 }

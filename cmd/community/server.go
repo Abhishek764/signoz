@@ -21,6 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
+	impldashboardv2 "github.com/SigNoz/signoz/pkg/modules/dashboardv2/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -79,7 +81,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 			return signoz.NewAuthNs(ctx, providerSettings, store, licensing)
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, _ licensing.Licensing, _ dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, _ licensing.Licensing, _ dashboard.Module, _ dashboardv2.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
 			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
 			if err != nil {
 				return nil, err
@@ -89,6 +91,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, _ querier.Querier, _ licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(impldashboard.NewStore(store), settings, analytics, orgGetter, queryParser)
+		},
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics) dashboardv2.Module {
+			return impldashboardv2.NewModule(impldashboardv2.NewStore(store), settings, analytics)
 		},
 		func(_ licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return noopgateway.NewProviderFactory()

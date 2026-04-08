@@ -32,6 +32,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
+	impldashboardv2 "github.com/SigNoz/signoz/pkg/modules/dashboardv2/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -119,16 +121,19 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return authNs, nil
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, licensing licensing.Licensing, dashboardModule dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, licensing licensing.Licensing, dashboardModule dashboard.Module, dashboardV2Module dashboardv2.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
 			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
 			if err != nil {
 				return nil, err
 			}
-			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, dashboardModule), nil
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, dashboardModule, dashboardV2Module), nil
 
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing)
+		},
+		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics) dashboardv2.Module {
+			return impldashboardv2.NewModule(impldashboardv2.NewStore(store), settings, analytics)
 		},
 		func(licensing licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return httpgateway.NewProviderFactory(licensing)

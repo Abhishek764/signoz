@@ -43,6 +43,8 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
+	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
+	impldashboardv2 "github.com/SigNoz/signoz/pkg/modules/dashboardv2/impldashboard"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -146,6 +148,18 @@ type APIHandler struct {
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
+
+	// DashboardV2Handler is created here instead of in pkg/signoz/handler.go (where
+	// all other handlers live) because it depends on IntegrationDashboardProvider,
+	// which requires cloudintegrations.Controller and integrations.Controller. Those
+	// controllers live in pkg/query-service/app/ and aren't available in pkg/signoz/.
+	//
+	// To fix: move cloudintegrations.Controller and integrations.Controller into
+	// pkg/modules/ as proper modules. This requires migrating them off model.ApiError
+	// (to pkg/errors), moving their repos, and updating ~30+ callers in http_handler.go.
+	// Once done, DashboardV2Handler can be created in pkg/signoz/handler.go like
+	// every other handler.
+	DashboardV2Handler dashboardv2.Handler
 }
 
 type APIHandlerOpts struct {
@@ -233,6 +247,11 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
+		DashboardV2Handler: impldashboardv2.NewHandler(
+			opts.Signoz.Modules.DashboardV2,
+			opts.Signoz.Authz,
+			NewIntegrationDashboardAdapter(opts.CloudIntegrationsController, opts.IntegrationsController),
+		),
 	}
 
 	logsQueryBuilder := logsv4.PrepareLogsQuery
@@ -540,6 +559,17 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
+
+	// Dashboard v2 routes
+	router.HandleFunc("/api/v2/dashboards", am.EditAccess(aH.DashboardV2Handler.Create)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/dashboards/{id}", am.ViewAccess(aH.DashboardV2Handler.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/dashboards/{id}", am.EditAccess(aH.DashboardV2Handler.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v2/dashboards/{id}", am.EditAccess(aH.DashboardV2Handler.Delete)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v2/dashboards/{id}/lock", am.EditAccess(aH.DashboardV2Handler.LockUnlock)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v2/dashboards/{id}/name", am.EditAccess(aH.DashboardV2Handler.UpdateName)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v2/dashboards/{id}/description", am.EditAccess(aH.DashboardV2Handler.UpdateDescription)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v2/dashboards/{id}/tags", am.EditAccess(aH.DashboardV2Handler.UpdateTags)).Methods(http.MethodPatch)
+
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
@@ -606,7 +636,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// Query Filter Analyzer api used to extract metric names and grouping columns from a query
 	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }
-
 
 func Intersection(a, b []int) (c []int) {
 	m := make(map[int]bool)

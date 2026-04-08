@@ -33,9 +33,19 @@ func TestInvalidateNotAJSON(t *testing.T) {
 	}
 }
 
+func TestInvalidateEmptyObject(t *testing.T) {
+	if _, err := UnmarshalAndValidateDashboardV2JSON([]byte("{}")); err == nil {
+		t.Fatal("expected error for empty object missing kind")
+	}
+}
+
 func TestValidateEmptySpec(t *testing.T) {
 	// no variables no panels
-	data := []byte(`{}`)
+	data := []byte(`{
+		"kind": "Dashboard",
+		"metadata": {"name": "test"},
+		"spec": {}
+	}`)
 	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid, got: %v", err)
 	}
@@ -43,38 +53,46 @@ func TestValidateEmptySpec(t *testing.T) {
 
 func TestValidateOnlyVariables(t *testing.T) {
 	data := []byte(`{
-		"variables": [
-			{
-				"kind": "ListVariable",
-				"spec": {
-					"name": "service",
-					"allowAllValue": true,
-					"allowMultiple": false,
-					"plugin": {
-						"kind": "SigNozDynamicVariable",
-						"spec": {
-							"name": "service.name",
-							"source": "Metrics"
+		"kind": "Dashboard",
+		"metadata": {"name": "test", "project": "signoz"},
+		"spec": {
+			"variables": [
+				{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "service",
+						"allowAllValue": true,
+						"allowMultiple": false,
+						"plugin": {
+							"kind": "SigNozDynamicVariable",
+							"spec": {"name": "service.name", "source": "Metrics"}
+						}
+					}
+				},
+				{
+					"kind": "TextVariable",
+					"spec": {
+						"name": "mytext",
+						"value": "default",
+						"plugin": {
+							"kind": "SigNozTextboxVariable",
+							"spec": {}
 						}
 					}
 				}
-			},
-			{
-				"kind": "TextVariable",
-				"spec": {
-					"name": "mytext",
-					"value": "default",
-					"plugin": {
-						"kind": "SigNozTextboxVariable",
-						"spec": {}
-					}
-				}
-			}
-		],
-		"layouts": []
+			],
+			"layouts": []
+		}
 	}`)
 	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
 		t.Fatalf("expected valid, got: %v", err)
+	}
+}
+
+func TestInvalidateWrongKindAtTop(t *testing.T) {
+	data := []byte(`{"kind": 123}`)
+	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err == nil {
+		t.Fatal("expected error for wrong type on kind field")
 	}
 }
 
@@ -87,65 +105,81 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown panel plugin",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {"kind": "NonExistentPanel", "spec": {}}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {"kind": "NonExistentPanel", "spec": {}}
+							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "NonExistentPanel",
 		},
 		{
 			name: "unknown query plugin",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-							"queries": [{
-								"kind": "TimeSeriesQuery",
-								"spec": {
-									"plugin": {"kind": "FakeQueryPlugin", "spec": {}}
-								}
-							}]
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
+								"queries": [{
+									"kind": "TimeSeriesQuery",
+									"spec": {
+										"plugin": {"kind": "FakeQueryPlugin", "spec": {}}
+									}
+								}]
+							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "FakeQueryPlugin",
 		},
 		{
 			name: "unknown variable plugin",
 			data: `{
-				"variables": [{
-					"kind": "ListVariable",
-					"spec": {
-						"name": "v1",
-						"allowAllValue": false,
-						"allowMultiple": false,
-						"plugin": {"kind": "FakeVariable", "spec": {}}
-					}
-				}],
-				"layouts": []
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"variables": [{
+						"kind": "ListVariable",
+						"spec": {
+							"name": "v1",
+							"allowAllValue": false,
+							"allowMultiple": false,
+							"plugin": {"kind": "FakeVariable", "spec": {}}
+						}
+					}],
+					"layouts": []
+				}
 			}`,
 			wantContain: "FakeVariable",
 		},
 		{
 			name: "unknown datasource plugin",
 			data: `{
-				"datasources": {
-					"ds1": {
-						"default": true,
-						"plugin": {"kind": "FakeDatasource", "spec": {}}
-					}
-				},
-				"layouts": []
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"datasources": {
+						"ds1": {
+							"default": true,
+							"plugin": {"kind": "FakeDatasource", "spec": {}}
+						}
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "FakeDatasource",
 		},
@@ -166,17 +200,21 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 
 func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
-		"panels": {
-			"good": {
-				"kind": "Panel",
-				"spec": {"plugin": {"kind": "SigNozNumberPanel", "spec": {}}}
+		"kind": "Dashboard",
+		"metadata": {"name": "test", "project": "signoz"},
+		"spec": {
+			"panels": {
+				"good": {
+					"kind": "Panel",
+					"spec": {"plugin": {"kind": "SigNozNumberPanel", "spec": {}}}
+				},
+				"bad": {
+					"kind": "Panel",
+					"spec": {"plugin": {"kind": "FakePanel", "spec": {}}}
+				}
 			},
-			"bad": {
-				"kind": "Panel",
-				"spec": {"plugin": {"kind": "FakePanel", "spec": {}}}
-			}
-		},
-		"layouts": []
+			"layouts": []
+		}
 	}`)
 	_, err := UnmarshalAndValidateDashboardV2JSON(data)
 	if err == nil {
@@ -196,61 +234,73 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on panel plugin field",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {
-								"kind": "SigNozTimeSeriesPanel",
-								"spec": {"visualization": {"fillSpans": "notabool"}}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozTimeSeriesPanel",
+									"spec": {"visualization": {"fillSpans": "notabool"}}
+								}
 							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "fillSpans",
 		},
 		{
 			name: "wrong type on query plugin field",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
-							"queries": [{
-								"kind": "TimeSeriesQuery",
-								"spec": {
-									"plugin": {
-										"kind": "SigNozPromQLQuery",
-										"spec": {"name": "A", "query": 123}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {"kind": "SigNozTimeSeriesPanel", "spec": {}},
+								"queries": [{
+									"kind": "TimeSeriesQuery",
+									"spec": {
+										"plugin": {
+											"kind": "SigNozPromQLQuery",
+											"spec": {"name": "A", "query": 123}
+										}
 									}
-								}
-							}]
+								}]
+							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "",
 		},
 		{
 			name: "wrong type on variable plugin field",
 			data: `{
-				"variables": [{
-					"kind": "ListVariable",
-					"spec": {
-						"name": "v",
-						"allowAllValue": false,
-						"allowMultiple": false,
-						"plugin": {
-							"kind": "SigNozDynamicVariable",
-							"spec": {"name": 123, "source": "Metrics"}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"variables": [{
+						"kind": "ListVariable",
+						"spec": {
+							"name": "v",
+							"allowAllValue": false,
+							"allowMultiple": false,
+							"plugin": {
+								"kind": "SigNozDynamicVariable",
+								"spec": {"name": 123, "source": "Metrics"}
+							}
 						}
-					}
-				}],
-				"layouts": []
+					}],
+					"layouts": []
+				}
 			}`,
 			wantContain: "",
 		},
@@ -278,90 +328,110 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad time preference",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {
-								"kind": "SigNozTimeSeriesPanel",
-								"spec": {"visualization": {"timePreference": "last2Hr"}}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozTimeSeriesPanel",
+									"spec": {"visualization": {"timePreference": "last2Hr"}}
+								}
 							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "timePreference",
 		},
 		{
 			name: "bad legend position",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {
-								"kind": "SigNozBarChartPanel",
-								"spec": {"legend": {"position": "top"}}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozBarChartPanel",
+									"spec": {"legend": {"position": "top"}}
+								}
 							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "legend position",
 		},
 		{
 			name: "bad threshold format",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {
-								"kind": "SigNozNumberPanel",
-								"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozNumberPanel",
+									"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
+								}
 							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "threshold format",
 		},
 		{
 			name: "bad comparison operator",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {
-								"kind": "SigNozNumberPanel",
-								"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "Text"}]}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozNumberPanel",
+									"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "Text"}]}
+								}
 							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "comparison operator",
 		},
 		{
 			name: "bad precision",
 			data: `{
-				"panels": {
-					"p1": {
-						"kind": "Panel",
-						"spec": {
-							"plugin": {
-								"kind": "SigNozTimeSeriesPanel",
-								"spec": {"formatting": {"decimalPrecision": 9}}
+				"kind": "Dashboard",
+				"metadata": {"name": "test", "project": "signoz"},
+				"spec": {
+					"panels": {
+						"p1": {
+							"kind": "Panel",
+							"spec": {
+								"plugin": {
+									"kind": "SigNozTimeSeriesPanel",
+									"spec": {"formatting": {"decimalPrecision": 9}}
+								}
 							}
 						}
-					}
-				},
-				"layouts": []
+					},
+					"layouts": []
+				}
 			}`,
 			wantContain: "precision",
 		},
@@ -383,29 +453,37 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 func TestValidateRequiredFields(t *testing.T) {
 	wrapVariable := func(pluginKind, pluginSpec string) string {
 		return `{
-			"variables": [{
-				"kind": "ListVariable",
-				"spec": {
-					"name": "v",
-					"allowAllValue": false,
-					"allowMultiple": false,
-					"plugin": {"kind": "` + pluginKind + `", "spec": ` + pluginSpec + `}
-				}
-			}],
-			"layouts": []
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"variables": [{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "v",
+						"allowAllValue": false,
+						"allowMultiple": false,
+						"plugin": {"kind": "` + pluginKind + `", "spec": ` + pluginSpec + `}
+					}
+				}],
+				"layouts": []
+			}
 		}`
 	}
 	wrapPanel := func(panelKind, panelSpec string) string {
 		return `{
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"plugin": {"kind": "` + panelKind + `", "spec": ` + panelSpec + `}
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "` + panelKind + `", "spec": ` + panelSpec + `}
+						}
 					}
-				}
-			},
-			"layouts": []
+				},
+				"layouts": []
+			}
 		}`
 	}
 
@@ -476,25 +554,29 @@ func TestValidateRequiredFields(t *testing.T) {
 
 func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{
-		"panels": {
-			"p1": {
-				"kind": "Panel",
-				"spec": {
-					"plugin": {
-						"kind": "SigNozTimeSeriesPanel",
-						"spec": {}
+		"kind": "Dashboard",
+		"metadata": {"name": "test", "project": "signoz"},
+		"spec": {
+			"panels": {
+				"p1": {
+					"kind": "Panel",
+					"spec": {
+						"plugin": {
+							"kind": "SigNozTimeSeriesPanel",
+							"spec": {}
+						}
 					}
 				}
-			}
-		},
-		"layouts": []
+			},
+			"layouts": []
+		}
 	}`)
 	var d StorableDashboardDataV2
 	if err := json.Unmarshal(data, &d); err != nil {
 		t.Fatalf("unmarshal failed: %v", err)
 	}
 
-	specJSON, _ := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
+	specJSON, _ := json.Marshal(d.Spec.Panels["p1"].Spec.Plugin.Spec)
 	var spec TimeSeriesPanelSpec
 	if err := json.Unmarshal(specJSON, &spec); err != nil {
 		t.Fatalf("unmarshal spec failed: %v", err)
@@ -520,22 +602,30 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
 		return []byte(`{
-			"panels": {"p1": {"kind": "Panel", "spec": {
-				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
-			}}},
-			"layouts": []
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"panels": {"p1": {"kind": "Panel", "spec": {
+					"plugin": {"kind": "` + panelKind + `", "spec": {}},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
+				}}},
+				"layouts": []
+			}
 		}`)
 	}
 	mkComposite := func(panelKind, subType, subSpec string) []byte {
 		return []byte(`{
-			"panels": {"p1": {"kind": "Panel", "spec": {
-				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "SigNozCompositeQuery", "spec": {
-					"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
-				}}}}]
-			}}},
-			"layouts": []
+			"kind": "Dashboard",
+			"metadata": {"name": "test", "project": "signoz"},
+			"spec": {
+				"panels": {"p1": {"kind": "Panel", "spec": {
+					"plugin": {"kind": "` + panelKind + `", "spec": {}},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "SigNozCompositeQuery", "spec": {
+						"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
+					}}}}]
+				}}},
+				"layouts": []
+			}
 		}`)
 	}
 

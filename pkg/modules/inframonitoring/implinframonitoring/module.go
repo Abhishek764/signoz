@@ -72,9 +72,9 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	// default to host name group by
 	if len(req.GroupBy) == 0 {
 		req.GroupBy = []qbtypes.GroupByKey{hostNameGroupByKey}
-		resp.Type = ResponseTypeList
+		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
-		resp.Type = ResponseTypeGroupedList
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
 	// 1. Check if any host metrics exist and get earliest retention time.

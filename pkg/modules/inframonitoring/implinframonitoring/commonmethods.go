@@ -14,11 +14,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-const (
-	ResponseTypeList        = "list"
-	ResponseTypeGroupedList = "grouped_list"
-)
-
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {

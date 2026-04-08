@@ -397,12 +397,12 @@ func (m *module) buildHostRecords(
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
 		hostName := labels[hostNameAttrKey]
 
-		var activeStatus string
+		activeStatus := inframonitoringtypes.HostStatusNone
 		if hostName != "" {
 			if activeHostsMap[hostName] {
-				activeStatus = inframonitoringtypes.HostStatusActive.StringValue()
+				activeStatus = inframonitoringtypes.HostStatusActive
 			} else {
-				activeStatus = inframonitoringtypes.HostStatusInactive.StringValue()
+				activeStatus = inframonitoringtypes.HostStatusInactive
 			}
 		}
 

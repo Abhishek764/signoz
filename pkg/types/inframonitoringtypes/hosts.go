@@ -95,7 +95,7 @@ func (req *HostsListRequest) UnmarshalJSON(data []byte) error {
 }
 
 type HostsListResponse struct {
-	Type                   string       `json:"type"` // TODO(nikhilmantri0902): should this also be changed to valuer.string?
+	Type                   ResponseType `json:"type"`
 	Records                []HostRecord `json:"records"`
 	Total                  int          `json:"total"`
 	SentAnyMetricsData     bool         `json:"sentAnyMetricsData"`
@@ -104,7 +104,7 @@ type HostsListResponse struct {
 
 type HostRecord struct {
 	HostName  string                 `json:"hostName"`
-	Status    string                 `json:"status"`
+	Status    HostStatus             `json:"status"`
 	CPU       float64                `json:"cpu"`
 	Memory    float64                `json:"memory"`
 	Wait      float64                `json:"wait"`

@@ -73,7 +73,7 @@ function CreateAlertChannels({
      *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
 
      *Details:*
-       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
+       {{ range .Labels.SortedPairs }}{{- if or (eq .Name "ruleId") (eq .Name "ruleSource") }}{{ continue }}{{ end -}} • *{{ .Name }}:* {{ .Value }}
        {{ end }}
      {{ end }}`,
 		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
@@ -81,6 +81,7 @@ function CreateAlertChannels({
        {{" "}}(
        {{- with .CommonLabels.Remove .GroupLabels.Names }}
          {{- range $index, $label := .SortedPairs -}}
+           {{- if or (eq $label.Name "ruleId") (eq $label.Name "ruleSource") }}{{ continue }}{{ end -}}
            {{ if $index }}, {{ end }}
            {{- $label.Name }}="{{ $label.Value -}}"
          {{- end }}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -97,7 +98,26 @@ function TraceDetailsV3(): JSX.Element {
 		});
 	};
 
-	const isWaterfallDocked = panelState.isOpen;
+	const [spanDetailVariant, setSpanDetailVariant] = useState<SpanDetailVariant>(
+		() =>
+			(localStorage.getItem(
+				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
+			) as SpanDetailVariant) || SpanDetailVariant.DOCKED,
+	);
+
+	const handleVariantChange = useCallback(
+		(newVariant: SpanDetailVariant): void => {
+			localStorage.setItem(
+				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
+				newVariant,
+			);
+			setSpanDetailVariant(newVariant);
+		},
+		[],
+	);
+
+	const isDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
+	const isWaterfallDocked = panelState.isOpen && isDocked;
 
 	const waterfallChildren = (
 		<ResizableBox
@@ -160,16 +180,26 @@ function TraceDetailsV3(): JSX.Element {
 					]}
 				/>
 
-				{panelState.isOpen && (
+				{panelState.isOpen && isDocked && (
 					<div className="trace-details-v3__docked-span-details">
 						<SpanDetailsPanel
 							panelState={panelState}
 							selectedSpan={enrichedSpan}
 							variant={SpanDetailVariant.DOCKED}
+							onVariantChange={handleVariantChange}
 						/>
 					</div>
 				)}
 			</div>
+
+			{panelState.isOpen && !isDocked && (
+				<SpanDetailsPanel
+					panelState={panelState}
+					selectedSpan={enrichedSpan}
+					variant={SpanDetailVariant.DIALOG}
+					onVariantChange={handleVariantChange}
+				/>
+			)}
 		</div>
 	);
 }

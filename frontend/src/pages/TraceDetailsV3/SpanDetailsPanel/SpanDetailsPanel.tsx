@@ -1,12 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
-import {
-	ChartBar,
-	ChevronDown,
-	ChevronUp,
-	Ellipsis,
-	ExternalLink,
-} from '@signozhq/icons';
+import { ChartBar, Dock, Ellipsis, PanelBottom } from '@signozhq/icons';
+import { Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
@@ -18,6 +13,7 @@ import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Span } from 'types/api/trace/getTraceV2';
 
+import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { KEY_ATTRIBUTE_KEYS, SpanDetailVariant } from './constants';
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
@@ -29,59 +25,8 @@ interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
 	selectedSpan: Span | undefined;
 	variant?: SpanDetailVariant;
+	onVariantChange?: (variant: SpanDetailVariant) => void;
 }
-
-const SPAN_HEADER_ACTIONS: HeaderAction[] = [
-	{
-		key: 'overflow',
-		component: (
-			<Button variant="ghost" size="icon" color="secondary" onClick={noop}>
-				<Ellipsis size={14} />
-			</Button>
-		),
-	},
-	{
-		key: 'analytics',
-		component: (
-			<Button
-				variant="ghost"
-				size="sm"
-				color="secondary"
-				prefixIcon={<ChartBar size={14} />}
-				onClick={noop}
-			>
-				Analytics
-			</Button>
-		),
-	},
-	{
-		key: 'view-full-trace',
-		component: (
-			<Button
-				variant="ghost"
-				size="sm"
-				color="secondary"
-				prefixIcon={<ExternalLink size={14} />}
-				onClick={noop}
-			>
-				View full trace
-			</Button>
-		),
-	},
-	{
-		key: 'nav',
-		component: (
-			<div className="span-details-panel__header-nav">
-				<Button variant="ghost" size="icon" color="secondary" onClick={noop}>
-					<ChevronUp size={14} />
-				</Button>
-				<Button variant="ghost" size="icon" color="secondary" onClick={noop}>
-					<ChevronDown size={14} />
-				</Button>
-			</div>
-		),
-	},
-];
 
 function SpanDetailsContent({
 	selectedSpan,
@@ -201,13 +146,92 @@ function SpanDetailsPanel({
 	panelState,
 	selectedSpan,
 	variant = SpanDetailVariant.DIALOG,
+	onVariantChange,
 }: SpanDetailsPanelProps): JSX.Element {
+	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
+	const headerActions = useMemo((): HeaderAction[] => {
+		const actions: HeaderAction[] = [
+			{
+				key: 'overflow',
+				component: (
+					<Button variant="ghost" size="icon" color="secondary" onClick={noop}>
+						<Ellipsis size={14} />
+					</Button>
+				),
+			},
+			{
+				key: 'analytics',
+				component: (
+					<Button
+						variant="ghost"
+						size="sm"
+						color="secondary"
+						prefixIcon={<ChartBar size={14} />}
+						onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
+					>
+						Analytics
+					</Button>
+				),
+			},
+			// TODO: Add back when driven through separate config for different pages
+			// {
+			// 	key: 'view-full-trace',
+			// 	component: (
+			// 		<Button variant="ghost" size="sm" color="secondary" prefixIcon={<ExternalLink size={14} />} onClick={noop}>
+			// 			View full trace
+			// 		</Button>
+			// 	),
+			// },
+			// TODO: Add back when used in trace explorer page
+			// {
+			// 	key: 'nav',
+			// 	component: (
+			// 		<div className="span-details-panel__header-nav">
+			// 			<Button variant="ghost" size="icon" color="secondary" onClick={noop}><ChevronUp size={14} /></Button>
+			// 			<Button variant="ghost" size="icon" color="secondary" onClick={noop}><ChevronDown size={14} /></Button>
+			// 		</div>
+			// 	),
+			// },
+		];
+
+		if (onVariantChange) {
+			const isDocked = variant === SpanDetailVariant.DOCKED;
+			actions.push({
+				key: 'dock-toggle',
+				component: (
+					<Tooltip title={isDocked ? 'Open as floating panel' : 'Dock on the side'}>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							onClick={(): void =>
+								onVariantChange(
+									isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
+								)
+							}
+						>
+							{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
+						</Button>
+					</Tooltip>
+				),
+			});
+		}
+
+		return actions;
+	}, [variant, onVariantChange]);
+
+	const PANEL_WIDTH = 600;
+	const PANEL_MARGIN_RIGHT = 20;
+	const PANEL_MARGIN_TOP = 25;
+	const PANEL_MARGIN_BOTTOM = 25;
+
 	const content = (
 		<>
 			<DetailsHeader
 				title="Span details"
 				onClose={panelState.close}
-				actions={SPAN_HEADER_ACTIONS}
+				actions={headerActions}
 				className={
 					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
 				}
@@ -216,41 +240,53 @@ function SpanDetailsPanel({
 		</>
 	);
 
+	const analyticsPanel = (
+		<AnalyticsPanel
+			isOpen={isAnalyticsOpen}
+			onClose={(): void => setIsAnalyticsOpen(false)}
+		/>
+	);
+
 	if (variant === SpanDetailVariant.DOCKED) {
-		return <div className="span-details-panel">{content}</div>;
+		return (
+			<>
+				<div className="span-details-panel">{content}</div>
+				{analyticsPanel}
+			</>
+		);
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
 		return (
-			<DetailsPanelDrawer
-				isOpen={panelState.isOpen}
-				onClose={panelState.close}
-				className="span-details-panel"
-			>
-				{content}
-			</DetailsPanelDrawer>
+			<>
+				<DetailsPanelDrawer
+					isOpen={panelState.isOpen}
+					onClose={panelState.close}
+					className="span-details-panel"
+				>
+					{content}
+				</DetailsPanelDrawer>
+				{analyticsPanel}
+			</>
 		);
 	}
 
-	const PANEL_WIDTH = 600;
-	const PANEL_MARGIN_RIGHT = 20;
-	const PANEL_MARGIN_TOP = 25;
-	const PANEL_MARGIN_BOTTOM = 25;
-
 	return (
-		<FloatingPanel
-			isOpen={panelState.isOpen}
-			// onClose={panelState.close}
-			className="span-details-panel"
-			width={PANEL_WIDTH}
-			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
-			defaultPosition={{
-				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
-				y: PANEL_MARGIN_TOP,
-			}}
-		>
-			{content}
-		</FloatingPanel>
+		<>
+			<FloatingPanel
+				isOpen={panelState.isOpen}
+				className="span-details-panel"
+				width={PANEL_WIDTH}
+				height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
+				defaultPosition={{
+					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
+					y: PANEL_MARGIN_TOP,
+				}}
+			>
+				{content}
+			</FloatingPanel>
+			{analyticsPanel}
+		</>
 	);
 }
 

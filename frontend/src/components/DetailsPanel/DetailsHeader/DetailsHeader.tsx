@@ -13,6 +13,7 @@ export interface DetailsHeaderProps {
 	title: string;
 	onClose: () => void;
 	actions?: HeaderAction[];
+	closePosition?: 'left' | 'right';
 	className?: string;
 }
 
@@ -20,20 +21,25 @@ function DetailsHeader({
 	title,
 	onClose,
 	actions,
+	closePosition = 'right',
 	className,
 }: DetailsHeaderProps): JSX.Element {
+	const closeButton = (
+		<Button
+			variant="ghost"
+			size="icon"
+			color="secondary"
+			onClick={onClose}
+			aria-label="Close"
+			className="details-header__icon-btn"
+		>
+			<X size={14} />
+		</Button>
+	);
+
 	return (
 		<div className={`details-header ${className || ''}`}>
-			<Button
-				variant="ghost"
-				size="icon"
-				color="secondary"
-				onClick={onClose}
-				aria-label="Close"
-				className="details-header__icon-btn"
-			>
-				<X size={14} />
-			</Button>
+			{closePosition === 'left' && closeButton}
 
 			<span className="details-header__title">{title}</span>
 
@@ -44,6 +50,8 @@ function DetailsHeader({
 					))}
 				</div>
 			)}
+
+			{closePosition === 'right' && closeButton}
 		</div>
 	);
 }

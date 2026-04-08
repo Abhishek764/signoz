@@ -3,6 +3,7 @@ package impldashboard
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -25,10 +26,11 @@ type handler struct {
 	module           dashboard.Module
 	authz            authz.AuthZ
 	providerSettings factory.ProviderSettings
+	integrations     dashboard.IntegrationDashboardProvider
 }
 
-func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, authz authz.AuthZ) dashboard.Handler {
-	return &handler{module: module, providerSettings: providerSettings, authz: authz}
+func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, authz authz.AuthZ, integrations dashboard.IntegrationDashboardProvider) dashboard.Handler {
+	return &handler{module: module, providerSettings: providerSettings, authz: authz, integrations: integrations}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -461,4 +463,345 @@ func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+// Perses-backed (v2) dashboard handlers
+
+func (handler *handler) CreatePerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req, err := dashboardtypes.UnmarshalAndValidateDashboardV2JSON(body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.CreatePerses(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), *req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	gettable, err := dashboardtypes.NewGettableDashboardV2FromDashboard(dashboard)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, gettable)
+}
+
+func (handler *handler) GetPerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+
+	if handler.integrations.IsCloudIntegrationDashboard(id) {
+		dashboard, err := handler.integrations.GetCloudIntegrationDashboard(ctx, orgID, id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		render.Success(rw, http.StatusOK, dashboard)
+		return
+	}
+
+	if handler.integrations.IsInstalledIntegrationDashboard(id) {
+		dashboard, err := handler.integrations.GetInstalledIntegrationDashboard(ctx, orgID, id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		render.Success(rw, http.StatusOK, dashboard)
+		return
+	}
+
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.GetPerses(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
+}
+
+func (handler *handler) UpdatePerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// TODO: reject cloud integration and installed integration dashboard IDs
+	// (prefixed with "cloud-integration--" and "integration--") with an explicit error,
+	// since those dashboards are read-only and cannot be updated.
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req, err := dashboardtypes.UnmarshalAndValidateDashboardV2JSON(body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	diff := 0
+	if claims.IdentNProvider == authtypes.IdentNProviderTokenizer {
+		diff = 1
+	}
+
+	dashboard, err := handler.module.UpdatePerses(ctx, orgID, dashboardID, claims.Email, *req, diff)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
+}
+
+func (handler *handler) DeletePerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.DeletePerses(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) LockUnlockPerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(dashboardtypes.LockUnlockDashboard)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	isAdmin := false
+	selectors := []authtypes.Selector{
+		authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+	}
+	err = handler.authz.CheckWithTupleCreation(
+		ctx,
+		claims,
+		valuer.MustNewUUID(claims.OrgID),
+		authtypes.RelationAssignee,
+		authtypes.TypeableRole,
+		selectors,
+		selectors,
+	)
+	if err == nil {
+		isAdmin = true
+	}
+
+	dashboard, err := handler.module.LockUnlockPerses(ctx, orgID, dashboardID, claims.Email, isAdmin, *req.Locked)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
+}
+
+func (handler *handler) UpdateNamePerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.UpdateNamePerses(ctx, orgID, dashboardID, claims.Email, req.Name)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
+}
+
+func (handler *handler) UpdateDescriptionPerses(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var req struct {
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.UpdateDescriptionPerses(ctx, orgID, dashboardID, claims.Email, req.Description)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
 }

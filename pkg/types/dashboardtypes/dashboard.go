@@ -34,9 +34,10 @@ type StorableDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Data   StorableDashboardData `bun:"data,type:text,notnull"`
-	Locked bool                  `bun:"locked,notnull,default:false"`
-	OrgID  valuer.UUID           `bun:"org_id,notnull"`
+	Data   StorableDashboardData   `bun:"data,type:text,notnull"`
+	DataV2 StorableDashboardDataV2 `bun:"datav2,type:text,notnull"`
+	Locked bool                    `bun:"locked,notnull,default:false"`
+	OrgID  valuer.UUID             `bun:"org_id,notnull"`
 }
 
 type Dashboard struct {

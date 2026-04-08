@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -25,7 +25,7 @@ type integrationDashboardAdapter struct {
 func NewIntegrationDashboardAdapter(
 	cloud *cloudintegrations.Controller,
 	integrations *integrations.Controller,
-) dashboardv2.IntegrationDashboardProvider {
+) dashboard.IntegrationDashboardProvider {
 	return &integrationDashboardAdapter{
 		cloud:        cloud,
 		integrations: integrations,

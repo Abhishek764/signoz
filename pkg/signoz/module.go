@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/modules/dashboardv2"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -62,7 +61,6 @@ type Modules struct {
 	SavedView        savedview.Module
 	Apdex            apdex.Module
 	Dashboard        dashboard.Module
-	DashboardV2      dashboardv2.Module
 	QuickFilter      quickfilter.Module
 	TraceFunnel      tracefunnel.Module
 	RawDataExport    rawdataexport.Module
@@ -93,7 +91,6 @@ func NewModules(
 	queryParser queryparser.QueryParser,
 	config Config,
 	dashboard dashboard.Module,
-	dashboardV2 dashboardv2.Module,
 	userGetter user.Getter,
 	userRoleStore authtypes.UserRoleStore,
 ) Modules {
@@ -109,7 +106,6 @@ func NewModules(
 		SavedView:        implsavedview.NewModule(sqlstore),
 		Apdex:            implapdex.NewModule(sqlstore),
 		Dashboard:        dashboard,
-		DashboardV2:      dashboardV2,
 		UserSetter:       userSetter,
 		UserGetter:       userGetter,
 		QuickFilter:      quickfilter,

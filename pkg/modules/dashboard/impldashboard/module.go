@@ -322,6 +322,160 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 }
 
 // checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings.
+// Perses-backed (v2) dashboard methods
+
+func (module *module) CreatePerses(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, data)
+
+	storable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Create(ctx, storable)
+	if err != nil {
+		return nil, err
+	}
+
+	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboardsV2([]*dashboardtypes.StorableDashboard{storable}))
+
+	return dashboard, nil
+}
+
+func (module *module) GetPerses(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewDashboardV2FromStorableDashboard(storable), nil
+}
+
+func (module *module) UpdatePerses(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboardV2, diff int) (*dashboardtypes.DashboardV2, error) {
+	// Fetch current state to validate lock status and panel diff before updating.
+	// This lives in the module layer (not pushed into a conditional SQL update)
+	// to keep business logic out of the store.
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.Update(ctx, data, updatedBy, diff)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) DeletePerses(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	dashboard, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	if dashboard.Locked {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to delete it")
+	}
+
+	return module.store.Delete(ctx, orgID, id)
+}
+
+func (module *module) LockUnlockPerses(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	role := types.RoleViewer
+	if isAdmin {
+		role = types.RoleAdmin
+	}
+
+	err = dashboard.LockUnlock(lock, role, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) UpdateNamePerses(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, name string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.UpdateName(name, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) UpdateDescriptionPerses(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, description string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboard := dashboardtypes.NewDashboardV2FromStorableDashboard(storable)
+
+	err = dashboard.UpdateDescription(description, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.Update(ctx, orgID, updatedStorable)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
 func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	promQL, ok := query["promql"].([]interface{})
 	if !ok {

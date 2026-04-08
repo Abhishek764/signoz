@@ -9,18 +9,11 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-playground/validator/v10"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
-	"github.com/uptrace/bun"
-)
-
-var (
-	TypeableMetaResourceDashboardV2  = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard-vtwo"))
-	TypeableMetaResourcesDashboardV2 = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards-vtwo"))
 )
 
 // StorableDashboardDataV2 wraps v1.DashboardSpec (Perses) with additional SigNoz-specific fields.
@@ -43,18 +36,6 @@ type StorableDashboardDataV2 struct {
 	UploadedGrafana bool   `json:"uploadedGrafana,omitempty"`
 }
 
-type StorableDashboardV2 struct {
-	bun.BaseModel `bun:"table:dashboard_v2,alias:dashboard_v2"`
-
-	types.Identifiable
-	types.TimeAuditable
-	types.UserAuditable
-	Data   StorableDashboardDataV2 `bun:"data,type:text,notnull"`
-	Locked bool                    `bun:"locked,notnull,default:false"`
-	OrgID  valuer.UUID             `bun:"org_id,notnull"`
-}
-
-// TODO: tags are yet to be figured out for v2 dashboards.
 type DashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
@@ -66,22 +47,19 @@ type DashboardV2 struct {
 }
 
 type (
-	GettableDashboardV2 = DashboardV2
-
+	GettableDashboardV2  = DashboardV2
 	UpdatableDashboardV2 = StorableDashboardDataV2
-
-	PostableDashboardV2 = StorableDashboardDataV2
-
-	ListableDashboardV2 []*GettableDashboardV2
+	PostableDashboardV2  = StorableDashboardDataV2
+	ListableDashboardV2  []*GettableDashboardV2
 )
 
-func NewStorableDashboardV2FromDashboardV2(dashboard *DashboardV2) (*StorableDashboardV2, error) {
+func NewStorableDashboardFromDashboardV2(dashboard *DashboardV2) (*StorableDashboard, error) {
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid")
 	}
 
-	return &StorableDashboardV2{
+	return &StorableDashboard{
 		Identifiable: types.Identifiable{
 			ID: dashboardID,
 		},
@@ -94,7 +72,7 @@ func NewStorableDashboardV2FromDashboardV2(dashboard *DashboardV2) (*StorableDas
 			UpdatedBy: dashboard.UpdatedBy,
 		},
 		OrgID:  dashboard.OrgID,
-		Data:   dashboard.Data,
+		DataV2: dashboard.Data,
 		Locked: dashboard.Locked,
 	}, nil
 }
@@ -117,7 +95,7 @@ func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardD
 	}
 }
 
-func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2) *DashboardV2 {
+func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboard) *DashboardV2 {
 	return &DashboardV2{
 		ID: storableDashboard.ID.StringValue(),
 		TimeAuditable: types.TimeAuditable{
@@ -129,12 +107,12 @@ func NewDashboardV2FromStorableDashboard(storableDashboard *StorableDashboardV2)
 			UpdatedBy: storableDashboard.UpdatedBy,
 		},
 		OrgID:  storableDashboard.OrgID,
-		Data:   storableDashboard.Data,
+		Data:   storableDashboard.DataV2,
 		Locked: storableDashboard.Locked,
 	}
 }
 
-func NewDashboardsV2FromStorableDashboards(storableDashboards []*StorableDashboardV2) []*DashboardV2 {
+func NewDashboardsV2FromStorableDashboards(storableDashboards []*StorableDashboard) []*DashboardV2 {
 	dashboards := make([]*DashboardV2, len(storableDashboards))
 	for idx, storableDashboard := range storableDashboards {
 		dashboards[idx] = NewDashboardV2FromStorableDashboard(storableDashboard)
@@ -419,14 +397,14 @@ func extractPluginFromVariable(v any) (*common.Plugin, error) {
 	return raw.Spec.Plugin, nil
 }
 
-func NewStatsFromStorableDashboardsV2(dashboards []*StorableDashboardV2) map[string]any {
+func NewStatsFromStorableDashboardsV2(dashboards []*StorableDashboard) map[string]any {
 	stats := make(map[string]any)
 	stats["dashboard.panels.count"] = int64(0)
 	stats["dashboard.panels.traces.count"] = int64(0)
 	stats["dashboard.panels.metrics.count"] = int64(0)
 	stats["dashboard.panels.logs.count"] = int64(0)
 	for _, dashboard := range dashboards {
-		for _, panel := range dashboard.Data.Panels {
+		for _, panel := range dashboard.DataV2.Panels {
 			if panel == nil {
 				continue
 			}

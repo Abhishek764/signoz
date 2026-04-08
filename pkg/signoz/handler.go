@@ -81,7 +81,7 @@ func NewHandlers(
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
-		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz), // cant call NewIntegrationDashboardAdapter here!!!
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),

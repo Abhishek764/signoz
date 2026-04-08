@@ -1119,7 +1119,7 @@ components:
           nullable: true
           type: object
         status:
-          type: string
+          $ref: '#/components/schemas/InframonitoringtypesHostStatus'
         wait:
           format: double
           type: number
@@ -1168,8 +1168,15 @@ components:
         total:
           type: integer
         type:
-          type: string
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
       type: object
+    InframonitoringtypesResponseType:
+      enum:
+      - list
+      - grouped_list
+      type: string
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:

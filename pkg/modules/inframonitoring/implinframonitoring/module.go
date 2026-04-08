@@ -142,6 +142,7 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	resp.Records = m.buildHostRecords(queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap)
+	resp.Warning = queryResp.Warning
 
 	return resp, nil
 }

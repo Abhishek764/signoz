@@ -1367,10 +1367,7 @@ export interface InframonitoringtypesHostRecordDTO {
 	 * @nullable true
 	 */
 	meta?: InframonitoringtypesHostRecordDTOMeta;
-	/**
-	 * @type string
-	 */
-	status?: string;
+	status?: InframonitoringtypesHostStatusDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -1430,12 +1427,14 @@ export interface InframonitoringtypesHostsListResponseDTO {
 	 * @type integer
 	 */
 	total?: number;
-	/**
-	 * @type string
-	 */
-	type?: string;
+	type?: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export enum InframonitoringtypesResponseTypeDTO {
+	list = 'list',
+	grouped_list = 'grouped_list',
+}
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer

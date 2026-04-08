@@ -95,11 +95,12 @@ func (req *HostsListRequest) UnmarshalJSON(data []byte) error {
 }
 
 type HostsListResponse struct {
-	Type                   ResponseType `json:"type"`
-	Records                []HostRecord `json:"records"`
-	Total                  int          `json:"total"`
-	SentAnyMetricsData     bool         `json:"sentAnyMetricsData"`
-	EndTimeBeforeRetention bool         `json:"endTimeBeforeRetention"`
+	Type                   ResponseType           `json:"type"`
+	Records                []HostRecord           `json:"records"`
+	Total                  int                    `json:"total"`
+	SentAnyMetricsData     bool                   `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
+	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
 type HostRecord struct {

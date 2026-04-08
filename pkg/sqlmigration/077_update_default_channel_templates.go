@@ -2,13 +2,16 @@ package sqlmigration
 
 import (
 	"context"
+	"crypto/md5"
 	_ "embed"
 	"encoding/json"
+	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -44,15 +47,51 @@ var oldEmailHTMLTemplate string
 //go:embed templates/new_email_html.tmpl
 var newEmailHTMLTemplate string
 
+type notificationChannelRow struct {
+	bun.BaseModel `bun:"table:notification_channel"`
+
+	ID        string    `bun:"id,pk"`
+	CreatedAt time.Time `bun:"created_at"`
+	UpdatedAt time.Time `bun:"updated_at"`
+	Name      string    `bun:"name"`
+	Type      string    `bun:"type"`
+	Data      string    `bun:"data"`
+	OrgID     string    `bun:"org_id"`
+}
+
+type alertmanagerConfigRow struct {
+	bun.BaseModel `bun:"table:alertmanager_config"`
+
+	ID        string    `bun:"id,pk"`
+	CreatedAt time.Time `bun:"created_at"`
+	UpdatedAt time.Time `bun:"updated_at"`
+	Config    string    `bun:"config"`
+	Hash      string    `bun:"hash"`
+	OrgID     string    `bun:"org_id"`
+}
+
+func computeConfigHash(raw string) string {
+	sum := md5.Sum([]byte(raw))
+	return fmt.Sprintf("%x", sum)
+}
+
+func normalizeTemplate(s string) string {
+	return strings.TrimSpace(s)
+}
+
 type migrateDefaultChannelTemplates struct {
 	sqlstore sqlstore.SQLStore
+	logger   *slog.Logger
 }
 
 func NewChannelTemplatesMigratorFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("update_channel_templates"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &migrateDefaultChannelTemplates{sqlstore: sqlstore}, nil
+			return &migrateDefaultChannelTemplates{
+				sqlstore: sqlstore,
+				logger:   ps.Logger,
+			}, nil
 		},
 	)
 }
@@ -72,11 +111,11 @@ func patchReceiver(receiver *config.Receiver) bool {
 		if cfg == nil {
 			continue
 		}
-		if cfg.Title == oldSlackTitleTemplate {
+		if normalizeTemplate(cfg.Title) == normalizeTemplate(oldSlackTitleTemplate) {
 			cfg.Title = newSlackTitleTemplate
 			changed = true
 		}
-		if cfg.Text == oldSlackTextTemplate {
+		if normalizeTemplate(cfg.Text) == normalizeTemplate(oldSlackTextTemplate) {
 			cfg.Text = newSlackTextTemplate
 			changed = true
 		}
@@ -86,11 +125,11 @@ func patchReceiver(receiver *config.Receiver) bool {
 		if cfg == nil {
 			continue
 		}
-		if cfg.Title == oldSlackTitleTemplate {
+		if normalizeTemplate(cfg.Title) == normalizeTemplate(oldSlackTitleTemplate) {
 			cfg.Title = newSlackTitleTemplate
 			changed = true
 		}
-		if cfg.Text == oldSlackTextTemplate {
+		if normalizeTemplate(cfg.Text) == normalizeTemplate(oldSlackTextTemplate) {
 			cfg.Text = newSlackTextTemplate
 			changed = true
 		}
@@ -100,7 +139,7 @@ func patchReceiver(receiver *config.Receiver) bool {
 		if cfg == nil {
 			continue
 		}
-		if cfg.Description == oldPagerdutyDescriptionTemplate {
+		if normalizeTemplate(cfg.Description) == normalizeTemplate(oldPagerdutyDescriptionTemplate) {
 			cfg.Description = newPagerdutyDescriptionTemplate
 			changed = true
 		}
@@ -110,7 +149,7 @@ func patchReceiver(receiver *config.Receiver) bool {
 		if cfg == nil {
 			continue
 		}
-		if cfg.Description == oldOpsgenieDescriptionTemplate {
+		if normalizeTemplate(cfg.Description) == normalizeTemplate(oldOpsgenieDescriptionTemplate) {
 			cfg.Description = newOpsgenieDescriptionTemplate
 			changed = true
 		}
@@ -120,7 +159,7 @@ func patchReceiver(receiver *config.Receiver) bool {
 		if cfg == nil {
 			continue
 		}
-		if cfg.HTML == oldEmailHTMLTemplate {
+		if normalizeTemplate(cfg.HTML) == normalizeTemplate(oldEmailHTMLTemplate) {
 			cfg.HTML = newEmailHTMLTemplate
 			changed = true
 		}
@@ -140,20 +179,22 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 	}()
 
 	// Rewrite notification_channel rows that match the old default template
-	var channels []*alertmanagertypes.Channel
+	var channels []*notificationChannelRow
 	if err := tx.NewSelect().Model(&channels).Scan(ctx); err != nil {
 		return err
 	}
 
 	for _, channel := range channels {
-		receiver, err := alertmanagertypes.NewReceiver(channel.Data)
-		if err != nil {
-			// Skip channels we cannot parse; leave them untouched
-			// migration is not responsible for invalid configs
+		var receiver config.Receiver
+		if err := json.Unmarshal([]byte(channel.Data), &receiver); err != nil {
+			m.logger.WarnContext(ctx, "skipping notification_channel: failed to unmarshal data",
+				"id", channel.ID, "name", channel.Name, "org_id", channel.OrgID, "error", err)
 			continue
 		}
 
 		if !patchReceiver(&receiver) {
+			m.logger.InfoContext(ctx, "notification_channel template up-to-date, skipping",
+				"id", channel.ID, "name", channel.Name, "org_id", channel.OrgID)
 			continue
 		}
 
@@ -163,28 +204,35 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 		}
 
 		channel.Data = string(data)
-		channel.UpdatedAt = time.Now()
+		channel.UpdatedAt = time.Now().UTC()
 
-		if _, err := tx.NewUpdate().Model(channel).WherePK().Exec(ctx); err != nil {
+		if _, err := tx.NewUpdate().
+			Model(channel).
+			Set("data = ?", channel.Data).
+			Set("updated_at = ?", channel.UpdatedAt).
+			WherePK().
+			Exec(ctx); err != nil {
 			return err
 		}
+
+		m.logger.InfoContext(ctx, "patched notification_channel",
+			"id", channel.ID, "name", channel.Name, "org_id", channel.OrgID)
 	}
 
 	// Update the embedded receivers in alertmanager_config
-	var storeableConfigs []*alertmanagertypes.StoreableConfig
-	if err := tx.NewSelect().Model(&storeableConfigs).Scan(ctx); err != nil {
+	var configs []*alertmanagerConfigRow
+	if err := tx.NewSelect().Model(&configs).Scan(ctx); err != nil {
 		return err
 	}
 
-	for _, sc := range storeableConfigs {
-		cfg, err := alertmanagertypes.NewConfigFromStoreableConfig(sc)
-		if err != nil {
-			// Skip configs we cannot parse; leave them untouched
-			// migration is not responsible for invalid configs
+	for _, row := range configs {
+		var alertmanagerConfig config.Config
+		if err := json.Unmarshal([]byte(row.Config), &alertmanagerConfig); err != nil {
+			m.logger.WarnContext(ctx, "skipping alertmanager_config: failed to unmarshal config",
+				"id", row.ID, "org_id", row.OrgID, "error", err)
 			continue
 		}
 
-		alertmanagerConfig := cfg.AlertmanagerConfig()
 		changed := false
 		for i := range alertmanagerConfig.Receivers {
 			if patchReceiver(&alertmanagerConfig.Receivers[i]) {
@@ -193,27 +241,32 @@ func (m *migrateDefaultChannelTemplates) Up(ctx context.Context, db *bun.DB) err
 		}
 
 		if !changed {
+			m.logger.InfoContext(ctx, "alertmanager_config template up-to-date, skipping",
+				"id", row.ID, "org_id", row.OrgID)
 			continue
 		}
 
-		// UpdateReceiver for each config updates the hash and updated_at
-		for i := range alertmanagerConfig.Receivers {
-			if err := cfg.UpdateReceiver(alertmanagerConfig.Receivers[i]); err != nil {
-				return err
-			}
+		rawConfig, err := json.Marshal(&alertmanagerConfig)
+		if err != nil {
+			return err
 		}
 
-		sc = cfg.StoreableConfig()
-		if _, err := tx.
-			NewInsert().
-			Model(sc).
-			On("CONFLICT (org_id) DO UPDATE").
-			Set("config = ?", sc.Config).
-			Set("hash = ?", sc.Hash).
-			Set("updated_at = ?", sc.UpdatedAt).
+		row.Config = string(rawConfig)
+		row.Hash = computeConfigHash(row.Config)
+		row.UpdatedAt = time.Now().UTC()
+
+		if _, err := tx.NewUpdate().
+			Model(row).
+			Set("config = ?", row.Config).
+			Set("hash = ?", row.Hash).
+			Set("updated_at = ?", row.UpdatedAt).
+			WherePK().
 			Exec(ctx); err != nil {
 			return err
 		}
+
+		m.logger.InfoContext(ctx, "patched alertmanager_config",
+			"id", row.ID, "org_id", row.OrgID)
 	}
 
 	return tx.Commit()

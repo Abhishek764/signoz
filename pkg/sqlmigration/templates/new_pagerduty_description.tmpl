@@ -2,10 +2,12 @@
 	{{- if gt (len .CommonLabels) (len .GroupLabels) -}}
 	  {{" "}}(
 	  {{- with .CommonLabels.Remove .GroupLabels.Names }}
-		{{- range $index, $label := .SortedPairs -}}
+		{{- $first := true -}}
+		{{- range $label := .SortedPairs -}}
 		  {{- if or (eq $label.Name "ruleId") (eq $label.Name "ruleSource") }}{{ continue }}{{ end -}}
-		  {{ if $index }}, {{ end }}
+		  {{- if not $first }}, {{ end -}}
 		  {{- $label.Name }}="{{ $label.Value -}}"
+		  {{- $first = false -}}
 		{{- end }}
 	  {{- end -}}
 	  )

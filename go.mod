@@ -39,7 +39,6 @@ require (
 	github.com/openfga/api/proto v0.0.0-20250909172242-b4b2a12f5c67
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251027165255-0f8f255e5f6c
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/perses/common v0.30.2
 	github.com/perses/perses v0.53.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.31.0
@@ -135,6 +134,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/perses/common v0.30.2 // indirect
 	github.com/prometheus/client_golang/exp v0.0.0-20260108101519-fb0838f53562 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.15.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect

@@ -1,7 +1,10 @@
+import { ComponentProps } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 
 import './FloatingPanel.styles.scss';
+
+type EnableResizing = ComponentProps<typeof Rnd>['enableResizing'];
 
 export interface FloatingPanelProps {
 	isOpen: boolean;
@@ -11,6 +14,7 @@ export interface FloatingPanelProps {
 	height?: number;
 	minWidth?: number;
 	minHeight?: number;
+	enableResizing?: EnableResizing;
 	className?: string;
 }
 
@@ -22,6 +26,7 @@ function FloatingPanel({
 	height = 600,
 	minWidth = 400,
 	minHeight = 300,
+	enableResizing,
 	className,
 }: FloatingPanelProps): JSX.Element | null {
 	if (!isOpen) {
@@ -64,16 +69,7 @@ function FloatingPanel({
 				}
 			}}
 			className={`floating-panel ${className || ''}`}
-			enableResizing={{
-				top: true,
-				right: false,
-				bottom: true,
-				left: false,
-				topRight: false,
-				bottomRight: false,
-				bottomLeft: false,
-				topLeft: false,
-			}}
+			enableResizing={enableResizing}
 		>
 			<div className="floating-panel__inner">{children}</div>
 		</Rnd>,

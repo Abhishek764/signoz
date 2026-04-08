@@ -14,6 +14,7 @@ import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
+import { HIGHLIGHTED_OPTIONS } from './config';
 import { KEY_ATTRIBUTE_KEYS, SpanDetailVariant } from './constants';
 import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
@@ -93,26 +94,20 @@ function SpanDetailsContent({
 
 			{/* Step 6: HighlightedOptions */}
 			<div className="span-details-panel__highlighted-options">
-				<KeyValueLabel
-					badgeKey="SERVICE"
-					badgeValue={selectedSpan.serviceName}
-					direction="column"
-				/>
-				<KeyValueLabel
-					badgeKey="STATUS CODE STRING"
-					badgeValue={selectedSpan.statusCodeString}
-					direction="column"
-				/>
-				<KeyValueLabel
-					badgeKey="TRACE ID"
-					badgeValue={selectedSpan.traceId}
-					direction="column"
-				/>
-				<KeyValueLabel
-					badgeKey="SPAN KIND"
-					badgeValue={selectedSpan.spanKind}
-					direction="column"
-				/>
+				{HIGHLIGHTED_OPTIONS.map((option) => {
+					const rendered = option.render(selectedSpan);
+					if (!rendered) {
+						return null;
+					}
+					return (
+						<KeyValueLabel
+							key={option.key}
+							badgeKey={option.label}
+							badgeValue={rendered}
+							direction="column"
+						/>
+					);
+				})}
 			</div>
 
 			{/* Step 7: KeyAttributes */}
@@ -221,7 +216,7 @@ function SpanDetailsPanel({
 		return actions;
 	}, [variant, onVariantChange]);
 
-	const PANEL_WIDTH = 600;
+	const PANEL_WIDTH = 500;
 	const PANEL_MARGIN_RIGHT = 20;
 	const PANEL_MARGIN_TOP = 25;
 	const PANEL_MARGIN_BOTTOM = 25;
@@ -281,6 +276,16 @@ function SpanDetailsPanel({
 				defaultPosition={{
 					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
 					y: PANEL_MARGIN_TOP,
+				}}
+				enableResizing={{
+					top: true,
+					right: true,
+					bottom: true,
+					left: true,
+					topRight: false,
+					bottomRight: false,
+					bottomLeft: false,
+					topLeft: false,
 				}}
 			>
 				{content}

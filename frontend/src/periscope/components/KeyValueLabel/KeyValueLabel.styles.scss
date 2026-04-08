@@ -14,7 +14,7 @@
 		border: none;
 		border-radius: 0;
 		gap: 4px;
-		padding: 8px 16px;
+		padding: 8px;
 
 		.key-value-label__key {
 			background: transparent;
@@ -49,7 +49,7 @@
 	}
 
 	&__key {
-		background: var(--l1-background);
+		background: var(--l2-background);
 		border-radius: 2px 0 0 2px;
 	}
 

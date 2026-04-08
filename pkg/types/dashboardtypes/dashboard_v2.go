@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-playground/validator/v10"
@@ -16,6 +17,11 @@ import (
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/uptrace/bun"
+)
+
+var (
+	TypeableMetaResourceDashboardV2  = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard_v2"))
+	TypeableMetaResourcesDashboardV2 = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards_v2"))
 )
 
 // StorableDashboardDataV2 wraps v1.Dashboard with additional SigNoz-specific fields.
@@ -27,8 +33,9 @@ import (
 //   - version     → Metadata.Version           (v1.Metadata)
 //
 // Metadata.Name is Perses's unique resource identifier within a project.
-// We ignore it because SigNoz uses a UUID (StorableDashboardV2.ID) for
-// dashboard identity instead.
+// In SigNoz, Metadata.Name is set to the same value as the dashboard ID
+// (StorableDashboardV2.ID / DashboardV2.ID) for both user-created and
+// bundled integration dashboards.
 //
 // Metadata.Project is Perses's namespace/grouping mechanism — dashboards,
 // datasources, and variables all belong to a project for multi-tenancy.
@@ -95,12 +102,14 @@ func NewStorableDashboardV2FromDashboardV2(dashboard *DashboardV2) (*StorableDas
 }
 
 func NewDashboardV2(orgID valuer.UUID, createdBy string, data StorableDashboardDataV2) *DashboardV2 {
+	id := valuer.GenerateUUID().StringValue()
 	currentTime := time.Now()
 	data.Metadata.CreatedAt = currentTime
 	data.Metadata.UpdatedAt = currentTime
+	data.Metadata.Name = id
 
 	return &DashboardV2{
-		ID: valuer.GenerateUUID().StringValue(),
+		ID: id,
 		UserAuditable: types.UserAuditable{
 			CreatedBy: createdBy,
 			UpdatedBy: createdBy,
@@ -170,6 +179,7 @@ func (dashboard *DashboardV2) Update(ctx context.Context, updatableDashboard Upd
 
 	dashboard.UpdatedBy = updatedBy
 	updatableDashboard.Metadata.UpdatedAt = time.Now()
+	updatableDashboard.Metadata.Name = dashboard.ID
 	dashboard.Data = updatableDashboard
 	return nil
 }

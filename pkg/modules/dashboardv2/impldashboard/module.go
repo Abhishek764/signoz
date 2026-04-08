@@ -31,7 +31,7 @@ func NewModule(store *store, settings factory.ProviderSettings, analytics analyt
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, data)
 
-	storable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	storable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 		return nil, err
 	}
 
-	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboardsV2([]*dashboardtypes.StorableDashboardV2{storable}))
+	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboardsV2([]*dashboardtypes.StorableDashboard{storable}))
 
 	return dashboard, nil
 }
@@ -71,7 +71,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return nil, err
 	}
 
-	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 		return nil, err
 	}
 
-	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (module *module) UpdateName(ctx context.Context, orgID valuer.UUID, id valu
 		return nil, err
 	}
 
-	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (module *module) UpdateDescription(ctx context.Context, orgID valuer.UUID, 
 		return nil, err
 	}
 
-	updatedStorable, err := dashboardtypes.NewStorableDashboardV2FromDashboardV2(dashboard)
+	updatedStorable, err := dashboardtypes.NewStorableDashboardFromDashboardV2(dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (module *module) UpdateDescription(ctx context.Context, orgID valuer.UUID, 
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboardV2, dashboardtypes.TypeableMetaResourcesDashboardV2}
+	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
 }
 
 func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {

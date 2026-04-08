@@ -17,7 +17,7 @@ func NewStore(sqlstore sqlstore.SQLStore) *store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(ctx context.Context, storable *dashboardtypes.StorableDashboardV2) error {
+func (store *store) Create(ctx context.Context, storable *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
 		BunDB().
@@ -31,8 +31,8 @@ func (store *store) Create(ctx context.Context, storable *dashboardtypes.Storabl
 	return nil
 }
 
-func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboardV2, error) {
-	storable := new(dashboardtypes.StorableDashboardV2)
+func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, error) {
+	storable := new(dashboardtypes.StorableDashboard)
 	err := store.
 		sqlstore.
 		BunDB().
@@ -48,7 +48,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storable, nil
 }
 
-func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *dashboardtypes.StorableDashboardV2) error {
+func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
 		BunDB().
@@ -69,7 +69,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		sqlstore.
 		BunDB().
 		NewDelete().
-		Model(new(dashboardtypes.StorableDashboardV2)).
+		Model(new(dashboardtypes.StorableDashboard)).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)

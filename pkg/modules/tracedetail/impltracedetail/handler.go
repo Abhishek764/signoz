@@ -1,7 +1,9 @@
 package impltracedetail
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -22,7 +24,10 @@ func NewHandler(module tracedetail.Module) tracedetail.Handler {
 }
 
 func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -34,7 +39,7 @@ func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	traceID := mux.Vars(r)["traceId"]
+	traceID := mux.Vars(r)["traceID"]
 	if traceID == "" {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "traceId is required"))
 		return
@@ -46,7 +51,7 @@ func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetWaterfall(r.Context(), orgID, traceID, &req)
+	result, err := h.module.GetWaterfall(ctx, orgID, traceID, &req)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"os"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -23,6 +25,7 @@ type provider struct {
 	bundb     *sqlstore.BunDB
 	dialect   *dialect
 	formatter sqlstore.SQLFormatter
+	done      chan struct{}
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -59,13 +62,19 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	sqliteDialect := sqlitedialect.New()
 	bunDB := sqlstore.NewBunDB(settings, sqldb, sqliteDialect, hooks)
-	return &provider{
+
+	done := make(chan struct{})
+	p := &provider{
 		settings:  settings,
 		sqldb:     sqldb,
 		bundb:     bunDB,
 		dialect:   new(dialect),
 		formatter: newFormatter(bunDB.Dialect()),
-	}, nil
+		done:      done,
+	}
+	go p.walDiagnosticLoop(config.Sqlite.Path)
+
+	return p, nil
 }
 
 func (provider *provider) BunDB() *bun.DB {
@@ -108,4 +117,74 @@ func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, for
 	}
 
 	return err
+}
+
+// walDiagnosticLoop periodically logs pool stats, WAL file size, and busy prepared statements
+// to help diagnose WAL checkpoint failures caused by permanent read locks.
+func (provider *provider) walDiagnosticLoop(dbPath string) {
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	logger := provider.settings.Logger()
+	walPath := dbPath + "-wal"
+
+	for {
+		select {
+		case <-provider.done:
+			return
+		case <-ticker.C:
+			// 1. Log pool stats (no SQL needed)
+			stats := provider.sqldb.Stats()
+			logger.Info("sqlite_pool_stats",
+				slog.Int("max_open", stats.MaxOpenConnections),
+				slog.Int("open", stats.OpenConnections),
+				slog.Int("in_use", stats.InUse),
+				slog.Int("idle", stats.Idle),
+				slog.Int64("wait_count", stats.WaitCount),
+				slog.String("wait_duration", stats.WaitDuration.String()),
+				slog.Int64("max_idle_closed", stats.MaxIdleClosed),
+				slog.Int64("max_idle_time_closed", stats.MaxIdleTimeClosed),
+				slog.Int64("max_lifetime_closed", stats.MaxLifetimeClosed),
+			)
+
+			// 2. Log WAL file size (no SQL needed)
+			if info, err := os.Stat(walPath); err == nil {
+				logger.Info("sqlite_wal_size",
+					slog.Int64("bytes", info.Size()),
+					slog.String("path", walPath),
+				)
+			}
+
+			// 3. Check for busy prepared statements on a single pool connection
+			provider.checkBusyStatements(logger)
+		}
+	}
+}
+
+func (provider *provider) checkBusyStatements(logger *slog.Logger) {
+	conn, err := provider.sqldb.Conn(context.Background())
+	if err != nil {
+		logger.Warn("sqlite_diag_conn_error", slog.String("error", err.Error()))
+		return
+	}
+	defer conn.Close()
+
+	rows, err := conn.QueryContext(context.Background(), "SELECT sql FROM sqlite_stmt WHERE busy")
+	if err != nil {
+		logger.Warn("sqlite_diag_query_error", slog.String("error", err.Error()))
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var stmtSQL string
+		if err := rows.Scan(&stmtSQL); err != nil {
+			logger.Warn("sqlite_diag_scan_error", slog.String("error", err.Error()))
+			continue
+		}
+		logger.Warn("leaked_busy_statement", slog.String("sql", stmtSQL))
+	}
+	if err := rows.Err(); err != nil {
+		logger.Warn("sqlite_diag_rows_error", slog.String("error", err.Error()))
+	}
 }

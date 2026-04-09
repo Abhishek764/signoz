@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
@@ -9,8 +9,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
-// TODO: Remove mock data when new API is available
-// import { mockSpan } from './mockSpanDetailsData';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
@@ -32,7 +30,6 @@ function TraceDetailsV3(): JSX.Element {
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
-	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
 
 	const selectedSpanId = urlQuery.get('spanId') || undefined;
 	const { safeNavigate } = useSafeNavigate();
@@ -46,17 +43,6 @@ function TraceDetailsV3(): JSX.Element {
 		entityId: selectedSpanId,
 		onClose: handleSpanDetailsClose,
 	});
-
-	// TODO: Remove mock enrichment when new API is available
-	const enrichedSpan = useMemo(() => {
-		if (!selectedSpan) {
-			return undefined;
-		}
-		return {
-			...selectedSpan,
-			// ...mockSpan,
-		};
-	}, [selectedSpan]);
 
 	useEffect(() => {
 		setInterestedSpanId({
@@ -135,8 +121,6 @@ function TraceDetailsV3(): JSX.Element {
 				uncollapsedNodes={uncollapsedNodes}
 				selectedSpan={selectedSpan}
 				setSelectedSpan={setSelectedSpan}
-				hoveredSpanId={hoveredSpanId}
-				setHoveredSpanId={setHoveredSpanId}
 			/>
 		</ResizableBox>
 	);
@@ -184,7 +168,7 @@ function TraceDetailsV3(): JSX.Element {
 					<div className="trace-details-v3__docked-span-details">
 						<SpanDetailsPanel
 							panelState={panelState}
-							selectedSpan={enrichedSpan}
+							selectedSpan={selectedSpan}
 							variant={SpanDetailVariant.DOCKED}
 							onVariantChange={handleVariantChange}
 							traceStartTime={traceData?.payload?.startTimestampMillis}
@@ -197,7 +181,7 @@ function TraceDetailsV3(): JSX.Element {
 			{panelState.isOpen && !isDocked && (
 				<SpanDetailsPanel
 					panelState={panelState}
-					selectedSpan={enrichedSpan}
+					selectedSpan={selectedSpan}
 					variant={SpanDetailVariant.DIALOG}
 					onVariantChange={handleVariantChange}
 					traceStartTime={traceData?.payload?.startTimestampMillis}

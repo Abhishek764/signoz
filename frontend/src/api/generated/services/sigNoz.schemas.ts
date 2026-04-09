@@ -1537,16 +1537,21 @@ export interface InframonitoringtypesHostsListResponseDTO {
 	 * @nullable true
 	 */
 	records?: InframonitoringtypesHostRecordDTO[] | null;
-	/**
-	 * @type boolean
-	 */
-	sentAnyMetricsData?: boolean;
+	requiredMetricsCheck?: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
 	total?: number;
 	type?: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesRequiredMetricsCheckDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingMetrics?: string[] | null;
 }
 
 export enum InframonitoringtypesResponseTypeDTO {

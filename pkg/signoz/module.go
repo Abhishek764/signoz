@@ -121,7 +121,7 @@ func NewModules(
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		InfraMonitoring:  implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
+		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, cache, analytics, providerSettings, config.ServiceAccount),
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 	}
 }

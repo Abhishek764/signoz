@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import {
 	CalendarClock,
@@ -9,17 +9,32 @@ import {
 	PanelBottom,
 	Timer,
 } from '@signozhq/icons';
+import { Tabs } from '@signozhq/ui';
 import { Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { QueryParams } from 'constants/query';
+import {
+	initialQueryBuilderFormValuesMap,
+	initialQueryState,
+} from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
+import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
+import Events from 'container/SpanDetailsDrawer/Events/Events';
+import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
+import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
 import { noop } from 'lodash-es';
+import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
+import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
@@ -53,15 +68,106 @@ function SpanDetailsContent({
 	traceStartTime?: number;
 	traceEndTime?: number;
 }): JSX.Element {
+	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans(selectedSpan.references);
+
+	const {
+		logs,
+		isLoading: isLogsLoading,
+		isError: isLogsError,
+		isFetching: isLogsFetching,
+		isLogSpanRelated,
+		hasTraceIdLogs,
+	} = useSpanContextLogs({
+		traceId: selectedSpan.traceId,
+		spanId: selectedSpan.spanId,
+		timeRange: {
+			startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+			endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+		},
+		isDrawerOpen: true,
+	});
+
+	const infraMetadata = useMemo(() => {
+		if (!hasInfraMetadata(selectedSpan)) {
+			return null;
+		}
+		return {
+			clusterName: getSpanAttribute(selectedSpan, 'k8s.cluster.name') || '',
+			podName: getSpanAttribute(selectedSpan, 'k8s.pod.name') || '',
+			nodeName: getSpanAttribute(selectedSpan, 'k8s.node.name') || '',
+			hostName: getSpanAttribute(selectedSpan, 'host.name') || '',
+			spanTimestamp: dayjs(selectedSpan.timestamp).format(),
+		};
+	}, [selectedSpan]);
+
+	const handleExplorerPageRedirect = useCallback((): void => {
+		const startTimeMs = (traceStartTime || 0) - FIVE_MINUTES_IN_MS;
+		const endTimeMs = (traceEndTime || 0) + FIVE_MINUTES_IN_MS;
+
+		const traceIdFilter = {
+			op: 'AND',
+			items: [
+				{
+					id: 'trace-id-filter',
+					key: {
+						key: 'trace_id',
+						id: 'trace-id-key',
+						dataType: 'string' as const,
+						isColumn: true,
+						type: '',
+						isJSON: false,
+					} as BaseAutocompleteData,
+					op: '=',
+					value: selectedSpan.traceId,
+				},
+			],
+		};
+
+		const compositeQuery = {
+			...initialQueryState,
+			queryType: 'builder',
+			builder: {
+				...initialQueryState.builder,
+				queryData: [
+					{
+						...initialQueryBuilderFormValuesMap.logs,
+						aggregateOperator: LogsAggregatorOperator.NOOP,
+						filters: traceIdFilter,
+					},
+				],
+			},
+		};
+
+		const searchParams = new URLSearchParams();
+		searchParams.set(QueryParams.compositeQuery, JSON.stringify(compositeQuery));
+		searchParams.set(QueryParams.startTime, startTimeMs.toString());
+		searchParams.set(QueryParams.endTime, endTimeMs.toString());
+
+		window.open(
+			`${window.location.origin}${
+				ROUTES.LOGS_EXPLORER
+			}?${searchParams.toString()}`,
+			'_blank',
+			'noopener,noreferrer',
+		);
+	}, [selectedSpan.traceId, traceStartTime, traceEndTime]);
+
+	const emptyLogsStateConfig = useMemo(
+		() => ({
+			...getEmptyLogsListConfig(() => {}),
+			showClearFiltersButton: false,
+		}),
+		[],
+	);
 
 	const keyAttributes = useMemo(() => {
 		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
 
 		const allAttrs: Record<string, string> = {
-			...selectedSpan.attributes_string,
-			...selectedSpan.resources_string,
+			...(selectedSpan.attributes || selectedSpan.attributes_string),
+			...(selectedSpan.resources || selectedSpan.resources_string),
 			...(selectedSpan.http_method && { http_method: selectedSpan.http_method }),
 			...(selectedSpan.http_url && { http_url: selectedSpan.http_url }),
 			...(selectedSpan.http_host && { http_host: selectedSpan.http_host }),
@@ -187,13 +293,74 @@ function SpanDetailsContent({
 			)}
 
 			{/* Step 8: MiniTraceContext */}
-			{/* Step 9: ContentTabs + content area */}
 
-			{/* Step 10: Pretty view */}
-			<DataViewer
-				data={selectedSpan}
-				drawerKey="trace-details"
-				prettyViewProps={{ showPinned: true }}
+			{/* Step 9: ContentTabs */}
+			<Tabs
+				defaultValue="overview"
+				variant="secondary"
+				items={[
+					{
+						key: 'overview',
+						label: 'Overview',
+						children: (
+							<DataViewer
+								data={selectedSpan}
+								drawerKey="trace-details"
+								prettyViewProps={{ showPinned: true }}
+							/>
+						),
+					},
+					{
+						key: 'events',
+						label: `Events (${selectedSpan.event?.length || 0})`,
+						children: (
+							<Events
+								span={selectedSpan}
+								startTime={traceStartTime || 0}
+								isSearchVisible
+							/>
+						),
+					},
+					{
+						key: 'logs',
+						label: 'Logs',
+						children: (
+							<SpanLogs
+								traceId={selectedSpan.traceId}
+								spanId={selectedSpan.spanId}
+								timeRange={{
+									startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+									endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+								}}
+								logs={logs}
+								isLoading={isLogsLoading}
+								isError={isLogsError}
+								isFetching={isLogsFetching}
+								isLogSpanRelated={isLogSpanRelated}
+								handleExplorerPageRedirect={handleExplorerPageRedirect}
+								emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
+							/>
+						),
+					},
+					...(infraMetadata
+						? [
+								{
+									key: 'metrics',
+									label: 'Metrics',
+									children: (
+										<InfraMetrics
+											clusterName={infraMetadata.clusterName}
+											podName={infraMetadata.podName}
+											nodeName={infraMetadata.nodeName}
+											hostName={infraMetadata.hostName}
+											timestamp={infraMetadata.spanTimestamp}
+											dataSource={DataSource.TRACES}
+										/>
+									),
+								},
+						  ]
+						: []),
+				]}
 			/>
 		</div>
 	);

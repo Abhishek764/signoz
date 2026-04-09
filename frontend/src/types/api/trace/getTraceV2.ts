@@ -37,11 +37,14 @@ export interface Span {
 	hasSibling: boolean;
 	subTreeNodeCount: number;
 	level: number;
-	// New API format fields (optional until API migration)
+	// V2 API format fields
 	attributes_string?: Record<string, string>;
 	attributes_number?: Record<string, number>;
 	attributes_bool?: Record<string, boolean>;
 	resources_string?: Record<string, string>;
+	// V3 API format fields
+	attributes?: Record<string, string>;
+	resources?: Record<string, string>;
 	http_method?: string;
 	http_url?: string;
 	http_host?: string;

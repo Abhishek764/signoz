@@ -21,6 +21,10 @@
 		background: var(--l1-background);
 		font-size: 14px;
 
+		[role='tabpanel'] {
+			padding: 0;
+		}
+
 		.data-viewer {
 			min-height: 500px;
 		}

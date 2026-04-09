@@ -30,8 +30,6 @@ interface ITraceWaterfallProps {
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | null;
-	setHoveredSpanId: Dispatch<SetStateAction<string | null>>;
 }
 
 function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
@@ -45,8 +43,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		setInterestedSpanId,
 		setSelectedSpan,
 		selectedSpan,
-		hoveredSpanId,
-		setHoveredSpanId,
 	} = props;
 	// get the current state of trace waterfall based on the API lifecycle
 	const traceWaterfallState = useMemo(() => {
@@ -110,8 +106,10 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						setInterestedSpanId={setInterestedSpanId}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
-						hoveredSpanId={hoveredSpanId}
-						setHoveredSpanId={setHoveredSpanId}
+						isFetching={
+							traceWaterfallState ===
+							TraceWaterfallStates.FETCHING_WITH_OLD_DATA_PRESENT
+						}
 					/>
 				);
 			default:
@@ -130,8 +128,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		traceId,
 		traceWaterfallState,
 		uncollapsedNodes,
-		hoveredSpanId,
-		setHoveredSpanId,
 	]);
 
 	return <div className="trace-waterfall">{getContent}</div>;

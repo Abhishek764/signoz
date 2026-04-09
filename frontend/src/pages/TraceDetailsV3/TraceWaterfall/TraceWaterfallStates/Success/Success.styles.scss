@@ -1,3 +1,28 @@
+.waterfall-loading-bar {
+	height: 2px;
+	background: var(--primary);
+	animation: waterfall-loading 1.5s ease-in-out infinite;
+	flex-shrink: 0;
+}
+
+@keyframes waterfall-loading {
+	0% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: left;
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+	100% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: right;
+	}
+}
+
 .success-content {
 	overflow-y: hidden;
 	overflow-x: hidden;

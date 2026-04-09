@@ -1,5 +1,6 @@
 import {
 	Dispatch,
+	memo,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -61,11 +62,10 @@ interface ISuccessProps {
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | null;
-	setHoveredSpanId: Dispatch<SetStateAction<string | null>>;
+	isFetching?: boolean;
 }
 
-function SpanOverview({
+const SpanOverview = memo(function SpanOverview({
 	span,
 	isSpanCollapsed,
 	handleCollapseUncollapse,
@@ -178,9 +178,7 @@ function SpanOverview({
 				/>
 
 				{/* Span name */}
-				<Typography.Text className="tree-label" ellipsis title={span.name}>
-					{span.name}
-				</Typography.Text>
+				<span className="tree-label">{span.name}</span>
 
 				{/* Action buttons — shown on hover via CSS, right-aligned */}
 				<span className="span-row-actions">
@@ -202,9 +200,9 @@ function SpanOverview({
 			</div>
 		</SpanHoverCard>
 	);
-}
+});
 
-export function SpanDuration({
+export const SpanDuration = memo(function SpanDuration({
 	span,
 	traceMetadata,
 	handleSpanClick,
@@ -320,7 +318,7 @@ export function SpanDuration({
 			})}
 		</div>
 	);
-}
+});
 
 // table config
 const columnDefHelper = createColumnHelper<Span>();
@@ -340,8 +338,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		setInterestedSpanId,
 		setSelectedSpan,
 		selectedSpan,
-		hoveredSpanId,
-		setHoveredSpanId,
+		isFetching,
 	} = props;
 
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
@@ -369,23 +366,16 @@ function Success(props: ISuccessProps): JSX.Element {
 		prevHoveredSpanIdRef.current = spanId;
 	}, []);
 
-	// Handle incoming hover from flamegraph (cross-view sync)
-	useEffect(() => {
-		applyHoverClass(hoveredSpanId);
-	}, [hoveredSpanId, applyHoverClass]);
-
 	const handleRowMouseEnter = useCallback(
 		(spanId: string): void => {
-			setHoveredSpanId(spanId);
 			applyHoverClass(spanId);
 		},
-		[setHoveredSpanId, applyHoverClass],
+		[applyHoverClass],
 	);
 
 	const handleRowMouseLeave = useCallback((): void => {
-		setHoveredSpanId(null);
 		applyHoverClass(null);
-	}, [setHoveredSpanId, applyHoverClass]);
+	}, [applyHoverClass]);
 
 	const handleFilteredSpansChange = useCallback(
 		(spanIds: string[], isActive: boolean) => {
@@ -584,6 +574,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				traceID={traceMetadata.traceId}
 				onFilteredSpansChange={handleFilteredSpansChange}
 			/>
+			{isFetching && <div className="waterfall-loading-bar" />}
 			<div className="waterfall-split-panel" ref={scrollContainerRef}>
 				{/* Sticky header row */}
 				<div className="waterfall-split-header">

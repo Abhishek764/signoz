@@ -8,6 +8,12 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
+// quoteIdentifier wraps s in backticks for use as a ClickHouse identifier,
+// escaping any embedded backticks by doubling them.
+func quoteIdentifier(s string) string {
+	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, "`", "``"))
+}
+
 type rankedGroup struct {
 	labels map[string]string
 	value  float64

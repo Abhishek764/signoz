@@ -14,11 +14,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// quoteIdentifier wraps s in backticks for use as a ClickHouse identifier,
-// escaping any embedded backticks by doubling them.
-func quoteIdentifier(s string) string {
-	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, "`", "``"))
-}
 
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""

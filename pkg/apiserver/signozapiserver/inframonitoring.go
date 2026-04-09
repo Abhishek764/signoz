@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/infra-monitoring/hosts/list", handler.New(
+	if err := router.Handle("/api/v2/infra_monitoring/hosts", handler.New(
 		provider.authZ.ViewAccess(provider.infraMonitoringHandler.HostsList),
 		handler.OpenAPIDef{
 			ID:                  "HostsList",

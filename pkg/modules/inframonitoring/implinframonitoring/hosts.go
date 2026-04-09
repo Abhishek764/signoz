@@ -16,7 +16,7 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
+const (
 	hostNameAttrKey = "host.name"
 )
 

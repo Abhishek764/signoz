@@ -61,6 +61,9 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 // reported. It returns a list of missing metrics (those not found or with zero count)
 // and the earliest first-reported timestamp across all present metrics.
 // When all metrics are missing, minFirstReportedUnixMilli is 0.
+// TODO(nikhilmantri0902, srikanthccv): This method was designed this way because querier errors if any of the metrics
+// in the querier list was never sent, the QueryRange call throws not found error. Modify this method, if QueryRange
+// behaviour changes towards this.
 func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) ([]string, uint64, error) {
 	if len(metricNames) == 0 {
 		return nil, 0, nil

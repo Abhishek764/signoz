@@ -153,9 +153,12 @@ func (m *module) getMetadata(
 		metrictypes.TimeAggregationUnspecified,
 		nil,
 	)
+	// Use the local samples table for the fingerprint subquery so each shard
+	// resolves fingerprints from its own data instead of a GLOBAL IN broadcast.
+	localSamplesTable := strings.TrimPrefix(samplesTableName, "distributed_")
 	fpSB := sqlbuilder.NewSelectBuilder()
 	fpSB.Select("DISTINCT fingerprint")
-	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTableName))
+	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localSamplesTable))
 	fpSB.Where(
 		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
 		fpSB.GE("unix_milli", startMs),
@@ -196,7 +199,7 @@ func (m *module) getMetadata(
 		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
 		innerSB.GE("unix_milli", adjustedStart),
 		innerSB.L("unix_milli", adjustedEnd),
-		fmt.Sprintf("fingerprint GLOBAL IN (%s)", innerSB.Var(fpSB)), // TODO(nikhilmantri0902): check if this can be modified to be used with local table.
+		fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
 	)
 
 	// Apply optional filter expression

@@ -32,6 +32,7 @@ import (
 //   - uploadedGrafana → UploadedGrafana
 type StorableDashboardDataV2 struct {
 	v1.DashboardSpec
+	SchemaVersion   string `json:"schemaVersion"`
 	Image           string `json:"image,omitempty"`
 	UploadedGrafana bool   `json:"uploadedGrafana,omitempty"`
 }
@@ -208,6 +209,12 @@ func UnmarshalAndValidateDashboardV2JSON(data []byte) (*StorableDashboardDataV2,
 	var d StorableDashboardDataV2
 	if err := json.Unmarshal(data, &d); err != nil {
 		return nil, err
+	}
+	if d.SchemaVersion == "" {
+		d.SchemaVersion = "v6"
+	}
+	if d.SchemaVersion != "v6" {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported schemaVersion %q, expected \"v6\"", d.SchemaVersion)
 	}
 	if err := validateDashboardV2(d); err != nil {
 		return nil, err

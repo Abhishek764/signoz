@@ -17,11 +17,12 @@
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
+		scrollbar-width: none;
 		background: var(--l1-background);
 		font-size: 14px;
 
-		* {
-			font-size: inherit;
+		.data-viewer {
+			min-height: 500px;
 		}
 	}
 

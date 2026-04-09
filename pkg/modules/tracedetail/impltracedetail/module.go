@@ -121,7 +121,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		// Build span nodes
 		for _, item := range spanItems {
 			span := item.ToSpan()
-			startTimeUnixNano := span.TimeUnixNano
+			startTimeUnixNano := span.TimeUnixMilli
 
 			// Metadata calculation
 			if startTime == 0 || startTimeUnixNano < startTime {
@@ -154,15 +154,15 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 				} else {
 					// Insert missing span
 					missingSpan := &tracedetailtypes.WaterfallSpan{
-						SpanID:       spanNode.ParentSpanID,
-						TraceID:      spanNode.TraceID,
-						Name:         "Missing Span",
-						TimeUnixNano: spanNode.TimeUnixNano,
-						DurationNano: spanNode.DurationNano,
-						Events:       make([]tracedetailtypes.Event, 0),
-						Children:     make([]*tracedetailtypes.WaterfallSpan, 0),
-						Attributes:   make(map[string]any),
-						Resource:     make(map[string]string),
+						SpanID:        spanNode.ParentSpanID,
+						TraceID:       spanNode.TraceID,
+						Name:          "Missing Span",
+						TimeUnixMilli: spanNode.TimeUnixMilli,
+						DurationNano:  spanNode.DurationNano,
+						Events:        make([]tracedetailtypes.Event, 0),
+						Children:      make([]*tracedetailtypes.WaterfallSpan, 0),
+						Attributes:    make(map[string]any),
+						Resource:      make(map[string]string),
 					}
 					missingSpan.Children = append(missingSpan.Children, spanNode)
 					spanIDToSpanNodeMap[missingSpan.SpanID] = missingSpan
@@ -181,10 +181,10 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 
 		// Sort trace roots
 		sort.Slice(traceRoots, func(i, j int) bool {
-			if traceRoots[i].TimeUnixNano == traceRoots[j].TimeUnixNano {
+			if traceRoots[i].TimeUnixMilli == traceRoots[j].TimeUnixMilli {
 				return traceRoots[i].Name < traceRoots[j].Name
 			}
-			return traceRoots[i].TimeUnixNano < traceRoots[j].TimeUnixNano
+			return traceRoots[i].TimeUnixMilli < traceRoots[j].TimeUnixMilli
 		})
 
 		serviceNameToTotalDurationMap = tracedetailv2.CalculateServiceTime(serviceNameIntervalMap)
@@ -233,13 +233,13 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 	response.UncollapsedSpans = uncollapsedSpans
 	response.StartTimestampMillis = startTime / 1000000
 	response.EndTimestampMillis = endTime / 1000000
-	response.DurationNano = durationNano
 	response.TotalSpansCount = totalSpans
 	response.TotalErrorSpansCount = totalErrorSpans
 	response.RootServiceName = rootServiceName
 	response.RootServiceEntryPoint = rootServiceEntryPoint
 	response.ServiceNameToTotalDurationMap = serviceNameToTotalDurationMap
 	response.HasMissingSpans = hasMissingSpans
+	response.HasMore = !selectAllSpans
 
 	return response, nil
 }

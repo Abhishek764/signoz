@@ -180,10 +180,10 @@ func findIndexForSelectedSpan(spans []*tracedetailtypes.WaterfallSpan, selectedS
 // sees a consistent ordering without needing to re-sort on every call.
 func SortSpanChildren(span *tracedetailtypes.WaterfallSpan) {
 	sort.Slice(span.Children, func(i, j int) bool {
-		if span.Children[i].TimeUnixNano == span.Children[j].TimeUnixNano {
+		if span.Children[i].TimeUnixMilli == span.Children[j].TimeUnixMilli {
 			return span.Children[i].Name < span.Children[j].Name
 		}
-		return span.Children[i].TimeUnixNano < span.Children[j].TimeUnixNano
+		return span.Children[i].TimeUnixMilli < span.Children[j].TimeUnixMilli
 	})
 	for _, child := range span.Children {
 		SortSpanChildren(child)

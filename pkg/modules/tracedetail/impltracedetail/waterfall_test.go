@@ -101,11 +101,11 @@ func makeChain(n int) (*tracedetailtypes.WaterfallSpan, map[string]*tracedetailt
 
 func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 	tests := []struct {
-		name           string
-		buildRoots     func() ([]*tracedetailtypes.WaterfallSpan, map[string]*tracedetailtypes.WaterfallSpan)
+		name             string
+		buildRoots       func() ([]*tracedetailtypes.WaterfallSpan, map[string]*tracedetailtypes.WaterfallSpan)
 		uncollapsedSpans []string
-		selectedSpanID string
-		wantSpanIDs    []string
+		selectedSpanID   string
+		wantSpanIDs      []string
 	}{
 		{
 			// Pre-order traversal is preserved: parent before children, siblings left-to-right.
@@ -117,9 +117,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				)
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{"root", "child1"},
-			selectedSpanID:              "root",
-				wantSpanIDs:                 []string{"root", "child1", "grandchild", "child2"},
+			uncollapsedSpans: []string{"root", "child1"},
+			selectedSpanID:   "root",
+			wantSpanIDs:      []string{"root", "child1", "grandchild", "child2"},
 		},
 		{
 			// Multiple spans uncollapsed simultaneously: children of all uncollapsed spans are visible at once.
@@ -135,9 +135,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				)
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{"root", "childA", "childB"},
-			selectedSpanID:              "root",
-				wantSpanIDs:                 []string{"root", "childA", "grandchildA", "childB", "grandchildB"},
+			uncollapsedSpans: []string{"root", "childA", "childB"},
+			selectedSpanID:   "root",
+			wantSpanIDs:      []string{"root", "childA", "grandchildA", "childB", "grandchildB"},
 		},
 		{
 			// Collapsing a span with other uncollapsed spans.
@@ -159,9 +159,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				)
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{"childA"},
-			selectedSpanID:              "childB",
-				wantSpanIDs:                 []string{"root", "childA", "grandchild1", "grandchild2", "childB"},
+			uncollapsedSpans: []string{"childA"},
+			selectedSpanID:   "childB",
+			wantSpanIDs:      []string{"root", "childA", "grandchild1", "grandchild2", "childB"},
 		},
 		{
 			// A collapsed span hides all children.
@@ -173,9 +173,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				)
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{},
-			selectedSpanID:              "root",
-				wantSpanIDs:                 []string{"root"},
+			uncollapsedSpans: []string{},
+			selectedSpanID:   "root",
+			wantSpanIDs:      []string{"root"},
 		},
 		{
 			// Selecting a span auto-uncollpases the path from root to that span so it is visible.
@@ -190,9 +190,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				)
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{},
-			selectedSpanID:              "selected",
-				wantSpanIDs:                 []string{"root", "parent", "selected"},
+			uncollapsedSpans: []string{},
+			selectedSpanID:   "selected",
+			wantSpanIDs:      []string{"root", "parent", "selected"},
 		},
 		{
 			// Siblings of ancestors are rendered as collapsed nodes but their subtrees must NOT be expanded.
@@ -210,9 +210,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				)
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{},
-			selectedSpanID:              "selected",
-				// children of root sort alphabetically: parent < unrelated; unrelated-child stays hidden
+			uncollapsedSpans: []string{},
+			selectedSpanID:   "selected",
+			// children of root sort alphabetically: parent < unrelated; unrelated-child stays hidden
 			wantSpanIDs: []string{"root", "parent", "selected", "unrelated"},
 		},
 		{
@@ -222,9 +222,9 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 				root := mkSpan("root", "svc", mkSpan("child", "svc"))
 				return []*tracedetailtypes.WaterfallSpan{root}, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{},
-			selectedSpanID:              "nonexistent",
-				wantSpanIDs:                 []string{"root"},
+			uncollapsedSpans: []string{},
+			selectedSpanID:   "nonexistent",
+			wantSpanIDs:      []string{"root"},
 		},
 	}
 
@@ -245,7 +245,7 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 //	root2 svc-b
 //	  └─ child2
 //
-// Expected output order: root1 → child1 → root2 → child2
+// Expected output order: root1 → child1 → root2 → child2.
 func TestGetSelectedSpans_MultipleRoots(t *testing.T) {
 	root1 := mkSpan("root1", "svc-a", mkSpan("child1", "svc-a"))
 	root2 := mkSpan("root2", "svc-b", mkSpan("child2", "svc-b"))
@@ -264,12 +264,12 @@ func TestGetSelectedSpans_MultipleRoots(t *testing.T) {
 
 func TestGetSelectedSpans_UncollapsedTracking(t *testing.T) {
 	tests := []struct {
-		name                        string
-		buildRoot                   func() (*tracedetailtypes.WaterfallSpan, map[string]*tracedetailtypes.WaterfallSpan)
-		uncollapsedSpans            []string
-		selectedSpanID              string
-		wantSpanIDs                 []string
-		checkUncollapsed            func(t *testing.T, uncollapsed []string)
+		name             string
+		buildRoot        func() (*tracedetailtypes.WaterfallSpan, map[string]*tracedetailtypes.WaterfallSpan)
+		uncollapsedSpans []string
+		selectedSpanID   string
+		wantSpanIDs      []string
+		checkUncollapsed func(t *testing.T, uncollapsed []string)
 	}{
 		{
 			// The path-to-selected spans are returned in updatedUncollapsedSpans.
@@ -282,9 +282,9 @@ func TestGetSelectedSpans_UncollapsedTracking(t *testing.T) {
 				)
 				return root, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{},
-			selectedSpanID:              "selected",
-				wantSpanIDs:                 []string{"root", "parent", "selected"},
+			uncollapsedSpans: []string{},
+			selectedSpanID:   "selected",
+			wantSpanIDs:      []string{"root", "parent", "selected"},
 			checkUncollapsed: func(t *testing.T, uncollapsed []string) {
 				assert.ElementsMatch(t, []string{"root", "parent"}, uncollapsed)
 			},
@@ -301,9 +301,9 @@ func TestGetSelectedSpans_UncollapsedTracking(t *testing.T) {
 				)
 				return root, buildSpanMap(root)
 			},
-			uncollapsedSpans:            []string{},
-			selectedSpanID:              "selected",
-				wantSpanIDs:                 []string{"root", "parent", "selected", "unrelated"},
+			uncollapsedSpans: []string{},
+			selectedSpanID:   "selected",
+			wantSpanIDs:      []string{"root", "parent", "selected", "unrelated"},
 			checkUncollapsed: func(t *testing.T, uncollapsed []string) {
 				assert.ElementsMatch(t, []string{"root", "parent"}, uncollapsed)
 			},

@@ -67,7 +67,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 	}
 
 	if err != nil {
-		m.logger.Info("cache miss for v3 waterfall", "traceID", traceID)
+		m.logger.InfoContext(ctx, "cache miss for v3 waterfall", slog.String("trace_id", traceID))
 
 		// Query trace summary for time boundaries
 		var summary tracedetailtypes.TraceSummary
@@ -203,7 +203,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		}
 		cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
 		if cacheErr := m.cache.Set(ctx, orgID, cacheKey, traceCache, cacheTTL); cacheErr != nil {
-			m.logger.DebugContext(ctx, "failed to store v3 waterfall cache", "traceID", traceID, "error", cacheErr)
+			m.logger.DebugContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))
 		}
 	}
 
@@ -254,11 +254,11 @@ func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID st
 
 	// Skip cache if trace end time falls within flux interval
 	if time.Since(time.UnixMilli(int64(cachedData.EndTime))) < fluxInterval {
-		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", "traceID", traceID)
+		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", slog.String("trace_id", traceID))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "trace end time within flux interval, traceID: %s", traceID)
 	}
 
-	m.logger.InfoContext(ctx, "cache hit for v3 waterfall", "traceID", traceID)
+	m.logger.InfoContext(ctx, "cache hit for v3 waterfall", slog.String("trace_id", traceID))
 	return cachedData, nil
 }
 

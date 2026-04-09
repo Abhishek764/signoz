@@ -243,19 +243,18 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 		}, nil
 	}
 
-	// Get metadata for all metrics
+	// Overlay any user-updated metadata on top of the timeseries metadata
+	// that was already fetched in the combined query.
 	metricNames := make([]string, len(metricStats))
 	for i := range metricStats {
 		metricNames[i] = metricStats[i].MetricName
 	}
 
-	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
+	updatedMetadata, err := m.fetchUpdatedMetadata(ctx, orgID, metricNames)
 	if err != nil {
 		return nil, err
 	}
-
-	// Enrich stats with metadata
-	enrichStatsWithMetadata(metricStats, metadata)
+	enrichStatsWithMetadata(metricStats, updatedMetadata)
 
 	return &metricsexplorertypes.StatsResponse{
 		Metrics: metricStats,
@@ -984,11 +983,14 @@ func (m *module) fetchMetricsStatsWithSamples(
 	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
 
-	// Timeseries counts per metric
+	// Timeseries counts and metadata per metric.
 	tsSB := sqlbuilder.NewSelectBuilder()
 	tsSB.Select(
 		"metric_name",
 		"uniq(fingerprint) AS timeseries",
+		"anyLast(description) AS description",
+		"anyLast(type) AS metric_type",
+		"argMax(unit, unix_milli) AS metric_unit",
 	)
 	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
 	tsSB.Where(tsSB.Between("unix_milli", start, end))
@@ -1036,6 +1038,9 @@ func (m *module) fetchMetricsStatsWithSamples(
 		"COALESCE(ts.timeseries, 0) AS timeseries",
 		"COALESCE(s.samples, 0) AS samples",
 		"COUNT(*) OVER() AS total",
+		"ts.description AS description",
+		"ts.metric_type AS metric_type",
+		"ts.metric_unit AS metric_unit",
 	)
 	finalSB.From("__time_series_counts ts")
 	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
@@ -1071,7 +1076,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 			metricStat metricsexplorertypes.Stat
 			rowTotal   uint64
 		)
-		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal); err != nil {
+		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal, &metricStat.Description, &metricStat.MetricType, &metricStat.MetricUnit); err != nil {
 			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
 		}
 		metricStats = append(metricStats, metricStat)

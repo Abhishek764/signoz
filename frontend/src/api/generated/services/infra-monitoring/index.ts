@@ -28,7 +28,7 @@ export const hostsList = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<HostsList200>({
-		url: `/api/v2/infra-monitoring/hosts/list`,
+		url: `/api/v2/infra_monitoring/hosts`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: inframonitoringtypesHostsListRequestDTO,

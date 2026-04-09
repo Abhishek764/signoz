@@ -7443,7 +7443,7 @@ paths:
       summary: Health check
       tags:
       - health
-  /api/v2/infra-monitoring/hosts/list:
+  /api/v2/infra_monitoring/hosts:
     post:
       deprecated: false
       description: This endpoint returns a list of hosts along with other information

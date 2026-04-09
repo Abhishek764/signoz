@@ -14,6 +14,12 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// quoteIdentifier wraps s in backticks for use as a ClickHouse identifier,
+// escaping any embedded backticks by doubling them.
+func quoteIdentifier(s string) string {
+	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, "`", "``"))
+}
+
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
@@ -173,11 +179,13 @@ func (m *module) getMetadata(
 	allCols := append(groupByCols, additionalCols...)
 
 	// --- Build inner query ---
+	innerSB := sqlbuilder.NewSelectBuilder()
+
 	// Inner SELECT columns: JSONExtractString for each groupBy col + argMax(tuple(...)) for additional cols
 	innerSelectCols := make([]string, 0, len(groupByCols)+1)
 	for _, col := range groupByCols {
 		innerSelectCols = append(innerSelectCols,
-			fmt.Sprintf("JSONExtractString(labels, '%s') AS `%s`", col, col),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", innerSB.Var(col), quoteIdentifier(col)),
 		)
 	}
 
@@ -185,14 +193,13 @@ func (m *module) getMetadata(
 	if len(additionalCols) > 0 {
 		tupleArgs := make([]string, 0, len(additionalCols))
 		for _, col := range additionalCols {
-			tupleArgs = append(tupleArgs, fmt.Sprintf("JSONExtractString(labels, '%s')", col))
+			tupleArgs = append(tupleArgs, fmt.Sprintf("JSONExtractString(labels, %s)", innerSB.Var(col)))
 		}
 		innerSelectCols = append(innerSelectCols,
 			fmt.Sprintf("argMax(tuple(%s), unix_milli) AS latest_attrs", strings.Join(tupleArgs, ", ")),
 		)
 	}
 
-	innerSB := sqlbuilder.NewSelectBuilder()
 	innerSB.Select(innerSelectCols...)
 	innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
 	innerSB.Where(
@@ -215,7 +222,7 @@ func (m *module) getMetadata(
 
 	groupByAliases := make([]string, 0, len(groupByCols))
 	for _, col := range groupByCols {
-		groupByAliases = append(groupByAliases, fmt.Sprintf("`%s`", col))
+		groupByAliases = append(groupByAliases, quoteIdentifier(col))
 	}
 	innerSB.GroupBy(groupByAliases...)
 
@@ -225,11 +232,11 @@ func (m *module) getMetadata(
 	// Outer SELECT columns: groupBy cols directly + tupleElement(latest_attrs, N) for each additionalCol
 	outerSelectCols := make([]string, 0, len(allCols))
 	for _, col := range groupByCols {
-		outerSelectCols = append(outerSelectCols, fmt.Sprintf("`%s`", col))
+		outerSelectCols = append(outerSelectCols, quoteIdentifier(col))
 	}
 	for i, col := range additionalCols {
 		outerSelectCols = append(outerSelectCols,
-			fmt.Sprintf("tupleElement(latest_attrs, %d) AS `%s`", i+1, col),
+			fmt.Sprintf("tupleElement(latest_attrs, %d) AS %s", i+1, quoteIdentifier(col)),
 		)
 	}
 

@@ -77,20 +77,19 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	// 1. Check if any host metrics exist and get earliest retention time.
-	// If no host metrics exist, return early — the UI shows the onboarding guide.
+	// 1. Check which required metrics exist and get earliest retention time.
+	// If any required metric is missing, return early with the list of missing metrics.
 	// 2. If metrics exist but req.End is before the earliest reported time, convey retention boundary.
-	count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
 	if err != nil {
 		return nil, err
 	}
-	if count == 0 {
-		resp.SentAnyMetricsData = false
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
 		resp.Records = []inframonitoringtypes.HostRecord{}
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.SentAnyMetricsData = true
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
 		resp.Records = []inframonitoringtypes.HostRecord{}

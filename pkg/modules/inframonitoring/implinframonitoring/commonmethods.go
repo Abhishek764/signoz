@@ -57,27 +57,61 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClause.WhereClause, nil
 }
 
-// getMetricsExistenceAndEarliestTime checks whether any of the given metric names
-// have been reported, and returns the total count and the earliest first-reported timestamp.
-// When count is 0, minFirstReportedUnixMilli is 0.
-func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
+// getMetricsExistenceAndEarliestTime checks which of the given metric names have been
+// reported. It returns a list of missing metrics (those not found or with zero count)
+// and the earliest first-reported timestamp across all present metrics.
+// When all metrics are missing, minFirstReportedUnixMilli is 0.
+func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) ([]string, uint64, error) {
 	if len(metricNames) == 0 {
-		return 0, 0, nil
+		return nil, 0, nil
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("count(*) AS cnt", "min(first_reported_unix_milli) AS min_first_reported")
+	sb.Select("metric_name", "count(*) AS cnt", "min(first_reported_unix_milli) AS min_first_reported")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
 	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
+	sb.GroupBy("metric_name")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	var count, minFirstReported uint64
-	err := m.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&count, &minFirstReported)
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return 0, 0, err
+		return nil, 0, err
 	}
-	return count, minFirstReported, nil
+	defer rows.Close()
+
+	type metricInfo struct {
+		count            uint64
+		minFirstReported uint64
+	}
+	found := make(map[string]metricInfo, len(metricNames))
+
+	for rows.Next() {
+		var name string
+		var cnt, minFR uint64
+		if err := rows.Scan(&name, &cnt, &minFR); err != nil {
+			return nil, 0, err
+		}
+		found[name] = metricInfo{count: cnt, minFirstReported: minFR}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	var missingMetrics []string
+	var globalMinFirstReported uint64
+	for _, name := range metricNames {
+		info, ok := found[name]
+		if !ok || info.count == 0 {
+			missingMetrics = append(missingMetrics, name)
+			continue
+		}
+		if globalMinFirstReported == 0 || info.minFirstReported < globalMinFirstReported {
+			globalMinFirstReported = info.minFirstReported
+		}
+	}
+
+	return missingMetrics, globalMinFirstReported, nil
 }
 
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,

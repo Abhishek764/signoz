@@ -94,11 +94,15 @@ func (req *HostsListRequest) UnmarshalJSON(data []byte) error {
 	return req.Validate()
 }
 
+type RequiredMetricsCheck struct {
+	MissingMetrics []string `json:"missingMetrics"`
+}
+
 type HostsListResponse struct {
 	Type                   ResponseType           `json:"type"`
 	Records                []HostRecord           `json:"records"`
 	Total                  int                    `json:"total"`
-	SentAnyMetricsData     bool                   `json:"sentAnyMetricsData"`
+	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }

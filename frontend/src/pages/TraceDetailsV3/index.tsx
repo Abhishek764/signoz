@@ -10,7 +10,7 @@ import { ResizableBox } from 'periscope/components/ResizableBox';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 // TODO: Remove mock data when new API is available
-import { mockSpan } from './mockSpanDetailsData';
+// import { mockSpan } from './mockSpanDetailsData';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
@@ -54,7 +54,7 @@ function TraceDetailsV3(): JSX.Element {
 		}
 		return {
 			...selectedSpan,
-			...mockSpan,
+			// ...mockSpan,
 		};
 	}, [selectedSpan]);
 

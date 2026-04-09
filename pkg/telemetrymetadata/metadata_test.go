@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -36,8 +37,14 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		telemetrylogs.TagAttributesV2TableName,
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
 	)
 }
 
@@ -174,9 +181,10 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			hasTraces := false
 			hasLogs := false
 			for _, key := range tt.inputKeys {
-				if key.Signal == telemetrytypes.SignalTraces {
+				switch key.Signal {
+				case telemetrytypes.SignalTraces:
 					hasTraces = true
-				} else if key.Signal == telemetrytypes.SignalLogs {
+				case telemetrytypes.SignalLogs:
 					hasLogs = true
 				}
 			}

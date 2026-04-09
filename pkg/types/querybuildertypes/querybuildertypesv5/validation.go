@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content
+// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	name := envelope.GetQueryName()
 
@@ -39,7 +39,7 @@ func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 }
 
 const (
-	// Maximum limit for query results
+	// Maximum limit for query results.
 	MaxQueryLimit = 10000
 )
 
@@ -172,7 +172,7 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 		return nil
 	}
 	for idx, item := range q.GroupBy {
-		if item.TelemetryFieldKey.Name == "" {
+		if item.Name == "" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
 			)
@@ -206,8 +206,11 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 		return nil
 	}
 
-	// At least one aggregation required for non-disabled queries
-	if len(q.Aggregations) == 0 && !q.Disabled {
+	// At least one aggregation required for aggregation queries, even if
+	// they are disabled, usually because they are used in formula
+	// regardless of use in formula, it's invalid to have empty Aggregations
+	// for aggregation request
+	if len(q.Aggregations) == 0 {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"at least one aggregation is required",
@@ -261,6 +264,12 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 				}
 				aliases[v.Alias] = true
 			}
+			if strings.Contains(strings.ToLower(v.Expression), " as ") {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"aliasing is not allowed in expression. Use `alias` field instead",
+				)
+			}
 		case LogAggregation:
 			if v.Expression == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
@@ -282,6 +291,12 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 					)
 				}
 				aliases[v.Alias] = true
+			}
+			if strings.Contains(strings.ToLower(v.Expression), " as ") {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"aliasing is not allowed in expression. Use `alias` field instead",
+				)
 			}
 		}
 	}
@@ -392,7 +407,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	validOrderKeys := make(map[string]bool)
 
 	for _, gb := range q.GroupBy {
-		validOrderKeys[gb.TelemetryFieldKey.Name] = true
+		validOrderKeys[gb.Name] = true
 	}
 
 	for i, agg := range q.Aggregations {
@@ -481,6 +496,19 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 		)
 	}
 
+	// raw/trace request types don't support metric queries;
+	// metrics are always aggregated and there is no raw form.
+	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"raw request type is not supported for metric queries",
+				)
+			}
+		}
+	}
+
 	// Validate composite query
 	if err := r.CompositeQuery.Validate(opts...); err != nil {
 		return err
@@ -494,7 +522,7 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	return nil
 }
 
-// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
+// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
 		if !envelope.IsDisabled() {
@@ -508,7 +536,7 @@ func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	)
 }
 
-// Validate performs validation on CompositeQuery
+// Validate performs validation on CompositeQuery.
 func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
 	if len(c.Queries) == 0 {
 		return errors.NewInvalidInputf(
@@ -569,13 +597,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid formula spec",
 			)
 		}
-		if spec.Expression == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"formula expression is required",
-			)
-		}
-		return nil
+		return spec.Validate()
 	case QueryTypeJoin:
 		_, ok := envelope.Spec.(QueryBuilderJoin)
 		if !ok {

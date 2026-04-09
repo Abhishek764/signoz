@@ -1280,14 +1280,22 @@ components:
             $ref: '#/components/schemas/InframonitoringtypesHostRecord'
           nullable: true
           type: array
-        sentAnyMetricsData:
-          type: boolean
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
         total:
           type: integer
         type:
           $ref: '#/components/schemas/InframonitoringtypesResponseType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      type: object
+    InframonitoringtypesRequiredMetricsCheck:
+      properties:
+        missingMetrics:
+          items:
+            type: string
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesResponseType:
       enum:

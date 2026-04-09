@@ -169,6 +169,21 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
+	// Check if channel is referenced by any route policy (rule-based or policy-based)
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.Name)
+	if err != nil {
+		return err
+	}
+	if len(policies) > 0 {
+		names := make([]string, 0, len(policies))
+		for _, p := range policies {
+			names = append(names, p.Name)
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channel %q cannot be deleted because it is used by the following routing policies: %v",
+			channel.Name, names)
+	}
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -217,7 +232,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 }
 
 func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
-	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Global, provider.config.Signoz.Route, orgID)
 	if err != nil {
 		return err
 	}

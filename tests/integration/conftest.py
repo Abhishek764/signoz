@@ -12,6 +12,7 @@ pytest_plugins = [
     "fixtures.sqlite",
     "fixtures.zookeeper",
     "fixtures.signoz",
+    "fixtures.audit",
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
@@ -51,6 +52,12 @@ def pytest_addoption(parser: pytest.Parser):
         help="sqlstore provider",
     )
     parser.addoption(
+        "--sqlite-mode",
+        action="store",
+        default="delete",
+        help="sqlite mode",
+    )
+    parser.addoption(
         "--postgres-version",
         action="store",
         default="15",
@@ -71,6 +78,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.129.7",
+        default="v0.144.2",
         help="schema migrator version",
     )

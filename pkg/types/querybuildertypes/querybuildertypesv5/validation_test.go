@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -31,7 +32,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -39,7 +47,12 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "B",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 					},
@@ -61,7 +74,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -194,7 +214,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -232,7 +259,12 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "sum(duration)",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 					},
@@ -366,7 +398,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 						{
@@ -374,7 +411,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[TraceAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalTraces,
+								Aggregations: []TraceAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalTraces,
 							},
 						},
 					},
@@ -396,7 +438,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "X",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 						{
@@ -404,7 +451,14 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "X",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 					},
@@ -427,7 +481,9 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:   "A",
 								Signal: telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{
-									{Expression: "count()"},
+									{
+										Expression: "count()",
+									},
 								},
 							},
 						},
@@ -462,7 +518,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "expression is required",
+			errMsg:  "expression cannot be blank",
 		},
 		{
 			name: "promql with empty query should return error",
@@ -581,7 +637,9 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:   "A",
 								Signal: telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{
-									{Expression: "count()"},
+									{
+										Expression: "count()",
+									},
 								},
 							},
 						},
@@ -600,6 +658,57 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: PromQuery{
 								Name:  "C",
 								Query: "up",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "raw request with metric query should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeRaw,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:         "A",
+								Disabled:     true,
+								Signal:       telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{},
+							},
+						},
+						{
+							Type: QueryTypeFormula,
+							Spec: QueryBuilderFormula{
+								Name:       "F1",
+								Expression: "A",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "raw request type is not supported for metric queries",
+		},
+		{
+			name: "raw request with log query without aggregations should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeRaw,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[LogAggregation]{
+								Name:         "A",
+								Signal:       telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{},
 							},
 						},
 					},
@@ -675,7 +784,7 @@ func TestValidateQueryEnvelope(t *testing.T) {
 			},
 			requestType: RequestTypeTimeSeries,
 			wantErr:     true,
-			errMsg:      "expression is required",
+			errMsg:      "expression cannot be blank",
 		},
 		{
 			name: "valid join spec",

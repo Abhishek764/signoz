@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { DialogWrapper } from '@signozhq/dialog';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -16,6 +17,8 @@ import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
 import KeyCreatedPhase from './KeyCreatedPhase';
 import KeyFormPhase from './KeyFormPhase';
@@ -26,6 +29,7 @@ import './AddKeyModal.styles.scss';
 
 function AddKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useQueryState(
 		SA_QUERY_PARAMS.ADD_KEY,
@@ -80,11 +84,11 @@ function AddKeyModal(): JSX.Element {
 				}
 			},
 			onError: (error) => {
-				const errMessage =
+				showErrorModal(
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to create key';
-				toast.error(errMessage, { richColors: true });
+					) as APIError,
+				);
 			},
 		},
 	});
@@ -105,19 +109,23 @@ function AddKeyModal(): JSX.Element {
 		});
 	}
 
+	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopy = useCallback(async (): Promise<void> => {
 		if (!createdKey?.key) {
 			return;
 		}
-		try {
-			await navigator.clipboard.writeText(createdKey.key);
-			setHasCopied(true);
-			setTimeout(() => setHasCopied(false), 2000);
-			toast.success('Key copied to clipboard', { richColors: true });
-		} catch {
+
+		copyToClipboard(createdKey.key);
+		setHasCopied(true);
+		setTimeout(() => setHasCopied(false), 2000);
+		toast.success('Key copied to clipboard', { richColors: true });
+	}, [copyToClipboard, createdKey?.key]);
+
+	useEffect(() => {
+		if (copyState.error) {
 			toast.error('Failed to copy key', { richColors: true });
 		}
-	}, [createdKey]);
+	}, [copyState.error]);
 
 	const handleClose = useCallback((): void => {
 		setIsAddKeyOpen(null);
@@ -146,7 +154,7 @@ function AddKeyModal(): JSX.Element {
 			width="base"
 			className="add-key-modal"
 			showCloseButton
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			{phase === Phase.FORM && (
 				<KeyFormPhase

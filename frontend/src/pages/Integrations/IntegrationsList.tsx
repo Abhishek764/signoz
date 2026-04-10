@@ -7,6 +7,7 @@ import { MoveUpRight, RotateCw } from 'lucide-react';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+import awsDarkUrl from '@/assets/Logos/aws-dark.svg';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
 
@@ -21,7 +22,7 @@ export const AWS_INTEGRATION = {
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
-	icon: `Logos/aws-dark.svg`,
+	icon: awsDarkUrl,
 	is_installed: false,
 	is_new: true,
 };

@@ -1,5 +1,6 @@
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
+import integrationsBgUrl from '@/assets/Images/integrations-hero-bg.png';
 import awsDarkUrl from '@/assets/Logos/aws-dark.svg';
 
 import AccountActions from './components/AccountActions';
@@ -14,7 +15,7 @@ function HeroSection(): JSX.Element {
 			style={
 				isDarkMode
 					? {
-							backgroundImage: `url('/Images/integrations-hero-bg.png')`,
+							backgroundImage: `url(${integrationsBgUrl})`,
 					  }
 					: {}
 			}

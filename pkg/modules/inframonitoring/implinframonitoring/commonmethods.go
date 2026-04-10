@@ -14,7 +14,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
@@ -121,9 +120,8 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,
 // within the given time range and metric names. It uses argMax(tuple(...), unix_milli) to ensure
 // we always pick attribute values from the latest timestamp for each group.
-//
 // The returned map has a composite key of groupBy column values joined by "\x00" (null byte),
-// mapping to a flat map of col_name -> col_value (includes both groupBy and additional cols).
+// mapping to a flat map of attr_name -> attr_value (includes both groupBy and additional cols).
 func (m *module) getMetadata(
 	ctx context.Context,
 	metricNames []string,
@@ -154,8 +152,6 @@ func (m *module) getMetadata(
 		metrictypes.TimeAggregationUnspecified,
 		nil,
 	)
-	// Use the local samples table for the fingerprint subquery so each shard
-	// resolves fingerprints from its own data instead of a GLOBAL IN broadcast.
 	localSamplesTable := strings.TrimPrefix(samplesTableName, "distributed_")
 	fpSB := sqlbuilder.NewSelectBuilder()
 	fpSB.Select("DISTINCT fingerprint")
@@ -211,7 +207,7 @@ func (m *module) getMetadata(
 			return nil, err
 		}
 		if filterClause != nil {
-			innerSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+			innerSB.AddWhereClause(filterClause)
 		}
 	}
 

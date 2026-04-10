@@ -3,6 +3,8 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/auditor/noopauditor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -194,6 +196,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddServiceAccountFactory(sqlstore, sqlschema),
 		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
+		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -308,6 +311,12 @@ func NewIdentNProviderFactories(tokenizer tokenizer.Tokenizer, serviceAccount se
 func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
 	return factory.MustNewNamedMap(
 		signozglobal.NewFactory(identNConfig),
+	)
+}
+
+func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
+	return factory.MustNewNamedMap(
+		noopauditor.NewFactory(),
 	)
 }
 

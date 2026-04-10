@@ -29,11 +29,8 @@ interface UseFlamegraphDragResult {
 	handleMouseMove: (e: ReactMouseEvent) => void;
 	handleMouseUp: () => void;
 	handleDragMouseLeave: () => void;
-	suppressClickRef: MutableRefObject<boolean>;
 	isDraggingRef: MutableRefObject<boolean>;
 }
-
-const DRAG_THRESHOLD = 5;
 
 export function useFlamegraphDrag(
 	args: UseFlamegraphDragArgs,
@@ -54,7 +51,6 @@ export function useFlamegraphDrag(
 	const isDraggingRef = useRef(false);
 	const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 	const dragDistanceRef = useRef(0);
-	const suppressClickRef = useRef(false);
 
 	const clampScrollTop = useCallback(
 		(next: number): number => {
@@ -143,9 +139,6 @@ export function useFlamegraphDrag(
 	);
 
 	const handleMouseUp = useCallback((): void => {
-		const wasDrag = dragDistanceRef.current > DRAG_THRESHOLD;
-		suppressClickRef.current = wasDrag;
-
 		isDraggingRef.current = false;
 		dragStartRef.current = null;
 		dragDistanceRef.current = 0;
@@ -156,23 +149,22 @@ export function useFlamegraphDrag(
 		}
 	}, [canvasRef]);
 
-	const handleDragMouseLeave = useCallback((): void => {
-		isDraggingRef.current = false;
-		dragStartRef.current = null;
-		dragDistanceRef.current = 0;
+	// const handleDragMouseLeave = useCallback((): void => {
+	// 	isDraggingRef.current = false;
+	// 	dragStartRef.current = null;
+	// 	dragDistanceRef.current = 0;
 
-		const canvas = canvasRef.current;
-		if (canvas) {
-			canvas.style.cursor = 'grab';
-		}
-	}, [canvasRef]);
+	// 	const canvas = canvasRef.current;
+	// 	if (canvas) {
+	// 		canvas.style.cursor = 'grab';
+	// 	}
+	// }, [canvasRef]);
 
 	return {
 		handleMouseDown,
 		handleMouseMove,
 		handleMouseUp,
-		handleDragMouseLeave,
-		suppressClickRef,
+		handleDragMouseLeave: handleMouseUp, // Same logic for mouse up and leaving the canvas
 		isDraggingRef,
 	};
 }

@@ -104,58 +104,6 @@ describe('useFlamegraphDrag', () => {
 		expect(defaultArgs.setScrollTop).toHaveBeenCalled();
 	});
 
-	it('does not set suppressClickRef when movement is below threshold', () => {
-		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
-
-		act(() => {
-			result.current.handleMouseDown(({
-				button: 0,
-				clientX: 100,
-				clientY: 50,
-				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
-		});
-
-		act(() => {
-			result.current.handleMouseMove(({
-				clientX: 102,
-				clientY: 51,
-			} as unknown) as React.MouseEvent);
-		});
-
-		act(() => {
-			result.current.handleMouseUp();
-		});
-
-		expect(result.current.suppressClickRef.current).toBe(false);
-	});
-
-	it('sets suppressClickRef when drag exceeds threshold', () => {
-		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
-
-		act(() => {
-			result.current.handleMouseDown(({
-				button: 0,
-				clientX: 100,
-				clientY: 50,
-				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
-		});
-
-		act(() => {
-			result.current.handleMouseMove(({
-				clientX: 150,
-				clientY: 100,
-			} as unknown) as React.MouseEvent);
-		});
-
-		act(() => {
-			result.current.handleMouseUp();
-		});
-
-		expect(result.current.suppressClickRef.current).toBe(true);
-	});
-
 	it('resets drag state on mouseup', () => {
 		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
 

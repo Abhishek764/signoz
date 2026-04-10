@@ -5,6 +5,7 @@ import {
 	RefObject,
 	SetStateAction,
 	useCallback,
+	useRef,
 	useState,
 } from 'react';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
@@ -88,7 +89,6 @@ interface UseFlamegraphHoverArgs {
 	viewStartTs: number;
 	viewEndTs: number;
 	isDraggingRef: MutableRefObject<boolean>;
-	suppressClickRef: MutableRefObject<boolean>;
 	onSpanClick: (spanId: string) => void;
 	isDarkMode: boolean;
 }
@@ -99,6 +99,7 @@ interface UseFlamegraphHoverResult {
 	hoveredEventKey: string | null;
 	handleHoverMouseMove: (e: ReactMouseEvent) => void;
 	handleHoverMouseLeave: () => void;
+	handleMouseDownForClick: (e: ReactMouseEvent) => void;
 	handleClick: (e: ReactMouseEvent) => void;
 	tooltipContent: TooltipContent | null;
 }
@@ -114,7 +115,6 @@ export function useFlamegraphHover(
 		viewStartTs,
 		viewEndTs,
 		isDraggingRef,
-		suppressClickRef,
 		onSpanClick,
 		isDarkMode,
 	} = args;
@@ -239,11 +239,25 @@ export function useFlamegraphHover(
 		}
 	}, [canvasRef, updateCursor]);
 
+	const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+	const CLICK_THRESHOLD = 5;
+
+	const handleMouseDownForClick = useCallback((e: ReactMouseEvent): void => {
+		mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+	}, []);
+
 	const handleClick = useCallback(
 		(e: ReactMouseEvent): void => {
-			if (suppressClickRef.current) {
-				return;
+			// Detect drag: if mouse moved more than threshold, skip click
+			if (mouseDownPosRef.current) {
+				const dx = e.clientX - mouseDownPosRef.current.x;
+				const dy = e.clientY - mouseDownPosRef.current.y;
+				if (Math.sqrt(dx * dx + dy * dy) > CLICK_THRESHOLD) {
+					mouseDownPosRef.current = null;
+					return;
+				}
 			}
+			mouseDownPosRef.current = null;
 
 			const canvas = canvasRef.current;
 			if (!canvas) {
@@ -265,7 +279,7 @@ export function useFlamegraphHover(
 				onSpanClick(span.spanId);
 			}
 		},
-		[canvasRef, spanRectsRef, suppressClickRef, onSpanClick],
+		[canvasRef, spanRectsRef, onSpanClick],
 	);
 
 	return {
@@ -274,6 +288,7 @@ export function useFlamegraphHover(
 		hoveredEventKey,
 		handleHoverMouseMove,
 		handleHoverMouseLeave,
+		handleMouseDownForClick,
 		handleClick,
 		tooltipContent,
 	};

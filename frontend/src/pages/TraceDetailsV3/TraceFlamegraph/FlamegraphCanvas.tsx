@@ -81,7 +81,6 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		handleMouseMove: handleDragMouseMove,
 		handleMouseUp,
 		handleDragMouseLeave,
-		suppressClickRef,
 		isDraggingRef,
 	} = useFlamegraphDrag({
 		canvasRef,
@@ -101,6 +100,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		hoveredEventKey,
 		handleHoverMouseMove,
 		handleHoverMouseLeave,
+		handleMouseDownForClick,
 		handleClick,
 		tooltipContent,
 	} = useFlamegraphHover({
@@ -111,7 +111,6 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		viewStartTs,
 		viewEndTs,
 		isDraggingRef,
-		suppressClickRef,
 		onSpanClick,
 		isDarkMode,
 	});
@@ -235,7 +234,10 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 						width: '100%',
 						cursor: 'grab',
 					}}
-					onMouseDown={handleMouseDown}
+					onMouseDown={(e): void => {
+						handleMouseDown(e);
+						handleMouseDownForClick(e);
+					}}
 					onMouseMove={handleMouseMove}
 					onMouseUp={handleMouseUp}
 					onClick={handleClick}

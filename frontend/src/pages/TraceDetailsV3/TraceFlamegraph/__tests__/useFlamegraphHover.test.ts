@@ -43,7 +43,6 @@ const defaultArgs = {
 	viewStartTs: MOCK_TRACE_METADATA.startTime,
 	viewEndTs: MOCK_TRACE_METADATA.endTime,
 	isDraggingRef: { current: false },
-	suppressClickRef: { current: false },
 	onSpanClick: jest.fn(),
 	isDarkMode: false,
 };
@@ -57,7 +56,6 @@ describe('useFlamegraphHover', () => {
 		jest.clearAllMocks();
 		defaultArgs.spanRectsRef.current = [spanRect];
 		defaultArgs.isDraggingRef.current = false;
-		defaultArgs.suppressClickRef.current = false;
 	});
 
 	it('sets hoveredSpanId and tooltipContent when hovering on span', () => {
@@ -118,14 +116,20 @@ describe('useFlamegraphHover', () => {
 		expect(result.current.tooltipContent).toBeNull();
 	});
 
-	it('suppresses click when suppressClickRef is set', () => {
+	it('suppresses click when drag distance exceeds threshold', () => {
 		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
-		defaultArgs.suppressClickRef.current = true;
+
+		act(() => {
+			result.current.handleMouseDownForClick({
+				clientX: 100,
+				clientY: 50,
+			} as React.MouseEvent);
+		});
 
 		act(() => {
 			result.current.handleClick({
 				clientX: 150,
-				clientY: 61,
+				clientY: 100,
 			} as React.MouseEvent);
 		});
 

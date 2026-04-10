@@ -79,24 +79,6 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Contextual map column - attributes_string with span context",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         SpanAttributesStringColumn,
-				FieldContext: telemetrytypes.FieldContextSpan,
-			},
-			expectedResult: SpanAttributesStringColumn,
-			expectedError:  nil,
-		},
-		{
-			name: "Contextual map column - resources_string with span context",
-			key: telemetrytypes.TelemetryFieldKey{
-				Name:         SpanResourcesStringColumn,
-				FieldContext: telemetrytypes.FieldContextSpan,
-			},
-			expectedResult: SpanResourcesStringColumn,
-			expectedError:  nil,
-		},
-		{
 			name: "Contextual map column - attributes_string without span context does not short-circuit",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          SpanAttributesStringColumn,

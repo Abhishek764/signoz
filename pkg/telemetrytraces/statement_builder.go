@@ -84,10 +84,11 @@ func (b *traceQueryStatementBuilder) Build(
 		return nil, err
 	}
 
+	isSelectFieldsEmpty := false
 	if requestType == qbtypes.RequestTypeRaw {
-		// we are expnding here to ensure that all the conflicts are taken care in adjustKeys
+		// we are expanding here to ensure that all the conflicts are taken care in adjustKeys
 		// i.e if there is a conflict we strip away context of the key in adjustKeys
-		query = b.expandRawSelectFields(query)
+		query, isSelectFieldsEmpty = b.expandRawSelectFields(query)
 	}
 
 	query = b.adjustKeys(ctx, keys, query, requestType)
@@ -97,7 +98,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
-		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
+		return b.buildListQuery(ctx, q, query, start, end, keys, variables, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
@@ -261,6 +262,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	isSelectFieldsEmpty bool,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -281,6 +283,13 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 			return nil, err
 		}
 		sb.SelectMore(colExpr)
+	}
+
+	if isSelectFieldsEmpty {
+		sb.SelectMore(SpanAttributesStringColumn)
+		sb.SelectMore(SpanAttributesNumberColumn)
+		sb.SelectMore(SpanAttributesBoolColumn)
+		sb.SelectMore(SpanResourcesStringColumn)
 	}
 
 	// From table
@@ -809,13 +818,15 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 
 // expandRawSelectFields populates SelectFields for raw (list view) queries.
 // It must be called before adjustKeys so that normalization runs over the full set.
-func (b *traceQueryStatementBuilder) expandRawSelectFields(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation] {
+// Returns the updated query and whether the original SelectFields was empty (i.e. full expansion was performed).
+func (b *traceQueryStatementBuilder) expandRawSelectFields(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], bool) {
+	wasEmpty := len(query.SelectFields) == 0
 	selectFields := []telemetrytypes.TelemetryFieldKey{
 		{Name: SpanTimestampColumn, FieldContext: telemetrytypes.FieldContextSpan},
 		{Name: SpanTraceIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
 		{Name: SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan},
 	}
-	if len(query.SelectFields) == 0 {
+	if wasEmpty {
 		// Select all intrinsic columns
 		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanTraceStateColumn, FieldContext: telemetrytypes.FieldContextSpan})
 		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanParentSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan})
@@ -841,12 +852,6 @@ func (b *traceQueryStatementBuilder) expandRawSelectFields(query qbtypes.QueryBu
 		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanDBOperationColumn, FieldContext: telemetrytypes.FieldContextSpan})
 		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanHasErrorColumn, FieldContext: telemetrytypes.FieldContextSpan})
 		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanIsRemoteColumn, FieldContext: telemetrytypes.FieldContextSpan})
-
-		// select all contextual map columns (special handling for them in field mapper)
-		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanAttributesStringColumn, FieldContext: telemetrytypes.FieldContextSpan})
-		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanAttributesNumberColumn, FieldContext: telemetrytypes.FieldContextSpan})
-		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanAttributesBoolColumn, FieldContext: telemetrytypes.FieldContextSpan})
-		selectFields = append(selectFields, telemetrytypes.TelemetryFieldKey{Name: SpanResourcesStringColumn, FieldContext: telemetrytypes.FieldContextSpan})
 	} else {
 		for _, field := range query.SelectFields {
 			// TODO(tvats): If a user specifies attribute.timestamp in the select fields, this loop will basically ignore it, as we already added a field by default. This can be fixed once we close https://github.com/SigNoz/engineering-pod/issues/3693
@@ -857,5 +862,5 @@ func (b *traceQueryStatementBuilder) expandRawSelectFields(query qbtypes.QueryBu
 		}
 	}
 	query.SelectFields = selectFields
-	return query
+	return query, wasEmpty
 }

@@ -1,0 +1,121 @@
+/**
+ * ! Do not edit manually
+ * * The file has been auto-generated using Orval for SigNoz
+ * * regenerate with 'yarn generate:api'
+ * SigNoz
+ */
+import type {
+	MutationFunction,
+	UseMutationOptions,
+	UseMutationResult,
+} from 'react-query';
+import { useMutation } from 'react-query';
+
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type {
+	GetWaterfall200,
+	GetWaterfallPathParameters,
+	RenderErrorResponseDTO,
+	TracedetailtypesWaterfallRequestDTO,
+} from '../sigNoz.schemas';
+
+/**
+ * Returns the waterfall view of spans for a given trace ID with tree structure, metadata, and windowed pagination
+ * @summary Get waterfall view for a trace
+ */
+export const getWaterfall = (
+	{ traceID }: GetWaterfallPathParameters,
+	tracedetailtypesWaterfallRequestDTO: BodyType<TracedetailtypesWaterfallRequestDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetWaterfall200>({
+		url: `/api/v3/traces/${traceID}/waterfall`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: tracedetailtypesWaterfallRequestDTO,
+		signal,
+	});
+};
+
+export const getGetWaterfallMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof getWaterfall>>,
+		TError,
+		{
+			pathParams: GetWaterfallPathParameters;
+			data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof getWaterfall>>,
+	TError,
+	{
+		pathParams: GetWaterfallPathParameters;
+		data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['getWaterfall'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof getWaterfall>>,
+		{
+			pathParams: GetWaterfallPathParameters;
+			data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return getWaterfall(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type GetWaterfallMutationResult = NonNullable<
+	Awaited<ReturnType<typeof getWaterfall>>
+>;
+export type GetWaterfallMutationBody = BodyType<TracedetailtypesWaterfallRequestDTO>;
+export type GetWaterfallMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get waterfall view for a trace
+ */
+export const useGetWaterfall = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof getWaterfall>>,
+		TError,
+		{
+			pathParams: GetWaterfallPathParameters;
+			data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof getWaterfall>>,
+	TError,
+	{
+		pathParams: GetWaterfallPathParameters;
+		data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getGetWaterfallMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};

@@ -2,6 +2,7 @@ package inframonitoringtypes
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -24,6 +25,22 @@ func (HostStatus) Enum() []any {
 		HostStatusInactive,
 		HostStatusNone,
 	}
+}
+
+const (
+	HostsOrderByCPU       = "cpu"
+	HostsOrderByMemory    = "memory"
+	HostsOrderByWait      = "wait"
+	HostsOrderByDiskUsage = "disk_usage"
+	HostsOrderByLoad15    = "load15"
+)
+
+var HostsValidOrderByKeys = []string{
+	HostsOrderByCPU,
+	HostsOrderByMemory,
+	HostsOrderByWait,
+	HostsOrderByDiskUsage,
+	HostsOrderByLoad15,
 }
 
 type HostsListRequest struct {
@@ -78,6 +95,15 @@ func (req *HostsListRequest) Validate() error {
 
 	if !req.FilterByStatus.IsZero() && req.FilterByStatus != HostStatusActive && req.FilterByStatus != HostStatusInactive {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by status: %s", req.FilterByStatus)
+	}
+
+	if req.OrderBy != nil {
+		if !slices.Contains(HostsValidOrderByKeys, req.OrderBy.Key.Name) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by key: %s", req.OrderBy.Key.Name)
+		}
+		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", req.OrderBy.Direction)
+		}
 	}
 
 	return nil

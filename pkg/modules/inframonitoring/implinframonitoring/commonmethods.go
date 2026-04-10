@@ -272,19 +272,3 @@ func (m *module) getMetadata(
 
 	return result, nil
 }
-
-func (m *module) validateOrderBy(orderBy *qbtypes.OrderBy, orderByToQueryNamesMap map[string][]string) error {
-	if orderBy == nil {
-		return nil
-	}
-
-	if _, exists := orderByToQueryNamesMap[orderBy.Key.Name]; !exists {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by key: %s", orderBy.Key.Name)
-	}
-
-	if orderBy.Direction != qbtypes.OrderDirectionAsc && orderBy.Direction != qbtypes.OrderDirectionDesc {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", orderBy.Direction)
-	}
-
-	return nil
-}

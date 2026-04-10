@@ -65,10 +65,6 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		}
 	}
 
-	if err := m.validateOrderBy(req.OrderBy, orderByToHostsQueryNames); err != nil {
-		return nil, err
-	}
-
 	// default to host name group by
 	if len(req.GroupBy) == 0 {
 		req.GroupBy = []qbtypes.GroupByKey{hostNameGroupByKey}

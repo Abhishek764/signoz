@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
@@ -159,6 +161,70 @@ func TestHostsListRequest_Validate(t *testing.T) {
 				Limit:          100,
 				Offset:         0,
 				FilterByStatus: HostStatus{valuer.NewString("UNKNOWN")},
+			},
+			wantErr: true,
+		},
+		{
+			name: "orderBy nil is valid",
+			req: &HostsListRequest{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "orderBy with valid key cpu and direction asc",
+			req: &HostsListRequest{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: HostsOrderByCPU,
+						},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "orderBy with invalid key",
+			req: &HostsListRequest{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "unknown",
+						},
+					},
+					Direction: qbtypes.OrderDirectionDesc,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "orderBy with valid key but invalid direction",
+			req: &HostsListRequest{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: HostsOrderByMemory,
+						},
+					},
+					Direction: qbtypes.OrderDirection{String: valuer.NewString("invalid")},
+				},
 			},
 			wantErr: true,
 		},

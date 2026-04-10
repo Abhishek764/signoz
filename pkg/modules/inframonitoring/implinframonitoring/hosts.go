@@ -43,11 +43,11 @@ var hostAttrKeysForMetadata = []string{
 // orderByToHostsQueryNames maps the orderBy column to the query/formula names
 // from HostsTableListQuery used for ranking host groups.
 var orderByToHostsQueryNames = map[string][]string{
-	"cpu":        {"A", "B", "F1"},
-	"memory":     {"C", "D", "F2"},
-	"wait":       {"E", "F", "F3"},
-	"disk_usage": {"H", "I", "F4"},
-	"load15":     {"G"},
+	inframonitoringtypes.HostsOrderByCPU:       {"A", "B", "F1"},
+	inframonitoringtypes.HostsOrderByMemory:    {"C", "D", "F2"},
+	inframonitoringtypes.HostsOrderByWait:      {"E", "F", "F3"},
+	inframonitoringtypes.HostsOrderByDiskUsage: {"H", "I", "F4"},
+	inframonitoringtypes.HostsOrderByLoad15:    {"G"},
 }
 
 func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
@@ -339,7 +339,7 @@ func (m *module) getTopHostGroups(
 
 // applyHostsActiveStatusFilter modifies req.Filter.Expression to include an IN/NOT IN
 // clause based on FilterByStatus and the set of active hosts.
-// Returns true if the caller should short-circuit with an empty result (ACTIVE
+// Returns true if the caller should short-circuit with an empty result (eg. ACTIVE
 // requested but no hosts are active).
 func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsListRequest, activeHostsMap map[string]bool) (shouldShortCircuit bool) {
 	if req.FilterByStatus != inframonitoringtypes.HostStatusActive && req.FilterByStatus != inframonitoringtypes.HostStatusInactive {

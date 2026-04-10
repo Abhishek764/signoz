@@ -9,7 +9,7 @@ import {
 	PanelBottom,
 	Timer,
 } from '@signozhq/icons';
-import { Tabs } from '@signozhq/ui';
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
 import { Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
@@ -200,131 +200,138 @@ function SpanDetailsContent({
 
 	return (
 		<div className="span-details-panel__body">
-			<div className="span-details-panel__span-row">
-				<KeyValueLabel
-					badgeKey="Span name"
-					badgeValue={selectedSpan.name}
-					maxCharacters={50}
-				/>
-				<SpanPercentileBadge
-					loading={percentile.loading}
-					percentileValue={percentile.percentileValue}
-					duration={percentile.duration}
-					spanPercentileData={percentile.spanPercentileData}
-					isOpen={percentile.isOpen}
-					toggleOpen={percentile.toggleOpen}
-				/>
-			</div>
-
-			<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
-
-			{/* Span info: exec time + start time */}
-			<div className="span-details-panel__span-info">
-				<div className="span-details-panel__span-info-item">
-					<Timer size={14} />
-					<span>
-						{getYAxisFormattedValue(`${selectedSpan.durationNano / 1000000}`, 'ms')}
-						{traceStartTime && traceEndTime && traceEndTime > traceStartTime && (
-							<>
-								{' — '}
-								<strong>
-									{(
-										(selectedSpan.durationNano * 100) /
-										((traceEndTime - traceStartTime) * 1e6)
-									).toFixed(2)}
-									%
-								</strong>
-								{' of total exec time'}
-							</>
-						)}
-					</span>
-				</div>
-				<div className="span-details-panel__span-info-item">
-					<CalendarClock size={14} />
-					<span>
-						{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
-					</span>
-				</div>
-				<div className="span-details-panel__span-info-item">
-					<Link2 size={14} />
-					<LinkedSpansToggle
-						count={linkedSpans.count}
-						isOpen={linkedSpans.isOpen}
-						toggleOpen={linkedSpans.toggleOpen}
+			<div className="span-details-panel__details-section">
+				<div className="span-details-panel__span-row">
+					<KeyValueLabel
+						badgeKey="Span name"
+						badgeValue={selectedSpan.name}
+						maxCharacters={50}
+					/>
+					<SpanPercentileBadge
+						loading={percentile.loading}
+						percentileValue={percentile.percentileValue}
+						duration={percentile.duration}
+						spanPercentileData={percentile.spanPercentileData}
+						isOpen={percentile.isOpen}
+						toggleOpen={percentile.toggleOpen}
 					/>
 				</div>
-			</div>
 
-			<LinkedSpansPanel
-				linkedSpans={linkedSpans.linkedSpans}
-				isOpen={linkedSpans.isOpen}
-			/>
+				<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
-			{/* Step 6: HighlightedOptions */}
-			<div className="span-details-panel__highlighted-options">
-				{HIGHLIGHTED_OPTIONS.map((option) => {
-					const rendered = option.render(selectedSpan);
-					if (!rendered) {
-						return null;
-					}
-					return (
-						<KeyValueLabel
-							key={option.key}
-							badgeKey={option.label}
-							badgeValue={rendered}
-							direction="column"
-						/>
-					);
-				})}
-			</div>
-
-			{/* Step 7: KeyAttributes */}
-			{keyAttributes.length > 0 && (
-				<div className="span-details-panel__key-attributes">
-					<div className="span-details-panel__key-attributes-label">
-						KEY ATTRIBUTES
+				{/* Span info: exec time + start time */}
+				<div className="span-details-panel__span-info">
+					<div className="span-details-panel__span-info-item">
+						<Timer size={14} />
+						<span>
+							{getYAxisFormattedValue(`${selectedSpan.durationNano / 1000000}`, 'ms')}
+							{traceStartTime && traceEndTime && traceEndTime > traceStartTime && (
+								<>
+									{' — '}
+									<strong>
+										{(
+											(selectedSpan.durationNano * 100) /
+											((traceEndTime - traceStartTime) * 1e6)
+										).toFixed(2)}
+										%
+									</strong>
+									{' of total exec time'}
+								</>
+							)}
+						</span>
 					</div>
-					<div className="span-details-panel__key-attributes-chips">
-						{keyAttributes.map(({ key, value }) => (
-							<KeyValueLabel key={key} badgeKey={key} badgeValue={value} />
-						))}
+					<div className="span-details-panel__span-info-item">
+						<CalendarClock size={14} />
+						<span>
+							{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
+						</span>
+					</div>
+					<div className="span-details-panel__span-info-item">
+						<Link2 size={14} />
+						<LinkedSpansToggle
+							count={linkedSpans.count}
+							isOpen={linkedSpans.isOpen}
+							toggleOpen={linkedSpans.toggleOpen}
+						/>
 					</div>
 				</div>
-			)}
 
-			{/* Step 8: MiniTraceContext */}
+				<LinkedSpansPanel
+					linkedSpans={linkedSpans.linkedSpans}
+					isOpen={linkedSpans.isOpen}
+				/>
 
-			{/* Step 9: ContentTabs */}
-			<Tabs
-				defaultValue="overview"
-				variant="secondary"
-				items={[
-					{
-						key: 'overview',
-						label: 'Overview',
-						children: (
+				{/* Step 6: HighlightedOptions */}
+				<div className="span-details-panel__highlighted-options">
+					{HIGHLIGHTED_OPTIONS.map((option) => {
+						const rendered = option.render(selectedSpan);
+						if (!rendered) {
+							return null;
+						}
+						return (
+							<KeyValueLabel
+								key={option.key}
+								badgeKey={option.label}
+								badgeValue={rendered}
+								direction="column"
+							/>
+						);
+					})}
+				</div>
+
+				{/* Step 7: KeyAttributes */}
+				{keyAttributes.length > 0 && (
+					<div className="span-details-panel__key-attributes">
+						<div className="span-details-panel__key-attributes-label">
+							KEY ATTRIBUTES
+						</div>
+						<div className="span-details-panel__key-attributes-chips">
+							{keyAttributes.map(({ key, value }) => (
+								<KeyValueLabel key={key} badgeKey={key} badgeValue={value} />
+							))}
+						</div>
+					</div>
+				)}
+
+				{/* Step 8: MiniTraceContext */}
+			</div>
+
+			<div className="span-details-panel__tabs-section">
+				{/* Step 9: ContentTabs */}
+				<TabsRoot defaultValue="overview">
+					<TabsList variant="secondary">
+						<TabsTrigger value="overview" variant="secondary">
+							Overview
+						</TabsTrigger>
+						<TabsTrigger value="events" variant="secondary">
+							Events ({selectedSpan.event?.length || 0})
+						</TabsTrigger>
+						<TabsTrigger value="logs" variant="secondary">
+							Logs
+						</TabsTrigger>
+						{infraMetadata && (
+							<TabsTrigger value="metrics" variant="secondary">
+								Metrics
+							</TabsTrigger>
+						)}
+					</TabsList>
+
+					<div className="span-details-panel__tabs-scroll">
+						<TabsContent value="overview">
 							<DataViewer
 								data={selectedSpan}
 								drawerKey="trace-details"
 								prettyViewProps={{ showPinned: true }}
 							/>
-						),
-					},
-					{
-						key: 'events',
-						label: `Events (${selectedSpan.event?.length || 0})`,
-						children: (
+						</TabsContent>
+						<TabsContent value="events">
 							<Events
 								span={selectedSpan}
 								startTime={traceStartTime || 0}
 								isSearchVisible
 							/>
-						),
-					},
-					{
-						key: 'logs',
-						label: 'Logs',
-						children: (
+						</TabsContent>
+						<TabsContent value="logs">
 							<SpanLogs
 								traceId={selectedSpan.traceId}
 								spanId={selectedSpan.spanId}
@@ -340,28 +347,22 @@ function SpanDetailsContent({
 								handleExplorerPageRedirect={handleExplorerPageRedirect}
 								emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
 							/>
-						),
-					},
-					...(infraMetadata
-						? [
-								{
-									key: 'metrics',
-									label: 'Metrics',
-									children: (
-										<InfraMetrics
-											clusterName={infraMetadata.clusterName}
-											podName={infraMetadata.podName}
-											nodeName={infraMetadata.nodeName}
-											hostName={infraMetadata.hostName}
-											timestamp={infraMetadata.spanTimestamp}
-											dataSource={DataSource.TRACES}
-										/>
-									),
-								},
-						  ]
-						: []),
-				]}
-			/>
+						</TabsContent>
+						{infraMetadata && (
+							<TabsContent value="metrics">
+								<InfraMetrics
+									clusterName={infraMetadata.clusterName}
+									podName={infraMetadata.podName}
+									nodeName={infraMetadata.nodeName}
+									hostName={infraMetadata.hostName}
+									timestamp={infraMetadata.spanTimestamp}
+									dataSource={DataSource.TRACES}
+								/>
+							</TabsContent>
+						)}
+					</div>
+				</TabsRoot>
+			</div>
 		</div>
 	);
 }

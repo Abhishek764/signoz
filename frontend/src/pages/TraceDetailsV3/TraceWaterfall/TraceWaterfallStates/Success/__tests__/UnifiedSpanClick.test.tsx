@@ -83,6 +83,7 @@ jest.mock('components/TimelineV3/TimelineV3', () => {
 // Mock other utilities that might cause issues
 jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: (): string => '#1890ff',
+	colorToRgb: (): string => '24, 144, 255',
 }));
 
 jest.mock('container/TraceDetail/utils', () => ({

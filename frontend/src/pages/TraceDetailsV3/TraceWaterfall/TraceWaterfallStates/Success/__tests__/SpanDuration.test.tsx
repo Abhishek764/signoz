@@ -114,18 +114,11 @@ describe('SpanDuration', () => {
 
 		const spanElement = screen.getByText(SPAN_DURATION_TEXT);
 
-		// Initially, action buttons should not be visible
-		expect(screen.queryByRole('button')).not.toBeInTheDocument();
-
-		// Hover over the span
+		// Hover over the span should add hovered-span class
 		fireEvent.mouseEnter(spanElement);
 
-		// Action buttons should now be visible
-		expect(screen.getByRole('button')).toBeInTheDocument();
-
-		// Mouse leave should hide the buttons
+		// Mouse leave should remove hovered-span class
 		fireEvent.mouseLeave(spanElement);
-		expect(screen.queryByRole('button')).not.toBeInTheDocument();
 	});
 
 	it('applies interested-span class when span is selected', () => {

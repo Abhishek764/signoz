@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
+import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
+import { toast } from '@signozhq/sonner';
 import type { MenuProps } from 'antd';
 // TODO: Replace antd Dropdown with @signozhq/ui component when moving to design library
 import { Dropdown } from 'antd';
@@ -11,7 +13,6 @@ import { darkTheme, lightTheme, themeExtension } from './constants';
 import usePinnedFields from './hooks/usePinnedFields';
 import useSearchFilter, { filterTree } from './hooks/useSearchFilter';
 import {
-	copyToClipboard,
 	keyPathToDisplayString,
 	keyPathToForward,
 	serializeKeyPath,
@@ -50,6 +51,7 @@ function PrettyView({
 	drawerKey = 'default',
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const [, setCopy] = useCopyToClipboard();
 	const { searchQuery, setSearchQuery, filteredData } = useSearchFilter(data);
 	const {
 		isPinned,
@@ -92,7 +94,15 @@ function PrettyView({
 				label: 'Copy',
 				icon: <Copy size={12} />,
 				onClick: (): void => {
-					copyToClipboard(context.fieldValue);
+					const text =
+						typeof context.fieldValue === 'object'
+							? JSON.stringify(context.fieldValue, null, 2)
+							: String(context.fieldValue);
+					setCopy(text);
+					toast.success('Copied to clipboard', {
+						richColors: true,
+						position: 'top-right',
+					});
 				},
 			};
 
@@ -189,6 +199,7 @@ function PrettyView({
 		[buildMenuItems],
 	);
 
+	// eslint-disable-next-line max-params
 	const getItemString = useCallback(
 		(
 			_nodeType: string,

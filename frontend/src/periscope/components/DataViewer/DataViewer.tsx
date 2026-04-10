@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Copy } from '@signozhq/icons';
+import { toast } from '@signozhq/sonner';
 // TODO: Replace antd Select with @signozhq/ui component when moving to design library
 import { Select } from 'antd';
 import { JsonView } from 'periscope/components/JsonView';
 import { PrettyView } from 'periscope/components/PrettyView';
 import { PrettyViewProps } from 'periscope/components/PrettyView';
-
-import { copyToClipboard } from './utils';
 
 import './DataViewer.styles.scss';
 
@@ -25,8 +25,18 @@ function DataViewer({
 	prettyViewProps,
 }: DataViewerProps): JSX.Element {
 	const [viewMode, setViewMode] = useState<ViewMode>('pretty');
+	const [, setCopy] = useCopyToClipboard();
 
 	const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
+
+	const handleCopy = (): void => {
+		const text = JSON.stringify(data, null, 2);
+		setCopy(text);
+		toast.success('Copied to clipboard', {
+			richColors: true,
+			position: 'top-right',
+		});
+	};
 
 	return (
 		<div className="data-viewer">
@@ -47,7 +57,7 @@ function DataViewer({
 				<button
 					type="button"
 					className="data-viewer__copy-btn"
-					onClick={(): void => copyToClipboard(data)}
+					onClick={handleCopy}
 					aria-label="Copy JSON"
 				>
 					<Copy size={14} />

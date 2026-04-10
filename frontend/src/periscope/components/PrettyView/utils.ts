@@ -1,15 +1,3 @@
-import { toast } from '@signozhq/sonner';
-
-export function copyToClipboard(value: unknown): void {
-	const text =
-		typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
-	navigator.clipboard.writeText(text);
-	toast.success('Copied to clipboard', {
-		richColors: true,
-		position: 'top-right',
-	});
-}
-
 // Resolve a value from a nested object using an array of keys (not dot-notation)
 // e.g. resolveValueByKeys({ tagMap: { 'cloud.account.id': 'x' } }, ['tagMap', 'cloud.account.id']) → 'x'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

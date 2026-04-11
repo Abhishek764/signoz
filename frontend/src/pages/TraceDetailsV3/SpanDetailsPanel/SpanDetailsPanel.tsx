@@ -1,12 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import {
+	Bookmark,
 	CalendarClock,
 	ChartBar,
+	ChartColumnBig,
 	Dock,
 	Ellipsis,
 	Link2,
+	Logs,
 	PanelBottom,
+	ScrollText,
 	Timer,
 } from '@signozhq/icons';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
@@ -303,17 +307,17 @@ function SpanDetailsContent({
 				<TabsRoot defaultValue="overview">
 					<TabsList variant="secondary">
 						<TabsTrigger value="overview" variant="secondary">
-							Overview
+							<Bookmark size={14} /> Overview
 						</TabsTrigger>
 						<TabsTrigger value="events" variant="secondary">
-							Events ({selectedSpan.event?.length || 0})
+							<ScrollText size={14} /> Events ({selectedSpan.event?.length || 0})
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
-							Logs
+							<Logs size={14} /> Logs
 						</TabsTrigger>
 						{infraMetadata && (
 							<TabsTrigger value="metrics" variant="secondary">
-								Metrics
+								<ChartColumnBig size={14} /> Metrics
 							</TabsTrigger>
 						)}
 					</TabsList>

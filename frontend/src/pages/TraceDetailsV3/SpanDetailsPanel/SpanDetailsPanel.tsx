@@ -57,6 +57,8 @@ interface SpanDetailsPanelProps {
 	onVariantChange?: (variant: SpanDetailVariant) => void;
 	traceStartTime?: number;
 	traceEndTime?: number;
+	serviceExecTime?: Record<string, number>;
+	spans?: Span[];
 }
 
 function SpanDetailsContent({
@@ -374,6 +376,8 @@ function SpanDetailsPanel({
 	onVariantChange,
 	traceStartTime,
 	traceEndTime,
+	serviceExecTime,
+	spans,
 }: SpanDetailsPanelProps): JSX.Element {
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
@@ -477,6 +481,10 @@ function SpanDetailsPanel({
 		<AnalyticsPanel
 			isOpen={isAnalyticsOpen}
 			onClose={(): void => setIsAnalyticsOpen(false)}
+			serviceExecTime={serviceExecTime}
+			traceStartTime={traceStartTime}
+			traceEndTime={traceEndTime}
+			spans={spans}
 		/>
 	);
 

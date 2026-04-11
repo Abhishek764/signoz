@@ -173,6 +173,8 @@ function TraceDetailsV3(): JSX.Element {
 							onVariantChange={handleVariantChange}
 							traceStartTime={traceData?.payload?.startTimestampMillis}
 							traceEndTime={traceData?.payload?.endTimestampMillis}
+							serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap}
+							spans={traceData?.payload?.spans}
 						/>
 					</div>
 				)}
@@ -186,6 +188,8 @@ function TraceDetailsV3(): JSX.Element {
 					onVariantChange={handleVariantChange}
 					traceStartTime={traceData?.payload?.startTimestampMillis}
 					traceEndTime={traceData?.payload?.endTimestampMillis}
+					serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap}
+					spans={traceData?.payload?.spans}
 				/>
 			)}
 		</div>

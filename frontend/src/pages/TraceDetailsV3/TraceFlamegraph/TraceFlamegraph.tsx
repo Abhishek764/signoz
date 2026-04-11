@@ -7,6 +7,7 @@ import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegrap
 
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
 import FlamegraphCanvas from './FlamegraphCanvas';
+import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
 
 //TODO: analyse if this is needed or not and move to separate file if needed else delete this enum.
 enum TraceFlamegraphState {
@@ -43,31 +44,37 @@ function TraceFlamegraph(): JSX.Element {
 		[history, search],
 	);
 
-	const { data, isFetching, error } = useGetTraceFlamegraph({
+	const { data, isFetching, error: fetchError } = useGetTraceFlamegraph({
 		traceId,
 		// selectedSpanId: firstSpanAtFetchLevel,
-		limit: 100000,
+		limit: 120000,
 	});
 
+	const spans = useMemo(() => data?.payload?.spans || [], [
+		data?.payload?.spans,
+	]);
+
+	const { layout, isComputing, error: workerError } = useVisualLayoutWorker(
+		spans,
+	);
+
 	const flamegraphState = useMemo(() => {
-		if (isFetching) {
-			if (data?.payload?.spans && data.payload.spans.length > 0) {
+		// Loading: fetching data or worker computing layout
+		if (isFetching || isComputing) {
+			if (layout.totalVisualRows > 0) {
 				return TraceFlamegraphState.FETCHING_WITH_OLD_DATA;
 			}
 			return TraceFlamegraphState.LOADING;
 		}
-		if (error) {
+		// Error: network or worker failure
+		if (fetchError || workerError) {
 			return TraceFlamegraphState.ERROR;
 		}
 		if (data?.payload?.spans && data.payload.spans.length === 0) {
 			return TraceFlamegraphState.NO_DATA;
 		}
 		return TraceFlamegraphState.SUCCESS;
-	}, [error, isFetching, data]);
-
-	const spans = useMemo(() => data?.payload?.spans || [], [
-		data?.payload?.spans,
-	]);
+	}, [fetchError, workerError, isFetching, isComputing, data, layout]);
 
 	const content = useMemo(() => {
 		switch (flamegraphState) {
@@ -85,14 +92,14 @@ function TraceFlamegraph(): JSX.Element {
 					</div>
 				);
 			case TraceFlamegraphState.ERROR:
-				return <Error error={error as any} />;
+				return <Error error={(fetchError || workerError) as any} />;
 			case TraceFlamegraphState.NO_DATA:
 				return <div>No data found for trace {traceId}</div>;
 			case TraceFlamegraphState.SUCCESS:
 			case TraceFlamegraphState.FETCHING_WITH_OLD_DATA:
 				return (
 					<FlamegraphCanvas
-						spans={spans}
+						layout={layout}
 						firstSpanAtFetchLevel={firstSpanAtFetchLevel}
 						setFirstSpanAtFetchLevel={setFirstSpanAtFetchLevel}
 						onSpanClick={handleSpanClick}
@@ -106,7 +113,6 @@ function TraceFlamegraph(): JSX.Element {
 				return <div>Fetching the trace...</div>;
 		}
 	}, [
-		error,
 		data?.payload?.endTimestampMillis,
 		data?.payload?.startTimestampMillis,
 		firstSpanAtFetchLevel,

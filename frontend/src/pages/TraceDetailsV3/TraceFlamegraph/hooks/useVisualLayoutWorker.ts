@@ -74,7 +74,9 @@ export function useVisualLayoutWorker(
 			if (e.data.type === 'result') {
 				setLayout(e.data.layout);
 			} else {
-				setLayout(computeVisualLayout(spans));
+				setError(
+					new Error(e.data.message || 'Flamegraph layout computation failed'),
+				);
 			}
 			setIsComputing(false);
 			isComputingRef.current = false;

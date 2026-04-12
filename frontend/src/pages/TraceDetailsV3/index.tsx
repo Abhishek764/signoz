@@ -131,6 +131,8 @@ function TraceDetailsV3(): JSX.Element {
 
 			<div className="trace-details-v3__content">
 				<Collapse
+					// @ts-expect-error motion is passed through to rc-collapse to disable animation
+					motion={false}
 					activeKey={activeKeys.filter((k) => k === 'flame')}
 					onChange={(): void => handleCollapseChange('flame')}
 					size="small"
@@ -138,7 +140,16 @@ function TraceDetailsV3(): JSX.Element {
 					items={[
 						{
 							key: 'flame',
-							label: 'Flame Graph',
+							label: (
+								<div className="trace-details-v3__collapse-label">
+									<span>Flame Graph</span>
+									{traceData?.payload?.totalSpansCount ? (
+										<span className="trace-details-v3__collapse-count">
+											{traceData.payload.totalSpansCount} spans
+										</span>
+									) : null}
+								</div>
+							),
 							children: (
 								<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
 									<TraceFlamegraph />
@@ -149,6 +160,8 @@ function TraceDetailsV3(): JSX.Element {
 				/>
 
 				<Collapse
+					// @ts-expect-error motion is passed through to rc-collapse to disable animation
+					motion={false}
 					activeKey={activeKeys.filter((k) => k === 'waterfall')}
 					onChange={(): void => handleCollapseChange('waterfall')}
 					size="small"

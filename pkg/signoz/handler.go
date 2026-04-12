@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
@@ -62,6 +63,7 @@ type Handlers struct {
 	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
 	RuleStateHistory        rulestatehistory.Handler
+	SystemDashboardHandler  systemdashboard.Handler
 }
 
 func NewHandlers(

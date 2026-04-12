@@ -2698,6 +2698,37 @@ components:
       - name
       - expiresAt
       type: object
+    SystemdashboardtypesData:
+      additionalProperties: {}
+      type: object
+    SystemdashboardtypesGettableSystemDashboard:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        data:
+          $ref: '#/components/schemas/SystemdashboardtypesData'
+        id:
+          type: string
+        source:
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - source
+      - data
+      - created_at
+      - updated_at
+      type: object
+    SystemdashboardtypesUpdatableSystemDashboard:
+      properties:
+        data:
+          $ref: '#/components/schemas/SystemdashboardtypesData'
+      required:
+      - data
+      type: object
     TelemetrytypesFieldContext:
       enum:
       - metric
@@ -6434,6 +6465,133 @@ paths:
       summary: Updates my service account
       tags:
       - serviceaccount
+  /api/v1/system/{source}/dashboard:
+    get:
+      deprecated: false
+      description: Returns the system dashboard for the given source. Seeds default
+        panels on the first call if no dashboard exists yet.
+      operationId: GetSystemDashboard
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SystemdashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a system dashboard
+      tags:
+      - system-dashboard
+    put:
+      deprecated: false
+      description: Replaces the panels, layout, and variables of a system dashboard.
+      operationId: UpdateSystemDashboard
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemdashboardtypesUpdatableSystemDashboard'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SystemdashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update a system dashboard
+      tags:
+      - system-dashboard
   /api/v1/user:
     get:
       deprecated: false

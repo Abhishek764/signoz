@@ -4,7 +4,6 @@ import { DetailsHeader } from 'components/DetailsPanel';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import { Span } from 'types/api/trace/getTraceV2';
 
 import './AnalyticsPanel.styles.scss';
 
@@ -14,7 +13,8 @@ interface AnalyticsPanelProps {
 	serviceExecTime?: Record<string, number>;
 	traceStartTime?: number;
 	traceEndTime?: number;
-	spans?: Span[];
+	// TODO: Re-enable when backend provides per-service span counts
+	// spans?: Span[];
 }
 
 const PANEL_WIDTH = 350;
@@ -28,7 +28,6 @@ function AnalyticsPanel({
 	serviceExecTime = {},
 	traceStartTime = 0,
 	traceEndTime = 0,
-	spans = [],
 }: AnalyticsPanelProps): JSX.Element | null {
 	const spread = traceEndTime - traceStartTime;
 
@@ -45,22 +44,22 @@ function AnalyticsPanel({
 			.sort((a, b) => b.percentage - a.percentage);
 	}, [serviceExecTime, spread]);
 
-	const spanCountRows = useMemo(() => {
-		const counts: Record<string, number> = {};
-		for (const span of spans) {
-			const name = span.serviceName || 'unknown';
-			counts[name] = (counts[name] || 0) + 1;
-		}
-		return Object.entries(counts)
-			.map(([service, count]) => ({
-				service,
-				count,
-				color: generateColor(service, themeColors.traceDetailColorsV3),
-			}))
-			.sort((a, b) => b.count - a.count);
-	}, [spans]);
+	// const spanCountRows = useMemo(() => {
+	// 	const counts: Record<string, number> = {};
+	// 	for (const span of spans) {
+	// 		const name = span.serviceName || 'unknown';
+	// 		counts[name] = (counts[name] || 0) + 1;
+	// 	}
+	// 	return Object.entries(counts)
+	// 		.map(([service, count]) => ({
+	// 			service,
+	// 			count,
+	// 			color: generateColor(service, themeColors.traceDetailColorsV3),
+	// 		}))
+	// 		.sort((a, b) => b.count - a.count);
+	// }, [spans]);
 
-	const maxSpanCount = spanCountRows[0]?.count || 1;
+	// const maxSpanCount = spanCountRows[0]?.count || 1;
 
 	if (!isOpen) {
 		return null;
@@ -99,9 +98,11 @@ function AnalyticsPanel({
 						<TabsTrigger value="exec-time" variant="secondary">
 							% exec time
 						</TabsTrigger>
+						{/* TODO: Enable when backend provides per-service span counts
 						<TabsTrigger value="spans" variant="secondary">
 							Spans
 						</TabsTrigger>
+						*/}
 					</TabsList>
 
 					<div className="analytics-panel__tabs-scroll">
@@ -139,6 +140,7 @@ function AnalyticsPanel({
 							</div>
 						</TabsContent>
 
+						{/* TODO: Enable when backend provides per-service span counts
 						<TabsContent value="spans">
 							<div className="analytics-panel__list">
 								{spanCountRows.map((row) => (
@@ -172,6 +174,7 @@ function AnalyticsPanel({
 								))}
 							</div>
 						</TabsContent>
+						*/}
 					</div>
 				</TabsRoot>
 			</div>

@@ -62,7 +62,6 @@ interface SpanDetailsPanelProps {
 	traceStartTime?: number;
 	traceEndTime?: number;
 	serviceExecTime?: Record<string, number>;
-	spans?: Span[];
 }
 
 function SpanDetailsContent({
@@ -381,7 +380,6 @@ function SpanDetailsPanel({
 	traceStartTime,
 	traceEndTime,
 	serviceExecTime,
-	spans,
 }: SpanDetailsPanelProps): JSX.Element {
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
@@ -488,7 +486,6 @@ function SpanDetailsPanel({
 			serviceExecTime={serviceExecTime}
 			traceStartTime={traceStartTime}
 			traceEndTime={traceEndTime}
-			spans={spans}
 		/>
 	);
 

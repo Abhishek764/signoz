@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "prettify": "prettier --write .",
     "fmt": "prettier --check .",
-    "lint": "eslint ./src",
+    "lint": "eslint ./src && stylelint \"src/**/*.scss\"",
     "lint:generated": "eslint ./src/api/generated --fix",
     "lint:fix": "eslint ./src --fix",
     "lint:styles": "stylelint \"src/**/*.scss\"",

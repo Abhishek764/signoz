@@ -1,10 +1,5 @@
 'use strict';
 
-/**
- * Shared helpers for asset pattern detection across ESLint and Stylelint rules.
- * Consolidates asset extension tracking and validation logic.
- */
-
 const ASSET_EXTENSIONS = ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.gif'];
 
 /**
@@ -12,27 +7,21 @@ const ASSET_EXTENSIONS = ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.gif'];
  * e.g. "/Icons/foo.svg" → true, "/Icons/foo.svg.bak" → false
  */
 function hasAssetExtension(str) {
-  if (typeof str !== 'string') return false;
-  return ASSET_EXTENSIONS.some((ext) => str.endsWith(ext));
+	if (typeof str !== 'string') return false;
+	return ASSET_EXTENSIONS.some((ext) => str.endsWith(ext));
 }
 
-/**
- * Returns true if the string contains an asset extension.
- * Uses boundary checking to avoid false positives:
- * - "/Icons/foo.svg" → true (at end)
- * - "/Icons/foo.svg?v=1" → true (followed by query char)
- * - "/config/jpg-settings" → false (no boundary after)
- * - "/icons.svg-dir/file" → false (no boundary after)
- */
+// Like hasAssetExtension but also matches mid-string with boundary check,
+// e.g. "/foo.svg?v=1" → true, "/icons.svg-dir/" → false
 function containsAssetExtension(str) {
-  if (typeof str !== 'string') return false;
-  return ASSET_EXTENSIONS.some((ext) => {
-    const idx = str.indexOf(ext);
-    if (idx === -1) return false;
-    const afterIdx = idx + ext.length;
-    // Accept if extension is at end of string or followed by non-alphanumeric char (?, #, /, etc.)
-    return afterIdx >= str.length || /[^a-zA-Z0-9]/.test(str[afterIdx]);
-  });
+	if (typeof str !== 'string') return false;
+	return ASSET_EXTENSIONS.some((ext) => {
+		const idx = str.indexOf(ext);
+		if (idx === -1) return false;
+		const afterIdx = idx + ext.length;
+		// Accept if extension is at end of string or followed by non-alphanumeric char (?, #, /, etc.)
+		return afterIdx >= str.length || /[^a-zA-Z0-9]/.test(str[afterIdx]);
+	});
 }
 
 /**
@@ -45,11 +34,11 @@ function containsAssetExtension(str) {
  * Returns null if the string is not a url() wrapper.
  */
 function extractUrlPath(str) {
-  if (typeof str !== 'string') return null;
-  // Match url( [whitespace] [quote?] path [quote?] [whitespace] )
-  // Capture group: [^'")\s]+ matches path until quote, closing paren, or whitespace
-  const match = str.match(/^url\(\s*['"]?([^'")\s]+)['"]?\s*\)$/);
-  return match ? match[1] : null;
+	if (typeof str !== 'string') return null;
+	// Match url( [whitespace] [quote?] path [quote?] [whitespace] )
+	// Capture group: [^'")\s]+ matches path until quote, closing paren, or whitespace
+	const match = str.match(/^url\(\s*['"]?([^'")\s]+)['"]?\s*\)$/);
+	return match ? match[1] : null;
 }
 
 /**
@@ -57,8 +46,8 @@ function extractUrlPath(str) {
  * Absolute paths in url() bypass <base href> and fail under any URL prefix.
  */
 function isAbsolutePath(str) {
-  if (typeof str !== 'string') return false;
-  return str.startsWith('/');
+	if (typeof str !== 'string') return false;
+	return str.startsWith('/') && !str.startsWith('//');
 }
 
 /**
@@ -66,15 +55,15 @@ function isAbsolutePath(str) {
  * Relative imports into public/ cause asset duplication in dist/.
  */
 function isPublicRelative(str) {
-  if (typeof str !== 'string') return false;
-  return str.includes('/public/') || str.startsWith('public/');
+	if (typeof str !== 'string') return false;
+	return str.includes('/public/') || str.startsWith('public/');
 }
 
 module.exports = {
-  ASSET_EXTENSIONS,
-  hasAssetExtension,
-  containsAssetExtension,
-  extractUrlPath,
-  isAbsolutePath,
-  isPublicRelative,
+	ASSET_EXTENSIONS,
+	hasAssetExtension,
+	containsAssetExtension,
+	extractUrlPath,
+	isAbsolutePath,
+	isPublicRelative,
 };

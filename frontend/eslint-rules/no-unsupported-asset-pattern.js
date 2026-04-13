@@ -1,137 +1,193 @@
 'use strict';
 
 const {
-  ASSET_EXTENSIONS,
-  hasAssetExtension,
-  containsAssetExtension,
-  extractUrlPath,
-  isAbsolutePath,
-  isPublicRelative,
+	hasAssetExtension,
+	containsAssetExtension,
+	extractUrlPath,
+	isAbsolutePath,
+	isPublicRelative,
 } = require('./shared/asset-patterns');
 
+const PUBLIC_DIR_SEGMENTS = ['/Icons/', '/Images/', '/Logos/', '/svgs/'];
+
+function collectBinaryStringParts(node) {
+	if (node.type === 'Literal' && typeof node.value === 'string') return [node.value];
+	if (node.type === 'BinaryExpression' && node.operator === '+') {
+		return [...collectBinaryStringParts(node.left), ...collectBinaryStringParts(node.right)];
+	}
+	if (node.type === 'TemplateLiteral') {
+		return node.quasis.map((q) => q.value.raw);
+	}
+	return [null];
+}
+
 module.exports = {
-  meta: {
-    type: 'problem',
-    docs: {
-      description:
-        'Disallow Vite-unsafe asset reference patterns that break runtime base-path deployments',
-      category: 'Asset Migration',
-      recommended: true,
-      url: 'docs/superpowers/specs/2026-04-13-eslint-no-unsupported-asset-pattern-design.md',
-    },
-    schema: [],
-    messages: {
-      absoluteString:
-        'Absolute asset path "{{ value }}" is not base-path-safe. ' +
-        "Use an ES import instead: import fooUrl from '@/assets/...' and reference the variable.",
-      templateLiteral:
-        'Dynamic asset path with absolute prefix is not base-path-safe. ' +
-        "Use new URL('./asset.svg', import.meta.url).href for dynamic asset paths.",
-      absoluteImport:
-        'Asset imported via absolute path is not supported. ' +
-        "Use import fooUrl from '@/assets/...' instead.",
-      publicImport:
-        'Importing from public/ causes build duplication (asset ends up in both dist/Icons/ and dist/assets/). ' +
-        "Move the asset to src/assets/ and use import fooUrl from '@/assets/...'.",
-    },
-  },
+	meta: {
+		type: 'problem',
+		docs: {
+			description:
+				'Disallow Vite-unsafe asset reference patterns that break runtime base-path deployments',
+			category: 'Asset Migration',
+			recommended: true,
+		},
+		schema: [],
+		messages: {
+			absoluteString:
+				'Absolute asset path "{{ value }}" is not base-path-safe. ' +
+				"Use an ES import instead: import fooUrl from '@/assets/...' and reference the variable.",
+			templateLiteral:
+				'Dynamic asset path with absolute prefix is not base-path-safe. ' +
+				"Use new URL('./asset.svg', import.meta.url).href for dynamic asset paths.",
+			absoluteImport:
+				'Asset imported via absolute path is not supported. ' +
+				"Use import fooUrl from '@/assets/...' instead.",
+			publicImport:
+				'Assets in public/ bypass Vite\'s module pipeline — their URLs are not base-path-aware and will break when the app is served from a sub-path (e.g. /app/). ' +
+				"Use an ES import instead: import fooUrl from '@/assets/...' so Vite injects the correct base path.",
+		},
+	},
 
-  create(context) {
-    return {
-      // Pattern #1: static absolute string literals used as values (not import sources)
-      Literal(node) {
-        if (node.parent && node.parent.type === 'ImportDeclaration') {
-          return;
-        }
-        const value = node.value;
-        if (typeof value !== 'string') return;
+	create(context) {
+		return {
+			Literal(node) {
+				if (node.parent && node.parent.type === 'ImportDeclaration') {
+					return;
+				}
+				const value = node.value;
+				if (typeof value !== 'string') return;
 
-        if (isAbsolutePath(value) && hasAssetExtension(value)) {
-          context.report({
-            node,
-            messageId: 'absoluteString',
-            data: { value },
-          });
-          return;
-        }
+				if (isAbsolutePath(value) && hasAssetExtension(value)) {
+					context.report({
+						node,
+						messageId: 'absoluteString',
+						data: { value },
+					});
+					return;
+				}
 
-        // CSS-in-JS url() wrapper: e.g. "url('/Images/bg.png')" or "url('/Icons/foo.svg')"
-        const urlPath = extractUrlPath(value);
-        if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
-          context.report({
-            node,
-            messageId: 'absoluteString',
-            data: { value: urlPath },
-          });
-        }
-      },
+				const urlPath = extractUrlPath(value);
+				if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
+					context.report({
+						node,
+						messageId: 'absoluteString',
+						data: { value: urlPath },
+					});
+				}
+			},
 
-      // Pattern #2: dynamic template literals — `/Icons/${name}.svg`
-      // Also catches: `/Logos/java.png?v=${x}` (extension inside a quasi, not at end)
-      // Also catches: `url('/Images/bg.png')` (CSS-in-JS url() wrapper in template)
-      TemplateLiteral(node) {
-        const quasis = node.quasis;
-        if (!quasis || quasis.length === 0) return;
+			TemplateLiteral(node) {
+				const quasis = node.quasis;
+				if (!quasis || quasis.length === 0) return;
 
-        const firstQuasi = quasis[0].value.raw;
+				const firstQuasi = quasis[0].value.raw;
+				const hasAssetExt = quasis.some((q) => containsAssetExtension(q.value.raw));
 
-        // Check for asset extension anywhere in any quasi (handles query-string suffixes)
-        const hasAssetExt = quasis.some((q) => containsAssetExtension(q.value.raw));
+				if (isAbsolutePath(firstQuasi) && hasAssetExt) {
+					context.report({
+						node,
+						messageId: 'templateLiteral',
+					});
+					return;
+				}
 
-        if (isAbsolutePath(firstQuasi) && hasAssetExt) {
-          context.report({
-            node,
-            messageId: 'templateLiteral',
-          });
-          return;
-        }
+				// Expression-first template with known public-dir segment: `${base}/Icons/foo.svg`
+				const hasPublicSegment = quasis.some((q) =>
+					PUBLIC_DIR_SEGMENTS.some((seg) => q.value.raw.includes(seg)),
+				);
+				if (hasPublicSegment && hasAssetExt) {
+					context.report({
+						node,
+						messageId: 'templateLiteral',
+					});
+					return;
+				}
 
-        // CSS-in-JS url() wrapper in template literal: `url('/Images/bg.png')`
-        // The entire template may be a static url() with no expressions.
-        if (quasis.length === 1) {
-          const urlPath = extractUrlPath(firstQuasi);
-          if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
-            context.report({
-              node,
-              messageId: 'templateLiteral',
-            });
-          }
-          return;
-        }
+				if (quasis.length === 1) {
+					const urlPath = extractUrlPath(firstQuasi);
+					if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
+						context.report({
+							node,
+							messageId: 'templateLiteral',
+						});
+					}
+					return;
+				}
 
-        // CSS-in-JS url() wrapper with expressions: `url('/Images/${name}.png')`
-        // Check if firstQuasi starts with url( and contains an asset extension somewhere in the template
-        if (firstQuasi.includes('url(') && hasAssetExt) {
-          const urlMatch = firstQuasi.match(/^url\(\s*['"]?\//);
-          if (urlMatch) {
-            context.report({
-              node,
-              messageId: 'templateLiteral',
-            });
-          }
-        }
-      },
+				if (firstQuasi.includes('url(') && hasAssetExt) {
+					const urlMatch = firstQuasi.match(/^url\(\s*['"]?\//);
+					if (urlMatch) {
+						context.report({
+							node,
+							messageId: 'templateLiteral',
+						});
+					}
+				}
+			},
 
-      // Pattern #3 + #4: import declarations
-      ImportDeclaration(node) {
-        const src = node.source.value;
-        if (typeof src !== 'string') return;
+			// String concatenation: "/Icons/" + name + ".svg"
+			BinaryExpression(node) {
+				if (node.operator !== '+') return;
 
-        if (isAbsolutePath(src) && hasAssetExtension(src)) {
-          context.report({
-            node,
-            messageId: 'absoluteImport',
-          });
-          return;
-        }
+				const parts = collectBinaryStringParts(node);
+				const prefixParts = [];
+				for (const part of parts) {
+					if (part === null) break;
+					prefixParts.push(part);
+				}
+				const staticPrefix = prefixParts.join('');
 
-        if (isPublicRelative(src) && hasAssetExtension(src)) {
-          context.report({
-            node,
-            messageId: 'publicImport',
-          });
-        }
-      },
-    };
-  },
+				if (!isAbsolutePath(staticPrefix)) return;
+
+				const hasExt = parts.some(
+					(part) => part !== null && containsAssetExtension(part),
+				);
+				if (hasExt) {
+					context.report({
+						node,
+						messageId: 'templateLiteral',
+					});
+				}
+			},
+
+			ImportDeclaration(node) {
+				const src = node.source.value;
+				if (typeof src !== 'string') return;
+
+				if (isAbsolutePath(src) && hasAssetExtension(src)) {
+					context.report({
+						node,
+						messageId: 'absoluteImport',
+					});
+					return;
+				}
+
+				if (isPublicRelative(src) && hasAssetExtension(src)) {
+					context.report({
+						node,
+						messageId: 'publicImport',
+					});
+				}
+			},
+
+			ImportExpression(node) {
+				const src = node.source;
+				if (!src || src.type !== 'Literal' || typeof src.value !== 'string') return;
+
+				if (isAbsolutePath(src.value) && hasAssetExtension(src.value)) {
+					context.report({
+						node,
+						messageId: 'absoluteImport',
+					});
+					return;
+				}
+
+				if (isPublicRelative(src.value) && hasAssetExtension(src.value)) {
+					context.report({
+						node,
+						messageId: 'publicImport',
+					});
+				}
+			},
+		};
+	},
 };

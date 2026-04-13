@@ -14,6 +14,8 @@ export interface FlamegraphCanvasProps {
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	onSpanClick: (spanId: string) => void;
 	traceMetadata: ITraceMetadata;
+	filteredSpanIds: string[];
+	isFilterActive: boolean;
 }
 
 export interface SpanRect {

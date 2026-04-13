@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
@@ -208,6 +209,7 @@ interface DrawSpanBarArgs {
 	selectedSpanId?: string | null;
 	hoveredSpanId?: string | null;
 	hoveredEventKey?: string | null;
+	isDimmedByFilter?: boolean;
 }
 
 export function drawSpanBar(args: DrawSpanBarArgs): void {
@@ -226,12 +228,21 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		selectedSpanId,
 		hoveredSpanId,
 		hoveredEventKey,
+		isDimmedByFilter,
 	} = args;
 
 	const spanY = y + metrics.SPAN_BAR_Y_OFFSET;
 	const isSelected = selectedSpanId === span.spanId;
 	const isHovered = hoveredSpanId === span.spanId;
 	const isSelectedOrHovered = isSelected || isHovered;
+	const shouldDim = isDimmedByFilter && !isSelectedOrHovered;
+
+	// Dim non-matching spans when filter is active (matches waterfall's .dimmed-span { opacity: 0.4 }).
+	// Alpha is applied to bar + events only; label is drawn after restoring alpha to 1
+	// so text stays readable against the faded bar.
+	if (shouldDim) {
+		ctx.globalAlpha = 0.4;
+	}
 
 	ctx.beginPath();
 	ctx.roundRect(x, spanY, width, metrics.SPAN_BAR_HEIGHT, 2);
@@ -302,6 +313,11 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 			halfSize: metrics.EVENT_DOT_SIZE / 2,
 		});
 	});
+
+	// Restore alpha before drawing label so text is legible on dimmed bars
+	if (shouldDim) {
+		ctx.globalAlpha = 1;
+	}
 
 	drawSpanLabel({
 		ctx,

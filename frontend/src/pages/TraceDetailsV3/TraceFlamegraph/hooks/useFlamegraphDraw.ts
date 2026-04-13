@@ -1,4 +1,4 @@
-import React, { RefObject, useCallback, useRef } from 'react';
+import React, { RefObject, useCallback, useMemo, useRef } from 'react';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
@@ -28,6 +28,8 @@ interface UseFlamegraphDrawArgs {
 	spanRectsRef?: React.MutableRefObject<SpanRect[]>;
 	eventRectsRef?: React.MutableRefObject<EventRect[]>;
 	hoveredEventKey?: string | null;
+	filteredSpanIds?: string[];
+	isFilterActive?: boolean;
 }
 
 interface UseFlamegraphDrawResult {
@@ -53,6 +55,8 @@ interface DrawLevelArgs {
 	eventRectsArray: EventRect[];
 	metrics: FlamegraphRowMetrics;
 	hoveredEventKey?: string | null;
+	filteredSpanIdsSet?: Set<string> | null;
+	isFilterActive?: boolean;
 }
 
 function drawLevel(args: DrawLevelArgs): void {
@@ -71,6 +75,8 @@ function drawLevel(args: DrawLevelArgs): void {
 		eventRectsArray,
 		metrics,
 		hoveredEventKey,
+		filteredSpanIdsSet,
+		isFilterActive: isFilterActiveInLevel,
 	} = args;
 
 	const viewEndTs = viewStartTs + timeSpan;
@@ -108,6 +114,11 @@ function drawLevel(args: DrawLevelArgs): void {
 
 		const color = getSpanColor({ span, isDarkMode });
 
+		const isDimmedByFilter =
+			!!isFilterActiveInLevel &&
+			!!filteredSpanIdsSet &&
+			!filteredSpanIdsSet.has(span.spanId);
+
 		drawSpanBar({
 			ctx,
 			span,
@@ -123,6 +134,7 @@ function drawLevel(args: DrawLevelArgs): void {
 			selectedSpanId,
 			hoveredSpanId,
 			hoveredEventKey,
+			isDimmedByFilter,
 		});
 	}
 }
@@ -207,12 +219,22 @@ export function useFlamegraphDraw(
 		spanRectsRef: spanRectsRefProp,
 		eventRectsRef: eventRectsRefProp,
 		hoveredEventKey,
+		filteredSpanIds,
+		isFilterActive,
 	} = args;
 
 	const spanRectsRefInternal = useRef<SpanRect[]>([]);
 	const spanRectsRef = spanRectsRefProp ?? spanRectsRefInternal;
 	const eventRectsRefInternal = useRef<EventRect[]>([]);
 	const eventRectsRef = eventRectsRefProp ?? eventRectsRefInternal;
+
+	const filteredSpanIdsSet = useMemo(
+		() =>
+			isFilterActive && filteredSpanIds && filteredSpanIds.length > 0
+				? new Set(filteredSpanIds)
+				: null,
+		[filteredSpanIds, isFilterActive],
+	);
 
 	const drawFlamegraph = useCallback(() => {
 		const canvas = canvasRef.current;
@@ -291,6 +313,8 @@ export function useFlamegraphDraw(
 				eventRectsArray,
 				metrics,
 				hoveredEventKey: currentHoveredEventKey,
+				filteredSpanIdsSet,
+				isFilterActive,
 			});
 		}
 
@@ -311,6 +335,8 @@ export function useFlamegraphDraw(
 		hoveredSpanId,
 		hoveredEventKey,
 		isDarkMode,
+		filteredSpanIdsSet,
+		isFilterActive,
 	]);
 
 	return { drawFlamegraph, spanRectsRef, eventRectsRef };

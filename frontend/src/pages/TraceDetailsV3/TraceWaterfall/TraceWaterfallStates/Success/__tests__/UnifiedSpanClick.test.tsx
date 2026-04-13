@@ -185,6 +185,8 @@ function TestComponent(): JSX.Element {
 			setInterestedSpanId={jest.fn()}
 			selectedSpan={selectedSpan}
 			setSelectedSpan={setSelectedSpan}
+			filteredSpanIds={[]}
+			isFilterActive={false}
 		/>
 	);
 }
@@ -216,6 +218,8 @@ describe('Span Click User Flows', () => {
 				setInterestedSpanId={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
+				filteredSpanIds={[]}
+				isFilterActive={false}
 			/>,
 			undefined,
 			{ initialRoute: '/trace' },
@@ -393,6 +397,8 @@ describe('Span Click User Flows', () => {
 				setInterestedSpanId={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
+				filteredSpanIds={[]}
+				isFilterActive={false}
 			/>,
 			undefined,
 			{ initialRoute: '/trace' },

@@ -58,6 +58,12 @@
 		border-left: unset;
 		border-radius: 0px 4px 4px 0px;
 	}
+
+	&__filter {
+		flex: 1;
+		margin-left: 8px;
+		min-width: 0;
+	}
 }
 
 .lightMode {

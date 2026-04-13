@@ -30,6 +30,8 @@ interface ITraceWaterfallProps {
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	filteredSpanIds: string[];
+	isFilterActive: boolean;
 }
 
 function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
@@ -43,6 +45,8 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		setInterestedSpanId,
 		setSelectedSpan,
 		selectedSpan,
+		filteredSpanIds,
+		isFilterActive,
 	} = props;
 	// get the current state of trace waterfall based on the API lifecycle
 	const traceWaterfallState = useMemo(() => {
@@ -106,6 +110,8 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						setInterestedSpanId={setInterestedSpanId}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
+						filteredSpanIds={filteredSpanIds}
+						isFilterActive={isFilterActive}
 						isFetching={
 							traceWaterfallState ===
 							TraceWaterfallStates.FETCHING_WITH_OLD_DATA_PRESENT
@@ -117,7 +123,9 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		}
 	}, [
 		errorFetchingTraceData,
+		filteredSpanIds,
 		interestedSpanId,
+		isFilterActive,
 		selectedSpan,
 		setInterestedSpanId,
 		setSelectedSpan,

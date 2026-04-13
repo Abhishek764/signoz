@@ -40,7 +40,6 @@ import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent'
 import SpanHoverCard from '../../../SpanHoverCard/SpanHoverCard';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../TraceWaterfall';
-import Filters from './Filters/Filters';
 
 import './Success.styles.scss';
 
@@ -62,6 +61,8 @@ interface ISuccessProps {
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	filteredSpanIds: string[];
+	isFilterActive: boolean;
 	isFetching?: boolean;
 }
 
@@ -338,11 +339,11 @@ function Success(props: ISuccessProps): JSX.Element {
 		setInterestedSpanId,
 		setSelectedSpan,
 		selectedSpan,
+		filteredSpanIds,
+		isFilterActive,
 		isFetching,
 	} = props;
 
-	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
-	const [isFilterActive, setIsFilterActive] = useState<boolean>(false);
 	const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
@@ -376,14 +377,6 @@ function Success(props: ISuccessProps): JSX.Element {
 	const handleRowMouseLeave = useCallback((): void => {
 		applyHoverClass(null);
 	}, [applyHoverClass]);
-
-	const handleFilteredSpansChange = useCallback(
-		(spanIds: string[], isActive: boolean) => {
-			setFilteredSpanIds(spanIds);
-			setIsFilterActive(isActive);
-		},
-		[],
-	);
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -578,12 +571,6 @@ function Success(props: ISuccessProps): JSX.Element {
 					</Button>
 				</div>
 			)}
-			<Filters
-				startTime={traceMetadata.startTime / 1e3}
-				endTime={traceMetadata.endTime / 1e3}
-				traceID={traceMetadata.traceId}
-				onFilteredSpansChange={handleFilteredSpansChange}
-			/>
 			{isFetching && <div className="waterfall-loading-bar" />}
 			<div className="waterfall-split-panel" ref={scrollContainerRef}>
 				{/* Sticky header row */}

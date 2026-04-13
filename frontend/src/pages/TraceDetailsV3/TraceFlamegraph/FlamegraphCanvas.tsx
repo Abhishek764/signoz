@@ -15,7 +15,14 @@ import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
-	const { layout, traceMetadata, firstSpanAtFetchLevel, onSpanClick } = props;
+	const {
+		layout,
+		traceMetadata,
+		firstSpanAtFetchLevel,
+		onSpanClick,
+		filteredSpanIds,
+		isFilterActive,
+	} = props;
 
 	const isDarkMode = useIsDarkMode(); //TODO: see if can be removed or use a new hook
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -127,6 +134,8 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		spanRectsRef,
 		eventRectsRef,
 		hoveredEventKey,
+		filteredSpanIds,
+		isFilterActive,
 	});
 
 	useScrollToSpan({

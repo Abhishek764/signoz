@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
@@ -30,6 +30,8 @@ function TraceDetailsV3(): JSX.Element {
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
+	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
+	const [isFilterActive, setIsFilterActive] = useState(false);
 
 	const selectedSpanId = urlQuery.get('spanId') || undefined;
 	const { safeNavigate } = useSafeNavigate();
@@ -38,6 +40,14 @@ function TraceDetailsV3(): JSX.Element {
 		urlQuery.delete('spanId');
 		safeNavigate({ search: urlQuery.toString() });
 	}, [urlQuery, safeNavigate]);
+
+	const handleFilteredSpansChange = useCallback(
+		(spanIds: string[], isActive: boolean): void => {
+			setFilteredSpanIds(spanIds);
+			setIsFilterActive(isActive);
+		},
+		[],
+	);
 
 	const panelState = useDetailsPanel({
 		entityId: selectedSpanId,
@@ -108,6 +118,19 @@ function TraceDetailsV3(): JSX.Element {
 		[],
 	);
 
+	const filterMetadata = useMemo(
+		() => ({
+			startTime: (traceData?.payload?.startTimestampMillis || 0) / 1e3,
+			endTime: (traceData?.payload?.endTimestampMillis || 0) / 1e3,
+			traceId: traceId || '',
+		}),
+		[
+			traceData?.payload?.startTimestampMillis,
+			traceData?.payload?.endTimestampMillis,
+			traceId,
+		],
+	);
+
 	const isDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
 	const isWaterfallDocked = panelState.isOpen && isDocked;
 
@@ -127,13 +150,18 @@ function TraceDetailsV3(): JSX.Element {
 				uncollapsedNodes={uncollapsedNodes}
 				selectedSpan={selectedSpan}
 				setSelectedSpan={setSelectedSpan}
+				filteredSpanIds={filteredSpanIds}
+				isFilterActive={isFilterActive}
 			/>
 		</ResizableBox>
 	);
 
 	return (
 		<div className="trace-details-v3">
-			<TraceDetailsHeader />
+			<TraceDetailsHeader
+				filterMetadata={filterMetadata}
+				onFilteredSpansChange={handleFilteredSpansChange}
+			/>
 
 			<div className="trace-details-v3__content">
 				<Collapse
@@ -158,7 +186,10 @@ function TraceDetailsV3(): JSX.Element {
 							),
 							children: (
 								<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
-									<TraceFlamegraph />
+									<TraceFlamegraph
+										filteredSpanIds={filteredSpanIds}
+										isFilterActive={isFilterActive}
+									/>
 								</ResizableBox>
 							),
 						},

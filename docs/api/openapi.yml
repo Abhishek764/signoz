@@ -3995,7 +3995,6 @@ components:
         span_id:
           type: string
         status_code:
-          format: int32
           type: integer
         status_code_string:
           type: string

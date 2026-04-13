@@ -5023,7 +5023,6 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	span_id?: string;
 	/**
 	 * @type integer
-	 * @format int32
 	 */
 	status_code?: number;
 	/**

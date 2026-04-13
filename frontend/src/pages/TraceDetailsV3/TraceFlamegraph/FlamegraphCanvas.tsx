@@ -12,11 +12,10 @@ import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
 import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
-import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
-	const { spans, traceMetadata, firstSpanAtFetchLevel, onSpanClick } = props;
+	const { layout, traceMetadata, firstSpanAtFetchLevel, onSpanClick } = props;
 
 	const isDarkMode = useIsDarkMode(); //TODO: see if can be removed or use a new hook
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -60,8 +59,6 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		viewStartRef.current = traceMetadata.startTime;
 		viewEndRef.current = traceMetadata.endTime;
 	}, [traceMetadata.startTime, traceMetadata.endTime]);
-
-	const { layout, isComputing: _isComputing } = useVisualLayoutWorker(spans);
 
 	const totalHeight = layout.totalVisualRows * rowHeight;
 

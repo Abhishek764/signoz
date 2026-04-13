@@ -1,13 +1,15 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Event, FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
+import { VisualLayout } from './computeVisualLayout';
+
 export interface ITraceMetadata {
 	startTime: number;
 	endTime: number;
 }
 
 export interface FlamegraphCanvasProps {
-	spans: FlamegraphSpan[][];
+	layout: VisualLayout;
 	firstSpanAtFetchLevel: string;
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	onSpanClick: (spanId: string) => void;

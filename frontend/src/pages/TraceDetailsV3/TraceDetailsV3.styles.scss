@@ -32,6 +32,19 @@
 		}
 	}
 
+	&__collapse-label {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+	}
+
+	&__collapse-count {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--l2-foreground);
+	}
+
 	&__flame-collapse {
 		flex-shrink: 0;
 

@@ -526,6 +526,16 @@ function Success(props: ISuccessProps): JSX.Element {
 						align: 'center',
 						behavior: 'auto',
 					});
+
+					// Auto-scroll sidebar horizontally to show the span name
+					const span = spans[idx];
+					const sidebarScrollEl = scrollContainerRef.current?.querySelector(
+						'.resizable-box__content',
+					);
+					if (sidebarScrollEl) {
+						const targetScrollLeft = Math.max(0, span.level * CONNECTOR_WIDTH - 40);
+						sidebarScrollEl.scrollLeft = targetScrollLeft;
+					}
 				}, 400);
 
 				setSelectedSpan(spans[idx]);

@@ -109,6 +109,21 @@ func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
+func (provider *Provider) GetMeters(ctx context.Context, key string) ([]byte, error) {
+	response, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v1/meters"),
+		http.MethodGet,
+		key,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(gjson.GetBytes(response, "data").String()), nil
+}
+
 func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte) error {
 	_, err := provider.do(
 		ctx,
@@ -189,7 +204,7 @@ func (provider *Provider) do(ctx context.Context, url *url.URL, method string, k
 	return nil, provider.errFromStatusCode(response.StatusCode, errorMessage)
 }
 
-// This can be taken down to the client package
+// This can be taken down to the client package.
 func (provider *Provider) errFromStatusCode(statusCode int, errorMessage string) error {
 	switch statusCode {
 	case http.StatusBadRequest:

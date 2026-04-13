@@ -14,8 +14,8 @@ QUERY_TIMEOUT = 30  # seconds
 @dataclass
 class TelemetryFieldKey:
     name: str
-    field_data_type: str
-    field_context: str
+    field_data_type: Optional[str] = None
+    field_context: Optional[str] = None
 
     def to_dict(self) -> Dict:
         return {
@@ -38,6 +38,7 @@ class OrderBy:
 class BuilderQuery:
     signal: str
     name: str = "A"
+    source: Optional[str] = None
     limit: Optional[int] = None
     filter_expression: Optional[str] = None
     select_fields: Optional[List[TelemetryFieldKey]] = None
@@ -48,6 +49,8 @@ class BuilderQuery:
             "signal": self.signal,
             "name": self.name,
         }
+        if self.source:
+            spec["source"] = self.source
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.filter_expression:
@@ -55,7 +58,9 @@ class BuilderQuery:
         if self.select_fields:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
-            spec["order"] = [o.to_dict() for o in self.order]
+            spec["order"] = [
+                o.to_dict() if hasattr(o, "to_dict") else o for o in self.order
+            ]
         return {"type": "builder_query", "spec": spec}
 
 
@@ -76,7 +81,9 @@ class TraceOperatorQuery:
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.order:
-            spec["order"] = [o.to_dict() for o in self.order]
+            spec["order"] = [
+                o.to_dict() if hasattr(o, "to_dict") else o for o in self.order
+            ]
         return {"type": "builder_trace_operator", "spec": spec}
 
 
@@ -245,6 +252,14 @@ def get_scalar_value(response_json: Dict, query_name: str) -> Optional[float]:
     if values:
         return values[0].get("value")
     return None
+
+
+def get_all_warnings(response_json: Dict) -> List[Dict]:
+    return response_json.get("data", {}).get("warning", {}).get("warnings", [])
+
+
+def get_error_message(response_json: Dict) -> str:
+    return response_json.get("error", {}).get("message", "")
 
 
 def compare_values(
@@ -434,6 +449,7 @@ def build_scalar_query(
     signal: str,
     aggregations: List[Dict],
     *,
+    source: Optional[str] = None,
     group_by: Optional[List[Dict]] = None,
     order: Optional[List[Dict]] = None,
     limit: Optional[int] = None,
@@ -449,6 +465,9 @@ def build_scalar_query(
         "disabled": disabled,
         "aggregations": aggregations,
     }
+
+    if source:
+        spec["source"] = source
 
     if group_by:
         spec["groupBy"] = group_by
@@ -517,6 +536,16 @@ def get_scalar_columns(response_json: Dict) -> List[Dict]:
     if not results:
         return []
     return results[0].get("columns", [])
+
+
+def get_column_data_from_response(response_json: Dict, column_name: str) -> List[Any]:
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    if not results:
+        return []
+    rows = results[0].get("rows") or []
+    return [
+        row["data"][column_name] for row in rows if column_name in row.get("data", {})
+    ]
 
 
 def assert_scalar_result_order(

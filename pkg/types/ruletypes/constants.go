@@ -8,7 +8,7 @@ const (
 	LabelThresholdName    = "threshold.name"
 	LabelSeverityName     = "severity"
 	LabelLastSeen         = "lastSeen"
-	LabelRuleId           = "ruleId"
+	LabelRuleID           = "ruleId"
 	LabelRuleSource       = "ruleSource"
 	LabelNoData           = "nodata"
 	LabelTestAlert        = "testalert"

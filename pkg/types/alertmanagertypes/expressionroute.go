@@ -73,7 +73,7 @@ var (
 	PolicyBasedExpression = ExpressionKind{valuer.NewString("policy")}
 )
 
-// RoutePolicy represents the database model for expression routes
+// RoutePolicy represents the database model for expression routes.
 type RoutePolicy struct {
 	bun.BaseModel `bun:"table:route_policy"`
 	types.Identifiable
@@ -136,4 +136,5 @@ type RouteStore interface {
 	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*RoutePolicy, error)
 	GetAllByName(ctx context.Context, orgID string, name string) ([]*RoutePolicy, error)
 	DeleteRouteByName(ctx context.Context, orgID string, name string) error
+	GetAll(ctx context.Context, orgID string) ([]*RoutePolicy, error)
 }

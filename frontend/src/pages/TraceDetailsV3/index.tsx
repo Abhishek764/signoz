@@ -45,9 +45,15 @@ function TraceDetailsV3(): JSX.Element {
 	});
 
 	useEffect(() => {
+		const spanId = urlQuery.get('spanId') || '';
+		// Only update interestedSpanId when a new span is selected,
+		// not when it's cleared (panel close) — avoids unnecessary API refetch
+		if (!spanId) {
+			return;
+		}
 		setInterestedSpanId({
-			spanId: urlQuery.get('spanId') || '',
-			isUncollapsed: urlQuery.get('spanId') !== '',
+			spanId,
+			isUncollapsed: true,
 		});
 	}, [urlQuery]);
 

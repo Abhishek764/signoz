@@ -12,6 +12,7 @@ pytest_plugins = [
     "fixtures.sqlite",
     "fixtures.zookeeper",
     "fixtures.signoz",
+    "fixtures.audit",
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
@@ -49,6 +50,12 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default="postgres",
         help="sqlstore provider",
+    )
+    parser.addoption(
+        "--sqlite-mode",
+        action="store",
+        default="delete",
+        help="sqlite mode",
     )
     parser.addoption(
         "--postgres-version",

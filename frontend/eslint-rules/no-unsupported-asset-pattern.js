@@ -11,9 +11,13 @@ const {
 const PUBLIC_DIR_SEGMENTS = ['/Icons/', '/Images/', '/Logos/', '/svgs/'];
 
 function collectBinaryStringParts(node) {
-	if (node.type === 'Literal' && typeof node.value === 'string') return [node.value];
+	if (node.type === 'Literal' && typeof node.value === 'string')
+		return [node.value];
 	if (node.type === 'BinaryExpression' && node.operator === '+') {
-		return [...collectBinaryStringParts(node.left), ...collectBinaryStringParts(node.right)];
+		return [
+			...collectBinaryStringParts(node.left),
+			...collectBinaryStringParts(node.right),
+		];
 	}
 	if (node.type === 'TemplateLiteral') {
 		return node.quasis.map((q) => q.value.raw);
@@ -42,7 +46,7 @@ module.exports = {
 				'Asset imported via absolute path is not supported. ' +
 				"Use import fooUrl from '@/assets/...' instead.",
 			publicImport:
-				'Assets in public/ bypass Vite\'s module pipeline — their URLs are not base-path-aware and will break when the app is served from a sub-path (e.g. /app/). ' +
+				"Assets in public/ bypass Vite's module pipeline — their URLs are not base-path-aware and will break when the app is served from a sub-path (e.g. /app/). " +
 				"Use an ES import instead: import fooUrl from '@/assets/...' so Vite injects the correct base path.",
 		},
 	},

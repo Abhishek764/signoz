@@ -1,11 +1,8 @@
+/* eslint-disable rulesdir/no-unsupported-asset-pattern */
+// hippa.svg and soc2.svg do not exist in src/assets — suppressed until assets are added
 import { Dot } from 'lucide-react';
 
 import './OnboardingFooter.styles.scss';
-// hippa.svg and soc2.svg do not exist in src/assets — suppressed until assets are added
-/* eslint-disable rulesdir/no-unsupported-asset-pattern */
-const hippaUrl = '/logos/hippa.svg';
-const soc2Url = '/logos/soc2.svg';
-/* eslint-enable rulesdir/no-unsupported-asset-pattern */
 
 export function OnboardingFooter(): JSX.Element {
 	return (

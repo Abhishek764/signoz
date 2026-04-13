@@ -1,0 +1,371 @@
+import json
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Callable, List
+
+import pytest
+from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
+
+from fixtures import types
+from fixtures.alertutils import (
+    update_channel_config_urls,
+    update_rule_channel_name,
+    verify_notification_expectation,
+)
+from fixtures.logger import setup_logger
+from fixtures.utils import get_testdata_file_path
+
+
+"""
+Default notification configs for each of the notifiers
+"""
+
+slack_default_config = {
+    # channel name configured on runtime
+    "slack_configs": [{
+        "api_url": "services/TEAM_ID/BOT_ID/TOKEN_ID",
+        "title":"[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{\" \"}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}=\"{{ $label.Value -}}\"\n {{- end }}\n {{- end -}}\n )\n {{- end }}",
+        "text":"{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name \"ruleId\" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}"
+    }],
+}
+
+# MSTeams default config
+msteams_default_config = {
+    "msteams_configs": [{
+        "webhook_url": "msteams/webhook_url",
+        "title":"[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{\" \"}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}=\"{{ $label.Value -}}\"\n {{- end }}\n {{- end -}}\n )\n {{- end }}",
+        "text":"{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name \"ruleId\" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}"
+    }],
+}
+
+# pagerduty default config
+pagerduty_default_config = {
+    "pagerduty_configs": [{
+        "routing_key":"PagerDutyRoutingKey",
+        "url":"v2/enqueue",
+        "client":"SigNoz Alert Manager",
+        "client_url":"https://enter-signoz-host-n-port-here/alerts",
+        "description":"[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n\t{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n\t {{\" \"}}(\n\t {{- with .CommonLabels.Remove .GroupLabels.Names }}\n\t\t{{- range $index, $label := .SortedPairs -}}\n\t\t {{ if $index }}, {{ end }}\n\t\t {{- $label.Name }}=\"{{ $label.Value -}}\"\n\t\t{{- end }}\n\t {{- end -}}\n\t )\n\t{{- end }}",
+        "details":{
+            "firing":"{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
+            "num_firing":"{{ .Alerts.Firing | len }}",
+            "num_resolved":"{{ .Alerts.Resolved | len }}",
+            "resolved":"{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}"
+        },
+        "source":"SigNoz Alert Manager",
+        "severity":"{{ (index .Alerts 0).Labels.severity }}"
+    }],
+}
+# opsgenie default config
+opsgenie_default_config = {
+   "opsgenie_configs": [
+    {
+      "api_key": "OpsGenieAPIKey",
+      "api_url": "/",
+      "description": "{{ if gt (len .Alerts.Firing) 0 -}}\r\n\tAlerts Firing:\r\n\t{{ range .Alerts.Firing }}\r\n\t - Message: {{ .Annotations.description }}\r\n\tLabels:\r\n\t{{ range .Labels.SortedPairs -}}\r\n\t\t{{- if ne .Name \"ruleId\" }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end -}}\r\n\t{{- end }}   Annotations:\r\n\t{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end }}   Source: {{ .GeneratorURL }}\r\n\t{{ end }}\r\n{{- end }}\r\n{{ if gt (len .Alerts.Resolved) 0 -}}\r\n\tAlerts Resolved:\r\n\t{{ range .Alerts.Resolved }}\r\n\t - Message: {{ .Annotations.description }}\r\n\tLabels:\r\n\t{{ range .Labels.SortedPairs -}}\r\n\t\t{{- if ne .Name \"ruleId\" }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end -}}\r\n\t{{- end }}   Annotations:\r\n\t{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end }}   Source: {{ .GeneratorURL }}\r\n\t{{ end }}\r\n{{- end }}",
+      "priority": "{{ if eq (index .Alerts 0).Labels.severity \"critical\" }}P1{{ else if eq (index .Alerts 0).Labels.severity \"warning\" }}P2{{ else if eq (index .Alerts 0).Labels.severity \"info\" }}P3{{ else }}P4{{ end }}",
+      "message": "{{ .CommonLabels.alertname }}",
+      "details": {}
+    }
+  ]
+}
+
+# webhook default config
+webhook_default_config = {
+    "webhook_configs": [{
+        "url": "webhook/webhook_url",
+    }],
+}
+# email default config
+email_default_config = {
+    "email_configs": [{
+        "to": "test@example.com",
+        "html": "<html><body>{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name \"ruleId\" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}</body></html>",
+        "headers": {
+            "Subject": "[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{\" \"}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}=\"{{ $label.Value -}}\"\n {{- end }}\n {{- end -}}\n )\n {{- end }}"
+        }
+    }],
+}
+
+# tests to verify the notifiers sending out the notifications with expected content
+# test out all notifiers integration weather they're sending out notifications with default 
+# templating for the following notifiers: webhook, slack, email, pagerduty, opsgenie, msteams
+NOTIFIERS_TEST = [
+    types.AlertManagerNotificationTestCase(
+        name="slack_notifier_default_templating",
+        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=slack_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=30,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/services/TEAM_ID/BOT_ID/TOKEN_ID",
+                        "json_body": {
+                            "attachments": [
+                                {
+                                "title": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                                "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
+                            }]}
+                    },
+                ),
+            ],
+        ),
+    ),
+
+
+
+    types.AlertManagerNotificationTestCase(
+        name="msteams_notifier_default_templating",
+        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=msteams_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=30,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/msteams/webhook_url",
+                        "json_body": {
+                            "@context": "http://schema.org/extensions",
+                            "type": "MessageCard",
+                            "title": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                            "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
+                            "themeColor": "8C1A1A"
+                        }
+                    },
+                ),
+            ],
+        ),
+    ),
+
+
+
+    types.AlertManagerNotificationTestCase(
+        name="pagerduty_notifier_default_templating",
+        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=pagerduty_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=30,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/v2/enqueue",
+                        "json_body": {
+                            "routing_key": "PagerDutyRoutingKey",
+                            "payload": {
+                                "summary": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                                "custom_details": {
+                                "firing": {
+                                    "Annotations": [{"description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"}],
+                                    "Labels": ["alertname = threshold_above_at_least_once","severity = critical","threshold.name = critical"],
+                                }}
+                            },
+                            "client": "SigNoz Alert Manager",
+                            "client_url": "https://enter-signoz-host-n-port-here/alerts"
+                            }
+                    },
+                ),
+            ],
+        ),
+    ),
+
+
+
+    types.AlertManagerNotificationTestCase(
+        name="opsgenie_notifier_default_templating",
+        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=opsgenie_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=30,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/v2/alerts",
+                        "json_body": {
+                            "message": "threshold_above_at_least_once",
+                            "description": "Alerts Firing:\r\n\t\r\n\t - Message: This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\tLabels:\r\n\t   - alertname = threshold_above_at_least_once\r\n\t   - severity = critical\r\n\t   - threshold.name = critical\r\n\t   Annotations:\r\n\t   - description = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - summary = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   Source: \r\n\t\r\n",
+                            "details": {
+                                "alertname": "threshold_above_at_least_once",
+                                "severity": "critical",
+                                "threshold.name": "critical"
+                            },
+                            "priority": "P1"
+                        }
+                    },
+                ),
+            ],
+        ),
+    ),
+
+
+
+    types.AlertManagerNotificationTestCase(
+        name="webhook_notifier_default_templating",
+        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=webhook_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=30,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/webhook/webhook_url",
+                        "json_body": {
+                            "status": "firing",
+                            "alerts": [{
+                                "status": "firing",
+                                "labels": {"alertname": "threshold_above_at_least_once","severity": "critical","threshold.name": "critical"},
+                                "annotations": {"summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)"
+                                }}
+                            ],
+                            "commonLabels": {"alertname": "threshold_above_at_least_once","severity": "critical","threshold.name": "critical"},
+                            "commonAnnotations": {"summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)"}
+                            }
+                    },
+                ),
+            ],
+        ),
+    ),
+
+    types.AlertManagerNotificationTestCase(
+        name="email_notifier_default_templating",
+        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=email_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=30,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="email",
+                    validation_data={
+                        "subject": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                        "html": "<html><body>*Alert:* threshold_above_at_least_once - critical\n\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *RelatedLogs:* \n *RelatedTraces:* \n\n *Details:*\n \u2022 *alertname:* threshold_above_at_least_once\n   \u2022 *severity:* critical\n   \u2022 *threshold.name:* critical\n   </body></html>"                    
+                    },
+                ),
+            ],
+        ),
+    ),
+]
+
+
+logger = setup_logger(__name__)
+
+@pytest.mark.parametrize(
+    "notifier_test_case",
+    NOTIFIERS_TEST,
+    ids=lambda notifier_test_case: notifier_test_case.name,
+)
+def test_notifier_templating(
+    # Notification channel related fixtures
+    notification_channel: types.TestContainerDocker,
+    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    create_notification_channel: Callable[[dict], str],
+    # Alert rule related fixtures
+    create_alert_rule: Callable[[dict], str],
+    # Alert data insertion related fixtures
+    insert_alert_data: Callable[[List[types.AlertData], datetime], None],
+    # Mail dev container for email verification
+    maildev: types.TestContainerDocker,
+    # Test case from parametrize
+    notifier_test_case: types.AlertManagerNotificationTestCase,
+):
+    # Generate unique channel name
+    channel_name = str(uuid.uuid4())
+
+    # Update channel config: set name and rewrite URLs to wiremock
+    channel_config = update_channel_config_urls(
+        notifier_test_case.channel_config, notification_channel
+    )
+    channel_config["name"] = channel_name
+
+    # Setup wiremock mocks for webhook-based validations
+    webhook_validations = [
+        v
+        for v in notifier_test_case.notification_expectation.notification_validations
+        if v.destination_type == "webhook"
+    ]
+    mock_mappings = [
+        Mapping(
+            request=MappingRequest(
+                method=HttpMethods.POST, url=v.validation_data["path"]
+            ),
+            response=MappingResponse(status=200, json_body={}),
+            persistent=False,
+        )
+        for v in webhook_validations
+    ]
+    if mock_mappings:
+        make_http_mocks(notification_channel, mock_mappings)
+        logger.info("Mock mappings created: %s", {"mock_mappings": mock_mappings})
+
+    # Create notification channel
+    create_notification_channel(channel_config)
+    logger.info("Channel created with name: %s", {"channel_name": channel_name})
+
+    # Insert alert data
+    insert_alert_data(
+        notifier_test_case.alert_data,
+        base_time=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
+    )
+
+    # Create alert rule
+    rule_path = get_testdata_file_path(notifier_test_case.rule_path)
+    with open(rule_path, "r", encoding="utf-8") as f:
+        rule_data = json.loads(f.read())
+    update_rule_channel_name(rule_data, channel_name)
+    rule_id = create_alert_rule(rule_data)
+    logger.info(
+        "rule created: %s", {"rule_id": rule_id, "rule_name": rule_data["alert"]}
+    )
+
+    # Verify notification expectations
+    verify_notification_expectation(
+        notification_channel,
+        maildev,
+        notifier_test_case.notification_expectation,
+    )

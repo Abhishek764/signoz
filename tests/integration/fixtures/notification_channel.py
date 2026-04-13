@@ -70,6 +70,29 @@ def notification_channel(
         restore,
     )
 
+@pytest.fixture(name="create_notification_channel", scope="function")
+def create_notification_channel(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> Callable[[dict], str]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def _create_notification_channel(channel_config: dict) -> str:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/channels"),
+            json=channel_config,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, (
+            f"Failed to create channel, "
+            f"Response: {response.text} "
+            f"Response status: {response.status_code}"
+        )
+        return response.json()["data"]["id"]
+
+    return _create_notification_channel
 
 @pytest.fixture(name="create_webhook_notification_channel", scope="function")
 def create_webhook_notification_channel(

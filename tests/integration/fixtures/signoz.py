@@ -16,6 +16,11 @@ from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+# Toggle: True = build SigNoz image from local Dockerfile.
+# False = pull public image from Docker Hub (https://hub.docker.com/r/signoz/signoz/tags).
+BUILD_LOCAL_IMAGE = False
+REMOTE_IMAGE = "signoz/signoz:latest"
+
 
 def create_signoz(
     network: Network,
@@ -44,22 +49,28 @@ def create_signoz(
         if arch == "x86_64":
             arch = "amd64"
 
-        # Build the image
-        dockerfile_path = "cmd/enterprise/Dockerfile.integration"
-        if with_web:
-            dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
+        if BUILD_LOCAL_IMAGE:
+            # Build the image from local Dockerfile
+            dockerfile_path = "cmd/enterprise/Dockerfile.integration"
+            if with_web:
+                dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
 
-        self = DockerImage(
-            path="../../",
-            dockerfile_path=dockerfile_path,
-            tag="signoz:integration",
-            buildargs={
-                "TARGETARCH": arch,
-                "ZEUSURL": zeus.container_configs["8080"].base(),
-            },
-        )
+            self = DockerImage(
+                path="../../",
+                dockerfile_path=dockerfile_path,
+                tag="signoz:integration",
+                buildargs={
+                    "TARGETARCH": arch,
+                    "ZEUSURL": zeus.container_configs["8080"].base(),
+                },
+            )
 
-        self.build()
+            self.build()
+            image = "signoz:integration"
+        else:
+            # Pull public image from Docker Hub
+            docker.from_env().images.pull(REMOTE_IMAGE)
+            image = REMOTE_IMAGE
 
         env = (
             {
@@ -87,7 +98,7 @@ def create_signoz(
         if env_overrides:
             env = env | env_overrides
 
-        container = DockerContainer("signoz:integration")
+        container = DockerContainer(image)
         for k, v in env.items():
             container.with_env(k, v)
         container.with_exposed_ports(8080)

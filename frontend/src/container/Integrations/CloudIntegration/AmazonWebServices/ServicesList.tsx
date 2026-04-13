@@ -56,33 +56,19 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 
 	useEffect(() => {
 		const allServices = [...enabledServices, ...notEnabledServices];
+		const defaultServiceId =
+			enabledServices[0]?.id ?? notEnabledServices[0]?.id ?? null;
 
 		// If a service is already selected and still exists in the refreshed list, keep it
 		if (activeService && allServices.some((s) => s.id === activeService)) {
-			// Update the selected service reference to the fresh object from the new list
-			const freshService = allServices.find((s) => s.id === activeService);
-			if (freshService) {
-				handleActiveService(freshService.id);
-			}
 			return;
 		}
 
 		// No valid selection — pick a default
-		if (enabledServices.length > 0) {
-			handleActiveService(enabledServices[0].id);
-		} else if (notEnabledServices.length > 0) {
-			handleActiveService(notEnabledServices[0].id);
+		if (defaultServiceId) {
+			handleActiveService(defaultServiceId);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [enabledServices, notEnabledServices]);
-
-	useEffect(() => {
-		if (activeService || !awsServices?.length) {
-			return;
-		}
-
-		handleActiveService(awsServices[0].id);
-	}, [awsServices, activeService, handleActiveService]);
+	}, [activeService, enabledServices, notEnabledServices, handleActiveService]);
 
 	if (isLoading) {
 		return (

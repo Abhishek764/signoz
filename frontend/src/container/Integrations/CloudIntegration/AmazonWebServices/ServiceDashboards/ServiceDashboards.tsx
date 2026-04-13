@@ -29,7 +29,7 @@ function ServiceDashboards({
 						return null;
 					}
 
-					const dashboardUrl = `/dashboards/${dashboard.id}`;
+					const dashboardUrl = `/dashboard/${dashboard.id}`;
 
 					return (
 						<div

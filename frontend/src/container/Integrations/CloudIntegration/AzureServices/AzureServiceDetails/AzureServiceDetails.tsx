@@ -4,12 +4,13 @@ import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
 import Tabs from '@signozhq/tabs';
 import { Checkbox, Popover, Skeleton } from 'antd';
+import { useGetService } from 'api/generated/services/cloudintegration';
+import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import { AzureConfig, AzureService } from 'container/Integrations/types';
-import { useGetCloudIntegrationServiceDetails } from 'hooks/integration/useServiceDetails';
+import type { AzureConfig, ServiceData } from 'container/Integrations/types';
 import { useUpdateServiceConfig } from 'hooks/integration/useUpdateServiceConfig';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEqual } from 'lodash-es';
@@ -20,7 +21,7 @@ import { ConfigConnectionStatus } from '../../ConfigConnectionStatus/ConfigConne
 import './AzureServiceDetails.styles.scss';
 
 interface AzureServiceDetailsProps {
-	selectedService: AzureService | null;
+	selectedService: CloudintegrationtypesServiceMetadataDTO | null;
 	cloudAccountId: string;
 }
 
@@ -42,16 +43,32 @@ export default function AzureServiceDetails({
 }: AzureServiceDetailsProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const { safeNavigate } = useSafeNavigate();
+	const isReadOnly = !cloudAccountId;
+	const serviceQueryParams = cloudAccountId
+		? { cloud_integration_id: cloudAccountId }
+		: undefined;
 
 	const {
-		data: serviceDetailsData,
+		data: serviceDetailsResponse,
 		isLoading,
 		refetch: refetchServiceDetails,
-	} = useGetCloudIntegrationServiceDetails(
-		INTEGRATION_TYPES.AZURE,
-		selectedService?.id || '',
-		cloudAccountId || undefined,
+	} = useGetService(
+		{
+			cloudProvider: INTEGRATION_TYPES.AZURE,
+			serviceId: selectedService?.id || '',
+		},
+		{
+			...serviceQueryParams,
+		},
+		{
+			query: {
+				enabled: !!selectedService?.id,
+			},
+		},
 	);
+	const serviceDetailsData = serviceDetailsResponse?.data as
+		| ServiceData
+		| undefined;
 
 	const {
 		mutate: updateAzureServiceConfig,
@@ -113,7 +130,7 @@ export default function AzureServiceDetails({
 		!isEqual(metricsConfigs, lastSavedSnapshot.metrics);
 
 	const handleSave = (): void => {
-		if (!selectedService?.id) {
+		if (!selectedService?.id || isReadOnly) {
 			return;
 		}
 
@@ -214,6 +231,9 @@ export default function AzureServiceDetails({
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const renderOverview = (): JSX.Element => {
 		const dashboards = serviceDetailsData?.assets?.dashboards || [];
+		const isServiceConfigEnabled =
+			Object.values(logsConfig).some(Boolean) ||
+			Object.values(metricsConfigs).some(Boolean);
 
 		const logsStatus = serviceDetailsData?.status?.logs || null;
 		const metricsStatus = serviceDetailsData?.status?.metrics || null;
@@ -269,7 +289,7 @@ export default function AzureServiceDetails({
 										onChange={(e): void =>
 											handleAzureLogsEnableAllChange(e.target.checked)
 										}
-										disabled={isUpdating}
+										disabled={isUpdating || isReadOnly}
 									>
 										<span className="azure-service-details-overview-configuration-title-text-select-all">
 											Select All
@@ -294,7 +314,7 @@ export default function AzureServiceDetails({
 												onChange={(e): void =>
 													handleAzureLogsEnabledChange(logName, e.target.checked)
 												}
-												disabled={isUpdating}
+												disabled={isUpdating || isReadOnly}
 											/>
 										</div>
 									))}
@@ -332,7 +352,7 @@ export default function AzureServiceDetails({
 										onChange={(e): void =>
 											handleAzureMetricsEnableAllChange(e.target.checked)
 										}
-										disabled={isUpdating}
+										disabled={isUpdating || isReadOnly}
 									>
 										<span className="azure-service-details-overview-configuration-title-text-select-all">
 											Select All
@@ -357,13 +377,13 @@ export default function AzureServiceDetails({
 												onChange={(e): void =>
 													handleAzureMetricsEnabledChange(metricName, e.target.checked)
 												}
-												disabled={isUpdating}
+												disabled={isUpdating || isReadOnly}
 											/>
 										</div>
 									))}
 							</div>
 						</div>
-						{hasChanges && (
+						{hasChanges && !isReadOnly && (
 							<div className="azure-service-details-overview-configuration-actions">
 								<Button
 									variant="solid"
@@ -397,31 +417,35 @@ export default function AzureServiceDetails({
 					markdownContent={serviceDetailsData?.overview}
 				/>
 
-				<div className="azure-service-dashboards">
-					<div className="azure-service-dashboards-title">Dashboards</div>
-					<div className="azure-service-dashboards-items">
-						{dashboards.map((dashboard) => (
-							<div
-								key={dashboard.id}
-								className={`azure-service-dashboard-item ${
-									dashboard.url ? 'azure-service-dashboard-item-clickable' : ''
-								}`}
-								onClick={(): void => {
-									if (dashboard.url) {
-										safeNavigate(dashboard.url);
-									}
-								}}
-							>
-								<div className="azure-service-dashboard-item-title">
-									{dashboard.title}
+				{dashboards.length > 0 && (
+					<div className="azure-service-dashboards">
+						<div className="azure-service-dashboards-title">Dashboards</div>
+						<div className="azure-service-dashboards-items">
+							{dashboards.map((dashboard) => (
+								<div
+									key={dashboard.id}
+									className={`azure-service-dashboard-item ${
+										!isReadOnly && isServiceConfigEnabled && dashboard.url
+											? 'azure-service-dashboard-item-clickable'
+											: ''
+									}`}
+									onClick={(): void => {
+										if (!isReadOnly && isServiceConfigEnabled && dashboard.url) {
+											safeNavigate(dashboard.url);
+										}
+									}}
+								>
+									<div className="azure-service-dashboard-item-title">
+										{dashboard.title}
+									</div>
+									<div className="azure-service-dashboard-item-description">
+										{dashboard.description}
+									</div>
 								</div>
-								<div className="azure-service-dashboard-item-description">
-									{dashboard.description}
-								</div>
-							</div>
-						))}
+							))}
+						</div>
 					</div>
-				</div>
+				)}
 			</div>
 		);
 	};

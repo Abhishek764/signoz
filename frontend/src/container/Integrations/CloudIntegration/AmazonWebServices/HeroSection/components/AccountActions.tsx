@@ -6,7 +6,7 @@ import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
-import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
+import { useGetCloudIntegrationAccounts } from 'hooks/integration/useGetCloudIntegrationAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
 
@@ -102,7 +102,7 @@ function AccountActionsRenderer({
 function AccountActions(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const { data: accounts, isLoading } = useAwsAccounts();
+	const { data: accounts, isLoading } = useGetCloudIntegrationAccounts('aws');
 
 	const initialAccount = useMemo(
 		() =>
@@ -124,7 +124,13 @@ function AccountActions(): JSX.Element {
 			const latestUrlQuery = new URLSearchParams(window.location.search);
 			latestUrlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
 			navigate({ search: latestUrlQuery.toString() });
+			return;
 		}
+
+		setActiveAccount(null);
+		const latestUrlQuery = new URLSearchParams(window.location.search);
+		latestUrlQuery.delete('cloudAccountId');
+		navigate({ search: latestUrlQuery.toString() });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialAccount]);
 

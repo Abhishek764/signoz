@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Skeleton } from 'antd';
+import { useListServicesMetadata } from 'api/generated/services/cloudintegration';
+import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import CloudIntegrationsHeader from 'components/CloudIntegrations/CloudIntegrationsHeader';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import {
-	AzureConfig,
-	AzureService,
-	CloudAccount,
-	IntegrationType,
-} from 'container/Integrations/types';
-import { useGetAccountServices } from 'hooks/integration/useGetAccountServices';
+import { CloudAccount, IntegrationType } from 'container/Integrations/types';
 import { useGetCloudIntegrationAccounts } from 'hooks/integration/useGetCloudIntegrationAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 
@@ -18,24 +14,15 @@ import AzureServicesListView from './AzureServicesListView';
 
 import './AzureServices.styles.scss';
 
-/** Service is enabled if even one sub item (log or metric) is enabled */
-function hasAnySubItemEnabled(service: AzureService): boolean {
-	const logs = service.config?.logs ?? [];
-	const metrics = service.config?.metrics ?? [];
-	return (
-		logs.some((log: AzureConfig) => log.enabled) ||
-		metrics.some((metric: AzureConfig) => metric.enabled)
-	);
-}
-
 function AzureServices(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const [selectedAccount, setSelectedAccount] = useState<CloudAccount | null>(
 		null,
 	);
-	const [selectedService, setSelectedService] = useState<AzureService | null>(
-		null,
-	);
+	const [
+		selectedService,
+		setSelectedService,
+	] = useState<CloudintegrationtypesServiceMetadataDTO | null>(null);
 
 	const {
 		data: accounts = [],
@@ -60,14 +47,23 @@ function AzureServices(): JSX.Element {
 	}, [initialAccount]);
 
 	const cloudAccountId = initialAccount?.cloud_account_id;
+	const serviceQueryParams = cloudAccountId
+		? { cloud_integration_id: cloudAccountId }
+		: undefined;
 
 	const {
-		data: azureServices = [],
+		data: servicesMetadata,
 		isLoading: isLoadingAzureServices,
-	} = useGetAccountServices(INTEGRATION_TYPES.AZURE, cloudAccountId);
+	} = useListServicesMetadata(
+		{ cloudProvider: INTEGRATION_TYPES.AZURE },
+		serviceQueryParams,
+	);
+	const azureServices = useMemo(() => servicesMetadata?.data?.services ?? [], [
+		servicesMetadata,
+	]);
 
 	const enabledServices = useMemo(
-		() => azureServices?.filter(hasAnySubItemEnabled) ?? [],
+		() => azureServices?.filter((service) => service.enabled) ?? [],
 		[azureServices],
 	);
 

@@ -178,8 +178,9 @@
 
 						&.aws-service-dashboard-item-clickable {
 							cursor: pointer;
+
 							&:hover {
-								background-color: var(--l1-background);
+								background-color: var(--l2-background);
 							}
 						}
 

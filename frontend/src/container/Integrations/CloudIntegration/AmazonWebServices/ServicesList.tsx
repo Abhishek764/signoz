@@ -1,29 +1,34 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Skeleton } from 'antd';
+import { useListServicesMetadata } from 'api/generated/services/cloudintegration';
+import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
-import { useGetAccountServices } from 'hooks/integration/aws/useGetAccountServices';
 import useUrlQuery from 'hooks/useUrlQuery';
-
-import { Service } from './types';
 
 interface ServicesListProps {
 	cloudAccountId: string;
 }
 
-/** Service is enabled if even one sub item (log or metric) is enabled */
-function hasAnySubItemEnabled(service: Service): boolean {
-	const logs = service.config?.logs ?? {};
-	const metrics = service.config?.metrics ?? {};
-	return logs.enabled || metrics.enabled;
-}
-
 function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const { data: awsServices = [], isLoading } = useGetAccountServices(
-		cloudAccountId,
+	const hasValidCloudAccountId = Boolean(cloudAccountId);
+	const serviceQueryParams = hasValidCloudAccountId
+		? { cloud_integration_id: cloudAccountId }
+		: undefined;
+
+	const { data: servicesMetadata, isLoading } = useListServicesMetadata(
+		{
+			cloudProvider: 'aws',
+		},
+		serviceQueryParams,
 	);
+
+	const awsServices = useMemo(() => servicesMetadata?.data?.services ?? [], [
+		servicesMetadata,
+	]);
+
 	const activeService = urlQuery.get('service');
 
 	const handleActiveService = useCallback(
@@ -36,7 +41,7 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 	);
 
 	const enabledServices = useMemo(
-		() => awsServices?.filter(hasAnySubItemEnabled) ?? [],
+		() => awsServices.filter((service) => service.enabled),
 		[awsServices],
 	);
 
@@ -95,7 +100,9 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 	const isEnabledServicesEmpty = enabledServices.length === 0;
 	const isNotEnabledServicesEmpty = notEnabledServices.length === 0;
 
-	const renderServiceItem = (service: Service): JSX.Element => {
+	const renderServiceItem = (
+		service: CloudintegrationtypesServiceMetadataDTO,
+	): JSX.Element => {
 		return (
 			<div
 				className={cx('aws-services-list-view-sidebar-content-item', {

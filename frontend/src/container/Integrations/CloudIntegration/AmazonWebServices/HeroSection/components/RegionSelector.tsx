@@ -28,10 +28,12 @@ export function RegionSelector({
 		<div className="region-selector">
 			<div className="select-all">
 				<Checkbox
-					checked={selectedRegions.includes('all')}
+					checked={
+						allRegionIds.length > 0 &&
+						allRegionIds.every((regionId) => selectedRegions.includes(regionId))
+					}
 					indeterminate={
-						selectedRegions.length > 20 &&
-						selectedRegions.length < allRegionIds.length
+						selectedRegions.length > 0 && selectedRegions.length < allRegionIds.length
 					}
 					onChange={(e): void => handleSelectAll(e.target.checked)}
 				>
@@ -46,10 +48,7 @@ export function RegionSelector({
 						{region.subRegions.map((subRegion) => (
 							<Checkbox
 								key={subRegion.id}
-								checked={
-									selectedRegions.includes('all') ||
-									selectedRegions.includes(subRegion.id)
-								}
+								checked={selectedRegions.includes(subRegion.id)}
 								onChange={(): void => handleRegionSelect(subRegion.id)}
 							>
 								{subRegion.name}

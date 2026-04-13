@@ -1,12 +1,10 @@
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import { getAzureDeploymentCommands } from 'api/integration';
 import { AxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { AzureCloudAccountConfig } from 'container/Integrations/types';
-import {
-	ConnectionParams,
-	IAzureDeploymentCommands,
-} from 'types/api/integrations/types';
+import { IAzureDeploymentCommands } from 'types/api/integrations/types';
 
 export function useGetDeploymentCommands({
 	azureAccountConfig,
@@ -14,7 +12,7 @@ export function useGetDeploymentCommands({
 	options,
 }: {
 	azureAccountConfig: AzureCloudAccountConfig;
-	connectionParams: ConnectionParams;
+	connectionParams: CloudintegrationtypesCredentialsDTO;
 	options?: UseQueryOptions<IAzureDeploymentCommands, AxiosError>;
 }): UseQueryResult<IAzureDeploymentCommands, AxiosError> {
 	return useQuery<IAzureDeploymentCommands, AxiosError>(

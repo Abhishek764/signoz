@@ -5,6 +5,7 @@ import Tabs from '@signozhq/tabs';
 import { Steps } from 'antd';
 import { StepsProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import { getAzureDeploymentCommands } from 'api/integration';
 import { CodeBlock } from 'components/CodeBlock';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -12,7 +13,6 @@ import { useGetAccountStatus } from 'hooks/integration/useGetAccountStatus';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
 	AccountStatusResponse,
-	ConnectionParams,
 	IAzureDeploymentCommands,
 } from 'types/api/integrations/types';
 
@@ -21,7 +21,7 @@ import { AzureAccountForm } from './AzureAccountForm';
 import './AzureAccount.styles.scss';
 
 interface ConnectNewAzureAccountProps {
-	connectionParams: ConnectionParams;
+	connectionParams: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	onAccountConnected: () => void;
 }
@@ -111,7 +111,7 @@ export const ConfigureAgentStep = ({
 	setDeploymentCommands,
 	setAccountId,
 }: {
-	connectionParams: ConnectionParams;
+	connectionParams: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	setDeploymentCommands: (deploymentCommands: IAzureDeploymentCommands) => void;
 	setAccountId: (accountId: string) => void;

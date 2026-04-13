@@ -36,7 +36,6 @@ function CloudAccountSetupModal({
 		handleSubmit,
 		handleClose,
 		setActiveView,
-		allRegions,
 		accountId,
 		handleRegionChange,
 		connectionParams,
@@ -97,9 +96,8 @@ function CloudAccountSetupModal({
 	]);
 
 	const getSelectedRegionsCount = useCallback(
-		(): number =>
-			selectedRegions.includes('all') ? allRegions.length : selectedRegions.length,
-		[selectedRegions, allRegions],
+		(): number => selectedRegions.length,
+		[selectedRegions],
 	);
 
 	const getModalConfig = useCallback(() => {

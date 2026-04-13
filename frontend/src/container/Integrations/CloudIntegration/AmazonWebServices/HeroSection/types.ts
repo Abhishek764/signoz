@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { FormInstance } from 'antd';
-import { ConnectionParams } from 'types/api/integrations/types';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 
 export enum ActiveViewEnum {
 	SELECT_REGIONS = 'select-regions',
@@ -24,7 +24,7 @@ export interface RegionFormProps {
 	onSubmit: () => Promise<void>;
 	accountId?: string;
 	handleRegionChange: (value: string) => void;
-	connectionParams?: ConnectionParams;
+	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading?: boolean;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;

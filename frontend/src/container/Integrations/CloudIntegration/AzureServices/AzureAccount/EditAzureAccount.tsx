@@ -1,12 +1,10 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/sonner';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
 import { useUpdateAccountConfig } from 'hooks/integration/useUpdateAccountConfig';
-import {
-	AzureAccountConfig,
-	ConnectionParams,
-} from 'types/api/integrations/types';
+import { AzureAccountConfig } from 'types/api/integrations/types';
 
 import { AzureAccountForm } from './AzureAccountForm';
 
@@ -14,7 +12,7 @@ import './AzureAccount.styles.scss';
 
 interface EditAzureAccountProps {
 	selectedAccount: CloudAccount;
-	connectionParams: ConnectionParams;
+	connectionParams: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	onAccountUpdated: () => void;
 }

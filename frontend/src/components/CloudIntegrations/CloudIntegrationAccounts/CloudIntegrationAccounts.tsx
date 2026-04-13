@@ -3,12 +3,15 @@ import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
 import { DrawerWrapper } from '@signozhq/drawer';
 import { Select } from 'antd';
+import {
+	GetConnectionCredentialsQueryResult,
+	useGetConnectionCredentials,
+} from 'api/generated/services/cloudintegration';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import ConnectNewAzureAccount from 'container/Integrations/CloudIntegration/AzureServices/AzureAccount/ConnectNewAzureAccount';
 import EditAzureAccount from 'container/Integrations/CloudIntegration/AzureServices/AzureAccount/EditAzureAccount';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
-import { useGetConnectionParams } from 'hooks/integration/useGetConnectionParams';
-import useAxiosError from 'hooks/useAxiosError';
 import { Dot, PencilLine, Plus } from 'lucide-react';
 
 import './CloudIntegrationAccounts.styles.scss';
@@ -45,14 +48,11 @@ export default function CloudIntegrationAccounts({
 		setIsDrawerOpen(true);
 	};
 
-	const handleError = useAxiosError();
-
 	const {
 		data: connectionParams,
 		isLoading: isConnectionParamsLoading,
-	} = useGetConnectionParams({
-		cloudServiceId: INTEGRATION_TYPES.AZURE,
-		options: { onError: handleError },
+	} = useGetConnectionCredentials<GetConnectionCredentialsQueryResult>({
+		cloudProvider: INTEGRATION_TYPES.AZURE,
 	});
 
 	const handleSelectAccount = (value: string): void => {
@@ -80,7 +80,9 @@ export default function CloudIntegrationAccounts({
 					<div className="edit-account-content">
 						<EditAzureAccount
 							selectedAccount={selectedAccount as CloudAccount}
-							connectionParams={connectionParams || {}}
+							connectionParams={
+								connectionParams?.data as CloudintegrationtypesCredentialsDTO
+							}
 							isConnectionParamsLoading={isConnectionParamsLoading}
 							onAccountUpdated={handleAccountUpdated}
 						/>
@@ -88,7 +90,9 @@ export default function CloudIntegrationAccounts({
 				) : (
 					<div className="add-new-account-content">
 						<ConnectNewAzureAccount
-							connectionParams={connectionParams || {}}
+							connectionParams={
+								connectionParams?.data as CloudintegrationtypesCredentialsDTO
+							}
 							isConnectionParamsLoading={isConnectionParamsLoading}
 							onAccountConnected={handleAccountConnected}
 						/>

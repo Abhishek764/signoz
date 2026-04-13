@@ -6,12 +6,13 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { toast } from '@signozhq/sonner';
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
+import { useUpdateAccount } from 'api/generated/services/cloudintegration';
 import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
-import { useUpdateAWSAccountConfig } from 'hooks/integration/aws/useUpdateAWSAccountConfig';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { isEqual } from 'lodash-es';
-import { AWSAccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
@@ -56,7 +57,7 @@ export function useAccountSettingsModal({
 	setActiveAccount,
 }: UseAccountSettingsModalProps): UseAccountSettingsModal {
 	const [form] = Form.useForm();
-	const { mutate: updateConfig, isLoading } = useUpdateAWSAccountConfig();
+	const { mutate: updateAccount, isLoading } = useUpdateAccount();
 	const accountRegions = useMemo(() => account?.config?.regions || [], [
 		account?.config?.regions,
 	]);
@@ -69,32 +70,60 @@ export function useAccountSettingsModal({
 	// Initialize regions from account when modal opens
 	useEffect(() => {
 		if (accountRegions.length > 0 && !isInitialRegionsSet) {
-			setSelectedRegions(accountRegions);
+			setSelectedRegions(
+				accountRegions.includes('all') ? allRegions() : accountRegions,
+			);
 			setIsInitialRegionsSet(true);
-			setIncludeAllRegions(accountRegions.includes('all'));
+			setIncludeAllRegions(
+				accountRegions.includes('all') ||
+					accountRegions.length === allRegions().length,
+			);
 		}
 	}, [accountRegions, isInitialRegionsSet]);
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
-			const payload: AWSAccountConfigPayload = {
+			const payload = {
 				config: {
-					regions: selectedRegions,
+					aws: {
+						regions: selectedRegions,
+					},
 				},
 			};
 
-			updateConfig(
-				{ accountId: account?.id, payload },
+			updateAccount(
 				{
-					onSuccess: (response) => {
-						const newActiveAccount = response?.data;
+					pathParams: {
+						cloudProvider: INTEGRATION_TYPES.AWS,
+						id: account?.id || '',
+					},
+					data: payload,
+				},
+				{
+					onSuccess: () => {
+						const newActiveAccount = {
+							...account,
+							config: {
+								...account.config,
+								regions: selectedRegions,
+							},
+						};
 						setActiveAccount(newActiveAccount);
 						onClose();
+						toast.success('Account settings updated successfully', {
+							position: 'bottom-right',
+						});
 
 						logEvent('AWS Integration: Account settings Updated', {
-							cloudAccountId: newActiveAccount?.cloud_account_id,
-							enabledRegions: newActiveAccount?.config?.regions,
+							cloudAccountId: newActiveAccount.cloud_account_id,
+							enabledRegions: newActiveAccount.config.regions,
+						});
+					},
+					onError: (error) => {
+						toast.error('Failed to update account settings', {
+							description: error?.message,
+							position: 'bottom-right',
 						});
 					},
 				},
@@ -102,14 +131,7 @@ export function useAccountSettingsModal({
 		} catch (error) {
 			console.error('Form submission failed:', error);
 		}
-	}, [
-		form,
-		selectedRegions,
-		updateConfig,
-		account?.id,
-		setActiveAccount,
-		onClose,
-	]);
+	}, [form, selectedRegions, updateAccount, account, setActiveAccount, onClose]);
 
 	const isSaveDisabled = useMemo(
 		() => isEqual(selectedRegions.sort(), accountRegions.sort()),
@@ -119,7 +141,7 @@ export function useAccountSettingsModal({
 	const handleIncludeAllRegionsChange = useCallback((checked: boolean): void => {
 		setIncludeAllRegions(checked);
 		if (checked) {
-			setSelectedRegions(['all']);
+			setSelectedRegions(allRegions());
 		} else {
 			setSelectedRegions([]);
 		}

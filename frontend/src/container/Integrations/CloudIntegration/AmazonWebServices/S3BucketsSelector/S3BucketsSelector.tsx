@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select, Skeleton } from 'antd';
-import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
+import { useGetCloudIntegrationAccounts } from 'hooks/integration/useGetCloudIntegrationAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import './S3BucketsSelector.styles.scss';
@@ -8,6 +8,7 @@ import './S3BucketsSelector.styles.scss';
 interface S3BucketsSelectorProps {
 	onChange?: (bucketsByRegion: Record<string, string[]>) => void;
 	initialBucketsByRegion?: Record<string, string[]>;
+	disabled?: boolean;
 }
 
 /**
@@ -17,9 +18,10 @@ interface S3BucketsSelectorProps {
 function S3BucketsSelector({
 	onChange,
 	initialBucketsByRegion = {},
+	disabled: isSelectorDisabled = false,
 }: S3BucketsSelectorProps): JSX.Element {
 	const cloudAccountId = useUrlQuery().get('cloudAccountId');
-	const { data: accounts, isLoading } = useAwsAccounts();
+	const { data: accounts, isLoading } = useGetCloudIntegrationAccounts('aws');
 	const [bucketsByRegion, setBucketsByRegion] = useState<
 		Record<string, string[]>
 	>(initialBucketsByRegion);
@@ -88,13 +90,13 @@ function S3BucketsSelector({
 			<div className="s3-buckets-selector-title">Select S3 Buckets by Region</div>
 			<div className="s3-buckets-selector-content">
 				{allRegions.map((region) => {
-					const disabled = isRegionDisabled(region);
+					const isRegionUnavailable = isRegionDisabled(region);
 
 					return (
 						<div key={region} className="s3-buckets-selector-region">
 							<div className="s3-buckets-selector-region-header">
 								<div className="s3-buckets-selector-region-label">{region}</div>
-								{disabled && (
+								{isRegionUnavailable && (
 									<div className="s3-buckets-selector-region-help">
 										Region disabled in account settings; S3 buckets here will not be
 										synced.
@@ -109,7 +111,7 @@ function S3BucketsSelector({
 									onChange={(value): void => handleRegionBucketsChange(region, value)}
 									tokenSeparators={[',']}
 									allowClear
-									disabled={disabled}
+									disabled={isSelectorDisabled || isRegionUnavailable}
 									suffixIcon={null}
 									notFoundContent={null}
 									filterOption={false}

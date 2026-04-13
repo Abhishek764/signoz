@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd';
-import { ConnectionParams } from 'types/api/integrations/types';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 
 function RenderConnectionFields({
 	isConnectionParamsLoading,
@@ -7,51 +7,51 @@ function RenderConnectionFields({
 	isFormDisabled,
 }: {
 	isConnectionParamsLoading?: boolean;
-	connectionParams?: ConnectionParams | null;
+	connectionParams?: CloudintegrationtypesCredentialsDTO | null;
 	isFormDisabled?: boolean;
 }): JSX.Element | null {
 	if (
 		isConnectionParamsLoading ||
-		(!!connectionParams?.ingestion_url &&
-			!!connectionParams?.ingestion_key &&
-			!!connectionParams?.signoz_api_url &&
-			!!connectionParams?.signoz_api_key)
+		(!!connectionParams?.ingestionUrl &&
+			!!connectionParams?.ingestionKey &&
+			!!connectionParams?.sigNozApiUrl &&
+			!!connectionParams?.sigNozApiKey)
 	) {
 		return null;
 	}
 
 	return (
-		<Form.Item name="connection_params">
-			{!connectionParams?.ingestion_url && (
+		<Form.Item name="connectionParams">
+			{!connectionParams?.ingestionUrl && (
 				<Form.Item
-					name="ingestion_url"
+					name="ingestionUrl"
 					label="Ingestion URL"
 					rules={[{ required: true, message: 'Please enter ingestion URL' }]}
 				>
 					<Input placeholder="Enter ingestion URL" disabled={isFormDisabled} />
 				</Form.Item>
 			)}
-			{!connectionParams?.ingestion_key && (
+			{!connectionParams?.ingestionKey && (
 				<Form.Item
-					name="ingestion_key"
+					name="ingestionKey"
 					label="Ingestion Key"
 					rules={[{ required: true, message: 'Please enter ingestion key' }]}
 				>
 					<Input placeholder="Enter ingestion key" disabled={isFormDisabled} />
 				</Form.Item>
 			)}
-			{!connectionParams?.signoz_api_url && (
+			{!connectionParams?.sigNozApiUrl && (
 				<Form.Item
-					name="signoz_api_url"
+					name="sigNozApiUrl"
 					label="SigNoz API URL"
 					rules={[{ required: true, message: 'Please enter SigNoz API URL' }]}
 				>
 					<Input placeholder="Enter SigNoz API URL" disabled={isFormDisabled} />
 				</Form.Item>
 			)}
-			{!connectionParams?.signoz_api_key && (
+			{!connectionParams?.sigNozApiKey && (
 				<Form.Item
-					name="signoz_api_key"
+					name="sigNozApiKey"
 					label="SigNoz API KEY"
 					rules={[{ required: true, message: 'Please enter SigNoz API Key' }]}
 				>

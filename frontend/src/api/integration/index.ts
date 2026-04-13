@@ -1,4 +1,5 @@
 import axios from 'api';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	CloudAccount,
 	ServiceData,
@@ -15,7 +16,6 @@ import {
 } from 'types/api/integrations/aws';
 import {
 	AzureAccountConfig,
-	ConnectionParams,
 	IAzureDeploymentCommands,
 } from 'types/api/integrations/types';
 
@@ -86,17 +86,8 @@ export const updateServiceConfig = async (
 	return response.data;
 };
 
-export const getConnectionParams = async (
-	cloudServiceId: string,
-): Promise<ConnectionParams> => {
-	const response = await axios.get(
-		`/cloud-integrations/${cloudServiceId}/accounts/generate-connection-params`,
-	);
-	return response.data.data;
-};
-
 export const getAzureDeploymentCommands = async (params: {
-	agent_config: ConnectionParams;
+	agent_config: CloudintegrationtypesCredentialsDTO;
 	account_config: AzureCloudAccountConfig;
 }): Promise<IAzureDeploymentCommands> => {
 	const response = await axios.post(

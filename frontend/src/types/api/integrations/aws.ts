@@ -1,11 +1,10 @@
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
-
-import { ConnectionParams } from './types';
 
 export interface GenerateConnectionUrlPayload {
 	agent_config: {
 		region: string;
-	} & ConnectionParams;
+	} & CloudintegrationtypesCredentialsDTO;
 	account_config: {
 		regions: string[];
 	};

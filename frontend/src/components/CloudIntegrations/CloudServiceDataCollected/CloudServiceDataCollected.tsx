@@ -1,5 +1,8 @@
 import { Table } from 'antd';
-import { ServiceData } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import {
+	CloudintegrationtypesCollectedLogAttributeDTO,
+	CloudintegrationtypesCollectedMetricDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { BarChart2, ScrollText } from 'lucide-react';
 
 import './CloudServiceDataCollected.styles.scss';
@@ -8,8 +11,8 @@ function CloudServiceDataCollected({
 	logsData,
 	metricsData,
 }: {
-	logsData: ServiceData['data_collected']['logs'];
-	metricsData: ServiceData['data_collected']['metrics'];
+	logsData: CloudintegrationtypesCollectedLogAttributeDTO[] | null | undefined;
+	metricsData: CloudintegrationtypesCollectedMetricDTO[] | null | undefined;
 }): JSX.Element {
 	const logsColumns = [
 		{

@@ -2,23 +2,30 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
-import { Color } from '@signozhq/design-tokens';
 import { toast } from '@signozhq/sonner';
 import { Switch } from '@signozhq/switch';
 import Tabs from '@signozhq/tabs';
-import { Popover, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
+import {
+	getListServicesMetadataQueryKey,
+	invalidateGetService,
+	invalidateListServicesMetadata,
+	useGetService,
+	useUpdateService,
+} from 'api/generated/services/cloudintegration';
+import {
+	CloudintegrationtypesServiceDTO,
+	ListServicesMetadata200,
+} from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/ServiceDashboards/ServiceDashboards';
-import { AWSServiceConfig } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
-import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
-import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+import { IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { CheckCircle, Save, TriangleAlert, X } from 'lucide-react';
+import { Save, X } from 'lucide-react';
 
-import { ConfigConnectionStatus } from '../../ConfigConnectionStatus/ConfigConnectionStatus';
 import S3BucketsSelector from '../S3BucketsSelector/S3BucketsSelector';
 
 import './ServiceDetails.styles.scss';
@@ -28,21 +35,41 @@ type ServiceConfigFormValues = {
 	metricsEnabled: boolean;
 	s3BucketsByRegion: Record<string, string[]>;
 };
+type ServiceDetailsData = CloudintegrationtypesServiceDTO & {
+	status?: IServiceStatus;
+};
 
 function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
+	const isReadOnly = !cloudAccountId;
+	const serviceQueryParams = cloudAccountId
+		? { cloud_integration_id: cloudAccountId }
+		: undefined;
 
 	const {
+		queryKey: _queryKey,
 		data: serviceDetailsData,
 		isLoading: isServiceDetailsLoading,
-	} = useServiceDetails(serviceId || '', cloudAccountId || undefined);
+	} = useGetService(
+		{
+			cloudProvider: INTEGRATION_TYPES.AWS,
+			serviceId: serviceId || '',
+		},
+		{
+			...serviceQueryParams,
+		},
+		{
+			query: {
+				enabled: !!serviceId,
+				select: (response): ServiceDetailsData => response.data,
+			},
+		},
+	);
 
-	// eslint-disable-next-line @typescript-eslint/naming-convention
-	const { config } = serviceDetailsData ?? {};
-
-	const awsConfig = config as AWSServiceConfig | undefined;
+	const awsConfig = serviceDetailsData?.cloudIntegrationService?.config?.aws;
+	const serviceDetailsId = serviceDetailsData?.id;
 
 	const {
 		control,
@@ -54,7 +81,7 @@ function ServiceDetails(): JSX.Element | null {
 		defaultValues: {
 			logsEnabled: awsConfig?.logs?.enabled || false,
 			metricsEnabled: awsConfig?.metrics?.enabled || false,
-			s3BucketsByRegion: awsConfig?.logs?.s3_buckets || {},
+			s3BucketsByRegion: awsConfig?.logs?.s3Buckets || {},
 		},
 	});
 
@@ -62,13 +89,22 @@ function ServiceDetails(): JSX.Element | null {
 		reset({
 			logsEnabled: awsConfig?.logs?.enabled || false,
 			metricsEnabled: awsConfig?.metrics?.enabled || false,
-			s3BucketsByRegion: awsConfig?.logs?.s3_buckets || {},
+			s3BucketsByRegion: awsConfig?.logs?.s3Buckets || {},
 		});
 	}, [awsConfig, reset]);
 
+	// Ensure form state does not leak across service switches while new details load.
+	useEffect(() => {
+		reset({
+			logsEnabled: false,
+			metricsEnabled: false,
+			s3BucketsByRegion: {},
+		});
+	}, [reset, serviceId]);
+
 	useEffect(() => {
 		resetToAwsConfig();
-	}, [resetToAwsConfig]);
+	}, [resetToAwsConfig, serviceDetailsId]);
 
 	// log telemetry event on visiting details of a service.
 	useEffect(() => {
@@ -81,9 +117,9 @@ function ServiceDetails(): JSX.Element | null {
 	}, [cloudAccountId, serviceId]);
 
 	const {
-		mutate: updateServiceConfig,
+		mutate: updateService,
 		isLoading: isUpdatingServiceConfig,
-	} = useUpdateServiceConfig();
+	} = useUpdateService();
 
 	const queryClient = useQueryClient();
 
@@ -100,18 +136,23 @@ function ServiceDetails(): JSX.Element | null {
 					return;
 				}
 
-				updateServiceConfig(
+				updateService(
 					{
-						serviceId,
-						payload: {
-							cloud_account_id: cloudAccountId,
+						pathParams: {
+							cloudProvider: INTEGRATION_TYPES.AWS,
+							id: cloudAccountId,
+							serviceId,
+						},
+						data: {
 							config: {
-								logs: {
-									enabled: logsEnabled,
-									s3_buckets: s3BucketsByRegion,
-								},
-								metrics: {
-									enabled: metricsEnabled,
+								aws: {
+									logs: {
+										enabled: logsEnabled,
+										s3Buckets: s3BucketsByRegion,
+									},
+									metrics: {
+										enabled: metricsEnabled,
+									},
 								},
 							},
 						},
@@ -122,10 +163,58 @@ function ServiceDetails(): JSX.Element | null {
 							// instead of waiting for the refetch to complete.
 							reset(values);
 
-							queryClient.invalidateQueries([
-								REACT_QUERY_KEY.AWS_SERVICE_DETAILS,
-								serviceId,
-							]);
+							const servicesListQueryKey = getListServicesMetadataQueryKey(
+								{
+									cloudProvider: INTEGRATION_TYPES.AWS,
+								},
+								{
+									cloud_integration_id: cloudAccountId,
+								},
+							);
+
+							queryClient.setQueryData<ListServicesMetadata200 | undefined>(
+								servicesListQueryKey,
+								(prev) => {
+									if (!prev?.data?.services?.length) {
+										return prev;
+									}
+
+									const isServiceEnabled = logsEnabled || metricsEnabled;
+
+									return {
+										...prev,
+										data: {
+											...prev.data,
+											services: prev.data.services.map((service) =>
+												service.id === serviceId
+													? { ...service, enabled: isServiceEnabled }
+													: service,
+											),
+										},
+									};
+								},
+							);
+
+							invalidateGetService(
+								queryClient,
+								{
+									cloudProvider: INTEGRATION_TYPES.AWS,
+									serviceId,
+								},
+								{
+									cloud_integration_id: cloudAccountId,
+								},
+							);
+
+							invalidateListServicesMetadata(
+								queryClient,
+								{
+									cloudProvider: INTEGRATION_TYPES.AWS,
+								},
+								{
+									cloud_integration_id: cloudAccountId,
+								},
+							);
 
 							logEvent('AWS Integration: Service settings saved', {
 								cloudAccountId,
@@ -147,7 +236,7 @@ function ServiceDetails(): JSX.Element | null {
 				console.error('Form submission failed:', error);
 			}
 		},
-		[serviceId, cloudAccountId, updateServiceConfig, queryClient, reset],
+		[serviceId, cloudAccountId, updateService, queryClient, reset],
 	);
 
 	if (isServiceDetailsLoading) {
@@ -168,21 +257,11 @@ function ServiceDetails(): JSX.Element | null {
 		const logsEnabled = watch('logsEnabled');
 		const metricsEnabled = watch('metricsEnabled');
 		const s3BucketsByRegion = watch('s3BucketsByRegion');
+		const isServiceConfigEnabled = logsEnabled || metricsEnabled;
 
-		const isLogsSupported = serviceDetailsData?.supported_signals?.logs || false;
+		const isLogsSupported = serviceDetailsData?.supportedSignals?.logs || false;
 		const isMetricsSupported =
-			serviceDetailsData?.supported_signals?.metrics || false;
-
-		const logsStatus = serviceDetailsData?.status?.logs || null;
-		const metricsStatus = serviceDetailsData?.status?.metrics || null;
-
-		const logsConnectionStatus = logsStatus?.find(
-			(log) => log.last_received_ts_ms > 0,
-		);
-
-		const metricsConnectionStatus = metricsStatus?.find(
-			(metric) => metric.last_received_ts_ms > 0,
-		);
+			serviceDetailsData?.supportedSignals?.metrics || false;
 
 		const hasUnsavedChanges = isDirty;
 
@@ -202,23 +281,6 @@ function ServiceDetails(): JSX.Element | null {
 							<div className="aws-service-details-overview-configuration-logs">
 								<div className="aws-service-details-overview-configuration-title">
 									<div className="aws-service-details-overview-configuration-title-text">
-										{logsEnabled && (
-											<Popover
-												content={<ConfigConnectionStatus status={logsStatus} />}
-												trigger="hover"
-												placement="right"
-												overlayClassName="config-connection-status-popover"
-											>
-												<div className="aws-service-details-overview-configuration-title-text-icon">
-													{logsConnectionStatus ? (
-														<CheckCircle size={16} color={Color.BG_FOREST_500} />
-													) : (
-														<TriangleAlert size={16} color={Color.BG_AMBER_500} />
-													)}
-												</div>
-											</Popover>
-										)}
-
 										<span>Log Collection</span>
 									</div>
 									<div className="configuration-action">
@@ -228,7 +290,7 @@ function ServiceDetails(): JSX.Element | null {
 											render={({ field }): JSX.Element => (
 												<Switch
 													checked={field.value}
-													disabled={isUpdatingServiceConfig}
+													disabled={isUpdatingServiceConfig || isReadOnly}
 													onCheckedChange={(checked): void => {
 														field.onChange(checked);
 													}}
@@ -247,6 +309,7 @@ function ServiceDetails(): JSX.Element | null {
 												<S3BucketsSelector
 													initialBucketsByRegion={field.value}
 													onChange={field.onChange}
+													disabled={isReadOnly}
 												/>
 											)}
 										/>
@@ -259,23 +322,6 @@ function ServiceDetails(): JSX.Element | null {
 							<div className="aws-service-details-overview-configuration-metrics">
 								<div className="aws-service-details-overview-configuration-title">
 									<div className="aws-service-details-overview-configuration-title-text">
-										{metricsEnabled && (
-											<Popover
-												content={<ConfigConnectionStatus status={metricsStatus} />}
-												trigger="hover"
-												placement="right"
-												overlayClassName="config-connection-status-popover"
-											>
-												<div className="aws-service-details-overview-configuration-title-text-icon">
-													{metricsConnectionStatus ? (
-														<CheckCircle size={16} color={Color.BG_FOREST_500} />
-													) : (
-														<TriangleAlert size={16} color={Color.BG_AMBER_500} />
-													)}
-												</div>
-											</Popover>
-										)}
-
 										<span>Metric Collection</span>
 									</div>
 									<div className="configuration-action">
@@ -285,7 +331,7 @@ function ServiceDetails(): JSX.Element | null {
 											render={({ field }): JSX.Element => (
 												<Switch
 													checked={field.value}
-													disabled={isUpdatingServiceConfig}
+													disabled={isUpdatingServiceConfig || isReadOnly}
 													onCheckedChange={field.onChange}
 												/>
 											)}
@@ -295,7 +341,7 @@ function ServiceDetails(): JSX.Element | null {
 							</div>
 						)}
 
-						{hasUnsavedChanges && (
+						{hasUnsavedChanges && !isReadOnly && (
 							<div className="aws-service-details-overview-configuration-actions">
 								<Button
 									variant="solid"
@@ -330,7 +376,10 @@ function ServiceDetails(): JSX.Element | null {
 					variables={{}}
 					markdownContent={serviceDetailsData?.overview}
 				/>
-				<ServiceDashboards service={serviceDetailsData} />
+				<ServiceDashboards
+					service={serviceDetailsData}
+					isInteractive={!isReadOnly && isServiceConfigEnabled}
+				/>
 			</div>
 		);
 	};
@@ -339,8 +388,8 @@ function ServiceDetails(): JSX.Element | null {
 		return (
 			<div className="aws-service-details-data-collected-table">
 				<CloudServiceDataCollected
-					logsData={serviceDetailsData?.data_collected?.logs || []}
-					metricsData={serviceDetailsData?.data_collected?.metrics || []}
+					logsData={serviceDetailsData?.dataCollected?.logs || []}
+					metricsData={serviceDetailsData?.dataCollected?.metrics || []}
 				/>
 			</div>
 		);

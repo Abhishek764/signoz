@@ -5,6 +5,7 @@ import { Button } from '@signozhq/button';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
 import { Modal } from 'antd/lib';
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import { removeIntegrationAccount } from 'api/integration';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -16,12 +17,11 @@ import {
 	CloudAccount,
 } from 'container/Integrations/types';
 import { CornerDownRight, Unlink } from 'lucide-react';
-import { ConnectionParams } from 'types/api/integrations/types';
 
 interface AzureAccountFormProps {
 	mode?: 'add' | 'edit';
 	selectedAccount: CloudAccount | null;
-	connectionParams: ConnectionParams;
+	connectionParams: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 	isLoading: boolean;
 	onSubmit: (values: {

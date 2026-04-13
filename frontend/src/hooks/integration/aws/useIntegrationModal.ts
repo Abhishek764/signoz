@@ -6,22 +6,27 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { toast } from '@signozhq/sonner';
 import { Form, FormInstance } from 'antd';
+import {
+	CreateAccountMutationResult,
+	GetConnectionCredentialsQueryResult,
+	useCreateAccount,
+} from 'api/generated/services/cloudintegration';
+import { useGetConnectionCredentials } from 'api/generated/services/cloudintegration';
+import {
+	CloudintegrationtypesCredentialsDTO,
+	CloudintegrationtypesPostableAccountDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
 } from 'container/Integrations/CloudIntegration/AmazonWebServices/HeroSection/types';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import useAxiosError from 'hooks/useAxiosError';
-import {
-	ConnectionUrlResponse,
-	GenerateConnectionUrlPayload,
-} from 'types/api/integrations/aws';
-import { ConnectionParams } from 'types/api/integrations/types';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
-import { useConnectionParams } from './useConnectionParams';
-import { useGenerateConnectionUrl } from './useGenerateConnectionUrl';
 
 interface UseIntegrationModalProps {
 	onClose: () => void;
@@ -46,7 +51,7 @@ interface UseIntegrationModal {
 	accountId?: string;
 	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
-	connectionParams?: ConnectionParams;
+	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
 }
 
@@ -92,32 +97,53 @@ export function useIntegrationModal({
 		onClose();
 	}, [onClose]);
 
-	const {
-		mutate: generateUrl,
-		isLoading: isGeneratingUrl,
-	} = useGenerateConnectionUrl();
+	const { mutate: generateUrl, isLoading: isGeneratingUrl } = useCreateAccount();
 
 	const handleError = useAxiosError();
 	const {
 		data: connectionParams,
 		isLoading: isConnectionParamsLoading,
-	} = useConnectionParams({ options: { onError: handleError } });
+	} = useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
+		{
+			cloudProvider: INTEGRATION_TYPES.AWS,
+		},
+		{
+			query: {
+				onError: handleError,
+			},
+		},
+	);
 
 	const handleGenerateUrl = useCallback(
-		(payload: GenerateConnectionUrlPayload): void => {
-			generateUrl(payload, {
-				onSuccess: (data: ConnectionUrlResponse) => {
-					logEvent('AWS Integration: Account connection attempt redirected to AWS', {
-						id: data.account_id,
-					});
-					window.open(data.connection_url, '_blank');
-					setModalState(ModalStateEnum.WAITING);
-					setAccountId(data.account_id);
+		(payload: CloudintegrationtypesPostableAccountDTO): void => {
+			generateUrl(
+				{
+					pathParams: { cloudProvider: INTEGRATION_TYPES.AWS },
+					data: payload,
 				},
-				onError: () => {
-					setModalState(ModalStateEnum.ERROR);
+				{
+					onSuccess: (response: CreateAccountMutationResult) => {
+						const accountId = response.data.id;
+						const connectionUrl = response.data.connectionArtifact.aws.connectionUrl;
+
+						logEvent(
+							'AWS Integration: Account connection attempt redirected to AWS',
+							{
+								id: accountId,
+							},
+						);
+						window.open(connectionUrl, '_blank');
+						setModalState(ModalStateEnum.WAITING);
+						setAccountId(accountId);
+					},
+					onError: () => {
+						setModalState(ModalStateEnum.ERROR);
+						toast.error('Failed to create account connection', {
+							position: 'bottom-right',
+						});
+					},
 				},
-			});
+			);
 		},
 		[generateUrl],
 	);
@@ -127,16 +153,18 @@ export function useIntegrationModal({
 			setIsLoading(true);
 			const values = await form.validateFields();
 
-			const payload: GenerateConnectionUrlPayload = {
-				agent_config: {
-					region: values.region,
-					ingestion_url: connectionParams?.ingestion_url || values.ingestion_url,
-					ingestion_key: connectionParams?.ingestion_key || values.ingestion_key,
-					signoz_api_url: connectionParams?.signoz_api_url || values.signoz_api_url,
-					signoz_api_key: connectionParams?.signoz_api_key || values.signoz_api_key,
+			const payload: CloudintegrationtypesPostableAccountDTO = {
+				config: {
+					aws: {
+						deploymentRegion: values.region,
+						regions: selectedRegions,
+					},
 				},
-				account_config: {
-					regions: includeAllRegions ? ['all'] : selectedRegions,
+				credentials: {
+					ingestionUrl: connectionParams?.data?.ingestionUrl || values.ingestionUrl,
+					ingestionKey: connectionParams?.data?.ingestionKey || values.ingestionKey,
+					sigNozApiUrl: connectionParams?.data?.sigNozApiUrl || values.sigNozApiUrl,
+					sigNozApiKey: connectionParams?.data?.sigNozApiKey || values.sigNozApiKey,
 				},
 			};
 
@@ -146,13 +174,7 @@ export function useIntegrationModal({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [
-		form,
-		includeAllRegions,
-		selectedRegions,
-		handleGenerateUrl,
-		connectionParams,
-	]);
+	}, [form, selectedRegions, handleGenerateUrl, connectionParams]);
 
 	return {
 		form,
@@ -173,7 +195,9 @@ export function useIntegrationModal({
 		setModalState,
 		selectedDeploymentRegion,
 		handleRegionChange,
-		connectionParams,
+		connectionParams: connectionParams?.data as
+			| CloudintegrationtypesCredentialsDTO
+			| undefined,
 		isConnectionParamsLoading,
 	};
 }

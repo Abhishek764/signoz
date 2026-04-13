@@ -1,11 +1,11 @@
+import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
-import { AzureService } from 'container/Integrations/types';
 
 interface AzureServicesListViewProps {
-	selectedService: AzureService | null;
-	enabledServices: AzureService[];
-	notEnabledServices: AzureService[];
-	onSelectService: (service: AzureService) => void;
+	selectedService: CloudintegrationtypesServiceMetadataDTO | null;
+	enabledServices: CloudintegrationtypesServiceMetadataDTO[];
+	notEnabledServices: CloudintegrationtypesServiceMetadataDTO[];
+	onSelectService: (service: CloudintegrationtypesServiceMetadataDTO) => void;
 }
 
 export default function AzureServicesListView({
@@ -17,7 +17,9 @@ export default function AzureServicesListView({
 	const isEnabledServicesEmpty = enabledServices.length === 0;
 	const isNotEnabledServicesEmpty = notEnabledServices.length === 0;
 
-	const renderServiceItem = (service: AzureService): JSX.Element => {
+	const renderServiceItem = (
+		service: CloudintegrationtypesServiceMetadataDTO,
+	): JSX.Element => {
 		return (
 			<div
 				className={cx('azure-services-list-view-sidebar-content-item', {

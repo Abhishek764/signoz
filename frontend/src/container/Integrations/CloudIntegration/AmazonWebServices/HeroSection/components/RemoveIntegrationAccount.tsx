@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useMutation } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import removeAwsIntegrationAccount from 'api/integration/aws/removeAwsIntegrationAccount';
+import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { INTEGRATION_TELEMETRY_EVENTS } from 'container/Integrations/constants';
 import { useNotifications } from 'hooks/useNotifications';
@@ -26,24 +25,31 @@ function RemoveIntegrationAccount({
 	};
 
 	const {
-		mutate: removeIntegration,
+		mutate: disconnectAccount,
 		isLoading: isRemoveIntegrationLoading,
-	} = useMutation(removeAwsIntegrationAccount, {
-		onSuccess: () => {
-			onRemoveIntegrationAccountSuccess?.();
-			setIsModalOpen(false);
-		},
-		onError: () => {
-			notifications.error({
-				message: SOMETHING_WENT_WRONG,
-			});
+	} = useDisconnectAccount({
+		mutation: {
+			onSuccess: () => {
+				onRemoveIntegrationAccountSuccess?.();
+				setIsModalOpen(false);
+			},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
 		},
 	});
 	const handleOk = (): void => {
 		logEvent(INTEGRATION_TELEMETRY_EVENTS.AWS_INTEGRATION_ACCOUNT_REMOVED, {
 			accountId,
 		});
-		removeIntegration(accountId);
+		disconnectAccount({
+			pathParams: {
+				cloudProvider: 'aws',
+				id: accountId,
+			},
+		});
 	};
 
 	const handleCancel = (): void => {

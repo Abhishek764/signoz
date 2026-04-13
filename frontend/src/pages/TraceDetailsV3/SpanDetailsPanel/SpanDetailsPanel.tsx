@@ -14,7 +14,7 @@ import {
 	Timer,
 } from '@signozhq/icons';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
-import { Tooltip } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
@@ -469,12 +469,16 @@ function SpanDetailsPanel({
 					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
 				}
 			/>
-			{selectedSpan && (
+			{selectedSpan ? (
 				<SpanDetailsContent
 					selectedSpan={selectedSpan}
 					traceStartTime={traceStartTime}
 					traceEndTime={traceEndTime}
 				/>
+			) : (
+				<div className="span-details-panel__body">
+					<Skeleton active paragraph={{ rows: 6 }} title={{ width: '60%' }} />
+				</div>
 			)}
 		</>
 	);

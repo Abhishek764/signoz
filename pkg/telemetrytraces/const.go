@@ -6,11 +6,11 @@ import (
 
 const (
 
-	// Internal Columns
+	// Internal Columns.
 	SpanTimestampBucketStartColumn = "ts_bucket_start"
 	SpanResourceFingerPrintColumn  = "resource_fingerprint"
 
-	// Intrinsic Columns
+	// Intrinsic Columns.
 	SpanTimestampColumn        = "timestamp"
 	SpanTraceIDColumn          = "trace_id"
 	SpanSpanIDColumn           = "span_id"
@@ -27,7 +27,7 @@ const (
 	SpanEventsColumn           = "events"
 	SpanLinksColumn            = "links"
 
-	// Calculated Columns
+	// Calculated Columns.
 	SpanResponseStatusCodeColumn = "response_status_code"
 	SpanExternalHTTPURLColumn    = "external_http_url"
 	SpanHTTPURLColumn            = "http_url"
@@ -39,7 +39,7 @@ const (
 	SpanHasErrorColumn           = "has_error"
 	SpanIsRemoteColumn           = "is_remote"
 
-	// Contextual Columns
+	// Contextual Columns.
 	SpanAttributesStringColumn = "attributes_string"
 	SpanAttributesNumberColumn = "attributes_number"
 	SpanAttributesBoolColumn   = "attributes_bool"

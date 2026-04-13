@@ -34,7 +34,7 @@ const mockChangelog: ChangelogSchema = {
 				id: 1,
 				documentId: 'doc1',
 				ext: '.webp',
-				url: '/uploads/feature1.webp',
+				url: '/uploads/feature1.webp', // eslint-disable-line rulesdir/no-unsupported-asset-pattern
 				mime: 'image/webp',
 				alternativeText: null,
 			},

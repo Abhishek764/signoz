@@ -100,8 +100,8 @@ func NewHandlers(
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
 		RegistryHandler:         registryHandler,
-		CloudIntegrationHandler: implcloudintegration.NewHandler(),
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
+		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 	}
 }

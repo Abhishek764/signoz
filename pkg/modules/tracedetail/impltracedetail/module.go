@@ -70,21 +70,6 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 
 	m.logger.DebugContext(ctx, "cache miss for v3 waterfall", slog.String("trace_id", traceID))
 
-	traceData, err := m.getTraceDataFromDB(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-
-	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
-	if cacheErr := m.cache.Set(ctx, orgID, cacheKey, traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
-		m.logger.ErrorContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))
-	}
-
-	return traceData, nil
-}
-
-// getTraceDataFromDB fetches and builds the waterfall cache from ClickHouse. Returns tracedetailtypes.ErrTraceNotFound when not found.
-func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -98,6 +83,20 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 	if len(spanItems) == 0 {
 		return nil, tracedetailtypes.ErrTraceNotFound
 	}
+
+	traceData := computeWaterfallTrace(spanItems)
+
+	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
+	if cacheErr := m.cache.Set(ctx, orgID, cacheKey, traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
+		m.logger.ErrorContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))
+	}
+
+	return traceData, nil
+}
+
+// computeWaterfallTrace builds a WaterfallTrace from raw span rows by constructing
+// the parent-child tree, inserting missing span placeholders, and calculating service times.
+func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailtypes.WaterfallTrace {
 
 	var (
 		startTime, endTime, durationNano, totalErrorSpans uint64
@@ -179,7 +178,7 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 		tracedetailv2.CalculateServiceTime(serviceNameIntervalMap),
 		traceRoots,
 		hasMissingSpans,
-	), nil
+	)
 }
 
 func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {

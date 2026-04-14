@@ -90,12 +90,14 @@ func TestBuildVariableDefinitions(t *testing.T) {
 			name: "nested fields definitions coming from NotificationTemplateData",
 			tmpl: "$severity for $service",
 			data: &NotificationTemplateData{Labels: template.KV{
-				"severity": "critical",
-				"service":  "test",
+				"severity":              "critical",
+				"service":               "test",
+				"cloud.region.instance": "ap-south-1",
 			}},
 			expectedVars: []string{
 				"{{ $severity := index .labels \"severity\" }}",
 				"{{ $service := index .labels \"service\" }}",
+				"{{ $cloud_region_instance := index .labels \"cloud.region.instance\" }}",
 			},
 		},
 		{
@@ -148,15 +150,17 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 		expectError              bool
 	}{
 		{
-			name: "NotificationTemplateData with dollar variables",
-			tmpl: "[$status] $rule_name (ID: $rule_id) - Firing: $total_firing, Resolved: $total_resolved, Severity: $severity",
+			name: "NotificationTemplateData with dollar variables and labels with dots and hyphens",
+			tmpl: "[$status] $rule_name (ID: $rule_id) - Firing: $total_firing, Resolved: $total_resolved, Severity: $severity\nHTTP method is: $http_request_method\nRequest path is: $http_request_path",
 			data: &NotificationTemplateData{
 				Receiver:  "pagerduty",
 				Status:    "firing",
 				AlertName: "HighMemory",
 				RuleID:    "rule-123",
 				Labels: template.KV{
-					"severity": "critical",
+					"severity":            "critical",
+					"http.request.method": "GET",
+					"http-request-path":   "/api/v1/metrics",
 				},
 				TotalFiring:   3,
 				TotalResolved: 1,
@@ -169,14 +173,18 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 				"{{$total_resolved := .total_resolved}}",
 				"{{$severity := index .labels \"severity\"}}",
 				"[{{ .status }}] {{ .rule_name }} (ID: {{ .rule_id }}) - Firing: {{ .total_firing }}, Resolved: {{ .total_resolved }}",
+				"{{$http_request_method := index .labels \"http.request.method\"}}",
+				"{{$http_request_path := index .labels \"http-request-path\"}}",
 			},
 			expectedData: map[string]any{
-				"status":         "firing",
-				"rule_name":      "HighMemory",
-				"rule_id":        "rule-123",
-				"total_firing":   3,
-				"total_resolved": 1,
-				"severity":       "critical",
+				"status":              "firing",
+				"rule_name":           "HighMemory",
+				"rule_id":             "rule-123",
+				"total_firing":        3,
+				"total_resolved":      1,
+				"severity":            "critical",
+				"http_request_method": "GET",
+				"http_request_path":   "/api/v1/metrics",
 			},
 			expectedUnknownVars: map[string]bool{},
 		},
@@ -224,7 +232,8 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 				AlertName:   "HighCPU",
 				TotalFiring: 5,
 				Labels: template.KV{
-					"value": "<MASKED VALUE>",
+					"value":      "<MASKED VALUE>",
+					"cpu.number": "10",
 				},
 				Annotations: template.KV{
 					"value": "85%",
@@ -234,11 +243,13 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 				"{{$rule_name := .rule_name}}",
 				"{{$value := index .labels \"value\"}}",
 				"Alert {{ .rule_name }} has {{.total_firing}} firing alerts",
+				"{{$cpu_number := index .labels \"cpu.number\"}}",
 			},
 			expectedData: map[string]any{
 				"rule_name":    "HighCPU",
 				"total_firing": 5,
 				"value":        "<MASKED VALUE>",
+				"cpu_number":   "10",
 			},
 			expectedUnknownVars: map[string]bool{},
 		},

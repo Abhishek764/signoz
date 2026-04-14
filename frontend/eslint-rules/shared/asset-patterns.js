@@ -1,6 +1,13 @@
 'use strict';
 
-const ASSET_EXTENSIONS = ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.gif'];
+const ALLOWED_ASSET_EXTENSIONS = [
+	'.svg',
+	'.png',
+	'.webp',
+	'.jpg',
+	'.jpeg',
+	'.gif',
+];
 
 /**
  * Returns true if the string ends with an asset extension.
@@ -8,14 +15,14 @@ const ASSET_EXTENSIONS = ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.gif'];
  */
 function hasAssetExtension(str) {
 	if (typeof str !== 'string') return false;
-	return ASSET_EXTENSIONS.some((ext) => str.endsWith(ext));
+	return ALLOWED_ASSET_EXTENSIONS.some((ext) => str.endsWith(ext));
 }
 
 // Like hasAssetExtension but also matches mid-string with boundary check,
 // e.g. "/foo.svg?v=1" → true, "/icons.svg-dir/" → true (- is non-alphanumeric boundary)
 function containsAssetExtension(str) {
 	if (typeof str !== 'string') return false;
-	return ASSET_EXTENSIONS.some((ext) => {
+	return ALLOWED_ASSET_EXTENSIONS.some((ext) => {
 		const idx = str.indexOf(ext);
 		if (idx === -1) return false;
 		const afterIdx = idx + ext.length;
@@ -101,7 +108,7 @@ function isExternalUrl(str) {
 }
 
 module.exports = {
-	ASSET_EXTENSIONS,
+	ALLOWED_ASSET_EXTENSIONS,
 	PUBLIC_DIR_SEGMENTS,
 	hasAssetExtension,
 	containsAssetExtension,

@@ -1,7 +1,14 @@
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 
+import circusTentUrl from '@/assets/Icons/circus-tent.svg';
+import eightBallUrl from '@/assets/Icons/eight-ball.svg';
+
 import { ChecklistItem } from './HomeChecklist/HomeChecklist';
+
+export function getRandomItemIcon(): string {
+	return Math.random() < 0.5 ? eightBallUrl : circusTentUrl;
+}
 
 export const checkListStepToPreferenceKeyMap = {
 	WILL_DO_LATER: ORG_PREFERENCES.WELCOME_CHECKLIST_DO_LATER,

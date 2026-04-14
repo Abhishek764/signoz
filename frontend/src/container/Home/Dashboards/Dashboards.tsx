@@ -11,9 +11,9 @@ import { useAppContext } from 'providers/App/App';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
 
-import circusTentUrl from '@/assets/Icons/circus-tent.svg';
 import dialsUrl from '@/assets/Icons/dials.svg';
-import eightBallUrl from '@/assets/Icons/eight-ball.svg';
+
+import { getRandomItemIcon } from '../constants';
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
@@ -135,7 +135,7 @@ export default function Dashboards({
 						>
 							<div className="dashboard-item-name-container home-data-item-name-container">
 								<img
-									src={Math.random() % 2 === 0 ? eightBallUrl : circusTentUrl}
+									src={getRandomItemIcon()}
 									alt="alert-rules"
 									className="alert-rules-img"
 								/>

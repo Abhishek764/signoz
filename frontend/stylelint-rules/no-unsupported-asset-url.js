@@ -1,3 +1,23 @@
+/**
+ * Stylelint rule: local/no-unsupported-asset-url
+ *
+ * Disallows asset URLs in CSS `url()` declarations that are not base-path-safe.
+ * When SigNoz is served from a sub-path (e.g. /app/), absolute and public-dir
+ * relative paths break because they bypass Vite's module pipeline and don't get
+ * the runtime base-path prefix.
+ *
+ * Flagged patterns:
+ *   - Absolute paths:          url('/icons/logo.svg')
+ *   - Public-relative paths:   url('../public/icons/logo.svg')
+ *   - Public-dir segments:     url('Icons/logo.svg')  (resolves from public/)
+ *
+ * Required pattern (base-path-safe):
+ *   - src/assets ES import:    import logo from '../../assets/icons/logo.svg'
+ *                              then reference via the imported variable in JS/TS.
+ *   - Relative from src/assets in SCSS: url('../../assets/icons/logo.svg')
+ *
+ * See: https://vitejs.dev/guide/assets  (Static Asset Handling)
+ */
 import stylelint from 'stylelint';
 import { createRequire } from 'module';
 
@@ -42,7 +62,16 @@ const messages = stylelint.utils.ruleMessages(ruleName, {
 		`Use a relative path from src/assets/ instead: url('../../assets/...')`,
 });
 
-/** @type {import('stylelint').Rule} */
+/**
+ * Rule implementation. Walks every CSS declaration in the file and checks
+ * each url() path against three forbidden patterns (absolute, public-relative,
+ * public-dir segment). Reports a violation with a fix hint for each match.
+ *
+ * `primaryOption` is the value from the stylelint config — the rule is a no-op
+ * when falsy (i.e. `"local/no-unsupported-asset-url": [false]`).
+ *
+ * @type {import('stylelint').Rule}
+ */
 const rule = (primaryOption) => {
 	return (root, result) => {
 		if (!primaryOption) return;

@@ -15,8 +15,8 @@ import { GettableAlert } from 'types/api/alerts/get';
 import { USER_ROLES } from 'types/roles';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
-import circusTentUrl from '@/assets/Icons/circus-tent.svg';
-import eightBallUrl from '@/assets/Icons/eight-ball.svg';
+
+import { getRandomItemIcon } from '../constants';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -156,7 +156,7 @@ export default function AlertRules({
 					>
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
-								src={Math.random() % 2 === 0 ? eightBallUrl : circusTentUrl}
+								src={getRandomItemIcon()}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>

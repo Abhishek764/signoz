@@ -83,64 +83,6 @@ func TestRenderHTML_Composite(t *testing.T) {
 	html, err := renderer.Render(context.Background(), testMarkdown, MarkdownFormatHTML)
 	require.NoError(t, err)
 
-	// Verify no raw newlines remain (all replaced with <p></p>)
-	assert.NotContains(t, html, "\n")
-	assert.Contains(t, html, SoftLineBreakHTML)
-
-	// Headings
-	assert.Contains(t, html, "<h1>🔥 FIRING: High CPU Usage on api-gateway</h1>")
-	assert.Contains(t, html, "<h2>Alert Details</h2>")
-	assert.Contains(t, html, "<h2>Alert Labels</h2>")
-	assert.Contains(t, html, "<h2>Remediation Steps</h2>")
-	assert.Contains(t, html, "<h2>Affected Services</h2>")
-	assert.Contains(t, html, "<h2>Incident Checklist</h2>")
-
-	// Emphasis and inline formatting
-	assert.Contains(t, html, "<strong>FIRING</strong>")
-	assert.Contains(t, html, "<em>api-gateway</em>")
-	assert.Contains(t, html, "<del>resolved</del>")
-
-	// Links and autolinks
-	assert.Contains(t, html, `<a href="https://signoz.example.com/alerts/123">https://signoz.example.com/alerts/123</a>`)
-	assert.Contains(t, html, `<a href="https://signoz.example.com/alerts/123">View Alert in SigNoz</a>`)
-	assert.Contains(t, html, `<a href="https://signoz.example.com/logs?service=api-gateway">View Logs</a>`)
-	assert.Contains(t, html, `<a href="https://signoz.example.com/traces?service=api-gateway">View Traces</a>`)
-	assert.Contains(t, html, `<a href="https://runbooks.example.com/cpu-high">https://runbooks.example.com/cpu-high</a>`)
-
-	// Images
-	assert.Contains(t, html, `<img src="https://signoz.example.com/badges/critical.svg" alt="critical" title="Critical Alert">`)
-
-	// Inline code
-	assert.Contains(t, html, "<code>cpu_usage_percent</code>")
-	assert.Contains(t, html, "<code>90</code>")
-	assert.Contains(t, html, "<code>alertmanager</code>")
-
-	// Lists
-	assert.Contains(t, html, "<ul>")
-	assert.Contains(t, html, "<ol>")
-	assert.Contains(t, html, "<li>api-gateway</li>")
-	assert.Contains(t, html, "<li>Check current CPU usage on the pod</li>")
-
-	// Task list (GFM extension)
-	assert.Contains(t, html, `<input checked="" disabled="" type="checkbox"> Alert acknowledged`)
-	assert.Contains(t, html, `<input disabled="" type="checkbox"> Root cause identified`)
-
-	// Blockquotes (including nested)
-	assert.Contains(t, html, "<blockquote>")
-	assert.Contains(t, html, "This alert fires when CPU usage exceeds 90%")
-	assert.Contains(t, html, "<blockquote><p></p><p>For capacity planning guidelines")
-
-	// Tables (GFM extension)
-	assert.Contains(t, html, "<table>")
-	assert.Contains(t, html, "<th>Label</th>")
-	assert.Contains(t, html, "<th>Value</th>")
-	assert.Contains(t, html, "<td>api-gateway</td>")
-	assert.Contains(t, html, "<td>critical</td>")
-
-	// Code block
-	assert.Contains(t, html, `<code class="language-promql">`)
-	assert.Contains(t, html, `container_cpu_usage_seconds_total`)
-
 	// Full expected output for exact match
 	expected := `<h1>🔥 FIRING: High CPU Usage on api-gateway</h1><p></p>` +
 		`<p><a href="https://signoz.example.com/alerts/123">https://signoz.example.com/alerts/123</a><p></p><a href="https://runbooks.example.com/cpu-high">https://runbooks.example.com/cpu-high</a></p><p></p>` +
@@ -219,7 +161,7 @@ func TestRenderHTML_BlockElements(t *testing.T) {
 | Label    | Value       |
 | -------- | ----------- |
 | service  | api-gateway |
-| severity | critical    |
+| severity | <no value>    |
 
 ` + "```promql\navg(rate(container_cpu_usage_seconds_total{service=\"api-gateway\"}[5m])) by (pod) > 0.9\n```"
 
@@ -233,7 +175,7 @@ func TestRenderHTML_BlockElements(t *testing.T) {
 		`<blockquote><p></p><p>This alert fires when CPU usage exceeds 90% for more than 5 minutes.</p><p></p></blockquote><p></p>` +
 		`<table><p></p><thead><p></p><tr><p></p><th>Label</th><p></p><th>Value</th><p></p></tr><p></p></thead><p></p>` +
 		`<tbody><p></p><tr><p></p><td>service</td><p></p><td>api-gateway</td><p></p></tr><p></p>` +
-		`<tr><p></p><td>severity</td><p></p><td>critical</td><p></p></tr><p></p></tbody><p></p></table><p></p>` +
+		`<tr><p></p><td>severity</td><p></p><td>&lt;no value&gt;</td><p></p></tr><p></p></tbody><p></p></table><p></p>` +
 		`<pre><code class="language-promql">avg(rate(container_cpu_usage_seconds_total{service=&quot;api-gateway&quot;}[5m])) by (pod) &gt; 0.9<p></p></code></pre><p></p>`
 
 	assert.Equal(t, expected, html)

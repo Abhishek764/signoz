@@ -16,7 +16,7 @@ import { USER_ROLES } from 'types/roles';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
-import { getRandomItemIcon } from '../constants';
+import { getItemIcon } from '../constants';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -156,7 +156,7 @@ export default function AlertRules({
 					>
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
-								src={getRandomItemIcon()}
+								src={getItemIcon(rule.id)}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>

@@ -13,7 +13,7 @@ import { USER_ROLES } from 'types/roles';
 
 import dialsUrl from '@/assets/Icons/dials.svg';
 
-import { getRandomItemIcon } from '../constants';
+import { getItemIcon } from '../constants';
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
@@ -135,7 +135,7 @@ export default function Dashboards({
 						>
 							<div className="dashboard-item-name-container home-data-item-name-container">
 								<img
-									src={getRandomItemIcon()}
+									src={getItemIcon(dashboard.id)}
 									alt="alert-rules"
 									className="alert-rules-img"
 								/>

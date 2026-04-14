@@ -6,8 +6,13 @@ import eightBallUrl from '@/assets/Icons/eight-ball.svg';
 
 import { ChecklistItem } from './HomeChecklist/HomeChecklist';
 
-export function getRandomItemIcon(): string {
-	return Math.random() < 0.5 ? eightBallUrl : circusTentUrl;
+const ITEM_ICONS = [circusTentUrl, eightBallUrl];
+
+export function getItemIcon(id: string): string {
+	if (!id) {
+		return ITEM_ICONS[0];
+	}
+	return ITEM_ICONS[id.charCodeAt(id.length - 1) % ITEM_ICONS.length];
 }
 
 export const checkListStepToPreferenceKeyMap = {

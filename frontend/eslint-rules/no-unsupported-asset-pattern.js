@@ -104,7 +104,7 @@ module.exports = {
 				if (typeof value !== 'string') return;
 				if (isExternalUrl(value)) return;
 
-				if (isAbsolutePath(value) && hasAssetExtension(value)) {
+				if (isAbsolutePath(value) && containsAssetExtension(value)) {
 					context.report({
 						node,
 						messageId: 'absoluteString',
@@ -113,7 +113,7 @@ module.exports = {
 					return;
 				}
 
-				if (isRelativePublicDir(value) && hasAssetExtension(value)) {
+				if (isRelativePublicDir(value) && containsAssetExtension(value)) {
 					context.report({
 						node,
 						messageId: 'relativePublicString',
@@ -125,7 +125,7 @@ module.exports = {
 				// Catches relative paths that start with "public/" e.g. 'public/Logos/aws-dark.svg'.
 				// isRelativePublicDir only covers known sub-dirs (Icons/, Logos/, etc.),
 				// so this handles the case where the full "public/" prefix is written explicitly.
-				if (isPublicRelative(value) && hasAssetExtension(value)) {
+				if (isPublicRelative(value) && containsAssetExtension(value)) {
 					context.report({
 						node,
 						messageId: 'relativePublicString',
@@ -137,7 +137,7 @@ module.exports = {
 				// Also check the path inside a CSS url("...") wrapper
 				const urlPath = extractUrlPath(value);
 				if (urlPath && isExternalUrl(urlPath)) return;
-				if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
+				if (urlPath && isAbsolutePath(urlPath) && containsAssetExtension(urlPath)) {
 					context.report({
 						node,
 						messageId: 'absoluteString',
@@ -145,7 +145,11 @@ module.exports = {
 					});
 					return;
 				}
-				if (urlPath && isRelativePublicDir(urlPath) && hasAssetExtension(urlPath)) {
+				if (
+					urlPath &&
+					isRelativePublicDir(urlPath) &&
+					containsAssetExtension(urlPath)
+				) {
 					context.report({
 						node,
 						messageId: 'relativePublicString',
@@ -153,7 +157,11 @@ module.exports = {
 					});
 					return;
 				}
-				if (urlPath && isPublicRelative(urlPath) && hasAssetExtension(urlPath)) {
+				if (
+					urlPath &&
+					isPublicRelative(urlPath) &&
+					containsAssetExtension(urlPath)
+				) {
 					context.report({
 						node,
 						messageId: 'relativePublicString',

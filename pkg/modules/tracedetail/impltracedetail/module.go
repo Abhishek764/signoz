@@ -29,6 +29,8 @@ const (
 	fluxInterval      = 2 * time.Minute
 )
 
+var errTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
+
 type module struct {
 	telemetryStore telemetrystore.TelemetryStore
 	cache          cache.Cache
@@ -48,10 +50,10 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 
 	traceData, err := m.getTraceData(ctx, orgID, traceID)
 	if err != nil {
+		if errors.Is(err, errTraceNotFound) {
+			return response, nil
+		}
 		return nil, err
-	}
-	if traceData == nil {
-		return response, nil
 	}
 
 	// Span selection: all spans or windowed
@@ -91,7 +93,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 	return response, nil
 }
 
-// getTraceData returns the waterfall cache for the given traceID with fallback on DB
+// getTraceData returns the waterfall cache for the given traceID with fallback on DB.
 func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
 	if cached, err := m.getFromCache(ctx, orgID, traceID); err == nil {
 		return cached, nil
@@ -100,8 +102,8 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 	m.logger.DebugContext(ctx, "cache miss for v3 waterfall", slog.String("trace_id", traceID))
 
 	traceData, err := m.getTraceDataFromDB(ctx, traceID)
-	if err != nil || traceData == nil {
-		return traceData, err
+	if err != nil {
+		return nil, err
 	}
 
 	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
@@ -124,7 +126,7 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, errTraceNotFound
 		}
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error querying trace summary: %v", err)
 	}
@@ -156,7 +158,7 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 	}
 
 	if len(spanItems) == 0 {
-		return nil, nil
+		return nil, errTraceNotFound
 	}
 
 	var (

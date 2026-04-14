@@ -167,6 +167,14 @@ module.exports = {
 						messageId: 'relativePublicString',
 						data: { value: urlPath },
 					});
+					return;
+				}
+				if (urlPath && isPublicRelative(urlPath) && hasAssetExtension(urlPath)) {
+					context.report({
+						node,
+						messageId: 'relativePublicString',
+						data: { value: urlPath },
+					});
 				}
 			},
 

@@ -433,7 +433,7 @@ function Success(props: ISuccessProps): JSX.Element {
 							sidebarScrollEl.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
 						}
 					}
-				}, 50);
+				}, 20);
 			}
 
 			// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so

@@ -46,7 +46,7 @@ function TraceFlamegraph({
 	const { data, isFetching, error: fetchError } = useGetTraceFlamegraph({
 		traceId,
 		// selectedSpanId: firstSpanAtFetchLevel,
-		limit: 120000,
+		limit: 100002,
 	});
 
 	const spans = useMemo(() => data?.payload?.spans || [], [

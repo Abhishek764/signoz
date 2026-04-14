@@ -94,8 +94,8 @@ func (n *Notifier) templateAlerts(ctx context.Context, alerts []*types.Alert) er
 	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
-		DefaultTitleTemplate: "",
-		DefaultBodyTemplate:  "",
+		DefaultTitleTemplate: alertmanagertypes.NoOpTemplateString,
+		DefaultBodyTemplate:  alertmanagertypes.NoOpTemplateString,
 	}, alerts, markdownrenderer.MarkdownFormatNoop)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	alerts, numTruncated := truncateAlerts(n.conf.MaxAlerts, alerts)
 	// template alerts before preparing the notification data
 	if err := n.templateAlerts(ctx, alerts); err != nil {
-		return false, err
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 	}
 	data := notify.GetTemplateData(ctx, n.tmpl, alerts, n.logger)
 

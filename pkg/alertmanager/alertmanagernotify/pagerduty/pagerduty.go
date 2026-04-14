@@ -316,8 +316,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
 		TitleTemplate:        customTitle,
 		DefaultTitleTemplate: n.conf.Description,
-		BodyTemplate:         "NO_OP",
-		DefaultBodyTemplate:  "NO_OP",
+		BodyTemplate:         alertmanagertypes.NoOpTemplateString,
+		DefaultBodyTemplate:  alertmanagertypes.NoOpTemplateString,
 	}, alerts, markdownrenderer.MarkdownFormatNoop)
 	if err != nil {
 		return "", err
@@ -358,6 +358,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	title, err := n.prepareContent(ctx, as)
 	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
 	}
 

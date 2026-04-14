@@ -160,6 +160,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	bodyBlocks, err := n.prepareContent(ctx, as)
 	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
 	}
 
@@ -218,7 +219,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
 		// the default body template is not used and instead we add collection of labels and annotations for each alert
-		DefaultBodyTemplate: "NO_OP",
+		DefaultBodyTemplate: alertmanagertypes.NoOpTemplateString,
 	}, alerts, markdownrenderer.MarkdownFormatNoop)
 	if err != nil {
 		return nil, err

@@ -91,9 +91,9 @@ type attachment struct {
 	Title      string               `json:"title,omitempty"`
 	TitleLink  string               `json:"title_link,omitempty"`
 	Pretext    string               `json:"pretext,omitempty"`
-	Text       string               `json:"text,omitempty"`
-	Fallback   string               `json:"fallback,omitempty"`
-	CallbackID string               `json:"callback_id,omitempty"`
+	Text       string               `json:"text"`
+	Fallback   string               `json:"fallback"`
+	CallbackID string               `json:"callback_id"`
 	Fields     []config.SlackField  `json:"fields,omitempty"`
 	Actions    []config.SlackAction `json:"actions,omitempty"`
 	ImageURL   string               `json:"image_url,omitempty"`
@@ -121,6 +121,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	attachments, err := n.prepareContent(ctx, as, tmplText)
 	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
 	}
 
@@ -202,7 +203,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		DefaultTitleTemplate: n.conf.Title,
 		// use default body templating to prepare the attachment
 		// as default template uses plain text markdown rendering instead of blockkit
-		DefaultBodyTemplate: "NO_OP",
+		DefaultBodyTemplate: alertmanagertypes.NoOpTemplateString,
 	}, alerts, markdownrenderer.MarkdownFormatSlackMrkdwn)
 	if err != nil {
 		return nil, err

@@ -225,6 +225,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	default:
 		message, description, err := n.prepareContent(ctx, as)
 		if err != nil {
+			n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 			return nil, false, err
 		}
 

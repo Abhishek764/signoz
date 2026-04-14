@@ -263,6 +263,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	// Prepare the content for the email
 	title, htmlBody, err := n.prepareContent(ctx, as, data)
 	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
 	}
 	if title != "" {
@@ -360,9 +361,6 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		}
 	}
 
-	// TODO: handle case where both custom and default body templates
-	// result in empty body, write no message in the email body
-
 	if htmlBody != "" {
 		// Html template
 		// Preferred alternative placed last per section 5.1.4 of RFC 2046
@@ -414,7 +412,7 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Headers["Subject"],
 		// no templating needed for email body as it will be handled with legacy templating
-		DefaultBodyTemplate: "NO_OP",
+		DefaultBodyTemplate: alertmanagertypes.NoOpTemplateString,
 	}, alerts, markdownrenderer.MarkdownFormatHTML)
 	if err != nil {
 		return "", "", err

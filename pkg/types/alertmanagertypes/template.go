@@ -11,6 +11,11 @@ import (
 	alertmanagertemplate "github.com/prometheus/alertmanager/template"
 )
 
+const (
+	// NoOpTemplateString is a placeholder template string that is used when no templating is required.
+	NoOpTemplateString = "NO_OP"
+)
+
 func AdditionalFuncMap() tmpltext.FuncMap {
 	return tmpltext.FuncMap{
 		// urlescape escapes the string for use in a URL query parameter.

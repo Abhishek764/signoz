@@ -48,7 +48,7 @@ func (at *alertManagerTemplater) ProcessTemplates(
 		return nil, err
 	}
 	// if title template results in empty string, use default template
-	// this happens for old alerts and API users who've not configured custom title annotation
+	// this happens for rules where custom title annotation was not set
 	if title == "" && input.DefaultTitleTemplate != "" {
 		title, err = at.expandDefaultTemplate(ctx, input.DefaultTitleTemplate, alerts)
 		if err != nil {
@@ -65,14 +65,14 @@ func (at *alertManagerTemplater) ProcessTemplates(
 		return nil, err
 	}
 	// if body template results in nil, use default template
-	// this happens for old alerts and API users who've not configured custom body annotation
+	// this happens for rules where custom body annotation was not set
 	if body == nil {
 		isDefaultTemplated = true
 		defaultBody, err := at.expandDefaultTemplate(ctx, input.DefaultBodyTemplate, alerts)
 		if err != nil {
 			return nil, err
 		}
-		body = []string{defaultBody} // default template result is combined for all alerts
+		body = []string{defaultBody} // default template combines all alerts message into a single body
 	} else {
 		mergeMissingVars(missingVars, bodyMissingVars)
 	}

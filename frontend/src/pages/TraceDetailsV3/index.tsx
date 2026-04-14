@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
+import useGetTraceV3 from 'hooks/trace/useGetTraceV3';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -71,7 +71,7 @@ function TraceDetailsV3(): JSX.Element {
 		data: traceData,
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
-	} = useGetTraceV2({
+	} = useGetTraceV3({
 		traceId,
 		uncollapsedSpans: uncollapsedNodes,
 		selectedSpanId: interestedSpanId.spanId,

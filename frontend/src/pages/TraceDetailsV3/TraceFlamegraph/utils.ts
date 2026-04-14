@@ -23,36 +23,6 @@ export function clamp(v: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, v));
 }
 
-/** Create diagonal stripe pattern for selected/hovered span (repeating-linear-gradient -45deg style). */
-function createStripePattern(
-	ctx: CanvasRenderingContext2D,
-	color: string,
-): CanvasPattern | null {
-	const size = 20;
-	const patternCanvas = document.createElement('canvas');
-	patternCanvas.width = size;
-	patternCanvas.height = size;
-	const pCtx = patternCanvas.getContext('2d');
-	if (!pCtx) {
-		return null;
-	}
-
-	// Diagonal stripes at -45deg: 10px transparent, 10px colored (0.04 opacity), repeat
-	pCtx.globalAlpha = 0.04;
-	pCtx.strokeStyle = color;
-	pCtx.lineWidth = 10;
-	pCtx.lineCap = 'butt';
-	for (let i = -size; i < size * 2; i += size) {
-		pCtx.beginPath();
-		pCtx.moveTo(i + size, 0);
-		pCtx.lineTo(i, size);
-		pCtx.stroke();
-	}
-	pCtx.globalAlpha = 1;
-
-	return ctx.createPattern(patternCanvas, 'repeat');
-}
-
 export function findSpanById(
 	spans: FlamegraphSpan[][],
 	spanId: string,
@@ -248,12 +218,9 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 	ctx.roundRect(x, spanY, width, metrics.SPAN_BAR_HEIGHT, 2);
 
 	if (isSelectedOrHovered) {
-		// Diagonal stripe pattern (repeating-linear-gradient -45deg style) + border in span color
-		const pattern = createStripePattern(ctx, color);
-		if (pattern) {
-			ctx.fillStyle = pattern;
-			ctx.fill();
-		}
+		// Solid fill matching --l2-background token (dark: #16181d, light: #f9f9fb)
+		ctx.fillStyle = isDarkMode ? '#16181d' : '#f9f9fb';
+		ctx.fill();
 		if (isSelected) {
 			ctx.setLineDash(DASHED_BORDER_LINE_DASH);
 		}

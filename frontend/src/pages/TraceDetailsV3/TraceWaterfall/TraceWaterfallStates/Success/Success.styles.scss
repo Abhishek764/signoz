@@ -434,34 +434,22 @@
 		}
 	}
 
-	// Hover state: static stripe pattern + border
+	// Hover state: solid l2-background fill + border (matches flamegraph)
 	.timeline-row:hover .span-bar,
 	.timeline-row.hovered-span .span-bar {
 		color: var(--span-color);
-		background-color: rgba(var(--span-color-rgb), 0.1);
-		border: 1px solid rgba(var(--span-color-rgb), 0.2);
-		background-image: repeating-linear-gradient(
-			-45deg,
-			transparent,
-			transparent 10px,
-			rgba(var(--span-color-rgb), 0.04) 10px,
-			rgba(var(--span-color-rgb), 0.04) 20px
-		);
+		background-color: var(--l2-background);
+		background-image: none;
+		border: 1px solid var(--span-color);
 	}
 
-	// Selected state: stripe pattern + dashed border
+	// Selected state: solid l3-background fill + dashed border (matches flamegraph)
 	.interested-span .span-bar,
 	.selected-non-matching-span .span-bar {
 		color: var(--span-color);
-		background-color: rgba(var(--span-color-rgb), 0.1);
+		background-color: var(--l2-background);
+		background-image: none;
 		border: 1px dashed var(--span-color);
-		background-image: repeating-linear-gradient(
-			-45deg,
-			transparent,
-			transparent 10px,
-			rgba(var(--span-color-rgb), 0.04) 10px,
-			rgba(var(--span-color-rgb), 0.04) 20px
-		);
 	}
 
 	// Shared state classes for both panels

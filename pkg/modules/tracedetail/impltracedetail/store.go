@@ -35,7 +35,7 @@ func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID stri
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errTraceNotFound
+			return nil, tracedetailtypes.ErrTraceNotFound
 		}
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error querying trace summary: %v", err)
 	}

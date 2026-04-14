@@ -5,6 +5,7 @@ import (
 	"maps"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
@@ -27,6 +28,9 @@ const (
 	MaxDepthForSelectedChildren int     = 5
 	MaxLimitToSelectAllSpans    uint    = 10_000
 )
+
+// ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.
+var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
 // WaterfallRequest is the request body for the v3 waterfall API.
 type WaterfallRequest struct {

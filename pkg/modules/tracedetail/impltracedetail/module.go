@@ -18,7 +18,6 @@ import (
 	tracedetailv2 "github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 )
 
-var errTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
 type module struct {
 	store  traceStore
@@ -37,7 +36,7 @@ func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, 
 func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.WaterfallResponse, error) {
 	traceData, err := m.getTraceData(ctx, orgID, traceID)
 	if err != nil {
-		if errors.Is(err, errTraceNotFound) {
+		if errors.Is(err, tracedetailtypes.ErrTraceNotFound) {
 			return new(tracedetailtypes.WaterfallResponse), nil
 		}
 		return nil, err
@@ -84,7 +83,7 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 	return traceData, nil
 }
 
-// getTraceDataFromDB fetches and builds the waterfall cache from ClickHouse. Returns errTraceNotFound when not found.
+// getTraceDataFromDB fetches and builds the waterfall cache from ClickHouse. Returns tracedetailtypes.ErrTraceNotFound when not found.
 func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
@@ -97,7 +96,7 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 	}
 
 	if len(spanItems) == 0 {
-		return nil, errTraceNotFound
+		return nil, tracedetailtypes.ErrTraceNotFound
 	}
 
 	var (

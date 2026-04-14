@@ -197,8 +197,8 @@ type OtelSpanRef struct {
 	RefType string `json:"refType,omitempty"`
 }
 
-// WaterfallCache holds pre-processed trace data for caching.
-type WaterfallCache struct {
+// WaterfallTrace holds pre-processed trace data for caching.
+type WaterfallTrace struct {
 	StartTime                     uint64                    `json:"startTime"`
 	EndTime                       uint64                    `json:"endTime"`
 	DurationNano                  uint64                    `json:"durationNano"`
@@ -210,7 +210,7 @@ type WaterfallCache struct {
 	HasMissingSpans               bool                      `json:"hasMissingSpans"`
 }
 
-func (c *WaterfallCache) Clone() cachetypes.Cacheable {
+func (c *WaterfallTrace) Clone() cachetypes.Cacheable {
 	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
 	maps.Copy(copyOfServiceNameToTotalDurationMap, c.ServiceNameToTotalDurationMap)
 
@@ -219,7 +219,7 @@ func (c *WaterfallCache) Clone() cachetypes.Cacheable {
 
 	copyOfTraceRoots := make([]*WaterfallSpan, len(c.TraceRoots))
 	copy(copyOfTraceRoots, c.TraceRoots)
-	return &WaterfallCache{
+	return &WaterfallTrace{
 		StartTime:                     c.StartTime,
 		EndTime:                       c.EndTime,
 		DurationNano:                  c.DurationNano,
@@ -232,10 +232,10 @@ func (c *WaterfallCache) Clone() cachetypes.Cacheable {
 	}
 }
 
-func (c *WaterfallCache) MarshalBinary() (data []byte, err error) {
+func (c *WaterfallTrace) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(c)
 }
 
-func (c *WaterfallCache) UnmarshalBinary(data []byte) error {
+func (c *WaterfallTrace) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
 }

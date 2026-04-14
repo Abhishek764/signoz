@@ -81,7 +81,7 @@ func NewHandlers(
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
-		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
@@ -97,7 +97,7 @@ func NewHandlers(
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
 		RegistryHandler:         registryHandler,
-		CloudIntegrationHandler: implcloudintegration.NewHandler(),
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
+		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 	}
 }

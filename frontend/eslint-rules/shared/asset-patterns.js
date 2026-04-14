@@ -12,14 +12,16 @@ function hasAssetExtension(str) {
 }
 
 // Like hasAssetExtension but also matches mid-string with boundary check,
-// e.g. "/foo.svg?v=1" → true, "/icons.svg-dir/" → false
+// e.g. "/foo.svg?v=1" → true, "/icons.svg-dir/" → true (- is non-alphanumeric boundary)
 function containsAssetExtension(str) {
 	if (typeof str !== 'string') return false;
 	return ASSET_EXTENSIONS.some((ext) => {
 		const idx = str.indexOf(ext);
 		if (idx === -1) return false;
 		const afterIdx = idx + ext.length;
-		// Accept if extension is at end of string or followed by non-alphanumeric char (?, #, /, etc.)
+		// Broad boundary (any non-alphanumeric) is intentional — the real guard against
+		// false positives is the upstream conditions (isAbsolutePath, isRelativePublicDir, etc.)
+		// that must pass before this is reached. "/icons.svg-dir/" → true (- is a boundary).
 		return afterIdx >= str.length || /[^a-zA-Z0-9]/.test(str[afterIdx]);
 	});
 }

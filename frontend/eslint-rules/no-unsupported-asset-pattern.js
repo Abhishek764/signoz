@@ -55,8 +55,8 @@ module.exports = {
 				'Relative public-dir path "{{ value }}" is not base-path-safe. ' +
 				"Use an ES import instead: import fooUrl from '@/assets/...' and reference the variable.",
 			invalidAssetImport:
-				"Asset '{{ src }}' must be imported from '@/assets/...' — " +
-				'move the file to src/assets/ and update the import path.',
+				"Asset '{{ src }}' must be imported from src/assets/ using either '@/assets/...' " +
+				'or a relative path into src/assets/.',
 		},
 	},
 

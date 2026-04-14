@@ -2,11 +2,8 @@ package impltracedetail
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
 	"log/slog"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -24,16 +21,16 @@ import (
 var errTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
 type module struct {
-	telemetryStore telemetrystore.TelemetryStore
-	cache          cache.Cache
-	logger         *slog.Logger
+	store  traceStore
+	cache  cache.Cache
+	logger *slog.Logger
 }
 
 func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, providerSettings factory.ProviderSettings) tracedetail.Module {
 	return &module{
-		telemetryStore: telemetryStore,
-		cache:          cache,
-		logger:         providerSettings.Logger,
+		store:  newClickhouseTraceStore(telemetryStore),
+		cache:  cache,
+		logger: providerSettings.Logger,
 	}
 }
 
@@ -87,47 +84,16 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 	return traceData, nil
 }
 
-// getTraceDataFromDB fetches and builds the waterfall cache from ClickHouse. Returns nil, nil when not found.
+// getTraceDataFromDB fetches and builds the waterfall cache from ClickHouse. Returns errTraceNotFound when not found.
 func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
-	var summary tracedetailtypes.TraceSummary
-	summaryQuery := fmt.Sprintf(
-		"SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id",
-		tracedetailtypes.TraceDB, tracedetailtypes.TraceSummaryTable,
-	)
-	err := m.telemetryStore.ClickhouseDB().QueryRow(ctx, summaryQuery, traceID).Scan(
-		&summary.TraceID, &summary.Start, &summary.End, &summary.NumSpans,
-	)
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errTraceNotFound
-		}
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error querying trace summary: %v", err)
+		return nil, err
 	}
 
-	detailsQuery := fmt.Sprintf(`
-		SELECT DISTINCT ON (span_id)
-			timestamp, duration_nano, span_id, trace_id, has_error, kind,
-			resource_string_service$$name, name, links as references,
-			attributes_string, attributes_number, attributes_bool, resources_string,
-			events, status_message, status_code_string, kind_string, parent_span_id,
-			flags, is_remote, trace_state, status_code,
-			db_name, db_operation, http_method, http_url, http_host,
-			external_http_method, external_http_url, response_status_code
-		FROM %s.%s
-		WHERE trace_id=$1 AND ts_bucket_start>=$2 AND ts_bucket_start<=$3
-		ORDER BY timestamp ASC, name ASC`,
-		tracedetailtypes.TraceDB, tracedetailtypes.TraceTable,
-	)
-
-	var spanItems []tracedetailtypes.SpanModel
-	err = m.telemetryStore.ClickhouseDB().Select(
-		ctx, &spanItems, detailsQuery,
-		traceID,
-		strconv.FormatInt(summary.Start.Unix()-1800, 10),
-		strconv.FormatInt(summary.End.Unix(), 10),
-	)
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error querying trace spans: %v", err)
+		return nil, err
 	}
 
 	if len(spanItems) == 0 {

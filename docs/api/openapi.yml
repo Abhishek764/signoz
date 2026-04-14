@@ -1215,6 +1215,13 @@ components:
         enabled:
           type: boolean
       type: object
+    InframonitoringtypesHostFilter:
+      properties:
+        expression:
+          type: string
+        filterByStatus:
+          $ref: '#/components/schemas/InframonitoringtypesHostStatus'
+      type: object
     InframonitoringtypesHostRecord:
       properties:
         cpu:
@@ -1253,9 +1260,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        filterByStatus:
-          $ref: '#/components/schemas/InframonitoringtypesHostStatus'
+          $ref: '#/components/schemas/InframonitoringtypesHostFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'

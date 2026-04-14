@@ -342,7 +342,7 @@ func (m *module) getTopHostGroups(
 // Returns true if the caller should short-circuit with an empty result (eg. ACTIVE
 // requested but no hosts are active).
 func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsListRequest, activeHostsMap map[string]bool) (shouldShortCircuit bool) {
-	if req.FilterByStatus != inframonitoringtypes.HostStatusActive && req.FilterByStatus != inframonitoringtypes.HostStatusInactive {
+	if req.Filter == nil || (req.Filter.FilterByStatus != inframonitoringtypes.HostStatusActive && req.Filter.FilterByStatus != inframonitoringtypes.HostStatusInactive) {
 		return false
 	}
 
@@ -352,15 +352,12 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsLis
 	}
 
 	if len(activeHosts) == 0 {
-		return req.FilterByStatus == inframonitoringtypes.HostStatusActive
+		return req.Filter.FilterByStatus == inframonitoringtypes.HostStatusActive
 	}
 
 	op := "IN"
-	if req.FilterByStatus == inframonitoringtypes.HostStatusInactive {
+	if req.Filter.FilterByStatus == inframonitoringtypes.HostStatusInactive {
 		op = "NOT IN"
-	}
-	if req.Filter == nil {
-		req.Filter = &qbtypes.Filter{}
 	}
 	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))
 	req.Filter.Expression = mergeFilterExpressions(req.Filter.Expression, statusClause)
@@ -374,7 +371,11 @@ func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoring
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	metadataMap, err := m.getMetadata(ctx, hostsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	metadataMap, err := m.getMetadata(ctx, hostsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}

@@ -43,15 +43,19 @@ var HostsValidOrderByKeys = []string{
 	HostsOrderByLoad15,
 }
 
+type HostFilter struct {
+	qbtypes.Filter `json:",inline"`
+	FilterByStatus HostStatus `json:"filterByStatus"`
+}
+
 type HostsListRequest struct {
-	Start          int64                `json:"start"`
-	End            int64                `json:"end"`
-	Filter         *qbtypes.Filter      `json:"filter"`
-	FilterByStatus HostStatus           `json:"filterByStatus"`
-	GroupBy        []qbtypes.GroupByKey `json:"groupBy"`
-	OrderBy        *qbtypes.OrderBy     `json:"orderBy"`
-	Offset         int                  `json:"offset"`
-	Limit          int                  `json:"limit"`
+	Start   int64                `json:"start"`
+	End     int64                `json:"end"`
+	Filter  *HostFilter          `json:"filter"`
+	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
+	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
+	Offset  int                  `json:"offset"`
+	Limit   int                  `json:"limit"`
 }
 
 // Validate ensures HostsListRequest contains acceptable values.
@@ -93,8 +97,9 @@ func (req *HostsListRequest) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
 	}
 
-	if !req.FilterByStatus.IsZero() && req.FilterByStatus != HostStatusActive && req.FilterByStatus != HostStatusInactive {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by status: %s", req.FilterByStatus)
+	if req.Filter != nil && !req.Filter.FilterByStatus.IsZero() &&
+		req.Filter.FilterByStatus != HostStatusActive && req.Filter.FilterByStatus != HostStatusInactive {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by status: %s", req.Filter.FilterByStatus)
 	}
 
 	if req.OrderBy != nil {

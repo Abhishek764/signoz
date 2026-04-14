@@ -57,6 +57,9 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClause.WhereClause, nil
 }
 
+// NOTE: this method is not specific to infra monitoring — it queries attributes_metadata generically.
+// Consider moving to telemetryMetaStore when a second use case emerges.
+//
 // getMetricsExistenceAndEarliestTime checks which of the given metric names have been
 // reported. It returns a list of missing metrics (those not found or with zero count)
 // and the earliest first-reported timestamp across all present metrics.

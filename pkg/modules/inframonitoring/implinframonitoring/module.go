@@ -93,6 +93,8 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
+	// TODO: replace this separate ClickHouse query with a sub-query inside the main query builder query
+	// once QB supports sub-queries. Tracked in PR #10805 review.
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
 	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey)
 	if err != nil {

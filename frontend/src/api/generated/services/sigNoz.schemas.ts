@@ -1448,6 +1448,14 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface InframonitoringtypesHostFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByStatus?: InframonitoringtypesHostStatusDTO;
+}
+
 /**
  * @nullable
  */
@@ -1504,8 +1512,7 @@ export interface InframonitoringtypesHostsListRequestDTO {
 	 * @format int64
 	 */
 	end?: number;
-	filter?: Querybuildertypesv5FilterDTO;
-	filterByStatus?: InframonitoringtypesHostStatusDTO;
+	filter?: InframonitoringtypesHostFilterDTO;
 	/**
 	 * @type array
 	 * @nullable true

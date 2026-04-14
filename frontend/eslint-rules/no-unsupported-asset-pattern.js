@@ -169,7 +169,11 @@ module.exports = {
 					});
 					return;
 				}
-				if (urlPath && isPublicRelative(urlPath) && hasAssetExtension(urlPath)) {
+				if (
+					urlPath &&
+					isPublicRelative(urlPath) &&
+					containsAssetExtension(urlPath)
+				) {
 					context.report({
 						node,
 						messageId: 'relativePublicString',

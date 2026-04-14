@@ -19,7 +19,6 @@ type WaterfallRequest struct {
 type WaterfallResponse struct {
 	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
 	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
-	DurationNano                  uint64            `json:"durationNano"`
 	RootServiceName               string            `json:"rootServiceName"`
 	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
 	TotalSpansCount               uint64            `json:"totalSpansCount"`
@@ -28,6 +27,7 @@ type WaterfallResponse struct {
 	Spans                         []*WaterfallSpan  `json:"spans"`
 	HasMissingSpans               bool              `json:"hasMissingSpans"`
 	UncollapsedSpans              []string          `json:"uncollapsedSpans"`
+	HasMore                       bool              `json:"hasMore"`
 }
 
 // Event represents a span event.
@@ -58,16 +58,15 @@ type WaterfallSpan struct {
 	IsRemote           string            `json:"is_remote"`
 	Kind               int32             `json:"kind"`
 	KindString         string            `json:"kind_string"`
-	Links              string            `json:"links"`
 	Name               string            `json:"name"`
 	ParentSpanID       string            `json:"parent_span_id"`
 	Resource           map[string]string `json:"resource"`
 	ResponseStatusCode string            `json:"response_status_code"`
 	SpanID             string            `json:"span_id"`
-	StatusCode         int32             `json:"status_code"`
+	StatusCode         int16             `json:"status_code"`
 	StatusCodeString   string            `json:"status_code_string"`
 	StatusMessage      string            `json:"status_message"`
-	Timestamp          string            `json:"timestamp"`
+	TimeUnixMilli      uint64            `json:"timestamp"`
 	TraceID            string            `json:"trace_id"`
 	TraceState         string            `json:"trace_state"`
 
@@ -77,10 +76,7 @@ type WaterfallSpan struct {
 	HasChildren      bool             `json:"has_children"`
 	Level            uint64           `json:"level"`
 
-	// timeUnixNano is an internal field used for tree building and sorting.
-	// It is not serialized in the JSON response.
-	TimeUnixNano uint64 `json:"-"`
-	// serviceName is an internal field used for service time calculation.
+	// used only for service time calculation
 	ServiceName string `json:"-"`
 }
 
@@ -117,7 +113,7 @@ type SpanModel struct {
 	Flags              uint32             `ch:"flags"`
 	IsRemote           string             `ch:"is_remote"`
 	TraceState         string             `ch:"trace_state"`
-	StatusCode         int32              `ch:"status_code"`
+	StatusCode         int16              `ch:"status_code"`
 	DBName             string             `ch:"db_name"`
 	DBOperation        string             `ch:"db_operation"`
 	HTTPMethod         string             `ch:"http_method"`
@@ -149,7 +145,7 @@ func (item *SpanModel) ToSpan() *WaterfallSpan {
 	for _, eventStr := range item.Events {
 		var event Event
 		if err := json.Unmarshal([]byte(eventStr), &event); err != nil {
-			continue
+			continue // skipping malformed events
 		}
 		events = append(events, event)
 	}
@@ -170,7 +166,6 @@ func (item *SpanModel) ToSpan() *WaterfallSpan {
 		IsRemote:           item.IsRemote,
 		Kind:               int32(item.Kind),
 		KindString:         item.SpanKind,
-		Links:              item.References,
 		Name:               item.Name,
 		ParentSpanID:       item.ParentSpanID,
 		Resource:           resources,
@@ -179,11 +174,10 @@ func (item *SpanModel) ToSpan() *WaterfallSpan {
 		StatusCode:         item.StatusCode,
 		StatusCodeString:   item.StatusCodeString,
 		StatusMessage:      item.StatusMessage,
-		Timestamp:          item.TimeUnixNano.Format(time.RFC3339Nano),
 		TraceID:            item.TraceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
-		TimeUnixNano:       uint64(item.TimeUnixNano.UnixNano()),
+		TimeUnixMilli:      uint64(item.TimeUnixNano.UnixNano() / 1000_000),
 		ServiceName:        item.ServiceName,
 	}
 }

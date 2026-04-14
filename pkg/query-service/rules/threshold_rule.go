@@ -347,8 +347,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		// Add values to be used in notifier layer for notification templates
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationValue, Value: value})
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold})
-		// annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: smpl.CompareOp.String()})
-		// annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: smpl.MatchType.String()})
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: smpl.CompareOperator.Literal()})
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: smpl.MatchType.Literal()})
 
 		if smpl.IsRecovering {
 			lb.Set(ruletypes.LabelIsRecovering, "true")

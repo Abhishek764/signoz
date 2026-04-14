@@ -221,8 +221,8 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		// Add values to be used in notifier layer for notification templates
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationValue, Value: valueFormatter.Format(result.V, r.Unit())})
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold})
-		// annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: result.CompareOp.String()})
-		// annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: result.MatchType.String()})
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: result.CompareOperator.Literal()})
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: result.MatchType.Literal()})
 
 		if result.IsRecovering {
 			lb.Set(ruletypes.LabelIsRecovering, "true")

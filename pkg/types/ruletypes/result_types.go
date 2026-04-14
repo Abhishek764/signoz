@@ -25,10 +25,9 @@ type Sample struct {
 
 	TargetUnit string
 
-	// CompareOp and MatchType carry the threshold evaluation context
-	// so the rule layer can set them as annotations for the notifier.
-	CompareOp CompareOperator
-	MatchType MatchType
+	// CompareOperator and MatchType carry the threshold evaluation context
+	CompareOperator CompareOperator
+	MatchType       MatchType
 }
 
 func (s Sample) String() string {

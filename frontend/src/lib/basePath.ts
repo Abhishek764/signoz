@@ -13,6 +13,7 @@ export function readBasePath(): string {
 	return document.querySelector('base')?.getAttribute('href') ?? '/';
 }
 
+/** @internal Use getBasePath() in application code. */
 export const basePath: string = readBasePath();
 
 export function getBasePath(): string {

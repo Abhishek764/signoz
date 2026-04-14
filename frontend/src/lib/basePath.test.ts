@@ -1,4 +1,4 @@
-import { readBasePath } from './basePath';
+import { getBasePath, readBasePath } from './basePath';
 
 describe('readBasePath', () => {
 	afterEach(() => {
@@ -27,5 +27,13 @@ describe('readBasePath', () => {
 		base.setAttribute('href', '/');
 		document.head.prepend(base);
 		expect(readBasePath()).toBe('/');
+	});
+});
+
+describe('getBasePath (module-init snapshot)', () => {
+	it('returns the value captured when the module was first loaded', () => {
+		// In Jest, no <base> tag is present when the module loads, so the
+		// snapshot is '/'. This test documents the singleton contract.
+		expect(getBasePath()).toBe('/');
 	});
 });

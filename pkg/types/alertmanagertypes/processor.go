@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-// NotificationProcessor orchestrates template expansion and markdown rendering
+// NotificationProcessor orchestrates template expansion and markdown rendering.
 type NotificationProcessor interface {
 	ProcessAlertNotification(ctx context.Context, input NotificationProcessorInput, alerts []*types.Alert, rendererFormat markdownrenderer.OutputFormat) (*NotificationProcessorResult, error)
 	// RenderEmailNotification renders the given processor result into final HTML using
@@ -17,7 +17,7 @@ type NotificationProcessor interface {
 	RenderEmailNotification(ctx context.Context, templateName emailtypes.TemplateName, result *NotificationProcessorResult, alerts []*types.Alert) (string, error)
 }
 
-// NotificationProcessorInput carries the templates and rendering format for a notification
+// NotificationProcessorInput carries the templates and rendering format for a notification.
 type NotificationProcessorInput struct {
 	TitleTemplate        string
 	BodyTemplate         string
@@ -25,7 +25,7 @@ type NotificationProcessorInput struct {
 	DefaultBodyTemplate  string
 }
 
-// NotificationProcessorResult has the final expanded and rendered notification content
+// NotificationProcessorResult has the final expanded and rendered notification content.
 type NotificationProcessorResult struct {
 	Title string
 	// Body contains per-alert rendered body strings.

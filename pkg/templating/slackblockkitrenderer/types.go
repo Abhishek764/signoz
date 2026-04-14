@@ -35,7 +35,7 @@ type TextObject struct {
 	Text string `json:"text"`
 }
 
-// RichTextList represents an ordered or unordered list
+// RichTextList represents an ordered or unordered list.
 type RichTextList struct {
 	Type     string        `json:"type"`
 	Style    string        `json:"style"`
@@ -45,7 +45,7 @@ type RichTextList struct {
 	Elements []interface{} `json:"elements"`
 }
 
-// RichTextPreformatted represents a code block
+// RichTextPreformatted represents a code block.
 type RichTextPreformatted struct {
 	Type     string        `json:"type"`
 	Elements []interface{} `json:"elements"`

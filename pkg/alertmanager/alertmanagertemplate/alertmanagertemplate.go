@@ -225,7 +225,7 @@ func (at *alertManagerTemplater) buildNotificationTemplateData(
 
 	// extract the rule-level convenience fields from common labels
 	alertName := commonLabels[ruletypes.LabelAlertName]
-	ruleID := commonLabels[ruletypes.LabelRuleId]
+	ruleID := commonLabels[ruletypes.LabelRuleID]
 	ruleLink := commonLabels[ruletypes.LabelRuleSource]
 
 	// build the group labels
@@ -265,14 +265,9 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		annotations[string(k)] = string(v)
 	}
 
-	status := string(a.Status())
-	isFiring := a.Status() == model.AlertFiring
-	isResolved := a.Status() == model.AlertResolved
-	isMissingData := labels[ruletypes.LabelNoData] == "true"
-
 	return AlertData{
 		Receiver:      receiver,
-		Status:        status,
+		Status:        string(a.Status()),
 		Labels:        labels,
 		Annotations:   annotations,
 		StartsAt:      a.StartsAt,
@@ -280,7 +275,7 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		GeneratorURL:  a.GeneratorURL,
 		Fingerprint:   a.Fingerprint().String(),
 		AlertName:     labels[ruletypes.LabelAlertName],
-		RuleID:        labels[ruletypes.LabelRuleId],
+		RuleID:        labels[ruletypes.LabelRuleID],
 		RuleLink:      labels[ruletypes.LabelRuleSource],
 		Severity:      labels[ruletypes.LabelSeverityName],
 		LogLink:       annotations[ruletypes.AnnotationRelatedLogs],
@@ -289,9 +284,9 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		Threshold:     annotations[ruletypes.AnnotationThresholdValue],
 		CompareOp:     annotations[ruletypes.AnnotationCompareOp],
 		MatchType:     annotations[ruletypes.AnnotationMatchType],
-		IsFiring:      isFiring,
-		IsResolved:    isResolved,
-		IsMissingData: isMissingData,
+		IsFiring:      a.Status() == model.AlertFiring,
+		IsResolved:    a.Status() == model.AlertResolved,
+		IsMissingData: labels[ruletypes.LabelNoData] == "true",
 		IsRecovering:  labels[ruletypes.LabelIsRecovering] == "true",
 	}
 }

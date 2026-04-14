@@ -27,7 +27,7 @@ type Sample struct {
 
 	// CompareOp and MatchType carry the threshold evaluation context
 	// so the rule layer can set them as annotations for the notifier.
-	CompareOp CompareOp
+	CompareOp CompareOperator
 	MatchType MatchType
 }
 

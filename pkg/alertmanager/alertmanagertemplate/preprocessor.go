@@ -76,7 +76,7 @@ func extractFieldMappings(data any) []fieldMapping {
 
 // prepareVariableName prepares the variable name to be used in go-text-template
 // it replaces every unwanted character like dots, spaces, etc. with an underscore
-// for example, "http.request.method" becomes "http_request_method"
+// for example, "http.request.method" becomes "http_request_method".
 func prepareVariableName(key string) string {
 	var b strings.Builder
 	b.Grow(len(key))
@@ -102,7 +102,7 @@ func prepareVariableName(key string) string {
 }
 
 // extractNestedFieldsDefinitions adds the labels and annotations keys from the data struct to the template variable definitions
-// it takes the known data struct and extracts the labels and annotations maps and adds their keys to template variable definitions to be used in the template
+// it takes the known data struct and extracts the labels and annotations maps and adds their keys to template variable definitions to be used in the template.
 func extractNestedFieldsDefinitions(data any) map[string]string {
 	variables := make(map[string]string)
 
@@ -128,8 +128,8 @@ func extractNestedFieldsDefinitions(data any) map[string]string {
 }
 
 // prepareDataForTemplating prepares the data for templating by adding the labels and annotations values to the resulting map
-// so they can be accessed directly from root level, the predefined values takes precedence over the labels and annotations values
-// for example, if labels has a value called rule_name, which collides with the rule_name field in the data struct, the value from the data struct will take precedence
+// so they can be accessed directly from root level, the predefined values take precedence over the labels and annotations values
+// for example, if labels have a value called rule_name, which collides with the rule_name field in the data struct, the value from the data struct will take precedence.
 func prepareDataForTemplating(data any) (map[string]interface{}, error) {
 	var result map[string]interface{}
 	if err := mapstructure.Decode(data, &result); err != nil {

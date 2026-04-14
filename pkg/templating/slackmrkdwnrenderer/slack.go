@@ -365,7 +365,7 @@ func (r *Renderer) renderTable(w util.BufWriter, source []byte, node ast.Node, e
 	return ast.WalkSkipChildren, nil
 }
 
-// extractPlainText extracts all the text content from the given node
+// extractPlainText extracts all the text content from the given node.
 func extractPlainText(n ast.Node, source []byte) string {
 	var buf bytes.Buffer
 	_ = ast.Walk(n, func(node ast.Node, entering bool) (ast.WalkStatus, error) {

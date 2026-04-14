@@ -27,7 +27,7 @@ type ExpandedTemplates struct {
 	MissingVars            []string // union of unknown vars from title + body templates
 }
 
-// AlertData holds per-alert data used when expanding body templates
+// AlertData holds per-alert data used when expanding body templates.
 type AlertData struct {
 	Receiver     string      `json:"receiver" mapstructure:"receiver"`
 	Status       string      `json:"status" mapstructure:"status"`

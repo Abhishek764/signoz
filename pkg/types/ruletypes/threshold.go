@@ -143,7 +143,7 @@ func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData E
 				smpl.RecoveryTarget = threshold.RecoveryTarget
 			}
 			smpl.TargetUnit = threshold.TargetUnit
-			smpl.CompareOp = threshold.CompareOp
+			smpl.CompareOp = threshold.CompareOperator
 			smpl.MatchType = threshold.MatchType
 			resultVector = append(resultVector, smpl)
 			continue
@@ -158,7 +158,7 @@ func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData E
 				Metric:     PrepareSampleLabelsForRule(series.Labels, threshold.Name),
 				Target:     *threshold.TargetValue,
 				TargetUnit: threshold.TargetUnit,
-				CompareOp:  threshold.CompareOp,
+				CompareOp:  threshold.CompareOperator,
 				MatchType:  threshold.MatchType,
 			}
 			if threshold.RecoveryTarget != nil {
@@ -181,7 +181,7 @@ func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData E
 				smpl.Target = *threshold.TargetValue
 				smpl.RecoveryTarget = threshold.RecoveryTarget
 				smpl.TargetUnit = threshold.TargetUnit
-				smpl.CompareOp = threshold.CompareOp
+				smpl.CompareOp = threshold.CompareOperator
 				smpl.MatchType = threshold.MatchType
 				// IsRecovering to notify that metrics is in recovery stage
 				smpl.IsRecovering = true

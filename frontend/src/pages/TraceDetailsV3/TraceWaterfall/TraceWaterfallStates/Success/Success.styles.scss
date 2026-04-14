@@ -257,11 +257,23 @@
 			flex-shrink: 0;
 			cursor: pointer;
 			color: var(--bg-vanilla-400);
+			border-radius: 4px;
 
-			&.no-children {
-				cursor: default;
-				width: 18px;
-				height: 18px;
+			&:hover {
+				background: var(--l3-background);
+			}
+		}
+
+		.subtree-count {
+			display: inline-flex;
+			align-items: center;
+			flex-shrink: 0;
+
+			.badge {
+				font-size: 10px;
+				line-height: 14px;
+				padding: 0 4px;
+				height: 14px;
 			}
 		}
 

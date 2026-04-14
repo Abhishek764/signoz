@@ -9,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Badge } from '@signozhq/badge';
 import {
 	createColumnHelper,
 	flexRender,
@@ -157,20 +158,27 @@ const SpanOverview = memo(function SpanOverview({
 				{/* Indent spacer */}
 				<span className="tree-indent" style={{ width: `${indentWidth}px` }} />
 
-				{/* Expand/collapse arrow or leaf bullet */}
-				{span.hasChildren ? (
-					<span
-						className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
-						onClick={(event): void => {
-							event.stopPropagation();
-							event.preventDefault();
-							handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
-						}}
-					>
-						{isSpanCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-					</span>
-				) : (
-					<span className="tree-arrow no-children" />
+				{/* Expand/collapse arrow + child count (only for spans with children) */}
+				{span.hasChildren && (
+					<>
+						<span
+							className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
+							onClick={(event): void => {
+								event.stopPropagation();
+								event.preventDefault();
+								handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
+							}}
+						>
+							{isSpanCollapsed ? (
+								<ChevronRight size={14} />
+							) : (
+								<ChevronDown size={14} />
+							)}
+						</span>
+						<span className="subtree-count">
+							<Badge color="vanilla">{span.subTreeNodeCount}</Badge>
+						</span>
+					</>
 				)}
 
 				{/* Colored service dot */}

@@ -66,9 +66,9 @@ func WrapDollarVariables(src string) (string, error) {
 	return tree.Root.String(), nil
 }
 
-// walkAndWrapTextNodes recursively walks the parse tree trying to find a text node
-// once text node is found it wraps the bare $variable and changes it to index based
-// element access form datamap like .key or .key.subkey
+// walkAndWrapTextNodes recursively walks the parse tree trying to find a text node.
+// Once a text node is found, it wraps the bare $variable and changes it to index-based
+// element access from the data map, like '.key' or '.key.subkey'.
 func walkAndWrapTextNodes(node parse.Node) {
 	if reflect.ValueOf(node).IsNil() {
 		return
@@ -135,8 +135,8 @@ func walkAndWrapTextNodes(node parse.Node) {
 
 // ExtractUsedVariables returns the set of all $variable referenced in template
 // — text nodes, action blocks, branch conditions, and loop declarations — regardless of scope.
-// After finding all variables we find the ones which are not part of our alert data and handle them so
-// Go-text-template parser doesn't rejects undefined $variables
+// After finding all variables, we find those that are not part of our alert data and handle them so the
+// text/template parser does not reject undefined $variables.
 func ExtractUsedVariables(src string) (map[string]bool, error) {
 	if src == "" {
 		return map[string]bool{}, nil
@@ -167,9 +167,8 @@ func ExtractUsedVariables(src string) (map[string]bool, error) {
 	return used, nil
 }
 
-// aggregateKV aggregates key-value pairs (labels or annotations) from all alerts into a single template.KV
-// the result is used to populate the labels and annotations in the notification template data.
-// this is done to avoid blank values in the template when labels and annotations used are not common throughout the alerts
+// aggregateKV aggregates key-value pairs (labels or annotations) from all alerts into a single template.KV.
+// The result is used to populate the labels and annotations in the notification template data.
 func aggregateKV(alerts []*types.Alert, extractFn func(*types.Alert) model.LabelSet) template.KV {
 	// track unique values per key in order of first appearance
 	valuesPerKey := make(map[string][]string)

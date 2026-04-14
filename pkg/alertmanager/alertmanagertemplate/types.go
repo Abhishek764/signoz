@@ -18,12 +18,16 @@ type TemplateInput struct {
 
 // ExpandedTemplates is the result of ExpandTemplates.
 type ExpandedTemplates struct {
-	Title       string
-	Body        string
-	MissingVars map[string]bool // union of unknown vars from title + body templates
+	Title string
+	// Body is notification array of body for each alert
+	Body []string
+	// IsDefaultTemplatedBody is true if the body templates are templated using
+	// default templates, false when custom templates were used for templating.
+	IsDefaultTemplatedBody bool
+	MissingVars            []string // union of unknown vars from title + body templates
 }
 
-// AlertData holds per-alert data used when expanding body templates
+// AlertData holds per-alert data used when expanding body templates.
 type AlertData struct {
 	Receiver     string      `json:"receiver" mapstructure:"receiver"`
 	Status       string      `json:"status" mapstructure:"status"`

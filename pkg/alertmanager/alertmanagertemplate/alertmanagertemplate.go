@@ -3,6 +3,7 @@ package alertmanagertemplate
 import (
 	"context"
 	"log/slog"
+	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -18,6 +19,9 @@ type AlertManagerTemplater interface {
 	// ProcessTemplates expands the title and body templates from input
 	// against the provided alerts and returns the expanded templates.
 	ProcessTemplates(ctx context.Context, input TemplateInput, alerts []*types.Alert) (*ExpandedTemplates, error)
+	// BuildNotificationTemplateData builds the NotificationTemplateData from context and alerts.
+	// This exposes the structured alert data that gets used in the notification templates.
+	BuildNotificationTemplateData(ctx context.Context, alerts []*types.Alert) *NotificationTemplateData
 }
 
 type alertManagerTemplater struct {
@@ -37,103 +41,139 @@ func (at *alertManagerTemplater) ProcessTemplates(
 	alerts []*types.Alert,
 ) (*ExpandedTemplates, error) {
 	ntd := at.buildNotificationTemplateData(ctx, alerts)
-
-	title, titleMissingVars, err := at.expandTitle(ctx, input, alerts, ntd)
-	if err != nil {
-		return nil, err
-	}
-
-	body, bodyMissingVars, err := at.expandBody(ctx, input, alerts, ntd)
-	if err != nil {
-		return nil, err
-	}
-
 	missingVars := make(map[string]bool)
-	for k := range titleMissingVars {
-		missingVars[k] = true
+
+	title, titleMissingVars, err := at.expandTitle(input.TitleTemplate, ntd)
+	if err != nil {
+		return nil, err
 	}
-	for k := range bodyMissingVars {
-		missingVars[k] = true
+	// if title template results in empty string, use default template
+	// this happens for rules where custom title annotation was not set
+	if title == "" && input.DefaultTitleTemplate != "" {
+		title, err = at.expandDefaultTemplate(ctx, input.DefaultTitleTemplate, alerts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		mergeMissingVars(missingVars, titleMissingVars)
 	}
 
-	return &ExpandedTemplates{Title: title, Body: body, MissingVars: missingVars}, nil
+	// isDefaultTemplated tracks whether the body is templated using default templates
+	isDefaultTemplated := false
+	body, bodyMissingVars, err := at.expandBody(input.BodyTemplate, ntd)
+	if err != nil {
+		return nil, err
+	}
+	// if body template results in nil, use default template
+	// this happens for rules where custom body annotation was not set
+	if body == nil {
+		isDefaultTemplated = true
+		defaultBody, err := at.expandDefaultTemplate(ctx, input.DefaultBodyTemplate, alerts)
+		if err != nil {
+			return nil, err
+		}
+		body = []string{defaultBody} // default template combines all alerts message into a single body
+	} else {
+		mergeMissingVars(missingVars, bodyMissingVars)
+	}
+
+	// convert the internal map to a sorted slice for returning missing variables
+	missingVarsList := make([]string, 0, len(missingVars))
+	for k := range missingVars {
+		missingVarsList = append(missingVarsList, k)
+	}
+	sort.Strings(missingVarsList)
+
+	return &ExpandedTemplates{
+		Title:                  title,
+		Body:                   body,
+		MissingVars:            missingVarsList,
+		IsDefaultTemplatedBody: isDefaultTemplated,
+	}, nil
 }
 
-// expandTitle expands the title template. Falls back to the default if the custom template
-// result in empty string.
+// BuildNotificationTemplateData builds the NotificationTemplateData from context and alerts.
+func (at *alertManagerTemplater) BuildNotificationTemplateData(
+	ctx context.Context,
+	alerts []*types.Alert,
+) *NotificationTemplateData {
+	return at.buildNotificationTemplateData(ctx, alerts)
+}
+
+// expandDefaultTemplate uses go-template to expand the default template.
+func (at *alertManagerTemplater) expandDefaultTemplate(
+	ctx context.Context,
+	tmplStr string,
+	alerts []*types.Alert,
+) (string, error) {
+	// if even the default template is empty, return empty string
+	// this is possible if user added channel with blank template
+	if tmplStr == "" {
+		at.logger.WarnContext(ctx, "default template is empty")
+		return "", nil
+	}
+	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
+	result, err := at.tmpl.ExecuteTextString(tmplStr, data)
+	if err != nil {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute default template: %s", err.Error())
+	}
+	return result, nil
+}
+
+// mergeMissingVars adds all keys from src into dst.
+func mergeMissingVars(dst, src map[string]bool) {
+	for k := range src {
+		dst[k] = true
+	}
+}
+
+// expandTitle expands the title template. Returns empty string if the template is empty.
 func (at *alertManagerTemplater) expandTitle(
-	ctx context.Context,
-	input TemplateInput,
-	alerts []*types.Alert,
+	titleTemplate string,
 	ntd *NotificationTemplateData,
 ) (string, map[string]bool, error) {
-	if input.TitleTemplate != "" {
-		processRes, err := PreProcessTemplateAndData(input.TitleTemplate, ntd)
-		if err != nil {
-			return "", nil, err
-		}
-		result, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
-		if err != nil {
-			return "", nil, errors.NewInternalf(errors.CodeInvalidInput, "failed to execute template: %s", err.Error())
-		}
-		if strings.TrimSpace(result) != "" {
-			return result, processRes.UnknownVars, nil
-		}
-	}
-
-	if input.DefaultTitleTemplate == "" {
-		at.logger.WarnContext(ctx, "missing default title template")
+	if titleTemplate == "" {
 		return "", nil, nil
 	}
-	// Fall back to the default title template if present in the input
-	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
-	result, err := at.tmpl.ExecuteTextString(input.DefaultTitleTemplate, data)
-	return result, nil, err
+	processRes, err := PreProcessTemplateAndData(titleTemplate, ntd)
+	if err != nil {
+		return "", nil, err
+	}
+	result, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
+	if err != nil {
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute custom title template: %s", err.Error())
+	}
+	return strings.TrimSpace(result), processRes.UnknownVars, nil
 }
 
-// expandBody expands the body template once per alert and concatenates the results to return resulting body template
-// it falls back to the default templates if body template is empty or result in empty string.
+// expandBody expands the body template for each individual alert. Returns nil if the template is empty.
 func (at *alertManagerTemplater) expandBody(
-	ctx context.Context,
-	input TemplateInput,
-	alerts []*types.Alert,
+	bodyTemplate string,
 	ntd *NotificationTemplateData,
-) (string, map[string]bool, error) {
-	if input.BodyTemplate != "" {
-		var sb strings.Builder
-		missingVars := make(map[string]bool)
-		for i := range ntd.Alerts {
-			processRes, err := PreProcessTemplateAndData(input.BodyTemplate, &ntd.Alerts[i])
-			if err != nil {
-				return "", nil, err
-			}
-			for k := range processRes.UnknownVars {
-				missingVars[k] = true
-			}
-			part, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
-			if err != nil {
-				return "", nil, errors.NewInternalf(errors.CodeInvalidInput, "failed to execute template: %s", err.Error())
-			}
-			sb.WriteString(part)
-			// Add separator if not last alert
-			if i < len(ntd.Alerts)-1 {
-				sb.WriteString("\n\n")
-			}
+) ([]string, map[string]bool, error) {
+	if bodyTemplate == "" {
+		return nil, nil, nil
+	}
+	var sb []string
+	missingVars := make(map[string]bool)
+	for i := range ntd.Alerts {
+		processRes, err := PreProcessTemplateAndData(bodyTemplate, &ntd.Alerts[i])
+		if err != nil {
+			return nil, nil, err
 		}
-		result := sb.String()
-		if strings.TrimSpace(result) != "" {
-			return result, missingVars, nil
+		part, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
+		if err != nil {
+			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute custom body template: %s", err.Error())
+		}
+		// add unknown variables and templated text to the result
+		for k := range processRes.UnknownVars {
+			missingVars[k] = true
+		}
+		if strings.TrimSpace(part) != "" {
+			sb = append(sb, strings.TrimSpace(part))
 		}
 	}
-
-	if input.DefaultBodyTemplate == "" {
-		at.logger.WarnContext(ctx, "missing default body template")
-		return "", nil, nil
-	}
-	// Fall back to the default body template if present in the input
-	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
-	result, err := at.tmpl.ExecuteTextString(input.DefaultBodyTemplate, data)
-	return result, nil, err
+	return sb, missingVars, nil
 }
 
 // buildNotificationTemplateData creates the NotificationTemplateData using
@@ -185,7 +225,7 @@ func (at *alertManagerTemplater) buildNotificationTemplateData(
 
 	// extract the rule-level convenience fields from common labels
 	alertName := commonLabels[ruletypes.LabelAlertName]
-	ruleID := commonLabels[ruletypes.LabelRuleId]
+	ruleID := commonLabels[ruletypes.LabelRuleID]
 	ruleLink := commonLabels[ruletypes.LabelRuleSource]
 
 	// build the group labels
@@ -225,14 +265,9 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		annotations[string(k)] = string(v)
 	}
 
-	status := string(a.Status())
-	isFiring := a.Status() == model.AlertFiring
-	isResolved := a.Status() == model.AlertResolved
-	isMissingData := labels[ruletypes.LabelNoData] == "true"
-
 	return AlertData{
 		Receiver:      receiver,
-		Status:        status,
+		Status:        string(a.Status()),
 		Labels:        labels,
 		Annotations:   annotations,
 		StartsAt:      a.StartsAt,
@@ -240,17 +275,18 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		GeneratorURL:  a.GeneratorURL,
 		Fingerprint:   a.Fingerprint().String(),
 		AlertName:     labels[ruletypes.LabelAlertName],
-		RuleID:        labels[ruletypes.LabelRuleId],
+		RuleID:        labels[ruletypes.LabelRuleID],
 		RuleLink:      labels[ruletypes.LabelRuleSource],
 		Severity:      labels[ruletypes.LabelSeverityName],
 		LogLink:       annotations[ruletypes.AnnotationRelatedLogs],
 		TraceLink:     annotations[ruletypes.AnnotationRelatedTraces],
 		Value:         annotations[ruletypes.AnnotationValue],
-		Threshold:     annotations[ruletypes.AnnotationThreshold],
+		Threshold:     annotations[ruletypes.AnnotationThresholdValue],
 		CompareOp:     annotations[ruletypes.AnnotationCompareOp],
 		MatchType:     annotations[ruletypes.AnnotationMatchType],
-		IsFiring:      isFiring,
-		IsResolved:    isResolved,
-		IsMissingData: isMissingData,
+		IsFiring:      a.Status() == model.AlertFiring,
+		IsResolved:    a.Status() == model.AlertResolved,
+		IsMissingData: labels[ruletypes.LabelNoData] == "true",
+		IsRecovering:  labels[ruletypes.LabelIsRecovering] == "true",
 	}
 }

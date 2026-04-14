@@ -64,28 +64,23 @@ export function getIntervals(
 		},
 	];
 
-	let tempBaseSpread = baseSpread;
+	// Only show even-interval ticks — skip the trailing partial tick at the edge.
+	// The last even tick sits before the full width, so it doesn't conflict with
+	// span duration labels that may have sub-millisecond precision.
 	let elapsedIntervals = 0;
 
-	while (tempBaseSpread && intervals.length < 20) {
-		let intervalTime: number;
-
-		if (tempBaseSpread <= 1.5 * intervalSpreadNormalized) {
-			intervalTime = elapsedIntervals + tempBaseSpread;
-			tempBaseSpread = 0;
-		} else {
-			intervalTime = elapsedIntervals + intervalSpreadNormalized;
-			tempBaseSpread -= intervalSpreadNormalized;
-		}
-
-		elapsedIntervals = intervalTime;
-		const labelTime = offsetTimestamp + intervalTime;
+	while (
+		elapsedIntervals + intervalSpreadNormalized <= baseSpread &&
+		intervals.length < 20
+	) {
+		elapsedIntervals += intervalSpreadNormalized;
+		const labelTime = offsetTimestamp + elapsedIntervals;
 
 		intervals.push({
 			label: `${toFixed(resolveTimeFromInterval(labelTime, intervalUnit), 2)}${
 				intervalUnit.name
 			}`,
-			percentage: (intervalTime / baseSpread) * 100,
+			percentage: (elapsedIntervals / baseSpread) * 100,
 		});
 	}
 

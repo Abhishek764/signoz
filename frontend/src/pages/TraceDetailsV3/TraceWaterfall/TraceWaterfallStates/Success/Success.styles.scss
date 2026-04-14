@@ -207,12 +207,20 @@
 		.timeline-row {
 			display: flex;
 			align-items: center;
+			// Match timeline-header's 15px padding so bars align with ticks
+			padding: 0 15px;
 		}
 
 		.timeline-row:hover,
 		.timeline-row.hovered-span {
 			border-radius: 4px;
 			background: rgba(171, 189, 255, 0.06) !important;
+		}
+
+		.timeline-row:has(.interested-span),
+		.timeline-row:has(.selected-non-matching-span) {
+			border-radius: 4px;
+			background: rgba(171, 189, 255, 0.12) !important;
 		}
 	}
 
@@ -457,10 +465,12 @@
 	}
 
 	// Shared state classes for both panels
-	.interested-span,
-	.selected-non-matching-span {
+	// Background highlight for selection is on .timeline-row via :has() — see .waterfall-timeline
+	// Only apply on .span-overview (left panel) where there's no parent row with :has()
+	.span-overview.interested-span,
+	.span-overview.selected-non-matching-span {
 		border-radius: 4px;
-		background: rgba(171, 189, 255, 0.06) !important;
+		background: rgba(171, 189, 255, 0.12) !important;
 	}
 
 	.dimmed-span {
@@ -530,7 +540,6 @@
 
 		.interested-span {
 			border-radius: 4px;
-			background: var(--bg-vanilla-300);
 		}
 
 		.span-duration .span-bar {

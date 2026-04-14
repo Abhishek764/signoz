@@ -84,20 +84,12 @@ function TraceDetailsV3(): JSX.Element {
 		}
 	}, [traceData]);
 
-	// Collapse state — at least one must remain open
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 
 	const handleCollapseChange = (key: string): void => {
-		setActiveKeys((prev) => {
-			const next = prev.includes(key)
-				? prev.filter((k) => k !== key)
-				: [...prev, key];
-			// Don't allow collapsing the last open section
-			if (next.length === 0) {
-				return prev;
-			}
-			return next;
-		});
+		setActiveKeys((prev) =>
+			prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+		);
 	};
 
 	const [spanDetailVariant, setSpanDetailVariant] = useState<SpanDetailVariant>(

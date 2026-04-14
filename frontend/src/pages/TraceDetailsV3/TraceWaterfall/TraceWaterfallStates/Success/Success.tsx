@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import {
 	Dispatch,
 	memo,
@@ -348,6 +349,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 	const prevHoveredSpanIdRef = useRef<string | null>(null);
+	const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {
@@ -388,6 +390,52 @@ function Success(props: ISuccessProps): JSX.Element {
 	const handleVirtualizerInstanceChanged = useCallback(
 		(instance: Virtualizer<HTMLDivElement, Element>): void => {
 			const { range } = instance;
+
+			// Auto-scroll sidebar horizontally to keep span names visible as depth changes.
+			// Debounced — only fires 50ms after scrolling settles to avoid jitter.
+			// Prefer the hovered span's level, else fall back to the median visible span.
+			if (range && instance.isScrolling) {
+				if (autoScrollTimerRef.current) {
+					clearTimeout(autoScrollTimerRef.current);
+				}
+
+				const capturedRange = { ...range };
+				autoScrollTimerRef.current = setTimeout(() => {
+					const hoveredId = prevHoveredSpanIdRef.current;
+					let targetLevel: number | null = null;
+
+					if (hoveredId) {
+						const hoveredIdx = spans.findIndex((s) => s.spanId === hoveredId);
+						if (
+							hoveredIdx >= capturedRange.startIndex &&
+							hoveredIdx <= capturedRange.endIndex
+						) {
+							targetLevel = spans[hoveredIdx].level;
+						}
+					}
+
+					if (targetLevel === null) {
+						const midIndex = Math.floor(
+							(capturedRange.startIndex + capturedRange.endIndex) / 2,
+						);
+						targetLevel = spans[midIndex]?.level ?? 0;
+					}
+
+					const sidebarScrollEl = scrollContainerRef.current?.querySelector(
+						'.resizable-box__content',
+					);
+					if (sidebarScrollEl) {
+						const targetScrollLeft = Math.max(0, targetLevel * CONNECTOR_WIDTH - 40);
+						if (
+							Math.abs(sidebarScrollEl.scrollLeft - targetScrollLeft) >
+							CONNECTOR_WIDTH * 3
+						) {
+							sidebarScrollEl.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+						}
+					}
+				}, 50);
+			}
+
 			// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so
 			// do not trigger the API call
 			if (spans.length < 500) {

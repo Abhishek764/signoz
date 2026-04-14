@@ -1,0 +1,39 @@
+.trace-details-filter {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+
+	&__search {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__scope {
+		flex-shrink: 0;
+	}
+
+	&__nav {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+		flex-shrink: 0;
+		white-space: nowrap;
+
+		.ant-typography {
+			font-size: 12px;
+			color: var(--l2-foreground);
+		}
+
+		.ant-btn {
+			padding: 2px 4px;
+			height: auto;
+		}
+	}
+
+	&__no-results {
+		font-size: 12px;
+		color: var(--l2-foreground);
+		white-space: nowrap;
+	}
+}

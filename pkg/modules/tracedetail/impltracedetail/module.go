@@ -21,14 +21,6 @@ import (
 	tracedetailv2 "github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 )
 
-const (
-	traceDB           = "signoz_traces"
-	traceTable        = "distributed_signoz_index_v3"
-	traceSummaryTable = "distributed_trace_summary"
-	cacheTTL          = 5 * time.Minute
-	fluxInterval      = 2 * time.Minute
-)
-
 var errTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
 type module struct {
@@ -46,18 +38,16 @@ func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, 
 }
 
 func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.WaterfallResponse, error) {
-	response := new(tracedetailtypes.WaterfallResponse)
-
 	traceData, err := m.getTraceData(ctx, orgID, traceID)
 	if err != nil {
 		if errors.Is(err, errTraceNotFound) {
-			return response, nil
+			return new(tracedetailtypes.WaterfallResponse), nil
 		}
 		return nil, err
 	}
 
 	// Span selection: all spans or windowed
-	limit := min(req.Limit, MaxLimitToSelectAllSpans)
+	limit := min(req.Limit, tracedetailtypes.MaxLimitToSelectAllSpans)
 	selectAllSpans := traceData.TotalSpans <= uint64(limit)
 
 	var (
@@ -73,24 +63,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		)
 	}
 
-	// Convert timestamps to milliseconds for service duration map
-	for serviceName, totalDuration := range traceData.ServiceNameToTotalDurationMap {
-		traceData.ServiceNameToTotalDurationMap[serviceName] = totalDuration / 1000000
-	}
-
-	response.Spans = selectedSpans
-	response.UncollapsedSpans = uncollapsedSpans
-	response.StartTimestampMillis = traceData.StartTime / 1000000
-	response.EndTimestampMillis = traceData.EndTime / 1000000
-	response.TotalSpansCount = traceData.TotalSpans
-	response.TotalErrorSpansCount = traceData.TotalErrorSpans
-	response.RootServiceName = rootServiceName
-	response.RootServiceEntryPoint = rootServiceEntryPoint
-	response.ServiceNameToTotalDurationMap = traceData.ServiceNameToTotalDurationMap
-	response.HasMissingSpans = traceData.HasMissingSpans
-	response.HasMore = !selectAllSpans
-
-	return response, nil
+	return tracedetailtypes.NewWaterfallResponse(traceData, selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint, selectAllSpans), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.
@@ -107,7 +80,7 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 	}
 
 	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
-	if cacheErr := m.cache.Set(ctx, orgID, cacheKey, traceData, cacheTTL); cacheErr != nil {
+	if cacheErr := m.cache.Set(ctx, orgID, cacheKey, traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
 		m.logger.ErrorContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))
 	}
 
@@ -119,7 +92,7 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 	var summary tracedetailtypes.TraceSummary
 	summaryQuery := fmt.Sprintf(
 		"SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id",
-		traceDB, traceSummaryTable,
+		tracedetailtypes.TraceDB, tracedetailtypes.TraceSummaryTable,
 	)
 	err := m.telemetryStore.ClickhouseDB().QueryRow(ctx, summaryQuery, traceID).Scan(
 		&summary.TraceID, &summary.Start, &summary.End, &summary.NumSpans,
@@ -143,7 +116,7 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 		FROM %s.%s
 		WHERE trace_id=$1 AND ts_bucket_start>=$2 AND ts_bucket_start<=$3
 		ORDER BY timestamp ASC, name ASC`,
-		traceDB, traceTable,
+		tracedetailtypes.TraceDB, tracedetailtypes.TraceTable,
 	)
 
 	var spanItems []tracedetailtypes.SpanModel
@@ -231,17 +204,17 @@ func (m *module) getTraceDataFromDB(ctx context.Context, traceID string) (*trace
 		return traceRoots[i].TimeUnixMilli < traceRoots[j].TimeUnixMilli
 	})
 
-	return &tracedetailtypes.WaterfallTrace{
-		StartTime:                     startTime,
-		EndTime:                       endTime,
-		DurationNano:                  durationNano,
-		TotalSpans:                    uint64(len(spanItems)),
-		TotalErrorSpans:               totalErrorSpans,
-		SpanIDToSpanNodeMap:           spanIDToSpanNodeMap,
-		ServiceNameToTotalDurationMap: tracedetailv2.CalculateServiceTime(serviceNameIntervalMap),
-		TraceRoots:                    traceRoots,
-		HasMissingSpans:               hasMissingSpans,
-	}, nil
+	return tracedetailtypes.NewWaterfallTrace(
+		startTime,
+		endTime,
+		durationNano,
+		uint64(len(spanItems)),
+		totalErrorSpans,
+		spanIDToSpanNodeMap,
+		tracedetailv2.CalculateServiceTime(serviceNameIntervalMap),
+		traceRoots,
+		hasMissingSpans,
+	), nil
 }
 
 func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
@@ -253,7 +226,7 @@ func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID st
 	}
 
 	// Skip cache if trace end time falls within flux interval
-	if time.Since(time.UnixMilli(int64(cachedData.EndTime))) < fluxInterval {
+	if time.Since(time.UnixMilli(int64(cachedData.EndTime))) < tracedetailtypes.FluxInterval {
 		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", slog.String("trace_id", traceID))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "trace end time within flux interval, traceID: %s", traceID)
 	}

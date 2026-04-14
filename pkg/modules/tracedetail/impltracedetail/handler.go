@@ -3,7 +3,6 @@ package impltracedetail
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -34,11 +33,7 @@ func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	traceID := mux.Vars(r)["traceID"]
-	if traceID == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "traceId is required"))
-		return
-	}
+	traceID := mux.Vars(r)["traceID"] // can't be empty or route won't match
 
 	var req tracedetailtypes.WaterfallRequest
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {

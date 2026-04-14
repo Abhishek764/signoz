@@ -8,66 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
 
-var (
-	spanLimitPerRequest         float64 = 500
-	maxDepthForSelectedChildren int     = 5
-	MaxLimitToSelectAllSpans    uint    = 10_000
-)
-
-type traverseOpts struct {
-	uncollapsedSpans map[string]struct{}
-	selectedSpanID   string
-	selectAll        bool
-}
-
-func traverseTrace(
-	span *tracedetailtypes.WaterfallSpan,
-	opts traverseOpts,
-	level uint64,
-	isPartOfPreOrder bool,
-	autoExpandDepth int,
-) ([]*tracedetailtypes.WaterfallSpan, []string) {
-
-	preOrderTraversal := []*tracedetailtypes.WaterfallSpan{}
-	autoExpandedSpans := []string{}
-
-	span.SubTreeNodeCount = 0
-	nodeWithoutChildren := span.CopyWithoutChildren(level)
-
-	if isPartOfPreOrder {
-		preOrderTraversal = append(preOrderTraversal, nodeWithoutChildren)
-	}
-
-	remainingAutoExpandDepth := 0
-	_, isSelectedSpanUncollapsed := opts.uncollapsedSpans[opts.selectedSpanID]
-	if span.SpanID == opts.selectedSpanID && isSelectedSpanUncollapsed {
-		remainingAutoExpandDepth = maxDepthForSelectedChildren
-	} else if autoExpandDepth > 0 {
-		remainingAutoExpandDepth = autoExpandDepth - 1
-	}
-
-	_, isAlreadyUncollapsed := opts.uncollapsedSpans[span.SpanID]
-	for _, child := range span.Children {
-		isChildWithinMaxDepth := remainingAutoExpandDepth > 0
-		childIsPartOfPreOrder := opts.selectAll || (isPartOfPreOrder && (isAlreadyUncollapsed || isChildWithinMaxDepth))
-
-		if isPartOfPreOrder && isChildWithinMaxDepth && !isAlreadyUncollapsed {
-			if !slices.Contains(autoExpandedSpans, span.SpanID) {
-				autoExpandedSpans = append(autoExpandedSpans, span.SpanID)
-			}
-		}
-
-		childTraversal, childAutoExpanded := traverseTrace(child, opts, level+1, childIsPartOfPreOrder, remainingAutoExpandDepth)
-		preOrderTraversal = append(preOrderTraversal, childTraversal...)
-		autoExpandedSpans = append(autoExpandedSpans, childAutoExpanded...)
-		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
-		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
-	}
-
-	nodeWithoutChildren.SubTreeNodeCount += 1
-	return preOrderTraversal, autoExpandedSpans
-}
-
 func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) ([]*tracedetailtypes.WaterfallSpan, []string, string, string) {
 	var preOrderTraversal = make([]*tracedetailtypes.WaterfallSpan, 0)
 	var rootServiceName, rootServiceEntryPoint string
@@ -120,8 +60,8 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 	}
 
 	// Window: 40% before, 60% after selected span
-	startIndex := selectedSpanIndex - int(spanLimitPerRequest*0.4)
-	endIndex := selectedSpanIndex + int(spanLimitPerRequest*0.6)
+	startIndex := selectedSpanIndex - int(tracedetailtypes.SpanLimitPerRequest*0.4)
+	endIndex := selectedSpanIndex + int(tracedetailtypes.SpanLimitPerRequest*0.6)
 
 	if startIndex < 0 {
 		endIndex = endIndex - startIndex
@@ -150,6 +90,75 @@ func GetAllSpans(traceRoots []*tracedetailtypes.WaterfallSpan) (spans []*tracede
 	return
 }
 
+// SortSpanChildren recursively sorts children of each span by TimeUnixNano then Name.
+// Must be called once after the span tree is fully built so that traverseTrace
+// sees a consistent ordering without needing to re-sort on every call.
+func SortSpanChildren(span *tracedetailtypes.WaterfallSpan) {
+	sort.Slice(span.Children, func(i, j int) bool {
+		if span.Children[i].TimeUnixMilli == span.Children[j].TimeUnixMilli {
+			return span.Children[i].Name < span.Children[j].Name
+		}
+		return span.Children[i].TimeUnixMilli < span.Children[j].TimeUnixMilli
+	})
+	for _, child := range span.Children {
+		SortSpanChildren(child)
+	}
+}
+
+type traverseOpts struct {
+	uncollapsedSpans map[string]struct{}
+	selectedSpanID   string
+	selectAll        bool
+}
+
+func traverseTrace(
+	span *tracedetailtypes.WaterfallSpan,
+	opts traverseOpts,
+	level uint64,
+	isPartOfPreOrder bool,
+	autoExpandDepth int,
+) ([]*tracedetailtypes.WaterfallSpan, []string) {
+
+	preOrderTraversal := []*tracedetailtypes.WaterfallSpan{}
+	autoExpandedSpans := []string{}
+
+	span.SubTreeNodeCount = 0
+	nodeWithoutChildren := span.CopyWithoutChildren(level)
+
+	if isPartOfPreOrder {
+		preOrderTraversal = append(preOrderTraversal, nodeWithoutChildren)
+	}
+
+	remainingAutoExpandDepth := 0
+	_, isSelectedSpanUncollapsed := opts.uncollapsedSpans[opts.selectedSpanID]
+	if span.SpanID == opts.selectedSpanID && isSelectedSpanUncollapsed {
+		remainingAutoExpandDepth = tracedetailtypes.MaxDepthForSelectedChildren
+	} else if autoExpandDepth > 0 {
+		remainingAutoExpandDepth = autoExpandDepth - 1
+	}
+
+	_, isAlreadyUncollapsed := opts.uncollapsedSpans[span.SpanID]
+	for _, child := range span.Children {
+		isChildWithinMaxDepth := remainingAutoExpandDepth > 0
+		childIsPartOfPreOrder := opts.selectAll || (isPartOfPreOrder && (isAlreadyUncollapsed || isChildWithinMaxDepth))
+
+		if isPartOfPreOrder && isChildWithinMaxDepth && !isAlreadyUncollapsed {
+			if !slices.Contains(autoExpandedSpans, span.SpanID) {
+				autoExpandedSpans = append(autoExpandedSpans, span.SpanID)
+			}
+		}
+
+		childTraversal, childAutoExpanded := traverseTrace(child, opts, level+1, childIsPartOfPreOrder, remainingAutoExpandDepth)
+		preOrderTraversal = append(preOrderTraversal, childTraversal...)
+		autoExpandedSpans = append(autoExpandedSpans, childAutoExpanded...)
+		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
+		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
+	}
+
+	nodeWithoutChildren.SubTreeNodeCount += 1
+	return preOrderTraversal, autoExpandedSpans
+}
+
 func getPathFromRootToSelectedSpanID(node *tracedetailtypes.WaterfallSpan, selectedSpanID string) (bool, []string) {
 	path := []string{node.SpanID}
 	if node.SpanID == selectedSpanID {
@@ -173,19 +182,4 @@ func findIndexForSelectedSpan(spans []*tracedetailtypes.WaterfallSpan, selectedS
 		}
 	}
 	return -1
-}
-
-// SortSpanChildren recursively sorts children of each span by TimeUnixNano then Name.
-// Must be called once after the span tree is fully built so that traverseTrace
-// sees a consistent ordering without needing to re-sort on every call.
-func SortSpanChildren(span *tracedetailtypes.WaterfallSpan) {
-	sort.Slice(span.Children, func(i, j int) bool {
-		if span.Children[i].TimeUnixMilli == span.Children[j].TimeUnixMilli {
-			return span.Children[i].Name < span.Children[j].Name
-		}
-		return span.Children[i].TimeUnixMilli < span.Children[j].TimeUnixMilli
-	})
-	for _, child := range span.Children {
-		SortSpanChildren(child)
-	}
 }

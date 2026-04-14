@@ -8,6 +8,26 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
+// ClickHouse database and table names for trace queries.
+const (
+	TraceDB           = "signoz_traces"
+	TraceTable        = "distributed_signoz_index_v3"
+	TraceSummaryTable = "distributed_trace_summary"
+)
+
+// Cache and freshness thresholds.
+const (
+	WaterfallCacheTTL = 5 * time.Minute
+	FluxInterval      = 2 * time.Minute
+)
+
+// Windowing constants for span selection.
+const (
+	SpanLimitPerRequest         float64 = 500
+	MaxDepthForSelectedChildren int     = 5
+	MaxLimitToSelectAllSpans    uint    = 10_000
+)
+
 // WaterfallRequest is the request body for the v3 waterfall API.
 type WaterfallRequest struct {
 	SelectedSpanID   string   `json:"selectedSpanId"`
@@ -238,4 +258,52 @@ func (c *WaterfallTrace) MarshalBinary() (data []byte, err error) {
 
 func (c *WaterfallTrace) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
+}
+
+// NewWaterfallTrace constructs a WaterfallTrace from processed span data.
+func NewWaterfallTrace(
+	startTime, endTime, durationNano, totalSpans, totalErrorSpans uint64,
+	spanIDToSpanNodeMap map[string]*WaterfallSpan,
+	serviceNameToTotalDurationMap map[string]uint64,
+	traceRoots []*WaterfallSpan,
+	hasMissingSpans bool,
+) *WaterfallTrace {
+	return &WaterfallTrace{
+		StartTime:                     startTime,
+		EndTime:                       endTime,
+		DurationNano:                  durationNano,
+		TotalSpans:                    totalSpans,
+		TotalErrorSpans:               totalErrorSpans,
+		SpanIDToSpanNodeMap:           spanIDToSpanNodeMap,
+		ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
+		TraceRoots:                    traceRoots,
+		HasMissingSpans:               hasMissingSpans,
+	}
+}
+
+// NewWaterfallResponse constructs a WaterfallResponse from processed trace data and selected spans.
+func NewWaterfallResponse(
+	traceData *WaterfallTrace,
+	selectedSpans []*WaterfallSpan,
+	uncollapsedSpans []string,
+	rootServiceName, rootServiceEntryPoint string,
+	selectAllSpans bool,
+) *WaterfallResponse {
+	serviceDurationsMillis := make(map[string]uint64, len(traceData.ServiceNameToTotalDurationMap))
+	for svc, dur := range traceData.ServiceNameToTotalDurationMap {
+		serviceDurationsMillis[svc] = dur / 1_000_000
+	}
+	return &WaterfallResponse{
+		Spans:                         selectedSpans,
+		UncollapsedSpans:              uncollapsedSpans,
+		StartTimestampMillis:          traceData.StartTime / 1_000_000,
+		EndTimestampMillis:            traceData.EndTime / 1_000_000,
+		TotalSpansCount:               traceData.TotalSpans,
+		TotalErrorSpansCount:          traceData.TotalErrorSpans,
+		RootServiceName:               rootServiceName,
+		RootServiceEntryPoint:         rootServiceEntryPoint,
+		ServiceNameToTotalDurationMap: serviceDurationsMillis,
+		HasMissingSpans:               traceData.HasMissingSpans,
+		HasMore:                       !selectAllSpans,
+	}
 }

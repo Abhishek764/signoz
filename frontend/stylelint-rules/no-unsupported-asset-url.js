@@ -6,6 +6,7 @@ const {
 	containsAssetExtension,
 	isAbsolutePath,
 	isPublicRelative,
+	isRelativePublicDir,
 } = require('../eslint-rules/shared/asset-patterns');
 
 const ruleName = 'local/no-unsupported-asset-url';
@@ -36,6 +37,9 @@ const messages = stylelint.utils.ruleMessages(ruleName, {
 	publicPath: () =>
 		`Assets in public/ bypass Vite's module pipeline — their URLs are not base-path-aware and will break when the app is served from a sub-path (e.g. /app/). ` +
 		`Use a relative path from src/assets/ instead: url('../../assets/...')`,
+	relativePath: (urlPath) =>
+		`Relative public-dir path "${urlPath}" in url() is not base-path-safe. ` +
+		`Use a relative path from src/assets/ instead: url('../../assets/...')`,
 });
 
 /** @type {import('stylelint').Rule} */
@@ -62,6 +66,17 @@ const rule = (primaryOption) => {
 				if (isPublicRelative(urlPath) && containsAssetExtension(urlPath)) {
 					stylelint.utils.report({
 						message: messages.publicPath(),
+						node: decl,
+						result,
+						ruleName,
+					});
+					continue;
+				}
+
+				// Pattern #3: relative public-dir segment, e.g. url('Icons/foo.svg')
+				if (isRelativePublicDir(urlPath) && containsAssetExtension(urlPath)) {
+					stylelint.utils.report({
+						message: messages.relativePath(urlPath),
 						node: decl,
 						result,
 						ruleName,

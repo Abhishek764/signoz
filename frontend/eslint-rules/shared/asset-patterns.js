@@ -59,11 +59,54 @@ function isPublicRelative(str) {
 	return str.includes('/public/') || str.startsWith('public/');
 }
 
+/**
+ * Returns true if the string is a relative reference into a known public-dir folder.
+ * e.g. "Icons/foo.svg", `Logos/aws-dark.svg`, "Images/bg.png"
+ * These bypass Vite's module pipeline even without a leading slash.
+ */
+const PUBLIC_DIR_SEGMENTS = ['Icons/', 'Images/', 'Logos/', 'svgs/'];
+
+function isRelativePublicDir(str) {
+	if (typeof str !== 'string') return false;
+	return PUBLIC_DIR_SEGMENTS.some((seg) => str.startsWith(seg));
+}
+
+/**
+ * Returns true if an asset import path is valid (goes through Vite's module pipeline).
+ * Valid: @/assets/..., any relative path containing /assets/, or node_modules packages.
+ * Invalid: absolute paths, public/ dir, or relative paths outside src/assets/.
+ */
+function isValidAssetImport(str) {
+	if (typeof str !== 'string') return false;
+	if (str.startsWith('@/assets/')) return true;
+	if (str.includes('/assets/')) return true;
+	// Not starting with . or / means it's a node_modules package — always valid
+	if (!str.startsWith('.') && !str.startsWith('/')) return true;
+	return false;
+}
+
+/**
+ * Returns true if the string is an external URL.
+ * Used to avoid false positives on CDN/API URLs with asset extensions.
+ */
+function isExternalUrl(str) {
+	if (typeof str !== 'string') return false;
+	return (
+		str.startsWith('http://') ||
+		str.startsWith('https://') ||
+		str.startsWith('//')
+	);
+}
+
 module.exports = {
 	ASSET_EXTENSIONS,
+	PUBLIC_DIR_SEGMENTS,
 	hasAssetExtension,
 	containsAssetExtension,
 	extractUrlPath,
 	isAbsolutePath,
 	isPublicRelative,
+	isRelativePublicDir,
+	isValidAssetImport,
+	isExternalUrl,
 };

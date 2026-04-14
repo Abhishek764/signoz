@@ -6,6 +6,9 @@ const {
 	extractUrlPath,
 	isAbsolutePath,
 	isPublicRelative,
+	isRelativePublicDir,
+	isValidAssetImport,
+	isExternalUrl,
 } = require('./shared/asset-patterns');
 
 const PUBLIC_DIR_SEGMENTS = ['/Icons/', '/Images/', '/Logos/', '/svgs/'];
@@ -48,6 +51,12 @@ module.exports = {
 			publicImport:
 				"Assets in public/ bypass Vite's module pipeline — their URLs are not base-path-aware and will break when the app is served from a sub-path (e.g. /app/). " +
 				"Use an ES import instead: import fooUrl from '@/assets/...' so Vite injects the correct base path.",
+			relativePublicString:
+				'Relative public-dir path "{{ value }}" is not base-path-safe. ' +
+				"Use an ES import instead: import fooUrl from '@/assets/...' and reference the variable.",
+			invalidAssetImport:
+				"Asset '{{ src }}' must be imported from '@/assets/...' — " +
+				'move the file to src/assets/ and update the import path.',
 		},
 	},
 
@@ -59,6 +68,7 @@ module.exports = {
 				}
 				const value = node.value;
 				if (typeof value !== 'string') return;
+				if (isExternalUrl(value)) return;
 
 				if (isAbsolutePath(value) && hasAssetExtension(value)) {
 					context.report({
@@ -69,11 +79,29 @@ module.exports = {
 					return;
 				}
 
+				if (isRelativePublicDir(value) && hasAssetExtension(value)) {
+					context.report({
+						node,
+						messageId: 'relativePublicString',
+						data: { value },
+					});
+					return;
+				}
+
 				const urlPath = extractUrlPath(value);
+				if (urlPath && isExternalUrl(urlPath)) return;
 				if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
 					context.report({
 						node,
 						messageId: 'absoluteString',
+						data: { value: urlPath },
+					});
+					return;
+				}
+				if (urlPath && isRelativePublicDir(urlPath) && hasAssetExtension(urlPath)) {
+					context.report({
+						node,
+						messageId: 'relativePublicString',
 						data: { value: urlPath },
 					});
 				}
@@ -84,12 +112,23 @@ module.exports = {
 				if (!quasis || quasis.length === 0) return;
 
 				const firstQuasi = quasis[0].value.raw;
+				if (isExternalUrl(firstQuasi)) return;
+
 				const hasAssetExt = quasis.some((q) => containsAssetExtension(q.value.raw));
 
 				if (isAbsolutePath(firstQuasi) && hasAssetExt) {
 					context.report({
 						node,
 						messageId: 'templateLiteral',
+					});
+					return;
+				}
+
+				if (isRelativePublicDir(firstQuasi) && hasAssetExt) {
+					context.report({
+						node,
+						messageId: 'relativePublicString',
+						data: { value: firstQuasi },
 					});
 					return;
 				}
@@ -108,10 +147,23 @@ module.exports = {
 
 				if (quasis.length === 1) {
 					const urlPath = extractUrlPath(firstQuasi);
+					if (urlPath && isExternalUrl(urlPath)) return;
 					if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
 						context.report({
 							node,
 							messageId: 'templateLiteral',
+						});
+						return;
+					}
+					if (
+						urlPath &&
+						isRelativePublicDir(urlPath) &&
+						hasAssetExtension(urlPath)
+					) {
+						context.report({
+							node,
+							messageId: 'relativePublicString',
+							data: { value: urlPath },
 						});
 					}
 					return;
@@ -128,7 +180,7 @@ module.exports = {
 				}
 			},
 
-			// String concatenation: "/Icons/" + name + ".svg"
+			// String concatenation: "/Icons/" + name + ".svg" or "Icons/" + name + ".svg"
 			BinaryExpression(node) {
 				if (node.operator !== '+') return;
 
@@ -140,15 +192,25 @@ module.exports = {
 				}
 				const staticPrefix = prefixParts.join('');
 
-				if (!isAbsolutePath(staticPrefix)) return;
+				if (isExternalUrl(staticPrefix)) return;
 
 				const hasExt = parts.some(
 					(part) => part !== null && containsAssetExtension(part),
 				);
-				if (hasExt) {
+
+				if (isAbsolutePath(staticPrefix) && hasExt) {
 					context.report({
 						node,
 						messageId: 'templateLiteral',
+					});
+					return;
+				}
+
+				if (isRelativePublicDir(staticPrefix) && hasExt) {
+					context.report({
+						node,
+						messageId: 'relativePublicString',
+						data: { value: staticPrefix },
 					});
 				}
 			},
@@ -156,19 +218,23 @@ module.exports = {
 			ImportDeclaration(node) {
 				const src = node.source.value;
 				if (typeof src !== 'string') return;
+				if (!hasAssetExtension(src)) return;
 
-				if (isAbsolutePath(src) && hasAssetExtension(src)) {
-					context.report({
-						node,
-						messageId: 'absoluteImport',
-					});
+				if (isAbsolutePath(src)) {
+					context.report({ node, messageId: 'absoluteImport' });
 					return;
 				}
 
-				if (isPublicRelative(src) && hasAssetExtension(src)) {
+				if (isPublicRelative(src)) {
+					context.report({ node, messageId: 'publicImport' });
+					return;
+				}
+
+				if (!isValidAssetImport(src)) {
 					context.report({
 						node,
-						messageId: 'publicImport',
+						messageId: 'invalidAssetImport',
+						data: { src },
 					});
 				}
 			},
@@ -176,19 +242,24 @@ module.exports = {
 			ImportExpression(node) {
 				const src = node.source;
 				if (!src || src.type !== 'Literal' || typeof src.value !== 'string') return;
+				const value = src.value;
+				if (!hasAssetExtension(value)) return;
 
-				if (isAbsolutePath(src.value) && hasAssetExtension(src.value)) {
-					context.report({
-						node,
-						messageId: 'absoluteImport',
-					});
+				if (isAbsolutePath(value)) {
+					context.report({ node, messageId: 'absoluteImport' });
 					return;
 				}
 
-				if (isPublicRelative(src.value) && hasAssetExtension(src.value)) {
+				if (isPublicRelative(value)) {
+					context.report({ node, messageId: 'publicImport' });
+					return;
+				}
+
+				if (!isValidAssetImport(value)) {
 					context.report({
 						node,
-						messageId: 'publicImport',
+						messageId: 'invalidAssetImport',
+						data: { src: value },
 					});
 				}
 			},

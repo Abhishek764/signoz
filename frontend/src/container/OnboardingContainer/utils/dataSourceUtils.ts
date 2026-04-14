@@ -122,7 +122,7 @@ export const frameworksMap = {
 export const defaultApplicationDataSource = {
 	name: 'java',
 	id: 'java',
-	imgURL: `Logos/java.png`,
+	imgURL: javaPngUrl,
 };
 
 const supportedLanguages = [

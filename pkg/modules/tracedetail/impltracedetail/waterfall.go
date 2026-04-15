@@ -4,6 +4,7 @@ import (
 	"maps"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
@@ -190,4 +191,17 @@ func findIndexForSelectedSpan(spans []*tracedetailtypes.WaterfallSpan, selectedS
 		}
 	}
 	return -1
+}
+
+func containsSpan(spans []*tracedetailtypes.WaterfallSpan, target *tracedetailtypes.WaterfallSpan) bool {
+	for _, s := range spans {
+		if s.SpanID == target.SpanID {
+			return true
+		}
+	}
+	return false
+}
+
+func waterfallCacheKey(traceID string) string {
+	return strings.Join([]string{"v3_waterfall", traceID}, "-")
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -81,8 +80,7 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 
 	traceData := computeWaterfallTrace(spanItems)
 
-	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
-	if cacheErr := m.cache.Set(ctx, orgID, cacheKey, traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
+	if cacheErr := m.cache.Set(ctx, orgID, waterfallCacheKey(traceID), traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
 		m.logger.ErrorContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))
 	}
 
@@ -91,8 +89,7 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 
 func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
 	cachedData := new(tracedetailtypes.WaterfallTrace)
-	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
-	err := m.cache.Get(ctx, orgID, cacheKey, cachedData)
+	err := m.cache.Get(ctx, orgID, waterfallCacheKey(traceID), cachedData)
 	if err != nil {
 		return nil, err
 	}
@@ -182,13 +179,4 @@ func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailt
 		traceRoots,
 		hasMissingSpans,
 	)
-}
-
-func containsSpan(spans []*tracedetailtypes.WaterfallSpan, target *tracedetailtypes.WaterfallSpan) bool {
-	for _, s := range spans {
-		if s.SpanID == target.SpanID {
-			return true
-		}
-	}
-	return false
 }

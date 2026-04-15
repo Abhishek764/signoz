@@ -55,32 +55,61 @@ func TestServeTemplatedIndex(t *testing.T) {
 
 	testCases := []struct {
 		name         string
+		path         string
 		globalConfig global.Config
 		expected     string
 	}{
 		{
-			name:         "RootBaseHref",
+			name:         "RootBaseHrefAtRoot",
+			path:         "/",
 			globalConfig: global.Config{},
 			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
 `,
 		},
 		{
-			name:         "SubPathBaseHref",
+			name:         "RootBaseHrefAtNonExistentPath",
+			path:         "/does-not-exist",
+			globalConfig: global.Config{},
+			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
+`,
+		},
+		{
+			name:         "RootBaseHrefAtDirectory",
+			path:         "/assets",
+			globalConfig: global.Config{},
+			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
+`,
+		},
+		{
+			name:         "SubPathBaseHrefAtRoot",
+			path:         "/",
+			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
+			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
+`,
+		},
+		{
+			name:         "SubPathBaseHrefAtNonExistentPath",
+			path:         "/does-not-exist",
+			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
+			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
+`,
+		},
+		{
+			name:         "SubPathBaseHrefAtDirectory",
+			path:         "/assets",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
 			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
 `,
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, tc.globalConfig)
+			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, testCase.globalConfig)
 
-			for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-				assert.Equal(t, tc.expected, httpGet(t, base+path))
-			}
+			assert.Equal(t, testCase.expected, httpGet(t, base+testCase.path))
 		})
 	}
 }
@@ -91,10 +120,32 @@ func TestServeNoTemplateIndex(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join("testdata", "no_template.html"))
 	require.NoError(t, err)
 
-	base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
+	testCases := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "Root",
+			path: "/",
+		},
+		{
+			name: "NonExistentPath",
+			path: "/does-not-exist",
+		},
+		{
+			name: "Directory",
+			path: "/assets",
+		},
+	}
 
-	for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-		assert.Equal(t, string(expected), httpGet(t, base+path))
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
+
+			assert.Equal(t, string(expected), httpGet(t, base+testCase.path))
+		})
 	}
 }
 
@@ -104,13 +155,34 @@ func TestServeInvalidTemplateIndex(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join("testdata", "invalid_template.html"))
 	require.NoError(t, err)
 
-	base := startServer(t, web.Config{Index: "invalid_template.html", Directory: "testdata"}, global.Config{
-		ExternalURL: &url.URL{Path: "/signoz"},
-	})
+	testCases := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "Root",
+			path: "/",
+		},
+		{
+			name: "NonExistentPath",
+			path: "/does-not-exist",
+		},
+		{
+			name: "Directory",
+			path: "/assets",
+		},
+	}
 
-	// Invalid template falls back to serving raw file unchanged
-	for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-		assert.Equal(t, string(expected), httpGet(t, base+path))
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			base := startServer(t, web.Config{Index: "invalid_template.html", Directory: "testdata"}, global.Config{
+				ExternalURL: &url.URL{Path: "/signoz"},
+			})
+
+			assert.Equal(t, string(expected), httpGet(t, base+testCase.path))
+		})
 	}
 }
 

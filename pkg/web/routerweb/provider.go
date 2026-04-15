@@ -1,12 +1,10 @@
 package routerweb
 
 import (
-	"bytes"
 	"context"
 	"net/http"
 	"os"
 	"path/filepath"
-	"text/template"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -19,10 +17,6 @@ import (
 const (
 	indexFileName string = "index.html"
 )
-
-type templateData struct {
-	BasePath string
-}
 
 type provider struct {
 	config        web.Config
@@ -51,24 +45,17 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", indexFileName)
 	}
 
-	basePath := "/"
+	baseHref := "/"
 	if routePrefix := globalConfig.RoutePrefix(); routePrefix != "" {
-		basePath = routePrefix + "/"
+		baseHref = routePrefix + "/"
 	}
 
-	tmpl, err := template.New(indexFileName).Delims("[[", "]]").Parse(string(raw))
-	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse %q as template", indexFileName)
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, templateData{BasePath: basePath}); err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot execute template for %q", indexFileName)
-	}
+	logger := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/web/routerweb").Logger()
+	indexContents := web.NewIndex(logger, indexFileName, raw, web.TemplateData{BaseHref: baseHref})
 
 	return &provider{
 		config:        config,
-		indexContents: buf.Bytes(),
+		indexContents: indexContents,
 	}, nil
 }
 

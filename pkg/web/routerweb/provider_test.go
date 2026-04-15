@@ -37,7 +37,7 @@ func startServer(t *testing.T, config web.Config, globalConfig global.Config) st
 	return "http://" + listener.Addr().String()
 }
 
-func get(t *testing.T, url string) string {
+func httpGet(t *testing.T, url string) string {
 	t.Helper()
 
 	res, err := http.DefaultClient.Get(url)
@@ -79,7 +79,7 @@ func TestServeTemplatedIndex(t *testing.T) {
 			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, tc.globalConfig)
 
 			for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-				assert.Equal(t, tc.expected, get(t, base+path))
+				assert.Equal(t, tc.expected, httpGet(t, base+path))
 			}
 		})
 	}
@@ -94,7 +94,7 @@ func TestServeNoTemplateIndex(t *testing.T) {
 	base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
 
 	for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-		assert.Equal(t, string(expected), get(t, base+path))
+		assert.Equal(t, string(expected), httpGet(t, base+path))
 	}
 }
 
@@ -110,7 +110,7 @@ func TestServeInvalidTemplateIndex(t *testing.T) {
 
 	// Invalid template falls back to serving raw file unchanged
 	for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-		assert.Equal(t, string(expected), get(t, base+path))
+		assert.Equal(t, string(expected), httpGet(t, base+path))
 	}
 }
 
@@ -124,5 +124,5 @@ func TestServeStaticFilesUnchanged(t *testing.T) {
 		ExternalURL: &url.URL{Path: "/signoz"},
 	})
 
-	assert.Equal(t, string(expected), get(t, base+"/assets/style.css"))
+	assert.Equal(t, string(expected), httpGet(t, base+"/assets/style.css"))
 }

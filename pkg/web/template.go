@@ -22,6 +22,7 @@ func NewIndex(logger *slog.Logger, name string, raw []byte, data TemplateData) [
 		logger.Error("cannot render index template, serving raw file", slog.String("name", name), errors.Attr(err))
 		return raw
 	}
+
 	return result
 }
 

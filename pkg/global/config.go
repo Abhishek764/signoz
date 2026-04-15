@@ -44,6 +44,7 @@ func (c Config) Validate() error {
 			return errors.NewInvalidInputf(ErrCodeInvalidGlobalConfig, "global.external_url path must start with '/', got %q", c.ExternalURL.Path)
 		}
 	}
+
 	return nil
 }
 
@@ -51,10 +52,12 @@ func (c Config) ExternalPath() string {
 	if c.ExternalURL == nil || c.ExternalURL.Path == "" || c.ExternalURL.Path == "/" {
 		return ""
 	}
+
 	p := path.Clean("/" + c.ExternalURL.Path)
 	if p == "/" {
 		return ""
 	}
+
 	return p
 }
 

@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"context"
 	"log/slog"
 	"text/template"
 
@@ -16,10 +17,10 @@ type TemplateData struct {
 
 // If the template cannot be parsed or executed, the raw bytes are
 // returned unchanged and the error is logged.
-func NewIndex(logger *slog.Logger, name string, raw []byte, data TemplateData) []byte {
+func NewIndex(ctx context.Context, logger *slog.Logger, name string, raw []byte, data TemplateData) []byte {
 	result, err := NewIndexE(name, raw, data)
 	if err != nil {
-		logger.Error("cannot render index template, serving raw file", slog.String("name", name), errors.Attr(err))
+		logger.ErrorContext(ctx, "cannot render index template, serving raw file", slog.String("name", name), errors.Attr(err))
 		return raw
 	}
 

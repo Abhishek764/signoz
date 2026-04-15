@@ -154,7 +154,7 @@ func (s *WaterfallSpan) CopyWithoutChildren(level uint64) *WaterfallSpan {
 
 // SpanModel is the ClickHouse scan struct for the v3 waterfall query.
 type SpanModel struct {
-	TimeUnixNano       time.Time          `ch:"timestamp"`
+	StartTime          time.Time          `ch:"timestamp"`
 	DurationNano       uint64             `ch:"duration_nano"`
 	SpanID             string             `ch:"span_id"`
 	TraceID            string             `ch:"trace_id"`
@@ -239,7 +239,7 @@ func (item *SpanModel) ToSpan() *WaterfallSpan {
 		TraceID:            item.TraceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
-		TimeUnixMilli:      uint64(item.TimeUnixNano.UnixNano() / 1000_000),
+		TimeUnixMilli:      uint64(item.StartTime.UnixMilli()),
 		ServiceName:        item.ServiceName,
 	}
 }
@@ -263,7 +263,6 @@ type OtelSpanRef struct {
 type WaterfallTrace struct {
 	StartTime                     uint64                    `json:"startTime"`
 	EndTime                       uint64                    `json:"endTime"`
-	DurationNano                  uint64                    `json:"durationNano"`
 	TotalSpans                    uint64                    `json:"totalSpans"`
 	TotalErrorSpans               uint64                    `json:"totalErrorSpans"`
 	ServiceNameToTotalDurationMap map[string]uint64         `json:"serviceNameToTotalDurationMap"`
@@ -274,7 +273,7 @@ type WaterfallTrace struct {
 
 // NewWaterfallTrace constructs a WaterfallTrace from processed span data.
 func NewWaterfallTrace(
-	startTime, endTime, durationNano, totalSpans, totalErrorSpans uint64,
+	startTime, endTime, totalSpans, totalErrorSpans uint64,
 	spanIDToSpanNodeMap map[string]*WaterfallSpan,
 	serviceNameToTotalDurationMap map[string]uint64,
 	traceRoots []*WaterfallSpan,
@@ -283,7 +282,6 @@ func NewWaterfallTrace(
 	return &WaterfallTrace{
 		StartTime:                     startTime,
 		EndTime:                       endTime,
-		DurationNano:                  durationNano,
 		TotalSpans:                    totalSpans,
 		TotalErrorSpans:               totalErrorSpans,
 		SpanIDToSpanNodeMap:           spanIDToSpanNodeMap,
@@ -305,7 +303,6 @@ func (c *WaterfallTrace) Clone() cachetypes.Cacheable {
 	return &WaterfallTrace{
 		StartTime:                     c.StartTime,
 		EndTime:                       c.EndTime,
-		DurationNano:                  c.DurationNano,
 		TotalSpans:                    c.TotalSpans,
 		TotalErrorSpans:               c.TotalErrorSpans,
 		ServiceNameToTotalDurationMap: copyOfServiceNameToTotalDurationMap,

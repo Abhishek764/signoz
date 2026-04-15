@@ -95,7 +95,7 @@ func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID st
 	}
 
 	// Skip cache if trace end time falls within flux interval
-	if time.Since(time.UnixMilli(int64(cachedData.EndTime))) < tracedetailtypes.FluxInterval {
+	if time.Since(time.Unix(0, int64(cachedData.EndTime))) < tracedetailtypes.FluxInterval {
 		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", slog.String("trace_id", traceID))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "trace end time within flux interval, traceID: %s", traceID)
 	}
@@ -109,26 +109,21 @@ func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID st
 func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailtypes.WaterfallTrace {
 
 	var (
-		startTime, endTime, durationNano, totalErrorSpans uint64
-		spanIDToSpanNodeMap                               = make(map[string]*tracedetailtypes.WaterfallSpan, len(spanItems))
-		serviceNameIntervalMap                            = map[string][]tracedetailv2.Interval{}
-		traceRoots                                        []*tracedetailtypes.WaterfallSpan
-		hasMissingSpans                                   bool
+		startTime, endTime, totalErrorSpans uint64
+		spanIDToSpanNodeMap                 = make(map[string]*tracedetailtypes.WaterfallSpan, len(spanItems))
+		serviceNameIntervalMap              = map[string][]tracedetailv2.Interval{}
+		traceRoots                          []*tracedetailtypes.WaterfallSpan
+		hasMissingSpans                     bool
 	)
 
 	for _, item := range spanItems {
 		span := item.ToSpan()
-		startTimeUnixNano := span.TimeUnixMilli
-
+		startTimeUnixNano := uint64(item.StartTime.UnixNano())
 		if startTime == 0 || startTimeUnixNano < startTime {
 			startTime = startTimeUnixNano
 		}
-		if endTime == 0 || (startTimeUnixNano+span.DurationNano) > endTime {
-			endTime = startTimeUnixNano + span.DurationNano
-		}
-		if durationNano == 0 || span.DurationNano > durationNano {
-			durationNano = span.DurationNano
-		}
+		endTime = max(endTime, startTimeUnixNano+span.DurationNano)
+
 		if span.HasError {
 			totalErrorSpans++
 		}
@@ -171,7 +166,6 @@ func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailt
 	return tracedetailtypes.NewWaterfallTrace(
 		startTime,
 		endTime,
-		durationNano,
 		uint64(len(spanItems)),
 		totalErrorSpans,
 		spanIDToSpanNodeMap,

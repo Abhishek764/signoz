@@ -67,5 +67,6 @@ func (c Config) ExternalPathTrailing() string {
 	if p := c.ExternalPath(); p != "" {
 		return p + "/"
 	}
+
 	return "/"
 }

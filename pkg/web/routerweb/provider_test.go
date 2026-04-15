@@ -20,11 +20,6 @@ import (
 
 func TestServeHttpWithoutPrefix(t *testing.T) {
 	t.Parallel()
-	fi, err := os.Open(filepath.Join("testdata", "index.html"))
-	require.NoError(t, err)
-
-	expected, err := io.ReadAll(fi)
-	require.NoError(t, err)
 
 	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, global.Config{})
 	require.NoError(t, err)
@@ -57,7 +52,7 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 		},
 		{
 			name: "Index",
-			path: "/" + "index.html",
+			path: "/index.html",
 		},
 		{
 			name: "DoesNotExist",
@@ -81,7 +76,7 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 			actual, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			assert.Equal(t, expected, actual)
+			assert.Contains(t, string(actual), `<base href="/" />`)
 		})
 	}
 }
@@ -93,7 +88,7 @@ func TestServeHttpWithBasePath(t *testing.T) {
 		ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"},
 	}
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata_basepath")}, globalConfig)
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, globalConfig)
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -156,7 +151,7 @@ func TestServeHttpWithBasePath(t *testing.T) {
 func TestServeHttpWithBasePathRoot(t *testing.T) {
 	t.Parallel()
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata_basepath")}, global.Config{})
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, global.Config{})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -196,7 +191,7 @@ func TestServeHttpStaticFilesUnchanged(t *testing.T) {
 		ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"},
 	}
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata_basepath")}, globalConfig)
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, globalConfig)
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -218,7 +213,7 @@ func TestServeHttpStaticFilesUnchanged(t *testing.T) {
 	}()
 
 	// Static CSS file should be served from disk unchanged
-	expected, err := os.ReadFile(filepath.Join("testdata_basepath", "assets", "style.css"))
+	expected, err := os.ReadFile(filepath.Join("testdata", "assets", "style.css"))
 	require.NoError(t, err)
 
 	res, err := http.DefaultClient.Get("http://" + listener.Addr().String() + "/assets/style.css")

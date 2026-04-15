@@ -47,8 +47,6 @@ func (c Config) Validate() error {
 	return nil
 }
 
-// ExternalPath returns the normalized path component of ExternalURL.
-// Returns empty string if no path is configured.
 func (c Config) ExternalPath() string {
 	if c.ExternalURL == nil || c.ExternalURL.Path == "" || c.ExternalURL.Path == "/" {
 		return ""
@@ -60,8 +58,6 @@ func (c Config) ExternalPath() string {
 	return p
 }
 
-// ExternalPathTrailing returns the external path with a trailing slash.
-// Returns "/" if no path is configured.
 func (c Config) ExternalPathTrailing() string {
 	if p := c.ExternalPath(); p != "" {
 		return p + "/"

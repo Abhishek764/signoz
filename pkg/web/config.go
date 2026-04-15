@@ -8,9 +8,7 @@ import (
 type Config struct {
 	// Whether the web package is enabled.
 	Enabled bool `mapstructure:"enabled"`
-	// The index file to use as the SPA entrypoint.
-	Index string `mapstructure:"index"`
-	// The directory containing the static build files.
+	Index     string `mapstructure:"index"`
 	Directory string `mapstructure:"directory"`
 }
 

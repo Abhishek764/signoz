@@ -21,11 +21,11 @@ import (
 func startServer(t *testing.T, config web.Config, globalConfig global.Config) string {
 	t.Helper()
 
-	w, err := New(context.Background(), factorytest.NewSettings(), config, globalConfig)
+	web, err := New(context.Background(), factorytest.NewSettings(), config, globalConfig)
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
-	require.NoError(t, w.AddToRouter(router))
+	require.NoError(t, web.AddToRouter(router))
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
@@ -74,9 +74,9 @@ func TestServeTemplatedIndex(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			base := startServer(t, web.Config{Index: "index.html", Directory: "testdata"}, tc.globalConfig)
+			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, tc.globalConfig)
 
-			for _, path := range []string{"/", "/index.html", "/does-not-exist", "/assets"} {
+			for _, path := range []string{"/", "/does-not-exist", "/assets"} {
 				assert.Contains(t, get(t, base+path), tc.expectedContains)
 			}
 		})
@@ -86,10 +86,10 @@ func TestServeTemplatedIndex(t *testing.T) {
 func TestServeNoTemplateIndex(t *testing.T) {
 	t.Parallel()
 
-	expected, err := os.ReadFile(filepath.Join("testdata", "index_no_template.html"))
+	expected, err := os.ReadFile(filepath.Join("testdata", "no_template.html"))
 	require.NoError(t, err)
 
-	base := startServer(t, web.Config{Index: "index_no_template.html", Directory: "testdata"}, global.Config{})
+	base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
 
 	assert.Equal(t, string(expected), get(t, base+"/"))
 }
@@ -97,10 +97,10 @@ func TestServeNoTemplateIndex(t *testing.T) {
 func TestServeInvalidTemplateIndex(t *testing.T) {
 	t.Parallel()
 
-	expected, err := os.ReadFile(filepath.Join("testdata", "index_invalid_template.html"))
+	expected, err := os.ReadFile(filepath.Join("testdata", "invalid_template.html"))
 	require.NoError(t, err)
 
-	base := startServer(t, web.Config{Index: "index_invalid_template.html", Directory: "testdata"}, global.Config{
+	base := startServer(t, web.Config{Index: "invalid_template.html", Directory: "testdata"}, global.Config{
 		ExternalURL: &url.URL{Path: "/signoz"},
 	})
 
@@ -114,7 +114,7 @@ func TestServeStaticFilesUnchanged(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join("testdata", "assets", "style.css"))
 	require.NoError(t, err)
 
-	base := startServer(t, web.Config{Index: "index.html", Directory: "testdata"}, global.Config{
+	base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{
 		ExternalURL: &url.URL{Path: "/signoz"},
 	})
 

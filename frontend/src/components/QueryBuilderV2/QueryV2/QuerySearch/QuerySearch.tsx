@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
@@ -46,7 +47,12 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { queryExamples } from './constants';
+import {
+	CONTEXT_PREFIXES,
+	ContextPrefix,
+	parseKeyInput,
+	queryExamples,
+} from './constants';
 
 import './QuerySearch.styles.scss';
 
@@ -111,6 +117,7 @@ function QuerySearch({
 	const [isEditorReady, setIsEditorReady] = useState(false);
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
+	const queryClient = useQueryClient();
 
 	const handleQueryValidation = useCallback((newExpression: string): void => {
 		try {
@@ -189,6 +196,11 @@ function QuerySearch({
 	const [keySuggestions, setKeySuggestions] = useState<
 		QueryKeyDataSuggestionsProps[] | null
 	>(null);
+	// Mirror of keySuggestions for synchronous access from inside the
+	// CodeMirror autocompletion source. The `extensions` array is
+	// reconfigured on each render, but `startCompletion` may fire before
+	// React's commit lands the new closure — so we read from this ref.
+	const keySuggestionsRef = useRef<QueryKeyDataSuggestionsProps[] | null>(null);
 
 	const [showExamples] = useState(false);
 
@@ -204,6 +216,10 @@ function QuerySearch({
 	const lastKeyRef = useRef<string>('');
 	const lastFetchedKeyRef = useRef<string>('');
 	const lastValueRef = useRef<string>('');
+	// Tracks contexts (e.g. "resource", "attribute") for which we've already
+	// proactively fetched the full key list, to avoid repeated calls when the
+	// user is mid-typing a context name.
+	const fetchedContextsRef = useRef<Set<string>>(new Set());
 	const isMountedRef = useRef<boolean>(true);
 
 	const dashboardDynamicVariables = useDashboardVariablesByType(
@@ -216,9 +232,10 @@ function QuerySearch({
 		[key: string]: QueryKeyDataSuggestionsProps[];
 	}): any[] =>
 		Object.values(keys).flatMap((items: QueryKeyDataSuggestionsProps[]) =>
-			items.map(({ name, fieldDataType }) => ({
+			items.map(({ name, fieldDataType, fieldContext }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+				fieldContext,
 				info: '',
 				details: '',
 			})),
@@ -249,44 +266,71 @@ function QuerySearch({
 	);
 
 	const fetchKeySuggestions = useCallback(
-		async (searchText?: string): Promise<void> => {
+		async (searchText?: string, fieldContext?: ContextPrefix): Promise<void> => {
 			if (
 				dataSource === DataSource.METRICS &&
 				!queryData.aggregateAttribute?.key &&
 				!showFilterSuggestionsWithoutMetric
 			) {
+				keySuggestionsRef.current = [];
 				setKeySuggestions([]);
 				return;
 			}
 
 			if (hardcodedAttributeKeys) {
+				keySuggestionsRef.current = hardcodedAttributeKeys;
 				setKeySuggestions(hardcodedAttributeKeys);
 				return;
 			}
 
-			lastFetchedKeyRef.current = searchText || '';
+			// Track using a composite key so primary (name-only) and
+			// secondary (context-only) fetches don't suppress each other.
+			lastFetchedKeyRef.current = `${fieldContext ?? ''}::${searchText ?? ''}`;
 
-			const response = await getKeySuggestions({
-				signal: dataSource,
-				searchText: searchText || '',
-				metricName: debouncedMetricName ?? undefined,
-				signalSource: signalSource as 'meter' | '',
+			// Route through React Query so identical concurrent calls share an
+			// in-flight promise and results are cached across components and
+			// remounts (staleTime keeps the entry hot for 5 min).
+			const response = await queryClient.fetchQuery({
+				queryKey: [
+					'fields/keys',
+					dataSource,
+					signalSource ?? '',
+					debouncedMetricName ?? '',
+					fieldContext ?? '',
+					searchText ?? '',
+				],
+				queryFn: () =>
+					getKeySuggestions({
+						signal: dataSource,
+						searchText: searchText || '',
+						fieldContext,
+						metricName: debouncedMetricName ?? undefined,
+						signalSource: signalSource as 'meter' | '',
+					}),
+				staleTime: 5 * 60 * 1000,
 			});
 
 			if (response.data.data) {
 				const { keys } = response.data.data;
 				const options = generateOptions(keys);
-				// Use a Map to deduplicate by label and preserve order: new options take precedence
+				// Deduplicate by `label + fieldContext` so that the same key name
+				// in different contexts (e.g. attribute.field1 vs resource.field1)
+				// is preserved — display-time dedup happens in autoSuggestions.
+				const dedupKey = (opt: QueryKeyDataSuggestionsProps): string =>
+					`${opt.label}::${opt.fieldContext ?? ''}`;
 				const merged = new Map<string, QueryKeyDataSuggestionsProps>();
-				options.forEach((opt) => merged.set(opt.label, opt));
+				options.forEach((opt) => merged.set(dedupKey(opt), opt));
 				if (searchText && lastKeyRef.current !== searchText) {
 					(keySuggestions || []).forEach((opt) => {
-						if (!merged.has(opt.label)) {
-							merged.set(opt.label, opt);
+						const k = dedupKey(opt);
+						if (!merged.has(k)) {
+							merged.set(k, opt);
 						}
 					});
 				}
-				setKeySuggestions(Array.from(merged.values()));
+				const next = Array.from(merged.values());
+				keySuggestionsRef.current = next;
+				setKeySuggestions(next);
 
 				// Force reopen the completion if editor is available and focused
 				if (editorRef.current) {
@@ -303,6 +347,7 @@ function QuerySearch({
 			signalSource,
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
+			queryClient,
 		],
 	);
 
@@ -312,6 +357,7 @@ function QuerySearch({
 	);
 
 	useEffect(() => {
+		keySuggestionsRef.current = [];
 		setKeySuggestions([]);
 		debouncedFetchKeySuggestions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -886,15 +932,104 @@ function QuerySearch({
 			};
 		}
 
-		if (queryContext.isInKey) {
-			const searchText = word?.text.toLowerCase().trim() ?? '';
+		// Parse user input into (context, name). When the input is shaped like
+		// "<known_context>.<rest>", we treat it as scoped to that context;
+		// otherwise it's a bare-name search (which may also partially match a
+		// context name and so trigger a secondary scoped fetch).
+		const rawSearchText = word?.text.toLowerCase().trim() ?? '';
+		const parsed = parseKeyInput(rawSearchText);
 
-			options = (keySuggestions || []).filter((option) =>
-				option.label.toLowerCase().includes(searchText),
-			);
+		if (queryContext.isInKey || parsed.isContextScoped) {
+			// Read from the ref to avoid a stale-closure read when CodeMirror
+			// re-runs the source synchronously after a programmatic startCompletion.
+			const liveKeySuggestions = keySuggestionsRef.current ?? keySuggestions;
 
-			if (options.length === 0 && lastFetchedKeyRef.current !== searchText) {
-				debouncedFetchKeySuggestions(searchText);
+			// --- Fetch strategy --------------------------------------------------
+			// Primary: always fire a debounced fetch with the user's raw input as
+			// `searchText` and no `fieldContext` — the backend already knows how
+			// to parse a "<context>.<rest>" prefix from `searchText` itself.
+			const primaryFetchKey = `::${rawSearchText}`;
+			if (lastFetchedKeyRef.current !== primaryFetchKey) {
+				debouncedFetchKeySuggestions(rawSearchText);
+			}
+
+			// Secondary: when the user's bare text is a prefix of a known context
+			// (e.g. "att" → "attribute"), proactively load that context's full key
+			// list once. Direct (non-debounced) call so it doesn't get cancelled
+			// by the primary debouncer. Requires `name.length > 0` — otherwise
+			// every context would match the empty string and we'd fire all
+			// six requests on initial mount before the user has typed anything.
+			const matchingContexts: ContextPrefix[] =
+				!parsed.isContextScoped && parsed.name.length > 0
+					? CONTEXT_PREFIXES.filter((c) => c.startsWith(parsed.name))
+					: [];
+			matchingContexts.forEach((ctx) => {
+				if (!fetchedContextsRef.current.has(ctx)) {
+					fetchedContextsRef.current.add(ctx);
+					fetchKeySuggestions('', ctx);
+				}
+			});
+
+			// --- Display: virtual expansion -------------------------------------
+			// Each cached key contributes a bare entry ({label: name}) and, when
+			// it has a fieldContext, a prefixed entry ({label: "<ctx>.<name>"}).
+			// We then filter and merge based on the parsed input.
+
+			if (parsed.isContextScoped && parsed.context) {
+				// Case: "<context>." or "<context>.<rest>" → only prefixed entries
+				// for that context, optionally substring-filtered by `rest`.
+				options = (liveKeySuggestions || [])
+					.filter((opt) => opt.fieldContext === parsed.context)
+					.filter((opt) =>
+						parsed.name ? opt.label.toLowerCase().includes(parsed.name) : true,
+					)
+					.map((opt) => ({
+						...opt,
+						label: `${parsed.context}.${opt.label}`,
+					}));
+			} else {
+				// Bare text (with or without a context-prefix partial match).
+				// (a) Bare name matches, deduped by label so the same name across
+				// contexts collapses to one entry.
+				const seenBare = new Set<string>();
+				const bareMatches = (liveKeySuggestions || [])
+					.filter((opt) => opt.label.toLowerCase().includes(parsed.name))
+					.filter((opt) => {
+						if (seenBare.has(opt.label)) {
+							return false;
+						}
+						seenBare.add(opt.label);
+						return true;
+					});
+
+				// (b) Prefixed entries from any matching context, but only for
+				// keys NOT already covered by the bare list (per user spec).
+				// Whatever the API returns is shown — no frontend-side name
+				// filtering — so e.g. `log.body` appears when typing `log`.
+				const contextMatches = matchingContexts.length
+					? (liveKeySuggestions || [])
+							.filter(
+								(opt) =>
+									opt.fieldContext !== undefined &&
+									matchingContexts.includes(opt.fieldContext as ContextPrefix) &&
+									!seenBare.has(opt.label),
+							)
+							.map((opt) => ({
+								...opt,
+								label: `${opt.fieldContext}.${opt.label}`,
+							}))
+					: [];
+
+				// Final list: bare matches first, then context-only prefixed
+				// entries. Dedup by final label as a safety net.
+				const seenFinal = new Set<string>();
+				options = [...bareMatches, ...contextMatches].filter((opt) => {
+					if (seenFinal.has(opt.label)) {
+						return false;
+					}
+					seenFinal.add(opt.label);
+					return true;
+				});
 			}
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
@@ -913,7 +1048,7 @@ function QuerySearch({
 				...option,
 				boost:
 					(option.boost || 0) +
-					(option.label.toLowerCase() === searchText ? 100 : 0),
+					(option.label.toLowerCase() === rawSearchText ? 100 : 0),
 			}));
 
 			// Add space after selection for keys

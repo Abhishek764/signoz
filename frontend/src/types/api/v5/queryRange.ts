@@ -46,6 +46,7 @@ export type FieldContext =
 	| 'scope'
 	| 'attribute'
 	| 'event'
+	| 'body'
 	| '';
 
 export type FieldDataType =

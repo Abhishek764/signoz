@@ -6,7 +6,7 @@ export interface QueryKeyDataSuggestionsProps {
 	info?: string;
 	apply?: string;
 	detail?: string;
-	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span' | 'log' | 'body';
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	name: string;
 	signal: 'traces' | 'logs' | 'metrics';
@@ -25,7 +25,7 @@ export interface QueryKeySuggestionsResponseProps {
 export interface QueryKeyRequestProps {
 	signal: 'traces' | 'logs' | 'metrics';
 	searchText: string;
-	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span' | 'log' | 'body';
 	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
 	metricName?: string;
 	signalSource?: 'meter' | '';

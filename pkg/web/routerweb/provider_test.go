@@ -18,212 +18,105 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServeHttpWithoutPrefix(t *testing.T) {
-	t.Parallel()
+func startServer(t *testing.T, config web.Config, globalConfig global.Config) string {
+	t.Helper()
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, global.Config{})
+	w, err := New(context.Background(), factorytest.NewSettings(), config, globalConfig)
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
-	err = w.AddToRouter(router)
-	require.NoError(t, err)
+	require.NoError(t, w.AddToRouter(router))
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
 
-	server := &http.Server{
-		Handler: router,
-	}
+	server := &http.Server{Handler: router}
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(func() { _ = server.Close() })
 
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	defer func() {
-		_ = server.Close()
-	}()
-
-	testCases := []struct {
-		name string
-		path string
-	}{
-		{
-			name: "Root",
-			path: "/",
-		},
-		{
-			name: "Index",
-			path: "/index.html",
-		},
-		{
-			name: "DoesNotExist",
-			path: "/does-not-exist",
-		},
-		{
-			name: "Directory",
-			path: "/assets",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res, err := http.DefaultClient.Get("http://" + listener.Addr().String() + tc.path)
-			require.NoError(t, err)
-
-			defer func() {
-				_ = res.Body.Close()
-			}()
-
-			actual, err := io.ReadAll(res.Body)
-			require.NoError(t, err)
-
-			assert.Contains(t, string(actual), `<base href="/" />`)
-		})
-	}
+	return "http://" + listener.Addr().String()
 }
 
-func TestServeHttpWithBasePath(t *testing.T) {
+func get(t *testing.T, url string) string {
+	t.Helper()
+
+	res, err := http.DefaultClient.Get(url)
+	require.NoError(t, err)
+	defer func() { _ = res.Body.Close() }()
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	return string(body)
+}
+
+func TestServeTemplatedIndex(t *testing.T) {
 	t.Parallel()
-
-	globalConfig := global.Config{
-		ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"},
-	}
-
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, globalConfig)
-	require.NoError(t, err)
-
-	router := mux.NewRouter()
-	err = w.AddToRouter(router)
-	require.NoError(t, err)
-
-	listener, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
-
-	server := &http.Server{
-		Handler: router,
-	}
-
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	defer func() {
-		_ = server.Close()
-	}()
 
 	testCases := []struct {
 		name             string
-		path             string
+		globalConfig     global.Config
 		expectedContains string
 	}{
 		{
-			name:             "RootServesTemplatedIndex",
-			path:             "/",
-			expectedContains: `<base href="/signoz/" />`,
+			name:             "RootBaseHref",
+			globalConfig:     global.Config{},
+			expectedContains: `<base href="/" />`,
 		},
 		{
-			name:             "IndexServesTemplatedIndex",
-			path:             "/" + "index.html",
-			expectedContains: `<base href="/signoz/" />`,
-		},
-		{
-			name:             "NonExistentPathServesTemplatedIndex",
-			path:             "/does-not-exist",
+			name:             "SubPathBaseHref",
+			globalConfig:     global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
 			expectedContains: `<base href="/signoz/" />`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := http.DefaultClient.Get("http://" + listener.Addr().String() + tc.path)
-			require.NoError(t, err)
+			t.Parallel()
 
-			defer func() {
-				_ = res.Body.Close()
-			}()
+			base := startServer(t, web.Config{Index: "index.html", Directory: "testdata"}, tc.globalConfig)
 
-			actual, err := io.ReadAll(res.Body)
-			require.NoError(t, err)
-
-			assert.Contains(t, string(actual), tc.expectedContains)
+			for _, path := range []string{"/", "/index.html", "/does-not-exist", "/assets"} {
+				assert.Contains(t, get(t, base+path), tc.expectedContains)
+			}
 		})
 	}
 }
 
-func TestServeHttpWithBasePathRoot(t *testing.T) {
+func TestServeNoTemplateIndex(t *testing.T) {
 	t.Parallel()
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, global.Config{})
+	expected, err := os.ReadFile(filepath.Join("testdata", "index_no_template.html"))
 	require.NoError(t, err)
 
-	router := mux.NewRouter()
-	err = w.AddToRouter(router)
-	require.NoError(t, err)
+	base := startServer(t, web.Config{Index: "index_no_template.html", Directory: "testdata"}, global.Config{})
 
-	listener, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
-
-	server := &http.Server{
-		Handler: router,
-	}
-
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	defer func() {
-		_ = server.Close()
-	}()
-
-	res, err := http.DefaultClient.Get("http://" + listener.Addr().String() + "/")
-	require.NoError(t, err)
-	defer func() {
-		_ = res.Body.Close()
-	}()
-
-	actual, err := io.ReadAll(res.Body)
-	require.NoError(t, err)
-
-	assert.Contains(t, string(actual), `<base href="/" />`)
+	assert.Equal(t, string(expected), get(t, base+"/"))
 }
 
-func TestServeHttpStaticFilesUnchanged(t *testing.T) {
+func TestServeInvalidTemplateIndex(t *testing.T) {
 	t.Parallel()
 
-	globalConfig := global.Config{
-		ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"},
-	}
-
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, globalConfig)
+	expected, err := os.ReadFile(filepath.Join("testdata", "index_invalid_template.html"))
 	require.NoError(t, err)
 
-	router := mux.NewRouter()
-	err = w.AddToRouter(router)
-	require.NoError(t, err)
+	base := startServer(t, web.Config{Index: "index_invalid_template.html", Directory: "testdata"}, global.Config{
+		ExternalURL: &url.URL{Path: "/signoz"},
+	})
 
-	listener, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
+	// Invalid template falls back to serving raw file unchanged
+	assert.Equal(t, string(expected), get(t, base+"/"))
+}
 
-	server := &http.Server{
-		Handler: router,
-	}
+func TestServeStaticFilesUnchanged(t *testing.T) {
+	t.Parallel()
 
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	defer func() {
-		_ = server.Close()
-	}()
-
-	// Static CSS file should be served from disk unchanged
 	expected, err := os.ReadFile(filepath.Join("testdata", "assets", "style.css"))
 	require.NoError(t, err)
 
-	res, err := http.DefaultClient.Get("http://" + listener.Addr().String() + "/assets/style.css")
-	require.NoError(t, err)
-	defer func() {
-		_ = res.Body.Close()
-	}()
+	base := startServer(t, web.Config{Index: "index.html", Directory: "testdata"}, global.Config{
+		ExternalURL: &url.URL{Path: "/signoz"},
+	})
 
-	actual, err := io.ReadAll(res.Body)
-	require.NoError(t, err)
-
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, string(expected), get(t, base+"/assets/style.css"))
 }

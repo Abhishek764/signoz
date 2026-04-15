@@ -36,6 +36,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 
 	expected := &Config{
 		Enabled:   false,
+		Index:     def.Index,
 		Directory: def.Directory,
 	}
 

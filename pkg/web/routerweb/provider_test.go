@@ -20,13 +20,13 @@ import (
 
 func TestServeHttpWithoutPrefix(t *testing.T) {
 	t.Parallel()
-	fi, err := os.Open(filepath.Join("testdata", indexFileName))
+	fi, err := os.Open(filepath.Join("testdata", "index.html"))
 	require.NoError(t, err)
 
 	expected, err := io.ReadAll(fi)
 	require.NoError(t, err)
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Directory: filepath.Join("testdata")}, global.Config{})
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata")}, global.Config{})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -57,7 +57,7 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 		},
 		{
 			name: "Index",
-			path: "/" + indexFileName,
+			path: "/" + "index.html",
 		},
 		{
 			name: "DoesNotExist",
@@ -93,7 +93,7 @@ func TestServeHttpWithBasePath(t *testing.T) {
 		ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"},
 	}
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Directory: filepath.Join("testdata_basepath")}, globalConfig)
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata_basepath")}, globalConfig)
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -126,7 +126,7 @@ func TestServeHttpWithBasePath(t *testing.T) {
 		},
 		{
 			name:             "IndexServesTemplatedIndex",
-			path:             "/" + indexFileName,
+			path:             "/" + "index.html",
 			expectedContains: `<base href="/signoz/" />`,
 		},
 		{
@@ -156,7 +156,7 @@ func TestServeHttpWithBasePath(t *testing.T) {
 func TestServeHttpWithBasePathRoot(t *testing.T) {
 	t.Parallel()
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Directory: filepath.Join("testdata_basepath")}, global.Config{})
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata_basepath")}, global.Config{})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -196,7 +196,7 @@ func TestServeHttpStaticFilesUnchanged(t *testing.T) {
 		ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"},
 	}
 
-	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Directory: filepath.Join("testdata_basepath")}, globalConfig)
+	w, err := New(context.Background(), factorytest.NewSettings(), web.Config{Index: "index.html", Directory: filepath.Join("testdata_basepath")}, globalConfig)
 	require.NoError(t, err)
 
 	router := mux.NewRouter()

@@ -8,8 +8,9 @@ import (
 type Config struct {
 	// Whether the web package is enabled.
 	Enabled bool `mapstructure:"enabled"`
-	// The directory containing the static build files. The root of this directory should
-	// have an index.html file.
+	// The index file to use as the SPA entrypoint.
+	Index string `mapstructure:"index"`
+	// The directory containing the static build files.
 	Directory string `mapstructure:"directory"`
 }
 
@@ -20,6 +21,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Enabled:   true,
+		Index:     "index.html",
 		Directory: "/etc/signoz/web",
 	}
 }

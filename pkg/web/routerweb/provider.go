@@ -14,10 +14,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	indexFileName string = "index.html"
-)
-
 type provider struct {
 	config        web.Config
 	indexContents []byte
@@ -39,14 +35,14 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "web directory is not a directory")
 	}
 
-	indexPath := filepath.Join(config.Directory, indexFileName)
+	indexPath := filepath.Join(config.Directory, config.Index)
 	raw, err := os.ReadFile(indexPath)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", indexFileName)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", config.Index)
 	}
 
 	logger := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/web/routerweb").Logger()
-	indexContents := web.NewIndex(logger, indexFileName, raw, web.TemplateData{BaseHref: globalConfig.ExternalPathTrailing()})
+	indexContents := web.NewIndex(logger, config.Index, raw, web.TemplateData{BaseHref: globalConfig.ExternalPathTrailing()})
 
 	return &provider{
 		config:        config,

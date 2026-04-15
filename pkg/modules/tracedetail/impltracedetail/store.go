@@ -11,16 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
 
-type traceStore interface {
-	GetTraceSummary(ctx context.Context, traceID string) (*tracedetailtypes.TraceSummary, error)
-	GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.SpanModel, error)
-}
-
 type clickhouseTraceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
 }
 
-func newClickhouseTraceStore(ts telemetrystore.TelemetryStore) traceStore {
+func newClickhouseTraceStore(ts telemetrystore.TelemetryStore) tracedetailtypes.TraceStore {
 	return &clickhouseTraceStore{telemetryStore: ts}
 }
 
@@ -34,10 +29,10 @@ func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID stri
 		&summary.TraceID, &summary.Start, &summary.End, &summary.NumSpans,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, tracedetailtypes.ErrTraceNotFound
 		}
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error querying trace summary: %v", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace summary")
 	}
 	return &summary, nil
 }
@@ -65,7 +60,7 @@ func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string
 		strconv.FormatInt(summary.End.Unix(), 10),
 	)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "error querying trace spans: %v", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans")
 	}
 	return spanItems, nil
 }

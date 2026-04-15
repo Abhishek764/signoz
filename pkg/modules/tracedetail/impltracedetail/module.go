@@ -11,16 +11,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	tracedetailv2 "github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-
-	tracedetailv2 "github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 )
 
-
 type module struct {
-	store  traceStore
+	store  tracedetailtypes.TraceStore
 	cache  cache.Cache
 	logger *slog.Logger
 }
@@ -36,9 +34,6 @@ func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, 
 func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.WaterfallResponse, error) {
 	traceData, err := m.getTraceData(ctx, orgID, traceID)
 	if err != nil {
-		if errors.Is(err, tracedetailtypes.ErrTraceNotFound) {
-			return new(tracedetailtypes.WaterfallResponse), nil
-		}
 		return nil, err
 	}
 
@@ -94,6 +89,24 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 	return traceData, nil
 }
 
+func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
+	cachedData := new(tracedetailtypes.WaterfallTrace)
+	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
+	err := m.cache.Get(ctx, orgID, cacheKey, cachedData)
+	if err != nil {
+		return nil, err
+	}
+
+	// Skip cache if trace end time falls within flux interval
+	if time.Since(time.UnixMilli(int64(cachedData.EndTime))) < tracedetailtypes.FluxInterval {
+		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", slog.String("trace_id", traceID))
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "trace end time within flux interval, traceID: %s", traceID)
+	}
+
+	m.logger.InfoContext(ctx, "cache hit for v3 waterfall", slog.String("trace_id", traceID))
+	return cachedData, nil
+}
+
 // computeWaterfallTrace builds a WaterfallTrace from raw span rows by constructing
 // the parent-child tree, inserting missing span placeholders, and calculating service times.
 func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailtypes.WaterfallTrace {
@@ -136,17 +149,7 @@ func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailt
 			if parentNode, exists := spanIDToSpanNodeMap[spanNode.ParentSpanID]; exists {
 				parentNode.Children = append(parentNode.Children, spanNode)
 			} else {
-				missingSpan := &tracedetailtypes.WaterfallSpan{
-					SpanID:        spanNode.ParentSpanID,
-					TraceID:       spanNode.TraceID,
-					Name:          "Missing Span",
-					TimeUnixMilli: spanNode.TimeUnixMilli,
-					DurationNano:  spanNode.DurationNano,
-					Events:        make([]tracedetailtypes.Event, 0),
-					Children:      make([]*tracedetailtypes.WaterfallSpan, 0),
-					Attributes:    make(map[string]any),
-					Resource:      make(map[string]string),
-				}
+				missingSpan := tracedetailtypes.NewMissingWaterfallSpan(spanNode.ParentSpanID, spanNode.TraceID, spanNode.TimeUnixMilli, spanNode.DurationNano)
 				missingSpan.Children = append(missingSpan.Children, spanNode)
 				spanIDToSpanNodeMap[missingSpan.SpanID] = missingSpan
 				traceRoots = append(traceRoots, missingSpan)
@@ -179,24 +182,6 @@ func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailt
 		traceRoots,
 		hasMissingSpans,
 	)
-}
-
-func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
-	cachedData := new(tracedetailtypes.WaterfallTrace)
-	cacheKey := strings.Join([]string{"v3_waterfall", traceID}, "-")
-	err := m.cache.Get(ctx, orgID, cacheKey, cachedData)
-	if err != nil {
-		return nil, err
-	}
-
-	// Skip cache if trace end time falls within flux interval
-	if time.Since(time.UnixMilli(int64(cachedData.EndTime))) < tracedetailtypes.FluxInterval {
-		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", slog.String("trace_id", traceID))
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "trace end time within flux interval, traceID: %s", traceID)
-	}
-
-	m.logger.InfoContext(ctx, "cache hit for v3 waterfall", slog.String("trace_id", traceID))
-	return cachedData, nil
 }
 
 func containsSpan(spans []*tracedetailtypes.WaterfallSpan, target *tracedetailtypes.WaterfallSpan) bool {

@@ -8,6 +8,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
 
+type traverseOpts struct {
+	uncollapsedSpans map[string]struct{}
+	selectedSpanID   string
+	selectAll        bool
+}
+
 func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) ([]*tracedetailtypes.WaterfallSpan, []string, string, string) {
 	uncollapsedSpanMap := getUncollapsedSpanMap(uncollapsedSpans, selectedSpanID, traceRoots, spanIDToSpanNodeMap)
 
@@ -43,6 +49,31 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 	}
 
 	return preOrderTraversal[startIndex:endIndex], slices.Collect(maps.Keys(uncollapsedSpanMap)), rootServiceName, rootServiceEntryPoint
+}
+
+func GetAllSpans(traceRoots []*tracedetailtypes.WaterfallSpan) (spans []*tracedetailtypes.WaterfallSpan, rootServiceName, rootEntryPoint string) {
+	if len(traceRoots) > 0 {
+		rootServiceName = traceRoots[0].ServiceName
+		rootEntryPoint = traceRoots[0].Name
+	}
+	for _, root := range traceRoots {
+		childSpans, _ := traverseTrace(root, traverseOpts{selectAll: true}, 0, true, 0)
+		spans = append(spans, childSpans...)
+	}
+	return
+}
+
+// SortSpanChildren recursively sorts children of each span by TimeUnixNano then Name.
+func SortSpanChildren(span *tracedetailtypes.WaterfallSpan) {
+	sort.Slice(span.Children, func(i, j int) bool {
+		if span.Children[i].TimeUnixMilli == span.Children[j].TimeUnixMilli {
+			return span.Children[i].Name < span.Children[j].Name
+		}
+		return span.Children[i].TimeUnixMilli < span.Children[j].TimeUnixMilli
+	})
+	for _, child := range span.Children {
+		SortSpanChildren(child)
+	}
 }
 
 // getUncollapsedSpanMap creates a map from uncollapsed spans ids and root to selected span path.
@@ -86,37 +117,6 @@ func windowAroundIndex(selectedIndex, total int) (start, end int) {
 	}
 	start = max(start, 0)
 	return
-}
-
-func GetAllSpans(traceRoots []*tracedetailtypes.WaterfallSpan) (spans []*tracedetailtypes.WaterfallSpan, rootServiceName, rootEntryPoint string) {
-	if len(traceRoots) > 0 {
-		rootServiceName = traceRoots[0].ServiceName
-		rootEntryPoint = traceRoots[0].Name
-	}
-	for _, root := range traceRoots {
-		childSpans, _ := traverseTrace(root, traverseOpts{selectAll: true}, 0, true, 0)
-		spans = append(spans, childSpans...)
-	}
-	return
-}
-
-// SortSpanChildren recursively sorts children of each span by TimeUnixNano then Name.
-func SortSpanChildren(span *tracedetailtypes.WaterfallSpan) {
-	sort.Slice(span.Children, func(i, j int) bool {
-		if span.Children[i].TimeUnixMilli == span.Children[j].TimeUnixMilli {
-			return span.Children[i].Name < span.Children[j].Name
-		}
-		return span.Children[i].TimeUnixMilli < span.Children[j].TimeUnixMilli
-	})
-	for _, child := range span.Children {
-		SortSpanChildren(child)
-	}
-}
-
-type traverseOpts struct {
-	uncollapsedSpans map[string]struct{}
-	selectedSpanID   string
-	selectAll        bool
 }
 
 func traverseTrace(

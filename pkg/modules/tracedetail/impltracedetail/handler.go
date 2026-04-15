@@ -33,15 +33,13 @@ func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	traceID := mux.Vars(r)["traceID"] // can't be empty or route won't match
-
-	var req tracedetailtypes.WaterfallRequest
-	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+	req := new(tracedetailtypes.WaterfallRequest)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	result, err := h.module.GetWaterfall(r.Context(), orgID, traceID, &req)
+	result, err := h.module.GetWaterfall(r.Context(), orgID, mux.Vars(r)["traceID"], req)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -9,21 +9,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
-// ClickHouse database and table names for trace queries.
 const (
+	// ClickHouse database and table names for trace queries.
 	TraceDB           = "signoz_traces"
 	TraceTable        = "distributed_signoz_index_v3"
 	TraceSummaryTable = "distributed_trace_summary"
-)
 
-// Cache and freshness thresholds.
-const (
+	// Cache and freshness thresholds.
 	WaterfallCacheTTL = 5 * time.Minute
 	FluxInterval      = 2 * time.Minute
-)
 
-// Windowing constants for span selection.
-const (
+	// Windowing constants for span selection in waterfall.
 	SpanLimitPerRequest         float64 = 500
 	MaxDepthForSelectedChildren int     = 5
 	MaxLimitToSelectAllSpans    uint    = 10_000
@@ -52,6 +48,33 @@ type WaterfallResponse struct {
 	HasMissingSpans               bool              `json:"hasMissingSpans"`
 	UncollapsedSpans              []string          `json:"uncollapsedSpans"`
 	HasMore                       bool              `json:"hasMore"`
+}
+
+// NewWaterfallResponse constructs a WaterfallResponse from processed trace data and selected spans.
+func NewWaterfallResponse(
+	traceData *WaterfallTrace,
+	selectedSpans []*WaterfallSpan,
+	uncollapsedSpans []string,
+	rootServiceName, rootServiceEntryPoint string,
+	selectAllSpans bool,
+) *WaterfallResponse {
+	serviceDurationsMillis := make(map[string]uint64, len(traceData.ServiceNameToTotalDurationMap))
+	for svc, dur := range traceData.ServiceNameToTotalDurationMap {
+		serviceDurationsMillis[svc] = dur / 1_000_000
+	}
+	return &WaterfallResponse{
+		Spans:                         selectedSpans,
+		UncollapsedSpans:              uncollapsedSpans,
+		StartTimestampMillis:          traceData.StartTime / 1_000_000,
+		EndTimestampMillis:            traceData.EndTime / 1_000_000,
+		TotalSpansCount:               traceData.TotalSpans,
+		TotalErrorSpansCount:          traceData.TotalErrorSpans,
+		RootServiceName:               rootServiceName,
+		RootServiceEntryPoint:         rootServiceEntryPoint,
+		ServiceNameToTotalDurationMap: serviceDurationsMillis,
+		HasMissingSpans:               traceData.HasMissingSpans,
+		HasMore:                       !selectAllSpans,
+	}
 }
 
 // Event represents a span event.
@@ -102,6 +125,21 @@ type WaterfallSpan struct {
 
 	// used only for service time calculation
 	ServiceName string `json:"-"`
+}
+
+// NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
+func NewMissingWaterfallSpan(spanID, traceID string, timeUnixMilli, durationNano uint64) *WaterfallSpan {
+	return &WaterfallSpan{
+		SpanID:        spanID,
+		TraceID:       traceID,
+		Name:          "Missing Span",
+		TimeUnixMilli: timeUnixMilli,
+		DurationNano:  durationNano,
+		Events:        make([]Event, 0),
+		Children:      make([]*WaterfallSpan, 0),
+		Attributes:    make(map[string]any),
+		Resource:      make(map[string]string),
+	}
 }
 
 // CopyWithoutChildren creates a shallow copy and reset computed tree fields.
@@ -234,6 +272,27 @@ type WaterfallTrace struct {
 	HasMissingSpans               bool                      `json:"hasMissingSpans"`
 }
 
+// NewWaterfallTrace constructs a WaterfallTrace from processed span data.
+func NewWaterfallTrace(
+	startTime, endTime, durationNano, totalSpans, totalErrorSpans uint64,
+	spanIDToSpanNodeMap map[string]*WaterfallSpan,
+	serviceNameToTotalDurationMap map[string]uint64,
+	traceRoots []*WaterfallSpan,
+	hasMissingSpans bool,
+) *WaterfallTrace {
+	return &WaterfallTrace{
+		StartTime:                     startTime,
+		EndTime:                       endTime,
+		DurationNano:                  durationNano,
+		TotalSpans:                    totalSpans,
+		TotalErrorSpans:               totalErrorSpans,
+		SpanIDToSpanNodeMap:           spanIDToSpanNodeMap,
+		ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
+		TraceRoots:                    traceRoots,
+		HasMissingSpans:               hasMissingSpans,
+	}
+}
+
 func (c *WaterfallTrace) Clone() cachetypes.Cacheable {
 	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
 	maps.Copy(copyOfServiceNameToTotalDurationMap, c.ServiceNameToTotalDurationMap)
@@ -262,52 +321,4 @@ func (c *WaterfallTrace) MarshalBinary() (data []byte, err error) {
 
 func (c *WaterfallTrace) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
-}
-
-// NewWaterfallTrace constructs a WaterfallTrace from processed span data.
-func NewWaterfallTrace(
-	startTime, endTime, durationNano, totalSpans, totalErrorSpans uint64,
-	spanIDToSpanNodeMap map[string]*WaterfallSpan,
-	serviceNameToTotalDurationMap map[string]uint64,
-	traceRoots []*WaterfallSpan,
-	hasMissingSpans bool,
-) *WaterfallTrace {
-	return &WaterfallTrace{
-		StartTime:                     startTime,
-		EndTime:                       endTime,
-		DurationNano:                  durationNano,
-		TotalSpans:                    totalSpans,
-		TotalErrorSpans:               totalErrorSpans,
-		SpanIDToSpanNodeMap:           spanIDToSpanNodeMap,
-		ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
-		TraceRoots:                    traceRoots,
-		HasMissingSpans:               hasMissingSpans,
-	}
-}
-
-// NewWaterfallResponse constructs a WaterfallResponse from processed trace data and selected spans.
-func NewWaterfallResponse(
-	traceData *WaterfallTrace,
-	selectedSpans []*WaterfallSpan,
-	uncollapsedSpans []string,
-	rootServiceName, rootServiceEntryPoint string,
-	selectAllSpans bool,
-) *WaterfallResponse {
-	serviceDurationsMillis := make(map[string]uint64, len(traceData.ServiceNameToTotalDurationMap))
-	for svc, dur := range traceData.ServiceNameToTotalDurationMap {
-		serviceDurationsMillis[svc] = dur / 1_000_000
-	}
-	return &WaterfallResponse{
-		Spans:                         selectedSpans,
-		UncollapsedSpans:              uncollapsedSpans,
-		StartTimestampMillis:          traceData.StartTime / 1_000_000,
-		EndTimestampMillis:            traceData.EndTime / 1_000_000,
-		TotalSpansCount:               traceData.TotalSpans,
-		TotalErrorSpansCount:          traceData.TotalErrorSpans,
-		RootServiceName:               rootServiceName,
-		RootServiceEntryPoint:         rootServiceEntryPoint,
-		ServiceNameToTotalDurationMap: serviceDurationsMillis,
-		HasMissingSpans:               traceData.HasMissingSpans,
-		HasMore:                       !selectAllSpans,
-	}
 }

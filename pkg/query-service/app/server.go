@@ -220,7 +220,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 				r.ServeHTTP(w, req)
 				return
 			}
-
 			prefixed.ServeHTTP(w, req)
 		})
 	}

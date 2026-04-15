@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRoutePrefix(t *testing.T) {
+func TestExternalPath(t *testing.T) {
 	testCases := []struct {
 		name     string
 		config   Config
@@ -47,7 +47,47 @@ func TestRoutePrefix(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.config.RoutePrefix())
+			assert.Equal(t, tc.expected, tc.config.ExternalPath())
+		})
+	}
+}
+
+func TestExternalPathTrailing(t *testing.T) {
+	testCases := []struct {
+		name     string
+		config   Config
+		expected string
+	}{
+		{
+			name:     "NilURL",
+			config:   Config{ExternalURL: nil},
+			expected: "/",
+		},
+		{
+			name:     "EmptyPath",
+			config:   Config{ExternalURL: &url.URL{Path: ""}},
+			expected: "/",
+		},
+		{
+			name:     "RootPath",
+			config:   Config{ExternalURL: &url.URL{Path: "/"}},
+			expected: "/",
+		},
+		{
+			name:     "SingleSegment",
+			config:   Config{ExternalURL: &url.URL{Path: "/signoz"}},
+			expected: "/signoz/",
+		},
+		{
+			name:     "MultiSegment",
+			config:   Config{ExternalURL: &url.URL{Path: "/a/b/c"}},
+			expected: "/a/b/c/",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.config.ExternalPathTrailing())
 		})
 	}
 }

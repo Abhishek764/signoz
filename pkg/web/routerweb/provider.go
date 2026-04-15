@@ -45,13 +45,8 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", indexFileName)
 	}
 
-	baseHref := "/"
-	if routePrefix := globalConfig.RoutePrefix(); routePrefix != "" {
-		baseHref = routePrefix + "/"
-	}
-
 	logger := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/web/routerweb").Logger()
-	indexContents := web.NewIndex(logger, indexFileName, raw, web.TemplateData{BaseHref: baseHref})
+	indexContents := web.NewIndex(logger, indexFileName, raw, web.TemplateData{BaseHref: globalConfig.ExternalPathTrailing()})
 
 	return &provider{
 		config:        config,

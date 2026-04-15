@@ -47,15 +47,24 @@ func (c Config) Validate() error {
 	return nil
 }
 
-// RoutePrefix returns the normalized path component of ExternalURL to be used
-// as the HTTP route prefix. Returns empty string if no prefix is needed.
-func (c Config) RoutePrefix() string {
+// ExternalPath returns the normalized path component of ExternalURL.
+// Returns empty string if no path is configured.
+func (c Config) ExternalPath() string {
 	if c.ExternalURL == nil || c.ExternalURL.Path == "" || c.ExternalURL.Path == "/" {
 		return ""
 	}
-	prefix := path.Clean("/" + c.ExternalURL.Path)
-	if prefix == "/" {
+	p := path.Clean("/" + c.ExternalURL.Path)
+	if p == "/" {
 		return ""
 	}
-	return prefix
+	return p
+}
+
+// ExternalPathTrailing returns the external path with a trailing slash.
+// Returns "/" if no path is configured.
+func (c Config) ExternalPathTrailing() string {
+	if p := c.ExternalPath(); p != "" {
+		return p + "/"
+	}
+	return "/"
 }

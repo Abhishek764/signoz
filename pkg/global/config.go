@@ -54,7 +54,6 @@ func (c Config) ExternalPath() string {
 	if c.ExternalURL == nil || c.ExternalURL.Path == "" || c.ExternalURL.Path == "/" {
 		return ""
 	}
-
 	p := path.Clean("/" + c.ExternalURL.Path)
 	if p == "/" {
 		return ""
@@ -67,6 +66,5 @@ func (c Config) ExternalPathTrailing() string {
 	if p := c.ExternalPath(); p != "" {
 		return p + "/"
 	}
-
 	return "/"
 }

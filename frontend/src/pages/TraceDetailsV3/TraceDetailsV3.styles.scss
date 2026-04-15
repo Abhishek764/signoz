@@ -40,6 +40,9 @@
 	}
 
 	&__collapse-count {
+		display: flex;
+		gap: 6px;
+		align-items: center;
 		font-size: 12px;
 		font-weight: 400;
 		color: var(--l2-foreground);

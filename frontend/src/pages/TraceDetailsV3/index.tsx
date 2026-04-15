@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useGetTraceV3 from 'hooks/trace/useGetTraceV3';
+import useGetTraceV3 from 'hooks/trace/useGetTraceV2';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -12,6 +13,7 @@ import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
+import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall, {
 	IInterestedSpan,
@@ -172,6 +174,13 @@ function TraceDetailsV3(): JSX.Element {
 									{traceData?.payload?.totalSpansCount ? (
 										<span className="trace-details-v3__collapse-count">
 											{traceData.payload.totalSpansCount} spans
+											{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
+												<WarningPopover
+													message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans."
+													placement="bottomRight"
+													autoAdjustOverflow={false}
+												/>
+											)}
 										</span>
 									) : null}
 								</div>

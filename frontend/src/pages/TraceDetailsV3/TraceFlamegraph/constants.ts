@@ -34,3 +34,6 @@ export const MIN_VISIBLE_SPAN_MS = 5;
 
 // Selected span style (dashed border)
 export const DASHED_BORDER_LINE_DASH = [4, 2];
+
+// Max spans fetched for flamegraph visualization
+export const FLAMEGRAPH_SPAN_LIMIT = 100002;

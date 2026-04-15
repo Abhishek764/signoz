@@ -6,6 +6,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
+import { FLAMEGRAPH_SPAN_LIMIT } from './constants';
 import FlamegraphCanvas from './FlamegraphCanvas';
 import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
 
@@ -46,7 +47,7 @@ function TraceFlamegraph({
 	const { data, isFetching, error: fetchError } = useGetTraceFlamegraph({
 		traceId,
 		// selectedSpanId: firstSpanAtFetchLevel,
-		limit: 100002,
+		limit: FLAMEGRAPH_SPAN_LIMIT,
 	});
 
 	const spans = useMemo(() => data?.payload?.spans || [], [

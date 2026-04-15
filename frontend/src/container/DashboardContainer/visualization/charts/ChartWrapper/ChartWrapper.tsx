@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import ChartLayout from 'container/DashboardContainer/visualization/layout/ChartLayout/ChartLayout';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
@@ -8,6 +8,7 @@ import {
 import UPlotChart from 'lib/uPlotV2/components/UPlotChart/UPlotChart';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
+import { CursorSyncPanelMetadata } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import noop from 'lodash-es/noop';
 import uPlot from 'uplot';
 
@@ -27,6 +28,7 @@ export default function ChartWrapper({
 	canPinTooltip = false,
 	syncMode,
 	syncKey,
+	yAxisUnit,
 	onDestroy = noop,
 	children,
 	layoutChildren,
@@ -34,6 +36,9 @@ export default function ChartWrapper({
 	pinnedTooltipElement,
 	'data-testid': testId,
 }: ChartProps): JSX.Element {
+	const panelMetadata = useMemo<CursorSyncPanelMetadata>(() => ({ yAxisUnit }), [
+		yAxisUnit,
+	]);
 	const plotInstanceRef = useRef<uPlot | null>(null);
 
 	const legendComponent = useCallback(
@@ -99,6 +104,7 @@ export default function ChartWrapper({
 									averageLegendWidth + TOOLTIP_WIDTH_PADDING,
 								)}
 								syncKey={syncKey}
+								panelMetadata={panelMetadata}
 								render={renderTooltipCallback}
 								pinnedTooltipElement={pinnedTooltipElement}
 							/>

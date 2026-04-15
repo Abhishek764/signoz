@@ -6,6 +6,7 @@ import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
@@ -115,6 +116,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
+					syncMode={DashboardCursorSync.Crosshair}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}

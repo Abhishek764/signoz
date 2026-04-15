@@ -4,10 +4,28 @@ import type {
 	ReactNode,
 	RefObject,
 } from 'react';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type uPlot from 'uplot';
 
 import type { TooltipRenderArgs } from '../../components/types';
 import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
+
+/**
+ * Per-panel metadata shared with the cursor sync registry so that
+ * panels receiving a synced cursor can make informed decisions about
+ * rendering (e.g. whether to show the horizontal crosshair, what to
+ * show in the tooltip for the source panel's context).
+ *
+ * Add new fields here as sync-aware features need them.
+ */
+export interface CursorSyncPanelMetadata {
+	/** Y-axis unit of this panel (e.g. 'ms', 'req/s'). Used to decide
+	 *  whether the horizontal crosshair should be shown on receiving panels. */
+	yAxisUnit?: string;
+	/** Label dimensions this panel groups by. Will be used to enrich
+	 *  tooltip content on receiving panels to show correlated series. */
+	groupBy?: BaseAutocompleteData[];
+}
 
 export const TOOLTIP_OFFSET = 10;
 
@@ -39,6 +57,9 @@ export interface TooltipPluginProps {
 	canPinTooltip?: boolean;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
+	/** Metadata about this panel shared with the sync registry so that
+	 *  receiving panels can make context-aware rendering decisions. */
+	panelMetadata?: CursorSyncPanelMetadata;
 	render: (args: TooltipRenderArgs) => ReactNode;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 	maxWidth?: number;

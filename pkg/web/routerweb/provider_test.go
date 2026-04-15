@@ -61,12 +61,14 @@ func TestServeTemplatedIndex(t *testing.T) {
 		{
 			name:         "RootBaseHref",
 			globalConfig: global.Config{},
-			expected:     "<html><head><base href=\"/\" /></head><body>Welcome to test data!!!</body></html>\n",
+			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
+`,
 		},
 		{
 			name:         "SubPathBaseHref",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected:     "<html><head><base href=\"/signoz/\" /></head><body>Welcome to test data!!!</body></html>\n",
+			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
+`,
 		},
 	}
 

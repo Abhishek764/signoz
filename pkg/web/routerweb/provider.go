@@ -65,11 +65,6 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	return nil
 }
 
-func (provider *provider) serveIndex(rw http.ResponseWriter) {
-	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-	rw.Write(provider.indexContents)
-}
-
 func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Join internally call path.Clean to prevent directory traversal
 	path := filepath.Join(provider.config.Directory, req.URL.Path)
@@ -97,6 +92,11 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// otherwise, use http.FileServer to serve the static file
 	provider.fileHandler.ServeHTTP(rw, req)
+}
+
+func (provider *provider) serveIndex(rw http.ResponseWriter) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = rw.Write(provider.indexContents)
 }
 
 func (provider *provider) serveIndex(rw http.ResponseWriter) {

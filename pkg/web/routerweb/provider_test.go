@@ -54,19 +54,19 @@ func TestServeTemplatedIndex(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name             string
-		globalConfig     global.Config
-		expectedContains string
+		name         string
+		globalConfig global.Config
+		expected     string
 	}{
 		{
-			name:             "RootBaseHref",
-			globalConfig:     global.Config{},
-			expectedContains: `<base href="/" />`,
+			name:         "RootBaseHref",
+			globalConfig: global.Config{},
+			expected:     "<html><head><base href=\"/\" /></head><body>Welcome to test data!!!</body></html>\n",
 		},
 		{
-			name:             "SubPathBaseHref",
-			globalConfig:     global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expectedContains: `<base href="/signoz/" />`,
+			name:         "SubPathBaseHref",
+			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
+			expected:     "<html><head><base href=\"/signoz/\" /></head><body>Welcome to test data!!!</body></html>\n",
 		},
 	}
 
@@ -77,7 +77,7 @@ func TestServeTemplatedIndex(t *testing.T) {
 			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, tc.globalConfig)
 
 			for _, path := range []string{"/", "/does-not-exist", "/assets"} {
-				assert.Contains(t, get(t, base+path), tc.expectedContains)
+				assert.Equal(t, tc.expected, get(t, base+path))
 			}
 		})
 	}

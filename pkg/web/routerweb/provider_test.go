@@ -91,7 +91,9 @@ func TestServeNoTemplateIndex(t *testing.T) {
 
 	base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
 
-	assert.Equal(t, string(expected), get(t, base+"/"))
+	for _, path := range []string{"/", "/does-not-exist", "/assets"} {
+		assert.Equal(t, string(expected), get(t, base+path))
+	}
 }
 
 func TestServeInvalidTemplateIndex(t *testing.T) {
@@ -105,7 +107,9 @@ func TestServeInvalidTemplateIndex(t *testing.T) {
 	})
 
 	// Invalid template falls back to serving raw file unchanged
-	assert.Equal(t, string(expected), get(t, base+"/"))
+	for _, path := range []string{"/", "/does-not-exist", "/assets"} {
+		assert.Equal(t, string(expected), get(t, base+path))
+	}
 }
 
 func TestServeStaticFilesUnchanged(t *testing.T) {

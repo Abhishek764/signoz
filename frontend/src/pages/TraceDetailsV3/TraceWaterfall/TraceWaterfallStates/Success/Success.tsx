@@ -397,7 +397,11 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
-			setInterestedSpanId({ spanId, isUncollapsed: !collapse });
+			setInterestedSpanId({
+				spanId,
+				isUncollapsed: !collapse,
+				scrollToSpan: false,
+			});
 		},
 		[setInterestedSpanId],
 	);
@@ -570,29 +574,32 @@ function Success(props: ISuccessProps): JSX.Element {
 		);
 	}, [spans, sidebarWidth]);
 
-	// Scroll to interested span
+	// Scroll to interested span — only when scrollToSpan is true (URL nav, flamegraph click, initial load)
+	// Skip for collapse/uncollapse to avoid jarring scroll jumps
 	useEffect(() => {
 		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
 			const idx = spans.findIndex(
 				(span) => span.span_id === interestedSpanId.spanId,
 			);
 			if (idx !== -1) {
-				setTimeout(() => {
-					virtualizerRef.current?.scrollToIndex(idx, {
-						align: 'center',
-						behavior: 'auto',
-					});
+				if (interestedSpanId.scrollToSpan !== false) {
+					setTimeout(() => {
+						virtualizerRef.current?.scrollToIndex(idx, {
+							align: 'center',
+							behavior: 'auto',
+						});
 
-					// Auto-scroll sidebar horizontally to show the span name
-					const span = spans[idx];
-					const sidebarScrollEl = scrollContainerRef.current?.querySelector(
-						'.resizable-box__content',
-					);
-					if (sidebarScrollEl) {
-						const targetScrollLeft = Math.max(0, span.level * CONNECTOR_WIDTH - 40);
-						sidebarScrollEl.scrollLeft = targetScrollLeft;
-					}
-				}, 400);
+						// Auto-scroll sidebar horizontally to show the span name
+						const span = spans[idx];
+						const sidebarScrollEl = scrollContainerRef.current?.querySelector(
+							'.resizable-box__content',
+						);
+						if (sidebarScrollEl) {
+							const targetScrollLeft = Math.max(0, span.level * CONNECTOR_WIDTH - 40);
+							sidebarScrollEl.scrollLeft = targetScrollLeft;
+						}
+					}, 400);
+				}
 
 				setSelectedSpan(spans[idx]);
 			}

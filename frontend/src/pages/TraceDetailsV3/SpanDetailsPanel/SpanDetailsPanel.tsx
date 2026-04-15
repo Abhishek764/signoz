@@ -37,7 +37,7 @@ import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
@@ -56,7 +56,7 @@ import './SpanDetailsPanel.styles.scss';
 
 interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
-	selectedSpan: Span | undefined;
+	selectedSpan: SpanV3 | undefined;
 	variant?: SpanDetailVariant;
 	onVariantChange?: (variant: SpanDetailVariant) => void;
 	traceStartTime?: number;
@@ -69,13 +69,13 @@ function SpanDetailsContent({
 	traceStartTime,
 	traceEndTime,
 }: {
-	selectedSpan: Span;
+	selectedSpan: SpanV3;
 	traceStartTime?: number;
 	traceEndTime?: number;
 }): JSX.Element {
 	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 	const percentile = useSpanPercentile(selectedSpan);
-	const linkedSpans = useLinkedSpans(selectedSpan.references);
+	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
 
 	const {
 		logs,
@@ -85,8 +85,8 @@ function SpanDetailsContent({
 		isLogSpanRelated,
 		hasTraceIdLogs,
 	} = useSpanContextLogs({
-		traceId: selectedSpan.traceId,
-		spanId: selectedSpan.spanId,
+		traceId: selectedSpan.trace_id,
+		spanId: selectedSpan.span_id,
 		timeRange: {
 			startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
 			endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
@@ -125,7 +125,7 @@ function SpanDetailsContent({
 						isJSON: false,
 					} as BaseAutocompleteData,
 					op: '=',
-					value: selectedSpan.traceId,
+					value: selectedSpan.trace_id,
 				},
 			],
 		};
@@ -157,7 +157,7 @@ function SpanDetailsContent({
 			'_blank',
 			'noopener,noreferrer',
 		);
-	}, [selectedSpan.traceId, traceStartTime, traceEndTime]);
+	}, [selectedSpan.trace_id, traceStartTime, traceEndTime]);
 
 	const emptyLogsStateConfig = useMemo(
 		() => ({
@@ -171,8 +171,8 @@ function SpanDetailsContent({
 		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
 
 		const allAttrs: Record<string, string> = {
-			...(selectedSpan.attributes || selectedSpan.attributes_string),
-			...(selectedSpan.resources || selectedSpan.resources_string),
+			...selectedSpan.attributes,
+			...selectedSpan.resource,
 			...(selectedSpan.http_method && { http_method: selectedSpan.http_method }),
 			...(selectedSpan.http_url && { http_url: selectedSpan.http_url }),
 			...(selectedSpan.http_host && { http_host: selectedSpan.http_host }),
@@ -191,11 +191,11 @@ function SpanDetailsContent({
 			}),
 			datetime: dayjs(selectedSpan.timestamp).format('MMM D, YYYY — HH:mm:ss'),
 			duration: getYAxisFormattedValue(
-				`${selectedSpan.durationNano / 1000000}`,
+				`${selectedSpan.duration_nano / 1000000}`,
 				'ms',
 			),
-			'span.kind': selectedSpan.spanKind,
-			status_code_string: selectedSpan.statusCodeString,
+			'span.kind': selectedSpan.kind_string,
+			status_code_string: selectedSpan.status_code_string,
 		};
 
 		return keys
@@ -229,13 +229,13 @@ function SpanDetailsContent({
 					<div className="span-details-panel__span-info-item">
 						<Timer size={14} />
 						<span>
-							{getYAxisFormattedValue(`${selectedSpan.durationNano / 1000000}`, 'ms')}
+							{getYAxisFormattedValue(`${selectedSpan.duration_nano / 1000000}`, 'ms')}
 							{traceStartTime && traceEndTime && traceEndTime > traceStartTime && (
 								<>
 									{' — '}
 									<strong>
 										{(
-											(selectedSpan.durationNano * 100) /
+											(selectedSpan.duration_nano * 100) /
 											((traceEndTime - traceStartTime) * 1e6)
 										).toFixed(2)}
 										%
@@ -309,7 +309,7 @@ function SpanDetailsContent({
 							<Bookmark size={14} /> Overview
 						</TabsTrigger>
 						<TabsTrigger value="events" variant="secondary">
-							<ScrollText size={14} /> Events ({selectedSpan.event?.length || 0})
+							<ScrollText size={14} /> Events ({selectedSpan.events?.length || 0})
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
 							<Logs size={14} /> Logs
@@ -330,16 +330,17 @@ function SpanDetailsContent({
 							/>
 						</TabsContent>
 						<TabsContent value="events">
+							{/* V2 Events component expects span.event (singular), V3 has span.events (plural) */}
 							<Events
-								span={selectedSpan}
+								span={{ ...selectedSpan, event: selectedSpan.events } as any}
 								startTime={traceStartTime || 0}
 								isSearchVisible
 							/>
 						</TabsContent>
 						<TabsContent value="logs">
 							<SpanLogs
-								traceId={selectedSpan.traceId}
-								spanId={selectedSpan.spanId}
+								traceId={selectedSpan.trace_id}
+								spanId={selectedSpan.span_id}
 								timeRange={{
 									startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
 									endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,

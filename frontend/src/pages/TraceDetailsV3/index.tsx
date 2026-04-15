@@ -4,11 +4,11 @@ import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useGetTraceV3 from 'hooks/trace/useGetTraceV2';
+import useGetTraceV3 from 'hooks/trace/useGetTraceV3';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
+import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
@@ -22,7 +22,7 @@ import TraceWaterfall, {
 import './TraceDetailsV3.styles.scss';
 
 function TraceDetailsV3(): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV2URLProps>();
+	const { id: traceId } = useParams<TraceDetailV3URLProps>();
 	const urlQuery = useUrlQuery();
 	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
 		() => ({
@@ -31,7 +31,7 @@ function TraceDetailsV3(): JSX.Element {
 		}),
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
-	const [selectedSpan, setSelectedSpan] = useState<Span>();
+	const [selectedSpan, setSelectedSpan] = useState<SpanV3>();
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [isFilterActive, setIsFilterActive] = useState(false);
 

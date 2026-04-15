@@ -3,10 +3,16 @@ import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/sonner';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Span } from 'types/api/trace/getTraceV2';
+
+// Accepts both V2 (spanId) and V3 (span_id) span shapes
+// TODO: Remove V2 (spanId) support when phasing out V2
+interface SpanLike {
+	spanId?: string;
+	span_id?: string;
+}
 
 export const useCopySpanLink = (
-	span?: Span,
+	span?: SpanLike,
 ): { onSpanCopy: MouseEventHandler<HTMLElement> } => {
 	const urlQuery = useUrlQuery();
 	const { pathname } = useLocation();
@@ -23,8 +29,9 @@ export const useCopySpanLink = (
 
 			urlQuery.delete('spanId');
 
-			if (span.spanId) {
-				urlQuery.set('spanId', span?.spanId);
+			const id = span.span_id || span.spanId;
+			if (id) {
+				urlQuery.set('spanId', id);
 			}
 
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;

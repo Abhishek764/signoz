@@ -1,12 +1,12 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@signozhq/badge';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 interface HighlightedOption {
 	key: string;
 	label: string;
-	render: (span: Span) => ReactNode | null;
+	render: (span: SpanV3) => ReactNode | null;
 }
 
 export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
@@ -14,10 +14,10 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'service',
 		label: 'SERVICE',
 		render: (span): ReactNode | null =>
-			span.serviceName ? (
+			span['service.name'] ? (
 				<Badge color="vanilla">
 					<span className="span-details-panel__service-dot" />
-					{span.serviceName}
+					{span['service.name']}
 				</Badge>
 			) : null,
 	},
@@ -25,23 +25,23 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'statusCodeString',
 		label: 'STATUS CODE STRING',
 		render: (span): ReactNode | null =>
-			span.statusCodeString ? (
-				<Badge color="vanilla">{span.statusCodeString}</Badge>
+			span.status_code_string ? (
+				<Badge color="vanilla">{span.status_code_string}</Badge>
 			) : null,
 	},
 	{
 		key: 'traceId',
 		label: 'TRACE ID',
 		render: (span): ReactNode | null =>
-			span.traceId ? (
+			span.trace_id ? (
 				<Link
 					to={{
-						pathname: `/trace/${span.traceId}`,
+						pathname: `/trace/${span.trace_id}`,
 						search: window.location.search,
 					}}
 					className="span-details-panel__trace-id"
 				>
-					{span.traceId}
+					{span.trace_id}
 				</Link>
 			) : null,
 	},
@@ -49,6 +49,6 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'spanKind',
 		label: 'SPAN KIND',
 		render: (span): ReactNode | null =>
-			span.spanKind ? <Badge color="vanilla">{span.spanKind}</Badge> : null,
+			span.kind_string ? <Badge color="vanilla">{span.kind_string}</Badge> : null,
 	},
 ];

@@ -1,12 +1,17 @@
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 /**
- * Look up an attribute from both `resources` and `attributes` on a span.
+ * Look up an attribute from both `resource` and `attributes` on a span.
  * Resources are checked first (service.name, k8s.* etc. live there).
- * Falls back to V2 fields (tagMap) if V3 fields are not present.
+ * TODO: Remove tagMap fallback when phasing out V2
  */
-export function getSpanAttribute(span: Span, key: string): string | undefined {
-	return span.resources?.[key] || span.attributes?.[key] || span.tagMap?.[key];
+export function getSpanAttribute(
+	span: SpanV3,
+	key: string,
+): string | undefined {
+	return (
+		span.resource?.[key] || span.attributes?.[key] || (span as any).tagMap?.[key]
+	);
 }
 
 const INFRA_METADATA_KEYS = [
@@ -18,9 +23,9 @@ const INFRA_METADATA_KEYS = [
 
 /**
  * Check if span has infrastructure metadata (k8s/host).
- * Works with both V2 (tagMap) and V3 (resources/attributes) spans.
+ * TODO: Remove tagMap fallback when phasing out V2
  */
-export function hasInfraMetadata(span: Span | undefined): boolean {
+export function hasInfraMetadata(span: SpanV3 | undefined): boolean {
 	if (!span) {
 		return false;
 	}

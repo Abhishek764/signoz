@@ -13,7 +13,7 @@ import dayjs from 'dayjs';
 import useClickOutside from 'hooks/useClickOutside';
 import { Check, ChevronDown, ChevronUp, Loader2, PlusIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import './SpanPercentile.styles.scss';
 
@@ -34,7 +34,7 @@ const timerangeOptions = [1, 2, 4, 6, 12, 24].map((hours) => ({
 }));
 
 interface SpanPercentileProps {
-	selectedSpan: Span;
+	selectedSpan: SpanV3;
 }
 
 function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
@@ -105,9 +105,9 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 		queryKey: [
 			'getUserPreferenceByPreferenceName',
 			USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
-			selectedSpan.spanId,
+			selectedSpan.span_id,
 		],
-		enabled: selectedSpan.tagMap !== undefined,
+		enabled: selectedSpan.attributes !== undefined,
 	});
 
 	const {
@@ -121,14 +121,14 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 			getSpanPercentiles({
 				start: startTime || 0,
 				end: endTime || 0,
-				spanDuration: selectedSpan.durationNano || 0,
-				serviceName: selectedSpan.serviceName || '',
+				spanDuration: selectedSpan.duration_nano || 0,
+				serviceName: selectedSpan['service.name'] || '',
 				name: selectedSpan.name || '',
 				resourceAttributes: selectedResourceAttributes,
 			}),
 		queryKey: [
 			REACT_QUERY_KEY.GET_SPAN_PERCENTILES,
-			selectedSpan.spanId,
+			selectedSpan.span_id,
 			startTime,
 			endTime,
 		],
@@ -163,7 +163,7 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 		return (): void => {
 			clearTimeout(timer);
 		};
-	}, [selectedSpan.spanId]);
+	}, [selectedSpan.span_id]);
 
 	useEffect(() => {
 		if (data?.httpStatusCode !== 200) {
@@ -179,21 +179,34 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 		}
 	}, [data]);
 
+	// Merge resource + attributes to get all span attributes (equivalent to V2 tagMap).
+	// Stringify all values since the backend expects map[string]string.
+	const allSpanAttributes = useMemo(() => {
+		const merged: Record<string, string> = {};
+		for (const [k, v] of Object.entries(selectedSpan.resource || {})) {
+			merged[k] = String(v);
+		}
+		for (const [k, v] of Object.entries(selectedSpan.attributes || {})) {
+			merged[k] = String(v);
+		}
+		return merged;
+	}, [selectedSpan.resource, selectedSpan.attributes]);
+
 	useEffect(() => {
 		if (userSelectedResourceAttributes) {
 			const userList = (userSelectedResourceAttributes?.data
 				?.value as string[]).map((attr: string) => attr);
 			let selectedMap: Record<string, string> = {};
 			userList.forEach((attr: string) => {
-				selectedMap[attr] = selectedSpan.tagMap?.[attr] || '';
+				selectedMap[attr] = allSpanAttributes[attr] || '';
 			});
 			selectedMap = Object.fromEntries(
 				Object.entries(selectedMap).filter(
-					([key]) => selectedSpan.tagMap?.[key] !== undefined,
+					([key]) => allSpanAttributes[key] !== undefined,
 				),
 			);
 
-			const resourceAttrs = Object.entries(selectedSpan.tagMap || {}).map(
+			const resourceAttrs = Object.entries(allSpanAttributes).map(
 				([key, value]) => ({
 					key,
 					value,
@@ -214,7 +227,7 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 		}
 
 		if (isErrorUserSelectedResourceAttributes) {
-			const resourceAttrs = Object.entries(selectedSpan.tagMap || {}).map(
+			const resourceAttrs = Object.entries(allSpanAttributes).map(
 				([key, value]) => ({
 					key,
 					value,
@@ -229,7 +242,7 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 	}, [
 		userSelectedResourceAttributes,
 		isErrorUserSelectedResourceAttributes,
-		selectedSpan.tagMap,
+		allSpanAttributes,
 	]);
 
 	const handleResourceAttributeChange = useCallback(
@@ -485,7 +498,7 @@ function SpanPercentile({ selectedSpan }: SpanPercentileProps): JSX.Element {
 													<Typography.Text className="span-percentile__table-row-value">
 														(this span){' '}
 														{getYAxisFormattedValue(
-															`${selectedSpan.durationNano / 1000000}`,
+															`${selectedSpan.duration_nano / 1000000}`,
 															'ms',
 														)}
 													</Typography.Text>

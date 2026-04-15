@@ -1,6 +1,6 @@
 import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { SpanDuration } from '../Success';
 
@@ -23,28 +23,38 @@ jest.mock('@signozhq/badge', () => ({
 	Badge: jest.fn(),
 }));
 
-const mockSpan: Span = {
-	spanId: 'test-span-id',
+const mockSpan: SpanV3 = {
+	span_id: 'test-span-id',
 	name: 'test-span',
-	serviceName: 'test-service',
-	durationNano: 1160000, // 1ms in nano
+	'service.name': 'test-service',
+	duration_nano: 1160000,
 	timestamp: 1234567890,
-	rootSpanId: 'test-root-span-id',
-	parentSpanId: 'test-parent-span-id',
-	traceId: 'test-trace-id',
-	hasError: false,
+	parent_span_id: 'test-parent-span-id',
+	trace_id: 'test-trace-id',
+	has_error: false,
 	kind: 0,
-	references: [],
-	tagMap: {},
-	event: [],
-	rootName: 'test-root-name',
-	statusMessage: 'test-status-message',
-	statusCodeString: 'test-status-code-string',
-	spanKind: 'test-span-kind',
-	hasChildren: false,
-	hasSibling: false,
-	subTreeNodeCount: 0,
+	kind_string: 'test-span-kind',
+	attributes: {},
+	resource: {},
+	events: [],
+	status_message: 'test-status-message',
+	status_code: 0,
+	status_code_string: 'test-status-code-string',
+	has_children: false,
+	has_sibling: false,
+	sub_tree_node_count: 0,
 	level: 0,
+	http_method: '',
+	http_url: '',
+	http_host: '',
+	db_name: '',
+	db_operation: '',
+	external_http_method: '',
+	external_http_url: '',
+	response_status_code: '',
+	is_remote: '',
+	flags: 0,
+	trace_state: '',
 };
 
 const mockTraceMetadata = {
@@ -146,7 +156,7 @@ describe('SpanDuration', () => {
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
 				handleSpanClick={mockSetSelectedSpan}
-				filteredSpanIds={[mockSpan.spanId]}
+				filteredSpanIds={[mockSpan.span_id]}
 				isFilterActive
 			/>,
 		);
@@ -184,7 +194,7 @@ describe('SpanDuration', () => {
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={mockSpan}
 				handleSpanClick={mockSetSelectedSpan}
-				filteredSpanIds={[mockSpan.spanId]}
+				filteredSpanIds={[mockSpan.span_id]}
 				isFilterActive
 			/>,
 		);

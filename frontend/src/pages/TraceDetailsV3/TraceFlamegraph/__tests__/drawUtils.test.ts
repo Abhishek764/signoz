@@ -131,7 +131,8 @@ describe('Canvas Draw Utils', () => {
 				selectedSpanId: 'sel',
 			});
 
-			expect(ctx.createPattern).toHaveBeenCalled();
+			// Selected spans get solid l2-background fill + dashed border
+			expect(ctx.fill).toHaveBeenCalled();
 			expect(ctx.setLineDash).toHaveBeenCalledWith(DASHED_BORDER_LINE_DASH);
 			expect(ctx.strokeStyle).toBe('#2F80ED');
 			expect(ctx.lineWidth).toBe(2);
@@ -139,7 +140,7 @@ describe('Canvas Draw Utils', () => {
 			expect(ctx.setLineDash).toHaveBeenLastCalledWith([]);
 		});
 
-		it('uses stripe pattern + solid stroke + 1px when hovered (not selected)', () => {
+		it('uses solid l2-background fill + solid stroke + 1px when hovered (not selected)', () => {
 			const ctx = createMockCtx();
 			const spanRectsArray: {
 				span: typeof MOCK_SPAN;
@@ -165,7 +166,7 @@ describe('Canvas Draw Utils', () => {
 				hoveredSpanId: 'hov',
 			});
 
-			expect(ctx.createPattern).toHaveBeenCalled();
+			expect(ctx.fill).toHaveBeenCalled();
 			expect(ctx.setLineDash).not.toHaveBeenCalled();
 			expect(ctx.lineWidth).toBe(1);
 			expect(ctx.stroke).toHaveBeenCalled();
@@ -446,11 +447,9 @@ describe('Canvas Draw Utils', () => {
 		});
 	});
 
-	describe('createStripePattern (via drawSpanBar)', () => {
-		it('uses pattern when createPattern returns non-null', () => {
+	describe('solid l2-background fill for selected/hovered spans', () => {
+		it('uses solid fill for hovered span', () => {
 			const ctx = createMockCtx();
-			const mockPattern = {} as CanvasPattern;
-			(ctx.createPattern as jest.Mock).mockReturnValue(mockPattern);
 
 			drawSpanBar({
 				ctx,
@@ -467,14 +466,12 @@ describe('Canvas Draw Utils', () => {
 				hoveredSpanId: 'p',
 			});
 
-			expect(ctx.createPattern).toHaveBeenCalled();
-			expect(ctx.fillStyle).toBe(mockPattern);
 			expect(ctx.fill).toHaveBeenCalled();
+			expect(ctx.stroke).toHaveBeenCalled();
 		});
 
-		it('skips fill when createPattern returns null', () => {
+		it('uses solid fill + dashed border for selected span', () => {
 			const ctx = createMockCtx();
-			(ctx.createPattern as jest.Mock).mockReturnValue(null);
 
 			drawSpanBar({
 				ctx,
@@ -491,7 +488,7 @@ describe('Canvas Draw Utils', () => {
 				selectedSpanId: 'p',
 			});
 
-			expect(ctx.fill).not.toHaveBeenCalled();
+			expect(ctx.fill).toHaveBeenCalled();
 			expect(ctx.stroke).toHaveBeenCalled();
 		});
 	});

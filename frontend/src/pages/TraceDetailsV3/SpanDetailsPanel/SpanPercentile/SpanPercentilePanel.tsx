@@ -3,7 +3,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { Check, ChevronDown, Loader2, PlusIcon } from 'lucide-react';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { UseSpanPercentileReturn } from './useSpanPercentile';
 
@@ -20,7 +20,7 @@ const timerangeOptions = [1, 2, 4, 6, 12, 24].map((hours) => ({
 }));
 
 interface SpanPercentilePanelProps {
-	selectedSpan: Span;
+	selectedSpan: SpanV3;
 	percentile: UseSpanPercentileReturn;
 }
 
@@ -207,7 +207,7 @@ function SpanPercentilePanel({
 									<Typography.Text className="span-percentile-panel__table-row-value">
 										(this span){' '}
 										{getYAxisFormattedValue(
-											`${selectedSpan.durationNano / 1000000}`,
+											`${selectedSpan.duration_nano / 1000000}`,
 											'ms',
 										)}
 									</Typography.Text>

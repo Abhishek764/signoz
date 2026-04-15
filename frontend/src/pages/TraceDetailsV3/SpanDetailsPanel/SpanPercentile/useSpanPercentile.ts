@@ -8,7 +8,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import useClickOutside from 'hooks/useClickOutside';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 export interface IResourceAttribute {
 	key: string;
@@ -51,7 +51,7 @@ export interface UseSpanPercentileReturn {
 	isFetchingData: boolean;
 }
 
-function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
+function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 	const [isOpen, setIsOpen] = useState(false);
 	const [selectedTimeRange, setSelectedTimeRange] = useState(1);
 	const [
@@ -119,9 +119,9 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 		queryKey: [
 			'getUserPreferenceByPreferenceName',
 			USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
-			selectedSpan.spanId,
+			selectedSpan.span_id,
 		],
-		enabled: selectedSpan.tagMap !== undefined,
+		enabled: selectedSpan.attributes !== undefined,
 	});
 
 	const {
@@ -135,14 +135,14 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 			getSpanPercentiles({
 				start: startTime || 0,
 				end: endTime || 0,
-				spanDuration: selectedSpan.durationNano || 0,
-				serviceName: selectedSpan.serviceName || '',
+				spanDuration: selectedSpan.duration_nano || 0,
+				serviceName: selectedSpan['service.name'] || '',
 				name: selectedSpan.name || '',
 				resourceAttributes: selectedResourceAttributes,
 			}),
 		queryKey: [
 			REACT_QUERY_KEY.GET_SPAN_PERCENTILES,
-			selectedSpan.spanId,
+			selectedSpan.span_id,
 			startTime,
 			endTime,
 		],
@@ -177,7 +177,7 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 		return (): void => {
 			clearTimeout(timer);
 		};
-	}, [selectedSpan.spanId]);
+	}, [selectedSpan.span_id]);
 
 	useEffect(() => {
 		if (data?.httpStatusCode !== 200) {
@@ -193,21 +193,34 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 		}
 	}, [data]);
 
+	// Merge resource + attributes to get all span attributes (equivalent to V2 tagMap).
+	// Stringify all values since the backend expects map[string]string.
+	const allSpanAttributes = useMemo(() => {
+		const merged: Record<string, string> = {};
+		for (const [k, v] of Object.entries(selectedSpan.resource || {})) {
+			merged[k] = String(v);
+		}
+		for (const [k, v] of Object.entries(selectedSpan.attributes || {})) {
+			merged[k] = String(v);
+		}
+		return merged;
+	}, [selectedSpan.resource, selectedSpan.attributes]);
+
 	useEffect(() => {
 		if (userSelectedResourceAttributes) {
 			const userList = (userSelectedResourceAttributes?.data
 				?.value as string[]).map((attr: string) => attr);
 			let selectedMap: Record<string, string> = {};
 			userList.forEach((attr: string) => {
-				selectedMap[attr] = selectedSpan.tagMap?.[attr] || '';
+				selectedMap[attr] = allSpanAttributes[attr] || '';
 			});
 			selectedMap = Object.fromEntries(
 				Object.entries(selectedMap).filter(
-					([key]) => selectedSpan.tagMap?.[key] !== undefined,
+					([key]) => allSpanAttributes[key] !== undefined,
 				),
 			);
 
-			const resourceAttrs = Object.entries(selectedSpan.tagMap || {}).map(
+			const resourceAttrs = Object.entries(allSpanAttributes).map(
 				([key, value]) => ({
 					key,
 					value,
@@ -228,7 +241,7 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 		}
 
 		if (isErrorUserSelectedResourceAttributes) {
-			const resourceAttrs = Object.entries(selectedSpan.tagMap || {}).map(
+			const resourceAttrs = Object.entries(allSpanAttributes).map(
 				([key, value]) => ({
 					key,
 					value,
@@ -244,7 +257,7 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 	}, [
 		userSelectedResourceAttributes,
 		isErrorUserSelectedResourceAttributes,
-		selectedSpan.tagMap,
+		allSpanAttributes,
 	]);
 
 	const handleResourceAttributeChange = useCallback(
@@ -281,7 +294,7 @@ function useSpanPercentile(selectedSpan: Span): UseSpanPercentileReturn {
 	const loading = isLoadingData || isFetchingData;
 	const percentileValue = Math.floor(spanPercentileData?.percentile || 0);
 	const duration = getYAxisFormattedValue(
-		`${selectedSpan.durationNano / 1000000}`,
+		`${selectedSpan.duration_nano / 1000000}`,
 		'ms',
 	);
 

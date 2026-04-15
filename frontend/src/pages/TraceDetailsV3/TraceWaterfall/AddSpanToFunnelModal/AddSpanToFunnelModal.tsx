@@ -19,7 +19,7 @@ import {
 	useFunnelContext,
 } from 'pages/TracesFunnels/FunnelContext';
 import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import './AddSpanToFunnelModal.styles.scss';
@@ -38,7 +38,7 @@ function FunnelDetailsView({
 	triggerDiscard,
 }: {
 	funnel: FunnelData;
-	span: Span;
+	span: SpanV3;
 	triggerAutoSave: boolean;
 	showNotifications: boolean;
 	onChangesDetected: (hasChanges: boolean) => void;
@@ -71,7 +71,7 @@ function FunnelDetailsView({
 			<FunnelConfiguration
 				funnel={funnel}
 				isTraceDetailsPage
-				span={span}
+				span={span as any}
 				triggerAutoSave={triggerAutoSave}
 				showNotifications={showNotifications}
 			/>
@@ -82,7 +82,7 @@ function FunnelDetailsView({
 interface AddSpanToFunnelModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	span: Span;
+	span: SpanV3;
 }
 
 function AddSpanToFunnelModal({
@@ -200,7 +200,7 @@ function AddSpanToFunnelModal({
 		</div>
 	);
 
-	const renderDetailsView = ({ span }: { span: Span }): JSX.Element => (
+	const renderDetailsView = ({ span }: { span: SpanV3 }): JSX.Element => (
 		<div className="add-span-to-funnel-modal add-span-to-funnel-modal--details">
 			<Button
 				type="text"

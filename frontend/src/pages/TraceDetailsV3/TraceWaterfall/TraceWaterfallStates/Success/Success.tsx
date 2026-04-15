@@ -35,7 +35,7 @@ import {
 	ListPlus,
 } from 'lucide-react';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
@@ -56,13 +56,13 @@ interface ITraceMetadata {
 	hasMissingSpans: boolean;
 }
 interface ISuccessProps {
-	spans: Span[];
+	spans: SpanV3[];
 	traceMetadata: ITraceMetadata;
 	interestedSpanId: IInterestedSpan;
 	uncollapsedNodes: string[];
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
-	selectedSpan: Span | undefined;
-	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	selectedSpan: SpanV3 | undefined;
+	setSelectedSpan: Dispatch<SetStateAction<SpanV3 | undefined>>;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	isFetching?: boolean;
@@ -79,28 +79,31 @@ const SpanOverview = memo(function SpanOverview({
 	traceMetadata,
 	onAddSpanToFunnel,
 }: {
-	span: Span;
+	span: SpanV3;
 	isSpanCollapsed: boolean;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
-	selectedSpan: Span | undefined;
-	handleSpanClick: (span: Span) => void;
+	selectedSpan: SpanV3 | undefined;
+	handleSpanClick: (span: SpanV3) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 	traceMetadata: ITraceMetadata;
-	onAddSpanToFunnel: (span: Span) => void;
+	onAddSpanToFunnel: (span: SpanV3) => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const { onSpanCopy } = useCopySpanLink(span);
 
-	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
-	if (span.hasError) {
+	let color = generateColor(
+		span['service.name'],
+		themeColors.traceDetailColorsV3,
+	);
+	if (span.has_error) {
 		color = `var(--bg-cherry-500)`;
 	}
 
 	// Smart highlighting logic
 	const isMatching =
-		isFilterActive && (filteredSpanIds || []).includes(span.spanId);
-	const isSelected = selectedSpan?.spanId === span.spanId;
+		isFilterActive && (filteredSpanIds || []).includes(span.span_id);
+	const isSelected = selectedSpan?.span_id === span.span_id;
 	const isDimmed = isFilterActive && !isMatching && !isSelected;
 	const isHighlighted = isFilterActive && isMatching && !isSelected;
 	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
@@ -130,7 +133,8 @@ const SpanOverview = memo(function SpanOverview({
 						const xPos = (lvl - 1) * CONNECTOR_WIDTH + 9;
 						if (lvl < span.level) {
 							// Stop the line at 50% for the last child's parent level
-							const isLastChildParentLine = !span.hasSibling && lvl === span.level - 1;
+							const isLastChildParentLine =
+								!span.has_sibling && lvl === span.level - 1;
 							return (
 								<div
 									key={lvl}
@@ -159,14 +163,14 @@ const SpanOverview = memo(function SpanOverview({
 				<span className="tree-indent" style={{ width: `${indentWidth}px` }} />
 
 				{/* Expand/collapse arrow + child count (only for spans with children) */}
-				{span.hasChildren && (
+				{span.has_children && (
 					<>
 						<span
 							className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
 							onClick={(event): void => {
 								event.stopPropagation();
 								event.preventDefault();
-								handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
+								handleCollapseUncollapse(span.span_id, !isSpanCollapsed);
 							}}
 						>
 							{isSpanCollapsed ? (
@@ -176,14 +180,14 @@ const SpanOverview = memo(function SpanOverview({
 							)}
 						</span>
 						<span className="subtree-count">
-							<Badge color="vanilla">{span.subTreeNodeCount}</Badge>
+							<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
 						</span>
 					</>
 				)}
 
 				{/* Colored service dot */}
 				<span
-					className={cx('tree-icon', { 'is-error': span.hasError })}
+					className={cx('tree-icon', { 'is-error': span.has_error })}
 					style={{ backgroundColor: color }}
 				/>
 
@@ -220,32 +224,35 @@ export const SpanDuration = memo(function SpanDuration({
 	filteredSpanIds,
 	isFilterActive,
 }: {
-	span: Span;
+	span: SpanV3;
 	traceMetadata: ITraceMetadata;
-	selectedSpan: Span | undefined;
-	handleSpanClick: (span: Span) => void;
+	selectedSpan: SpanV3 | undefined;
+	handleSpanClick: (span: SpanV3) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
-		span.durationNano / 1e6,
+		span.duration_nano / 1e6,
 	);
 
 	const spread = traceMetadata.endTime - traceMetadata.startTime;
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
-	const width = (span.durationNano * 1e2) / (spread * 1e6);
+	const width = (span.duration_nano * 1e2) / (spread * 1e6);
 
-	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
+	let color = generateColor(
+		span['service.name'],
+		themeColors.traceDetailColorsV3,
+	);
 	let rgbColor = colorToRgb(color);
 
-	if (span.hasError) {
+	if (span.has_error) {
 		color = `var(--bg-cherry-500)`;
 		rgbColor = '239, 68, 68';
 	}
 
 	const isMatching =
-		isFilterActive && (filteredSpanIds || []).includes(span.spanId);
-	const isSelected = selectedSpan?.spanId === span.spanId;
+		isFilterActive && (filteredSpanIds || []).includes(span.span_id);
+	const isSelected = selectedSpan?.span_id === span.span_id;
 	const isDimmed = isFilterActive && !isMatching && !isSelected;
 	const isHighlighted = isFilterActive && isMatching && !isSelected;
 	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
@@ -281,9 +288,9 @@ export const SpanDuration = memo(function SpanDuration({
 					</span>
 				</div>
 			</SpanHoverCard>
-			{span.event?.map((event) => {
+			{span.events?.map((event) => {
 				const eventTimeMs = event.timeUnixNano / 1e6;
-				const spanDurationMs = span.durationNano / 1e6;
+				const spanDurationMs = span.duration_nano / 1e6;
 				const eventOffsetPercent =
 					((eventTimeMs - span.timestamp) / spanDurationMs) * 100;
 				const clampedOffset = Math.max(1, Math.min(eventOffsetPercent, 99));
@@ -299,7 +306,7 @@ export const SpanDuration = memo(function SpanDuration({
 					.join(', ')})`;
 				return (
 					<Popover
-						key={`${span.spanId}-event-${event.name}-${event.timeUnixNano}`}
+						key={`${span.span_id}-event-${event.name}-${event.timeUnixNano}`}
 						content={
 							<EventTooltipContent
 								eventName={event.name}
@@ -331,7 +338,7 @@ export const SpanDuration = memo(function SpanDuration({
 });
 
 // table config
-const columnDefHelper = createColumnHelper<Span>();
+const columnDefHelper = createColumnHelper<SpanV3>();
 
 const ROW_HEIGHT = 28;
 const DEFAULT_SIDEBAR_WIDTH = 450;
@@ -413,7 +420,7 @@ function Success(props: ISuccessProps): JSX.Element {
 					let targetLevel: number | null = null;
 
 					if (hoveredId) {
-						const hoveredIdx = spans.findIndex((s) => s.spanId === hoveredId);
+						const hoveredIdx = spans.findIndex((s) => s.span_id === hoveredId);
 						if (
 							hoveredIdx >= capturedRange.startIndex &&
 							hoveredIdx <= capturedRange.endIndex
@@ -454,7 +461,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				// do not trigger for trace root as nothing to fetch above
 				if (spans[0].level !== 0) {
 					setInterestedSpanId({
-						spanId: spans[0].spanId,
+						spanId: spans[0].span_id,
 						isUncollapsed: false,
 					});
 				}
@@ -463,7 +470,7 @@ function Success(props: ISuccessProps): JSX.Element {
 
 			if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
 				setInterestedSpanId({
-					spanId: spans[spans.length - 1].spanId,
+					spanId: spans[spans.length - 1].span_id,
 					isUncollapsed: false,
 				});
 			}
@@ -475,9 +482,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		false,
 	);
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
-		Span | undefined
+		SpanV3 | undefined
 	>(undefined);
-	const handleAddSpanToFunnel = useCallback((span: Span): void => {
+	const handleAddSpanToFunnel = useCallback((span: SpanV3): void => {
 		setIsAddSpanToFunnelModalOpen(true);
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
@@ -486,10 +493,10 @@ function Success(props: ISuccessProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const handleSpanClick = useCallback(
-		(span: Span): void => {
+		(span: SpanV3): void => {
 			setSelectedSpan(span);
-			if (span?.spanId) {
-				urlQuery.set('spanId', span?.spanId);
+			if (span?.span_id) {
+				urlQuery.set('spanId', span?.span_id);
 			}
 
 			safeNavigate({ search: urlQuery.toString() });
@@ -508,7 +515,7 @@ function Success(props: ISuccessProps): JSX.Element {
 						span={cellProps.row.original}
 						handleCollapseUncollapse={handleCollapseUncollapse}
 						isSpanCollapsed={
-							!uncollapsedNodes.includes(cellProps.row.original.spanId)
+							!uncollapsedNodes.includes(cellProps.row.original.span_id)
 						}
 						selectedSpan={selectedSpan}
 						handleSpanClick={handleSpanClick}
@@ -567,7 +574,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	useEffect(() => {
 		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
 			const idx = spans.findIndex(
-				(span) => span.spanId === interestedSpanId.spanId,
+				(span) => span.span_id === interestedSpanId.spanId,
 			);
 			if (idx !== -1) {
 				setTimeout(() => {
@@ -671,8 +678,8 @@ function Success(props: ISuccessProps): JSX.Element {
 									return (
 										<tr
 											key={String(virtualRow.key)}
-											data-testid={`cell-0-${span.spanId}`}
-											data-span-id={span.spanId}
+											data-testid={`cell-0-${span.span_id}`}
+											data-span-id={span.span_id}
 											className="span-tree-row"
 											style={{
 												position: 'absolute',
@@ -682,7 +689,7 @@ function Success(props: ISuccessProps): JSX.Element {
 												height: ROW_HEIGHT,
 												transform: `translateY(${virtualRow.start}px)`,
 											}}
-											onMouseEnter={(): void => handleRowMouseEnter(span.spanId)}
+											onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
 											onMouseLeave={handleRowMouseLeave}
 										>
 											{row.getVisibleCells().map((cell) => (
@@ -704,8 +711,8 @@ function Success(props: ISuccessProps): JSX.Element {
 							return (
 								<div
 									key={String(virtualRow.key)}
-									data-testid={`cell-1-${span.spanId}`}
-									data-span-id={span.spanId}
+									data-testid={`cell-1-${span.span_id}`}
+									data-span-id={span.span_id}
 									className="timeline-row"
 									style={{
 										position: 'absolute',
@@ -715,7 +722,7 @@ function Success(props: ISuccessProps): JSX.Element {
 										height: ROW_HEIGHT,
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
-									onMouseEnter={(): void => handleRowMouseEnter(span.spanId)}
+									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
 									onMouseLeave={handleRowMouseLeave}
 								>
 									<SpanDuration

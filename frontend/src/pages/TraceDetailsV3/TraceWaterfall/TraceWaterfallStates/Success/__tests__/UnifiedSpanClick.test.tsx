@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import Success from '../Success';
 
@@ -140,28 +140,38 @@ const mockTraceMetadata = {
 	hasMissingSpans: false,
 };
 
-const createMockSpan = (spanId: string, level = 1): Span => ({
-	spanId,
-	traceId: 'test-trace-id',
-	rootSpanId: 'span-1',
-	parentSpanId: level === 0 ? '' : 'span-1',
+const createMockSpan = (spanId: string, level = 1): SpanV3 => ({
+	span_id: spanId,
+	trace_id: 'test-trace-id',
+	parent_span_id: level === 0 ? '' : 'span-1',
 	name: `Test Span ${spanId}`,
-	serviceName: 'test-service',
+	'service.name': 'test-service',
 	timestamp: mockTraceMetadata.startTime + level * 100000,
-	durationNano: 50000000,
+	duration_nano: 50000000,
 	level,
-	hasError: false,
+	has_error: false,
 	kind: 1,
-	references: [],
-	tagMap: {},
-	event: [],
-	rootName: 'Test Root Span',
-	statusMessage: '',
-	statusCodeString: 'OK',
-	spanKind: 'server',
-	hasChildren: false,
-	hasSibling: false,
-	subTreeNodeCount: 1,
+	kind_string: 'server',
+	attributes: {},
+	resource: {},
+	events: [],
+	status_message: '',
+	status_code: 0,
+	status_code_string: 'OK',
+	has_children: false,
+	has_sibling: false,
+	sub_tree_node_count: 1,
+	http_method: '',
+	http_url: '',
+	http_host: '',
+	db_name: '',
+	db_operation: '',
+	external_http_method: '',
+	external_http_url: '',
+	response_status_code: '',
+	is_remote: '',
+	flags: 0,
+	trace_state: '',
 });
 
 const mockSpans = [
@@ -172,7 +182,7 @@ const mockSpans = [
 
 // Shared TestComponent for all tests
 function TestComponent(): JSX.Element {
-	const [selectedSpan, setSelectedSpan] = React.useState<Span | undefined>(
+	const [selectedSpan, setSelectedSpan] = React.useState<SpanV3 | undefined>(
 		undefined,
 	);
 
@@ -181,7 +191,7 @@ function TestComponent(): JSX.Element {
 			spans={mockSpans}
 			traceMetadata={mockTraceMetadata}
 			interestedSpanId={{ spanId: '', isUncollapsed: false }}
-			uncollapsedNodes={mockSpans.map((s) => s.spanId)}
+			uncollapsedNodes={mockSpans.map((s) => s.span_id)}
 			setInterestedSpanId={jest.fn()}
 			selectedSpan={selectedSpan}
 			setSelectedSpan={setSelectedSpan}
@@ -214,7 +224,7 @@ describe('Span Click User Flows', () => {
 				spans={mockSpans}
 				traceMetadata={mockTraceMetadata}
 				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
+				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
 				setInterestedSpanId={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
@@ -393,7 +403,7 @@ describe('Span Click User Flows', () => {
 				spans={mockSpans}
 				traceMetadata={mockTraceMetadata}
 				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.spanId)}
+				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
 				setInterestedSpanId={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}

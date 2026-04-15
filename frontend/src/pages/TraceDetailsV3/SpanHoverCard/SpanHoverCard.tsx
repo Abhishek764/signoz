@@ -3,7 +3,7 @@ import { Popover } from 'antd';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
 import './SpanHoverCard.styles.scss';
@@ -51,7 +51,7 @@ export function SpanTooltipContent({
 }
 
 interface SpanHoverCardProps {
-	span: Span;
+	span: SpanV3;
 	traceMetadata: ITraceMetadata;
 	children: ReactNode;
 }
@@ -61,11 +61,14 @@ function SpanHoverCard({
 	traceMetadata,
 	children,
 }: SpanHoverCardProps): JSX.Element {
-	const durationMs = span.durationNano / 1e6;
+	const durationMs = span.duration_nano / 1e6;
 	const relativeStartMs = span.timestamp - traceMetadata.startTime;
 
-	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
-	if (span.hasError) {
+	let color = generateColor(
+		span['service.name'],
+		themeColors.traceDetailColorsV3,
+	);
+	if (span.has_error) {
 		color = 'var(--bg-cherry-500)';
 	}
 
@@ -76,7 +79,7 @@ function SpanHoverCard({
 				<SpanTooltipContent
 					spanName={span.name}
 					color={color}
-					hasError={span.hasError}
+					hasError={span.has_error}
 					relativeStartMs={relativeStartMs}
 					durationMs={durationMs}
 				/>

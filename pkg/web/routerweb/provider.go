@@ -1,13 +1,16 @@
 package routerweb
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
@@ -17,36 +20,55 @@ const (
 	indexFileName string = "index.html"
 )
 
+type templateData struct {
+	BasePath string
+}
+
 type provider struct {
-	config web.Config
+	config        web.Config
+	indexContents []byte
 }
 
-func NewFactory() factory.ProviderFactory[web.Web, web.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("router"), New)
+func NewFactory(globalConfig global.Config) factory.ProviderFactory[web.Web, web.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("router"), func(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
+		return New(ctx, settings, config, globalConfig)
+	})
 }
 
-func New(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
+func New(ctx context.Context, settings factory.ProviderSettings, config web.Config, globalConfig global.Config) (web.Web, error) {
 	fi, err := os.Stat(config.Directory)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot access web directory")
 	}
 
-	ok := fi.IsDir()
-	if !ok {
+	if !fi.IsDir() {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "web directory is not a directory")
 	}
 
-	fi, err = os.Stat(filepath.Join(config.Directory, indexFileName))
+	indexPath := filepath.Join(config.Directory, indexFileName)
+	raw, err := os.ReadFile(indexPath)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot access %q in web directory", indexFileName)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", indexFileName)
 	}
 
-	if os.IsNotExist(err) || fi.IsDir() {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "%q does not exist", indexFileName)
+	basePath := "/"
+	if routePrefix := globalConfig.RoutePrefix(); routePrefix != "" {
+		basePath = routePrefix + "/"
+	}
+
+	tmpl, err := template.New(indexFileName).Delims("[[", "]]").Parse(string(raw))
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot parse %q as template", indexFileName)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, templateData{BasePath: basePath}); err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot execute template for %q", indexFileName)
 	}
 
 	return &provider{
-		config: config,
+		config:        config,
+		indexContents: buf.Bytes(),
 	}, nil
 }
 
@@ -63,6 +85,11 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	return nil
 }
 
+func (provider *provider) serveIndex(rw http.ResponseWriter) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	rw.Write(provider.indexContents)
+}
+
 func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Join internally call path.Clean to prevent directory traversal
 	path := filepath.Join(provider.config.Directory, req.URL.Path)
@@ -72,7 +99,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
-			http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
+			provider.serveIndex(rw)
 			return
 		}
 
@@ -84,7 +111,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if fi.IsDir() {
 		// path is a directory, serve index.html
-		http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
+		provider.serveIndex(rw)
 		return
 	}
 

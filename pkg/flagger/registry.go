@@ -7,7 +7,7 @@ var (
 	FeatureKafkaSpanEval     = featuretypes.MustNewName("kafka_span_eval")
 	FeatureHideRootUser      = featuretypes.MustNewName("hide_root_user")
 	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
-	FeaturePutMetersFromZeus = featuretypes.MustNewName("put_meters_from_zeus")
+	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -45,7 +45,7 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeaturePutMetersFromZeus,
+			Name:           FeaturePutMetersInZeus,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether usage meters are sent to Zeus instead of the legacy subscriptions service",

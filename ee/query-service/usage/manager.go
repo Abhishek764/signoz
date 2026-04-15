@@ -174,7 +174,7 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 		}
 
 		evalCtx := featuretypes.NewFlaggerEvaluationContext(organization.ID)
-		useZeus := lm.flagger.BooleanOrEmpty(ctx, flagger.FeaturePutMetersFromZeus, evalCtx)
+		useZeus := lm.flagger.BooleanOrEmpty(ctx, flagger.FeaturePutMetersInZeus, evalCtx)
 
 		if useZeus {
 			errv2 = lm.zeus.PutMetersV2(ctx, payload.LicenseKey.String(), body)

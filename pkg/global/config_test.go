@@ -94,45 +94,46 @@ func TestExternalPathTrailing(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	testCases := []struct {
-		name      string
-		config    Config
-		expectErr bool
+		name   string
+		config Config
+		fail   bool
 	}{
 		{
-			name:      "NilURL",
-			config:    Config{ExternalURL: nil},
-			expectErr: false,
+			name:   "NilURL",
+			config: Config{ExternalURL: nil},
+			fail:   false,
 		},
 		{
-			name:      "EmptyPath",
-			config:    Config{ExternalURL: &url.URL{Path: ""}},
-			expectErr: false,
+			name:   "EmptyPath",
+			config: Config{ExternalURL: &url.URL{Path: ""}},
+			fail:   false,
 		},
 		{
-			name:      "RootPath",
-			config:    Config{ExternalURL: &url.URL{Path: "/"}},
-			expectErr: false,
+			name:   "RootPath",
+			config: Config{ExternalURL: &url.URL{Path: "/"}},
+			fail:   false,
 		},
 		{
-			name:      "ValidPath",
-			config:    Config{ExternalURL: &url.URL{Path: "/signoz"}},
-			expectErr: false,
+			name:   "ValidPath",
+			config: Config{ExternalURL: &url.URL{Path: "/signoz"}},
+			fail:   false,
 		},
 		{
-			name:      "NoLeadingSlash",
-			config:    Config{ExternalURL: &url.URL{Path: "signoz"}},
-			expectErr: true,
+			name:   "NoLeadingSlash",
+			config: Config{ExternalURL: &url.URL{Path: "signoz"}},
+			fail:   true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.config.Validate()
-			if tc.expectErr {
+			if tc.fail {
 				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
+				return
 			}
+
+			assert.NoError(t, err)
 		})
 	}
 }

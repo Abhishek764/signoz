@@ -39,9 +39,11 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
-	if c.ExternalURL != nil && c.ExternalURL.Path != "" && c.ExternalURL.Path != "/" {
-		if !strings.HasPrefix(c.ExternalURL.Path, "/") {
-			return errors.NewInvalidInputf(ErrCodeInvalidGlobalConfig, "global.external_url path must start with '/', got %q", c.ExternalURL.Path)
+	if c.ExternalURL != nil {
+		if c.ExternalURL.Path != "" && c.ExternalURL.Path != "/" {
+			if !strings.HasPrefix(c.ExternalURL.Path, "/") {
+				return errors.NewInvalidInputf(ErrCodeInvalidGlobalConfig, "global::external_url path must start with '/', got %q", c.ExternalURL.Path)
+			}
 		}
 	}
 
@@ -65,5 +67,6 @@ func (c Config) ExternalPathTrailing() string {
 	if p := c.ExternalPath(); p != "" {
 		return p + "/"
 	}
+
 	return "/"
 }

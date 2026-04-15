@@ -8,7 +8,11 @@ import (
 type Config struct {
 	// Whether the web package is enabled.
 	Enabled bool `mapstructure:"enabled"`
-	Index     string `mapstructure:"index"`
+
+	// The name of the index file to serve.
+	Index string `mapstructure:"index"`
+
+	// The directory from which to serve the web files.
 	Directory string `mapstructure:"directory"`
 }
 

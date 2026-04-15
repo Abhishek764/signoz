@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
@@ -63,53 +64,45 @@ func TestServeTemplatedIndex(t *testing.T) {
 			name:         "RootBaseHrefAtRoot",
 			path:         "/",
 			globalConfig: global.Config{},
-			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
-`,
+			expected:     `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>`,
 		},
 		{
 			name:         "RootBaseHrefAtNonExistentPath",
 			path:         "/does-not-exist",
 			globalConfig: global.Config{},
-			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
-`,
+			expected:     `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>`,
 		},
 		{
 			name:         "RootBaseHrefAtDirectory",
 			path:         "/assets",
 			globalConfig: global.Config{},
-			expected: `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>
-`,
+			expected:     `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>`,
 		},
 		{
 			name:         "SubPathBaseHrefAtRoot",
 			path:         "/",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
-`,
+			expected:     `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>`,
 		},
 		{
 			name:         "SubPathBaseHrefAtNonExistentPath",
 			path:         "/does-not-exist",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
-`,
+			expected:     `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>`,
 		},
 		{
 			name:         "SubPathBaseHrefAtDirectory",
 			path:         "/assets",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected: `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>
-`,
+			expected:     `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>`,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
 			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, testCase.globalConfig)
 
-			assert.Equal(t, testCase.expected, httpGet(t, base+testCase.path))
+			assert.Equal(t, testCase.expected, strings.TrimSuffix(httpGet(t, base+testCase.path), "\n"))
 		})
 	}
 }
@@ -140,8 +133,6 @@ func TestServeNoTemplateIndex(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
 			base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
 
 			assert.Equal(t, string(expected), httpGet(t, base+testCase.path))
@@ -175,11 +166,7 @@ func TestServeInvalidTemplateIndex(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			base := startServer(t, web.Config{Index: "invalid_template.html", Directory: "testdata"}, global.Config{
-				ExternalURL: &url.URL{Path: "/signoz"},
-			})
+			base := startServer(t, web.Config{Index: "invalid_template.html", Directory: "testdata"}, global.Config{ExternalURL: &url.URL{Path: "/signoz"}})
 
 			assert.Equal(t, string(expected), httpGet(t, base+testCase.path))
 		})
@@ -192,9 +179,7 @@ func TestServeStaticFilesUnchanged(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join("testdata", "assets", "style.css"))
 	require.NoError(t, err)
 
-	base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{
-		ExternalURL: &url.URL{Path: "/signoz"},
-	})
+	base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{ExternalURL: &url.URL{Path: "/signoz"}})
 
 	assert.Equal(t, string(expected), httpGet(t, base+"/assets/style.css"))
 }

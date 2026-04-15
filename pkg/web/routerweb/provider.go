@@ -52,12 +52,9 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
 	cache := middleware.NewCache(0)
-	err := router.PathPrefix(provider.config.Prefix).
+	err := router.PathPrefix("/").
 		Handler(
-			http.StripPrefix(
-				provider.config.Prefix,
-				cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
-			),
+			cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
 		).GetError()
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "unable to add web to router")

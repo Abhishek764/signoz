@@ -47,6 +47,7 @@ import {
 	StatusPage,
 	SupportPage,
 	TraceDetail,
+	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
 	TracesFunnelDetails,
@@ -140,9 +141,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.TRACE_DETAIL,
 		exact: true,
-		component: TraceDetail,
+		component: TraceDetailV3,
 		isPrivate: true,
 		key: 'TRACE_DETAIL',
+	},
+	{
+		path: ROUTES.TRACE_DETAIL_OLD,
+		exact: true,
+		component: TraceDetail,
+		isPrivate: true,
+		key: 'TRACE_DETAIL_OLD',
 	},
 	{
 		path: ROUTES.SETTINGS,

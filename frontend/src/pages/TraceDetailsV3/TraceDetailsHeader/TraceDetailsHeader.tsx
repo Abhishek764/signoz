@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, Typography } from 'antd';
+import { Button } from '@signozhq/button';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ArrowLeft } from 'lucide-react';
+import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
@@ -19,15 +20,20 @@ interface FilterMetadata {
 interface TraceDetailsHeaderProps {
 	filterMetadata: FilterMetadata;
 	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
-	hideFilter?: boolean;
+	noData?: boolean;
 }
 
 function TraceDetailsHeader({
 	filterMetadata,
 	onFilteredSpansChange,
-	hideFilter,
+	noData,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV2URLProps>();
+
+	const handleSwitchToOldView = useCallback((): void => {
+		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
+		history.replace(oldUrl);
+	}, [traceID]);
 
 	const handlePreviousBtnClick = useCallback((): void => {
 		const isSpaNavigate =
@@ -42,14 +48,21 @@ function TraceDetailsHeader({
 
 	return (
 		<div className="trace-details-header">
-			<Button className="previous-btn" onClick={handlePreviousBtnClick}>
+			<Button
+				variant="solid"
+				color="secondary"
+				size="sm"
+				className="trace-details-header__back-btn"
+				onClick={handlePreviousBtnClick}
+			>
 				<ArrowLeft size={14} />
 			</Button>
-			<div className="trace-name">
-				<Typography.Text className="trace-id">Trace ID</Typography.Text>
-			</div>
-			<Typography.Text className="trace-id-value">{traceID}</Typography.Text>
-			{!hideFilter && (
+			<KeyValueLabel
+				badgeKey="Trace ID"
+				badgeValue={traceID || ''}
+				maxCharacters={100}
+			/>
+			{!noData && (
 				<div className="trace-details-header__filter">
 					<Filters
 						startTime={filterMetadata.startTime}
@@ -59,6 +72,15 @@ function TraceDetailsHeader({
 					/>
 				</div>
 			)}
+			<Button
+				variant="solid"
+				color="secondary"
+				size="sm"
+				className="trace-details-header__old-view-btn"
+				onClick={handleSwitchToOldView}
+			>
+				Old View
+			</Button>
 		</div>
 	);
 }

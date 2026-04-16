@@ -160,7 +160,7 @@ function TraceDetailsV3(): JSX.Element {
 			<TraceDetailsHeader
 				filterMetadata={filterMetadata}
 				onFilteredSpansChange={handleFilteredSpansChange}
-				hideFilter={showNoData}
+				noData={showNoData}
 			/>
 
 			{showNoData ? (

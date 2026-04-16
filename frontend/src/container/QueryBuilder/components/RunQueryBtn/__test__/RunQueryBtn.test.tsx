@@ -71,6 +71,12 @@ describe('RunQueryBtn', () => {
 		expect(screen.getByRole('button', { name: /run query/i })).toBeDisabled();
 	});
 
+	test('disabled when disabled prop is true', () => {
+		const onRun = jest.fn();
+		render(<RunQueryBtn onStageRunQuery={onRun} disabled />);
+		expect(screen.getByRole('button', { name: /run query/i })).toBeDisabled();
+	});
+
 	test('shows cancel state and calls handleCancelQuery', () => {
 		const onCancel = jest.fn();
 		render(<RunQueryBtn isLoadingQueries handleCancelQuery={onCancel} />);

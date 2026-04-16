@@ -10,7 +10,10 @@ import './ToolbarActions.styles.scss';
 interface RightToolbarActionsProps {
 	onStageRunQuery: () => void;
 	isLoadingQueries?: boolean;
+	handleCancelQuery?: () => void;
+	/** @deprecated Use handleCancelQuery instead */
 	listQueryKeyRef?: MutableRefObject<any>;
+	/** @deprecated Use handleCancelQuery instead */
 	chartQueryKeyRef?: MutableRefObject<any>;
 	showLiveLogs?: boolean;
 }
@@ -18,6 +21,7 @@ interface RightToolbarActionsProps {
 export default function RightToolbarActions({
 	onStageRunQuery,
 	isLoadingQueries,
+	handleCancelQuery: handleCancelQueryProp,
 	listQueryKeyRef,
 	chartQueryKeyRef,
 	showLiveLogs,
@@ -42,12 +46,16 @@ export default function RightToolbarActions({
 	if (showLiveLogs) {
 		return (
 			<div className="right-toolbar-actions-container">
-				<RunQueryBtn />
+				<RunQueryBtn disabled />
 			</div>
 		);
 	}
 
 	const handleCancelQuery = (): void => {
+		if (handleCancelQueryProp) {
+			handleCancelQueryProp();
+			return;
+		}
 		if (listQueryKeyRef?.current) {
 			queryClient.cancelQueries(listQueryKeyRef.current);
 		}
@@ -69,6 +77,7 @@ export default function RightToolbarActions({
 
 RightToolbarActions.defaultProps = {
 	isLoadingQueries: false,
+	handleCancelQuery: undefined,
 	listQueryKeyRef: null,
 	chartQueryKeyRef: null,
 	showLiveLogs: false,

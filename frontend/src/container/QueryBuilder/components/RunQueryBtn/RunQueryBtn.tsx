@@ -15,15 +15,18 @@ import './RunQueryBtn.scss';
 interface RunQueryBtnProps {
 	className?: string;
 	label?: string;
+	disabled?: boolean;
 	isLoadingQueries?: boolean;
 	handleCancelQuery?: () => void;
 	onStageRunQuery?: () => void;
+	/** @deprecated Use handleCancelQuery + isLoadingQueries instead */
 	queryRangeKey?: QueryKey;
 }
 
 function RunQueryBtn({
 	className,
 	label,
+	disabled,
 	isLoadingQueries,
 	handleCancelQuery,
 	onStageRunQuery,
@@ -61,7 +64,7 @@ function RunQueryBtn({
 		<Button
 			type="primary"
 			className={cx('run-query-btn periscope-btn primary', className)}
-			disabled={isLoading || !onStageRunQuery}
+			disabled={disabled || !onStageRunQuery}
 			onClick={onStageRunQuery}
 			icon={<Play size={14} />}
 		>

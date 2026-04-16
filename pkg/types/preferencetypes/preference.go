@@ -172,6 +172,15 @@ func NewAvailablePreference() map[Name]Preference {
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
 		},
+		NameDashboardPreferences: {
+			Name:          NameDashboardPreferences,
+			Description:   "User preferences for dashboards, such as cursor sync behaviour. Keyed by dashboard ID.",
+			ValueType:     ValueTypeObject,
+			DefaultValue:  MustNewValue(DashboardPreferences{}, ValueTypeObject),
+			AllowedScopes: []Scope{ScopeUser},
+			AllowedValues: []string{},
+			Value:         MustNewValue(DashboardPreferences{}, ValueTypeObject),
+		},
 	}
 }
 

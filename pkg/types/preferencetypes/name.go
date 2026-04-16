@@ -21,6 +21,7 @@ var (
 	NameLastSeenChangelogVersion                = Name{valuer.NewString("last_seen_changelog_version")}
 	NameSpanDetailsPinnedAttributes             = Name{valuer.NewString("span_details_pinned_attributes")}
 	NameSpanPercentileResourceAttributes        = Name{valuer.NewString("span_percentile_resource_attributes")}
+	NameDashboardPreferences                    = Name{valuer.NewString("dashboard_preferences")}
 )
 
 type Name struct{ valuer.String }
@@ -41,6 +42,7 @@ func NewName(name string) (Name, error) {
 			NameLastSeenChangelogVersion.StringValue(),
 			NameSpanDetailsPinnedAttributes.StringValue(),
 			NameSpanPercentileResourceAttributes.StringValue(),
+			NameDashboardPreferences.StringValue(),
 		},
 		name,
 	)

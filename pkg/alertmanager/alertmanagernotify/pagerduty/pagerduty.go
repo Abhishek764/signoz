@@ -28,6 +28,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/alecthomas/units"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -333,6 +334,22 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 	logger := n.logger.With(slog.Any("group_key", key))
 
+	// prepare title for notification
+	title, err := n.prepareContent(ctx, as)
+	if err != nil {
+		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
+		return false, err
+	}
+
+	// remove custom templating from annotations
+	for i := range as {
+		if as[i].Annotations == nil {
+			continue
+		}
+		delete(as[i].Annotations, ruletypes.AnnotationTitleTemplate)
+		delete(as[i].Annotations, ruletypes.AnnotationBodyTemplate)
+	}
+
 	var (
 		alerts    = types.Alerts(as...)
 		data      = notify.GetTemplateData(ctx, n.tmpl, as, logger)
@@ -354,12 +371,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		nfCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeTimeout, "configured pagerduty timeout reached (%s)", n.conf.Timeout))
 		defer cancel()
 		ctx = nfCtx
-	}
-
-	title, err := n.prepareContent(ctx, as)
-	if err != nil {
-		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
-		return false, err
 	}
 
 	nf := n.notifyV2

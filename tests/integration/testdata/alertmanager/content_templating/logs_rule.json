@@ -1,0 +1,71 @@
+{
+  "alert": "content_templating_logs",
+  "ruleType": "threshold_rule",
+  "alertType": "LOGS_BASED_ALERT",
+  "condition": {
+    "thresholds": {
+      "kind": "basic",
+      "spec": [
+        {
+          "name": "critical",
+          "target": 0,
+          "matchType": "1",
+          "op": "1",
+          "channels": [
+            "test channel"
+          ]
+        }
+      ]
+    },
+    "compositeQuery": {
+      "queryType": "builder",
+      "panelType": "graph",
+      "queries": [
+        {
+          "type": "builder_query",
+          "spec": {
+            "name": "A",
+            "signal": "logs",
+            "filter": {
+              "expression": "body CONTAINS 'payment failure'"
+            },
+            "aggregations": [
+              {
+                "expression": "count()"
+              }
+            ],
+            "groupBy": [
+              {"name": "service.name", "fieldContext": "resource"}
+            ]
+          }
+        }
+      ]
+    },
+    "selectedQueryName": "A"
+  },
+  "evaluation": {
+    "kind": "rolling",
+    "spec": {
+      "evalWindow": "5m0s",
+      "frequency": "15s"
+    }
+  },
+  "labels": {},
+  "annotations": {
+    "description": "Payment failure spike detected on $service_name",
+    "summary": "Payment failures elevated on $service_name",
+    "title_template": "[$status] Payment failure spike in $service_name",
+    "body_template": "**Severity:** $severity\n**Status:** $status\n\n**Service:** $service_name\n\n**Condition ($threshold_name):**\n- **Current:** $value\n- **Threshold:** $compare_op $threshold\n\n**Description:** Payment failures observed at $value over the evaluation window, crossing the $threshold_name threshold of $compare_op $threshold on $service_name. Investigate downstream payment processor health.\n\n**Runbook:** https://signoz.io/docs/runbooks/payment-failure-spike"
+  },
+  "notificationSettings": {
+    "groupBy": [],
+    "usePolicy": false,
+    "renotify": {
+      "enabled": false,
+      "interval": "30m",
+      "alertStates": []
+    }
+  },
+  "version": "v5",
+  "schemaVersion": "v2alpha1"
+}

@@ -8,7 +8,7 @@ from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingRespons
 
 from fixtures import types
 from fixtures.alertutils import (
-    update_channel_config_urls,
+    update_raw_channel_config,
     update_rule_channel_name,
     verify_notification_expectation,
 )
@@ -22,6 +22,7 @@ from fixtures.notification_channelutils import (
     webhook_default_config,
 )
 from fixtures.utils import get_testdata_file_path
+from fixtures.maildev import delete_all_mails
 
 # tests to verify the notifiers sending out the notifications with expected content
 NOTIFIERS_TEST = [
@@ -269,30 +270,36 @@ def test_notifier_templating(
     channel_name = str(uuid.uuid4())
 
     # update channel config: set name and rewrite URLs to wiremock
-    channel_config = update_channel_config_urls(
-        notifier_test_case.channel_config, notification_channel
+    channel_config = update_raw_channel_config(
+        notifier_test_case.channel_config, channel_name, notification_channel
     )
-    channel_config["name"] = channel_name
+    logger.info("Channel config: %s", {"channel_config": channel_config})
 
-    # setup wiremock mocks for webhook-based validations
+    # setup wiremock mocks for webhook-based notification validations
     webhook_validations = [
         v
         for v in notifier_test_case.notification_expectation.notification_validations
         if v.destination_type == "webhook"
     ]
-    mock_mappings = [
-        Mapping(
-            request=MappingRequest(
-                method=HttpMethods.POST, url=v.validation_data["path"]
-            ),
-            response=MappingResponse(status=200, json_body={}),
-            persistent=False,
-        )
-        for v in webhook_validations
-    ]
-    if mock_mappings:
+    if len(webhook_validations) > 0:
+        mock_mappings = [
+            Mapping(
+                request=MappingRequest(
+                    method=HttpMethods.POST, url=v.validation_data["path"]
+                ),
+                response=MappingResponse(status=200, json_body={}),
+                persistent=False,
+            )
+            for v in webhook_validations
+        ]
+
         make_http_mocks(notification_channel, mock_mappings)
-        logger.info("Mock mappings created: %s", {"mock_mappings": mock_mappings})
+        logger.info("Mock mappings created")
+
+    # clear mails if any destination is email
+    if any(v.destination_type == "email" for v in notifier_test_case.notification_expectation.notification_validations):
+        delete_all_mails(maildev)
+        logger.info("Mails deleted")
 
     # create notification channel
     create_notification_channel(channel_config)

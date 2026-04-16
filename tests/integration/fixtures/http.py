@@ -132,7 +132,7 @@ def gateway(
 
 
 @pytest.fixture(name="make_http_mocks", scope="function")
-def make_http_mocks() -> Callable[[types.TestContainerDocker, List[Mapping]], None]:
+def make_http_mocks(request: pytest.FixtureRequest) -> Callable[[types.TestContainerDocker, List[Mapping]], None]:
     def _make_http_mocks(
         container: types.TestContainerDocker, mappings: List[Mapping]
     ) -> None:
@@ -141,7 +141,10 @@ def make_http_mocks() -> Callable[[types.TestContainerDocker, List[Mapping]], No
         for mapping in mappings:
             Mappings.create_mapping(mapping=mapping)
 
-    yield _make_http_mocks
+        def cleanup():
+            Mappings.delete_all_mappings()
+            Requests.reset_request_journal()
 
-    Mappings.delete_all_mappings()
-    Requests.reset_request_journal()
+        request.addfinalizer(cleanup)
+
+    return _make_http_mocks

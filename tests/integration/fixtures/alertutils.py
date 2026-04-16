@@ -243,8 +243,9 @@ def verify_webhook_alert_expectation(
     return True  # should not reach here
 
 
-def update_channel_config_urls(
+def update_raw_channel_config(
     channel_config: dict,
+    channel_name: str,
     notification_channel: types.TestContainerDocker,
 ) -> dict:
     """
@@ -252,6 +253,8 @@ def update_channel_config_urls(
     notification_channel container to receive notifications.
     """
     config = channel_config.copy()
+
+    config["name"] = channel_name
 
     url_field_map = {
         "slack_configs": "api_url",

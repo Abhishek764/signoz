@@ -1,0 +1,73 @@
+{
+  "alert": "content_templating_traces",
+  "ruleType": "threshold_rule",
+  "alertType": "TRACES_BASED_ALERT",
+  "condition": {
+    "thresholds": {
+      "kind": "basic",
+      "spec": [
+        {
+          "name": "critical",
+          "target": 1,
+          "matchType": "1",
+          "op": "1",
+          "channels": [
+            "test channel"
+          ],
+          "targetUnit": "s"
+        }
+      ]
+    },
+    "compositeQuery": {
+      "queryType": "builder",
+      "unit": "ns",
+      "panelType": "graph",
+      "queries": [
+        {
+          "type": "builder_query",
+          "spec": {
+            "name": "A",
+            "signal": "traces",
+            "filter": {
+              "expression": "http.request.path = '/checkout'"
+            },
+            "aggregations": [
+              {
+                "expression": "p90(duration_nano)"
+              }
+            ],
+            "groupBy": [
+              {"name": "service.name", "fieldContext": "resource"}
+            ]
+          }
+        }
+      ]
+    },
+    "selectedQueryName": "A"
+  },
+  "evaluation": {
+    "kind": "rolling",
+    "spec": {
+      "evalWindow": "5m0s",
+      "frequency": "15s"
+    }
+  },
+  "labels": {},
+  "annotations": {
+    "description": "p90 latency high on $service_name",
+    "summary": "p90 latency exceeded threshold on $service_name",
+    "title_template": "[$status] p90 latency high on $service_name",
+    "body_template": "**Severity:** $severity\n**Status:** $status\n\n**Service:** $service_name\n\n**Condition ($threshold_name):**\n- **Current:** $value\n- **Threshold:** $compare_op $threshold\n\n**Description:** p90 request latency on $service_name reached $value, crossing the $threshold_name threshold of $compare_op $threshold. Investigate downstream dependencies and recent deploys.\n\n**Runbook:** https://signoz.io/docs/runbooks/high-latency"
+  },
+  "notificationSettings": {
+    "groupBy": [],
+    "usePolicy": false,
+    "renotify": {
+      "enabled": false,
+      "interval": "30m",
+      "alertStates": []
+    }
+  },
+  "version": "v5",
+  "schemaVersion": "v2alpha1"
+}

@@ -1,0 +1,74 @@
+{
+  "alert": "content_templating_metrics",
+  "ruleType": "threshold_rule",
+  "alertType": "METRIC_BASED_ALERT",
+  "condition": {
+    "thresholds": {
+      "kind": "basic",
+      "spec": [
+        {
+          "name": "critical",
+          "target": 100,
+          "matchType": "1",
+          "op": "1",
+          "channels": [
+            "test channel"
+          ]
+        }
+      ]
+    },
+    "compositeQuery": {
+      "queryType": "builder",
+      "panelType": "graph",
+      "queries": [
+        {
+          "type": "builder_query",
+          "spec": {
+            "name": "A",
+            "signal": "metrics",
+            "aggregations": [
+              {
+                "metricName": "container_memory_bytes_content_templating",
+                "timeAggregation": "avg",
+                "spaceAggregation": "max"
+              }
+            ],
+            "groupBy": [
+              {"name": "namespace", "fieldContext": "attribute", "fieldDataType": "string"},
+              {"name": "pod", "fieldContext": "attribute", "fieldDataType": "string"},
+              {"name": "container", "fieldContext": "attribute", "fieldDataType": "string"},
+              {"name": "node", "fieldContext": "attribute", "fieldDataType": "string"},
+              {"name": "severity", "fieldContext": "attribute", "fieldDataType": "string"}
+            ]
+          }
+        }
+      ]
+    },
+    "selectedQueryName": "A"
+  },
+  "evaluation": {
+    "kind": "rolling",
+    "spec": {
+      "evalWindow": "5m0s",
+      "frequency": "15s"
+    }
+  },
+  "labels": {},
+  "annotations": {
+    "description": "Container $container in pod $pod ($namespace) exceeded memory threshold",
+    "summary": "High container memory in $namespace/$pod",
+    "title_template": "[$status] High container memory in $namespace/$pod",
+    "body_template": "**Severity:** $severity\n**Status:** $status\n\n**Pod Details:**\n- **Namespace:** $namespace\n- **Pod:** $pod\n- **Container:** $container\n- **Node:** $node\n\n**Condition ($threshold_name):**\n- **Current:** $value\n- **Threshold:** $compare_op $threshold\n\n**Description:** Container $container in pod $pod ($namespace) has memory usage at $value, which crossed the $threshold_name threshold of $compare_op $threshold. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit"
+  },
+  "notificationSettings": {
+    "groupBy": [],
+    "usePolicy": false,
+    "renotify": {
+      "enabled": false,
+      "interval": "30m",
+      "alertStates": []
+    }
+  },
+  "version": "v5",
+  "schemaVersion": "v2alpha1"
+}

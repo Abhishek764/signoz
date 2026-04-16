@@ -1,0 +1,24 @@
+.action-menu {
+	.ant-dropdown-menu {
+		padding: 4px !important;
+	}
+
+	.ant-dropdown-menu-item {
+		gap: 8px;
+
+		.ant-dropdown-menu-item-icon {
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			min-width: 14px;
+			height: 14px;
+			flex-shrink: 0;
+			margin-inline-end: 0 !important;
+
+			svg {
+				width: 14px;
+				height: 14px;
+			}
+		}
+	}
+}

@@ -1,18 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import {
 	Bookmark,
 	CalendarClock,
 	ChartBar,
 	ChartColumnBig,
+	Copy,
 	Dock,
-	Ellipsis,
 	Link2,
 	Logs,
 	PanelBottom,
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
+import { toast } from '@signozhq/sonner';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
@@ -31,18 +33,24 @@ import Events from 'container/SpanDetailsDrawer/Events/Events';
 import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
-import { noop } from 'lodash-es';
 import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
+import { ActionMenu, ActionMenuItem } from 'periscope/components/ActionMenu';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
+import { getLeafKeyFromPath } from 'periscope/components/PrettyView/utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
-import { KEY_ATTRIBUTE_KEYS, SpanDetailVariant } from './constants';
+import {
+	KEY_ATTRIBUTE_KEYS,
+	SpanDetailVariant,
+	VISIBLE_ACTIONS,
+} from './constants';
+import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
 import {
 	LinkedSpansPanel,
 	LinkedSpansToggle,
@@ -74,8 +82,70 @@ function SpanDetailsContent({
 	traceEndTime?: number;
 }): JSX.Element {
 	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+	const spanAttributeActions = useSpanAttributeActions();
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
+
+	// Map span attribute actions to PrettyView actions format.
+	// Use the last key in fieldKeyPath (the actual attribute key), not the full display path.
+	const prettyViewCustomActions = useMemo(
+		() =>
+			spanAttributeActions.map((action) => ({
+				key: action.value,
+				label: action.label,
+				icon: action.icon,
+				shouldHide: action.shouldHide,
+				onClick: (context: {
+					fieldKey: string;
+					fieldKeyPath: (string | number)[];
+					fieldValue: unknown;
+				}): void => {
+					const leafKey = getLeafKeyFromPath(context.fieldKeyPath, context.fieldKey);
+					action.callback({
+						key: leafKey,
+						value: String(context.fieldValue),
+					});
+				},
+			})),
+		[spanAttributeActions],
+	);
+
+	const [, setCopy] = useCopyToClipboard();
+
+	// Build dropdown menu for key attributes (copy + span actions, no pin)
+	const buildKeyAttrMenu = useCallback(
+		(key: string, value: string): ActionMenuItem[] => {
+			const items: ActionMenuItem[] = [
+				{
+					key: 'copy',
+					label: 'Copy',
+					icon: <Copy size={12} />,
+					onClick: (): void => {
+						setCopy(value);
+						toast.success('Copied to clipboard', {
+							richColors: true,
+							position: 'top-right',
+						});
+					},
+				},
+			];
+			spanAttributeActions.forEach((action) => {
+				if (action.shouldHide && action.shouldHide(key)) {
+					return;
+				}
+				items.push({
+					key: action.value,
+					label: action.label,
+					icon: action.icon,
+					onClick: (): void => {
+						action.callback({ key, value });
+					},
+				});
+			});
+			return items;
+		},
+		[spanAttributeActions, setCopy],
+	);
 
 	const {
 		logs,
@@ -170,37 +240,23 @@ function SpanDetailsContent({
 	const keyAttributes = useMemo(() => {
 		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
 
-		const allAttrs: Record<string, string> = {
-			...selectedSpan.attributes,
-			...selectedSpan.resource,
-			...(selectedSpan.http_method && { http_method: selectedSpan.http_method }),
-			...(selectedSpan.http_url && { http_url: selectedSpan.http_url }),
-			...(selectedSpan.http_host && { http_host: selectedSpan.http_host }),
-			...(selectedSpan.db_name && { db_name: selectedSpan.db_name }),
-			...(selectedSpan.db_operation && {
-				db_operation: selectedSpan.db_operation,
-			}),
-			...(selectedSpan.external_http_method && {
-				external_http_method: selectedSpan.external_http_method,
-			}),
-			...(selectedSpan.external_http_url && {
-				external_http_url: selectedSpan.external_http_url,
-			}),
-			...(selectedSpan.response_status_code && {
-				response_status_code: selectedSpan.response_status_code,
-			}),
-			datetime: dayjs(selectedSpan.timestamp).format('MMM D, YYYY — HH:mm:ss'),
-			duration: getYAxisFormattedValue(
-				`${selectedSpan.duration_nano / 1000000}`,
-				'ms',
-			),
-			'span.kind': selectedSpan.kind_string,
-			status_code_string: selectedSpan.status_code_string,
-		};
+		const allAttrs: Record<string, string> = {};
+		Object.entries(selectedSpan.resource || {}).forEach(([k, v]) => {
+			allAttrs[k] = String(v);
+		});
+		Object.entries(selectedSpan.attributes || {}).forEach(([k, v]) => {
+			allAttrs[k] = String(v);
+		});
+		const span = (selectedSpan as unknown) as Record<string, unknown>;
+		keys.forEach((key) => {
+			if (!(key in allAttrs) && span[key] != null && span[key] !== '') {
+				allAttrs[key] = String(span[key]);
+			}
+		});
 
 		return keys
 			.filter((key) => allAttrs[key])
-			.map((key) => ({ key, value: String(allAttrs[key]) }));
+			.map((key) => ({ key, value: allAttrs[key] }));
 	}, [selectedSpan]);
 
 	return (
@@ -292,7 +348,16 @@ function SpanDetailsContent({
 						</div>
 						<div className="span-details-panel__key-attributes-chips">
 							{keyAttributes.map(({ key, value }) => (
-								<KeyValueLabel key={key} badgeKey={key} badgeValue={value} />
+								<ActionMenu
+									key={key}
+									items={buildKeyAttrMenu(key, value)}
+									trigger={['click']}
+									placement="bottomRight"
+								>
+									<div>
+										<KeyValueLabel badgeKey={key} badgeValue={value} />
+									</div>
+								</ActionMenu>
 							))}
 						</div>
 					</div>
@@ -326,7 +391,11 @@ function SpanDetailsContent({
 							<DataViewer
 								data={selectedSpan}
 								drawerKey="trace-details"
-								prettyViewProps={{ showPinned: true }}
+								prettyViewProps={{
+									showPinned: true,
+									actions: prettyViewCustomActions,
+									visibleActions: VISIBLE_ACTIONS,
+								}}
 							/>
 						</TabsContent>
 						<TabsContent value="events">
@@ -386,14 +455,6 @@ function SpanDetailsPanel({
 
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
-			{
-				key: 'overflow',
-				component: (
-					<Button variant="ghost" size="icon" color="secondary" onClick={noop}>
-						<Ellipsis size={14} />
-					</Button>
-				),
-			},
 			{
 				key: 'analytics',
 				component: (

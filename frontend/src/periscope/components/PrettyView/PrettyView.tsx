@@ -4,15 +4,14 @@ import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import type { MenuProps } from 'antd';
-// TODO: Replace antd Dropdown with @signozhq/ui component when moving to design library
-import { Dropdown } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { ActionMenu, ActionMenuItem } from 'periscope/components/ActionMenu';
 
 import { darkTheme, lightTheme, themeExtension } from './constants';
 import usePinnedFields from './hooks/usePinnedFields';
 import useSearchFilter, { filterTree } from './hooks/useSearchFilter';
 import {
+	getLeafKeyFromPath,
 	keyPathToDisplayString,
 	keyPathToForward,
 	serializeKeyPath,
@@ -32,12 +31,20 @@ export interface PrettyViewAction {
 	label: React.ReactNode;
 	icon?: React.ReactNode;
 	onClick: (context: FieldContext) => void;
+	/** If provided, action is hidden when this returns true for the field key */
+	shouldHide?: (key: string) => boolean;
+}
+
+export interface VisibleActionsConfig {
+	leaf: readonly string[];
+	nested: readonly string[];
 }
 
 export interface PrettyViewProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	data: Record<string, any>;
 	actions?: PrettyViewAction[];
+	visibleActions?: VisibleActionsConfig;
 	searchable?: boolean;
 	showPinned?: boolean;
 	drawerKey?: string;
@@ -46,6 +53,7 @@ export interface PrettyViewProps {
 function PrettyView({
 	data,
 	actions,
+	visibleActions,
 	searchable = true,
 	showPinned = false,
 	drawerKey = 'default',
@@ -86,32 +94,43 @@ function PrettyView({
 		[],
 	);
 
+	const isActionVisible = useCallback(
+		(actionKey: string, isNested: boolean): boolean => {
+			if (!visibleActions) {
+				return true;
+			}
+			const list = isNested ? visibleActions.nested : visibleActions.leaf;
+			return list.includes(actionKey);
+		},
+		[visibleActions],
+	);
+
 	const buildMenuItems = useCallback(
-		(context: FieldContext): MenuProps['items'] => {
-			// todo: drive dropdown through config.
-			const copyItem = {
-				key: 'copy',
-				label: 'Copy',
-				icon: <Copy size={12} />,
-				onClick: (): void => {
-					const text =
-						typeof context.fieldValue === 'object'
-							? JSON.stringify(context.fieldValue, null, 2)
-							: String(context.fieldValue);
-					setCopy(text);
-					toast.success('Copied to clipboard', {
-						richColors: true,
-						position: 'top-right',
-					});
-				},
-			};
+		(context: FieldContext): ActionMenuItem[] => {
+			const items: ActionMenuItem[] = [];
 
-			const items: NonNullable<MenuProps['items']> = [copyItem];
+			// Copy action
+			if (isActionVisible('copy', context.isNested)) {
+				items.push({
+					key: 'copy',
+					label: 'Copy',
+					icon: <Copy size={12} />,
+					onClick: (): void => {
+						const text =
+							typeof context.fieldValue === 'object'
+								? JSON.stringify(context.fieldValue, null, 2)
+								: String(context.fieldValue);
+						setCopy(text);
+						toast.success('Copied to clipboard', {
+							richColors: true,
+							position: 'top-right',
+						});
+					},
+				});
+			}
 
-			// Pin action only for leaf nodes
-			if (!context.isNested) {
-				// Resolve the correct forward path — pinned tree uses display keys
-				// which don't match the original serialized path
+			// Pin action
+			if (isActionVisible('pin', context.isNested) && !context.isNested) {
 				const resolvedPath =
 					displayKeyToForwardPath[context.fieldKey] || context.fieldKeyPath;
 				const serialized = serializeKeyPath(resolvedPath);
@@ -127,10 +146,20 @@ function PrettyView({
 				});
 			}
 
+			// Custom actions (filter, group, etc.)
 			if (actions && actions.length > 0) {
-				//todo: why this divider?
-				items.push({ type: 'divider' as const, key: 'divider' });
-				actions.forEach((action) => {
+				const leafKey = getLeafKeyFromPath(
+					context.fieldKeyPath,
+					context.fieldKey,
+					displayKeyToForwardPath,
+				);
+
+				const visibleCustomActions = actions.filter(
+					(action) =>
+						isActionVisible(action.key, context.isNested) &&
+						!(action.shouldHide && action.shouldHide(leafKey)),
+				);
+				visibleCustomActions.forEach((action) => {
 					items.push({
 						key: action.key,
 						label: action.label,
@@ -144,7 +173,7 @@ function PrettyView({
 
 			return items;
 		},
-		[actions, isPinned, togglePin, displayKeyToForwardPath],
+		[actions, isActionVisible, isPinned, togglePin, displayKeyToForwardPath],
 	);
 
 	const renderWithActions = useCallback(
@@ -171,19 +200,7 @@ function PrettyView({
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
-					<Dropdown
-						menu={{
-							items: menuItems,
-							onClick: (e): void => {
-								e.domEvent.stopPropagation();
-							},
-						}}
-						trigger={['click']}
-						placement="bottomLeft"
-						getPopupContainer={(trigger): HTMLElement =>
-							trigger.parentElement || document.body
-						}
-					>
+					<ActionMenu items={menuItems} trigger={['click']} placement="bottomLeft">
 						<span
 							className="pretty-view__actions"
 							onClick={(e): void => e.stopPropagation()}
@@ -192,7 +209,7 @@ function PrettyView({
 						>
 							<Ellipsis size={12} />
 						</span>
-					</Dropdown>
+					</ActionMenu>
 				</span>
 			);
 		},

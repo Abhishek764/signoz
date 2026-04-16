@@ -1,3 +1,23 @@
+import { SPAN_ACTION } from './hooks/useSpanAttributeActions';
+
+// Action identifiers for built-in PrettyView actions (copy, pin)
+export const PRETTY_VIEW_ACTION = {
+	COPY: 'copy',
+	PIN: 'pin',
+} as const;
+
+// Which actions are visible per node type — drives the entire menu
+export const VISIBLE_ACTIONS = {
+	leaf: [
+		PRETTY_VIEW_ACTION.COPY,
+		PRETTY_VIEW_ACTION.PIN,
+		SPAN_ACTION.FILTER_IN,
+		SPAN_ACTION.FILTER_OUT,
+		SPAN_ACTION.GROUP_BY,
+	],
+	nested: [PRETTY_VIEW_ACTION.COPY],
+} as const;
+
 export enum SpanDetailVariant {
 	DRAWER = 'drawer',
 	DIALOG = 'dialog',
@@ -9,9 +29,9 @@ export const KEY_ATTRIBUTE_KEYS: Record<string, string[]> = {
 		'service.name',
 		'service.namespace',
 		'deployment.environment',
-		'datetime',
-		'duration',
-		'span.kind',
+		'timestamp',
+		'duration_nano',
+		'kind_string',
 		'status_code_string',
 		'http_method',
 		'http_url',

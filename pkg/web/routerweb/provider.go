@@ -17,6 +17,7 @@ import (
 type provider struct {
 	config        web.Config
 	indexContents []byte
+	fileHandler   http.Handler
 }
 
 func NewFactory(globalConfig global.Config) factory.ProviderFactory[web.Web, web.Config] {
@@ -47,6 +48,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 	return &provider{
 		config:        config,
 		indexContents: indexContents,
+		fileHandler:   http.FileServer(http.Dir(config.Directory)),
 	}, nil
 }
 
@@ -89,7 +91,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// otherwise, use http.FileServer to serve the static file
-	http.FileServer(http.Dir(provider.config.Directory)).ServeHTTP(rw, req)
+	provider.fileHandler.ServeHTTP(rw, req)
 }
 
 func (provider *provider) serveIndex(rw http.ResponseWriter) {

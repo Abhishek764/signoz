@@ -31,6 +31,10 @@ func (cloneable *CloneableA) Clone() cachetypes.Cacheable {
 	}
 }
 
+func (cloneable *CloneableA) Size() int64 {
+	return int64(len(cloneable.Key)) + 16
+}
+
 func (cloneable *CloneableA) MarshalBinary() ([]byte, error) {
 	return json.Marshal(cloneable)
 }
@@ -163,6 +167,50 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 	cachedCacheable := new(CacheableB)
 	err = cache.Get(context.Background(), orgID, "key", cachedCacheable)
 	assert.Error(t, err)
+}
+
+// LargeCloneable reports a large byte cost so we can test ristretto eviction
+// without allocating the full payload in memory.
+type LargeCloneable struct {
+	Key  string
+	Cost int64
+}
+
+func (c *LargeCloneable) Clone() cachetypes.Cacheable {
+	return &LargeCloneable{Key: c.Key, Cost: c.Cost}
+}
+
+func (c *LargeCloneable) Size() int64 { return c.Cost }
+
+func (c *LargeCloneable) MarshalBinary() ([]byte, error) { return json.Marshal(c) }
+
+func (c *LargeCloneable) UnmarshalBinary(data []byte) error { return json.Unmarshal(data, c) }
+
+func TestCloneableCostTriggersEviction(t *testing.T) {
+	const maxCost int64 = 1 << 20 // 1 MiB
+	const perEntry int64 = 256 * 1024
+	const entries = 32 // 32 * 256 KiB = 8 MiB, well over MaxCost
+
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		NumCounters: 10 * 1000,
+		MaxCost:     maxCost,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	for i := 0; i < entries; i++ {
+		item := &LargeCloneable{Key: fmt.Sprintf("key-%d", i), Cost: perEntry}
+		assert.NoError(t, c.Set(context.Background(), orgID, fmt.Sprintf("key-%d", i), item, time.Minute))
+	}
+
+	metrics := c.(*provider).cc.Metrics
+	// Eviction (or admission rejection) must have kicked in: we wrote 32 entries
+	// each costing 256 KiB into a 1 MiB cache.
+	assert.Greater(t, metrics.KeysEvicted()+metrics.SetsRejected(), uint64(0),
+		"expected eviction or admission rejection once total cost exceeds MaxCost; got evicted=%d rejected=%d",
+		metrics.KeysEvicted(), metrics.SetsRejected())
+	// Net retained cost should not exceed MaxCost.
+	assert.LessOrEqual(t, int64(metrics.CostAdded()-metrics.CostEvicted()), maxCost)
 }
 
 func TestCloneableConcurrentSetGet(t *testing.T) {

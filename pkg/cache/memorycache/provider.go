@@ -112,11 +112,13 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
+		cost := cloneable.Size()
+		// Clamp to a minimum of 1: ristretto treats cost 0 specially and we
+		// never want zero-size entries to bypass admission accounting.
 		span.SetAttributes(attribute.Bool("memory.cloneable", true))
-		span.SetAttributes(attribute.Int64("memory.cost", 1))
+		span.SetAttributes(attribute.Int64("memory.cost", cost))
 		toCache := cloneable.Clone()
-		// In case of contention we are choosing to evict the cloneable entries first hence cost is set to 1
-		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
+		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, max(cost, 1), ttl); !ok {
 			return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 		}
 
@@ -125,15 +127,15 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	toCache, err := provider.marshalBinary(ctx, data)
-	cost := int64(len(toCache))
 	if err != nil {
 		return err
 	}
+	cost := int64(len(toCache))
 
 	span.SetAttributes(attribute.Bool("memory.cloneable", false))
 	span.SetAttributes(attribute.Int64("memory.cost", cost))
 
-	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
+	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, max(cost, 1), ttl); !ok {
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 	}
 

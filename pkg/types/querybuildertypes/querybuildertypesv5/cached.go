@@ -59,3 +59,21 @@ func (c *CachedData) Clone() cachetypes.Cacheable {
 
 	return clonedCachedData
 }
+
+// Size approximates the retained bytes of this CachedData. The dominant cost is
+// the serialized bucket values (json.RawMessage); other fields are fixed-size
+// or small strings.
+func (c *CachedData) Size() int64 {
+	var size int64
+	for _, b := range c.Buckets {
+		if b == nil {
+			continue
+		}
+		// Value is the bulk of the payload
+		size += int64(len(b.Value))
+	}
+	for _, w := range c.Warnings {
+		size += int64(len(w))
+	}
+	return size
+}

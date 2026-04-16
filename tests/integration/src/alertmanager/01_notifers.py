@@ -39,7 +39,8 @@ NOTIFIERS_TEST = [
         channel_config=slack_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=30,
+            # extra wait for alertmanager server setup
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",

@@ -49,6 +49,7 @@ jobs:
           - role
           - ttl
           - alerts
+          - alertmanager
           - ingestionkeys
           - rootuser
           - serviceaccount

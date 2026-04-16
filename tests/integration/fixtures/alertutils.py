@@ -4,13 +4,13 @@ import time
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import List
+from urllib.parse import urlparse
 
 import requests
 
 from fixtures import types
 from fixtures.logger import setup_logger
 from fixtures.maildev import verify_email_received
-from urllib.parse import urlparse
 
 logger = setup_logger(__name__)
 
@@ -98,6 +98,7 @@ def _verify_alerts_labels(
 
     return (fired_count, missing_alerts)
 
+
 def verify_webhook_notification_expectation(
     notification_channel: types.TestContainerDocker,
     validation_data: dict,
@@ -163,7 +164,9 @@ def verify_notification_expectation(
     if not expected_notification.should_notify:
         # Verify no notifications were received
         for validation in expected_notification.notification_validations:
-            found = _check_notification_validation(validation, notification_channel, maildev)
+            found = _check_notification_validation(
+                validation, notification_channel, maildev
+            )
             assert not found, (
                 f"Expected no notification but found one for "
                 f"{validation.destination_type} with data {validation.validation_data}"
@@ -173,12 +176,13 @@ def verify_notification_expectation(
 
     # Expected notifications but didn't get them all — report missing
     missing = [
-        v for v in expected_notification.notification_validations
+        v
+        for v in expected_notification.notification_validations
         if not _check_notification_validation(v, notification_channel, maildev)
     ]
-    assert len(missing) == 0, (
-        f"Expected all notifications to be found but missing: {missing}"
-    )
+    assert (
+        len(missing) == 0
+    ), f"Expected all notifications to be found but missing: {missing}"
     return True
 
 

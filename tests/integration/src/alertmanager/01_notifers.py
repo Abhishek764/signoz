@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -13,6 +14,7 @@ from fixtures.alertutils import (
     verify_notification_expectation,
 )
 from fixtures.logger import setup_logger
+from fixtures.maildev import delete_all_mails
 from fixtures.notification_channelutils import (
     email_default_config,
     msteams_default_config,
@@ -22,7 +24,6 @@ from fixtures.notification_channelutils import (
     webhook_default_config,
 )
 from fixtures.utils import get_testdata_file_path
-from fixtures.maildev import delete_all_mails
 
 # tests to verify the notifiers sending out the notifications with expected content
 NOTIFIERS_TEST = [
@@ -48,11 +49,13 @@ NOTIFIERS_TEST = [
                             "username": "Alertmanager",
                             "attachments": [
                                 {
-                                "title": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
-                                "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
-                                "color": "danger",
-                                "mrkdwn_in": ["fallback","pretext","text"]
-                            }]}
+                                    "title": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
+                                    "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
+                                    "color": "danger",
+                                    "mrkdwn_in": ["fallback", "pretext", "text"],
+                                }
+                            ],
+                        },
                     },
                 ),
             ],
@@ -80,33 +83,86 @@ NOTIFIERS_TEST = [
                             "type": "message",
                             "attachments": [
                                 {
-                                "contentType": "application/vnd.microsoft.card.adaptive",
-                                "content": {
-                                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                                    "type": "AdaptiveCard",
-                                    "version": "1.2",
-                                    "body": [
-                                    {"type": "TextBlock", 
-                                    "text": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
-                                        "weight": "Bolder","size": "Medium","wrap": True,"style": "heading","color": "Attention"
+                                    "contentType": "application/vnd.microsoft.card.adaptive",
+                                    "content": {
+                                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                                        "type": "AdaptiveCard",
+                                        "version": "1.2",
+                                        "body": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
+                                                "weight": "Bolder",
+                                                "size": "Medium",
+                                                "wrap": True,
+                                                "style": "heading",
+                                                "color": "Attention",
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Alerts",
+                                                "weight": "Bolder",
+                                                "size": "Medium",
+                                                "wrap": True,
+                                                "color": "Attention",
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Labels",
+                                                "weight": "Bolder",
+                                                "size": "Medium",
+                                            },
+                                            {
+                                                "type": "FactSet",
+                                                "text": "",
+                                                "facts": [
+                                                    {
+                                                        "title": "threshold.name",
+                                                        "value": "critical",
+                                                    }
+                                                ],
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Annotations",
+                                                "weight": "Bolder",
+                                                "size": "Medium",
+                                            },
+                                            {
+                                                "type": "FactSet",
+                                                "text": "",
+                                                "facts": [
+                                                    {
+                                                        "title": "threshold.value",
+                                                        "value": "10",
+                                                    },
+                                                    {
+                                                        "title": "compare_op",
+                                                        "value": "above",
+                                                    },
+                                                    {
+                                                        "title": "match_type",
+                                                        "value": "at_least_once",
+                                                    },
+                                                    {"title": "value", "value": "15"},
+                                                    {
+                                                        "title": "description",
+                                                        "value": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                        "msteams": {"width": "full"},
+                                        "actions": [
+                                            {
+                                                "type": "Action.OpenUrl",
+                                                "title": "View Alert",
+                                            }
+                                        ],
                                     },
-                                    {"type": "TextBlock", "text": "Alerts","weight": "Bolder","size": "Medium","wrap": True,"color": "Attention"},
-                                    {"type": "TextBlock", "text": "Labels","weight": "Bolder","size": "Medium"},
-                                    {"type": "FactSet", "text": "","facts": [{"title": "threshold.name","value": "critical"}]},
-                                    {"type": "TextBlock", "text": "Annotations","weight": "Bolder","size": "Medium"},
-                                    {"type": "FactSet", "text": "",
-                                        "facts": [ {"title": "threshold.value","value": "10"}, {"title": "compare_op","value": "above"}, 
-                                        {"title": "match_type","value": "at_least_once"}, {"title": "value","value": "15"},
-                                        {"title": "description","value": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)"} 
-                                        ]
-                                    }
-                                    ],
-                                    "msteams": {"width": "full"},
-                                    "actions": [{"type": "Action.OpenUrl", "title": "View Alert"}]
                                 }
-                                }
-                            ]
-                            }
+                            ],
+                        },
                     },
                 ),
             ],
@@ -134,18 +190,31 @@ NOTIFIERS_TEST = [
                             "routing_key": "PagerDutyRoutingKey",
                             "event_action": "trigger",
                             "payload": {
-                                "summary": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                                "summary": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
                                 "source": "SigNoz Alert Manager",
                                 "severity": "critical",
                                 "custom_details": {
-                                "firing": {
-                                    "Annotations": ["compare_op = above",{"description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"},"match_type = at_least_once", "threshold.value = 10", "value = 15"],
-                                    "Labels": ["alertname = threshold_above_at_least_once","severity = critical","threshold.name = critical"],
-                                }}
+                                    "firing": {
+                                        "Annotations": [
+                                            "compare_op = above",
+                                            {
+                                                "description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"
+                                            },
+                                            "match_type = at_least_once",
+                                            "threshold.value = 10",
+                                            "value = 15",
+                                        ],
+                                        "Labels": [
+                                            "alertname = threshold_above_at_least_once",
+                                            "severity = critical",
+                                            "threshold.name = critical",
+                                        ],
+                                    }
+                                },
                             },
                             "client": "SigNoz Alert Manager",
-                            "client_url": "https://enter-signoz-host-n-port-here/alerts"
-                            }
+                            "client_url": "https://enter-signoz-host-n-port-here/alerts",
+                        },
                     },
                 ),
             ],
@@ -175,10 +244,10 @@ NOTIFIERS_TEST = [
                             "details": {
                                 "alertname": "threshold_above_at_least_once",
                                 "severity": "critical",
-                                "threshold.name": "critical"
+                                "threshold.name": "critical",
                             },
-                            "priority": "P1"
-                        }
+                            "priority": "P1",
+                        },
                     },
                 ),
             ],
@@ -204,14 +273,38 @@ NOTIFIERS_TEST = [
                         "path": "/webhook/webhook_url",
                         "json_body": {
                             "status": "firing",
-                            "alerts": [{
-                                "status": "firing",
-                                "labels": {"alertname": "threshold_above_at_least_once","severity": "critical","threshold.name": "critical"},
-                                "annotations": {"compare_op": "above", "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "match_type": "at_least_once", "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "threshold.value": "10", "value": "15"}
-                            }],
-                            "commonLabels": {"alertname": "threshold_above_at_least_once","severity": "critical","threshold.name": "critical"},
-                            "commonAnnotations": {"compare_op": "above", "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "match_type": "at_least_once", "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "threshold.value": "10", "value": "15"}
-                            }
+                            "alerts": [
+                                {
+                                    "status": "firing",
+                                    "labels": {
+                                        "alertname": "threshold_above_at_least_once",
+                                        "severity": "critical",
+                                        "threshold.name": "critical",
+                                    },
+                                    "annotations": {
+                                        "compare_op": "above",
+                                        "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
+                                        "match_type": "at_least_once",
+                                        "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
+                                        "threshold.value": "10",
+                                        "value": "15",
+                                    },
+                                }
+                            ],
+                            "commonLabels": {
+                                "alertname": "threshold_above_at_least_once",
+                                "severity": "critical",
+                                "threshold.name": "critical",
+                            },
+                            "commonAnnotations": {
+                                "compare_op": "above",
+                                "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
+                                "match_type": "at_least_once",
+                                "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
+                                "threshold.value": "10",
+                                "value": "15",
+                            },
+                        },
                     },
                 ),
             ],
@@ -234,8 +327,8 @@ NOTIFIERS_TEST = [
                 types.NotificationValidation(
                     destination_type="email",
                     validation_data={
-                        "subject": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
-                        "html": "<html><body>*Alert:* threshold_above_at_least_once - critical\n\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *RelatedLogs:* \n *RelatedTraces:* \n\n *Details:*\n \u2022 *alertname:* threshold_above_at_least_once\n   \u2022 *severity:* critical\n   \u2022 *threshold.name:* critical\n   </body></html>"
+                        "subject": '[FIRING:1] threshold_above_at_least_once for  (alertname="threshold_above_at_least_once", severity="critical", threshold.name="critical")',
+                        "html": "<html><body>*Alert:* threshold_above_at_least_once - critical\n\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *RelatedLogs:* \n *RelatedTraces:* \n\n *Details:*\n \u2022 *alertname:* threshold_above_at_least_once\n   \u2022 *severity:* critical\n   \u2022 *threshold.name:* critical\n   </body></html>",
                     },
                 ),
             ],
@@ -245,6 +338,7 @@ NOTIFIERS_TEST = [
 
 
 logger = setup_logger(__name__)
+
 
 @pytest.mark.parametrize(
     "notifier_test_case",
@@ -297,7 +391,10 @@ def test_notifier_templating(
         logger.info("Mock mappings created")
 
     # clear mails if any destination is email
-    if any(v.destination_type == "email" for v in notifier_test_case.notification_expectation.notification_validations):
+    if any(
+        v.destination_type == "email"
+        for v in notifier_test_case.notification_expectation.notification_validations
+    ):
         delete_all_mails(maildev)
         logger.info("Mails deleted")
 

@@ -1,5 +1,5 @@
-from http import HTTPStatus
 import json
+from http import HTTPStatus
 from typing import List
 
 import docker
@@ -82,12 +82,12 @@ def maildev(
     )
 
 
-def get_all_mails(maildev: types.TestContainerDocker) -> List[dict]:
+def get_all_mails(_maildev: types.TestContainerDocker) -> List[dict]:
     """
     Fetches all emails from the MailDev HTTP API.
     Returns list of dicts with keys: subject, html, text.
     """
-    url = maildev.host_configs["1080"].get("/email")
+    url = _maildev.host_configs["1080"].get("/email")
     response = requests.get(url, timeout=5)
     assert response.status_code == HTTPStatus.OK, (
         f"Failed to fetch emails from MailDev, "
@@ -105,15 +105,13 @@ def get_all_mails(maildev: types.TestContainerDocker) -> List[dict]:
     ]
 
 
-def verify_email_received(
-    maildev: types.TestContainerDocker, filters: dict
-) -> bool:
+def verify_email_received(_maildev: types.TestContainerDocker, filters: dict) -> bool:
     """
     Checks if any email in MailDev matches all the given filters.
     Filters are matched with exact equality against the email fields (subject, html, text).
     Returns True if at least one matching email is found.
     """
-    emails = get_all_mails(maildev)
+    emails = get_all_mails(_maildev)
     for email in emails:
         logger.info("Email: %s", json.dumps(email, indent=2))
         if all(
@@ -124,11 +122,11 @@ def verify_email_received(
     return False
 
 
-def delete_all_mails(maildev: types.TestContainerDocker) -> None:
+def delete_all_mails(_maildev: types.TestContainerDocker) -> None:
     """
     Deletes all emails from the MailDev inbox.
     """
-    url = maildev.host_configs["1080"].get("/email/all")
+    url = _maildev.host_configs["1080"].get("/email/all")
     response = requests.delete(url, timeout=5)
     assert response.status_code == HTTPStatus.OK, (
         f"Failed to delete emails from MailDev, "

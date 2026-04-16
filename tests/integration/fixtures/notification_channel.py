@@ -70,6 +70,7 @@ def notification_channel(
         restore,
     )
 
+
 @pytest.fixture(name="create_notification_channel", scope="function")
 def create_notification_channel(
     signoz: types.SigNoz,
@@ -93,6 +94,7 @@ def create_notification_channel(
         return response.json()["data"]["id"]
 
     return _create_notification_channel
+
 
 @pytest.fixture(name="create_webhook_notification_channel", scope="function")
 def create_webhook_notification_channel(

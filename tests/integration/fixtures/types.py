@@ -204,6 +204,7 @@ class AlertTestCase:
     # list of alert expectations for the test case
     alert_expectation: AlertExpectation
 
+
 @dataclass(frozen=True)
 class NotificationValidation:
     # destination type of the notification, either webhook or email
@@ -212,6 +213,7 @@ class NotificationValidation:
     destination_type: Literal["webhook", "email"]
     # validation data for validating the received notification payload
     validation_data: dict[str, any]
+
 
 @dataclass(frozen=True)
 class AMNotificationExpectation:
@@ -224,6 +226,7 @@ class AMNotificationExpectation:
     # list of notifications to expect, as a single rule can trigger multiple notifications
     # spanning across different notifiers
     notification_validations: List[NotificationValidation]
+
 
 @dataclass(frozen=True)
 class AlertManagerNotificationTestCase:

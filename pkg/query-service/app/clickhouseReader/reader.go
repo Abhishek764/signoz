@@ -905,7 +905,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx contex
 		return nil, err
 	}
 
-	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
+	if time.Since(time.Unix(0, int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
 		r.logger.Info("the trace end time falls under the flux interval, skipping getWaterfallSpansForTraceWithMetadata cache", "traceID", traceID)
 		return nil, errors.Errorf("the trace end time falls under the flux interval, skipping getWaterfallSpansForTraceWithMetadata cache, traceID: %s", traceID)
 	}
@@ -1138,7 +1138,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, 
 		return nil, err
 	}
 
-	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
+	if time.Since(time.Unix(0, int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
 		r.logger.Info("the trace end time falls under the flux interval, skipping getFlamegraphSpansForTrace cache", "traceID", traceID)
 		return nil, errors.Errorf("the trace end time falls under the flux interval, skipping getFlamegraphSpansForTrace cache, traceID: %s", traceID)
 	}

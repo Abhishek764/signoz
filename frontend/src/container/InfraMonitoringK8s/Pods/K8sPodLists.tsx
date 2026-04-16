@@ -1,755 +1,586 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
-import { LoadingOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Spin,
-	Table,
-	TableColumnType as ColumnType,
-	TablePaginationConfig,
-	TableProps,
-	Typography,
-} from 'antd';
-import type { SorterResult } from 'antd/es/table/interface';
-import get from 'api/browser/localstorage/get';
-import set from 'api/browser/localstorage/set';
-import logEvent from 'api/common/logEvent';
-import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
-import classNames from 'classnames';
-import { InfraMonitoringEvents } from 'constants/events';
+import React, { useCallback, useEffect } from 'react';
+import { Color } from '@signozhq/design-tokens';
+import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
+import axios from 'api';
+import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
+import { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
-import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
+import { Group } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
-
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import {
-	GetK8sEntityToAggregateAttribute,
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	K8sCategory,
-} from '../constants';
+	K8sBaseFilters,
+	K8sBaseList,
+	K8sRenderedRowData,
+} from '../Base/K8sBaseList';
 import {
-	useInfraMonitoringCurrentPage,
-	useInfraMonitoringEventsFilters,
-	useInfraMonitoringGroupBy,
-	useInfraMonitoringLogFilters,
-	useInfraMonitoringOrderBy,
-	useInfraMonitoringPodUID,
-	useInfraMonitoringTracesFilters,
-	useInfraMonitoringView,
-} from '../hooks';
-import K8sHeader from '../K8sHeader';
-import LoadingContainer from '../LoadingContainer';
-import {
-	defaultAddedColumns,
-	defaultAvailableColumns,
-	formatDataForTable,
-	getK8sPodsListColumns,
-	getK8sPodsListQuery,
 	IEntityColumn,
-	K8sPodsRowData,
-	usePageSize,
-} from '../utils';
-import PodDetails from './PodDetails/PodDetails';
+	useInfraMonitoringTableColumnsStore,
+} from '../Base/useInfraMonitoringTableColumnsStore';
+import {
+	EntityProgressBar,
+	formatBytes,
+	ValidateColumnValueWrapper,
+} from '../commonUtils';
+import { K8sCategory } from '../constants';
 
-import '../InfraMonitoringK8s.styles.scss';
+export interface TimeSeriesValue {
+	timestamp: number;
+	value: string;
+}
+
+export interface TimeSeries {
+	labels: Record<string, string>;
+	labelsArray: Array<Record<string, string>>;
+	values: TimeSeriesValue[];
+}
+
+export interface K8sPodsData {
+	podUID: string;
+	podCPU: number;
+	podCPURequest: number;
+	podCPULimit: number;
+	podMemory: number;
+	podMemoryRequest: number;
+	podMemoryLimit: number;
+	restartCount: number;
+	meta: {
+		k8s_cronjob_name: string;
+		k8s_daemonset_name: string;
+		k8s_deployment_name: string;
+		k8s_job_name: string;
+		k8s_namespace_name: string;
+		k8s_node_name: string;
+		k8s_pod_name: string;
+		k8s_pod_uid: string;
+		k8s_statefulset_name: string;
+		k8s_cluster_name: string;
+	};
+	countByPhase: {
+		pending: number;
+		running: number;
+		succeeded: number;
+		failed: number;
+		unknown: number;
+	};
+}
+
+export interface K8sPodsListResponse {
+	status: string;
+	data: {
+		type: string;
+		records: K8sPodsData[];
+		groups: null;
+		total: number;
+		sentAnyHostMetricsData: boolean;
+		isSendingK8SAgentMetrics: boolean;
+	};
+}
+
+export const podsMetaMap = [
+	{ dot: 'k8s.cronjob.name', under: 'k8s_cronjob_name' },
+	{ dot: 'k8s.daemonset.name', under: 'k8s_daemonset_name' },
+	{ dot: 'k8s.deployment.name', under: 'k8s_deployment_name' },
+	{ dot: 'k8s.job.name', under: 'k8s_job_name' },
+	{ dot: 'k8s.namespace.name', under: 'k8s_namespace_name' },
+	{ dot: 'k8s.node.name', under: 'k8s_node_name' },
+	{ dot: 'k8s.pod.name', under: 'k8s_pod_name' },
+	{ dot: 'k8s.pod.uid', under: 'k8s_pod_uid' },
+	{ dot: 'k8s.statefulset.name', under: 'k8s_statefulset_name' },
+	{ dot: 'k8s.cluster.name', under: 'k8s_cluster_name' },
+] as const;
+
+export function mapPodsMeta(raw: Record<string, unknown>): K8sPodsData['meta'] {
+	// clone everything
+	const out: Record<string, unknown> = { ...raw };
+	// overlay only the dot→under mappings
+	podsMetaMap.forEach(({ dot, under }) => {
+		if (dot in raw) {
+			const v = raw[dot];
+			out[under] = typeof v === 'string' ? v : raw[under];
+		}
+	});
+	return out as K8sPodsData['meta'];
+}
+
+// TODO: Remove this method once we move this to OpenAPI
+export const getK8sPodsList = async (
+	props: K8sBaseFilters,
+	signal?: AbortSignal,
+	headers?: Record<string, string>,
+	dotMetricsEnabled = false,
+): Promise<SuccessResponse<K8sPodsListResponse> | ErrorResponse> => {
+	try {
+		const requestProps =
+			dotMetricsEnabled && Array.isArray(props.filters?.items)
+				? {
+						...props,
+						filters: {
+							...props.filters,
+							items: props.filters?.items.reduce<typeof props.filters.items>(
+								(acc, item) => {
+									if (item.value === undefined) {
+										return acc;
+									}
+									if (
+										item.key &&
+										typeof item.key === 'object' &&
+										'key' in item.key &&
+										typeof item.key.key === 'string'
+									) {
+										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+										acc.push({
+											...item,
+											key: { ...item.key, key: mappedKey },
+										});
+									} else {
+										acc.push(item);
+									}
+									return acc;
+								},
+								[] as typeof props.filters.items,
+							),
+						},
+				  }
+				: props;
+
+		const response = await axios.post('/pods/list', requestProps, {
+			signal,
+			headers,
+		});
+		const payload: K8sPodsListResponse = response.data;
+		payload.data.records = payload.data.records.map((record) => ({
+			...record,
+			meta: mapPodsMeta(record.meta as Record<string, unknown>),
+		}));
+
+		return {
+			statusCode: 200,
+			error: null,
+			message: 'Success',
+			payload,
+			params: requestProps,
+		};
+	} catch (error) {
+		return ErrorResponseHandler(error as AxiosError);
+	}
+};
+
+const columnProgressBarClassName = 'column-progress-bar';
+
+const columns: IEntityColumn[] = [
+	{
+		label: 'Pod Group',
+		value: 'podGroup',
+		id: 'podGroup',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'hidden-on-collapse',
+	},
+	{
+		label: 'Pod name',
+		value: 'podName',
+		id: 'podName',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'hidden-on-expand',
+	},
+	{
+		label: 'CPU Req Usage (%)',
+		value: 'cpu_request',
+		id: 'cpu_request',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'CPU Limit Usage (%)',
+		value: 'cpu_limit',
+		id: 'cpu_limit',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'CPU Usage (cores)',
+		value: 'cpu',
+		id: 'cpu',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'Mem Req Usage (%)',
+		value: 'memory_request',
+		id: 'memory_request',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'Mem Limit Usage (%)',
+		value: 'memory_limit',
+		id: 'memory_limit',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'Mem Usage (WSS)',
+		value: 'memory',
+		id: 'memory',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'Namespace name',
+		value: 'namespace',
+		id: 'namespace',
+		canBeHidden: true,
+		defaultVisibility: false,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'Node name',
+		value: 'node',
+		id: 'node',
+		canBeHidden: true,
+		defaultVisibility: false,
+		behaviour: 'always-visible',
+	},
+	{
+		label: 'Cluster name',
+		value: 'cluster',
+		id: 'cluster',
+		canBeHidden: true,
+		defaultVisibility: false,
+		behaviour: 'always-visible',
+	},
+	// TODO - Re-enable the column once backend issue is fixed
+	// {
+	// 	label: 'Restarts',
+	// 	value: 'restarts',
+	// 	id: 'restarts',
+	// 	canRemove: false,
+	// },
+];
+
+export interface K8sPodsRowData {
+	key: string;
+	podName: React.ReactNode;
+	podUID: string;
+	cpu_request: React.ReactNode;
+	cpu_limit: React.ReactNode;
+	cpu: React.ReactNode;
+	memory_request: React.ReactNode;
+	memory_limit: React.ReactNode;
+	memory: React.ReactNode;
+	restarts: React.ReactNode;
+	groupedByMeta?: any;
+}
+
+const columnsConfig: ColumnType<K8sRenderedRowData>[] = [
+	{
+		title: (
+			<div className="column-header entity-group-header">
+				<Group size={14} /> POD GROUP
+			</div>
+		),
+		dataIndex: 'podGroup',
+		key: 'podGroup',
+		ellipsis: true,
+		width: 180,
+		sorter: false,
+		className: 'column entity-group-header',
+	},
+	{
+		title: <div className="column-header pod-name-header">Pod Name</div>,
+		dataIndex: 'podName',
+		key: 'podName',
+		width: 180,
+		ellipsis: true,
+		sorter: false,
+		className: 'column column-pod-name',
+	},
+	{
+		title: <div className="column-header med-col">CPU Req Usage (%)</div>,
+		dataIndex: 'cpu_request',
+		key: 'cpu_request',
+		width: 180,
+		ellipsis: true,
+		sorter: true,
+		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
+	},
+	{
+		title: <div className="column-header med-col">CPU Limit Usage (%)</div>,
+		dataIndex: 'cpu_limit',
+		key: 'cpu_limit',
+		width: 120,
+		sorter: true,
+		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
+	},
+	{
+		title: <div className="column-header">CPU Usage (cores)</div>,
+		dataIndex: 'cpu',
+		key: 'cpu',
+		width: 80,
+		sorter: true,
+		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
+	},
+	{
+		title: <div className="column-heade med-col">Mem Req Usage (%)</div>,
+		dataIndex: 'memory_request',
+		key: 'memory_request',
+		width: 120,
+		sorter: true,
+		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
+	},
+	{
+		title: <div className="column-header med-col">Mem Limit Usage (%)</div>,
+		dataIndex: 'memory_limit',
+		key: 'memory_limit',
+		width: 120,
+		sorter: true,
+		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
+	},
+	{
+		title: <div className="column-header med-col">Mem Usage (WSS)</div>,
+		dataIndex: 'memory',
+		key: 'memory',
+		width: 120,
+		ellipsis: true,
+		sorter: true,
+		align: 'left',
+		className: `column ${columnProgressBarClassName}`,
+	},
+	{
+		title: <div className="column-header">Namespace</div>,
+		dataIndex: 'namespace',
+		key: 'namespace',
+		width: 100,
+		sorter: false,
+		ellipsis: true,
+		align: 'left',
+		className: 'column column-namespace',
+	},
+	{
+		title: <div className="column-header">Node</div>,
+		dataIndex: 'node',
+		key: 'node',
+		width: 100,
+		sorter: false,
+		ellipsis: true,
+		align: 'left',
+		className: 'column column-node',
+	},
+	{
+		title: <div className="column-header">Cluster</div>,
+		dataIndex: 'cluster',
+		key: 'cluster',
+		width: 100,
+		sorter: false,
+		ellipsis: true,
+		align: 'left',
+		className: 'column column-cluster',
+	},
+	// TODO - Re-enable the column once backend issue is fixed
+	// {
+	// 	title: (
+	// 		<div className="column-header">
+	// 			<Tooltip title="Container Restarts">Restarts</Tooltip>
+	// 		</div>
+	// 	),
+	// 	dataIndex: 'restarts',
+	// 	key: 'restarts',
+	// 	width: 40,
+	// 	ellipsis: true,
+	// 	sorter: true,
+	// 	align: 'left',
+	// 	className: `column ${columnProgressBarClassName}`,
+	// },
+];
+
+const dotToUnder: Record<string, keyof K8sPodsData['meta']> = {
+	'k8s.cronjob.name': 'k8s_cronjob_name',
+	'k8s.daemonset.name': 'k8s_daemonset_name',
+	'k8s.deployment.name': 'k8s_deployment_name',
+	'k8s.job.name': 'k8s_job_name',
+	'k8s.namespace.name': 'k8s_namespace_name',
+	'k8s.node.name': 'k8s_node_name',
+	'k8s.pod.name': 'k8s_pod_name',
+	'k8s.pod.uid': 'k8s_pod_uid',
+	'k8s.statefulset.name': 'k8s_statefulset_name',
+	'k8s.cluster.name': 'k8s_cluster_name',
+};
+
+const getGroupByEle = (
+	pod: K8sPodsData,
+	groupBy: IBuilderQuery['groupBy'],
+): React.ReactNode => {
+	const groupByValues: string[] = [];
+
+	groupBy.forEach((group) => {
+		const rawKey = group.key as string;
+
+		// Choose mapped key if present, otherwise use rawKey
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof pod.meta;
+		const value = pod.meta[metaKey];
+
+		groupByValues.push(value);
+	});
+
+	return (
+		<div className="pod-group">
+			{groupByValues.map((value) => (
+				<Tag key={value} color={Color.BG_SLATE_400} className="pod-group-tag-item">
+					{value === '' ? '<no-value>' : value}
+				</Tag>
+			))}
+		</div>
+	);
+};
+
+export const formatDataForTable = (
+	pod: K8sPodsData,
+	groupBy: BaseAutocompleteData[],
+): K8sRenderedRowData => ({
+	key: pod.podUID,
+	podName: (
+		<Tooltip title={pod.meta.k8s_pod_name || ''}>
+			{pod.meta.k8s_pod_name || ''}
+		</Tooltip>
+	),
+	podUID: pod.podUID || '',
+	cpu_request: (
+		<ValidateColumnValueWrapper
+			value={pod.podCPURequest}
+			entity={K8sCategory.PODS}
+			attribute="CPU Request"
+		>
+			<div className="progress-container">
+				<EntityProgressBar value={pod.podCPURequest} type="request" />
+			</div>
+		</ValidateColumnValueWrapper>
+	),
+	cpu_limit: (
+		<ValidateColumnValueWrapper
+			value={pod.podCPULimit}
+			entity={K8sCategory.PODS}
+			attribute="CPU Limit"
+		>
+			<div className="progress-container">
+				<EntityProgressBar value={pod.podCPULimit} type="limit" />
+			</div>
+		</ValidateColumnValueWrapper>
+	),
+	cpu: (
+		<ValidateColumnValueWrapper value={pod.podCPU}>
+			{pod.podCPU}
+		</ValidateColumnValueWrapper>
+	),
+	memory_request: (
+		<ValidateColumnValueWrapper
+			value={pod.podMemoryRequest}
+			entity={K8sCategory.PODS}
+			attribute="Memory Request"
+		>
+			<div className="progress-container">
+				<EntityProgressBar value={pod.podMemoryRequest} type="request" />
+			</div>
+		</ValidateColumnValueWrapper>
+	),
+	memory_limit: (
+		<ValidateColumnValueWrapper
+			value={pod.podMemoryLimit}
+			entity={K8sCategory.PODS}
+			attribute="Memory Limit"
+		>
+			<div className="progress-container">
+				<EntityProgressBar value={pod.podMemoryLimit} type="limit" />
+			</div>
+		</ValidateColumnValueWrapper>
+	),
+	memory: (
+		<ValidateColumnValueWrapper value={pod.podMemory}>
+			{formatBytes(pod.podMemory)}
+		</ValidateColumnValueWrapper>
+	),
+	restarts: (
+		<ValidateColumnValueWrapper value={pod.restartCount}>
+			{pod.restartCount}
+		</ValidateColumnValueWrapper>
+	),
+	namespace: pod.meta.k8s_namespace_name,
+	node: pod.meta.k8s_node_name,
+	cluster: pod.meta.k8s_job_name,
+	meta: pod.meta,
+	podGroup: getGroupByEle(pod, groupBy),
+	...pod.meta,
+	groupedByMeta: pod.meta,
+});
 
 function K8sPodsList({
-	isFiltersVisible,
-	handleFilterVisibilityChange,
-	quickFiltersLastUpdated,
+	controlListPrefix,
 }: {
-	isFiltersVisible: boolean;
-	handleFilterVisibilityChange: () => void;
-	quickFiltersLastUpdated: number;
+	controlListPrefix?: React.ReactNode;
 }): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
-	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
-	const [defaultOrderBy] = useState(orderBy);
-	const [selectedPodUID, setSelectedPodUID] = useInfraMonitoringPodUID();
-	const [, setView] = useInfraMonitoringView();
-	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
-	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
-	const [, setLogFilters] = useInfraMonitoringLogFilters();
-
-	const [filtersInitialised, setFiltersInitialised] = useState(false);
-
-	const [addedColumns, setAddedColumns] = useState<IEntityColumn[]>([]);
-
-	const [availableColumns, setAvailableColumns] = useState<IEntityColumn[]>(
-		defaultAvailableColumns,
-	);
-
-	const [selectedRowData, setSelectedRowData] = useState<K8sPodsRowData | null>(
-		null,
-	);
-
-	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
-
-	const [groupByOptions, setGroupByOptions] = useState<
-		{ value: string; label: string }[]
-	>([]);
-
-	const { currentQuery } = useQueryBuilder();
-
-	const queryFilters = useMemo(
-		() =>
-			currentQuery?.builder?.queryData[0]?.filters || {
-				items: [],
-				op: 'and',
-			},
-		[currentQuery?.builder?.queryData],
-	);
-
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.PODS,
+	const fetchListData = useCallback(
+		async (filters: K8sBaseFilters, signal?: AbortSignal) => {
+			filters.orderBy ||= {
+				columnName: 'cpu',
+				order: 'desc',
+			};
+
+			const response = await getK8sPodsList(
+				filters,
+				signal,
+				undefined,
 				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true, // isInfraMonitoring
-		K8sCategory.PODS, // infraMonitoringEntity
-	);
-
-	// Reset pagination every time quick filters are changed
-	useEffect(() => {
-		if (quickFiltersLastUpdated !== -1) {
-			setCurrentPage(1);
-		}
-	}, [quickFiltersLastUpdated, setCurrentPage]);
-
-	useEffect(() => {
-		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '[]');
-
-		if (addedColumns && addedColumns.length > 0) {
-			const availableColumns = defaultAvailableColumns.filter(
-				(column) => !addedColumns.includes(column.id),
 			);
 
-			const newAddedColumns = defaultAvailableColumns.filter((column) =>
-				addedColumns.includes(column.id),
-			);
-
-			setAvailableColumns(availableColumns);
-			setAddedColumns(newAddedColumns);
-		}
-	}, []);
-
-	const { pageSize, setPageSize } = usePageSize(K8sCategory.PODS);
-
-	const query = useMemo(() => {
-		const baseQuery = getK8sPodsListQuery();
-
-		const queryPayload = {
-			...baseQuery,
-			limit: pageSize,
-			offset: (currentPage - 1) * pageSize,
-			filters: queryFilters,
-			start: Math.floor(minTime / 1000000),
-			end: Math.floor(maxTime / 1000000),
-			orderBy: orderBy || baseQuery.orderBy,
-		};
-
-		if (groupBy.length > 0) {
-			queryPayload.groupBy = groupBy;
-		}
-
-		return queryPayload;
-	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
-
-	const queryKey = useMemo(() => {
-		if (selectedPodUID) {
-			return [
-				'podList',
-				String(pageSize),
-				String(currentPage),
-				JSON.stringify(queryFilters),
-				JSON.stringify(orderBy),
-				JSON.stringify(groupBy),
-			];
-		}
-		return [
-			'podList',
-			String(pageSize),
-			String(currentPage),
-			JSON.stringify(queryFilters),
-			JSON.stringify(orderBy),
-			JSON.stringify(groupBy),
-			String(minTime),
-			String(maxTime),
-		];
-	}, [
-		selectedPodUID,
-		pageSize,
-		currentPage,
-		queryFilters,
-		orderBy,
-		groupBy,
-		minTime,
-		maxTime,
-	]);
-
-	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
-		query as K8sPodsListPayload,
-		{
-			queryKey,
-			enabled: !!query,
-			keepPreviousData: true,
+			return {
+				data: response.payload?.data.records || [],
+				total: response.payload?.data.total || 0,
+				error: response.error,
+			};
 		},
-		undefined,
-		dotMetricsEnabled,
+		[dotMetricsEnabled],
 	);
 
-	const createFiltersForSelectedRowData = (
-		selectedRowData: K8sPodsRowData,
-	): IBuilderQuery['filters'] => {
-		const baseFilters: IBuilderQuery['filters'] = {
-			items: [...queryFilters.items],
-			op: 'and',
-		};
+	const getSelectedItemKey = useCallback((item: K8sPodsData) => item.podUID, []);
 
-		if (!selectedRowData) {
-			return baseFilters;
-		}
-
-		const { groupedByMeta } = selectedRowData;
-
-		for (const key of Object.keys(groupedByMeta)) {
-			baseFilters.items.push({
-				key: {
-					key,
-					type: null,
-				},
-				op: '=',
-				value: groupedByMeta[key],
-				id: key,
-			});
-		}
-
-		return baseFilters;
-	};
-
-	const fetchGroupedByRowDataQuery = useMemo(() => {
-		if (!selectedRowData) {
-			return null;
-		}
-
-		const baseQuery = getK8sPodsListQuery();
-
-		const filters = createFiltersForSelectedRowData(selectedRowData);
-
-		return {
-			...baseQuery,
-			limit: 10,
-			offset: 0,
-			filters,
-			start: Math.floor(minTime / 1000000),
-			end: Math.floor(maxTime / 1000000),
-			orderBy: orderBy || baseQuery.orderBy,
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [minTime, maxTime, orderBy, selectedRowData]);
-
-	const groupedByRowDataQueryKey = useMemo(() => {
-		// be careful with what you serialize from selectedRowData
-		// since it's react node, it could contain circular references
-		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
-		if (selectedPodUID) {
-			return [
-				'podList',
-				JSON.stringify(queryFilters),
-				JSON.stringify(orderBy),
-				selectedRowDataKey,
-			];
-		}
-		return [
-			'podList',
-			JSON.stringify(queryFilters),
-			JSON.stringify(orderBy),
-			selectedRowDataKey,
-			String(minTime),
-			String(maxTime),
-		];
-	}, [queryFilters, orderBy, selectedPodUID, minTime, maxTime, selectedRowData]);
-
-	const {
-		data: groupedByRowData,
-		isFetching: isFetchingGroupedByRowData,
-		isLoading: isLoadingGroupedByRowData,
-		isError: isErrorGroupedByRowData,
-		refetch: fetchGroupedByRowData,
-	} = useGetK8sPodsList(
-		fetchGroupedByRowDataQuery as K8sPodsListPayload,
-		{
-			queryKey: groupedByRowDataQueryKey,
-			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-		},
-		undefined,
-		dotMetricsEnabled,
-	);
-
-	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
-	const totalCount = data?.payload?.data?.total || 0;
-
-	const nestedPodsData = useMemo(() => {
-		if (!selectedRowData || !groupedByRowData?.payload?.data.records) {
-			return [];
-		}
-		return groupedByRowData?.payload?.data?.records || [];
-	}, [groupedByRowData, selectedRowData]);
-
-	const formattedPodsData = useMemo(
-		() => formatDataForTable(podsData, groupBy),
-		[podsData, groupBy],
-	);
-
-	const formattedGroupedByPodsData = useMemo(
-		() =>
-			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
-		[groupedByRowData, groupBy],
-	);
-
-	const columns = useMemo(
-		() => getK8sPodsListColumns(addedColumns, groupBy, defaultOrderBy),
-		[addedColumns, groupBy, defaultOrderBy],
-	);
-
-	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
-		(
-			pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter: SorterResult<K8sPodsRowData> | SorterResult<K8sPodsRowData>[],
-		): void => {
-			if (pagination.current) {
-				setCurrentPage(pagination.current);
-				logEvent(InfraMonitoringEvents.PageNumberChanged, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Pod,
-				});
-			}
-
-			if ('field' in sorter && sorter.order) {
-				setOrderBy({
-					columnName: sorter.field as string,
-					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				});
-			} else {
-				setOrderBy(null);
-			}
-		},
-		[setCurrentPage, setOrderBy],
-	);
-
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
-	});
-
-	const handleFiltersChange = useCallback(
-		(value: IBuilderQuery['filters']): void => {
-			handleChangeQueryData('filters', value);
-			if (filtersInitialised) {
-				setCurrentPage(1);
-			} else {
-				setFiltersInitialised(true);
-			}
-
-			if (value?.items && value?.items?.length > 0) {
-				logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Pod,
-				});
-			}
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
-	);
-
-	const handleGroupByChange = useCallback(
-		(value: IBuilderQuery['groupBy']) => {
-			const newGroupBy = [];
-
-			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
-
-				const key = groupByFiltersData?.payload?.attributeKeys?.find(
-					(k) => k.key === element,
-				);
-
-				if (key) {
-					newGroupBy.push(key);
-				}
-			}
-
-			// Reset pagination on switching to groupBy
-			setCurrentPage(1);
-			setGroupBy(newGroupBy);
-			setExpandedRowKeys([]);
-
-			logEvent(InfraMonitoringEvents.GroupByChanged, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: InfraMonitoringEvents.Pod,
-			});
-		},
-		[groupByFiltersData, setCurrentPage, setGroupBy],
+	const initializeTableColumns = useInfraMonitoringTableColumnsStore(
+		(state) => state.initializePageColumns,
 	);
 
 	useEffect(() => {
-		logEvent(InfraMonitoringEvents.PageVisited, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: InfraMonitoringEvents.Pod,
-			total: data?.payload?.data?.total,
-		});
-	}, [data?.payload?.data?.total]);
-
-	const selectedPodData = useMemo(() => {
-		if (!selectedPodUID) {
-			return null;
-		}
-		if (groupBy.length > 0) {
-			// If grouped by, return the pod from the formatted grouped by pods data
-			return nestedPodsData.find((pod) => pod.podUID === selectedPodUID) || null;
-		}
-		// If not grouped by, return the node from the nodes data
-		return podsData.find((pod) => pod.podUID === selectedPodUID) || null;
-	}, [selectedPodUID, groupBy.length, podsData, nestedPodsData]);
-
-	const handleGroupByRowClick = (record: K8sPodsRowData): void => {
-		setSelectedRowData(record);
-
-		if (expandedRowKeys.includes(record.key)) {
-			setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.key));
-		} else {
-			setExpandedRowKeys([record.key]);
-		}
-	};
-
-	useEffect(() => {
-		if (selectedRowData) {
-			fetchGroupedByRowData();
-		}
-	}, [selectedRowData, fetchGroupedByRowData]);
-
-	const openPodInNewTab = (record: K8sPodsRowData): void => {
-		const newParams = new URLSearchParams(document.location.search);
-		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
-		openInNewTab(
-			buildAbsolutePath({
-				relativePath: '',
-				urlQueryString: newParams.toString(),
-			}),
-		);
-	};
-
-	const handleRowClick = (
-		record: K8sPodsRowData,
-		event: React.MouseEvent,
-	): void => {
-		if (event && isModifierKeyPressed(event)) {
-			openPodInNewTab(record);
-			return;
-		}
-		if (groupBy.length === 0) {
-			setSelectedPodUID(record.podUID);
-			setSelectedRowData(null);
-		} else {
-			handleGroupByRowClick(record);
-		}
-
-		logEvent(InfraMonitoringEvents.ItemClicked, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: InfraMonitoringEvents.Pod,
-		});
-	};
-
-	const handleClosePodDetail = (): void => {
-		setSelectedPodUID(null);
-		setView(null);
-		setTracesFilters(null);
-		setEventsFilters(null);
-		setLogFilters(null);
-	};
-
-	const handleAddColumn = useCallback(
-		(column: IEntityColumn): void => {
-			setAddedColumns((prev) => [...prev, column]);
-
-			setAvailableColumns((prev) => prev.filter((c) => c.value !== column.value));
-		},
-		[setAddedColumns, setAvailableColumns],
-	);
-
-	// Update local storage when added columns updated
-	useEffect(() => {
-		const addedColumnIDs = addedColumns.map((column) => column.id);
-
-		set('k8sPodsAddedColumns', JSON.stringify(addedColumnIDs));
-	}, [addedColumns]);
-
-	useEffect(() => {
-		if (groupByFiltersData?.payload) {
-			setGroupByOptions(
-				groupByFiltersData?.payload?.attributeKeys?.map((filter) => ({
-					value: filter.key,
-					label: filter.key,
-				})) || [],
-			);
-		}
-	}, [groupByFiltersData]);
-
-	const handleRemoveColumn = useCallback(
-		(column: IEntityColumn): void => {
-			setAddedColumns((prev) => prev.filter((c) => c.value !== column.value));
-
-			setAvailableColumns((prev) => [...prev, column]);
-		},
-		[setAddedColumns, setAvailableColumns],
-	);
-
-	const nestedColumns = useMemo(
-		() => getK8sPodsListColumns(addedColumns, [], defaultOrderBy),
-		[addedColumns, defaultOrderBy],
-	);
-
-	const isGroupedByAttribute = groupBy.length > 0;
-
-	const handleExpandedRowViewAllClick = (): void => {
-		if (!selectedRowData) {
-			return;
-		}
-
-		const filters = createFiltersForSelectedRowData(selectedRowData);
-
-		handleFiltersChange(filters);
-
-		setCurrentPage(1);
-		setSelectedRowData(null);
-		setGroupBy([]);
-		setOrderBy(null);
-	};
-
-	const expandedRowRender = (): JSX.Element => (
-		<div className="expanded-table-container">
-			{isErrorGroupedByRowData && (
-				<Typography>{groupedByRowData?.error || 'Something went wrong'}</Typography>
-			)}
-
-			{isFetchingGroupedByRowData || isLoadingGroupedByRowData ? (
-				<LoadingContainer />
-			) : (
-				<div className="expanded-table">
-					<Table
-						columns={nestedColumns as ColumnType<K8sPodsRowData>[]}
-						dataSource={formattedGroupedByPodsData}
-						pagination={false}
-						scroll={{ x: true }}
-						tableLayout="fixed"
-						showHeader={false}
-						loading={{
-							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
-							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-						}}
-						onRow={(
-							record: K8sPodsRowData,
-						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
-							onClick: (event: React.MouseEvent): void => {
-								if (isModifierKeyPressed(event)) {
-									openPodInNewTab(record);
-									return;
-								}
-								setSelectedPodUID(record.podUID);
-							},
-							className: 'expanded-clickable-row',
-						})}
-					/>
-
-					{groupedByRowData?.payload?.data?.total &&
-						groupedByRowData?.payload?.data?.total > 10 && (
-							<div className="expanded-table-footer">
-								<Button
-									type="default"
-									size="small"
-									className="periscope-btn secondary"
-									onClick={handleExpandedRowViewAllClick}
-								>
-									<CornerDownRight size={14} />
-									View All
-								</Button>
-							</div>
-						)}
-				</div>
-			)}
-		</div>
-	);
-
-	const expandRowIconRenderer = ({
-		expanded,
-		onExpand,
-		record,
-	}: {
-		expanded: boolean;
-		onExpand: (
-			record: K8sPodsRowData,
-			e: React.MouseEvent<HTMLButtonElement>,
-		) => void;
-		record: K8sPodsRowData;
-	}): JSX.Element | null => {
-		if (!isGroupedByAttribute) {
-			return null;
-		}
-
-		return expanded ? (
-			<Button
-				className="periscope-btn ghost"
-				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
-					onExpand(record, e)
-				}
-				role="button"
-			>
-				<ChevronDown size={14} />
-			</Button>
-		) : (
-			<Button
-				className="periscope-btn ghost"
-				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
-					onExpand(record, e)
-				}
-				role="button"
-			>
-				<ChevronRight size={14} />
-			</Button>
-		);
-	};
-
-	const onPaginationChange = (page: number, pageSize: number): void => {
-		setCurrentPage(page);
-		setPageSize(pageSize);
-		logEvent(InfraMonitoringEvents.PageNumberChanged, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: InfraMonitoringEvents.Pod,
-		});
-	};
-
-	const showTableLoadingState =
-		(isFetching || isLoading) && formattedPodsData.length === 0;
+		initializeTableColumns(K8sCategory.PODS, columns);
+	}, [initializeTableColumns]);
 
 	return (
-		<div className="k8s-list">
-			<K8sHeader
-				selectedGroupBy={groupBy}
-				groupByOptions={groupByOptions}
-				isLoadingGroupByFilters={isLoadingGroupByFilters}
-				isFiltersVisible={isFiltersVisible}
-				handleFilterVisibilityChange={handleFilterVisibilityChange}
-				defaultAddedColumns={defaultAddedColumns}
-				addedColumns={addedColumns}
-				availableColumns={availableColumns}
-				handleFiltersChange={handleFiltersChange}
-				handleGroupByChange={handleGroupByChange}
-				onAddColumn={handleAddColumn}
-				onRemoveColumn={handleRemoveColumn}
-				entity={K8sCategory.PODS}
-				showAutoRefresh={!selectedPodData}
-			/>
-			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
-
-			<Table
-				className={classNames('k8s-list-table', {
-					'expanded-k8s-list-table': isGroupedByAttribute,
-				})}
-				dataSource={showTableLoadingState ? [] : formattedPodsData}
-				columns={columns}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					total: totalCount,
-					showSizeChanger: true,
-					hideOnSinglePage: false,
-					onChange: onPaginationChange,
-				}}
-				loading={{
-					spinning: showTableLoadingState,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText: showTableLoadingState ? null : (
-						<div className="no-filtered-hosts-message-container">
-							<div className="no-filtered-hosts-message-content">
-								<img
-									src={emptyStateUrl}
-									alt="thinking-emoji"
-									className="empty-state-svg"
-								/>
-
-								<Typography.Text className="no-filtered-hosts-message">
-									This query had no results. Edit your query and try again!
-								</Typography.Text>
-							</div>
-						</div>
-					),
-				}}
-				scroll={{ x: true }}
-				tableLayout="fixed"
-				onChange={handleTableChange}
-				onRow={(
-					record: K8sPodsRowData,
-				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
-					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
-					className: 'clickable-row',
-				})}
-				expandable={{
-					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-					expandIcon: expandRowIconRenderer,
-					expandedRowKeys,
-				}}
-			/>
-
-			{selectedPodData && (
-				<PodDetails
-					pod={selectedPodData}
-					isModalTimeSelection
-					onClose={handleClosePodDetail}
-				/>
-			)}
-		</div>
+		<K8sBaseList
+			controlListPrefix={controlListPrefix}
+			entity={K8sCategory.PODS}
+			tableColumns={columnsConfig}
+			fetchListData={fetchListData}
+			renderColumn={formatDataForTable}
+			getSelectedItemKey={getSelectedItemKey}
+		/>
 	);
 }
 

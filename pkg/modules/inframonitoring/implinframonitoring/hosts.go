@@ -463,6 +463,7 @@ func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostN
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
 		sb.E("attr_name", hostNameAttr),
+		sb.NE("attr_string_value", ""),
 		sb.GE("last_reported_unix_milli", sinceUnixMilli),
 	)
 

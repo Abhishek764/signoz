@@ -13,7 +13,7 @@ const SoftLineBreakHTML = `<p></p>`
 
 func (r *markdownRenderer) renderHTML(_ context.Context, markdown string) (string, error) {
 	var buf bytes.Buffer
-	if err := r.htmlRenderer.Convert([]byte(markdown), &buf); err != nil {
+	if err := newHTMLRenderer().Convert([]byte(markdown), &buf); err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to convert markdown to HTML")
 	}
 

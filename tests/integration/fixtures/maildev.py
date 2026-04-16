@@ -94,7 +94,7 @@ def get_all_mails(maildev: types.TestContainerDocker) -> List[dict]:
         f"status code: {response.status_code}, response: {response.text}"
     )
     emails = response.json()
-    # logger.debug("Emails: %s", json.dumps(emails, indent=2))
+    # logger.info("Emails: %s", json.dumps(emails, indent=2))
     return [
         {
             "subject": email.get("subject", ""),
@@ -115,7 +115,7 @@ def verify_email_received(
     """
     emails = get_all_mails(maildev)
     for email in emails:
-        # logger.debug("Email: %s", json.dumps(email, indent=2))
+        logger.info("Email: %s", json.dumps(email, indent=2))
         if all(
             key in email and filter_value == email[key]
             for key, filter_value in filters.items()

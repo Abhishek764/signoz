@@ -13,79 +13,15 @@ from fixtures.alertutils import (
     verify_notification_expectation,
 )
 from fixtures.logger import setup_logger
+from fixtures.notification_channelutils import (
+    email_default_config,
+    msteams_default_config,
+    opsgenie_default_config,
+    pagerduty_default_config,
+    slack_default_config,
+    webhook_default_config,
+)
 from fixtures.utils import get_testdata_file_path
-
-
-"""
-Default notification configs for each of the notifiers
-"""
-
-slack_default_config = {
-    # channel name configured on runtime
-    "slack_configs": [{
-        "api_url": "services/TEAM_ID/BOT_ID/TOKEN_ID", # base_url configured on runtime
-        "title":"[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{\" \"}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}=\"{{ $label.Value -}}\"\n {{- end }}\n {{- end -}}\n )\n {{- end }}",
-        "text":"{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name \"ruleId\" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}"
-    }],
-}
-
-# MSTeams default config
-msteams_default_config = {
-    "msteams_configs": [{
-        "webhook_url": "msteams/webhook_url", # base_url configured on runtime
-        "title":"[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{\" \"}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}=\"{{ $label.Value -}}\"\n {{- end }}\n {{- end -}}\n )\n {{- end }}",
-        "text":"{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name \"ruleId\" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}"
-    }],
-}
-
-# pagerduty default config
-pagerduty_default_config = {
-    "pagerduty_configs": [{
-        "routing_key":"PagerDutyRoutingKey",
-        "url":"v2/enqueue", # base_url configured on runtime
-        "client":"SigNoz Alert Manager",
-        "client_url":"https://enter-signoz-host-n-port-here/alerts",
-        "description":"[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n\t{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n\t {{\" \"}}(\n\t {{- with .CommonLabels.Remove .GroupLabels.Names }}\n\t\t{{- range $index, $label := .SortedPairs -}}\n\t\t {{ if $index }}, {{ end }}\n\t\t {{- $label.Name }}=\"{{ $label.Value -}}\"\n\t\t{{- end }}\n\t {{- end -}}\n\t )\n\t{{- end }}",
-        "details":{
-            "firing":"{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
-            "num_firing":"{{ .Alerts.Firing | len }}",
-            "num_resolved":"{{ .Alerts.Resolved | len }}",
-            "resolved":"{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}"
-        },
-        "source":"SigNoz Alert Manager",
-        "severity":"{{ (index .Alerts 0).Labels.severity }}"
-    }],
-}
-# opsgenie default config
-opsgenie_default_config = {
-   "opsgenie_configs": [
-    {
-      "api_key": "OpsGenieAPIKey",
-      "api_url": "/", # base_url configured on runtime
-      "description": "{{ if gt (len .Alerts.Firing) 0 -}}\r\n\tAlerts Firing:\r\n\t{{ range .Alerts.Firing }}\r\n\t - Message: {{ .Annotations.description }}\r\n\tLabels:\r\n\t{{ range .Labels.SortedPairs -}}\r\n\t\t{{- if ne .Name \"ruleId\" }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end -}}\r\n\t{{- end }}   Annotations:\r\n\t{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end }}   Source: {{ .GeneratorURL }}\r\n\t{{ end }}\r\n{{- end }}\r\n{{ if gt (len .Alerts.Resolved) 0 -}}\r\n\tAlerts Resolved:\r\n\t{{ range .Alerts.Resolved }}\r\n\t - Message: {{ .Annotations.description }}\r\n\tLabels:\r\n\t{{ range .Labels.SortedPairs -}}\r\n\t\t{{- if ne .Name \"ruleId\" }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end -}}\r\n\t{{- end }}   Annotations:\r\n\t{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}\r\n\t{{ end }}   Source: {{ .GeneratorURL }}\r\n\t{{ end }}\r\n{{- end }}",
-      "priority": "{{ if eq (index .Alerts 0).Labels.severity \"critical\" }}P1{{ else if eq (index .Alerts 0).Labels.severity \"warning\" }}P2{{ else if eq (index .Alerts 0).Labels.severity \"info\" }}P3{{ else }}P4{{ end }}",
-      "message": "{{ .CommonLabels.alertname }}",
-      "details": {}
-    }
-  ]
-}
-
-# webhook default config
-webhook_default_config = {
-    "webhook_configs": [{
-        "url": "webhook/webhook_url", # base_url configured on runtime
-    }],
-}
-# email default config
-email_default_config = {
-    "email_configs": [{
-        "to": "test@example.com",
-        "html": "<html><body>{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name \"ruleId\" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}</body></html>",
-        "headers": {
-            "Subject": "[{{ .Status | toUpper }}{{ if eq .Status \"firing\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{\" \"}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}=\"{{ $label.Value -}}\"\n {{- end }}\n {{- end -}}\n )\n {{- end }}"
-        }
-    }],
-}
 
 # tests to verify the notifiers sending out the notifications with expected content
 NOTIFIERS_TEST = [
@@ -108,10 +44,13 @@ NOTIFIERS_TEST = [
                     validation_data={
                         "path": "/services/TEAM_ID/BOT_ID/TOKEN_ID",
                         "json_body": {
+                            "username": "Alertmanager",
                             "attachments": [
                                 {
                                 "title": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
                                 "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
+                                "color": "danger",
+                                "mrkdwn_in": ["fallback","pretext","text"]
                             }]}
                     },
                 ),
@@ -137,12 +76,36 @@ NOTIFIERS_TEST = [
                     validation_data={
                         "path": "/msteams/webhook_url",
                         "json_body": {
-                            "@context": "http://schema.org/extensions",
-                            "type": "MessageCard",
-                            "title": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
-                            "text": "*Alert:* threshold_above_at_least_once - critical\r\n\r\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n *RelatedLogs:* \r\n *RelatedTraces:* \r\n\r\n *Details:*\r\n • *alertname:* threshold_above_at_least_once\r\n   • *severity:* critical\r\n   • *threshold.name:* critical\r\n   ",
-                            "themeColor": "8C1A1A"
-                        }
+                            "type": "message",
+                            "attachments": [
+                                {
+                                "contentType": "application/vnd.microsoft.card.adaptive",
+                                "content": {
+                                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                                    "type": "AdaptiveCard",
+                                    "version": "1.2",
+                                    "body": [
+                                    {"type": "TextBlock", 
+                                    "text": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                                        "weight": "Bolder","size": "Medium","wrap": True,"style": "heading","color": "Attention"
+                                    },
+                                    {"type": "TextBlock", "text": "Alerts","weight": "Bolder","size": "Medium","wrap": True,"color": "Attention"},
+                                    {"type": "TextBlock", "text": "Labels","weight": "Bolder","size": "Medium"},
+                                    {"type": "FactSet", "text": "","facts": [{"title": "threshold.name","value": "critical"}]},
+                                    {"type": "TextBlock", "text": "Annotations","weight": "Bolder","size": "Medium"},
+                                    {"type": "FactSet", "text": "",
+                                        "facts": [ {"title": "threshold.value","value": "10"}, {"title": "compare_op","value": "above"}, 
+                                        {"title": "match_type","value": "at_least_once"}, {"title": "value","value": "15"},
+                                        {"title": "description","value": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)"} 
+                                        ]
+                                    }
+                                    ],
+                                    "msteams": {"width": "full"},
+                                    "actions": [{"type": "Action.OpenUrl", "title": "View Alert"}]
+                                }
+                                }
+                            ]
+                            }
                     },
                 ),
             ],
@@ -168,11 +131,14 @@ NOTIFIERS_TEST = [
                         "path": "/v2/enqueue",
                         "json_body": {
                             "routing_key": "PagerDutyRoutingKey",
+                            "event_action": "trigger",
                             "payload": {
                                 "summary": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
+                                "source": "SigNoz Alert Manager",
+                                "severity": "critical",
                                 "custom_details": {
                                 "firing": {
-                                    "Annotations": [{"description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"}],
+                                    "Annotations": ["compare_op = above",{"description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"},"match_type = at_least_once", "threshold.value = 10", "value = 15"],
                                     "Labels": ["alertname = threshold_above_at_least_once","severity = critical","threshold.name = critical"],
                                 }}
                             },
@@ -204,7 +170,7 @@ NOTIFIERS_TEST = [
                         "path": "/v2/alerts",
                         "json_body": {
                             "message": "threshold_above_at_least_once",
-                            "description": "Alerts Firing:\r\n\t\r\n\t - Message: This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\tLabels:\r\n\t   - alertname = threshold_above_at_least_once\r\n\t   - severity = critical\r\n\t   - threshold.name = critical\r\n\t   Annotations:\r\n\t   - description = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - summary = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   Source: \r\n\t\r\n",
+                            "description": "Alerts Firing:\r\n\t\r\n\t - Message: This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\tLabels:\r\n\t   - alertname = threshold_above_at_least_once\r\n\t   - severity = critical\r\n\t   - threshold.name = critical\r\n\t   Annotations:\r\n\t   - compare_op = above\r\n\t   - description = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - match_type = at_least_once\r\n\t   - summary = This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\r\n\t   - threshold.value = 10\r\n\t   - value = 15\r\n\t   Source: \r\n\t\r\n",
                             "details": {
                                 "alertname": "threshold_above_at_least_once",
                                 "severity": "critical",
@@ -240,11 +206,10 @@ NOTIFIERS_TEST = [
                             "alerts": [{
                                 "status": "firing",
                                 "labels": {"alertname": "threshold_above_at_least_once","severity": "critical","threshold.name": "critical"},
-                                "annotations": {"summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)"
-                                }}
-                            ],
+                                "annotations": {"compare_op": "above", "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "match_type": "at_least_once", "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "threshold.value": "10", "value": "15"}
+                            }],
                             "commonLabels": {"alertname": "threshold_above_at_least_once","severity": "critical","threshold.name": "critical"},
-                            "commonAnnotations": {"summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)"}
+                            "commonAnnotations": {"compare_op": "above", "description": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "match_type": "at_least_once", "summary": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)", "threshold.value": "10", "value": "15"}
                             }
                     },
                 ),
@@ -269,7 +234,7 @@ NOTIFIERS_TEST = [
                     destination_type="email",
                     validation_data={
                         "subject": "[FIRING:1] threshold_above_at_least_once for  (alertname=\"threshold_above_at_least_once\", severity=\"critical\", threshold.name=\"critical\")",
-                        "html": "<html><body>*Alert:* threshold_above_at_least_once - critical\n\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *RelatedLogs:* \n *RelatedTraces:* \n\n *Details:*\n \u2022 *alertname:* threshold_above_at_least_once\n   \u2022 *severity:* critical\n   \u2022 *threshold.name:* critical\n   </body></html>"                    
+                        "html": "<html><body>*Alert:* threshold_above_at_least_once - critical\n\n *Summary:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *Description:* This alert is fired when the defined metric (current value: 15) crosses the threshold (10)\n *RelatedLogs:* \n *RelatedTraces:* \n\n *Details:*\n \u2022 *alertname:* threshold_above_at_least_once\n   \u2022 *severity:* critical\n   \u2022 *threshold.name:* critical\n   </body></html>"
                     },
                 ),
             ],

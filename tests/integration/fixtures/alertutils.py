@@ -116,6 +116,7 @@ def verify_webhook_notification_expectation(
 
     for req in res.json()["requests"]:
         body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
+        # logger.info("Webhook request body: %s", json.dumps(body, indent=2))
         if _is_json_subset(json_body, body):
             return True
     return False
@@ -254,7 +255,7 @@ def update_channel_config_urls(
 
     url_field_map = {
         "slack_configs": "api_url",
-        "msteams_configs": "webhook_url",
+        "msteamsv2_configs": "webhook_url",
         "webhook_configs": "url",
         "pagerduty_configs": "url",
         "opsgenie_configs": "api_url",

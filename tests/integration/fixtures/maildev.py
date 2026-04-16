@@ -24,7 +24,7 @@ def maildev(
     """
 
     def create() -> types.TestContainerDocker:
-        container = DockerContainer(image="maildev/maildev:2.1.0")
+        container = DockerContainer(image="maildev/maildev:2.2.1")
         container.with_exposed_ports(1025, 1080)
         container.with_network(network=network)
         container.start()

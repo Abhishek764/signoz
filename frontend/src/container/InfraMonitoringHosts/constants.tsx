@@ -23,6 +23,8 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
+import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
+
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import { getHostListsQuery } from './utils';
 
@@ -198,7 +200,7 @@ function EndTimeBeforeRetentionMessage(): JSX.Element {
 			<div className={hostsEmptyStateStyles.hostsEmptyStateContainerContent}>
 				<img
 					className={hostsEmptyStateStyles.eyesEmoji}
-					src="/Images/eyesEmoji.svg"
+					src={eyesEmojiUrl}
 					alt="eyes emoji"
 				/>
 				<div className={hostsEmptyStateStyles.noHostsMessage}>

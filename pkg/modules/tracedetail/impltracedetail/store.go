@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
+
+	sqlbuilder "github.com/huandu/go-sqlbuilder"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -20,12 +21,15 @@ func newClickhouseTraceStore(ts telemetrystore.TelemetryStore) tracedetailtypes.
 }
 
 func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID string) (*tracedetailtypes.TraceSummary, error) {
-	query := fmt.Sprintf(
-		"SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id",
-		tracedetailtypes.TraceDB, tracedetailtypes.TraceSummaryTable,
-	)
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("trace_id", "min(start) AS start", "max(end) AS end", "sum(num_spans) AS num_spans")
+	sb.From(fmt.Sprintf("%s.%s", tracedetailtypes.TraceDB, tracedetailtypes.TraceSummaryTable))
+	sb.Where(sb.E("trace_id", traceID))
+	sb.GroupBy("trace_id")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
 	var summary tracedetailtypes.TraceSummary
-	err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, traceID).Scan(
+	err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(
 		&summary.TraceID, &summary.Start, &summary.End, &summary.NumSpans,
 	)
 	if err != nil {
@@ -38,6 +42,7 @@ func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID stri
 }
 
 func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.SpanModel, error) {
+	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
 			timestamp, duration_nano, span_id, trace_id, has_error, kind,
@@ -48,7 +53,7 @@ func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string
 			db_name, db_operation, http_method, http_url, http_host,
 			external_http_method, external_http_url, response_status_code
 		FROM %s.%s
-		WHERE trace_id=$1 AND ts_bucket_start>=$2 AND ts_bucket_start<=$3
+		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
 		ORDER BY timestamp ASC, name ASC`,
 		tracedetailtypes.TraceDB, tracedetailtypes.TraceTable,
 	)
@@ -56,8 +61,8 @@ func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string
 	err := s.telemetryStore.ClickhouseDB().Select(
 		ctx, &spanItems, query,
 		traceID,
-		strconv.FormatInt(summary.Start.Unix()-1800, 10),
-		strconv.FormatInt(summary.End.Unix(), 10),
+		summary.Start.Unix()-1800,
+		summary.End.Unix(),
 	)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans")

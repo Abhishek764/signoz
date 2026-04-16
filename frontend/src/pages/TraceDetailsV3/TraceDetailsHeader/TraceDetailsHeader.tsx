@@ -19,11 +19,13 @@ interface FilterMetadata {
 interface TraceDetailsHeaderProps {
 	filterMetadata: FilterMetadata;
 	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
+	hideFilter?: boolean;
 }
 
 function TraceDetailsHeader({
 	filterMetadata,
 	onFilteredSpansChange,
+	hideFilter,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV2URLProps>();
 
@@ -47,14 +49,16 @@ function TraceDetailsHeader({
 				<Typography.Text className="trace-id">Trace ID</Typography.Text>
 			</div>
 			<Typography.Text className="trace-id-value">{traceID}</Typography.Text>
-			<div className="trace-details-header__filter">
-				<Filters
-					startTime={filterMetadata.startTime}
-					endTime={filterMetadata.endTime}
-					traceID={filterMetadata.traceId}
-					onFilteredSpansChange={onFilteredSpansChange}
-				/>
-			</div>
+			{!hideFilter && (
+				<div className="trace-details-header__filter">
+					<Filters
+						startTime={filterMetadata.startTime}
+						endTime={filterMetadata.endTime}
+						traceID={filterMetadata.traceId}
+						onFilteredSpansChange={onFilteredSpansChange}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

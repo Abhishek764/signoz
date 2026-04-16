@@ -64,7 +64,8 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 		o.ObserveInt64(telemetry.setsRejected, int64(metrics.SetsRejected()), metric.WithAttributes(attributes...))
 		o.ObserveInt64(telemetry.getsDropped, int64(metrics.GetsDropped()), metric.WithAttributes(attributes...))
 		o.ObserveInt64(telemetry.getsKept, int64(metrics.GetsKept()), metric.WithAttributes(attributes...))
-		o.ObserveInt64(telemetry.totalCost, int64(cc.MaxCost()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.costUsed, int64(metrics.CostAdded())-int64(metrics.CostEvicted()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.totalCost, cc.MaxCost(), metric.WithAttributes(attributes...))
 		return nil
 	},
 		telemetry.cacheRatio,
@@ -79,6 +80,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 		telemetry.setsRejected,
 		telemetry.getsDropped,
 		telemetry.getsKept,
+		telemetry.costUsed,
 		telemetry.totalCost,
 	)
 	if err != nil {

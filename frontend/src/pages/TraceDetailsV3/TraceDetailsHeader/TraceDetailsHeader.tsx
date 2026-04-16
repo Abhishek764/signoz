@@ -63,24 +63,26 @@ function TraceDetailsHeader({
 				maxCharacters={100}
 			/>
 			{!noData && (
-				<div className="trace-details-header__filter">
-					<Filters
-						startTime={filterMetadata.startTime}
-						endTime={filterMetadata.endTime}
-						traceID={filterMetadata.traceId}
-						onFilteredSpansChange={onFilteredSpansChange}
-					/>
-				</div>
+				<>
+					<div className="trace-details-header__filter">
+						<Filters
+							startTime={filterMetadata.startTime}
+							endTime={filterMetadata.endTime}
+							traceID={filterMetadata.traceId}
+							onFilteredSpansChange={onFilteredSpansChange}
+						/>
+					</div>
+					<Button
+						variant="solid"
+						color="secondary"
+						size="sm"
+						className="trace-details-header__old-view-btn"
+						onClick={handleSwitchToOldView}
+					>
+						Old View
+					</Button>
+				</>
 			)}
-			<Button
-				variant="solid"
-				color="secondary"
-				size="sm"
-				className="trace-details-header__old-view-btn"
-				onClick={handleSwitchToOldView}
-			>
-				Old View
-			</Button>
 		</div>
 	);
 }

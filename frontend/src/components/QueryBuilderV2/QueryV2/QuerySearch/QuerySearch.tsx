@@ -30,7 +30,7 @@ import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariabl
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Filter, Info, TriangleAlert } from 'lucide-react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -85,6 +85,23 @@ interface QuerySearchProps {
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 	showFilterSuggestionsWithoutMetric?: boolean;
+	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
+	initialExpression?: string;
+}
+
+function combineInitialAndUserExpression(
+	initial: string,
+	user: string,
+): string {
+	const trimmedInitial = initial.trim();
+	const trimmedUser = user.trim();
+	if (!trimmedInitial) {
+		return trimmedUser;
+	}
+	if (!trimmedUser) {
+		return trimmedInitial;
+	}
+	return `${trimmedInitial} AND (${trimmedUser})`;
 }
 
 function QuerySearch({
@@ -96,6 +113,7 @@ function QuerySearch({
 	signalSource,
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
+	initialExpression,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -112,18 +130,26 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = useCallback((newExpression: string): void => {
-		try {
-			const validationResponse = validateQuery(newExpression);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
-	}, []);
+	const isScopedFilter = initialExpression !== undefined;
+
+	const validateExpressionForEditor = useCallback(
+		(editorDoc: string): void => {
+			const toValidate = isScopedFilter
+				? combineInitialAndUserExpression(initialExpression ?? '', editorDoc)
+				: editorDoc;
+			try {
+				const validationResponse = validateQuery(toValidate);
+				setValidation(validationResponse);
+			} catch (error) {
+				setValidation({
+					isValid: false,
+					message: 'Failed to process query',
+					errors: [error as IDetailedError],
+				});
+			}
+		},
+		[initialExpression, isScopedFilter],
+	);
 
 	const getCurrentExpression = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
@@ -177,9 +203,9 @@ function QuerySearch({
 			// Do not update codemirror editor if the expression is the same
 			if (newExpression !== currentExpression && !isFocused) {
 				updateEditorValue(newExpression, { skipOnChange: true });
-				if (newExpression) {
-					handleQueryValidation(newExpression);
-				}
+			}
+			if (!isFocused) {
+				validateExpressionForEditor(newExpression);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -616,7 +642,7 @@ function QuerySearch({
 
 	const handleBlur = (): void => {
 		const currentExpression = getCurrentExpression();
-		handleQueryValidation(currentExpression);
+		validateExpressionForEditor(currentExpression);
 		setIsFocused(false);
 	};
 
@@ -634,7 +660,6 @@ function QuerySearch({
 	);
 
 	const handleExampleClick = (exampleQuery: string): void => {
-		// If there's an existing query, append the example with AND
 		const currentExpression = getCurrentExpression();
 		const newExpression = currentExpression
 			? `${currentExpression} AND ${exampleQuery}`
@@ -1319,6 +1344,19 @@ function QuerySearch({
 			)}
 
 			<div className="query-where-clause-editor-container">
+				{isScopedFilter ? (
+					<Tooltip title={initialExpression || ''} placement="topLeft">
+						<div className="query-search-initial-scope-label">
+							<Filter
+								size={14}
+								style={{
+									opacity: 0.9,
+									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+								}}
+							/>
+						</div>
+					</Tooltip>
+				) : null}
 				<Tooltip
 					title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
 					placement="left"
@@ -1358,6 +1396,7 @@ function QuerySearch({
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
+						hasInitialExpression: isScopedFilter,
 					})}
 					extensions={[
 						autocompletion({
@@ -1392,7 +1431,12 @@ function QuerySearch({
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
-											onRun(getCurrentExpression());
+											const user = getCurrentExpression();
+											onRun(
+												isScopedFilter
+													? combineInitialAndUserExpression(initialExpression ?? '', user)
+													: user,
+											);
 										}
 										return true;
 									},
@@ -1557,6 +1601,7 @@ QuerySearch.defaultProps = {
 	placeholder:
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
+	initialExpression: undefined,
 };
 
 export default QuerySearch;

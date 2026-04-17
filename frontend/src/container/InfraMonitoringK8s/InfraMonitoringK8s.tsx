@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
@@ -76,11 +76,14 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		entityVersion: '',
 	});
 
+	const handleChangeQueryDataRef = useRef(handleChangeQueryData);
+	handleChangeQueryDataRef.current = handleChangeQueryData;
+
 	useEffect(() => {
 		if (urlFilters && urlFilters.items) {
-			handleChangeQueryData('filters', urlFilters);
+			handleChangeQueryDataRef.current('filters', urlFilters);
 		}
-	}, [urlFilters, handleChangeQueryData]);
+	}, [urlFilters]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =

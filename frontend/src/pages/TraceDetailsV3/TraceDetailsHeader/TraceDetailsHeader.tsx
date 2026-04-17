@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ArrowLeft } from 'lucide-react';
@@ -39,7 +39,9 @@ function TraceDetailsHeader({
 		const isSpaNavigate =
 			document.referrer &&
 			new URL(document.referrer).origin === window.location.origin;
-		if (isSpaNavigate) {
+		const hasBackHistory = window.history.length > 1;
+
+		if (isSpaNavigate && hasBackHistory) {
 			history.goBack();
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);

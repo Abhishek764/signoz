@@ -171,16 +171,12 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const tooltipElement = tooltipContent
 		? createPortal(
 				<div
-					className="span-hover-card-popover"
+					className="span-hover-card-popover flamegraph-tooltip"
 					style={{
 						position: 'fixed',
 						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
 						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),
 						zIndex: 1000,
-						backgroundColor: 'rgba(30, 30, 30, 0.95)',
-						padding: '8px 12px',
-						borderRadius: 4,
-						boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
 						pointerEvents: 'none',
 					}}
 				>

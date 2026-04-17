@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -34,7 +35,7 @@ func (handler *handler) GetConnectionCredentials(rw http.ResponseWriter, r *http
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -59,7 +60,7 @@ func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -104,7 +105,7 @@ func (handler *handler) GetAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -135,7 +136,7 @@ func (handler *handler) ListAccounts(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -160,7 +161,7 @@ func (handler *handler) UpdateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -214,7 +215,7 @@ func (handler *handler) DisconnectAccount(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -245,7 +246,7 @@ func (handler *handler) ListServicesMetadata(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -286,13 +287,13 @@ func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceID, err := cloudintegrationtypes.NewServiceID(provider, mux.Vars(r)["service_id"])
+	serviceID, err := cptypes.NewServiceID(provider, mux.Vars(r)["service_id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -332,13 +333,13 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceID, err := cloudintegrationtypes.NewServiceID(provider, mux.Vars(r)["service_id"])
+	serviceID, err := cptypes.NewServiceID(provider, mux.Vars(r)["service_id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -402,7 +403,7 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	provider, err := cptypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return

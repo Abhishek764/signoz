@@ -7,6 +7,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes/awstypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -14,12 +16,12 @@ import (
 type Account struct {
 	types.Identifiable
 	types.TimeAuditable
-	ProviderAccountID *string           `json:"providerAccountId" required:"true" nullable:"true"`
-	Provider          CloudProviderType `json:"provider" required:"true"`
-	RemovedAt         *time.Time        `json:"removedAt" required:"true" nullable:"true"`
-	AgentReport       *AgentReport      `json:"agentReport" required:"true" nullable:"true"`
-	OrgID             valuer.UUID       `json:"orgId" required:"true"`
-	Config            *AccountConfig    `json:"config" required:"true" nullable:"false"`
+	ProviderAccountID *string                   `json:"providerAccountId" required:"true" nullable:"true"`
+	Provider          cptypes.CloudProviderType `json:"provider" required:"true"`
+	RemovedAt         *time.Time                `json:"removedAt" required:"true" nullable:"true"`
+	AgentReport       *AgentReport              `json:"agentReport" required:"true" nullable:"true"`
+	OrgID             valuer.UUID               `json:"orgId" required:"true"`
+	Config            *AccountConfig            `json:"config" required:"true" nullable:"false"`
 }
 
 // AgentReport represents heartbeats sent by the agent.
@@ -30,11 +32,7 @@ type AgentReport struct {
 
 type AccountConfig struct {
 	// required till new providers are added
-	AWS *AWSAccountConfig `json:"aws" required:"true" nullable:"false"`
-}
-
-type AWSAccountConfig struct {
-	Regions []string `json:"regions" required:"true" nullable:"false"`
+	AWS *awstypes.AWSAccountConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 type PostableAccount struct {
@@ -45,7 +43,7 @@ type PostableAccount struct {
 type PostableAccountConfig struct {
 	// as agent version is common for all providers, we can keep it at top level of this struct
 	AgentVersion string
-	Aws          *AWSPostableAccountConfig `json:"aws" required:"true" nullable:"false"`
+	Aws          *awstypes.AWSPostableAccountConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 type Credentials struct {
@@ -55,11 +53,6 @@ type Credentials struct {
 	IngestionKey string `json:"ingestionKey" required:"true"`
 }
 
-type AWSPostableAccountConfig struct {
-	DeploymentRegion string   `json:"deploymentRegion" required:"true"`
-	Regions          []string `json:"regions" required:"true" nullable:"false"`
-}
-
 type GettableAccountWithConnectionArtifact struct {
 	ID                 valuer.UUID         `json:"id" required:"true"`
 	ConnectionArtifact *ConnectionArtifact `json:"connectionArtifact" required:"true"`
@@ -67,11 +60,7 @@ type GettableAccountWithConnectionArtifact struct {
 
 type ConnectionArtifact struct {
 	// required till new providers are added
-	Aws *AWSConnectionArtifact `json:"aws" required:"true" nullable:"false"`
-}
-
-type AWSConnectionArtifact struct {
-	ConnectionURL string `json:"connectionUrl" required:"true"`
+	AWS *awstypes.AWSConnectionArtifact `json:"aws" required:"true" nullable:"false"`
 }
 
 type GetConnectionArtifactRequest = PostableAccount
@@ -84,7 +73,7 @@ type UpdatableAccount struct {
 	Config *AccountConfig `json:"config" required:"true" nullable:"false"`
 }
 
-func NewAccount(orgID valuer.UUID, provider CloudProviderType, config *AccountConfig) *Account {
+func NewAccount(orgID valuer.UUID, provider cptypes.CloudProviderType, config *AccountConfig) *Account {
 	return &Account{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -125,8 +114,8 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 	}
 
 	switch storableAccount.Provider {
-	case CloudProviderTypeAWS:
-		awsConfig := new(AWSAccountConfig)
+	case cptypes.CloudProviderTypeAWS:
+		awsConfig := new(awstypes.AWSAccountConfig)
 		err := json.Unmarshal([]byte(storableAccount.Config), awsConfig)
 		if err != nil {
 			return nil, err
@@ -170,14 +159,14 @@ func NewGettableAccounts(accounts []*Account) *GettableAccounts {
 	}
 }
 
-func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAccountConfig) (*AccountConfig, error) {
+func NewAccountConfigFromPostable(provider cptypes.CloudProviderType, config *PostableAccountConfig) (*AccountConfig, error) {
 	switch provider {
-	case CloudProviderTypeAWS:
+	case cptypes.CloudProviderTypeAWS:
 		if config.Aws == nil {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config can not be nil for AWS provider")
 		}
 
-		if err := validateAWSRegion(config.Aws.DeploymentRegion); err != nil {
+		if err := cptypes.NewAWSRegion(config.Aws.DeploymentRegion); err != nil {
 			return nil, err
 		}
 
@@ -186,20 +175,20 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 		}
 
 		for _, region := range config.Aws.Regions {
-			if err := validateAWSRegion(region); err != nil {
+			if err := cptypes.NewAWSRegion(region); err != nil {
 				return nil, err
 			}
 		}
 
-		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.Aws.Regions}}, nil
+		return &AccountConfig{AWS: &awstypes.AWSAccountConfig{Regions: config.Aws.Regions}}, nil
 	default:
-		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+		return nil, errors.NewInvalidInputf(cptypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }
 
-func NewAccountConfigFromUpdatable(provider CloudProviderType, config *UpdatableAccount) (*AccountConfig, error) {
+func NewAccountConfigFromUpdatable(provider cptypes.CloudProviderType, config *UpdatableAccount) (*AccountConfig, error) {
 	switch provider {
-	case CloudProviderTypeAWS:
+	case cptypes.CloudProviderTypeAWS:
 		if config.Config.AWS == nil {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config can not be nil for AWS provider")
 		}
@@ -209,14 +198,14 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 		}
 
 		for _, region := range config.Config.AWS.Regions {
-			if err := validateAWSRegion(region); err != nil {
+			if err := cptypes.NewAWSRegion(region); err != nil {
 				return nil, err
 			}
 		}
 
-		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.Config.AWS.Regions}}, nil
+		return &AccountConfig{AWS: &awstypes.AWSAccountConfig{Regions: config.Config.AWS.Regions}}, nil
 	default:
-		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+		return nil, errors.NewInvalidInputf(cptypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }
 
@@ -235,7 +224,7 @@ func GetSigNozAPIURLFromDeployment(deployment *zeustypes.GettableDeployment) (st
 	return fmt.Sprintf("https://%s.%s", deployment.Name, deployment.Cluster.Region.DNS), nil
 }
 
-func (account *Account) Update(provider CloudProviderType, config *AccountConfig) error {
+func (account *Account) Update(provider cptypes.CloudProviderType, config *AccountConfig) error {
 	account.Config = config
 	account.UpdatedAt = time.Now()
 	return nil
@@ -302,4 +291,8 @@ func (config *AccountConfig) ToJSON() ([]byte, error) {
 	}
 
 	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
+}
+
+func NewIngestionKeyName(provider cptypes.CloudProviderType) string {
+	return fmt.Sprintf("%s-integration", provider.StringValue())
 }

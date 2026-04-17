@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
@@ -28,7 +29,7 @@ type module struct {
 	licensing         licensing.Licensing
 	global            global.Global
 	serviceAccount    serviceaccount.Module
-	cloudProvidersMap map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule
+	cloudProvidersMap map[cptypes.CloudProviderType]cloudintegration.CloudProviderModule
 	config            cloudintegration.Config
 }
 
@@ -39,7 +40,7 @@ func NewModule(
 	gateway gateway.Gateway,
 	licensing licensing.Licensing,
 	serviceAccount serviceaccount.Module,
-	cloudProvidersMap map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule,
+	cloudProvidersMap map[cptypes.CloudProviderType]cloudintegration.CloudProviderModule,
 	config cloudintegration.Config,
 ) (cloudintegration.Module, error) {
 	return &module{
@@ -56,7 +57,7 @@ func NewModule(
 
 // GetConnectionCredentials returns credentials required to generate connection artifact. eg. apiKey, ingestionKey etc.
 // It will return creds it can deduce and return empty value for others.
-func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Credentials, error) {
+func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType) (*cloudintegrationtypes.Credentials, error) {
 	// get license to get the deployment details
 	license, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -119,7 +120,7 @@ func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudi
 	return cloudProviderModule.GetConnectionArtifact(ctx, account, req)
 }
 
-func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
+func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cptypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -133,7 +134,7 @@ func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, account
 	return cloudintegrationtypes.NewAccountFromStorable(storableAccount)
 }
 
-func (module *module) GetConnectedAccount(ctx context.Context, orgID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
+func (module *module) GetConnectedAccount(ctx context.Context, orgID, accountID valuer.UUID, provider cptypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -148,7 +149,7 @@ func (module *module) GetConnectedAccount(ctx context.Context, orgID, accountID 
 }
 
 // ListAccounts return only agent connected accounts.
-func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
+func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -162,7 +163,7 @@ func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provi
 	return cloudintegrationtypes.NewAccountsFromStorables(storableAccounts)
 }
 
-func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, req *cloudintegrationtypes.AgentCheckInRequest) (*cloudintegrationtypes.AgentCheckInResponse, error) {
+func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType, req *cloudintegrationtypes.AgentCheckInRequest) (*cloudintegrationtypes.AgentCheckInResponse, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -248,7 +249,7 @@ func (module *module) UpdateAccount(ctx context.Context, account *cloudintegrati
 	return module.store.UpdateAccount(ctx, storableAccount)
 }
 
-func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cptypes.CloudProviderType) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -257,7 +258,7 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 	return module.store.RemoveAccount(ctx, orgID, accountID, provider)
 }
 
-func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
+func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType, integrationID valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -300,7 +301,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 	return resp, nil
 }
 
-func (module *module) GetService(ctx context.Context, orgID valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType, cloudIntegrationID valuer.UUID) (*cloudintegrationtypes.Service, error) {
+func (module *module) GetService(ctx context.Context, orgID valuer.UUID, serviceID cptypes.ServiceID, provider cptypes.CloudProviderType, cloudIntegrationID valuer.UUID) (*cloudintegrationtypes.Service, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -336,7 +337,7 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, service
 	return cloudintegrationtypes.NewService(*serviceDefinition, integrationService), nil
 }
 
-func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cptypes.CloudProviderType) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -360,7 +361,7 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 	return module.store.CreateService(ctx, cloudintegrationtypes.NewStorableCloudIntegrationService(service, string(configJSON)))
 }
 
-func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, integrationService *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, integrationService *cloudintegrationtypes.CloudIntegrationService, provider cptypes.CloudProviderType) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -424,7 +425,7 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	stats := make(map[string]any)
 
 	// get connected accounts for AWS
-	awsAccountsCount, err := module.store.CountConnectedAccounts(ctx, orgID, cloudintegrationtypes.CloudProviderTypeAWS)
+	awsAccountsCount, err := module.store.CountConnectedAccounts(ctx, orgID, cptypes.CloudProviderTypeAWS)
 	if err == nil {
 		stats["cloudintegration.aws.connectedaccounts.count"] = awsAccountsCount
 	}
@@ -436,15 +437,15 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
-func (module *module) getCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
+func (module *module) getCloudProvider(provider cptypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
 	if cloudProviderModule, ok := module.cloudProvidersMap[provider]; ok {
 		return cloudProviderModule, nil
 	}
 
-	return nil, errors.NewInvalidInputf(cloudintegrationtypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	return nil, errors.NewInvalidInputf(cptypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
-func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (string, error) {
+func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType) (string, error) {
 	keyName := cloudintegrationtypes.NewIngestionKeyName(provider)
 
 	result, err := module.gateway.SearchIngestionKeysByName(ctx, orgID, keyName, 1, 10)
@@ -465,7 +466,7 @@ func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.
 	return createdIngestionKey.Value, nil
 }
 
-func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (string, error) {
+func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType) (string, error) {
 	domain := module.serviceAccount.Config().Email.Domain
 	serviceAccount := serviceaccounttypes.NewServiceAccount("integration", domain, serviceaccounttypes.ServiceAccountStatusActive, orgID)
 	serviceAccount, err := module.serviceAccount.GetOrCreate(ctx, orgID, serviceAccount)

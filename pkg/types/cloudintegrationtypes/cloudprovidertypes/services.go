@@ -1,4 +1,4 @@
-package cloudintegrationtypes
+package cloudprovidertypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -8,6 +8,8 @@ import (
 type ServiceID struct{ valuer.String }
 
 var (
+	ErrCodeInvalidCloudRegion = errors.MustNewCode("invalid_cloud_region")
+
 	AWSServiceALB         = ServiceID{valuer.NewString("alb")}
 	AWSServiceAPIGateway  = ServiceID{valuer.NewString("api-gateway")}
 	AWSServiceDynamoDB    = ServiceID{valuer.NewString("dynamodb")}
@@ -60,16 +62,11 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 	},
 }
 
-// NewServiceID returns a new ServiceID from a string, validated against the supported services for the given cloud provider.
 func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
-	services, ok := SupportedServices[provider]
-	if !ok {
-		return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "no services defined for cloud provider: %s", provider)
-	}
-	for _, s := range services {
+	for _, s := range SupportedServices[provider] {
 		if s.StringValue() == service {
 			return s, nil
 		}
 	}
-	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for cloud provider %s", service, provider)
+	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for %s cloud provider", service, provider.StringValue())
 }

@@ -117,8 +117,8 @@ function SpanDetailsContent({
 		(key: string, value: string): ActionMenuItem[] => {
 			const items: ActionMenuItem[] = [
 				{
-					key: 'copy',
-					label: 'Copy',
+					key: 'copy-value',
+					label: 'Copy Value',
 					icon: <Copy size={12} />,
 					onClick: (): void => {
 						setCopy(value);

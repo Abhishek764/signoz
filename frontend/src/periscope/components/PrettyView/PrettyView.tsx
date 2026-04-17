@@ -109,11 +109,11 @@ function PrettyView({
 		(context: FieldContext): ActionMenuItem[] => {
 			const items: ActionMenuItem[] = [];
 
-			// Copy action
+			// Copy Value action
 			if (isActionVisible('copy', context.isNested)) {
 				items.push({
-					key: 'copy',
-					label: 'Copy',
+					key: 'copy-value',
+					label: 'Copy Value',
 					icon: <Copy size={12} />,
 					onClick: (): void => {
 						const text =

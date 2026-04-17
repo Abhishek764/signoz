@@ -1,12 +1,13 @@
-import { toast } from '@signozhq/sonner';
-import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { toast } from '@signozhq/ui';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -14,17 +15,16 @@ const mockToast = jest.mocked(toast);
 
 const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/key-1';
 
-const mockKey: ServiceaccounttypesFactorAPIKeyDTO = {
+const mockKey: ServiceaccounttypesGettableFactorAPIKeyDTO = {
 	id: 'key-1',
 	name: 'Original Key Name',
 	expiresAt: 0,
 	lastObservedAt: null as any,
-	key: 'snz_abc123',
 	serviceAccountId: 'sa-1',
 };
 
 function renderModal(
-	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null = mockKey,
+	keyItem: ServiceaccounttypesGettableFactorAPIKeyDTO | null = mockKey,
 	searchParams: Record<string, string> = {
 		account: 'sa-1',
 		'edit-key': 'key-1',

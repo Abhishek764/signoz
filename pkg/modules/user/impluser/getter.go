@@ -184,7 +184,7 @@ func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valu
 	return factorPassword, nil
 }
 
-// this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
+// GetNonDeletedUserByEmailAndOrgID restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error.
 func (module *getter) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
 	existingUsers, err := module.store.GetNonDeletedUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
@@ -216,6 +216,10 @@ func (module *getter) GetRolesByUserID(ctx context.Context, userID valuer.UUID) 
 	}
 
 	return userRoles, nil
+}
+
+func (module *getter) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	return module.store.GetResetPasswordTokenByOrgIDAndUserID(ctx, orgID, userID)
 }
 
 func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {

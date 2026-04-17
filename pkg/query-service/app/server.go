@@ -136,7 +136,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
-		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		Signoz:                        signoz,
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
@@ -208,7 +207,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
@@ -223,7 +222,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
 	api.RegisterThirdPartyApiRoutes(r, am)
-	api.MetricExplorerRoutes(r, am)
 	api.RegisterTraceFunnelsRoutes(r, am)
 
 	err := s.signoz.APIServer.AddToRouter(r)
@@ -346,7 +344,6 @@ func makeRulesManager(
 		MetadataStore:          metadataStore,
 		Prometheus:             prometheus,
 		Context:                context.Background(),
-		Reader:                 ch,
 		Querier:                querier,
 		Logger:                 providerSettings.Logger,
 		Cache:                  cache,
@@ -355,7 +352,7 @@ func makeRulesManager(
 		Alertmanager:           alertmanager,
 		RuleStore:              ruleStore,
 		MaintenanceStore:       maintenanceStore,
-		SqlStore:               sqlstore,
+		SQLStore:               sqlstore,
 		QueryParser:            queryParser,
 		RuleStateHistoryModule: ruleStateHistoryModule,
 	}

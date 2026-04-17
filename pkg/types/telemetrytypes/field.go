@@ -19,12 +19,12 @@ var (
 )
 
 const (
-	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries
-	// e.g., "body.status" where "body." is the prefix
+	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries.
+	// e.g., "body.status" where "body." is the prefix.
 	BodyJSONStringSearchPrefix = "body."
 	ArraySep                   = jsontypeexporter.ArraySeparator
 	ArraySepSuffix             = "[]"
-	// TODO(Piyush): Remove once we've migrated to the new array syntax
+	// TODO(Piyush): Remove once we've migrated to the new array syntax.
 	ArrayAnyIndex       = "[*]."
 	ArrayAnyIndexSuffix = "[*]"
 )
@@ -49,8 +49,8 @@ func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
 	return strings.Contains(f.Name, ArraySep) || strings.Contains(f.Name, ArrayAnyIndex)
 }
 
-// ArrayPathSegments returns just the individual segments of the path
-// e.g., "education[].awards[].type" -> ["education", "awards", "type"]
+// ArrayPathSegments returns just the individual segments of the path.
+// e.g., "education[].awards[].type" -> ["education", "awards", "type"].
 func (f *TelemetryFieldKey) ArrayPathSegments() []string {
 	return strings.Split(strings.ReplaceAll(f.Name, ArrayAnyIndex, ArraySep), ArraySep)
 }
@@ -177,10 +177,10 @@ func (f *TelemetryFieldKey) Normalize() {
 // Both fieldContext and :fieldDataType are optional.
 // fieldName can contain dots and can start with a dot (e.g., ".http_code").
 // Special cases:
-// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context
-// - When key starts with "body." prefix, use "body" as context with remainder as field name
+// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context.
+// - When key starts with "body." prefix, use "body" as context with remainder as field name.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
-	var explicitFieldDataType FieldDataType = FieldDataTypeUnspecified
+	var explicitFieldDataType = FieldDataTypeUnspecified
 	var fieldName string
 
 	// Step 1: Parse data type from the right (after the last ":")
@@ -268,7 +268,8 @@ func (t *TelemetryFieldValues) NumValues() int {
 }
 
 type MetricContext struct {
-	MetricName string `json:"metricName"`
+	MetricName      string `json:"metricName"`
+	MetricNamespace string `json:"metricNamespace,omitempty"`
 }
 
 type FieldKeySelector struct {
@@ -297,15 +298,16 @@ type GettableFieldKeys struct {
 }
 
 type PostableFieldKeysParams struct {
-	Signal         Signal        `query:"signal"`
-	Source         Source        `query:"source"`
-	Limit          int           `query:"limit"`
-	StartUnixMilli int64         `query:"startUnixMilli"`
-	EndUnixMilli   int64         `query:"endUnixMilli"`
-	FieldContext   FieldContext  `query:"fieldContext"`
-	FieldDataType  FieldDataType `query:"fieldDataType"`
-	MetricName     string        `query:"metricName"`
-	SearchText     string        `query:"searchText"`
+	Signal          Signal        `query:"signal"`
+	Source          Source        `query:"source"`
+	Limit           int           `query:"limit"`
+	StartUnixMilli  int64         `query:"startUnixMilli"`
+	EndUnixMilli    int64         `query:"endUnixMilli"`
+	FieldContext    FieldContext  `query:"fieldContext"`
+	FieldDataType   FieldDataType `query:"fieldDataType"`
+	MetricName      string        `query:"metricName"`
+	MetricNamespace string        `query:"metricNamespace"`
+	SearchText      string        `query:"searchText"`
 }
 
 type GettableFieldValues struct {
@@ -344,9 +346,10 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 		req.Limit = 1000
 	}
 
-	if params.MetricName != "" {
+	if params.MetricName != "" || params.MetricNamespace != "" {
 		req.MetricContext = &MetricContext{
-			MetricName: params.MetricName,
+			MetricName:      params.MetricName,
+			MetricNamespace: params.MetricNamespace,
 		}
 	}
 

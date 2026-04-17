@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -10,9 +10,13 @@ import {
 } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
+
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {
@@ -26,56 +30,6 @@ import {
 function EmptyOrLoadingView(
 	viewState: EmptyOrLoadingViewProps,
 ): React.ReactNode {
-	const { isError, errorMessage } = viewState;
-	if (isError) {
-		return <Typography>{errorMessage || 'Something went wrong'}</Typography>;
-	}
-	if (viewState.showHostsEmptyState) {
-		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={!viewState.sentAnyHostMetricsData}
-				incorrectData={viewState.isSendingIncorrectK8SAgentMetrics}
-			/>
-		);
-	}
-	if (viewState.showEndTimeBeforeRetentionMessage) {
-		return (
-			<div className="hosts-empty-state-container">
-				<div className="hosts-empty-state-container-content">
-					<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
-					<div className="no-hosts-message">
-						<Typography.Title level={5} className="no-hosts-message-title">
-							Queried time range is before earliest host metrics
-						</Typography.Title>
-						<Typography.Text className="no-hosts-message-text">
-							Your requested end time is earlier than the earliest detected time of
-							host metrics data, please adjust your end time.
-						</Typography.Text>
-					</div>
-				</div>
-			</div>
-		);
-	}
-	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
-		return (
-			<div className="no-filtered-hosts-message-container">
-				<div className="no-filtered-hosts-message-content">
-					<img
-						src="/Icons/emptyState.svg"
-						alt="thinking-emoji"
-						className="empty-state-svg"
-					/>
-					<Typography.Title level={5} className="no-filtered-hosts-title">
-						No host metrics found
-					</Typography.Title>
-					<Typography.Text className="no-filtered-hosts-message">
-						No host metrics in the selected time range and filters. Please adjust your
-						time range or filters.
-					</Typography.Text>
-				</div>
-			</div>
-		);
-	}
 	if (viewState.showTableLoadingState) {
 		return (
 			<div className="hosts-list-loading-state">
@@ -100,6 +54,63 @@ function EmptyOrLoadingView(
 			</div>
 		);
 	}
+	const { isError, data } = viewState;
+	if (isError || data?.error || (data?.statusCode || 0) >= 300) {
+		return (
+			<ErrorContent
+				error={{
+					code: data?.statusCode || 500,
+					message: data?.error || 'Something went wrong',
+				}}
+			/>
+		);
+	}
+	if (viewState.showHostsEmptyState) {
+		return (
+			<HostsEmptyOrIncorrectMetrics
+				noData={!viewState.sentAnyHostMetricsData}
+				incorrectData={viewState.isSendingIncorrectK8SAgentMetrics}
+			/>
+		);
+	}
+	if (viewState.showEndTimeBeforeRetentionMessage) {
+		return (
+			<div className="hosts-empty-state-container">
+				<div className="hosts-empty-state-container-content">
+					<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
+					<div className="no-hosts-message">
+						<Typography.Title level={5} className="no-hosts-message-title">
+							Queried time range is before earliest host metrics
+						</Typography.Title>
+						<Typography.Text className="no-hosts-message-text">
+							Your requested end time is earlier than the earliest detected time of
+							host metrics data, please adjust your end time.
+						</Typography.Text>
+					</div>
+				</div>
+			</div>
+		);
+	}
+	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
+		return (
+			<div className="no-filtered-hosts-message-container">
+				<div className="no-filtered-hosts-message-content">
+					<img
+						src={emptyStateUrl}
+						alt="thinking-emoji"
+						className="empty-state-svg"
+					/>
+					<Typography.Title level={5} className="no-filtered-hosts-title">
+						No host metrics found
+					</Typography.Title>
+					<Typography.Text className="no-filtered-hosts-message">
+						No host metrics in the selected time range and filters. Please adjust your
+						time range or filters.
+					</Typography.Text>
+				</div>
+			</div>
+		);
+	}
 	return null;
 }
 
@@ -116,8 +127,12 @@ export default function HostsListTable({
 	pageSize,
 	setOrderBy,
 	setPageSize,
+	orderBy,
 }: HostsListTableProps): JSX.Element {
-	const columns = useMemo(() => getHostsListColumns(), []);
+	const [defaultOrderBy] = useState(orderBy);
+	const columns = useMemo(() => getHostsListColumns(defaultOrderBy), [
+		defaultOrderBy,
+	]);
 
 	const sentAnyHostMetricsData = useMemo(
 		() => data?.payload?.data?.sentAnyHostMetricsData || false,
@@ -186,7 +201,8 @@ export default function HostsListTable({
 		!isLoading &&
 		formattedHostMetricsData.length === 0 &&
 		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
-		!filters.items.length;
+		!filters.items.length &&
+		!endTimeBeforeRetention;
 
 	const showEndTimeBeforeRetentionMessage =
 		!isFetching &&
@@ -207,7 +223,7 @@ export default function HostsListTable({
 
 	const emptyOrLoadingView = EmptyOrLoadingView({
 		isError,
-		errorMessage: data?.error ?? '',
+		data,
 		showHostsEmptyState,
 		sentAnyHostMetricsData,
 		isSendingIncorrectK8SAgentMetrics,

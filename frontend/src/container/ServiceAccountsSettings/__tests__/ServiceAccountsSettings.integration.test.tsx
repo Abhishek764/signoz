@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
 
@@ -19,6 +19,26 @@ jest.mock('@signozhq/drawer', () => ({
 		content?: ReactNode;
 		open: boolean;
 	}): JSX.Element | null => (open ? <div>{content}</div> : null),
+}));
+
+jest.mock('@signozhq/dialog', () => ({
+	DialogWrapper: ({
+		children,
+		open,
+		title,
+	}: {
+		children?: ReactNode;
+		open: boolean;
+		title?: string;
+	}): JSX.Element | null =>
+		open ? (
+			<div role="dialog" aria-label={title}>
+				{children}
+			</div>
+		) : null,
+	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
+		<div>{children}</div>
+	),
 }));
 
 const mockServiceAccountsAPI = [
@@ -149,7 +169,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 
 		expect(
-			await screen.findByRole('button', { name: /Disable Service Account/i }),
+			await screen.findByRole('button', { name: /Delete Service Account/i }),
 		).toBeInTheDocument();
 	});
 
@@ -187,14 +207,16 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await user.click(screen.getByRole('button', { name: /Save Changes/i }));
 
 		await screen.findByDisplayValue('CI Bot Updated');
-		expect(listRefetchSpy).toHaveBeenCalled();
+		await waitFor(() => {
+			expect(listRefetchSpy).toHaveBeenCalled();
+		});
 	});
 
 	it('"New Service Account" button opens the Create Service Account modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);

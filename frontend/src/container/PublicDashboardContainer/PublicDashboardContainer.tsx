@@ -6,6 +6,7 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -16,6 +17,8 @@ import GetMinMax from 'lib/getMinMax';
 import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import Panel from './Panel';
 
@@ -80,7 +83,7 @@ function PublicDashboardContainer({
 	const { widgets } = dashboard?.data || {};
 
 	const [selectedTimeRangeLabel, setSelectedTimeRangeLabel] = useState<string>(
-		publicDashboard?.defaultTimeRange || '30m',
+		publicDashboard?.defaultTimeRange || DEFAULT_TIME_RANGE,
 	);
 
 	const [selectedTimeRange, setSelectedTimeRange] = useState<{
@@ -88,7 +91,7 @@ function PublicDashboardContainer({
 		endTime: number;
 	}>(
 		getStartTimeAndEndTimeFromTimeRange(
-			publicDashboard?.defaultTimeRange || '30m',
+			publicDashboard?.defaultTimeRange || DEFAULT_TIME_RANGE,
 		),
 	);
 
@@ -129,11 +132,7 @@ function PublicDashboardContainer({
 			<div className="public-dashboard-header">
 				<div className="public-dashboard-header-left">
 					<div className="brand-logo">
-						<img
-							src="/Logos/signoz-brand-logo.svg"
-							alt="SigNoz"
-							className="brand-logo-img"
-						/>
+						<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo-img" />
 
 						<Typography className="brand-logo-name">SigNoz</Typography>
 					</div>

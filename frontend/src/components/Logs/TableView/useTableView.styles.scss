@@ -1,5 +1,5 @@
 .text {
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
@@ -33,18 +33,13 @@
 	display: flex;
 	align-items: center;
 
-	.ant-typography {
+	p {
 		margin-bottom: 0;
 	}
 }
 
-.lightMode {
-	.text {
-		color: var(--bg-slate-400);
-	}
-}
-
 .paragraph {
+	margin: 0;
 	padding: 0px !important;
 	&.small {
 		font-size: 11px !important;

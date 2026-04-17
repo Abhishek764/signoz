@@ -3,6 +3,7 @@ package signozapiserver
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -58,6 +59,7 @@ type provider struct {
 	factoryHandler          factory.Handler
 	cloudIntegrationHandler cloudintegration.Handler
 	ruleStateHistoryHandler rulestatehistory.Handler
+	alertmanagerHandler     alertmanager.Handler
 	traceDetailHandler      tracedetail.Handler
 }
 
@@ -85,6 +87,7 @@ func NewFactory(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	alertmanagerHandler alertmanager.Handler,
 	traceDetailHandler tracedetail.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -115,6 +118,7 @@ func NewFactory(
 			factoryHandler,
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
+			alertmanagerHandler,
 			traceDetailHandler,
 		)
 	})
@@ -147,6 +151,7 @@ func newProvider(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	alertmanagerHandler alertmanager.Handler,
 	traceDetailHandler tracedetail.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -177,6 +182,7 @@ func newProvider(
 		factoryHandler:          factoryHandler,
 		cloudIntegrationHandler: cloudIntegrationHandler,
 		ruleStateHistoryHandler: ruleStateHistoryHandler,
+		alertmanagerHandler:     alertmanagerHandler,
 		traceDetailHandler:      traceDetailHandler,
 	}
 
@@ -275,6 +281,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRuleStateHistoryRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAlertmanagerRoutes(router); err != nil {
 		return err
 	}
 

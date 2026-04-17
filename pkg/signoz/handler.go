@@ -1,6 +1,8 @@
 package signoz
 
 import (
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/authz/signozauthzapi"
@@ -64,6 +66,7 @@ type Handlers struct {
 	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
 	RuleStateHistory        rulestatehistory.Handler
+	AlertmanagerHandler     alertmanager.Handler
 	TraceDetail             tracedetail.Handler
 }
 
@@ -80,6 +83,7 @@ func NewHandlers(
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
+	alertmanagerService alertmanager.Alertmanager,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -102,6 +106,7 @@ func NewHandlers(
 		RegistryHandler:         registryHandler,
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
+		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 	}
 }

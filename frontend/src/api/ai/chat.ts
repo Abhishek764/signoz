@@ -40,6 +40,12 @@ export type SSEEvent =
 			eventId: number;
 	  }
 	| {
+			type: 'thinking';
+			executionId: string;
+			content: string;
+			eventId: number;
+	  }
+	| {
 			type: 'tool_call';
 			executionId: string;
 			toolName: string;
@@ -125,6 +131,16 @@ export interface ThreadListResponse {
 	hasMore: boolean;
 }
 
+export interface MessageSummaryBlock {
+	type: string;
+	content?: string;
+	toolCallId?: string;
+	toolName?: string;
+	toolInput?: unknown;
+	result?: unknown;
+	success?: boolean;
+}
+
 export interface MessageSummary {
 	messageId: string;
 	role: string;
@@ -132,6 +148,7 @@ export interface MessageSummary {
 	content: string | null;
 	complete: boolean;
 	toolCalls: Record<string, unknown>[] | null;
+	blocks: MessageSummaryBlock[] | null;
 	actions: unknown[] | null;
 	feedbackRating: 'positive' | 'negative' | null;
 	feedbackComment: string | null;

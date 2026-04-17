@@ -5,10 +5,12 @@ import remarkGfm from 'remark-gfm';
 // Side-effect: registers all built-in block types into the BlockRegistry
 import './blocks';
 
-import { Message } from '../types';
+import { Message, MessageBlock } from '../types';
 import { RichCodeBlock } from './blocks';
 import { MessageContext } from './MessageContext';
 import MessageFeedback from './MessageFeedback';
+import ThinkingStep from './ThinkingStep';
+import ToolCallStep from './ToolCallStep';
 
 interface MessageBubbleProps {
 	message: Message;
@@ -38,12 +40,46 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 const MD_PLUGINS = [remarkGfm];
 const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
+/** Renders a single MessageBlock by type. */
+function renderBlock(block: MessageBlock, index: number): JSX.Element {
+	switch (block.type) {
+		case 'thinking':
+			return <ThinkingStep key={index} content={block.content} />;
+		case 'tool_call':
+			// Blocks in a persisted message are always complete — done is always true.
+			return (
+				<ToolCallStep
+					key={index}
+					toolCall={{
+						toolName: block.toolName,
+						input: block.toolInput,
+						result: block.result,
+						done: true,
+					}}
+				/>
+			);
+		case 'text':
+		default:
+			return (
+				<ReactMarkdown
+					key={index}
+					className="ai-message__markdown"
+					remarkPlugins={MD_PLUGINS}
+					components={MD_COMPONENTS}
+				>
+					{block.content}
+				</ReactMarkdown>
+			);
+	}
+}
+
 export default function MessageBubble({
 	message,
 	onRegenerate,
 	isLastAssistant = false,
 }: MessageBubbleProps): JSX.Element {
 	const isUser = message.role === 'user';
+	const hasBlocks = !isUser && message.blocks && message.blocks.length > 0;
 
 	return (
 		<div
@@ -74,6 +110,11 @@ export default function MessageBubble({
 
 					{isUser ? (
 						<p className="ai-message__text">{message.content}</p>
+					) : hasBlocks ? (
+						<MessageContext.Provider value={{ messageId: message.id }}>
+							{/* eslint-disable-next-line react/no-array-index-key */}
+							{message.blocks!.map((block, i) => renderBlock(block, i))}
+						</MessageContext.Provider>
 					) : (
 						<MessageContext.Provider value={{ messageId: message.id }}>
 							<ReactMarkdown

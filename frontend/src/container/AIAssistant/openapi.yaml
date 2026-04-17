@@ -6,668 +6,2253 @@ info:
 paths:
  /health:
   get:
-   tags: [Health]
+   tags:
+    - Health
    summary: Health
    operationId: health_health_get
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/HealthResponse' }
+       schema:
+        $ref: '#/components/schemas/HealthResponse'
  /ready:
   get:
-   tags: [Health]
+   tags:
+    - Health
    summary: Ready
    operationId: ready_ready_get
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ReadinessResponse' }
+       schema:
+        $ref: '#/components/schemas/ReadinessResponse'
     '503':
      description: One or more checks failed
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ReadinessResponse' }
+       schema:
+        $ref: '#/components/schemas/ReadinessResponse'
  /api/v1/assistant/threads:
   post:
-   tags: [Threads]
+   tags:
+    - Threads
    summary: Create a new thread
    operationId: create_thread_api_v1_assistant_threads_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     content:
      application/json:
       schema:
        anyOf:
-        - { $ref: '#/components/schemas/CreateThreadRequest' }
-        - { type: 'null' }
+        - $ref: '#/components/schemas/CreateThreadRequest'
+        - type: 'null'
+       title: Body
    responses:
     '201':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/CreateThreadResponse' }
+       schema:
+        $ref: '#/components/schemas/CreateThreadResponse'
     '403':
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ErrorResponse' }
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
   get:
-   tags: [Threads]
+   tags:
+    - Threads
    summary: List threads
-   description: Cursor-based pagination, sorted by updatedAt desc.
+   description:
+    Cursor-based pagination, sorted by updatedAt desc. Use `archived=true|false|all`
+    to filter.
    operationId: list_threads_api_v1_assistant_threads_get
    parameters:
     - name: archived
       in: query
-      schema: { type: string, enum: ['true', 'false', all], default: 'false' }
+      required: false
+      schema:
+       enum:
+        - 'true'
+        - 'false'
+        - all
+       type: string
+       description: 'Filter: true, false, or all'
+       default: 'false'
+       title: Archived
+      description: 'Filter: true, false, or all'
     - name: limit
       in: query
-      schema: { type: integer, maximum: 50, minimum: 1, default: 20 }
+      required: false
+      schema:
+       type: integer
+       maximum: 50
+       minimum: 1
+       default: 20
+       title: Limit
     - name: cursor
       in: query
-      schema: { anyOf: [{ type: string }, { type: 'null' }] }
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: Opaque cursor from previous response's nextCursor
+       title: Cursor
+      description: Opaque cursor from previous response's nextCursor
     - name: sort
       in: query
-      schema: { type: string, const: updated_desc, default: updated_desc }
+      required: false
+      schema:
+       const: updated_desc
+       type: string
+       description: 'Sort order. V1: updated_desc only'
+       default: updated_desc
+       title: Sort
+      description: 'Sort order. V1: updated_desc only'
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ThreadListResponse' }
+       schema:
+        $ref: '#/components/schemas/ThreadListResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/threads/{thread_id}:
   get:
-   tags: [Threads]
+   tags:
+    - Threads
    summary: Get thread with full conversation state
-   description: Cold-start reconstruction. Returns all messages, pending approval/clarification, and active execution.
+   description:
+    Cold-start reconstruction path. Returns all messages, pending approval/clarification,
+    and active execution.
    operationId: get_thread_api_v1_assistant_threads__thread_id__get
    parameters:
     - name: thread_id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+       type: string
+       format: uuid
+       title: Thread Id
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ThreadDetailResponse' }
+       schema:
+        $ref: '#/components/schemas/ThreadDetailResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '404':
      description: thread_not_found
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ErrorResponse' }
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
   patch:
-   tags: [Threads]
+   tags:
+    - Threads
    summary: Update thread (rename or archive/unarchive)
    operationId: update_thread_api_v1_assistant_threads__thread_id__patch
    parameters:
     - name: thread_id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+       type: string
+       format: uuid
+       title: Thread Id
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/UpdateThreadRequest' }
+      schema:
+       $ref: '#/components/schemas/UpdateThreadRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ThreadSummary' }
+       schema:
+        $ref: '#/components/schemas/ThreadSummary'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
+    '404':
+     description: thread_not_found
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
     '409':
      description: thread_has_active_execution
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/threads/{thread_id}/messages:
   post:
-   tags: [Messages]
+   tags:
+    - Messages
    summary: Send a message and start execution
-   description: Persists the user message, creates an execution (state queued), kicks off agent loop async, returns immediately. Open GET /executions/{executionId}/events for SSE.
+   description:
+    'Persists the user message, creates an execution (state: queued),
+    kicks off the agent loop asynchronously, and returns immediately. Open `GET
+    /executions/{executionId}/events` for the SSE stream.'
    operationId: create_message_api_v1_assistant_threads__thread_id__messages_post
    parameters:
     - name: thread_id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+       type: string
+       format: uuid
+       title: Thread Id
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/CreateMessageRequest' }
+      schema:
+       $ref: '#/components/schemas/CreateMessageRequest'
    responses:
     '201':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/CreateMessageResponse' }
+       schema:
+        $ref: '#/components/schemas/CreateMessageResponse'
     '400':
      description: invalid_content_length / invalid_fork_target
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
+    '404':
+     description: thread_not_found
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
     '409':
      description: thread_busy
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
     '429':
      description: hourly_message_limit / daily_message_limit / daily_token_limit
      headers:
       Retry-After:
-       schema: { type: integer, minimum: 1 }
+       description: Seconds until the client may retry the request.
+       schema:
+        type: integer
+        minimum: 1
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/executions/{execution_id}/events:
   get:
-   tags: [Messages]
+   tags:
+    - Messages
    summary: Subscribe to execution events (SSE)
-   description: Opens a Server-Sent Events stream. Pass Last-Event-ID header to replay missed events on reconnect.
+   description: Opens a Server-Sent Events stream for the given execution. Pass
+    `Last-Event-ID` header to replay missed events on reconnect.
    operationId: execution_events_api_v1_assistant_executions__execution_id__events_get
    parameters:
     - name: execution_id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+       type: string
+       format: uuid
+       title: Execution Id
     - name: Last-Event-ID
       in: header
       required: false
-      schema: { anyOf: [{ type: integer }, { type: 'null' }] }
+      schema:
+       anyOf:
+        - type: integer
+        - type: 'null'
+       title: Last-Event-Id
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    responses:
     '200':
      description: SSE event stream
      content:
-      text/event-stream: {}
+      application/json:
+       schema: {}
+      text/event-stream:
+       schema:
+        description: 'Server-Sent Events stream. Each event has `event: <type>`
+         and `data: <json>` fields.'
+        oneOf:
+         - $ref: '#/components/schemas/ApprovalEvent'
+         - $ref: '#/components/schemas/ClarificationEvent'
+         - $ref: '#/components/schemas/ConversationEvent'
+         - $ref: '#/components/schemas/DoneEvent'
+         - $ref: '#/components/schemas/ErrorEvent'
+         - $ref: '#/components/schemas/MessageEvent'
+         - $ref: '#/components/schemas/StatusEvent'
+         - $ref: '#/components/schemas/ThinkingEvent'
+         - $ref: '#/components/schemas/ToolCallEvent'
+         - $ref: '#/components/schemas/ToolResultEvent'
     '404':
      description: Execution not found
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/messages/{message_id}/regenerate:
   post:
-   tags: [Messages]
+   tags:
+    - Messages
    summary: Regenerate assistant response
+   description:
+    Clean-slate regeneration. Starts a fresh execution with conversation
+    history up to (excluding) the original assistant response.
    operationId: regenerate_message_api_v1_assistant_messages__message_id__regenerate_post
    parameters:
     - name: message_id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+       type: string
+       format: uuid
+       title: Message Id
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    responses:
     '201':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/RegenerateResponse' }
+       schema:
+        $ref: '#/components/schemas/RegenerateResponse'
+    '400':
+     description: validation_error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
+    '404':
+     description: message_not_found
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
     '409':
      description: thread_busy
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/approve:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Approve a pending action
-   description: Triggers replay execution with stored tool call params. Returns new executionId — open SSE for that execution.
+   description:
+    "Triggers a replay execution that runs the stored tool call with\
+    \ exact params. Returns a new executionId \u2014 open SSE for that execution."
    operationId: approve_api_v1_assistant_approve_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/ApproveRequest' }
+      schema:
+       $ref: '#/components/schemas/ApproveRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ApproveResponse' }
+       schema:
+        $ref: '#/components/schemas/ApproveResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '409':
      description: approval_superseded
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/reject:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Reject a pending action
+   description: Marks the approval as rejected. The execution completes with no
+    tool execution.
    operationId: reject_api_v1_assistant_reject_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/RejectRequest' }
+      schema:
+       $ref: '#/components/schemas/RejectRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/RejectResponse' }
+       schema:
+        $ref: '#/components/schemas/RejectResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '409':
      description: approval_superseded
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/clarify:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Submit clarification answers
+   description: Provides structured answers to a clarification request. Starts
+    a new execution that resumes the agent with the answers as tool results.
    operationId: clarify_api_v1_assistant_clarify_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/ClarifyRequest' }
+      schema:
+       $ref: '#/components/schemas/ClarifyRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ClarifyResponse' }
+       schema:
+        $ref: '#/components/schemas/ClarifyResponse'
+    '400':
+     description: validation_error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '409':
      description: clarification_superseded
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/cancel:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Cancel the active execution on a thread
+   description:
+    Cooperative cancel. The agent loop finishes its current step, emits
+    a truncated message if streaming, and transitions to canceled.
    operationId: cancel_api_v1_assistant_cancel_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/CancelRequest' }
+      schema:
+       $ref: '#/components/schemas/CancelRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/CancelResponse' }
+       schema:
+        $ref: '#/components/schemas/CancelResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '409':
      description: no_active_execution
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/undo:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Undo a create action
+   description: Deletes the resource that was created by the assistant.
    operationId: undo_api_v1_assistant_undo_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/UndoRequest' }
+      schema:
+       $ref: '#/components/schemas/UndoRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ActionResultResponse' }
+       schema:
+        $ref: '#/components/schemas/ActionResultResponse'
+    '400':
+     description: validation_error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '409':
      description: undo_conflict
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/revert:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Revert a modify action
+   description: Rolls back the resource to its pre-change snapshot.
    operationId: revert_api_v1_assistant_revert_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/RevertRequest' }
+      schema:
+       $ref: '#/components/schemas/RevertRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ActionResultResponse' }
+       schema:
+        $ref: '#/components/schemas/ActionResultResponse'
+    '400':
+     description: validation_error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '409':
      description: revert_conflict
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
     '410':
      description: revert_expired
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/restore:
   post:
-   tags: [Actions]
+   tags:
+    - Actions
    summary: Restore a deleted resource
+   description: Recreates the resource from its pre-delete snapshot.
    operationId: restore_api_v1_assistant_restore_post
+   parameters:
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/RestoreRequest' }
+      schema:
+       $ref: '#/components/schemas/RestoreRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/ActionResultResponse' }
+       schema:
+        $ref: '#/components/schemas/ActionResultResponse'
+    '400':
+     description: validation_error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '410':
      description: restore_expired
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
  /api/v1/assistant/messages/{message_id}/feedback:
   post:
-   tags: [Feedback]
+   tags:
+    - Feedback
    summary: Submit feedback on an assistant message
    operationId: submit_feedback_api_v1_assistant_messages__message_id__feedback_post
    parameters:
     - name: message_id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+       type: string
+       format: uuid
+       title: Message Id
+    - name: authorization
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz auth token (Bearer or raw JWT)
+       title: Authorization
+      description: SigNoz auth token (Bearer or raw JWT)
+    - name: X-SigNoz-URL
+      in: header
+      required: false
+      schema:
+       anyOf:
+        - type: string
+        - type: 'null'
+       description: SigNoz instance base URL for multi-tenant deployments. Falls
+        back to SIGNOZ_API_URL env var when omitted.
+       title: X-Signoz-Url
+      description: SigNoz instance base URL for multi-tenant deployments. Falls
+       back to SIGNOZ_API_URL env var when omitted.
    requestBody:
     required: true
     content:
      application/json:
-      schema: { $ref: '#/components/schemas/FeedbackRequest' }
+      schema:
+       $ref: '#/components/schemas/FeedbackRequest'
    responses:
     '200':
+     description: Successful Response
      content:
       application/json:
-       schema: { $ref: '#/components/schemas/FeedbackResponse' }
+       schema:
+        $ref: '#/components/schemas/FeedbackResponse'
+    '400':
+     description: validation_error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '403':
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+     description: Forbidden
     '404':
      description: message_not_found
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ErrorResponse'
+    '422':
+     description: Validation Error
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/HTTPValidationError'
 components:
  schemas:
   ActionResultResponse:
-   type: object
-   required: [resourceType, resourceId, action]
    properties:
-    success: { type: boolean, default: true }
-    resourceType: { type: string }
-    resourceId: { type: string }
-    action: { type: string }
+    success:
+     type: boolean
+     title: Success
+     default: true
+    resourceType:
+     type: string
+     title: Resourcetype
+    resourceId:
+     type: string
+     title: Resourceid
+    action:
+     type: string
+     title: Action
+   type: object
+   required:
+    - resourceType
+    - resourceId
+    - action
+   title: ActionResultResponse
+   description: Shared response for undo, revert, restore.
   ApprovalSummary:
-   type: object
-   required:
-    [
-     approvalId,
-     executionId,
-     sourceMessageId,
-     state,
-     actionType,
-     resourceType,
-     summary,
-     createdAt,
-    ]
    properties:
-    approvalId: { type: string, format: uuid }
-    executionId: { type: string, format: uuid }
-    sourceMessageId: { type: string, format: uuid }
-    state: { type: string }
-    actionType: { type: string }
-    resourceType: { type: string }
-    summary: { type: string }
+    approvalId:
+     type: string
+     format: uuid
+     title: Approvalid
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+    sourceMessageId:
+     type: string
+     format: uuid
+     title: Sourcemessageid
+    state:
+     type: string
+     title: State
+    actionType:
+     type: string
+     title: Actiontype
+    resourceType:
+     type: string
+     title: Resourcetype
+    summary:
+     type: string
+     title: Summary
     diff:
-     { anyOf: [{ additionalProperties: true, type: object }, { type: 'null' }] }
-    createdAt: { type: string, format: date-time }
-  ApproveRequest:
-   type: object
-   required: [approvalId]
-   properties:
-    approvalId: { type: string, format: uuid }
-  ApproveResponse:
-   type: object
-   required: [executionId]
-   properties:
-    executionId: { type: string, format: uuid }
-  CancelRequest:
-   type: object
-   required: [threadId]
-   properties:
-    threadId: { type: string, format: uuid }
-  CancelResponse:
-   type: object
-   required: [executionId, previousState, state]
-   properties:
-    executionId: { type: string, format: uuid }
-    previousState: { type: string }
-    state: { type: string }
-  ClarificationField:
-   type: object
-   required: [id, type, label]
-   properties:
-    id: { type: string }
-    type: { type: string }
-    label: { type: string }
-    required: { type: boolean, default: false }
-    options:
-     { anyOf: [{ items: { type: string }, type: array }, { type: 'null' }] }
-    default:
-     {
-      anyOf:
-       [
-        { type: string },
-        { items: { type: string }, type: array },
-        { type: 'null' },
-       ],
-     }
-  ClarificationSummary:
+     anyOf:
+      - additionalProperties: true
+        type: object
+      - type: 'null'
+     title: Diff
+    createdAt:
+     type: string
+     format: date-time
+     title: Createdat
    type: object
    required:
-    [clarificationId, executionId, sourceMessageId, state, message, createdAt]
+    - approvalId
+    - executionId
+    - sourceMessageId
+    - state
+    - actionType
+    - resourceType
+    - summary
+    - createdAt
+   title: ApprovalSummary
+  ApproveRequest:
    properties:
-    clarificationId: { type: string, format: uuid }
-    executionId: { type: string, format: uuid }
-    sourceMessageId: { type: string, format: uuid }
-    state: { type: string }
-    message: { type: string }
+    approvalId:
+     type: string
+     format: uuid
+     title: Approvalid
+   type: object
+   required:
+    - approvalId
+   title: ApproveRequest
+  ApproveResponse:
+   properties:
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+   type: object
+   required:
+    - executionId
+   title: ApproveResponse
+   description: Approve starts a new execution for the replay.
+  CancelRequest:
+   properties:
+    threadId:
+     type: string
+     format: uuid
+     title: Threadid
+   type: object
+   required:
+    - threadId
+   title: CancelRequest
+  CancelResponse:
+   properties:
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+    previousState:
+     type: string
+     title: Previousstate
+    state:
+     type: string
+     title: State
+   type: object
+   required:
+    - executionId
+    - previousState
+    - state
+   title: CancelResponse
+  ClarificationField:
+   properties:
+    id:
+     type: string
+     title: Id
+    type:
+     type: string
+     title: Type
+    label:
+     type: string
+     title: Label
+    required:
+     type: boolean
+     title: Required
+     default: false
+    options:
+     anyOf:
+      - items:
+         type: string
+        type: array
+      - type: 'null'
+     title: Options
+    default:
+     anyOf:
+      - type: string
+      - items:
+         type: string
+        type: array
+      - type: 'null'
+     title: Default
+   type: object
+   required:
+    - id
+    - type
+    - label
+   title: ClarificationField
+  ClarificationSummary:
+   properties:
+    clarificationId:
+     type: string
+     format: uuid
+     title: Clarificationid
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+    sourceMessageId:
+     type: string
+     format: uuid
+     title: Sourcemessageid
+    state:
+     type: string
+     title: State
+    message:
+     type: string
+     title: Message
     discoveredContext:
-     { anyOf: [{ additionalProperties: true, type: object }, { type: 'null' }] }
+     anyOf:
+      - additionalProperties: true
+        type: object
+      - type: 'null'
+     title: Discoveredcontext
     fields:
-     {
-      items: { $ref: '#/components/schemas/ClarificationField' },
-      type: array,
-      default: [],
-     }
-    createdAt: { type: string, format: date-time }
+     items:
+      $ref: '#/components/schemas/ClarificationField'
+     type: array
+     title: Fields
+     default: []
+    createdAt:
+     type: string
+     format: date-time
+     title: Createdat
+   type: object
+   required:
+    - clarificationId
+    - executionId
+    - sourceMessageId
+    - state
+    - message
+    - createdAt
+   title: ClarificationSummary
   ClarifyRequest:
-   type: object
-   required: [clarificationId, answers]
    properties:
-    clarificationId: { type: string, format: uuid }
-    answers: { additionalProperties: true, type: object }
+    clarificationId:
+     type: string
+     format: uuid
+     title: Clarificationid
+    answers:
+     additionalProperties: true
+     type: object
+     title: Answers
+   type: object
+   required:
+    - clarificationId
+    - answers
+   title: ClarifyRequest
   ClarifyResponse:
-   type: object
-   required: [executionId]
    properties:
-    executionId: { type: string, format: uuid }
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+   type: object
+   required:
+    - executionId
+   title: ClarifyResponse
+   description: Clarify starts a new execution for the continuation.
   CreateMessageRequest:
-   type: object
-   required: [content]
    properties:
-    content: { type: string, maxLength: 10000, minLength: 1 }
+    content:
+     type: string
+     maxLength: 10000
+     minLength: 1
+     title: Content
     contexts:
      anyOf:
-      - { items: { $ref: '#/components/schemas/MessageContext' }, type: array }
-      - { type: 'null' }
+      - items:
+         $ref: '#/components/schemas/MessageContext'
+        type: array
+      - type: 'null'
+     title: Contexts
     forkFromMessageId:
-     { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
+     anyOf:
+      - type: string
+        format: uuid
+      - type: 'null'
+     title: Forkfrommessageid
+   type: object
+   required:
+    - content
+   title: CreateMessageRequest
   CreateMessageResponse:
-   type: object
-   required: [executionId]
    properties:
-    executionId: { type: string, format: uuid }
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+   type: object
+   required:
+    - executionId
+   title: CreateMessageResponse
   CreateThreadRequest:
-   type: object
    properties:
-    title: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+    title:
+     anyOf:
+      - type: string
+        maxLength: 200
+      - type: 'null'
+     title: Title
+   type: object
+   title: CreateThreadRequest
   CreateThreadResponse:
-   type: object
-   required: [threadId]
    properties:
-    threadId: { type: string, format: uuid }
+    threadId:
+     type: string
+     format: uuid
+     title: Threadid
+   type: object
+   required:
+    - threadId
+   title: CreateThreadResponse
   ErrorBody:
-   type: object
-   required: [code, message]
+   description: "Inner error object \u2014 matches Go ErrorsJSON."
    properties:
-    code: { type: string, pattern: '^[a-z_]+$' }
-    message: { type: string }
+    code:
+     pattern: ^[a-z_]+$
+     title: Code
+     type: string
+    message:
+     title: Message
+     type: string
     errors:
-     {
-      anyOf:
-       [
-        {
-         items: { $ref: '#/components/schemas/ErrorResponseAdditional' },
-         type: array,
-        },
-        { type: 'null' },
-       ],
-     }
-    url: { anyOf: [{ type: string }, { type: 'null' }] }
+     anyOf:
+      - items:
+         $ref: '#/components/schemas/ErrorResponseAdditional'
+        type: array
+      - type: 'null'
+     default: null
+     title: Errors
+    url:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Url
+   required:
+    - code
+    - message
+   title: ErrorBody
+   type: object
   ErrorResponse:
-   type: object
-   required: [error]
    properties:
-    status: { type: string, default: error }
-    error: { $ref: '#/components/schemas/ErrorBody' }
+    status:
+     type: string
+     title: Status
+     default: error
+    error:
+     $ref: '#/components/schemas/ErrorBody'
+   type: object
+   required:
+    - error
+   title: ErrorResponse
+   description: "Top-level error envelope \u2014 matches Go RenderErrorResponse."
   ErrorResponseAdditional:
-   type: object
-   required: [message]
+   description: "Single sub-error entry \u2014 matches Go ErrorsResponseerroradditional."
    properties:
-    message: { type: string }
+    message:
+     title: Message
+     type: string
+   required:
+    - message
+   title: ErrorResponseAdditional
+   type: object
   FeedbackRating:
    type: string
-   enum: [positive, negative]
+   enum:
+    - positive
+    - negative
+   title: FeedbackRating
   FeedbackRequest:
-   type: object
-   required: [rating]
    properties:
-    rating: { $ref: '#/components/schemas/FeedbackRating' }
-    comment: { anyOf: [{ type: string, maxLength: 2000 }, { type: 'null' }] }
+    rating:
+     $ref: '#/components/schemas/FeedbackRating'
+    comment:
+     anyOf:
+      - type: string
+        maxLength: 2000
+      - type: 'null'
+     title: Comment
+   type: object
+   required:
+    - rating
+   title: FeedbackRequest
   FeedbackResponse:
-   type: object
    properties: {}
+   type: object
+   title: FeedbackResponse
+  HTTPValidationError:
+   properties:
+    detail:
+     items:
+      $ref: '#/components/schemas/ValidationError'
+     type: array
+     title: Detail
+   type: object
+   title: HTTPValidationError
   HealthResponse:
-   type: object
-   required: [status]
    properties:
-    status: { type: string, const: ok }
+    status:
+     type: string
+     const: ok
+     title: Status
+   type: object
+   required:
+    - status
+   title: HealthResponse
   MessageAction:
-   type: object
-   required: [kind, actionMetadataId, resourceType, resourceId, label]
    properties:
-    kind: { type: string }
-    actionMetadataId: { type: string, format: uuid }
-    resourceType: { type: string }
-    resourceId: { type: string }
-    label: { type: string }
+    kind:
+     type: string
+     title: Kind
+    actionMetadataId:
+     type: string
+     format: uuid
+     title: Actionmetadataid
+    resourceType:
+     type: string
+     title: Resourcetype
+    resourceId:
+     type: string
+     title: Resourceid
+    label:
+     type: string
+     title: Label
+   type: object
+   required:
+    - kind
+    - actionMetadataId
+    - resourceType
+    - resourceId
+    - label
+   title: MessageAction
   MessageContext:
-   type: object
-   required: [source, type, resourceId]
    properties:
-    source: { type: string }
-    type: { type: string }
-    resourceId: { type: string }
-    resourceName: { anyOf: [{ type: string }, { type: 'null' }] }
+    source:
+     type: string
+     title: Source
+    type:
+     type: string
+     title: Type
+    resourceId:
+     type: string
+     title: Resourceid
+    resourceName:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: Resourcename
     metadata:
-     { anyOf: [{ additionalProperties: true, type: object }, { type: 'null' }] }
+     anyOf:
+      - additionalProperties: true
+        type: object
+      - type: 'null'
+     title: Metadata
+   type: object
+   required:
+    - source
+    - type
+    - resourceId
+   title: MessageContext
   MessageSummary:
-   type: object
-   required: [messageId, role, createdAt, updatedAt]
    properties:
-    messageId: { type: string, format: uuid }
-    role: { type: string }
-    contentType: { type: string, default: markdown }
-    content: { anyOf: [{ type: string }, { type: 'null' }] }
-    complete: { type: boolean, default: true }
+    messageId:
+     type: string
+     format: uuid
+     title: Messageid
+    role:
+     type: string
+     title: Role
+    contentType:
+     type: string
+     title: Contenttype
+     default: markdown
+    content:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: Content
+    complete:
+     type: boolean
+     title: Complete
+     default: true
     toolCalls:
-     {
-      anyOf:
-       [
-        { items: { additionalProperties: true, type: object }, type: array },
-        { type: 'null' },
-       ],
-     }
+     anyOf:
+      - items:
+         additionalProperties: true
+         type: object
+        type: array
+      - type: 'null'
+     title: Toolcalls
+    blocks:
+     anyOf:
+      - items:
+         additionalProperties: true
+         type: object
+        type: array
+      - type: 'null'
+     title: Blocks
     contexts:
-     {
-      anyOf:
-       [
-        { items: { additionalProperties: true, type: object }, type: array },
-        { type: 'null' },
-       ],
-     }
+     anyOf:
+      - items:
+         additionalProperties: true
+         type: object
+        type: array
+      - type: 'null'
+     title: Contexts
     actions:
-     {
-      anyOf:
-       [
-        { items: { $ref: '#/components/schemas/MessageAction' }, type: array },
-        { type: 'null' },
-       ],
-     }
+     anyOf:
+      - items:
+         $ref: '#/components/schemas/MessageAction'
+        type: array
+      - type: 'null'
+     title: Actions
     feedbackRating:
-     {
-      anyOf:
-       [{ $ref: '#/components/schemas/FeedbackRating' }, { type: 'null' }],
-     }
-    feedbackComment: { anyOf: [{ type: string }, { type: 'null' }] }
-    executionId: { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
-    createdAt: { type: string, format: date-time }
-    updatedAt: { type: string, format: date-time }
+     anyOf:
+      - $ref: '#/components/schemas/FeedbackRating'
+      - type: 'null'
+    feedbackComment:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: Feedbackcomment
+    executionId:
+     anyOf:
+      - type: string
+        format: uuid
+      - type: 'null'
+     title: Executionid
+    createdAt:
+     type: string
+     format: date-time
+     title: Createdat
+    updatedAt:
+     type: string
+     format: date-time
+     title: Updatedat
+   type: object
+   required:
+    - messageId
+    - role
+    - createdAt
+    - updatedAt
+   title: MessageSummary
   ReadinessChecks:
-   type: object
-   required: [database, redis]
    properties:
-    database: { type: string, enum: [ok, failed] }
-    redis: { type: string, enum: [ok, failed] }
+    database:
+     type: string
+     enum:
+      - ok
+      - failed
+     title: Database
+    redis:
+     type: string
+     enum:
+      - ok
+      - failed
+     title: Redis
+   type: object
+   required:
+    - database
+    - redis
+   title: ReadinessChecks
   ReadinessResponse:
-   type: object
-   required: [status, checks]
    properties:
-    status: { type: string, enum: [ok, degraded] }
-    checks: { $ref: '#/components/schemas/ReadinessChecks' }
+    status:
+     type: string
+     enum:
+      - ok
+      - degraded
+     title: Status
+    checks:
+     $ref: '#/components/schemas/ReadinessChecks'
+   type: object
+   required:
+    - status
+    - checks
+   title: ReadinessResponse
   RegenerateResponse:
-   type: object
-   required: [executionId]
    properties:
-    executionId: { type: string, format: uuid }
+    executionId:
+     type: string
+     format: uuid
+     title: Executionid
+   type: object
+   required:
+    - executionId
+   title: RegenerateResponse
   RejectRequest:
-   type: object
-   required: [approvalId]
    properties:
-    approvalId: { type: string, format: uuid }
+    approvalId:
+     type: string
+     format: uuid
+     title: Approvalid
+   type: object
+   required:
+    - approvalId
+   title: RejectRequest
   RejectResponse:
-   type: object
    properties: {}
+   type: object
+   title: RejectResponse
+   description: Reject completes the execution with no new work.
   RestoreRequest:
-   type: object
-   required: [actionMetadataId]
    properties:
-    actionMetadataId: { type: string, format: uuid }
+    actionMetadataId:
+     type: string
+     format: uuid
+     title: Actionmetadataid
+   type: object
+   required:
+    - actionMetadataId
+   title: RestoreRequest
   RevertRequest:
-   type: object
-   required: [actionMetadataId]
    properties:
-    actionMetadataId: { type: string, format: uuid }
+    actionMetadataId:
+     type: string
+     format: uuid
+     title: Actionmetadataid
+   type: object
+   required:
+    - actionMetadataId
+   title: RevertRequest
   ThreadDetailResponse:
-   type: object
-   required: [threadId, createdAt, updatedAt]
    properties:
-    threadId: { type: string, format: uuid }
-    title: { anyOf: [{ type: string }, { type: 'null' }] }
-    state: { anyOf: [{ type: string }, { type: 'null' }] }
+    threadId:
+     type: string
+     format: uuid
+     title: Threadid
+    title:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: Title
+    state:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: State
     activeExecutionId:
-     { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
-    archived: { type: boolean, default: false }
-    createdAt: { type: string, format: date-time }
-    updatedAt: { type: string, format: date-time }
+     anyOf:
+      - type: string
+        format: uuid
+      - type: 'null'
+     title: Activeexecutionid
+    archived:
+     type: boolean
+     title: Archived
+     default: false
+    createdAt:
+     type: string
+     format: date-time
+     title: Createdat
+    updatedAt:
+     type: string
+     format: date-time
+     title: Updatedat
     messages:
-     {
-      items: { $ref: '#/components/schemas/MessageSummary' },
-      type: array,
-      default: [],
-     }
+     items:
+      $ref: '#/components/schemas/MessageSummary'
+     type: array
+     title: Messages
+     default: []
     pendingApproval:
-     {
-      anyOf:
-       [{ $ref: '#/components/schemas/ApprovalSummary' }, { type: 'null' }],
-     }
+     anyOf:
+      - $ref: '#/components/schemas/ApprovalSummary'
+      - type: 'null'
     pendingClarification:
-     {
-      anyOf:
-       [
-        { $ref: '#/components/schemas/ClarificationSummary' },
-        { type: 'null' },
-       ],
-     }
-  ThreadListResponse:
+     anyOf:
+      - $ref: '#/components/schemas/ClarificationSummary'
+      - type: 'null'
    type: object
-   required: [threads]
+   required:
+    - threadId
+    - createdAt
+    - updatedAt
+   title: ThreadDetailResponse
+   description: Full thread state for cold-start reconstruction (GET /threads/{id}).
+  ThreadListResponse:
    properties:
     threads:
-     { items: { $ref: '#/components/schemas/ThreadSummary' }, type: array }
-    nextCursor: { anyOf: [{ type: string }, { type: 'null' }] }
-    hasMore: { type: boolean, default: false }
+     items:
+      $ref: '#/components/schemas/ThreadSummary'
+     type: array
+     title: Threads
+    nextCursor:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: Nextcursor
+    hasMore:
+     type: boolean
+     title: Hasmore
+     default: false
+   type: object
+   required:
+    - threads
+   title: ThreadListResponse
   ThreadSummary:
-   type: object
-   required: [threadId, createdAt, updatedAt]
    properties:
-    threadId: { type: string, format: uuid }
-    title: { anyOf: [{ type: string }, { type: 'null' }] }
-    state: { anyOf: [{ type: string }, { type: 'null' }] }
+    threadId:
+     type: string
+     format: uuid
+     title: Threadid
+    title:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: Title
+    state:
+     anyOf:
+      - type: string
+      - type: 'null'
+     title: State
     activeExecutionId:
-     { anyOf: [{ type: string, format: uuid }, { type: 'null' }] }
-    archived: { type: boolean, default: false }
-    createdAt: { type: string, format: date-time }
-    updatedAt: { type: string, format: date-time }
+     anyOf:
+      - type: string
+        format: uuid
+      - type: 'null'
+     title: Activeexecutionid
+    archived:
+     type: boolean
+     title: Archived
+     default: false
+    createdAt:
+     type: string
+     format: date-time
+     title: Createdat
+    updatedAt:
+     type: string
+     format: date-time
+     title: Updatedat
+   type: object
+   required:
+    - threadId
+    - createdAt
+    - updatedAt
+   title: ThreadSummary
+   description: Thread list item.
   UndoRequest:
-   type: object
-   required: [actionMetadataId]
    properties:
-    actionMetadataId: { type: string, format: uuid }
+    actionMetadataId:
+     type: string
+     format: uuid
+     title: Actionmetadataid
+   type: object
+   required:
+    - actionMetadataId
+   title: UndoRequest
   UpdateThreadRequest:
-   type: object
    properties:
-    title: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
-    archived: { anyOf: [{ type: boolean }, { type: 'null' }] }
-  ValidationError:
+    title:
+     anyOf:
+      - type: string
+        maxLength: 200
+      - type: 'null'
+     title: Title
+    archived:
+     anyOf:
+      - type: boolean
+      - type: 'null'
+     title: Archived
    type: object
-   required: [loc, msg, type]
+   title: UpdateThreadRequest
+  ValidationError:
    properties:
     loc:
-     { items: { anyOf: [{ type: string }, { type: integer }] }, type: array }
-    msg: { type: string }
-    type: { type: string }
-    input: {}
-    ctx: { type: object }
+     items:
+      anyOf:
+       - type: string
+       - type: integer
+     type: array
+     title: Location
+    msg:
+     type: string
+     title: Message
+    type:
+     type: string
+     title: Error Type
+    input:
+     title: Input
+    ctx:
+     type: object
+     title: Context
+   type: object
+   required:
+    - loc
+    - msg
+    - type
+   title: ValidationError
+  ApprovalEvent:
+   properties:
+    type:
+     default: approval
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    approvalId:
+     title: Approvalid
+     type: string
+    actionType:
+     title: Actiontype
+     type: string
+    resourceType:
+     title: Resourcetype
+     type: string
+    summary:
+     title: Summary
+     type: string
+    diff:
+     anyOf:
+      - additionalProperties: true
+        type: object
+      - type: 'null'
+     default: null
+     title: Diff
+   required:
+    - executionId
+    - approvalId
+    - actionType
+    - resourceType
+    - summary
+   title: ApprovalEvent
+   type: object
+  ClarificationFieldEvent:
+   properties:
+    id:
+     title: Id
+     type: string
+    type:
+     title: Type
+     type: string
+    label:
+     title: Label
+     type: string
+    required:
+     default: false
+     title: Required
+     type: boolean
+    options:
+     anyOf:
+      - items:
+         type: string
+        type: array
+      - type: 'null'
+     default: null
+     title: Options
+    default:
+     anyOf:
+      - type: string
+      - items:
+         type: string
+        type: array
+      - type: 'null'
+     default: null
+     title: Default
+   required:
+    - id
+    - type
+    - label
+   title: ClarificationFieldEvent
+   type: object
+  ClarificationEvent:
+   properties:
+    type:
+     default: clarification
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    clarificationId:
+     title: Clarificationid
+     type: string
+    message:
+     title: Message
+     type: string
+    discoveredContext:
+     anyOf:
+      - additionalProperties: true
+        type: object
+      - type: 'null'
+     default: null
+     title: Discoveredcontext
+    fields:
+     default: []
+     items:
+      $ref: '#/components/schemas/ClarificationFieldEvent'
+     title: Fields
+     type: array
+   required:
+    - executionId
+    - clarificationId
+    - message
+   title: ClarificationEvent
+   type: object
+  ConversationEvent:
+   properties:
+    type:
+     default: conversation
+     title: Type
+     type: string
+    threadId:
+     title: Threadid
+     type: string
+    title:
+     title: Title
+     type: string
+   required:
+    - threadId
+    - title
+   title: ConversationEvent
+   type: object
+  DoneEvent:
+   properties:
+    type:
+     default: done
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    tokenInput:
+     title: Tokeninput
+     type: integer
+    tokenOutput:
+     title: Tokenoutput
+     type: integer
+    latencyMs:
+     title: Latencyms
+     type: integer
+   required:
+    - executionId
+    - tokenInput
+    - tokenOutput
+    - latencyMs
+   title: DoneEvent
+   type: object
+  RetryAction:
+   enum:
+    - auto
+    - manual
+    - none
+   title: RetryAction
+   type: string
+  ErrorEvent:
+   properties:
+    type:
+     default: error
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    error:
+     $ref: '#/components/schemas/ErrorBody'
+    retryAction:
+     $ref: '#/components/schemas/RetryAction'
+     default: none
+   required:
+    - executionId
+    - error
+   title: ErrorEvent
+   type: object
+  MessageActionEvent:
+   properties:
+    kind:
+     title: Kind
+     type: string
+    actionMetadataId:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Actionmetadataid
+    resourceType:
+     title: Resourcetype
+     type: string
+    resourceId:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Resourceid
+    label:
+     title: Label
+     type: string
+   required:
+    - kind
+    - resourceType
+    - label
+   title: MessageActionEvent
+   type: object
+  MessageEvent:
+   properties:
+    type:
+     default: message
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    messageId:
+     title: Messageid
+     type: string
+    delta:
+     title: Delta
+     type: string
+    done:
+     default: false
+     title: Done
+     type: boolean
+    actions:
+     anyOf:
+      - items:
+         $ref: '#/components/schemas/MessageActionEvent'
+        type: array
+      - type: 'null'
+     default: null
+     title: Actions
+   required:
+    - executionId
+    - messageId
+    - delta
+   title: MessageEvent
+   type: object
+  ExecutionState:
+   enum:
+    - queued
+    - running
+    - awaiting_approval
+    - awaiting_clarification
+    - resumed
+    - completed
+    - failed
+    - canceled
+   title: ExecutionState
+   type: string
+  StatusEvent:
+   properties:
+    type:
+     default: status
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    state:
+     $ref: '#/components/schemas/ExecutionState'
+   required:
+    - executionId
+    - state
+   title: StatusEvent
+   type: object
+  ThinkingEvent:
+   properties:
+    type:
+     default: thinking
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    content:
+     title: Content
+     type: string
+   required:
+    - executionId
+    - content
+   title: ThinkingEvent
+   type: object
+  ToolCallEvent:
+   properties:
+    type:
+     default: tool_call
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    messageId:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Messageid
+    toolCallId:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Toolcallid
+    toolName:
+     title: Toolname
+     type: string
+    toolInput:
+     additionalProperties: true
+     title: Toolinput
+     type: object
+   required:
+    - executionId
+    - toolName
+    - toolInput
+   title: ToolCallEvent
+   type: object
+  ToolResultEvent:
+   properties:
+    type:
+     default: tool_result
+     title: Type
+     type: string
+    executionId:
+     title: Executionid
+     type: string
+    eventId:
+     default: 0
+     title: Eventid
+     type: integer
+    messageId:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Messageid
+    toolCallId:
+     anyOf:
+      - type: string
+      - type: 'null'
+     default: null
+     title: Toolcallid
+    success:
+     default: true
+     title: Success
+     type: boolean
+    toolName:
+     title: Toolname
+     type: string
+    result:
+     additionalProperties: true
+     title: Result
+     type: object
+   required:
+    - executionId
+    - toolName
+    - result
+   title: ToolResultEvent
+   type: object

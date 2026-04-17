@@ -1553,6 +1553,60 @@
 	max-height: 160px;
 }
 
+// ─── Thinking step ───────────────────────────────────────────────────────────
+
+.ai-thinking-step {
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	overflow: hidden;
+	margin: 4px 0;
+	font-size: 12px;
+}
+
+.ai-thinking-step__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 5px 8px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 12px;
+	color: var(--l2-foreground);
+	font-style: italic;
+}
+
+.ai-thinking-step__icon {
+	flex-shrink: 0;
+	color: var(--l3-foreground, #6b7280);
+}
+
+.ai-thinking-step__label {
+	font-weight: 500;
+	color: var(--l3-foreground, #6b7280);
+}
+
+.ai-thinking-step__chevron {
+	flex-shrink: 0;
+	color: var(--l3-foreground, #6b7280);
+	margin-left: auto;
+}
+
+.ai-thinking-step__body {
+	padding: 6px 8px 8px;
+	border-top: 1px solid var(--l2-border);
+}
+
+.ai-thinking-step__content {
+	font-size: 12px;
+	color: var(--l3-foreground, #6b7280);
+	font-style: italic;
+	margin: 0;
+	white-space: pre-wrap;
+	line-height: 1.5;
+}
+
 // ─── Approval card ────────────────────────────────────────────────────────────
 
 .ai-approval {

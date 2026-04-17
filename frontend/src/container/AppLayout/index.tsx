@@ -860,7 +860,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							<LayoutContent data-overlayscrollbars-initialize>
 								<OverlayScrollbar>
 									<ChildrenContainer>
-										{isToDisplayLayout && !renderFullScreen && !isAIAssistantPage && <TopNav />}
+										{isToDisplayLayout && !renderFullScreen && !isAIAssistantPage && (
+											<TopNav />
+										)}
 										{children}
 									</ChildrenContainer>
 								</OverlayScrollbar>
@@ -868,8 +870,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						</Sentry.ErrorBoundary>
 					</div>
 
-					<AIAssistantPanel />
-					<AIAssistantModal />
+					{isLoggedIn && (
+						<>
+							<AIAssistantPanel />
+							<AIAssistantModal />
+						</>
+					)}
 				</Flex>
 
 				{showAddCreditCardModal && <ChatSupportGateway />}

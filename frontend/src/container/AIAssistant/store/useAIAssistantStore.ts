@@ -12,6 +12,7 @@ import {
 	getThreadDetail,
 	listThreads,
 	MessageSummary,
+	MessageSummaryBlock,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
 	streamEvents,
@@ -25,6 +26,7 @@ import {
 	ConversationStreamState,
 	Message,
 	MessageAttachment,
+	MessageBlock,
 } from '../types';
 
 const USE_MOCK_AI = import.meta.env.VITE_AI_MOCK === 'true';
@@ -90,10 +92,12 @@ function disconnectAndCommit(
 		}
 		const conv = s.conversations[conversationId];
 		if (conv && st.streamingContent.trim()) {
+			const blocks = streamEventsToBlocks(st.streamingEvents);
 			conv.messages.push({
 				id: st.streamingMessageId ?? uuidv4(),
 				role: 'assistant',
 				content: st.streamingContent,
+				blocks: blocks.length > 0 ? blocks : undefined,
 				createdAt: Date.now(),
 			});
 			conv.updatedAt = Date.now();
@@ -205,6 +209,16 @@ async function runStreamingLoop(
 			if (event.done) {
 				break;
 			}
+		} else if (event.type === 'thinking') {
+			set((s) => {
+				const st = s.streams[conversationId];
+				if (st) {
+					st.streamingEvents.push({
+						kind: 'thinking',
+						content: event.content,
+					});
+				}
+			});
 		} else if (event.type === 'tool_call') {
 			set((s) => {
 				const st = s.streams[conversationId];
@@ -293,6 +307,35 @@ async function runStreamingLoop(
 }
 
 /**
+ * Converts streaming event items into persisted MessageBlocks.
+ */
+function streamEventsToBlocks(
+	events: ConversationStreamState['streamingEvents'],
+): MessageBlock[] {
+	return events
+		.map((e): MessageBlock | null => {
+			if (e.kind === 'text') {
+				return { type: 'text', content: e.content };
+			}
+			if (e.kind === 'thinking') {
+				return { type: 'thinking', content: e.content };
+			}
+			if (e.kind === 'tool') {
+				return {
+					type: 'tool_call',
+					toolCallId: e.toolCall.toolName, // best available id during streaming
+					toolName: e.toolCall.toolName,
+					toolInput: e.toolCall.input,
+					result: e.toolCall.result,
+					success: e.toolCall.done,
+				};
+			}
+			return null;
+		})
+		.filter((b): b is MessageBlock => b !== null);
+}
+
+/**
  * Commits accumulated streaming text as a message and removes the stream entry.
  */
 function finalizeStreamingMessage(
@@ -304,15 +347,17 @@ function finalizeStreamingMessage(
 	if (!stream) {
 		return;
 	}
-	const { streamingMessageId, streamingContent } = stream;
+	const { streamingMessageId, streamingContent, streamingEvents } = stream;
 
 	set((s) => {
 		const conv = s.conversations[conversationId];
 		if (conv && streamingContent.trim()) {
+			const blocks = streamEventsToBlocks(streamingEvents);
 			conv.messages.push({
 				id: streamingMessageId ?? uuidv4(),
 				role: 'assistant',
 				content: streamingContent,
+				blocks: blocks.length > 0 ? blocks : undefined,
 				createdAt: Date.now(),
 			});
 			conv.updatedAt = Date.now();
@@ -433,11 +478,41 @@ interface AIAssistantStore {
 // Server → client converters
 // ---------------------------------------------------------------------------
 
+function toBlocks(
+	raw: MessageSummaryBlock[] | null | undefined,
+): MessageBlock[] | undefined {
+	if (!raw || raw.length === 0) {
+		return undefined;
+	}
+	return raw
+		.map((b): MessageBlock | null => {
+			if (b.type === 'text') {
+				return { type: 'text', content: b.content ?? '' };
+			}
+			if (b.type === 'thinking') {
+				return { type: 'thinking', content: b.content ?? '' };
+			}
+			if (b.type === 'tool_call' && b.toolName) {
+				return {
+					type: 'tool_call',
+					toolCallId: b.toolCallId ?? '',
+					toolName: b.toolName,
+					toolInput: b.toolInput,
+					result: b.result,
+					success: b.success,
+				};
+			}
+			return null;
+		})
+		.filter((b): b is MessageBlock => b !== null);
+}
+
 function toMessage(m: MessageSummary): Message {
 	return {
 		id: m.messageId,
 		role: m.role as 'user' | 'assistant',
 		content: m.content ?? '',
+		blocks: toBlocks(m.blocks),
 		feedbackRating: m.feedbackRating ?? undefined,
 		createdAt: new Date(m.createdAt).getTime(),
 	};

@@ -26,11 +26,38 @@ export interface AssistantAction {
 
 export type FeedbackRating = 'positive' | 'negative';
 
+// ---------------------------------------------------------------------------
+// Message blocks — ordered content blocks for assistant replies
+// ---------------------------------------------------------------------------
+
+export interface TextBlock {
+	type: 'text';
+	content: string;
+}
+
+export interface ThinkingBlock {
+	type: 'thinking';
+	content: string;
+}
+
+export interface ToolCallBlock {
+	type: 'tool_call';
+	toolCallId: string;
+	toolName: string;
+	toolInput: unknown;
+	result?: unknown;
+	success?: boolean;
+}
+
+export type MessageBlock = TextBlock | ThinkingBlock | ToolCallBlock;
+
 export interface Message {
 	id: string;
 	role: MessageRole;
 	content: string;
 	attachments?: MessageAttachment[];
+	/** Ordered content blocks for structured rendering of assistant replies. */
+	blocks?: MessageBlock[];
 	/** Suggested follow-up actions returned by the assistant (final message only). */
 	actions?: AssistantAction[];
 	/** Persisted feedback rating — set after user votes and the API confirms. */
@@ -69,6 +96,7 @@ export interface StreamingToolCall {
  */
 export type StreamingEventItem =
 	| { kind: 'text'; content: string }
+	| { kind: 'thinking'; content: string }
 	| { kind: 'tool'; toolCall: StreamingToolCall };
 
 /** Data from an SSE `approval` event — user must approve or reject before the stream continues. */

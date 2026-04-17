@@ -10,6 +10,7 @@ import {
 import ApprovalCard from './ApprovalCard';
 import { RichCodeBlock } from './blocks';
 import ClarificationForm from './ClarificationForm';
+import ThinkingStep from './ThinkingStep';
 import ToolCallStep from './ToolCallStep';
 
 function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
@@ -71,10 +72,13 @@ export default function StreamingMessage({
 				)}
 
 				{/* eslint-disable react/no-array-index-key */}
-				{/* Events rendered in arrival order: text and tool calls interleaved */}
+				{/* Events rendered in arrival order: text, thinking, and tool calls interleaved */}
 				{events.map((event, i) => {
 					if (event.kind === 'tool') {
 						return <ToolCallStep key={i} toolCall={event.toolCall} />;
+					}
+					if (event.kind === 'thinking') {
+						return <ThinkingStep key={i} content={event.content} />;
 					}
 					return (
 						<ReactMarkdown

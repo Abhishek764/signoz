@@ -20,7 +20,7 @@ func TestExtractFieldMappings(t *testing.T) {
 		CreatedAt  time.Time         `mapstructure:"created_at"`
 		Extra      map[string]string `mapstructure:"extra"`
 		Items      []string          `mapstructure:"items"` // slice skipped
-		unexported string            // unexported skipped
+		unexported string            //nolint:unused // unexported skipped
 		NoTag      string            // no mapstructure tag skipped
 		SkippedTag string            `mapstructure:"-"` // explicit skip
 	}
@@ -90,12 +90,12 @@ func TestExtractFieldMappings(t *testing.T) {
 
 func TestBuildVariableDefinitions(t *testing.T) {
 	testCases := []struct {
-		name         string
-		tmpl         string
-		data         any
-		expectedVars []string // substrings that must appear in result
+		name          string
+		tmpl          string
+		data          any
+		expectedVars  []string // substrings that must appear in result
 		forbiddenVars []string // substrings that must NOT appear (dotted identifiers)
-		expectError  bool
+		expectError   bool
 	}{
 		{
 			name: "empty template still emits struct bindings for title data",
@@ -244,9 +244,9 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 			tmpl: "$rule.name: value $alert.value $rule.threshold.op $rule.threshold.value ($alert.status) desc=$description",
 			data: &alertmanagertypes.AlertData{
 				Alert: alertmanagertypes.AlertInfo{
-					Status:     "firing",
-					Value:      "85%",
-					IsFiring:   true,
+					Status:   "firing",
+					Value:    "85%",
+					IsFiring: true,
 				},
 				Rule: alertmanagertypes.RuleInfo{
 					Name:      "DiskFull",

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,7 @@ import (
 
 // testSetup returns an AlertTemplater and a context pre-populated with group key,
 // receiver name, and group labels for use in tests.
-func testSetup(t *testing.T) (AlertManagerTemplater, context.Context) {
+func testSetup(t *testing.T) (Templater, context.Context) {
 	t.Helper()
 	tmpl := test.CreateTmpl(t)
 	ctx := context.Background()
@@ -55,7 +56,7 @@ func TestExpandTemplates(t *testing.T) {
 	tests := []struct {
 		name              string
 		alerts            []*types.Alert
-		input             TemplateInput
+		input             alertmanagertypes.ExpandRequest
 		wantTitle         string
 		wantBody          []string
 		wantMissingVars   []string
@@ -71,18 +72,18 @@ func TestExpandTemplates(t *testing.T) {
 					map[string]string{
 						ruletypes.LabelAlertName:    "HighRequestThroughput",
 						ruletypes.LabelSeverityName: "warning",
-						"service":                   "payment-service",
+						"service.name":              "payment-service",
 					},
 					map[string]string{"description": "Request rate exceeded 10k/s"},
 					true,
 				),
 			},
-			input: TemplateInput{
-				TitleTemplate: "High request throughput for $service",
-				BodyTemplate: `The service $service is getting high request. Please investigate.
-Severity: $severity
-Status: $status
-Service: $service
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "High request throughput for $service.name",
+				BodyTemplate: `The service $service.name is getting high request. Please investigate.
+Severity: $rule.severity
+Status: $alert.status
+Service: $service.name
 Description: $description`,
 			},
 			wantTitle: "High request throughput for payment-service",
@@ -112,7 +113,7 @@ Description: Request rate exceeded 10k/s`},
 					true,
 				),
 			},
-			input: TemplateInput{
+			input: alertmanagertypes.ExpandRequest{
 				DefaultTitleTemplate: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
      {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
        {{" "}}(
@@ -138,19 +139,22 @@ Description: Request rate exceeded 10k/s`},
      {{ end }}`,
 			},
 			wantTitle: "[FIRING:1] DiskUsageHigh for  (instance=\"db-primary-01\")",
-			wantBody: []string{`*Alert:* DiskUsageHigh - critical
-
-     *Summary:* Disk usage high on database host
-     *Description:* Disk usage is high on the database host
-     *RelatedLogs:* View in <https://logs.example.com/search?q=DiskUsageHigh|logs explorer>
-     *RelatedTraces:* View in <https://traces.example.com/search?q=DiskUsageHigh|traces explorer>
-
-     *Details:*
-        • *alertname:* DiskUsageHigh
-        • *instance:* db-primary-01
-        • *severity:* critical
-       
-     `},
+			// Written with explicit \n so trailing whitespace inside the body
+			// (emitted by the un-trimmed "{{ end }}" in the default template)
+			// survives format-on-save.
+			wantBody: []string{"*Alert:* DiskUsageHigh - critical\n" +
+				"\n" +
+				"     *Summary:* Disk usage high on database host\n" +
+				"     *Description:* Disk usage is high on the database host\n" +
+				"     *RelatedLogs:* View in <https://logs.example.com/search?q=DiskUsageHigh|logs explorer>\n" +
+				"     *RelatedTraces:* View in <https://traces.example.com/search?q=DiskUsageHigh|traces explorer>\n" +
+				"\n" +
+				"     *Details:*\n" +
+				"        • *alertname:* DiskUsageHigh\n" +
+				"        • *instance:* db-primary-01\n" +
+				"        • *severity:* critical\n" +
+				"       \n" +
+				"     "},
 			wantIsDefaultBody: true,
 		},
 		{
@@ -162,8 +166,8 @@ Description: Request rate exceeded 10k/s`},
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-2"}, nil, true),
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-3"}, nil, true),
 			},
-			input: TemplateInput{
-				TitleTemplate: "$rule_name: $total_firing pods affected",
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name: $alert.total_firing pods affected",
 				BodyTemplate:  "$labels.pod is crash looping",
 			},
 			wantTitle:         "PodCrashLoop: 3 pods affected",
@@ -178,9 +182,9 @@ Description: Request rate exceeded 10k/s`},
 				createAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "auth-service"}, nil, true),
 				createAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "payment-service"}, nil, false),
 			},
-			input: TemplateInput{
-				TitleTemplate: "$total_firing firing, $total_resolved resolved",
-				BodyTemplate:  "$labels.service ($status)",
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$alert.total_firing firing, $alert.total_resolved resolved",
+				BodyTemplate:  "$labels.service ($alert.status)",
 			},
 			wantTitle:         "1 firing, 1 resolved",
 			wantBody:          []string{"auth-service (firing)", "payment-service (resolved)"},
@@ -193,8 +197,8 @@ Description: Request rate exceeded 10k/s`},
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
-			input: TemplateInput{
-				TitleTemplate: "[$environment] $rule_name",
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "[$environment] $rule.name",
 			},
 			wantTitle:         "[<no value>] HighCPU",
 			wantMissingVars:   []string{"environment"},
@@ -207,8 +211,8 @@ Description: Request rate exceeded 10k/s`},
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "PodOOMKilled", ruletypes.LabelSeverityName: "warning"}, nil, true),
 			},
-			input: TemplateInput{
-				BodyTemplate: "$rule_name: see runbook at $runbook_url",
+			input: alertmanagertypes.ExpandRequest{
+				BodyTemplate: "$rule.name: see runbook at $runbook_url",
 			},
 			wantBody:        []string{"PodOOMKilled: see runbook at <no value>"},
 			wantMissingVars: []string{"runbook_url"},
@@ -219,9 +223,9 @@ Description: Request rate exceeded 10k/s`},
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "HighMemory", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
-			input: TemplateInput{
-				TitleTemplate: "[$environment] $rule_name and [{{ $service }}]",
-				BodyTemplate:  "$rule_name: see runbook at $runbook_url",
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "[$environment] $rule.name and [{{ $service }}]",
+				BodyTemplate:  "$rule.name: see runbook at $runbook_url",
 			},
 			wantTitle:       "[<no value>] HighMemory and [<no value>]",
 			wantBody:        []string{"HighMemory: see runbook at <no value>"},
@@ -234,7 +238,7 @@ Description: Request rate exceeded 10k/s`},
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, false),
 			},
-			input: TemplateInput{
+			input: alertmanagertypes.ExpandRequest{
 				TitleTemplate:        "   ",
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})",
 				DefaultBodyTemplate:  "Runbook: https://runbook.example.com",
@@ -248,8 +252,8 @@ Description: Request rate exceeded 10k/s`},
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
-			input: TemplateInput{
-				TitleTemplate: "$rule_name ({{$severity | toUpperAndTrim}}) for $alertname",
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name ({{$severity | toUpperAndTrim}}) for $alertname",
 			},
 			errorContains: "function \"toUpperAndTrim\" not defined",
 		},
@@ -257,7 +261,7 @@ Description: Request rate exceeded 10k/s`},
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := at.ProcessTemplates(ctx, tc.input, tc.alerts)
+			got, err := at.Expand(ctx, tc.input, tc.alerts)
 			if tc.errorContains != "" {
 				require.ErrorContains(t, err, tc.errorContains)
 				return
@@ -270,7 +274,7 @@ Description: Request rate exceeded 10k/s`},
 			if tc.wantBody != nil {
 				require.Equal(t, tc.wantBody, got.Body)
 			}
-			require.Equal(t, tc.wantIsDefaultBody, got.IsDefaultTemplatedBody)
+			require.Equal(t, tc.wantIsDefaultBody, got.IsDefaultBody)
 
 			if len(tc.wantMissingVars) == 0 {
 				require.Empty(t, got.MissingVars)

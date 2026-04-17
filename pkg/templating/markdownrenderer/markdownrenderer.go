@@ -2,7 +2,6 @@ package markdownrenderer
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
@@ -43,23 +42,20 @@ const (
 	MarkdownFormatNoop
 )
 
-// MarkdownRenderer is the interface for rendering markdown to different formats.
-type MarkdownRenderer interface {
+// Renderer is the interface for rendering markdown to different formats.
+type Renderer interface {
 	// Render renders the markdown to the given output format.
 	Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error)
 }
 
-type markdownRenderer struct {
-	logger *slog.Logger
+type renderer struct {
 }
 
-func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
-	return &markdownRenderer{
-		logger: logger,
-	}
+func NewRenderer() Renderer {
+	return &renderer{}
 }
 
-func (r *markdownRenderer) Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error) {
+func (r *renderer) Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error) {
 	switch outputFormat {
 	case MarkdownFormatHTML:
 		return r.renderHTML(ctx, markdown)

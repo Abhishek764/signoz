@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-func (r *markdownRenderer) renderHTML(_ context.Context, markdown string) (string, error) {
+func (r *renderer) renderHTML(_ context.Context, markdown string) (string, error) {
 	var buf bytes.Buffer
 	if err := newHTMLRenderer().Convert([]byte(markdown), &buf); err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to convert markdown to HTML")

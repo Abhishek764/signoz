@@ -2,7 +2,6 @@ package markdownrenderer
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
@@ -11,6 +10,28 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
+
+// newHTMLRenderer creates a new goldmark.Markdown instance for HTML rendering.
+func newHTMLRenderer() goldmark.Markdown {
+	return goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(templatingextensions.EscapeNoValue),
+	)
+}
+
+// newSlackBlockKitRenderer creates a new goldmark.Markdown instance for Slack Block Kit rendering.
+func newSlackBlockKitRenderer() goldmark.Markdown {
+	return goldmark.New(
+		goldmark.WithExtensions(slackblockkitrenderer.BlockKitV2),
+	)
+}
+
+// newSlackMrkdwnRenderer creates a new goldmark.Markdown instance for Slack mrkdwn rendering.
+func newSlackMrkdwnRenderer() goldmark.Markdown {
+	return goldmark.New(
+		goldmark.WithExtensions(slackmrkdwnrenderer.SlackMrkdwn),
+	)
+}
 
 type OutputFormat int
 
@@ -21,40 +42,20 @@ const (
 	MarkdownFormatNoop
 )
 
-// MarkdownRenderer is the interface for rendering markdown to different formats.
-type MarkdownRenderer interface {
+// Renderer is the interface for rendering markdown to different formats.
+type Renderer interface {
 	// Render renders the markdown to the given output format.
 	Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error)
 }
 
-type markdownRenderer struct {
-	logger                *slog.Logger
-	htmlRenderer          goldmark.Markdown
-	slackBlockKitRenderer goldmark.Markdown
-	slackMrkdwnRenderer   goldmark.Markdown
+type renderer struct {
 }
 
-func NewMarkdownRenderer(logger *slog.Logger) MarkdownRenderer {
-	htmlRenderer := goldmark.New(
-		// basic GitHub Flavored Markdown extensions
-		goldmark.WithExtensions(extension.GFM),
-		goldmark.WithExtensions(templatingextensions.EscapeNoValue),
-	)
-	slackBlockKitRenderer := goldmark.New(
-		goldmark.WithExtensions(slackblockkitrenderer.BlockKitV2),
-	)
-	slackMrkdwnRenderer := goldmark.New(
-		goldmark.WithExtensions(slackmrkdwnrenderer.SlackMrkdwn),
-	)
-	return &markdownRenderer{
-		logger:                logger,
-		htmlRenderer:          htmlRenderer,
-		slackBlockKitRenderer: slackBlockKitRenderer,
-		slackMrkdwnRenderer:   slackMrkdwnRenderer,
-	}
+func NewRenderer() Renderer {
+	return &renderer{}
 }
 
-func (r *markdownRenderer) Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error) {
+func (r *renderer) Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error) {
 	switch outputFormat {
 	case MarkdownFormatHTML:
 		return r.renderHTML(ctx, markdown)

@@ -3,7 +3,6 @@ package markdownrenderer
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
 	"testing"
 )
 
@@ -30,7 +29,7 @@ func prettyJSON(s string) string {
 }
 
 func TestRenderSlackBlockKit(t *testing.T) {
-	renderer := NewMarkdownRenderer(slog.Default())
+	renderer := NewRenderer()
 
 	tests := []struct {
 		name     string
@@ -117,7 +116,7 @@ error: connection timeout after 30s
 }
 
 func TestRenderSlackMrkdwn(t *testing.T) {
-	renderer := NewMarkdownRenderer(slog.Default())
+	renderer := NewRenderer()
 
 	markdown := `# Alert Triggered
 

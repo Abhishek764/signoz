@@ -34,7 +34,12 @@ func (handler *handler) ListRules(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, rules.Rules)
+	view := make([]*ruletypes.Rule, 0, len(rules.Rules))
+	for _, rule := range rules.Rules {
+		view = append(view, ruletypes.NewRule(rule))
+	}
+
+	render.Success(rw, http.StatusOK, view)
 }
 
 func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
@@ -53,7 +58,7 @@ func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, rule)
+	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule))
 }
 
 func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
@@ -73,7 +78,7 @@ func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, rule)
+	render.Success(rw, http.StatusCreated, ruletypes.NewRule(rule))
 }
 
 func (handler *handler) UpdateRuleByID(rw http.ResponseWriter, req *http.Request) {
@@ -140,7 +145,7 @@ func (handler *handler) PatchRuleByID(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, rule)
+	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule))
 }
 
 func (handler *handler) TestRule(rw http.ResponseWriter, req *http.Request) {

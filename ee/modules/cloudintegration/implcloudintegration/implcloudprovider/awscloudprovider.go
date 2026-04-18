@@ -8,8 +8,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes/awstypes"
 )
 
 type awscloudprovider struct {
@@ -21,7 +19,7 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 }
 
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	baseURL := fmt.Sprintf(awstypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.Aws.DeploymentRegion)
+	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.Aws.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
 	q := u.Query()
@@ -31,8 +29,8 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, acc
 	u.RawQuery = q.Encode()
 
 	q = u.Query()
-	q.Set("stackName", awstypes.AgentCloudFormationBaseStackName.StringValue())
-	q.Set("templateURL", fmt.Sprintf(awstypes.AgentCloudFormationTemplateS3Path.StringValue(), req.Config.AgentVersion))
+	q.Set("stackName", cloudintegrationtypes.AgentCloudFormationBaseStackName.StringValue())
+	q.Set("templateURL", fmt.Sprintf(cloudintegrationtypes.AgentCloudFormationTemplateS3Path.StringValue(), req.Config.AgentVersion))
 	q.Set("param_SigNozIntegrationAgentVersion", req.Config.AgentVersion)
 	q.Set("param_SigNozApiUrl", req.Credentials.SigNozAPIURL)
 	q.Set("param_SigNozApiKey", req.Credentials.SigNozAPIKey)
@@ -41,23 +39,23 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, acc
 	q.Set("param_IngestionKey", req.Credentials.IngestionKey)
 
 	return &cloudintegrationtypes.ConnectionArtifact{
-		AWS: awstypes.NewConnectionArtifact(u.String() + "?&" + q.Encode()), // this format is required by AWS
+		AWS: cloudintegrationtypes.NewAWSConnectionArtifact(u.String() + "?&" + q.Encode()), // this format is required by AWS
 	}, nil
 }
 
 func (provider *awscloudprovider) ListServiceDefinitions(ctx context.Context) ([]*cloudintegrationtypes.ServiceDefinition, error) {
-	return provider.serviceDefinitions.List(ctx, cptypes.CloudProviderTypeAWS)
+	return provider.serviceDefinitions.List(ctx, cloudintegrationtypes.CloudProviderTypeAWS)
 }
 
-func (provider *awscloudprovider) GetServiceDefinition(ctx context.Context, serviceID cptypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
-	serviceDef, err := provider.serviceDefinitions.Get(ctx, cptypes.CloudProviderTypeAWS, serviceID)
+func (provider *awscloudprovider) GetServiceDefinition(ctx context.Context, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
+	serviceDef, err := provider.serviceDefinitions.Get(ctx, cloudintegrationtypes.CloudProviderTypeAWS, serviceID)
 	if err != nil {
 		return nil, err
 	}
 
 	// override cloud integration dashboard id
 	for index, dashboard := range serviceDef.Assets.Dashboards {
-		serviceDef.Assets.Dashboards[index].ID = cloudintegrationtypes.GetCloudIntegrationDashboardID(cptypes.CloudProviderTypeAWS, serviceID.StringValue(), dashboard.ID)
+		serviceDef.Assets.Dashboards[index].ID = cloudintegrationtypes.GetCloudIntegrationDashboardID(cloudintegrationtypes.CloudProviderTypeAWS, serviceID.StringValue(), dashboard.ID)
 	}
 
 	return serviceDef, nil
@@ -73,12 +71,12 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 		return services[i].Type.StringValue() < services[j].Type.StringValue()
 	})
 
-	compiledMetrics := new(awstypes.AWSMetricsCollectionStrategy)
-	compiledLogs := new(awstypes.AWSLogsCollectionStrategy)
+	compiledMetrics := new(cloudintegrationtypes.AWSMetricsCollectionStrategy)
+	compiledLogs := new(cloudintegrationtypes.AWSLogsCollectionStrategy)
 	var compiledS3Buckets map[string][]string
 
 	for _, storedSvc := range services {
-		svcCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(cptypes.CloudProviderTypeAWS, storedSvc.Config)
+		svcCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(cloudintegrationtypes.CloudProviderTypeAWS, storedSvc.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -89,10 +87,10 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 		}
 
 		strategy := svcDef.TelemetryCollectionStrategy.AWS
-		logsEnabled := svcCfg.IsLogsEnabled(cptypes.CloudProviderTypeAWS)
+		logsEnabled := svcCfg.IsLogsEnabled(cloudintegrationtypes.CloudProviderTypeAWS)
 
 		// S3Sync: logs come directly from configured S3 buckets, not CloudWatch subscriptions
-		if storedSvc.Type == cptypes.AWSServiceS3Sync {
+		if storedSvc.Type == cloudintegrationtypes.AWSServiceS3Sync {
 			if logsEnabled && svcCfg.AWS.Logs.S3Buckets != nil {
 				compiledS3Buckets = svcCfg.AWS.Logs.S3Buckets
 			}
@@ -104,14 +102,14 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 			compiledLogs.Subscriptions = append(compiledLogs.Subscriptions, strategy.Logs.Subscriptions...)
 		}
 
-		metricsEnabled := svcCfg.IsMetricsEnabled(cptypes.CloudProviderTypeAWS)
+		metricsEnabled := svcCfg.IsMetricsEnabled(cloudintegrationtypes.CloudProviderTypeAWS)
 
 		if metricsEnabled && strategy.Metrics != nil {
 			compiledMetrics.StreamFilters = append(compiledMetrics.StreamFilters, strategy.Metrics.StreamFilters...)
 		}
 	}
 
-	collectionStrategy := new(awstypes.AWSTelemetryCollectionStrategy)
+	collectionStrategy := new(cloudintegrationtypes.AWSTelemetryCollectionStrategy)
 
 	if len(compiledMetrics.StreamFilters) > 0 {
 		collectionStrategy.Metrics = compiledMetrics
@@ -124,6 +122,6 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 	}
 
 	return &cloudintegrationtypes.ProviderIntegrationConfig{
-		AWS: awstypes.NewIntegrationConfig(account.Config.AWS.Regions, collectionStrategy),
+		AWS: cloudintegrationtypes.NewAWSIntegrationConfig(account.Config.AWS.Regions, collectionStrategy),
 	}, nil
 }

@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes/awstypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -45,19 +43,19 @@ type GettableAgentCheckIn struct {
 // IntegrationConfig older integration config struct for backward compatibility,
 // this will be eventually removed once agents are updated to use new struct.
 type IntegrationConfig struct {
-	EnabledRegions []string                          `json:"enabled_regions" required:"true" nullable:"false"` // backward compatible
-	Telemetry      *awstypes.OldAWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`       // backward compatible
+	EnabledRegions []string                  `json:"enabled_regions" required:"true" nullable:"false"` // backward compatible
+	Telemetry      *OldAWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`       // backward compatible
 }
 
 type ProviderIntegrationConfig struct {
-	AWS *awstypes.AWSIntegrationConfig `json:"aws" required:"true" nullable:"false"`
+	AWS *AWSIntegrationConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 // NewGettableAgentCheckIn constructs a backward-compatible response from an AgentCheckInResponse.
 // It populates the old snake_case fields (account_id, cloud_account_id, integration_config, removed_at)
 // from the new camelCase fields so older agents continue to work unchanged.
 // The provider parameter controls which provider-specific block is mapped into the legacy integration_config.
-func NewGettableAgentCheckIn(provider cptypes.CloudProviderType, resp *AgentCheckInResponse) *GettableAgentCheckIn {
+func NewGettableAgentCheckIn(provider CloudProviderType, resp *AgentCheckInResponse) *GettableAgentCheckIn {
 	gettable := &GettableAgentCheckIn{
 		AccountID:            resp.CloudIntegrationID,
 		CloudAccountID:       resp.ProviderAccountID,
@@ -66,7 +64,7 @@ func NewGettableAgentCheckIn(provider cptypes.CloudProviderType, resp *AgentChec
 	}
 
 	switch provider {
-	case cptypes.CloudProviderTypeAWS:
+	case CloudProviderTypeAWS:
 		gettable.OlderIntegrationConfig = awsOlderIntegrationConfig(resp.IntegrationConfig)
 	}
 

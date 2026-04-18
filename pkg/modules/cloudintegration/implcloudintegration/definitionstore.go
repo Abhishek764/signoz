@@ -14,7 +14,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
 )
 
 const definitionsRoot = "fs/definitions"
@@ -30,7 +29,7 @@ func NewServiceDefinitionStore() citypes.ServiceDefinitionStore {
 }
 
 // Get reads and hydrates the service definition for the given provider and service ID.
-func (s *definitionStore) Get(ctx context.Context, provider cptypes.CloudProviderType, serviceID cptypes.ServiceID) (*citypes.ServiceDefinition, error) {
+func (s *definitionStore) Get(ctx context.Context, provider citypes.CloudProviderType, serviceID citypes.ServiceID) (*citypes.ServiceDefinition, error) {
 	svcDir := path.Join(definitionsRoot, provider.StringValue(), serviceID.StringValue())
 	def, err := readServiceDefinition(svcDir)
 	if err != nil {
@@ -40,7 +39,7 @@ func (s *definitionStore) Get(ctx context.Context, provider cptypes.CloudProvide
 }
 
 // List reads and hydrates all service definitions for the given provider, sorted by ID.
-func (s *definitionStore) List(ctx context.Context, provider cptypes.CloudProviderType) ([]*citypes.ServiceDefinition, error) {
+func (s *definitionStore) List(ctx context.Context, provider citypes.CloudProviderType) ([]*citypes.ServiceDefinition, error) {
 	providerDir := path.Join(definitionsRoot, provider.StringValue())
 	entries, err := fs.ReadDir(definitionFiles, providerDir)
 	if err != nil {

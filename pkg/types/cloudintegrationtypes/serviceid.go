@@ -1,4 +1,4 @@
-package cloudprovidertypes
+package cloudintegrationtypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -7,9 +7,9 @@ import (
 
 type ServiceID struct{ valuer.String }
 
-var (
-	ErrCodeInvalidCloudRegion = errors.MustNewCode("invalid_cloud_region")
+var ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
 
+var (
 	AWSServiceALB         = ServiceID{valuer.NewString("alb")}
 	AWSServiceAPIGateway  = ServiceID{valuer.NewString("api-gateway")}
 	AWSServiceDynamoDB    = ServiceID{valuer.NewString("dynamodb")}

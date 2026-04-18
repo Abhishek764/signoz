@@ -56,7 +56,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -168,9 +168,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
-			cloudProvidersMap := map[cptypes.CloudProviderType]cloudintegration.CloudProviderModule{
-				cptypes.CloudProviderTypeAWS:   awsCloudProviderModule,
-				cptypes.CloudProviderTypeAzure: azureCloudProviderModule,
+			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
+				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
+				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
 			}
 
 			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)

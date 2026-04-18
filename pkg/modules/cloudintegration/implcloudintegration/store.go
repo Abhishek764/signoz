@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -18,7 +17,7 @@ func NewStore(sqlStore sqlstore.SQLStore) cloudintegrationtypes.Store {
 	return &store{store: sqlStore}
 }
 
-func (store *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provider cptypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+func (store *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	account := new(cloudintegrationtypes.StorableCloudIntegration)
 	err := store.
 		store.
@@ -35,7 +34,7 @@ func (store *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, p
 	return account, nil
 }
 
-func (store *store) GetConnectedAccount(ctx context.Context, orgID, id valuer.UUID, provider cptypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+func (store *store) GetConnectedAccount(ctx context.Context, orgID, id valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	account := new(cloudintegrationtypes.StorableCloudIntegration)
 	err := store.
 		store.
@@ -55,7 +54,7 @@ func (store *store) GetConnectedAccount(ctx context.Context, orgID, id valuer.UU
 	return account, nil
 }
 
-func (store *store) GetConnectedAccountByProviderAccountID(ctx context.Context, orgID valuer.UUID, providerAccountID string, provider cptypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+func (store *store) GetConnectedAccountByProviderAccountID(ctx context.Context, orgID valuer.UUID, providerAccountID string, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
 	account := new(cloudintegrationtypes.StorableCloudIntegration)
 	err := store.
 		store.
@@ -74,7 +73,7 @@ func (store *store) GetConnectedAccountByProviderAccountID(ctx context.Context, 
 	return account, nil
 }
 
-func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
+func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
 	var accounts []*cloudintegrationtypes.StorableCloudIntegration
 	err := store.
 		store.
@@ -94,7 +93,7 @@ func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID
 	return accounts, nil
 }
 
-func (store *store) CountConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cptypes.CloudProviderType) (int, error) {
+func (store *store) CountConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (int, error) {
 	storable := new(cloudintegrationtypes.StorableCloudIntegration)
 	count, err := store.
 		store.
@@ -142,7 +141,7 @@ func (store *store) UpdateAccount(ctx context.Context, account *cloudintegration
 	return err
 }
 
-func (store *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provider cptypes.CloudProviderType) error {
+func (store *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
 	_, err := store.
 		store.
 		BunDBCtx(ctx).
@@ -156,7 +155,7 @@ func (store *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, pr
 	return err
 }
 
-func (store *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID cptypes.ServiceID) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+func (store *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
 	service := new(cloudintegrationtypes.StorableCloudIntegrationService)
 	err := store.
 		store.

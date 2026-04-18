@@ -1,4 +1,4 @@
-package cloudprovidertypes
+package cloudintegrationtypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"

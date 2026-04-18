@@ -1,4 +1,4 @@
-package awstypes
+package cloudintegrationtypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -103,15 +103,65 @@ type AWSServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-func NewConnectionArtifact(connectionURL string) *AWSConnectionArtifact {
+func NewAWSConnectionArtifact(connectionURL string) *AWSConnectionArtifact {
 	return &AWSConnectionArtifact{
 		ConnectionURL: connectionURL,
 	}
 }
 
-func NewIntegrationConfig(enabledRegions []string, telemetryCollectionStrategy *AWSTelemetryCollectionStrategy) *AWSIntegrationConfig {
+func NewAWSIntegrationConfig(enabledRegions []string, telemetryCollectionStrategy *AWSTelemetryCollectionStrategy) *AWSIntegrationConfig {
 	return &AWSIntegrationConfig{
 		EnabledRegions:              enabledRegions,
 		TelemetryCollectionStrategy: telemetryCollectionStrategy,
 	}
+}
+
+// awsOlderIntegrationConfig converts a ProviderIntegrationConfig into the legacy snake_case
+// IntegrationConfig format consumed by older AWS agents. Returns nil if AWS config is absent.
+func awsOlderIntegrationConfig(cfg *ProviderIntegrationConfig) *IntegrationConfig {
+	if cfg == nil || cfg.AWS == nil {
+		return nil
+	}
+	awsCfg := cfg.AWS
+
+	older := &IntegrationConfig{
+		EnabledRegions: awsCfg.EnabledRegions,
+	}
+
+	if awsCfg.TelemetryCollectionStrategy == nil {
+		return older
+	}
+
+	// Older agents expect a "provider" field and fully snake_case keys inside telemetry.
+	oldTelemetry := &OldAWSCollectionStrategy{
+		Provider:  CloudProviderTypeAWS.StringValue(),
+		S3Buckets: awsCfg.TelemetryCollectionStrategy.S3Buckets,
+	}
+
+	if awsCfg.TelemetryCollectionStrategy.Metrics != nil {
+		// Convert camelCase cloudwatchMetricStreamFilters → snake_case cloudwatch_metric_stream_filters
+		oldMetrics := &OldAWSMetricsStrategy{}
+		for _, f := range awsCfg.TelemetryCollectionStrategy.Metrics.StreamFilters {
+			oldMetrics.StreamFilters = append(oldMetrics.StreamFilters, struct {
+				Namespace   string   `json:"Namespace"`
+				MetricNames []string `json:"MetricNames,omitempty"`
+			}{Namespace: f.Namespace, MetricNames: f.MetricNames})
+		}
+		oldTelemetry.Metrics = oldMetrics
+	}
+
+	if awsCfg.TelemetryCollectionStrategy.Logs != nil {
+		// Convert camelCase cloudwatchLogsSubscriptions → snake_case cloudwatch_logs_subscriptions
+		oldLogs := &OldAWSLogsStrategy{}
+		for _, s := range awsCfg.TelemetryCollectionStrategy.Logs.Subscriptions {
+			oldLogs.Subscriptions = append(oldLogs.Subscriptions, struct {
+				LogGroupNamePrefix string `json:"log_group_name_prefix"`
+				FilterPattern      string `json:"filter_pattern"`
+			}{LogGroupNamePrefix: s.LogGroupNamePrefix, FilterPattern: s.FilterPattern})
+		}
+		oldTelemetry.Logs = oldLogs
+	}
+
+	older.Telemetry = oldTelemetry
+	return older
 }

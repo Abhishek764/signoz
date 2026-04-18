@@ -9,7 +9,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/SigNoz/signoz/pkg/types"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -33,12 +32,12 @@ type StorableCloudIntegration struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	Provider        cptypes.CloudProviderType `bun:"provider,type:text"`
-	Config          string                    `bun:"config,type:text"` // Config is provider-specific data in JSON string format
-	AccountID       *string                   `bun:"account_id,type:text"`
-	LastAgentReport *StorableAgentReport      `bun:"last_agent_report,type:text"`
-	RemovedAt       *time.Time                `bun:"removed_at,type:timestamp,nullzero"`
-	OrgID           valuer.UUID               `bun:"org_id,type:text"`
+	Provider        CloudProviderType    `bun:"provider,type:text"`
+	Config          string               `bun:"config,type:text"` // Config is provider-specific data in JSON string format
+	AccountID       *string              `bun:"account_id,type:text"`
+	LastAgentReport *StorableAgentReport `bun:"last_agent_report,type:text"`
+	RemovedAt       *time.Time           `bun:"removed_at,type:timestamp,nullzero"`
+	OrgID           valuer.UUID          `bun:"org_id,type:text"`
 }
 
 // StorableAgentReport represents the last heartbeat and arbitrary data sent by the agent
@@ -54,9 +53,9 @@ type StorableCloudIntegrationService struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	Type               cptypes.ServiceID `bun:"type,type:text,notnull"` // Keeping Type field name as is, but it is a service id
-	Config             string            `bun:"config,type:text"`       // Config is cloud provider's service specific data in JSON string format
-	CloudIntegrationID valuer.UUID       `bun:"cloud_integration_id,type:text"`
+	Type               ServiceID   `bun:"type,type:text,notnull"` // Keeping Type field name as is, but it is a service id
+	Config             string      `bun:"config,type:text"`       // Config is cloud provider's service specific data in JSON string format
+	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text"`
 }
 
 // Following Service config types are only internally used to store service config in DB and use JSON snake case keys for backward compatibility.
@@ -154,9 +153,9 @@ func (account *StorableCloudIntegration) Update(providerAccountID *string, agent
 }
 
 // following StorableServiceConfig related functions are helper functions to convert between JSON string and ServiceConfig domain struct.
-func newStorableServiceConfig(provider cptypes.CloudProviderType, serviceID cptypes.ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) (*StorableServiceConfig, error) {
+func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) (*StorableServiceConfig, error) {
 	switch provider {
-	case cptypes.CloudProviderTypeAWS:
+	case CloudProviderTypeAWS:
 		storableAWSServiceConfig := new(StorableAWSServiceConfig)
 
 		if supportedSignals.Logs {
@@ -168,7 +167,7 @@ func newStorableServiceConfig(provider cptypes.CloudProviderType, serviceID cpty
 				Enabled: serviceConfig.AWS.Logs.Enabled,
 			}
 
-			if serviceID == cptypes.AWSServiceS3Sync {
+			if serviceID == AWSServiceS3Sync {
 				if serviceConfig.AWS.Logs.S3Buckets == nil {
 					return nil, errors.NewInvalidInputf(ErrCodeCloudIntegrationInvalidConfig, "s3 buckets config is required for AWS S3 Sync service")
 				}
@@ -189,13 +188,13 @@ func newStorableServiceConfig(provider cptypes.CloudProviderType, serviceID cpty
 
 		return &StorableServiceConfig{AWS: storableAWSServiceConfig}, nil
 	default:
-		return nil, errors.NewInvalidInputf(cptypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }
 
-func newStorableServiceConfigFromJSON(provider cptypes.CloudProviderType, jsonStr string) (*StorableServiceConfig, error) {
+func newStorableServiceConfigFromJSON(provider CloudProviderType, jsonStr string) (*StorableServiceConfig, error) {
 	switch provider {
-	case cptypes.CloudProviderTypeAWS:
+	case CloudProviderTypeAWS:
 		awsConfig := new(StorableAWSServiceConfig)
 		err := json.Unmarshal([]byte(jsonStr), awsConfig)
 		if err != nil {
@@ -203,13 +202,13 @@ func newStorableServiceConfigFromJSON(provider cptypes.CloudProviderType, jsonSt
 		}
 		return &StorableServiceConfig{AWS: awsConfig}, nil
 	default:
-		return nil, errors.NewInvalidInputf(cptypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }
 
-func (config *StorableServiceConfig) toJSON(provider cptypes.CloudProviderType) ([]byte, error) {
+func (config *StorableServiceConfig) toJSON(provider CloudProviderType) ([]byte, error) {
 	switch provider {
-	case cptypes.CloudProviderTypeAWS:
+	case CloudProviderTypeAWS:
 		jsonBytes, err := json.Marshal(config.AWS)
 		if err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize AWS service config to JSON")
@@ -217,6 +216,6 @@ func (config *StorableServiceConfig) toJSON(provider cptypes.CloudProviderType) 
 
 		return jsonBytes, nil
 	default:
-		return nil, errors.NewInvalidInputf(cptypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }

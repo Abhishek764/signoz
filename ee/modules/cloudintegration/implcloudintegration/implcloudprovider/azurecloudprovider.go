@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	cptypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/cloudprovidertypes"
 )
 
 type azurecloudprovider struct{}
@@ -22,7 +21,7 @@ func (provider *azurecloudprovider) ListServiceDefinitions(ctx context.Context) 
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) GetServiceDefinition(ctx context.Context, serviceID cptypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
+func (provider *azurecloudprovider) GetServiceDefinition(ctx context.Context, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
 	panic("implement me")
 }
 

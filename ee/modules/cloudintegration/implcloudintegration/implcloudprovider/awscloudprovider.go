@@ -19,11 +19,11 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 }
 
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.Aws.DeploymentRegion)
+	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.AWS.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
 	q := u.Query()
-	q.Set("region", req.Config.Aws.DeploymentRegion)
+	q.Set("region", req.Config.AWS.DeploymentRegion)
 	u.Fragment = "/stacks/quickcreate"
 
 	u.RawQuery = q.Encode()

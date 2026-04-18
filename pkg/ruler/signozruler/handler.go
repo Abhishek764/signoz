@@ -111,9 +111,13 @@ func (handler *handler) DeleteRuleByID(rw http.ResponseWriter, req *http.Request
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	idStr := mux.Vars(req)["id"]
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
 
-	err := handler.ruler.DeleteRule(ctx, idStr)
+	err = handler.ruler.DeleteRule(ctx, id.StringValue())
 	if err != nil {
 		render.Error(rw, err)
 		return

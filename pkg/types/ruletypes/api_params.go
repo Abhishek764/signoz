@@ -647,6 +647,8 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 // PlannedMaintenance and other entities. v1 handlers keep serializing
 // GettableRule directly for back-compat with existing SDK / Terraform clients.
 type Rule struct {
+	// TODO: type as valuer.UUID to match PlannedMaintenance.ID and surface
+	// format: uuid in the spec.
 	Id    string     `json:"id" required:"true"`
 	State AlertState `json:"state" required:"true"`
 	PostableRule

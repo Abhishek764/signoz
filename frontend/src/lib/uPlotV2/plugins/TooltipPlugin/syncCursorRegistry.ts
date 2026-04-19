@@ -1,4 +1,4 @@
-import type { CursorSyncPanelMetadata } from './types';
+import type { ChartMetadata } from './types';
 
 /**
  * Module-level registry that tracks the metadata of the panel currently
@@ -11,20 +11,14 @@ import type { CursorSyncPanelMetadata } from './types';
  * - Whether to show the horizontal crosshair line (matching yAxisUnit)
  * - Future: what to render inside the tooltip (matching groupBy, etc.)
  */
-const metadataBySyncKey = new Map<
-	string,
-	CursorSyncPanelMetadata | undefined
->();
+const metadataBySyncKey = new Map<string, ChartMetadata | undefined>();
 
 export const syncCursorRegistry = {
-	setMetadata(
-		syncKey: string,
-		metadata: CursorSyncPanelMetadata | undefined,
-	): void {
+	setMetadata(syncKey: string, metadata: ChartMetadata | undefined): void {
 		metadataBySyncKey.set(syncKey, metadata);
 	},
 
-	getMetadata(syncKey: string): CursorSyncPanelMetadata | undefined {
+	getMetadata(syncKey: string): ChartMetadata | undefined {
 		return metadataBySyncKey.get(syncKey);
 	},
 };

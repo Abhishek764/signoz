@@ -6,6 +6,7 @@ import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
@@ -82,6 +83,15 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		timezone,
 	]);
 
+	const chartMetadata = useMemo(
+		() => ({
+			yAxisUnit: widget.yAxisUnit,
+			decimalPrecision: widget.decimalPrecision,
+			timezone,
+		}),
+		[widget.yAxisUnit, widget.decimalPrecision, timezone],
+	);
+
 	const layoutChildren = useMemo(() => {
 		if (!isFullViewMode) {
 			return null;
@@ -112,10 +122,11 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
-					yAxisUnit={widget.yAxisUnit}
-					decimalPrecision={widget.decimalPrecision}
-					timezone={timezone}
+					chartMetadata={chartMetadata}
 					data={chartData as uPlot.AlignedData}
+					syncMode={
+						isFullViewMode ? DashboardCursorSync.None : DashboardCursorSync.Crosshair
+					}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}

@@ -57,6 +57,15 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 		widget?.mergeAllActiveQueries,
 	]);
 
+	const chartMetadata = useMemo(
+		() => ({
+			yAxisUnit: widget.yAxisUnit,
+			decimalPrecision: widget.decimalPrecision,
+			timezone,
+		}),
+		[widget.yAxisUnit, widget.decimalPrecision, timezone],
+	);
+
 	const layoutChildren = useMemo(() => {
 		if (!isFullViewMode || widget.mergeAllActiveQueries) {
 			return null;
@@ -93,10 +102,8 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 						uPlotRef.current = null;
 					}}
 					isQueriesMerged={widget.mergeAllActiveQueries}
-					yAxisUnit={widget.yAxisUnit}
-					decimalPrecision={widget.decimalPrecision}
+					chartMetadata={chartMetadata}
 					syncMode={DashboardCursorSync.Crosshair}
-					timezone={timezone}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}

@@ -41,7 +41,7 @@ export default function TooltipPlugin({
 	maxHeight = 600,
 	syncMode = DashboardCursorSync.None,
 	syncKey = '_tooltip_sync_global_',
-	panelMetadata,
+	chartMetadata,
 	pinnedTooltipElement,
 	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
@@ -117,13 +117,13 @@ export default function TooltipPlugin({
 
 				if (u.cursor.event != null) {
 					// This panel is the source — publish metadata and always show line.
-					syncCursorRegistry.setMetadata(syncKey, panelMetadata);
+					syncCursorRegistry.setMetadata(syncKey, chartMetadata);
 					yCursorEl.style.display = '';
 				} else {
 					// This panel is receiving sync — show only if units match.
 					const sourceMeta = syncCursorRegistry.getMetadata(syncKey);
 					yCursorEl.style.display =
-						sourceMeta?.yAxisUnit === panelMetadata?.yAxisUnit ? '' : 'none';
+						sourceMeta?.yAxisUnit === chartMetadata?.yAxisUnit ? '' : 'none';
 				}
 			});
 		}

@@ -232,7 +232,9 @@ function StatusCodeBarCharts({
 						data={chartData}
 						width={dimensions.width}
 						height={dimensions.height}
-						timezone={timezone}
+						chartMetadata={{
+							timezone,
+						}}
 						legendConfig={{
 							position: LegendPosition.BOTTOM,
 						}}

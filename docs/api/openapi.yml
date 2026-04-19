@@ -668,8 +668,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
       type: object
     CloudintegrationtypesAgentReport:
       nullable: true
@@ -692,6 +692,68 @@ components:
             $ref: '#/components/schemas/CloudintegrationtypesDashboard'
           nullable: true
           type: array
+      type: object
+    CloudintegrationtypesAzureAccountConfig:
+      properties:
+        deploymentRegion:
+          type: string
+        resourceGroups:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentRegion
+      - resourceGroups
+      type: object
+    CloudintegrationtypesAzureConnectionArtifact:
+      properties:
+        cliCommand:
+          type: string
+        cloudShellCommand:
+          type: string
+      required:
+      - cliCommand
+      - cloudShellCommand
+      type: object
+    CloudintegrationtypesAzureLogsCollectionStrategy:
+      properties:
+        categories:
+          items:
+            type: string
+          type: array
+      type: object
+    CloudintegrationtypesAzureMetricsCollectionStrategy:
+      properties:
+        serviceNames:
+          items:
+            type: string
+          type: array
+      required:
+      - serviceNames
+      type: object
+    CloudintegrationtypesAzureServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureServiceMetricsConfig'
+      type: object
+    CloudintegrationtypesAzureServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    CloudintegrationtypesAzureServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    CloudintegrationtypesAzureTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureMetricsCollectionStrategy'
       type: object
     CloudintegrationtypesCloudIntegrationService:
       nullable: true
@@ -737,8 +799,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureConnectionArtifact'
       type: object
     CloudintegrationtypesCredentials:
       properties:
@@ -910,8 +972,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -972,8 +1034,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -1018,15 +1080,31 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
         config:
-          $ref: '#/components/schemas/CloudintegrationtypesAccountConfig'
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableAccountConfig'
       required:
       - config
+      type: object
+    CloudintegrationtypesUpdatableAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableAzureAccountConfig'
+      type: object
+    CloudintegrationtypesUpdatableAzureAccountConfig:
+      properties:
+        resourceGroups:
+          items:
+            type: string
+          type: array
+      required:
+      - resourceGroups
       type: object
     CloudintegrationtypesUpdatableService:
       properties:

@@ -29,8 +29,13 @@ type AgentReport struct {
 }
 
 type AccountConfig struct {
-	// required till new providers are added
-	AWS *AWSAccountConfig `json:"aws" required:"true" nullable:"false"`
+	AWS   *AWSAccountConfig   `json:"aws" required:"false" nullable:"false"`
+	Azure *AzureAccountConfig `json:"azure" required:"false" nullable:"false"`
+}
+
+type UpdatableAccountConfig struct {
+	AWS   *UpdatableAWSAccountConfig   `json:"aws" required:"false" nullable:"false"`
+	Azure *UpdatableAzureAccountConfig `json:"azure" required:"false" nullable:"false"`
 }
 
 type PostableAccount struct {
@@ -41,7 +46,8 @@ type PostableAccount struct {
 type PostableAccountConfig struct {
 	// as agent version is common for all providers, we can keep it at top level of this struct
 	AgentVersion string
-	AWS          *AWSPostableAccountConfig `json:"aws" required:"true" nullable:"false"`
+	AWS          *AWSPostableAccountConfig   `json:"aws" required:"false" nullable:"false"`
+	Azure        *AzurePostableAccountConfig `json:"azure" required:"false" nullable:"false"`
 }
 
 type Credentials struct {
@@ -58,7 +64,8 @@ type GettableAccountWithConnectionArtifact struct {
 
 type ConnectionArtifact struct {
 	// required till new providers are added
-	AWS *AWSConnectionArtifact `json:"aws" required:"true" nullable:"false"`
+	AWS   *AWSConnectionArtifact   `json:"aws" required:"false" nullable:"false"`
+	Azure *AzureConnectionArtifact `json:"azure" required:"false" nullable:"false"`
 }
 
 type GetConnectionArtifactRequest = PostableAccount
@@ -68,7 +75,7 @@ type GettableAccounts struct {
 }
 
 type UpdatableAccount struct {
-	Config *AccountConfig `json:"config" required:"true" nullable:"false"`
+	Config *UpdatableAccountConfig `json:"config" required:"true" nullable:"false"`
 }
 
 func NewAccount(orgID valuer.UUID, provider CloudProviderType, config *AccountConfig) *Account {

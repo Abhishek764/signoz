@@ -15,7 +15,6 @@ import (
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -100,7 +99,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	s := &Server{
 		config:             config,
-		signoz:       signoz,
+		signoz:             signoz,
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -282,4 +281,3 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	return nil
 }
-

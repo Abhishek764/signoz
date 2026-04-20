@@ -49,6 +49,12 @@ var orderByToHostsQueryNames = map[string][]string{
 	inframonitoringtypes.HostsOrderByLoad15:    {"G"},
 }
 
+// groupHostCounts holds per-group active and inactive host counts.
+type groupHostCounts struct {
+	Active   int
+	Inactive int
+}
+
 func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 	return &qbtypes.QueryRangeRequest{
 		RequestType: qbtypes.RequestTypeScalar,
@@ -512,12 +518,6 @@ func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostN
 	}
 
 	return activeHosts, nil
-}
-
-// groupHostCounts holds per-group active and inactive host counts.
-type groupHostCounts struct {
-	Active   int
-	Inactive int
 }
 
 // getPerGroupActiveInactiveHostCounts computes the number of active and inactive hosts per group

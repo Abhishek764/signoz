@@ -201,10 +201,10 @@ def test_clickhouse_sql_local_table_warning(
     assert body["status"] == "success"
 
     warning = body["data"].get("warning")
-    assert warning is not None, "Expected a warning in the response for local table usage"
-    warning_messages = " ".join(
-        w["message"] for w in warning.get("warnings", [])
-    )
-    assert "distributed" in warning_messages, (
-        f"Expected warning to mention distributed table, got: {warning_messages}"
-    )
+    assert (
+        warning is not None
+    ), "Expected a warning in the response for local table usage"
+    warning_messages = " ".join(w["message"] for w in warning.get("warnings", []))
+    assert (
+        "distributed" in warning_messages
+    ), f"Expected warning to mention distributed table, got: {warning_messages}"

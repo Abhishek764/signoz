@@ -53,6 +53,7 @@ type validationConfig struct {
 	skipAggregationOrderBy    bool
 	skipSelectFieldValidation bool
 	skipGroupByValidation     bool
+	requestType               RequestType
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -108,6 +109,13 @@ func WithSkipSelectFieldValidation() ValidationOption {
 func WithSkipGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.skipGroupByValidation = true
+	}
+}
+
+// WithRequestType sets the request type for validation.
+func WithRequestType(requestType RequestType) ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.requestType = requestType
 	}
 }
 
@@ -176,6 +184,11 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
 			)
+		}
+		if cfg.requestType == RequestTypeTimeSeries && item.Name == "timestamp" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput, "group by on timestamp is not allowed for request type %s", cfg.requestType.StringValue(),
+			).WithAdditional("Timeseries request already accounts for timestamp in the response")
 		}
 	}
 	return nil
@@ -666,10 +679,10 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
 	case RequestTypeTimeSeries, RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation()}
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithRequestType(requestType)}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
-		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation(), WithRequestType(requestType)}
 	default:
-		return []ValidationOption{}
+		return []ValidationOption{WithRequestType(requestType)}
 	}
 }

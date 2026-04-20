@@ -688,6 +688,7 @@ def test_non_existent__internal_metrics_returns_warning(
     assert warnings[0]["message"].startswith(
         f"no data found for the metric {metric_name}"
     )
+
 # Verify /api/v1/fields/values filters label values by metricNamespace prefix.
 # Inserts metrics under ns.a and ns.b, then asserts a specific prefix returns
 # only matching values while a common prefix returns both.

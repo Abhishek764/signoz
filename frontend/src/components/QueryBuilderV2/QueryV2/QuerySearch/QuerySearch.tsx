@@ -47,7 +47,7 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { ContextPrefix, parseKeyInput, queryExamples } from './constants';
+import { queryExamples } from './constants';
 
 import './QuerySearch.styles.scss';
 
@@ -257,7 +257,7 @@ function QuerySearch({
 	);
 
 	const fetchKeySuggestions = useCallback(
-		async (searchText?: string, fieldContext?: ContextPrefix): Promise<void> => {
+		async (searchText?: string): Promise<void> => {
 			if (
 				dataSource === DataSource.METRICS &&
 				!queryData.aggregateAttribute?.key &&
@@ -274,9 +274,7 @@ function QuerySearch({
 				return;
 			}
 
-			// Track using a composite key so primary (name-only) and
-			// secondary (context-only) fetches don't suppress each other.
-			lastFetchedKeyRef.current = `${fieldContext ?? ''}::${searchText ?? ''}`;
+			lastFetchedKeyRef.current = searchText ?? '';
 
 			try {
 				// Route through React Query so identical concurrent calls share an
@@ -288,14 +286,12 @@ function QuerySearch({
 						dataSource,
 						signalSource ?? '',
 						debouncedMetricName ?? '',
-						fieldContext ?? '',
 						searchText ?? '',
 					],
 					queryFn: () =>
 						getKeySuggestions({
 							signal: dataSource,
 							searchText: searchText || '',
-							fieldContext,
 							metricName: debouncedMetricName ?? undefined,
 							signalSource: signalSource as 'meter' | '',
 						}),
@@ -329,11 +325,17 @@ function QuerySearch({
 						toggleSuggestions(10);
 					}
 				}
-			} catch {
+			} catch (error) {
 				// Suggestions are non-critical — a transient API failure must not
 				// crash the editor. Callers invoke this fire-and-forget (via the
 				// debouncer), so an unhandled rejection would bubble up to the
-				// process and, in test environments, fail the worker.
+				// process and, in test environments, fail the worker. Surface it
+				// to the console so a real bug (thrown from generateOptions, etc.)
+				// isn't silently lost.
+				if (process.env.NODE_ENV !== 'production') {
+					// eslint-disable-next-line no-console
+					console.warn('[QuerySearch] fetchKeySuggestions failed:', error);
+				}
 			}
 		},
 		[
@@ -930,42 +932,51 @@ function QuerySearch({
 			};
 		}
 
-		// Parse user input into (context, name). Only a committed
-		// "<known_context>." prefix is treated as context-scoped; bare text
-		// like "att" is matched against field names, not context names.
+		// The ref is the source of truth for the latest cache; the `keySuggestions`
+		// state is kept in sync only so dependent React children re-render. We
+		// read the ref first because CodeMirror may re-run this source
+		// synchronously (via startCompletion) before React commits the new state.
+		const liveKeySuggestions = keySuggestionsRef.current ?? keySuggestions;
+
+		// Detect a context-scoped input (`<head>.<rest>`) by asking the cache
+		// directly: scoped if any cached key's `fieldContext` matches the head.
+		// No stored enum, no hardcoded list — the backend's response is the
+		// source of truth for what counts as a context.
 		const rawSearchText = word?.text.toLowerCase().trim() ?? '';
-		const parsed = parseKeyInput(rawSearchText);
+		const dotIdx = rawSearchText.indexOf('.');
+		const head = dotIdx > 0 ? rawSearchText.slice(0, dotIdx) : '';
+		const isContextScoped =
+			!!head &&
+			(liveKeySuggestions || []).some((opt) => opt.fieldContext === head);
+		const contextName = isContextScoped
+			? rawSearchText.slice(dotIdx + 1)
+			: rawSearchText;
 
-		if (queryContext.isInKey || parsed.isContextScoped) {
-			// Read from the ref to avoid a stale-closure read when CodeMirror
-			// re-runs the source synchronously after a programmatic startCompletion.
-			const liveKeySuggestions = keySuggestionsRef.current ?? keySuggestions;
-
+		if (queryContext.isInKey || isContextScoped) {
 			// Debounced fetch with the user's raw input. The backend parses
-			// "<context>.<rest>" out of `searchText` itself, so there's no
-			// separate fieldContext param.
-			if (lastFetchedKeyRef.current !== `::${rawSearchText}`) {
+			// "<context>.<rest>" out of `searchText` itself.
+			if (lastFetchedKeyRef.current !== rawSearchText) {
 				debouncedFetchKeySuggestions(rawSearchText);
 			}
 
-			if (parsed.isContextScoped && parsed.context) {
-				// "<context>." or "<context>.<rest>" → only prefixed entries for
-				// that context, optionally substring-filtered by `rest`.
+			if (isContextScoped) {
+				// "<head>." or "<head>.<rest>" → only keys with matching
+				// `fieldContext`, optionally substring-filtered by `rest`.
 				options = (liveKeySuggestions || [])
-					.filter((opt) => opt.fieldContext === parsed.context)
+					.filter((opt) => opt.fieldContext === head)
 					.filter((opt) =>
-						parsed.name ? opt.label.toLowerCase().includes(parsed.name) : true,
+						contextName ? opt.label.toLowerCase().includes(contextName) : true,
 					)
 					.map((opt) => ({
 						...opt,
-						label: `${parsed.context}.${opt.label}`,
+						label: `${head}.${opt.label}`,
 					}));
 			} else {
 				// Bare input: match against field names only. Dedup by label so
 				// the same name across contexts collapses to one entry.
 				const seen = new Set<string>();
 				options = (liveKeySuggestions || [])
-					.filter((opt) => opt.label.toLowerCase().includes(parsed.name))
+					.filter((opt) => opt.label.toLowerCase().includes(rawSearchText))
 					.filter((opt) => {
 						if (seen.has(opt.label)) {
 							return false;

@@ -23,7 +23,7 @@ func NewHandler(m inframonitoring.Module) inframonitoring.Handler {
 	}
 }
 
-func (h *handler) HostsList(rw http.ResponseWriter, req *http.Request) {
+func (h *handler) ListHosts(rw http.ResponseWriter, req *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
 		render.Error(rw, err)
@@ -38,7 +38,7 @@ func (h *handler) HostsList(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := h.module.HostsList(req.Context(), orgID, &parsedReq)
+	result, err := h.module.ListHosts(req.Context(), orgID, &parsedReq)
 	if err != nil {
 		render.Error(rw, err)
 		return

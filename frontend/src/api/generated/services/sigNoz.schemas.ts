@@ -6761,7 +6761,7 @@ export type Healthz503 = {
 	status: string;
 };
 
-export type HostsList200 = {
+export type ListHosts200 = {
 	data: InframonitoringtypesHostsListResponseDTO;
 	/**
 	 * @type string

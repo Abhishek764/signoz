@@ -47,7 +47,7 @@ func NewModule(
 	}
 }
 
-func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
+func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}

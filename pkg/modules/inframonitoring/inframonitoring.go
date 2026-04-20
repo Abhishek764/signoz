@@ -9,9 +9,9 @@ import (
 )
 
 type Handler interface {
-	HostsList(http.ResponseWriter, *http.Request)
+	ListHosts(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
-	HostsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error)
+	ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error)
 }

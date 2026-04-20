@@ -9,6 +9,28 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type Hosts struct {
+	Type                   ResponseType           `json:"type"`
+	Records                []HostRecord           `json:"records"`
+	Total                  int                    `json:"total"`
+	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
+	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
+	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
+}
+
+type HostRecord struct {
+	HostName          string                 `json:"hostName"`
+	Status            HostStatus             `json:"status"`
+	ActiveHostCount   int                    `json:"activeHostCount"`
+	InactiveHostCount int                    `json:"inactiveHostCount"`
+	CPU               float64                `json:"cpu"`
+	Memory            float64                `json:"memory"`
+	Wait              float64                `json:"wait"`
+	Load15            float64                `json:"load15"`
+	DiskUsage         float64                `json:"diskUsage"`
+	Meta              map[string]interface{} `json:"meta"`
+}
+
 type HostStatus struct {
 	valuer.String
 }
@@ -48,7 +70,7 @@ type HostFilter struct {
 	FilterByStatus HostStatus `json:"filterByStatus"`
 }
 
-type HostsListRequest struct {
+type PostableHosts struct {
 	Start   int64                `json:"start"`
 	End     int64                `json:"end"`
 	Filter  *HostFilter          `json:"filter"`
@@ -59,7 +81,7 @@ type HostsListRequest struct {
 }
 
 // Validate ensures HostsListRequest contains acceptable values.
-func (req *HostsListRequest) Validate() error {
+func (req *PostableHosts) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -115,38 +137,16 @@ func (req *HostsListRequest) Validate() error {
 }
 
 // UnmarshalJSON validates input immediately after decoding.
-func (req *HostsListRequest) UnmarshalJSON(data []byte) error {
-	type raw HostsListRequest
+func (req *PostableHosts) UnmarshalJSON(data []byte) error {
+	type raw PostableHosts
 	var decoded raw
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		return err
 	}
-	*req = HostsListRequest(decoded)
+	*req = PostableHosts(decoded)
 	return req.Validate()
 }
 
 type RequiredMetricsCheck struct {
 	MissingMetrics []string `json:"missingMetrics"`
-}
-
-type HostsListResponse struct {
-	Type                   ResponseType           `json:"type"`
-	Records                []HostRecord           `json:"records"`
-	Total                  int                    `json:"total"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
-	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
-	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
-}
-
-type HostRecord struct {
-	HostName          string                 `json:"hostName"`
-	Status            HostStatus             `json:"status"`
-	ActiveHostCount   int                    `json:"activeHostCount"`
-	InactiveHostCount int                    `json:"inactiveHostCount"`
-	CPU               float64                `json:"cpu"`
-	Memory            float64                `json:"memory"`
-	Wait              float64                `json:"wait"`
-	Load15            float64                `json:"load15"`
-	DiskUsage         float64                `json:"diskUsage"`
-	Meta              map[string]interface{} `json:"meta"`
 }

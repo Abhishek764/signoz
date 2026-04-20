@@ -295,7 +295,7 @@ func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
 func (m *module) getTopHostGroups(
 	ctx context.Context,
 	orgID valuer.UUID,
-	req *inframonitoringtypes.HostsListRequest,
+	req *inframonitoringtypes.PostableHosts,
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
@@ -346,7 +346,7 @@ func (m *module) getTopHostGroups(
 // clause based on FilterByStatus and the set of active hosts.
 // Returns true if the caller should short-circuit with an empty result (eg. ACTIVE
 // requested but no hosts are active).
-func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsListRequest, activeHostsMap map[string]bool) (shouldShortCircuit bool) {
+func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.PostableHosts, activeHostsMap map[string]bool) (shouldShortCircuit bool) {
 	if req.Filter == nil || (req.Filter.FilterByStatus != inframonitoringtypes.HostStatusActive && req.Filter.FilterByStatus != inframonitoringtypes.HostStatusInactive) {
 		return false
 	}
@@ -369,7 +369,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsLis
 	return false
 }
 
-func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoringtypes.HostsListRequest) (map[string]map[string]string, error) {
+func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableHosts) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range hostAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
@@ -527,7 +527,7 @@ func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostN
 // and a simple uniqExactIf for total count. Inactive = total - active (computed in Go).
 func (m *module) getPerGroupActiveInactiveHostCounts(
 	ctx context.Context,
-	req *inframonitoringtypes.HostsListRequest,
+	req *inframonitoringtypes.PostableHosts,
 	metricNames []string,
 	pageGroups []map[string]string,
 	sinceUnixMilli int64,

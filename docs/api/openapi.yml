@@ -2330,7 +2330,25 @@ components:
       - inactive
       - ""
       type: string
-    InframonitoringtypesHostsListRequest:
+    InframonitoringtypesHosts:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesHostRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      type: object
+    InframonitoringtypesPostableHosts:
       properties:
         end:
           format: int64
@@ -2351,24 +2369,6 @@ components:
         start:
           format: int64
           type: integer
-      type: object
-    InframonitoringtypesHostsListResponse:
-      properties:
-        endTimeBeforeRetention:
-          type: boolean
-        records:
-          items:
-            $ref: '#/components/schemas/InframonitoringtypesHostRecord'
-          nullable: true
-          type: array
-        requiredMetricsCheck:
-          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
-        total:
-          type: integer
-        type:
-          $ref: '#/components/schemas/InframonitoringtypesResponseType'
-        warning:
-          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
       type: object
     InframonitoringtypesRequiredMetricsCheck:
       properties:
@@ -9967,7 +9967,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InframonitoringtypesHostsListRequest'
+              $ref: '#/components/schemas/InframonitoringtypesPostableHosts'
       responses:
         "200":
           content:
@@ -9975,7 +9975,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/InframonitoringtypesHostsListResponse'
+                    $ref: '#/components/schemas/InframonitoringtypesHosts'
                   status:
                     type: string
                 required:

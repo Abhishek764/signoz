@@ -47,12 +47,12 @@ func NewModule(
 	}
 }
 
-func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
+func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	resp := &inframonitoringtypes.HostsListResponse{}
+	resp := &inframonitoringtypes.Hosts{}
 
 	// default to cpu order by
 	if req.OrderBy == nil {

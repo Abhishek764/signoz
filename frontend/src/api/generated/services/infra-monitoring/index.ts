@@ -14,7 +14,7 @@ import { useMutation } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	InframonitoringtypesHostsListRequestDTO,
+	InframonitoringtypesPostableHostsDTO,
 	ListHosts200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
@@ -24,14 +24,14 @@ import type {
  * @summary List Hosts for Infra Monitoring
  */
 export const listHosts = (
-	inframonitoringtypesHostsListRequestDTO: BodyType<InframonitoringtypesHostsListRequestDTO>,
+	inframonitoringtypesPostableHostsDTO: BodyType<InframonitoringtypesPostableHostsDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListHosts200>({
 		url: `/api/v2/infra_monitoring/hosts`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: inframonitoringtypesHostsListRequestDTO,
+		data: inframonitoringtypesPostableHostsDTO,
 		signal,
 	});
 };
@@ -43,13 +43,13 @@ export const getListHostsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listHosts>>,
 		TError,
-		{ data: BodyType<InframonitoringtypesHostsListRequestDTO> },
+		{ data: BodyType<InframonitoringtypesPostableHostsDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listHosts>>,
 	TError,
-	{ data: BodyType<InframonitoringtypesHostsListRequestDTO> },
+	{ data: BodyType<InframonitoringtypesPostableHostsDTO> },
 	TContext
 > => {
 	const mutationKey = ['listHosts'];
@@ -63,7 +63,7 @@ export const getListHostsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listHosts>>,
-		{ data: BodyType<InframonitoringtypesHostsListRequestDTO> }
+		{ data: BodyType<InframonitoringtypesPostableHostsDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -76,7 +76,7 @@ export const getListHostsMutationOptions = <
 export type ListHostsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof listHosts>>
 >;
-export type ListHostsMutationBody = BodyType<InframonitoringtypesHostsListRequestDTO>;
+export type ListHostsMutationBody = BodyType<InframonitoringtypesPostableHostsDTO>;
 export type ListHostsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -89,13 +89,13 @@ export const useListHosts = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listHosts>>,
 		TError,
-		{ data: BodyType<InframonitoringtypesHostsListRequestDTO> },
+		{ data: BodyType<InframonitoringtypesPostableHostsDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listHosts>>,
 	TError,
-	{ data: BodyType<InframonitoringtypesHostsListRequestDTO> },
+	{ data: BodyType<InframonitoringtypesPostableHostsDTO> },
 	TContext
 > => {
 	const mutationOptions = getListHostsMutationOptions(options);

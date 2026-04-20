@@ -41,14 +41,20 @@ func TestClickHouseQuery_Validate_DeprecatedTables(t *testing.T) {
 			`use "distributed_signoz_index_v3"`,
 		},
 		{
-			"usage_explorer",
-			"SELECT * FROM usage_explorer",
-			`table "usage_explorer" is deprecated`,
-		},
-		{
 			"signoz_spans",
 			"SELECT * FROM signoz_spans LIMIT 10",
 			`table "signoz_spans" is deprecated`,
+		},
+		// Dependency graph V1 → V2
+		{
+			"distributed_dependency_graph_minutes",
+			"SELECT * FROM distributed_dependency_graph_minutes",
+			`use "distributed_dependency_graph_minutes_v2"`,
+		},
+		{
+			"dependency_graph_minutes",
+			"SELECT * FROM dependency_graph_minutes",
+			`use "distributed_dependency_graph_minutes_v2"`,
 		},
 		// Logs V1 → V2
 		{
@@ -60,6 +66,38 @@ func TestClickHouseQuery_Validate_DeprecatedTables(t *testing.T) {
 			"logs",
 			"SELECT body FROM logs LIMIT 100",
 			`use "distributed_logs_v2"`,
+		},
+		// Tag attributes V1 → V2
+		{
+			"distributed_tag_attributes",
+			"SELECT * FROM distributed_tag_attributes",
+			`use "distributed_tag_attributes_v2"`,
+		},
+		{
+			"tag_attributes",
+			"SELECT * FROM tag_attributes",
+			`use "distributed_tag_attributes_v2"`,
+		},
+		// Metrics V2 → V4
+		{
+			"distributed_samples_v2",
+			"SELECT * FROM distributed_samples_v2",
+			`use "distributed_samples_v4"`,
+		},
+		{
+			"samples_v2",
+			"SELECT * FROM samples_v2",
+			`use "distributed_samples_v4"`,
+		},
+		{
+			"distributed_time_series_v2",
+			"SELECT * FROM distributed_time_series_v2",
+			`use "distributed_time_series_v4"`,
+		},
+		{
+			"time_series_v2",
+			"SELECT * FROM time_series_v2",
+			`use "distributed_time_series_v4"`,
 		},
 	}
 
@@ -89,19 +127,12 @@ func TestClickHouseQuery_LocalTableUsageWarning(t *testing.T) {
 		dist  string // expected distributed replacement in warning
 	}{
 		// Traces
+		{"signoz_error_index_v2", "SELECT * FROM signoz_error_index_v2", "distributed_signoz_error_index_v2"},
 		{"signoz_index_v3", "SELECT * FROM signoz_index_v3", "distributed_signoz_index_v3"},
 		{"tag_attributes_v2", "SELECT * FROM tag_attributes_v2", "distributed_tag_attributes_v2"},
 		// Logs
 		{"logs_v2", "SELECT body FROM logs_v2 LIMIT 50", "distributed_logs_v2"},
 		{"logs_v2_resource", "SELECT * FROM logs_v2_resource", "distributed_logs_v2_resource"},
-		// Metrics
-		{"samples_v4", "SELECT * FROM samples_v4 WHERE unix_milli >= 1000", "distributed_samples_v4"},
-		{"samples_v4_agg_5m", "SELECT * FROM samples_v4_agg_5m", "distributed_samples_v4_agg_5m"},
-		{"time_series_v4", "SELECT * FROM time_series_v4", "distributed_time_series_v4"},
-		{"time_series_v4_6hrs", "SELECT * FROM time_series_v4_6hrs", "distributed_time_series_v4_6hrs"},
-		// Meter
-		{"samples", "SELECT * FROM samples WHERE unix_milli >= 1000", "distributed_samples"},
-		{"samples_agg_1d", "SELECT * FROM samples_agg_1d", "distributed_samples_agg_1d"},
 		// Metadata
 		{"attributes_metadata", "SELECT * FROM attributes_metadata", "distributed_attributes_metadata"},
 	}
@@ -151,8 +182,8 @@ func TestClickHouseQuery_LocalTableUsageWarning_CaseInsensitive(t *testing.T) {
 		name  string
 		query string
 	}{
-		{"local table uppercase", "SELECT * FROM SAMPLES_V4"},
-		{"local table mixed case", "SELECT * FROM Time_Series_V4"},
+		{"local table uppercase", "SELECT * FROM LOGS_V2"},
+		{"local table mixed case", "SELECT * FROM Signoz_Index_V3"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

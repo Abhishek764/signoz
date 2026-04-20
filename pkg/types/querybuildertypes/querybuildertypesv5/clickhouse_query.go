@@ -48,48 +48,72 @@ var chDeprecatedChecks = buildDeprecatedChecks([]struct{ name, replacement strin
 	// Traces V2 → V3
 	{"distributed_signoz_index_v2", "distributed_signoz_index_v3"},
 	{"signoz_index_v2", "distributed_signoz_index_v3"},
-	{"distributed_signoz_error_index_v2", "distributed_signoz_index_v3"},
-	{"signoz_error_index_v2", "distributed_signoz_index_v3"},
-	{"distributed_dependency_graph_minutes_v2", ""},
-	{"dependency_graph_minutes_v2", ""},
-	{"distributed_signoz_operations", "distributed_top_level_operations"},
-	{"signoz_operations", "distributed_top_level_operations"},
 	{"distributed_durationSort", "distributed_signoz_index_v3"},
 	{"durationSort", "distributed_signoz_index_v3"},
-	{"distributed_usage_explorer", ""},
-	{"usage_explorer", ""},
-	{"distributed_signoz_spans", ""},
-	{"signoz_spans", ""},
+	{"distributed_signoz_spans", "distributed_signoz_index_v3"},
+	{"signoz_spans", "distributed_signoz_index_v3"},
+	// Dependency graph V1 → V2 (dropped in migration 1003)
+	{"distributed_dependency_graph_minutes", "distributed_dependency_graph_minutes_v2"},
+	{"dependency_graph_minutes", "distributed_dependency_graph_minutes_v2"},
 	// Logs V1 → V2
 	{"distributed_logs", "distributed_logs_v2"},
 	{"logs", "distributed_logs_v2"},
+	// Tag attributes V1 → V2
+	{"distributed_tag_attributes", "distributed_tag_attributes_v2"},
+	{"tag_attributes", "distributed_tag_attributes_v2"},
+	// Metrics V2 → V4 (no v3 exists)
+	{"distributed_samples_v2", "distributed_samples_v4"},
+	{"samples_v2", "distributed_samples_v4"},
+	{"distributed_time_series_v2", "distributed_time_series_v4"},
+	{"time_series_v2", "distributed_time_series_v4"},
 })
 
 // chLocalChecks contains checks for local (non-distributed) tables; matching
 // queries produce a warning rather than an error.
+// Note: metric & meter local tables (samples_v4, time_series_v4, samples, etc.)
+// are intentionally omitted — SigNoz metric queries correctly use local tables
+// by design (see https://signoz.io/docs/userguide/write-a-metrics-clickhouse-query/).
 var chLocalChecks = buildLocalChecks([]struct{ name, replacement string }{
 	// Traces
+	{"dependency_graph_minutes_v2", "distributed_dependency_graph_minutes_v2"},
+	{"signoz_error_index_v2", "distributed_signoz_error_index_v2"},
 	{"signoz_index_v3", "distributed_signoz_index_v3"},
+	{"span_attributes", "distributed_span_attributes"},
+	{"span_attributes_keys", "distributed_span_attributes_keys"},
 	{"tag_attributes_v2", "distributed_tag_attributes_v2"},
+	{"top_level_operations", "distributed_top_level_operations"},
+	{"trace_summary", "distributed_trace_summary"},
+	{"traces_v3_resource", "distributed_traces_v3_resource"},
+	{"usage", "distributed_usage"},
+	{"usage_explorer", "distributed_usage_explorer"},
 	// Logs
+	{"logs_attribute_keys", "distributed_logs_attribute_keys"},
+	{"logs_resource_keys", "distributed_logs_resource_keys"},
 	{"logs_v2", "distributed_logs_v2"},
 	{"logs_v2_resource", "distributed_logs_v2_resource"},
+	{"tag_attributes_v2", "distributed_tag_attributes_v2"},
+	{"usage", "distributed_usage"},
 	// Metrics
 	{"samples_v4", "distributed_samples_v4"},
 	{"samples_v4_agg_5m", "distributed_samples_v4_agg_5m"},
 	{"samples_v4_agg_30m", "distributed_samples_v4_agg_30m"},
-	{"exp_hist", "distributed_exp_hist"},
-	{"time_series_v4", "distributed_time_series_v4"},
-	{"time_series_v4_6hrs", "distributed_time_series_v4_6hrs"},
-	{"time_series_v4_1day", "distributed_time_series_v4_1day"},
-	{"time_series_v4_1week", "distributed_time_series_v4_1week"},
+	// NOTE: its tricky to determine if usage of time_series_v4 vs distributed_time_series_v4 is correct or not,
+	// without understanding the entire SQL. Hence we're skipping them for now.
+	// TODO: Develop an intelligent non over-engineered solution for this.
+	// {"exp_hist", "distributed_exp_hist"},
+	// {"time_series_v4", "distributed_time_series_v4"},
+	// {"time_series_v4_6hrs", "distributed_time_series_v4_6hrs"},
+	// {"time_series_v4_1day", "distributed_time_series_v4_1day"},
+	// {"time_series_v4_1week", "distributed_time_series_v4_1week"},
 	{"updated_metadata", "distributed_updated_metadata"},
 	{"metadata", "distributed_metadata"},
+	{"usage", "distributed_usage"},
 	// Meter
 	{"samples", "distributed_samples"},
 	{"samples_agg_1d", "distributed_samples_agg_1d"},
 	// Metadata
 	{"attributes_metadata", "distributed_attributes_metadata"},
+	{"column_evolution_metadata", "distributed_column_evolution_metadata"},
 })
 
 type ClickHouseQuery struct {

@@ -135,6 +135,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		PanelType:       req.RequestType.StringValue(),
 	}
 	intervalWarnings := []string{}
+	localTableWarnings := []string{}
 
 	dependencyQueries := make(map[string]bool)
 	traceOperatorQueries := make(map[string]qbtypes.QueryBuilderTraceOperator)
@@ -261,7 +262,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				if w := spec.LocalTableUsageWarning(); w != "" {
 					// TODO: remove this if we have too much log volume from this
 					q.logger.WarnContext(ctx, "clickhouse query references local tables", slog.String("warning", w))
-					intervalWarnings = append(intervalWarnings, w)
+					localTableWarnings = append(localTableWarnings, w)
 				}
 			}
 		case qbtypes.QueryTypeTraceOperator:
@@ -435,13 +436,20 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
 	if qbResp != nil {
 		qbResp.QBEvent = event
-		if len(intervalWarnings) != 0 {
+		extraWarnings := make([]string, 0, len(intervalWarnings)+len(localTableWarnings))
+		// Interval warnings are only relevant for time series queries; skip them
+		// otherwise to avoid surfacing irrelevant step-interval messages.
+		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
+			extraWarnings = append(extraWarnings, intervalWarnings...)
+		}
+		extraWarnings = append(extraWarnings, localTableWarnings...)
+		if len(extraWarnings) != 0 {
 			if qbResp.Warning == nil {
 				qbResp.Warning = &qbtypes.QueryWarnData{
-					Warnings: make([]qbtypes.QueryWarnDataAdditional, 0, len(intervalWarnings)),
+					Warnings: make([]qbtypes.QueryWarnDataAdditional, 0, len(extraWarnings)),
 				}
 			}
-			for _, w := range intervalWarnings {
+			for _, w := range extraWarnings {
 				qbResp.Warning.Warnings = append(qbResp.Warning.Warnings, qbtypes.QueryWarnDataAdditional{Message: w})
 			}
 		}

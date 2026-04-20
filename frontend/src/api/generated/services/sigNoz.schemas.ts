@@ -3068,6 +3068,10 @@ export type InframonitoringtypesHostRecordDTOMeta = {
 
 export interface InframonitoringtypesHostRecordDTO {
 	/**
+	 * @type integer
+	 */
+	activeHostCount?: number;
+	/**
 	 * @type number
 	 * @format double
 	 */
@@ -3081,6 +3085,10 @@ export interface InframonitoringtypesHostRecordDTO {
 	 * @type string
 	 */
 	hostName?: string;
+	/**
+	 * @type integer
+	 */
+	inactiveHostCount?: number;
 	/**
 	 * @type number
 	 * @format double

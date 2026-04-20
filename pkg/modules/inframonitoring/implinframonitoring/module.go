@@ -3,6 +3,7 @@ package implinframonitoring
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
@@ -94,9 +95,11 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	// TODO: replace this separate ClickHouse query with a sub-query inside the main query builder query
-	// once QB supports sub-queries. Tracked in PR #10805 review.
+	// once QB supports sub-queries.
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
-	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey)
+	// Compute the cutoff once so every downstream query/subquery agrees on what "active" means.
+	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, sinceUnixMilli)
 	if err != nil {
 		return nil, err
 	}
@@ -132,13 +135,26 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	if req.Filter != nil {
 		hostsFilterExpr = req.Filter.Expression
 	}
+
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newHostsTableListQuery())
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err
 	}
 
-	resp.Records = m.buildHostRecords(queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap)
+	// Compute per-group active/inactive host counts.
+	// When host.name is in groupBy, each row = one host, so counts are derived
+	// directly from activeHostsMap in buildHostRecords (no extra query needed).
+	hostCounts := make(map[string]groupHostCounts)
+	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
+	if !isHostNameInGroupBy {
+		hostCounts, err = m.getPerGroupActiveInactiveHostCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp.Records = buildHostRecords(isHostNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap, hostCounts)
 	resp.Warning = queryResp.Warning
 
 	return resp, nil

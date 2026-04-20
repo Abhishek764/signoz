@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { Badge } from '@signozhq/badge';
 import { LockKeyhole } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
+import { Badge } from '@signozhq/ui';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -17,7 +17,7 @@ interface OverviewTabProps {
 	localName: string;
 	onNameChange: (v: string) => void;
 	localRole: string;
-	onRoleChange: (v: string) => void;
+	onRoleChange: (v: string | undefined) => void;
 	isDisabled: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;

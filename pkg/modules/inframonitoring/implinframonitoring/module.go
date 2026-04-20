@@ -3,6 +3,7 @@ package implinframonitoring
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
@@ -65,32 +66,27 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		}
 	}
 
-	if err := m.validateOrderBy(req.OrderBy, orderByToHostsQueryNames); err != nil {
-		return nil, err
-	}
-
 	// default to host name group by
 	if len(req.GroupBy) == 0 {
 		req.GroupBy = []qbtypes.GroupByKey{hostNameGroupByKey}
-		resp.Type = ResponseTypeList
+		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
-		resp.Type = ResponseTypeGroupedList
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	// 1. Check if any host metrics exist and get earliest retention time.
-	// If no host metrics exist, return early — the UI shows the onboarding guide.
+	// 1. Check which required metrics exist and get earliest retention time.
+	// If any required metric is missing, return early with the list of missing metrics.
 	// 2. If metrics exist but req.End is before the earliest reported time, convey retention boundary.
-	count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
 	if err != nil {
 		return nil, err
 	}
-	if count == 0 {
-		resp.SentAnyMetricsData = false
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
 		resp.Records = []inframonitoringtypes.HostRecord{}
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.SentAnyMetricsData = true
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
 		resp.Records = []inframonitoringtypes.HostRecord{}
@@ -98,8 +94,12 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
+	// TODO: replace this separate ClickHouse query with a sub-query inside the main query builder query
+	// once QB supports sub-queries.
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
-	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey)
+	// Compute the cutoff once so every downstream query/subquery agrees on what "active" means.
+	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, sinceUnixMilli)
 	if err != nil {
 		return nil, err
 	}
@@ -135,13 +135,27 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	if req.Filter != nil {
 		hostsFilterExpr = req.Filter.Expression
 	}
+
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newHostsTableListQuery())
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err
 	}
 
-	resp.Records = m.buildHostRecords(queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap)
+	// Compute per-group active/inactive host counts.
+	// When host.name is in groupBy, each row = one host, so counts are derived
+	// directly from activeHostsMap in buildHostRecords (no extra query needed).
+	hostCounts := make(map[string]groupHostCounts)
+	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
+	if !isHostNameInGroupBy {
+		hostCounts, err = m.getPerGroupActiveInactiveHostCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp.Records = buildHostRecords(isHostNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap, hostCounts)
+	resp.Warning = queryResp.Warning
 
 	return resp, nil
 }
@@ -157,35 +171,30 @@ func (m *module) PodsList(ctx context.Context, orgID valuer.UUID, req *inframoni
 		req.OrderBy = &qbtypes.OrderBy{
 			Key: qbtypes.OrderByKey{
 				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-					Name: "cpu",
+					Name: inframonitoringtypes.PodsOrderByCPU,
 				},
 			},
 			Direction: qbtypes.OrderDirectionDesc,
 		}
 	}
 
-	if err := m.validateOrderBy(req.OrderBy, orderByToPodsQueryNames); err != nil {
-		return nil, err
-	}
-
 	if len(req.GroupBy) == 0 {
 		req.GroupBy = []qbtypes.GroupByKey{podUIDGroupByKey}
-		resp.Type = ResponseTypeList
+		resp.Type = inframonitoringtypes.ResponseTypeList
 	} else {
-		resp.Type = ResponseTypeGroupedList
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
-	count, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList)
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList)
 	if err != nil {
 		return nil, err
 	}
-	if count == 0 {
-		resp.SentAnyMetricsData = false
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
 		resp.Records = []inframonitoringtypes.PodRecord{}
 		resp.Total = 0
 		return resp, nil
 	}
-	resp.SentAnyMetricsData = true
 	if req.End < int64(minFirstReportedUnixMilli) {
 		resp.EndTimeBeforeRetention = true
 		resp.Records = []inframonitoringtypes.PodRecord{}
@@ -223,7 +232,8 @@ func (m *module) PodsList(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
-	resp.Records = m.buildPodRecords(queryResp, pageGroups, req.GroupBy, metadataMap, req.End)
+	resp.Records = buildPodRecords(queryResp, pageGroups, req.GroupBy, metadataMap, req.End)
+	resp.Warning = queryResp.Warning
 
 	return resp, nil
 }

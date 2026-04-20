@@ -50,13 +50,13 @@ var podAttrKeysForMetadata = []string{
 }
 
 var orderByToPodsQueryNames = map[string][]string{
-	"cpu":            {"A"},
-	"cpu_request":    {"B"},
-	"cpu_limit":      {"C"},
-	"memory":         {"D"},
-	"memory_request": {"E"},
-	"memory_limit":   {"F"},
-	"phase":          {"G"},
+	inframonitoringtypes.PodsOrderByCPU:           {"A"},
+	inframonitoringtypes.PodsOrderByCPURequest:    {"B"},
+	inframonitoringtypes.PodsOrderByCPULimit:      {"C"},
+	inframonitoringtypes.PodsOrderByMemory:        {"D"},
+	inframonitoringtypes.PodsOrderByMemoryRequest: {"E"},
+	inframonitoringtypes.PodsOrderByMemoryLimit:   {"F"},
+	inframonitoringtypes.PodsOrderByPhase:         {"G"},
 }
 
 func phaseNumberToString(v float64) string {
@@ -276,7 +276,7 @@ func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringt
 	return m.getMetadata(ctx, podsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }
 
-func (m *module) buildPodRecords(
+func buildPodRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
@@ -299,7 +299,7 @@ func (m *module) buildPodRecords(
 			PodMemoryRequest: -1,
 			PodMemoryLimit:   -1,
 			PodAge:           -1,
-			Meta:             map[string]interface{}{},
+			Meta:             map[string]any{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {

@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { Badge, toast } from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	getResetPasswordToken,
+	useCreateResetPasswordToken,
 	useDeleteUser,
+	useGetResetPasswordToken,
 	useGetUser,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -28,6 +28,7 @@ import {
 	useMemberRoleManager,
 } from 'hooks/member/useMemberRoleManager';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
@@ -52,6 +53,27 @@ function getDeleteTooltip(
 		return SELF_DELETE_TOOLTIP;
 	}
 	return undefined;
+}
+
+function getInviteButtonLabel(
+	isLoading: boolean,
+	existingToken: { expiresAt?: Date } | undefined,
+	isExpired: boolean,
+	notFound: boolean,
+): string {
+	if (isLoading) {
+		return 'Checking invite...';
+	}
+	if (existingToken && !isExpired) {
+		return 'Copy Invite Link';
+	}
+	if (isExpired) {
+		return 'Regenerate Invite Link';
+	}
+	if (notFound) {
+		return 'Generate Invite Link';
+	}
+	return 'Copy Invite Link';
 }
 
 function toSaveApiError(err: unknown): APIError {
@@ -82,15 +104,20 @@ function EditMemberDrawer({
 	const [localRole, setLocalRole] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
-	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [resetLink, setResetLink] = useState<string | null>(null);
+	const [resetLinkExpiresAt, setResetLinkExpiresAt] = useState<string | null>(
+		null,
+	);
 	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
 	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
 
 	const isInvited = member?.status === MemberStatus.Invited;
+	const isDeleted = member?.status === MemberStatus.Deleted;
 	const isSelf = !!member?.id && member.id === currentUser?.id;
+
+	const { showErrorModal } = useErrorModal();
 
 	const {
 		data: fetchedUser,
@@ -111,26 +138,60 @@ function EditMemberDrawer({
 		refetch: refetchRoles,
 	} = useRoles();
 
-	const { fetchedRoleIds, applyDiff } = useMemberRoleManager(
-		member?.id ?? '',
-		open && !!member?.id,
+	const {
+		fetchedRoleIds,
+		isLoading: isMemberRolesLoading,
+		applyDiff,
+	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
+
+	// Token status query for invited users
+	const {
+		data: tokenQueryData,
+		isLoading: isLoadingTokenStatus,
+		isError: tokenNotFound,
+	} = useGetResetPasswordToken(
+		{ id: member?.id ?? '' },
+		{ query: { enabled: open && !!member?.id && isInvited } },
 	);
+
+	const existingToken = tokenQueryData?.data;
+	const isTokenExpired =
+		existingToken != null &&
+		new Date(String(existingToken.expiresAt)) < new Date();
+
+	// Create/regenerate token mutation
+	const {
+		mutateAsync: createTokenMutation,
+		isLoading: isGeneratingLink,
+	} = useCreateResetPasswordToken();
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
 	const fetchedUserId = fetchedUser?.data?.id;
 	const fetchedUserDisplayName = fetchedUser?.data?.displayName;
 
+	const roleSessionRef = useRef<string | null>(null);
+
 	useEffect(() => {
 		if (fetchedUserId) {
 			setLocalDisplayName(fetchedUserDisplayName ?? member?.name ?? '');
 		}
-		setSaveErrors([]);
 	}, [fetchedUserId, fetchedUserDisplayName, member?.name]);
 
 	useEffect(() => {
-		setLocalRole(fetchedRoleIds[0] ?? '');
-	}, [fetchedRoleIds]);
+		if (fetchedUserId) {
+			setSaveErrors([]);
+		}
+	}, [fetchedUserId]);
+
+	useEffect(() => {
+		if (!member?.id) {
+			roleSessionRef.current = null;
+		} else if (member.id !== roleSessionRef.current && !isMemberRolesLoading) {
+			setLocalRole(fetchedRoleIds[0] ?? '');
+			roleSessionRef.current = member.id;
+		}
+	}, [member?.id, fetchedRoleIds, isMemberRolesLoading]);
 
 	const isDirty =
 		member !== null &&
@@ -153,17 +214,10 @@ function EditMemberDrawer({
 				onClose();
 			},
 			onError: (err): void => {
-				const errMessage =
-					convertToApiError(
-						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'An error occurred';
-				const prefix = isInvited
-					? 'Failed to revoke invite'
-					: 'Failed to delete member';
-				toast.error(`${prefix}: ${errMessage}`, {
-					richColors: true,
-					position: 'top-right',
-				});
+				const errMessage = convertToApiError(
+					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				);
+				showErrorModal(errMessage as APIError);
 			},
 		},
 	});
@@ -328,12 +382,21 @@ function EditMemberDrawer({
 		if (!member) {
 			return;
 		}
-		setIsGeneratingLink(true);
 		try {
-			const response = await getResetPasswordToken({ id: member.id });
+			const response = await createTokenMutation({
+				pathParams: { id: member.id },
+			});
 			if (response?.data?.token) {
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
+				setResetLinkExpiresAt(
+					response.data.expiresAt
+						? formatTimezoneAdjustedTimestamp(
+								String(response.data.expiresAt),
+								DATE_TIME_FORMATS.DASH_DATETIME,
+						  )
+						: null,
+				);
 				setHasCopiedResetLink(false);
 				setLinkType(isInvited ? 'invite' : 'reset');
 				setShowResetLinkDialog(true);
@@ -344,15 +407,13 @@ function EditMemberDrawer({
 					position: 'top-right',
 				});
 			}
-		} catch {
-			toast.error('Failed to generate password reset link', {
-				richColors: true,
-				position: 'top-right',
-			});
-		} finally {
-			setIsGeneratingLink(false);
+		} catch (err) {
+			const errMsg = convertToApiError(
+				err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+			);
+			showErrorModal(errMsg as APIError);
 		}
-	}, [member, isInvited, onClose]);
+	}, [member, isInvited, onClose, showErrorModal, createTokenMutation]);
 
 	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopyResetLink = useCallback((): void => {
@@ -419,7 +480,7 @@ function EditMemberDrawer({
 						}}
 						className="edit-member-drawer__input"
 						placeholder="Enter name"
-						disabled={isRootUser}
+						disabled={isRootUser || isDeleted}
 					/>
 				</Tooltip>
 			</div>
@@ -440,9 +501,15 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-role">
 					Roles
 				</label>
-				{isSelf || isRootUser ? (
+				{isSelf || isRootUser || isDeleted ? (
 					<Tooltip
-						title={isRootUser ? ROOT_USER_TOOLTIP : 'You cannot modify your own role'}
+						title={
+							isRootUser
+								? ROOT_USER_TOOLTIP
+								: isDeleted
+								? undefined
+								: 'You cannot modify your own role'
+						}
 					>
 						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
 							<div className="edit-member-drawer__disabled-roles">
@@ -467,7 +534,7 @@ function EditMemberDrawer({
 						onRefetch={refetchRoles}
 						value={localRole}
 						onChange={(role): void => {
-							setLocalRole(role);
+							setLocalRole(role ?? '');
 							setSaveErrors((prev) =>
 								prev.filter(
 									(err) =>
@@ -476,6 +543,7 @@ function EditMemberDrawer({
 							);
 						}}
 						placeholder="Select role"
+						allowClear={false}
 					/>
 				)}
 			</div>
@@ -486,6 +554,10 @@ function EditMemberDrawer({
 					{member?.status === MemberStatus.Active ? (
 						<Badge color="forest" variant="outline">
 							ACTIVE
+						</Badge>
+					) : member?.status === MemberStatus.Deleted ? (
+						<Badge color="cherry" variant="outline">
+							DELETED
 						</Badge>
 					) : (
 						<Badge color="amber" variant="outline">
@@ -525,55 +597,64 @@ function EditMemberDrawer({
 		<div className="edit-member-drawer__layout">
 			<div className="edit-member-drawer__body">{drawerBody}</div>
 
-			<div className="edit-member-drawer__footer">
-				<div className="edit-member-drawer__footer-left">
-					<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
-						<span className="edit-member-drawer__tooltip-wrapper">
-							<Button
-								className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
-								onClick={(): void => setShowDeleteConfirm(true)}
-								disabled={isRootUser || isSelf}
-							>
-								<Trash2 size={12} />
-								{isInvited ? 'Revoke Invite' : 'Delete Member'}
-							</Button>
-						</span>
-					</Tooltip>
+			{!isDeleted && (
+				<div className="edit-member-drawer__footer">
+					<div className="edit-member-drawer__footer-left">
+						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
+							<span className="edit-member-drawer__tooltip-wrapper">
+								<Button
+									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
+									onClick={(): void => setShowDeleteConfirm(true)}
+									disabled={isRootUser || isSelf}
+								>
+									<Trash2 size={12} />
+									{isInvited ? 'Revoke Invite' : 'Delete Member'}
+								</Button>
+							</span>
+						</Tooltip>
 
-					<div className="edit-member-drawer__footer-divider" />
-					<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-						<span className="edit-member-drawer__tooltip-wrapper">
-							<Button
-								className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-								onClick={handleGenerateResetLink}
-								disabled={isGeneratingLink || isRootUser}
-							>
-								<RefreshCw size={12} />
-								{isGeneratingLink && 'Generating...'}
-								{!isGeneratingLink && isInvited && 'Copy Invite Link'}
-								{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
-							</Button>
-						</span>
-					</Tooltip>
+						<div className="edit-member-drawer__footer-divider" />
+						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+							<span className="edit-member-drawer__tooltip-wrapper">
+								<Button
+									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+									onClick={handleGenerateResetLink}
+									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
+								>
+									<RefreshCw size={12} />
+									{isGeneratingLink
+										? 'Generating...'
+										: isInvited
+										? getInviteButtonLabel(
+												isLoadingTokenStatus,
+												existingToken,
+												isTokenExpired,
+												tokenNotFound,
+										  )
+										: 'Generate Password Reset Link'}
+								</Button>
+							</span>
+						</Tooltip>
+					</div>
+
+					<div className="edit-member-drawer__footer-right">
+						<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
+							<X size={14} />
+							Cancel
+						</Button>
+
+						<Button
+							variant="solid"
+							color="primary"
+							size="sm"
+							disabled={!isDirty || isSaving || isRootUser}
+							onClick={handleSave}
+						>
+							{isSaving ? 'Saving...' : 'Save Member Details'}
+						</Button>
+					</div>
 				</div>
-
-				<div className="edit-member-drawer__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
-						<X size={14} />
-						Cancel
-					</Button>
-
-					<Button
-						variant="solid"
-						color="primary"
-						size="sm"
-						disabled={!isDirty || isSaving || isRootUser}
-						onClick={handleSave}
-					>
-						{isSaving ? 'Saving...' : 'Save Member Details'}
-					</Button>
-				</div>
-			</div>
+			)}
 		</div>
 	);
 
@@ -600,6 +681,7 @@ function EditMemberDrawer({
 				open={showResetLinkDialog}
 				linkType={linkType}
 				resetLink={resetLink}
+				expiresAt={resetLinkExpiresAt}
 				hasCopied={hasCopiedResetLink}
 				onClose={(): void => {
 					setShowResetLinkDialog(false);

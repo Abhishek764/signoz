@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -16,7 +15,7 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
+const (
 	hostNameAttrKey = "host.name"
 )
 
@@ -43,11 +42,11 @@ var hostAttrKeysForMetadata = []string{
 // orderByToHostsQueryNames maps the orderBy column to the query/formula names
 // from HostsTableListQuery used for ranking host groups.
 var orderByToHostsQueryNames = map[string][]string{
-	"cpu":        {"A", "B", "F1"},
-	"memory":     {"C", "D", "F2"},
-	"wait":       {"E", "F", "F3"},
-	"disk_usage": {"H", "I", "F4"},
-	"load15":     {"G"},
+	inframonitoringtypes.HostsOrderByCPU:       {"A", "B", "F1"},
+	inframonitoringtypes.HostsOrderByMemory:    {"C", "D", "F2"},
+	inframonitoringtypes.HostsOrderByWait:      {"E", "F", "F3"},
+	inframonitoringtypes.HostsOrderByDiskUsage: {"H", "I", "F4"},
+	inframonitoringtypes.HostsOrderByLoad15:    {"G"},
 }
 
 func (m *module) newHostsTableListQuery() *qbtypes.QueryRangeRequest {
@@ -339,10 +338,10 @@ func (m *module) getTopHostGroups(
 
 // applyHostsActiveStatusFilter modifies req.Filter.Expression to include an IN/NOT IN
 // clause based on FilterByStatus and the set of active hosts.
-// Returns true if the caller should short-circuit with an empty result (ACTIVE
+// Returns true if the caller should short-circuit with an empty result (eg. ACTIVE
 // requested but no hosts are active).
 func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsListRequest, activeHostsMap map[string]bool) (shouldShortCircuit bool) {
-	if req.FilterByStatus != inframonitoringtypes.HostStatusActive && req.FilterByStatus != inframonitoringtypes.HostStatusInactive {
+	if req.Filter == nil || (req.Filter.FilterByStatus != inframonitoringtypes.HostStatusActive && req.Filter.FilterByStatus != inframonitoringtypes.HostStatusInactive) {
 		return false
 	}
 
@@ -352,15 +351,12 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.HostsLis
 	}
 
 	if len(activeHosts) == 0 {
-		return req.FilterByStatus == inframonitoringtypes.HostStatusActive
+		return req.Filter.FilterByStatus == inframonitoringtypes.HostStatusActive
 	}
 
 	op := "IN"
-	if req.FilterByStatus == inframonitoringtypes.HostStatusInactive {
+	if req.Filter.FilterByStatus == inframonitoringtypes.HostStatusInactive {
 		op = "NOT IN"
-	}
-	if req.Filter == nil {
-		req.Filter = &qbtypes.Filter{}
 	}
 	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))
 	req.Filter.Expression = mergeFilterExpressions(req.Filter.Expression, statusClause)
@@ -374,7 +370,11 @@ func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoring
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	metadataMap, err := m.getMetadata(ctx, hostsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	metadataMap, err := m.getMetadata(ctx, hostsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -383,12 +383,18 @@ func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoring
 
 // buildHostRecords constructs the final list of HostRecords for a page.
 // Groups that had no metric data get default values of -1.
-func (m *module) buildHostRecords(
+//
+// hostCounts is nil when host.name is in the groupBy — in that case, counts are
+// derived directly from activeHostsMap (1/0 per host). When non-nil (custom groupBy
+// without host.name), counts are looked up from the map.
+func buildHostRecords(
+	isHostNameInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	activeHostsMap map[string]bool,
+	hostCounts map[string]groupHostCounts,
 ) []inframonitoringtypes.HostRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -397,24 +403,37 @@ func (m *module) buildHostRecords(
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
 		hostName := labels[hostNameAttrKey]
 
-		var activeStatus string
-		if hostName != "" {
-			if activeHostsMap[hostName] {
-				activeStatus = inframonitoringtypes.HostStatusActive.StringValue()
-			} else {
-				activeStatus = inframonitoringtypes.HostStatusInactive.StringValue()
+		activeStatus := inframonitoringtypes.HostStatusNone
+		activeHostCount := 0
+		inactiveHostCount := 0
+		if isHostNameInGroupBy { // derive from activeHostsMap since each row = one host
+			if hostName != "" {
+				if activeHostsMap[hostName] {
+					activeStatus = inframonitoringtypes.HostStatusActive
+					activeHostCount = 1
+				} else {
+					activeStatus = inframonitoringtypes.HostStatusInactive
+					inactiveHostCount = 1
+				}
+			}
+		} else { // derive from hostCounts since custom groupBy without host.name
+			if counts, ok := hostCounts[compositeKey]; ok {
+				activeHostCount = counts.Active
+				inactiveHostCount = counts.Inactive
 			}
 		}
 
 		record := inframonitoringtypes.HostRecord{
-			HostName:  hostName,
-			Status:    activeStatus,
-			CPU:       -1,
-			Memory:    -1,
-			Wait:      -1,
-			Load15:    -1,
-			DiskUsage: -1,
-			Meta:      map[string]interface{}{},
+			HostName:          hostName,
+			Status:            activeStatus,
+			ActiveHostCount:   activeHostCount,
+			InactiveHostCount: inactiveHostCount,
+			CPU:               -1,
+			Memory:            -1,
+			Wait:              -1,
+			Load15:            -1,
+			DiskUsage:         -1,
+			Meta:              map[string]any{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -446,15 +465,11 @@ func (m *module) buildHostRecords(
 	return records
 }
 
-// getActiveHosts returns a set of host names that have reported metrics recently (since sinceUnixMilli).
-// It queries distributed_metadata for hosts where last_reported_unix_milli >= sinceUnixMilli.
-// TODO(nikhilmantri0902): This method does not return active hosts numbers based on custom grouping by. So
-// if we have a different group by key than host.name in the API, then this method's response, will be useless technically, because
-// with a group-by different from host.name, we should show count of active-inactive hosts in that group.
-// We should have a way to determine active groups based on the group by keys in the request.
-func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string) (map[string]bool, error) {
-	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
-
+// getActiveHostsQuery builds a SelectBuilder that returns distinct host names
+// with metrics reported in the last 10 minutes. The builder is not executed —
+// callers can either execute it (getActiveHosts) or embed it as a subquery
+// (getPerGroupActiveInactiveHostCounts).
+func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string, sinceUnixMilli int64) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Distinct()
 	sb.Select("attr_string_value")
@@ -462,9 +477,17 @@ func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostN
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
 		sb.E("attr_name", hostNameAttr),
+		sb.NE("attr_string_value", ""),
 		sb.GE("last_reported_unix_milli", sinceUnixMilli),
 	)
 
+	return sb
+}
+
+// getActiveHosts returns a set of host names that have reported metrics recently.
+// It queries distributed_metadata for hosts where last_reported_unix_milli >= 10 minutes ago.
+func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
+	sb := m.getActiveHostsQuery(metricNames, hostNameAttr, sinceUnixMilli)
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
@@ -489,4 +512,119 @@ func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostN
 	}
 
 	return activeHosts, nil
+}
+
+// groupHostCounts holds per-group active and inactive host counts.
+type groupHostCounts struct {
+	Active   int
+	Inactive int
+}
+
+// getPerGroupActiveInactiveHostCounts computes the number of active and inactive hosts per group
+// for the current page. It queries the timeseries table using the provided filter
+// expression (which includes user filter + status filter + page groups IN clause).
+// Uses GLOBAL IN with the active-hosts subquery inside uniqExactIf for active count,
+// and a simple uniqExactIf for total count. Inactive = total - active (computed in Go).
+func (m *module) getPerGroupActiveInactiveHostCounts(
+	ctx context.Context,
+	req *inframonitoringtypes.HostsListRequest,
+	metricNames []string,
+	pageGroups []map[string]string,
+	sinceUnixMilli int64,
+) (map[string]groupHostCounts, error) {
+
+	// Build the full filter expression from req (user filter + status filter) and page groups.
+	reqFilterExpr := ""
+	if req.Filter != nil {
+		reqFilterExpr = req.Filter.Expression
+	}
+	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
+	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
+
+	adjustedStart, adjustedEnd, distributedTimeSeriesTableName, _ := telemetrymetrics.WhichTSTableToUse(
+		uint64(req.Start), uint64(req.End), nil,
+	)
+
+	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", hostNameAttrKey)
+
+	sb := sqlbuilder.NewSelectBuilder()
+	selectCols := make([]string, 0, len(req.GroupBy)+2)
+	for _, key := range req.GroupBy {
+		selectCols = append(selectCols,
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(key.Name), quoteIdentifier(key.Name)),
+		)
+	}
+
+	activeHostsSQ := m.getActiveHostsQuery(metricNames, hostNameAttrKey, sinceUnixMilli)
+	selectCols = append(selectCols,
+		fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
+		fmt.Sprintf("uniqExactIf(%s, %s != '') AS total_host_count", hostNameExpr, hostNameExpr),
+	)
+
+	// Build a fingerprint subquery to restrict to fingerprints with actual sample
+	// data in the original time range (not the wider timeseries table window).
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, req.Start, req.End)
+
+	sb.Select(selectCols...)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
+	sb.Where(
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
+		sb.GE("unix_milli", adjustedStart),
+		sb.L("unix_milli", adjustedEnd),
+		fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
+	)
+
+	// Apply the combined filter expression (user filter + status filter + page groups IN).
+	if filterExpr != "" {
+		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+		if err != nil {
+			return nil, err
+		}
+		if filterClause != nil {
+			sb.AddWhereClause(filterClause)
+		}
+	}
+
+	// GROUP BY
+	groupByAliases := make([]string, 0, len(req.GroupBy))
+	for _, key := range req.GroupBy {
+		groupByAliases = append(groupByAliases, quoteIdentifier(key.Name))
+	}
+	sb.GroupBy(groupByAliases...)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]groupHostCounts)
+	for rows.Next() {
+		groupVals := make([]string, len(req.GroupBy))
+		scanPtrs := make([]any, 0, len(req.GroupBy)+2)
+		for i := range groupVals {
+			scanPtrs = append(scanPtrs, &groupVals[i])
+		}
+
+		var activeCount, totalCount uint64
+		scanPtrs = append(scanPtrs, &activeCount, &totalCount)
+
+		if err := rows.Scan(scanPtrs...); err != nil {
+			return nil, err
+		}
+
+		compositeKey := compositeKeyFromList(groupVals)
+		result[compositeKey] = groupHostCounts{
+			Active:   int(activeCount),
+			Inactive: int(totalCount - activeCount),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

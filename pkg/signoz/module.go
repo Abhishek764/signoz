@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
@@ -32,7 +33,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
-	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -74,6 +74,7 @@ type Modules struct {
 	InfraMonitoring  inframonitoring.Module
 	Promote          promote.Module
 	ServiceAccount   serviceaccount.Module
+	CloudIntegration cloudintegration.Module
 	RuleStateHistory rulestatehistory.Module
 }
 
@@ -96,6 +97,8 @@ func NewModules(
 	dashboard dashboard.Module,
 	userGetter user.Getter,
 	userRoleStore authtypes.UserRoleStore,
+	serviceAccount serviceaccount.Module,
+	cloudIntegrationModule cloudintegration.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -121,7 +124,8 @@ func NewModules(
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		InfraMonitoring:  implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, cache, analytics, providerSettings, config.ServiceAccount),
+		ServiceAccount:   serviceAccount,
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
+		CloudIntegration: cloudIntegrationModule,
 	}
 }

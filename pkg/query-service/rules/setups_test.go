@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.TelemetryStore) querier.Querier {
+func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.TelemetryStore) (querier.Querier, *telemetrytypestest.MockMetadataStore) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
@@ -46,11 +46,12 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // prometheus
 		nil, // traceStmtBuilder
 		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
 		metricStmtBuilder,
 		nil, // meterStmtBuilder
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
-	)
+	), metadataStore
 }
 
 func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
@@ -91,6 +92,7 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 		nil,            // prometheus
 		nil,            // traceStmtBuilder
 		logStmtBuilder, // logStmtBuilder
+		nil,            // auditStmtBuilder
 		nil,            // metricStmtBuilder
 		nil,            // meterStmtBuilder
 		nil,            // traceOperatorStmtBuilder
@@ -131,6 +133,7 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 		nil,              // prometheus
 		traceStmtBuilder, // traceStmtBuilder
 		nil,              // logStmtBuilder
+		nil,              // auditStmtBuilder
 		nil,              // metricStmtBuilder
 		nil,              // meterStmtBuilder
 		nil,              // traceOperatorStmtBuilder

@@ -2,7 +2,7 @@ import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountKeysQueryKey,
@@ -16,6 +16,8 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsString, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
 export interface RevokeKeyContentProps {
 	isRevoking: boolean;
@@ -56,6 +58,7 @@ export function RevokeKeyContent({
 
 function RevokeKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [revokeKeyId, setRevokeKeyId] = useQueryState(
 		SA_QUERY_PARAMS.REVOKE_KEY,
@@ -83,11 +86,11 @@ function RevokeKeyModal(): JSX.Element {
 				}
 			},
 			onError: (error) => {
-				const errMessage =
+				showErrorModal(
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to revoke key';
-				toast.error(errMessage, { richColors: true });
+					) as APIError,
+				);
 			},
 		},
 	});
@@ -115,7 +118,7 @@ function RevokeKeyModal(): JSX.Element {
 			width="narrow"
 			className="alert-dialog delete-dialog"
 			showCloseButton={false}
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			<RevokeKeyContent
 				isRevoking={isRevoking}

@@ -5,11 +5,12 @@ import { Style } from '@signozhq/design-tokens';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { cloneDeep, debounce } from 'lodash-es';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
@@ -40,6 +41,8 @@ function InviteMembersModal({
 	onClose,
 	onComplete,
 }: InviteMembersModalProps): JSX.Element {
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
+
 	const [rows, setRows] = useState<InviteRow[]>(() => [
 		EMPTY_ROW(),
 		EMPTY_ROW(),
@@ -204,13 +207,11 @@ function InviteMembersModal({
 			resetAndClose();
 			onComplete?.();
 		} catch (err) {
-			const apiErr = err as APIError;
-			const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
-			toast.error(errorMessage, { richColors: true, position: 'top-right' });
+			showErrorModal(err as APIError);
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [rows, onComplete, resetAndClose, validateAllUsers]);
+	}, [validateAllUsers, rows, resetAndClose, onComplete, showErrorModal]);
 
 	const touchedRows = rows.filter(isRowTouched);
 	const isSubmitDisabled = isSubmitting || touchedRows.length === 0;
@@ -227,7 +228,7 @@ function InviteMembersModal({
 			showCloseButton
 			width="wide"
 			className="invite-members-modal"
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			<div className="invite-members-modal__content">
 				<div className="invite-members-modal__table">
@@ -329,6 +330,7 @@ function InviteMembersModal({
 						size="sm"
 						onClick={handleSubmit}
 						disabled={isSubmitDisabled}
+						loading={isSubmitting}
 					>
 						{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
 					</Button>

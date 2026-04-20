@@ -14,10 +14,29 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-const (
-	ResponseTypeList        = "list"
-	ResponseTypeGroupedList = "grouped_list"
-)
+// buildSamplesTblFingerprintSubQuery returns a SelectBuilder that selects distinct fingerprints
+// from the samples table for the given metric names andtime range.
+// The timeseries tables are ReplacingMergeTrees with bucketed granularity, so
+// WhichTSTableToUse widens the window — this subquery helps restricts to fingerprints
+// that actually have sample data in the requested range.
+func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, startMs, endMs int64) *sqlbuilder.SelectBuilder {
+	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
+		uint64(startMs), uint64(endMs),
+		metrictypes.UnspecifiedType,
+		metrictypes.TimeAggregationUnspecified,
+		nil,
+	)
+	localSamplesTable := strings.TrimPrefix(samplesTableName, "distributed_")
+	fpSB := sqlbuilder.NewSelectBuilder()
+	fpSB.Select("DISTINCT fingerprint")
+	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localSamplesTable))
+	fpSB.Where(
+		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
+		fpSB.GE("unix_milli", startMs),
+		fpSB.L("unix_milli", endMs),
+	)
+	return fpSB
+}
 
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
@@ -62,35 +81,74 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClause.WhereClause, nil
 }
 
-// getMetricsExistenceAndEarliestTime checks whether any of the given metric names
-// have been reported, and returns the total count and the earliest first-reported timestamp.
-// When count is 0, minFirstReportedUnixMilli is 0.
-func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
+// NOTE: this method is not specific to infra monitoring — it queries attributes_metadata generically.
+// Consider moving to telemetryMetaStore when a second use case emerges.
+//
+// getMetricsExistenceAndEarliestTime checks which of the given metric names have been
+// reported. It returns a list of missing metrics (those not found or with zero count)
+// and the earliest first-reported timestamp across all present metrics.
+// When all metrics are missing, minFirstReportedUnixMilli is 0.
+// TODO(nikhilmantri0902, srikanthccv): This method was designed this way because querier errors if any of the metrics
+// in the querier list was never sent, the QueryRange call throws not found error. Modify this method, if QueryRange
+// behaviour changes towards this.
+func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) ([]string, uint64, error) {
 	if len(metricNames) == 0 {
-		return 0, 0, nil
+		return nil, 0, nil
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("count(*) AS cnt", "min(first_reported_unix_milli) AS min_first_reported")
+	sb.Select("metric_name", "count(*) AS cnt", "min(first_reported_unix_milli) AS min_first_reported")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
 	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
+	sb.GroupBy("metric_name")
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	var count, minFirstReported uint64
-	err := m.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&count, &minFirstReported)
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return 0, 0, err
+		return nil, 0, err
 	}
-	return count, minFirstReported, nil
+	defer rows.Close()
+
+	type metricInfo struct {
+		count            uint64
+		minFirstReported uint64
+	}
+	found := make(map[string]metricInfo, len(metricNames))
+
+	for rows.Next() {
+		var name string
+		var cnt, minFR uint64
+		if err := rows.Scan(&name, &cnt, &minFR); err != nil {
+			return nil, 0, err
+		}
+		found[name] = metricInfo{count: cnt, minFirstReported: minFR}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	var missingMetrics []string
+	var globalMinFirstReported uint64
+	for _, name := range metricNames {
+		info, ok := found[name]
+		if !ok || info.count == 0 {
+			missingMetrics = append(missingMetrics, name)
+			continue
+		}
+		if globalMinFirstReported == 0 || info.minFirstReported < globalMinFirstReported {
+			globalMinFirstReported = info.minFirstReported
+		}
+	}
+
+	return missingMetrics, globalMinFirstReported, nil
 }
 
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,
 // within the given time range and metric names. It uses argMax(tuple(...), unix_milli) to ensure
 // we always pick attribute values from the latest timestamp for each group.
-//
 // The returned map has a composite key of groupBy column values joined by "\x00" (null byte),
-// mapping to a flat map of col_name -> col_value (includes both groupBy and additional cols).
+// mapping to a flat map of attr_name -> attr_value (includes both groupBy and additional cols).
 func (m *module) getMetadata(
 	ctx context.Context,
 	metricNames []string,
@@ -111,24 +169,7 @@ func (m *module) getMetadata(
 		uint64(startMs), uint64(endMs), nil,
 	)
 
-	// Build a fingerprint subquery against the samples table using the original
-	// (non-adjusted) time range. The time_series tables are ReplacingMergeTrees
-	// with bucketed granularity, so WhichTSTableToUse widens the window — this
-	// subquery restricts to fingerprints actually active in the requested range.
-	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(startMs), uint64(endMs),
-		metrictypes.UnspecifiedType,
-		metrictypes.TimeAggregationUnspecified,
-		nil,
-	)
-	fpSB := sqlbuilder.NewSelectBuilder()
-	fpSB.Select("DISTINCT fingerprint")
-	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTableName))
-	fpSB.Where(
-		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
-		fpSB.GE("unix_milli", startMs),
-		fpSB.L("unix_milli", endMs),
-	)
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, startMs, endMs)
 
 	// Flatten groupBy keys to string names for SQL expressions and result scanning.
 	groupByCols := make([]string, len(groupBy))
@@ -138,11 +179,13 @@ func (m *module) getMetadata(
 	allCols := append(groupByCols, additionalCols...)
 
 	// --- Build inner query ---
+	innerSB := sqlbuilder.NewSelectBuilder()
+
 	// Inner SELECT columns: JSONExtractString for each groupBy col + argMax(tuple(...)) for additional cols
 	innerSelectCols := make([]string, 0, len(groupByCols)+1)
 	for _, col := range groupByCols {
 		innerSelectCols = append(innerSelectCols,
-			fmt.Sprintf("JSONExtractString(labels, '%s') AS `%s`", col, col),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", innerSB.Var(col), quoteIdentifier(col)),
 		)
 	}
 
@@ -150,21 +193,20 @@ func (m *module) getMetadata(
 	if len(additionalCols) > 0 {
 		tupleArgs := make([]string, 0, len(additionalCols))
 		for _, col := range additionalCols {
-			tupleArgs = append(tupleArgs, fmt.Sprintf("JSONExtractString(labels, '%s')", col))
+			tupleArgs = append(tupleArgs, fmt.Sprintf("JSONExtractString(labels, %s)", innerSB.Var(col)))
 		}
 		innerSelectCols = append(innerSelectCols,
 			fmt.Sprintf("argMax(tuple(%s), unix_milli) AS latest_attrs", strings.Join(tupleArgs, ", ")),
 		)
 	}
 
-	innerSB := sqlbuilder.NewSelectBuilder()
 	innerSB.Select(innerSelectCols...)
 	innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
 	innerSB.Where(
 		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
 		innerSB.GE("unix_milli", adjustedStart),
 		innerSB.L("unix_milli", adjustedEnd),
-		fmt.Sprintf("fingerprint GLOBAL IN (%s)", innerSB.Var(fpSB)), // TODO(nikhilmantri0902): check if this can be modified to be used with local table.
+		fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
 	)
 
 	// Apply optional filter expression
@@ -174,13 +216,13 @@ func (m *module) getMetadata(
 			return nil, err
 		}
 		if filterClause != nil {
-			innerSB.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+			innerSB.AddWhereClause(filterClause)
 		}
 	}
 
 	groupByAliases := make([]string, 0, len(groupByCols))
 	for _, col := range groupByCols {
-		groupByAliases = append(groupByAliases, fmt.Sprintf("`%s`", col))
+		groupByAliases = append(groupByAliases, quoteIdentifier(col))
 	}
 	innerSB.GroupBy(groupByAliases...)
 
@@ -190,11 +232,11 @@ func (m *module) getMetadata(
 	// Outer SELECT columns: groupBy cols directly + tupleElement(latest_attrs, N) for each additionalCol
 	outerSelectCols := make([]string, 0, len(allCols))
 	for _, col := range groupByCols {
-		outerSelectCols = append(outerSelectCols, fmt.Sprintf("`%s`", col))
+		outerSelectCols = append(outerSelectCols, quoteIdentifier(col))
 	}
 	for i, col := range additionalCols {
 		outerSelectCols = append(outerSelectCols,
-			fmt.Sprintf("tupleElement(latest_attrs, %d) AS `%s`", i+1, col),
+			fmt.Sprintf("tupleElement(latest_attrs, %d) AS %s", i+1, quoteIdentifier(col)),
 		)
 	}
 
@@ -238,20 +280,4 @@ func (m *module) getMetadata(
 	}
 
 	return result, nil
-}
-
-func (m *module) validateOrderBy(orderBy *qbtypes.OrderBy, orderByToQueryNamesMap map[string][]string) error {
-	if orderBy == nil {
-		return nil
-	}
-
-	if _, exists := orderByToQueryNamesMap[orderBy.Key.Name]; !exists {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by key: %s", orderBy.Key.Name)
-	}
-
-	if orderBy.Direction != qbtypes.OrderDirectionAsc && orderBy.Direction != qbtypes.OrderDirectionDesc {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", orderBy.Direction)
-	}
-
-	return nil
 }

@@ -24,7 +24,7 @@ var (
 	AWSServiceSNS         = ServiceID{valuer.NewString("sns")}
 	AWSServiceSQS         = ServiceID{valuer.NewString("sqs")}
 
-	// Azure services
+	// Azure services.
 	AzureServiceBlobStorage = ServiceID{valuer.NewString("blobstorage")}
 	AzureServiceFrontDoor   = ServiceID{valuer.NewString("frontdoor")}
 )

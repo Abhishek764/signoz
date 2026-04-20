@@ -35,7 +35,7 @@ type AzureTelemetryCollectionStrategy struct {
 	Logs         *AzureLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
 }
 
-// AzureMetricsCollectionStrategy no additional config required for metrics, will be added in future as required
+// AzureMetricsCollectionStrategy no additional config required for metrics, will be added in future as required.
 type AzureMetricsCollectionStrategy struct{}
 
 type AzureLogsCollectionStrategy struct {

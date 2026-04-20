@@ -373,7 +373,7 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 
 	// update or create service
 	if svc.CloudIntegrationService == nil {
-		cloudIntegrationService := new(cloudintegrationtypes.CloudIntegrationService)
+		var cloudIntegrationService *cloudintegrationtypes.CloudIntegrationService
 		cloudIntegrationService, err = cloudintegrationtypes.NewCloudIntegrationService(serviceID, cloudIntegrationID, provider, req.Config)
 		if err != nil {
 			render.Error(rw, err)

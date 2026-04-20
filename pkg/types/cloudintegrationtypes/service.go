@@ -21,8 +21,8 @@ type CloudIntegrationService struct {
 }
 
 type ServiceConfig struct {
-	AWS   *AWSServiceConfig   `json:"aws" required:"false" nullable:"false"`
-	Azure *AzureServiceConfig `json:"azure" required:"false" nullable:"false"`
+	AWS   *AWSServiceConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureServiceConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 // ServiceMetadata helps to quickly list available services and whether it is enabled or not.
@@ -88,8 +88,8 @@ type DataCollected struct {
 // TelemetryCollectionStrategy is cloud provider specific configuration for signal collection,
 // this is used by agent to understand the nitty-gritty for collecting telemetry for the cloud provider.
 type TelemetryCollectionStrategy struct {
-	AWS   *AWSTelemetryCollectionStrategy   `json:"aws" required:"false" nullable:"false"`
-	Azure *AzureTelemetryCollectionStrategy `json:"azure" required:"false" nullable:"false"`
+	AWS   *AWSTelemetryCollectionStrategy   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureTelemetryCollectionStrategy `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 // Assets represents the collection of dashboards.

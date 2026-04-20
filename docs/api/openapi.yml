@@ -721,6 +721,8 @@ components:
           items:
             type: string
           type: array
+      required:
+      - categories
       type: object
     CloudintegrationtypesAzureMetricsCollectionStrategy:
       properties:
@@ -1052,6 +1054,8 @@ components:
       - s3sync
       - sns
       - sqs
+      - blobstorage
+      - frontdoor
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:

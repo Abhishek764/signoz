@@ -29,13 +29,13 @@ type AgentReport struct {
 }
 
 type AccountConfig struct {
-	AWS   *AWSAccountConfig   `json:"aws" required:"false" nullable:"false"`
-	Azure *AzureAccountConfig `json:"azure" required:"false" nullable:"false"`
+	AWS   *AWSAccountConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureAccountConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 type UpdatableAccountConfig struct {
-	AWS   *UpdatableAWSAccountConfig   `json:"aws" required:"false" nullable:"false"`
-	Azure *UpdatableAzureAccountConfig `json:"azure" required:"false" nullable:"false"`
+	AWS   *UpdatableAWSAccountConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *UpdatableAzureAccountConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 type PostableAccount struct {
@@ -46,8 +46,8 @@ type PostableAccount struct {
 type PostableAccountConfig struct {
 	// as agent version is common for all providers, we can keep it at top level of this struct
 	AgentVersion string
-	AWS          *AWSPostableAccountConfig   `json:"aws" required:"false" nullable:"false"`
-	Azure        *AzurePostableAccountConfig `json:"azure" required:"false" nullable:"false"`
+	AWS          *AWSPostableAccountConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure        *AzurePostableAccountConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 type Credentials struct {
@@ -64,8 +64,8 @@ type GettableAccountWithConnectionArtifact struct {
 
 type ConnectionArtifact struct {
 	// required till new providers are added
-	AWS   *AWSConnectionArtifact   `json:"aws" required:"false" nullable:"false"`
-	Azure *AzureConnectionArtifact `json:"azure" required:"false" nullable:"false"`
+	AWS   *AWSConnectionArtifact   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureConnectionArtifact `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 type GetConnectionArtifactRequest = PostableAccount

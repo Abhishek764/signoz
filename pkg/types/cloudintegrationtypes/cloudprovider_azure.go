@@ -41,5 +41,5 @@ type AzureMetricsCollectionStrategy struct {
 
 type AzureLogsCollectionStrategy struct {
 	// List of categories to enable for diagnostic settings, to start with it will have 'allLogs' and no filtering.
-	Categories []string `json:"categories,omitempty" required:"false" nullable:"false"`
+	Categories []string `json:"categories" required:"true" nullable:"false"`
 }

@@ -856,7 +856,7 @@ export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
 	/**
 	 * @type array
 	 */
-	categories?: string[];
+	categories: string[];
 }
 
 export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
@@ -1216,6 +1216,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	s3sync = 's3sync',
 	sns = 'sns',
 	sqs = 'sqs',
+	blobstorage = 'blobstorage',
+	frontdoor = 'frontdoor',
 }
 export interface CloudintegrationtypesServiceMetadataDTO {
 	/**

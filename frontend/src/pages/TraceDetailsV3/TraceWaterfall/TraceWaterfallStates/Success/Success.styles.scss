@@ -115,6 +115,11 @@
 			flex-shrink: 0;
 		}
 
+		.status-header {
+			width: 50px;
+			flex-shrink: 0;
+		}
+
 		.timeline-header {
 			flex: 1;
 			overflow: hidden;
@@ -175,7 +180,7 @@
 		.span-tree-row:hover,
 		.span-tree-row.hovered-span {
 			border-radius: 4px;
-			background: rgba(171, 189, 255, 0.06) !important;
+			background: color-mix(in srgb, var(--l3-background) 20%, transparent) !important;
 
 			.span-overview {
 				background: unset !important;
@@ -196,6 +201,39 @@
 		&:hover,
 		&:active {
 			background: rgba(35, 196, 248, 0.2);
+		}
+	}
+
+	.waterfall-status-col {
+		width: 50px;
+		flex-shrink: 0;
+		position: relative;
+
+		.status-cell {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+
+			--badge-border-radius: 2px;
+			--badge-padding: 3px 6px;
+			--badge-line-height: 12px;
+			--badge-border-width: 0px;
+
+			&.hovered-span {
+				border-radius: 4px;
+				background: color-mix(in srgb, var(--l3-background) 20%, transparent) !important;
+			}
+
+			&.interested-span,
+			&.selected-non-matching-span {
+				border-radius: 4px;
+				background: color-mix(in srgb, var(--l3-background) 40%, transparent) !important;
+			}
+
+			&.dimmed-span {
+				opacity: 0.4;
+			}
 		}
 	}
 
@@ -224,13 +262,13 @@
 		.timeline-row:hover,
 		.timeline-row.hovered-span {
 			border-radius: 4px;
-			background: rgba(171, 189, 255, 0.06) !important;
+			background: color-mix(in srgb, var(--l3-background) 20%, transparent) !important;
 		}
 
 		.timeline-row:has(.interested-span),
 		.timeline-row:has(.selected-non-matching-span) {
 			border-radius: 4px;
-			background: rgba(171, 189, 255, 0.12) !important;
+			background: color-mix(in srgb, var(--l3-background) 40%, transparent) !important;
 		}
 	}
 
@@ -468,7 +506,7 @@
 	.span-overview.interested-span,
 	.span-overview.selected-non-matching-span {
 		border-radius: 4px;
-		background: rgba(171, 189, 255, 0.12) !important;
+		background: color-mix(in srgb, var(--l3-background) 40%, transparent) !important;
 	}
 
 	.dimmed-span {

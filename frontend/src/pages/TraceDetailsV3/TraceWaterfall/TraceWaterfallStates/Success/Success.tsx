@@ -19,6 +19,7 @@ import {
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import { Button, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
+import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
@@ -49,6 +50,34 @@ import './Success.styles.scss';
 // css config
 const CONNECTOR_WIDTH = 20;
 const VERTICAL_CONNECTOR_WIDTH = 1;
+
+interface SpanStateClasses {
+	isSelected: boolean;
+	isDimmed: boolean;
+	isHighlighted: boolean;
+	isSelectedNonMatching: boolean;
+	isMatching: boolean;
+}
+
+function getSpanStateClasses(
+	spanId: string,
+	selectedSpan: SpanV3 | undefined,
+	filteredSpanIds: string[],
+	isFilterActive: boolean,
+): SpanStateClasses {
+	const isMatching = isFilterActive && (filteredSpanIds || []).includes(spanId);
+	const isSelected = selectedSpan?.span_id === spanId;
+	const isDimmed = isFilterActive && !isMatching && !isSelected;
+	const isHighlighted = isFilterActive && isMatching && !isSelected;
+	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
+	return {
+		isSelected,
+		isDimmed,
+		isHighlighted,
+		isSelectedNonMatching,
+		isMatching,
+	};
+}
 
 interface ITraceMetadata {
 	traceId: string;
@@ -102,12 +131,18 @@ const SpanOverview = memo(function SpanOverview({
 	}
 
 	// Smart highlighting logic
-	const isMatching =
-		isFilterActive && (filteredSpanIds || []).includes(span.span_id);
-	const isSelected = selectedSpan?.span_id === span.span_id;
-	const isDimmed = isFilterActive && !isMatching && !isSelected;
-	const isHighlighted = isFilterActive && isMatching && !isSelected;
-	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
+	const {
+		isSelected,
+		isDimmed,
+		isHighlighted,
+		isSelectedNonMatching,
+		isMatching,
+	} = getSpanStateClasses(
+		span.span_id,
+		selectedSpan,
+		filteredSpanIds,
+		isFilterActive,
+	);
 
 	const indentWidth = isRootSpan ? 0 : span.level * CONNECTOR_WIDTH;
 
@@ -251,12 +286,18 @@ export const SpanDuration = memo(function SpanDuration({
 		rgbColor = '239, 68, 68';
 	}
 
-	const isMatching =
-		isFilterActive && (filteredSpanIds || []).includes(span.span_id);
-	const isSelected = selectedSpan?.span_id === span.span_id;
-	const isDimmed = isFilterActive && !isMatching && !isSelected;
-	const isHighlighted = isFilterActive && isMatching && !isSelected;
-	const isSelectedNonMatching = isSelected && isFilterActive && !isMatching;
+	const {
+		isSelected,
+		isDimmed,
+		isHighlighted,
+		isSelectedNonMatching,
+		isMatching,
+	} = getSpanStateClasses(
+		span.span_id,
+		selectedSpan,
+		filteredSpanIds,
+		isFilterActive,
+	);
 
 	return (
 		<div
@@ -659,6 +700,7 @@ function Success(props: ISuccessProps): JSX.Element {
 						style={{ width: sidebarWidth, flexShrink: 0 }}
 					/>
 					<div className="resize-handle-header" />
+					<div className="status-header" />
 					<div className="timeline-header">
 						<TimelineV3
 							startTimestamp={traceMetadata.startTime}
@@ -720,6 +762,50 @@ function Success(props: ISuccessProps): JSX.Element {
 							</tbody>
 						</table>
 					</ResizableBox>
+
+					{/* Status code column */}
+					<div className="waterfall-status-col">
+						{virtualItems.map((virtualRow) => {
+							const span = spans[virtualRow.index];
+							const {
+								isSelected,
+								isDimmed,
+								isSelectedNonMatching,
+								isMatching,
+							} = getSpanStateClasses(
+								span.span_id,
+								selectedSpan,
+								filteredSpanIds,
+								isFilterActive,
+							);
+							return (
+								<div
+									key={`status-${String(virtualRow.key)}`}
+									className={cx('status-cell', {
+										'interested-span': isSelected && (!isFilterActive || isMatching),
+										'dimmed-span': isDimmed,
+										'selected-non-matching-span': isSelectedNonMatching,
+									})}
+									style={{
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										width: '100%',
+										height: ROW_HEIGHT,
+										transform: `translateY(${virtualRow.start}px)`,
+									}}
+									data-span-id={span.span_id}
+									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
+									onMouseLeave={handleRowMouseLeave}
+									onClick={(): void => handleSpanClick(span)}
+								>
+									{span.response_status_code && (
+										<HttpStatusBadge statusCode={span.response_status_code} />
+									)}
+								</div>
+							);
+						})}
+					</div>
 
 					{/* Right panel - timeline bars */}
 					<div

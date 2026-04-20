@@ -1,12 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import {
 	Bookmark,
 	CalendarClock,
 	ChartBar,
 	ChartColumnBig,
-	Copy,
 	Dock,
 	Link2,
 	Logs,
@@ -14,13 +12,7 @@ import {
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
-import {
-	TabsContent,
-	TabsList,
-	TabsRoot,
-	TabsTrigger,
-	toast,
-} from '@signozhq/ui';
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
@@ -39,7 +31,6 @@ import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
 import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
-import { ActionMenu, ActionMenuItem } from 'periscope/components/ActionMenu';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
@@ -51,7 +42,7 @@ import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
 import {
-	KEY_ATTRIBUTE_KEYS,
+	// KEY_ATTRIBUTE_KEYS, // uncomment when key attributes section is re-enabled
 	SpanDetailVariant,
 	VISIBLE_ACTIONS,
 } from './constants';
@@ -115,42 +106,43 @@ function SpanDetailsContent({
 		[spanAttributeActions],
 	);
 
-	const [, setCopy] = useCopyToClipboard();
+	// const [, setCopy] = useCopyToClipboard();
 
-	// Build dropdown menu for key attributes (copy + span actions, no pin)
-	const buildKeyAttrMenu = useCallback(
-		(key: string, value: string): ActionMenuItem[] => {
-			const items: ActionMenuItem[] = [
-				{
-					key: 'copy-value',
-					label: 'Copy Value',
-					icon: <Copy size={12} />,
-					onClick: (): void => {
-						setCopy(value);
-						toast.success('Copied to clipboard', {
-							richColors: true,
-							position: 'top-right',
-						});
-					},
-				},
-			];
-			spanAttributeActions.forEach((action) => {
-				if (action.shouldHide && action.shouldHide(key)) {
-					return;
-				}
-				items.push({
-					key: action.value,
-					label: action.label,
-					icon: action.icon,
-					onClick: (): void => {
-						action.callback({ key, value });
-					},
-				});
-			});
-			return items;
-		},
-		[spanAttributeActions, setCopy],
-	);
+	// Key attributes section — commented out as pinning in PrettyView covers this use case.
+	// Uncomment when key attributes need to be shown separately.
+	// const buildKeyAttrMenu = useCallback(
+	// 	(key: string, value: string): ActionMenuItem[] => {
+	// 		const items: ActionMenuItem[] = [
+	// 			{
+	// 				key: 'copy-value',
+	// 				label: 'Copy Value',
+	// 				icon: <Copy size={12} />,
+	// 				onClick: (): void => {
+	// 					setCopy(value);
+	// 					toast.success('Copied to clipboard', {
+	// 						richColors: true,
+	// 						position: 'top-right',
+	// 					});
+	// 				},
+	// 			},
+	// 		];
+	// 		spanAttributeActions.forEach((action) => {
+	// 			if (action.shouldHide && action.shouldHide(key)) {
+	// 				return;
+	// 			}
+	// 			items.push({
+	// 				key: action.value,
+	// 				label: action.label,
+	// 				icon: action.icon,
+	// 				onClick: (): void => {
+	// 					action.callback({ key, value });
+	// 				},
+	// 			});
+	// 		});
+	// 		return items;
+	// 	},
+	// 	[spanAttributeActions, setCopy],
+	// );
 
 	const {
 		logs,
@@ -242,27 +234,25 @@ function SpanDetailsContent({
 		[],
 	);
 
-	const keyAttributes = useMemo(() => {
-		const keys = KEY_ATTRIBUTE_KEYS.traces || [];
-
-		const allAttrs: Record<string, string> = {};
-		Object.entries(selectedSpan.resource || {}).forEach(([k, v]) => {
-			allAttrs[k] = String(v);
-		});
-		Object.entries(selectedSpan.attributes || {}).forEach(([k, v]) => {
-			allAttrs[k] = String(v);
-		});
-		const span = (selectedSpan as unknown) as Record<string, unknown>;
-		keys.forEach((key) => {
-			if (!(key in allAttrs) && span[key] != null && span[key] !== '') {
-				allAttrs[key] = String(span[key]);
-			}
-		});
-
-		return keys
-			.filter((key) => allAttrs[key])
-			.map((key) => ({ key, value: allAttrs[key] }));
-	}, [selectedSpan]);
+	// const keyAttributes = useMemo(() => {
+	// 	const keys = KEY_ATTRIBUTE_KEYS.traces || [];
+	// 	const allAttrs: Record<string, string> = {};
+	// 	Object.entries(selectedSpan.resource || {}).forEach(([k, v]) => {
+	// 		allAttrs[k] = String(v);
+	// 	});
+	// 	Object.entries(selectedSpan.attributes || {}).forEach(([k, v]) => {
+	// 		allAttrs[k] = String(v);
+	// 	});
+	// 	const span = (selectedSpan as unknown) as Record<string, unknown>;
+	// 	keys.forEach((key) => {
+	// 		if (!(key in allAttrs) && span[key] != null && span[key] !== '') {
+	// 			allAttrs[key] = String(span[key]);
+	// 		}
+	// 	});
+	// 	return keys
+	// 		.filter((key) => allAttrs[key])
+	// 		.map((key) => ({ key, value: allAttrs[key] }));
+	// }, [selectedSpan]);
 
 	return (
 		<div className="span-details-panel__body">
@@ -345,7 +335,7 @@ function SpanDetailsContent({
 					})}
 				</div>
 
-				{/* Step 7: KeyAttributes */}
+				{/* Step 7: KeyAttributes — commented out, pinning in PrettyView covers this.
 				{keyAttributes.length > 0 && (
 					<div className="span-details-panel__key-attributes">
 						<div className="span-details-panel__key-attributes-label">
@@ -367,6 +357,7 @@ function SpanDetailsContent({
 						</div>
 					</div>
 				)}
+			*/}
 
 				{/* Step 8: MiniTraceContext */}
 			</div>

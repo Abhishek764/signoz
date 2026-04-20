@@ -1,4 +1,4 @@
-package slackmrkdwnrenderer
+package mrkdwn
 
 import (
 	"bytes"
@@ -6,24 +6,40 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
 	extensionast "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/util"
 )
 
-// Renderer renders nodes as Slack mrkdwn.
-type Renderer struct {
+// Extender is a goldmark.Extender that registers the Slack mrkdwn node
+// renderer together with the GFM extensions it relies on (tables,
+// strikethrough).
+var Extender goldmark.Extender = &extender{}
+
+type extender struct{}
+
+func (e *extender) Extend(m goldmark.Markdown) {
+	extension.Table.Extend(m)
+	extension.Strikethrough.Extend(m)
+	m.Renderer().AddOptions(
+		renderer.WithNodeRenderers(util.Prioritized(newRenderer(), 1)),
+	)
+}
+
+// nodeRenderer renders nodes as Slack mrkdwn.
+type nodeRenderer struct {
 	prefixes []string
 }
 
-// NewRenderer returns a new Renderer with given options.
-func NewRenderer() renderer.NodeRenderer {
-	return &Renderer{}
+func newRenderer() renderer.NodeRenderer {
+	return &nodeRenderer{}
 }
 
 // RegisterFuncs implements NodeRenderer.RegisterFuncs.
-func (r *Renderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+func (r *nodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	// Blocks
 	reg.Register(ast.KindDocument, r.renderDocument)
 	reg.Register(ast.KindHeading, r.renderHeading)
@@ -50,7 +66,7 @@ func (r *Renderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(extensionast.KindTable, r.renderTable)
 }
 
-func (r *Renderer) writePrefix(w util.BufWriter) {
+func (r *nodeRenderer) writePrefix(w util.BufWriter) {
 	for _, p := range r.prefixes {
 		_, _ = w.WriteString(p)
 	}
@@ -58,33 +74,38 @@ func (r *Renderer) writePrefix(w util.BufWriter) {
 
 // writeLineSeparator writes a newline followed by the current prefix.
 // Used for tight separations (e.g., between list items or text blocks).
-func (r *Renderer) writeLineSeparator(w util.BufWriter) {
+func (r *nodeRenderer) writeLineSeparator(w util.BufWriter) {
 	_ = w.WriteByte('\n')
 	r.writePrefix(w)
 }
 
 // writeBlockSeparator writes a blank line separator between block-level elements,
 // respecting any active prefixes for proper nesting (e.g., inside blockquotes).
-func (r *Renderer) writeBlockSeparator(w util.BufWriter) {
+func (r *nodeRenderer) writeBlockSeparator(w util.BufWriter) {
 	r.writeLineSeparator(w)
 	r.writeLineSeparator(w)
 }
 
 // separateFromPrevious writes a block separator if the node has a previous sibling.
-func (r *Renderer) separateFromPrevious(w util.BufWriter, n ast.Node) {
+func (r *nodeRenderer) separateFromPrevious(w util.BufWriter, n ast.Node) {
 	if n.PreviousSibling() != nil {
 		r.writeBlockSeparator(w)
 	}
 }
 
-func (r *Renderer) renderDocument(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
-	if !entering {
+func (r *nodeRenderer) renderDocument(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if entering {
+		// The renderer is pooled, so wipe any prefix stack left over from a
+		// prior document (e.g. one that errored mid-walk and left push/pop
+		// unbalanced) before starting a fresh convert.
+		r.prefixes = r.prefixes[:0]
+	} else {
 		_, _ = w.WriteString("\n\n")
 	}
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderHeading(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderHeading(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.separateFromPrevious(w, node)
 	}
@@ -92,7 +113,7 @@ func (r *Renderer) renderHeading(w util.BufWriter, source []byte, node ast.Node,
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderBlockquote(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderBlockquote(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.separateFromPrevious(w, n)
 		r.prefixes = append(r.prefixes, "> ")
@@ -103,7 +124,7 @@ func (r *Renderer) renderBlockquote(w util.BufWriter, source []byte, n ast.Node,
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderCodeBlock(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderCodeBlock(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.separateFromPrevious(w, n)
 		// start code block and write code line by line
@@ -120,7 +141,7 @@ func (r *Renderer) renderCodeBlock(w util.BufWriter, source []byte, n ast.Node, 
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderList(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		if node.PreviousSibling() != nil {
 			r.writeLineSeparator(w)
@@ -133,7 +154,7 @@ func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, en
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderListItem(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderListItem(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		if n.PreviousSibling() != nil {
 			r.writeLineSeparator(w)
@@ -158,21 +179,21 @@ func (r *Renderer) renderListItem(w util.BufWriter, source []byte, n ast.Node, e
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderParagraph(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderParagraph(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.separateFromPrevious(w, n)
 	}
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderTextBlock(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTextBlock(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering && n.PreviousSibling() != nil {
 		r.writeLineSeparator(w)
 	}
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderRawHTML(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderRawHTML(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		n := n.(*ast.RawHTML)
 		l := n.Segments.Len()
@@ -184,7 +205,7 @@ func (r *Renderer) renderRawHTML(w util.BufWriter, source []byte, n ast.Node, en
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderThematicBreak(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderThematicBreak(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.separateFromPrevious(w, n)
 		_, _ = w.WriteString("---")
@@ -192,7 +213,7 @@ func (r *Renderer) renderThematicBreak(w util.BufWriter, source []byte, n ast.No
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderAutoLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderAutoLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -212,7 +233,7 @@ func (r *Renderer) renderAutoLink(w util.BufWriter, source []byte, node ast.Node
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderCodeSpan(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderCodeSpan(w util.BufWriter, source []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		_ = w.WriteByte('`')
 		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
@@ -231,7 +252,7 @@ func (r *Renderer) renderCodeSpan(w util.BufWriter, source []byte, n ast.Node, e
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*ast.Emphasis)
 	mark := "_"
 	if n.Level == 2 {
@@ -241,7 +262,7 @@ func (r *Renderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*ast.Link)
 	if entering {
 		_, _ = w.WriteString("<")
@@ -253,7 +274,7 @@ func (r *Renderer) renderLink(w util.BufWriter, source []byte, node ast.Node, en
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderImage(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderImage(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -275,7 +296,7 @@ func (r *Renderer) renderImage(w util.BufWriter, source []byte, node ast.Node, e
 	return ast.WalkSkipChildren, nil
 }
 
-func (r *Renderer) renderText(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderText(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -289,12 +310,12 @@ func (r *Renderer) renderText(w util.BufWriter, source []byte, node ast.Node, en
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderStrikethrough(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderStrikethrough(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	_, _ = w.WriteString("~")
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderTable(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTable(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}

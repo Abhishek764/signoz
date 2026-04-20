@@ -1,4 +1,4 @@
-package templatingextensions
+package markdownrenderer
 
 import (
 	"bytes"
@@ -53,7 +53,7 @@ func TestEscapeNoValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gm := goldmark.New(goldmark.WithExtensions(EscapeNoValue, extension.Strikethrough))
+			gm := goldmark.New(goldmark.WithExtensions(escapeNoValue, extension.Strikethrough))
 			var buf bytes.Buffer
 			if err := gm.Convert([]byte(tt.markdown), &buf); err != nil {
 				t.Fatal(err)

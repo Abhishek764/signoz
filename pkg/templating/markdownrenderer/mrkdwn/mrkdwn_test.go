@@ -1,4 +1,4 @@
-package slackmrkdwnrenderer
+package mrkdwn
 
 import (
 	"bytes"
@@ -97,7 +97,7 @@ func TestRenderer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			md := goldmark.New(goldmark.WithExtensions(SlackMrkdwn))
+			md := goldmark.New(goldmark.WithExtensions(Extender))
 
 			var buf bytes.Buffer
 			if err := md.Convert([]byte(tt.markdown), &buf); err != nil {

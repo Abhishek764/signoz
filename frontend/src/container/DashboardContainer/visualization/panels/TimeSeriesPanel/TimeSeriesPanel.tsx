@@ -83,15 +83,6 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		timezone,
 	]);
 
-	const chartMetadata = useMemo(
-		() => ({
-			yAxisUnit: widget.yAxisUnit,
-			decimalPrecision: widget.decimalPrecision,
-			timezone,
-		}),
-		[widget.yAxisUnit, widget.decimalPrecision, timezone],
-	);
-
 	const layoutChildren = useMemo(() => {
 		if (!isFullViewMode) {
 			return null;
@@ -122,7 +113,9 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
-					chartMetadata={chartMetadata}
+					timezone={timezone}
+					yAxisUnit={widget.yAxisUnit}
+					decimalPrecision={widget.decimalPrecision}
 					data={chartData as uPlot.AlignedData}
 					syncMode={
 						isFullViewMode ? DashboardCursorSync.None : DashboardCursorSync.Crosshair

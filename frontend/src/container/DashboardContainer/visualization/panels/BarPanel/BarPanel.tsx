@@ -83,15 +83,6 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		return prepareBarPanelData(queryResponse?.data?.payload);
 	}, [queryResponse?.data?.payload]);
 
-	const chartMetadata = useMemo(
-		() => ({
-			yAxisUnit: widget.yAxisUnit,
-			decimalPrecision: widget.decimalPrecision,
-			timezone,
-		}),
-		[widget.yAxisUnit, widget.decimalPrecision, timezone],
-	);
-
 	const layoutChildren = useMemo(() => {
 		if (!isFullViewMode) {
 			return null;
@@ -132,12 +123,14 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					}}
 					plotRef={onPlotRef}
 					onDestroy={onPlotDestroy}
-					chartMetadata={chartMetadata}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
 					isStackedBarChart={widget.stackedBarChart ?? false}
+					yAxisUnit={widget.yAxisUnit}
+					decimalPrecision={widget.decimalPrecision}
+					timezone={timezone}
 				>
 					<ContextMenu
 						coordinates={coordinates}

@@ -4,20 +4,10 @@ import type {
 	ReactNode,
 	RefObject,
 } from 'react';
-import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import type { PrecisionOption } from 'components/Graph/types';
-// import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type uPlot from 'uplot';
 
 import type { TooltipRenderArgs } from '../../components/types';
 import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
-
-export interface ChartMetadata {
-	yAxisUnit?: string;
-	decimalPrecision?: PrecisionOption;
-	timezone?: Timezone;
-	// groupBy?: BaseAutocompleteData[];
-}
 
 export const TOOLTIP_OFFSET = 10;
 
@@ -44,14 +34,16 @@ export interface TooltipLayoutInfo {
 	height: number;
 }
 
+export interface TooltipSyncMetadata {
+	yAxisUnit?: string;
+}
+
 export interface TooltipPluginProps {
 	config: UPlotConfigBuilder;
 	canPinTooltip?: boolean;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
-	/** Metadata about this chart shared with the sync registry so that
-	 *  receiving panels can make context-aware rendering decisions. */
-	chartMetadata?: ChartMetadata;
+	syncMetadata?: TooltipSyncMetadata;
 	render: (args: TooltipRenderArgs) => ReactNode;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 	maxWidth?: number;

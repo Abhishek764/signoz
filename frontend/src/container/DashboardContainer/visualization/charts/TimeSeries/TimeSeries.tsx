@@ -18,18 +18,13 @@ export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
 			}
 			const tooltipProps: TimeSeriesTooltipProps = {
 				...props,
-				timezone: rest.chartMetadata?.timezone,
-				yAxisUnit: rest.chartMetadata?.yAxisUnit,
-				decimalPrecision: rest.chartMetadata?.decimalPrecision,
+				timezone: rest.timezone,
+				yAxisUnit: rest.yAxisUnit,
+				decimalPrecision: rest.decimalPrecision,
 			};
 			return <TimeSeriesTooltip {...tooltipProps} />;
 		},
-		[
-			customTooltip,
-			rest.chartMetadata?.timezone,
-			rest.chartMetadata?.yAxisUnit,
-			rest.chartMetadata?.decimalPrecision,
-		],
+		[customTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
 	);
 
 	return (

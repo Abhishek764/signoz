@@ -4,7 +4,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 
 import Histogram from '../../charts/Histogram/Histogram';
@@ -29,7 +28,6 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const isDarkMode = useIsDarkMode();
-	const { timezone } = useTimezone();
 
 	const config = useMemo(() => {
 		return prepareHistogramPanelConfig({
@@ -56,15 +54,6 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 		widget?.bucketCount,
 		widget?.mergeAllActiveQueries,
 	]);
-
-	const chartMetadata = useMemo(
-		() => ({
-			yAxisUnit: widget.yAxisUnit,
-			decimalPrecision: widget.decimalPrecision,
-			timezone,
-		}),
-		[widget.yAxisUnit, widget.decimalPrecision, timezone],
-	);
 
 	const layoutChildren = useMemo(() => {
 		if (!isFullViewMode || widget.mergeAllActiveQueries) {
@@ -101,8 +90,9 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 					onDestroy={(): void => {
 						uPlotRef.current = null;
 					}}
+					yAxisUnit={widget.yAxisUnit}
+					decimalPrecision={widget.decimalPrecision}
 					isQueriesMerged={widget.mergeAllActiveQueries}
-					chartMetadata={chartMetadata}
 					syncMode={DashboardCursorSync.Crosshair}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}

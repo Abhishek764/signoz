@@ -58,7 +58,7 @@
 		}
 
 		[role='tab'] {
-			color: var(--foreground);
+			color: var(--foreground) !important;
 		}
 
 		[class*='tabs__list-wrapper'] {

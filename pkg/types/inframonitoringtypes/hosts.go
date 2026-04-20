@@ -18,6 +18,10 @@ type Hosts struct {
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
+type RequiredMetricsCheck struct {
+	MissingMetrics []string `json:"missingMetrics"`
+}
+
 type HostRecord struct {
 	HostName          string                 `json:"hostName"`
 	Status            HostStatus             `json:"status"`
@@ -145,8 +149,4 @@ func (req *PostableHosts) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableHosts(decoded)
 	return req.Validate()
-}
-
-type RequiredMetricsCheck struct {
-	MissingMetrics []string `json:"missingMetrics"`
 }

@@ -1,6 +1,6 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { getVisibleSpans } from '../utils';
+import { getAncestorSpanIds, getVisibleSpans } from '../utils';
 
 function makeSpan(
 	overrides: Partial<SpanV3> & { span_id: string; level: number },
@@ -219,5 +219,47 @@ describe('getVisibleSpans', () => {
 		const uncollapsed = new Set(['root', 'C']);
 		const result = getVisibleSpans(spans, uncollapsed);
 		expect(result.map((s) => s.span_id)).toEqual(['root', 'A', 'B', 'C', 'C1']);
+	});
+});
+
+describe('getAncestorSpanIds', () => {
+	it('returns empty set for root span', () => {
+		const spans = [makeSpan({ span_id: 'root', level: 0 })];
+		expect(getAncestorSpanIds(spans, 'root').size).toBe(0);
+	});
+
+	it('returns parent for direct child', () => {
+		const spans = [
+			makeSpan({ span_id: 'root', level: 0, has_children: true }),
+			makeSpan({ span_id: 'child', level: 1, parent_span_id: 'root' }),
+		];
+		const ancestors = getAncestorSpanIds(spans, 'child');
+		expect(ancestors).toEqual(new Set(['root']));
+	});
+
+	it('returns all ancestors for deeply nested span', () => {
+		const spans = [
+			makeSpan({ span_id: 'L0', level: 0, has_children: true }),
+			makeSpan({
+				span_id: 'L1',
+				level: 1,
+				has_children: true,
+				parent_span_id: 'L0',
+			}),
+			makeSpan({
+				span_id: 'L2',
+				level: 2,
+				has_children: true,
+				parent_span_id: 'L1',
+			}),
+			makeSpan({ span_id: 'L3', level: 3, parent_span_id: 'L2' }),
+		];
+		const ancestors = getAncestorSpanIds(spans, 'L3');
+		expect(ancestors).toEqual(new Set(['L2', 'L1', 'L0']));
+	});
+
+	it('returns empty set for unknown span', () => {
+		const spans = [makeSpan({ span_id: 'root', level: 0 })];
+		expect(getAncestorSpanIds(spans, 'unknown').size).toBe(0);
 	});
 });

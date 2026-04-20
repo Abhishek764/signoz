@@ -32,3 +32,31 @@ export function getVisibleSpans(
 
 	return visible;
 }
+
+/**
+ * Returns the set of ancestor span IDs for a given span.
+ * Walks up the tree via parent_span_id until reaching the root.
+ */
+export function getAncestorSpanIds(
+	allSpans: SpanV3[],
+	targetSpanId: string,
+): Set<string> {
+	const spanMap = new Map<string, SpanV3>();
+	for (const span of allSpans) {
+		spanMap.set(span.span_id, span);
+	}
+
+	const ancestors = new Set<string>();
+	let current = spanMap.get(targetSpanId);
+
+	while (current && current.parent_span_id) {
+		const parent = spanMap.get(current.parent_span_id);
+		if (!parent) {
+			break;
+		}
+		ancestors.add(parent.span_id);
+		current = parent;
+	}
+
+	return ancestors;
+}

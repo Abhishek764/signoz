@@ -20,6 +20,7 @@ import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall, {
 	IInterestedSpan,
 } from './TraceWaterfall/TraceWaterfall';
+import { getAncestorSpanIds } from './TraceWaterfall/utils';
 
 import './TraceDetailsV3.styles.scss';
 
@@ -140,6 +141,36 @@ function TraceDetailsV3(): JSX.Element {
 			setUncollapsedNodes(traceData.payload.uncollapsedSpans);
 		}
 	}, [traceData, isFullDataLoaded]);
+
+	// Frontend mode: auto-expand ancestors of the selected span so it becomes visible
+	useEffect(() => {
+		if (!isFullDataLoaded || !interestedSpanId.spanId || allSpans.length === 0) {
+			return;
+		}
+		const ancestors = getAncestorSpanIds(allSpans, interestedSpanId.spanId);
+		if (ancestors.size === 0) {
+			return;
+		}
+		setLocalUncollapsedNodes((prev) => {
+			// Check if all ancestors are already expanded — avoid unnecessary state update
+			let allPresent = true;
+			for (const id of ancestors) {
+				if (!prev.has(id)) {
+					allPresent = false;
+					break;
+				}
+			}
+			if (allPresent) {
+				return prev;
+			}
+
+			const next = new Set(prev);
+			for (const id of ancestors) {
+				next.add(id);
+			}
+			return next;
+		});
+	}, [isFullDataLoaded, interestedSpanId.spanId, allSpans]);
 
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 

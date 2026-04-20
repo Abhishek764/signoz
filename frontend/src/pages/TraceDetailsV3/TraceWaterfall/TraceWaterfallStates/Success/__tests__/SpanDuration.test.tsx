@@ -19,7 +19,7 @@ jest.mock('components/TimelineV3/TimelineV3', () => ({
 
 // Mock the hooks
 jest.mock('hooks/useUrlQuery');
-jest.mock('@signozhq/badge', () => ({
+jest.mock('@signozhq/ui', () => ({
 	Badge: jest.fn(),
 }));
 

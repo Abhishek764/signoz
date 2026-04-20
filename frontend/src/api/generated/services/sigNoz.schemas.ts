@@ -6866,7 +6866,7 @@ export type Healthz503 = {
 	status: string;
 };
 
-export type HostsList200 = {
+export type ListHosts200 = {
 	data: InframonitoringtypesHostsListResponseDTO;
 	/**
 	 * @type string
@@ -6874,7 +6874,7 @@ export type HostsList200 = {
 	status: string;
 };
 
-export type PodsList200 = {
+export type ListPods200 = {
 	data: InframonitoringtypesPodsListResponseDTO;
 	/**
 	 * @type string

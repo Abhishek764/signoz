@@ -10034,7 +10034,7 @@ paths:
         for the default host.name grouping or ''grouped_list'' for custom groupBy
         keys. Also reports missing required metrics and whether the requested time
         range falls before the data retention boundary.'
-      operationId: HostsList
+      operationId: ListHosts
       requestBody:
         content:
           application/json:
@@ -10102,7 +10102,7 @@ paths:
         or ''grouped_list'' for custom groupBy keys. Also reports missing required
         metrics and whether the requested time range falls before the data retention
         boundary.'
-      operationId: PodsList
+      operationId: ListPods
       requestBody:
         content:
           application/json:

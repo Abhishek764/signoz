@@ -47,7 +47,7 @@ func NewModule(
 	}
 }
 
-func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
+func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	return resp, nil
 }
 
-func (m *module) PodsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error) {
+func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}

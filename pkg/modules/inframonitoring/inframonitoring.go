@@ -9,11 +9,11 @@ import (
 )
 
 type Handler interface {
-	HostsList(http.ResponseWriter, *http.Request)
-	PodsList(http.ResponseWriter, *http.Request)
+	ListHosts(http.ResponseWriter, *http.Request)
+	ListPods(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
-	HostsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error)
-	PodsList(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error)
+	ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error)
+	ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error)
 }

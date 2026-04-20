@@ -373,7 +373,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		cursorX,
 		onMouseMove: onCrosshairMove,
 		onMouseLeave: onCrosshairLeave,
-	} = useCrosshair({ containerRef: timelineAreaRef });
+	} = useCrosshair({ containerRef: timelineAreaRef, enabled: false });
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {

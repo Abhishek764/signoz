@@ -20,6 +20,8 @@ body {
 	font-optical-sizing: auto;
 	font-weight: 400;
 	font-style: normal;
+	background: var(--l1-background) !important;
+	color: var(--l1-foreground) !important;
 }
 
 body {
@@ -798,4 +800,21 @@ notifications	-  2050
 
 [role='tab'] {
 	color: var(--foreground) !important;
+}
+
+[data-slot='drawer-content'] {
+	background: var(--l1-background) !important;
+	border: 1px solid var(--l1-border) !important;
+
+	[data-slot='drawer-title'] {
+		color: var(--l1-foreground) !important;
+	}
+
+	[data-slot='drawer-close'] {
+		color: var(--l1-foreground) !important;
+	}
+
+	[data-slot='drawer-body'] {
+		color: var(--l1-foreground) !important;
+	}
 }

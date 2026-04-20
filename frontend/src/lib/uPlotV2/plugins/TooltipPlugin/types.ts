@@ -4,6 +4,7 @@ import type {
 	ReactNode,
 	RefObject,
 } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type uPlot from 'uplot';
 
 import type { TooltipRenderArgs } from '../../components/types';
@@ -36,6 +37,7 @@ export interface TooltipLayoutInfo {
 
 export interface TooltipSyncMetadata {
 	yAxisUnit?: string;
+	groupBy?: BaseAutocompleteData[];
 }
 
 export interface TooltipPluginProps {

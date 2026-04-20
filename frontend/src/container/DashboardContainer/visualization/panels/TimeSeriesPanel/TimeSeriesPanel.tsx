@@ -6,12 +6,14 @@ import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
+import { PanelMode } from '../types';
 
 import '../Panel.styles.scss';
 
@@ -104,6 +106,10 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		widget.decimalPrecision,
 	]);
 
+	const groupBy = useMemo(() => {
+		return widget.query.builder.queryData[0].groupBy;
+	}, [widget.query]);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
@@ -116,6 +122,12 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					data={chartData as uPlot.AlignedData}
+					syncMode={
+						panelMode === PanelMode.DASHBOARD_VIEW
+							? DashboardCursorSync.Crosshair
+							: DashboardCursorSync.None
+					}
+					groupBy={groupBy}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}

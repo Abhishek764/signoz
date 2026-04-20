@@ -4,7 +4,7 @@ import cx from 'classnames';
 import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 import uPlot from 'uplot';
 
-import { syncCursorRegistry } from './syncCursorRegistry';
+import { createSyncDisplayHook } from './syncDisplayHook';
 import {
 	createInitialControllerState,
 	createSetCursorHandler,
@@ -100,32 +100,16 @@ export default function TooltipPlugin({
 
 		// Enable uPlot's built-in cursor sync when requested so that
 		// crosshair / tooltip can follow the dashboard-wide cursor.
+		let removeSyncDisplayHook: (() => void) | null = null;
 		if (syncMode !== DashboardCursorSync.None && config.scales[0]?.props.time) {
 			config.setCursor({
 				sync: { key: syncKey, scales: ['x', 'y'] },
 			});
 
-			// Show the horizontal crosshair only when the receiving panel shares
-			// the same y-axis unit as the source panel. When this panel is the
-			// source (cursor.event != null) the line is always shown and this
-			// panel's metadata is written to the registry so receivers can read it.
-			config.addHook('setCursor', (u: uPlot): void => {
-				const yCursorEl = u.root.querySelector<HTMLElement>('.u-cursor-y');
-				if (!yCursorEl) {
-					return;
-				}
-
-				if (u.cursor.event != null) {
-					// This panel is the source — publish metadata and always show line.
-					syncCursorRegistry.setMetadata(syncKey, syncMetadata);
-					yCursorEl.style.display = '';
-				} else {
-					// This panel is receiving sync — show only if units match.
-					const sourceMeta = syncCursorRegistry.getMetadata(syncKey);
-					yCursorEl.style.display =
-						sourceMeta?.yAxisUnit === syncMetadata?.yAxisUnit ? '' : 'none';
-				}
-			});
+			removeSyncDisplayHook = config.addHook(
+				'setCursor',
+				createSyncDisplayHook(syncKey, syncMetadata, controller),
+			);
 		}
 
 		// Dismiss the tooltip when the user clicks / presses a key
@@ -403,6 +387,7 @@ export default function TooltipPlugin({
 			removeSetSeriesHook();
 			removeSetLegendHook();
 			removeSetCursorHook();
+			removeSyncDisplayHook?.();
 			if (overClickHandler) {
 				const plot = getPlot(controller);
 				if (plot) {

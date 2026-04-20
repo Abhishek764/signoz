@@ -12,8 +12,8 @@ type UpdatableAzureAccountConfig struct {
 type AzurePostableAccountConfig = AzureAccountConfig
 
 type AzureConnectionArtifact struct {
-	CLICommand        string `json:"cliCommand" required:"true"`
-	CloudShellCommand string `json:"cloudShellCommand" required:"true"`
+	CLICommand             string `json:"cliCommand" required:"true"`
+	CloudPowerShellCommand string `json:"cloudPowerShellCommand" required:"true"`
 }
 
 type AzureServiceConfig struct {

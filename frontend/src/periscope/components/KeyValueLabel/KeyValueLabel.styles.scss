@@ -50,23 +50,14 @@
 		border-radius: 2px 0 0 2px;
 		&,
 		&:hover {
-			color: var(--l1-foreground);
-		}
-	}
-
-	&__value {
-		background: var(--l3-background);
-		&,
-		&:hover {
 			color: var(--l2-foreground);
 		}
-
-		&--clickable {
-			cursor: pointer;
-
-			&:hover {
-				opacity: 0.8;
-			}
-		}
+	}
+	&__key {
+		background: var(--l2-background);
+		border-radius: 2px 0 0 2px;
+	}
+	&__value {
+		background: var(--l3-background);
 	}
 }

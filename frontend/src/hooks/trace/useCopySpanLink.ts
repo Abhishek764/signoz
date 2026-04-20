@@ -1,7 +1,7 @@
 import { MouseEventHandler, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 // Accepts both V2 (spanId) and V3 (span_id) span shapes

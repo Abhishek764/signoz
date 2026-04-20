@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge } from '@signozhq/badge';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 

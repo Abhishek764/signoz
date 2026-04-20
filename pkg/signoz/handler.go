@@ -41,6 +41,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -68,6 +70,7 @@ type Handlers struct {
 	RuleStateHistory        rulestatehistory.Handler
 	AlertmanagerHandler     alertmanager.Handler
 	TraceDetail             tracedetail.Handler
+	RulerHandler            ruler.Handler
 }
 
 func NewHandlers(
@@ -84,6 +87,7 @@ func NewHandlers(
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
+	rulerService ruler.Ruler,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -108,5 +112,6 @@ func NewHandlers(
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
+		RulerHandler:            signozruler.NewHandler(rulerService),
 	}
 }

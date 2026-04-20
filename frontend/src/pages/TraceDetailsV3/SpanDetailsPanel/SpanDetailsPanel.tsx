@@ -14,8 +14,13 @@ import {
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
+import {
+	TabsContent,
+	TabsList,
+	TabsRoot,
+	TabsTrigger,
+	toast,
+} from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';

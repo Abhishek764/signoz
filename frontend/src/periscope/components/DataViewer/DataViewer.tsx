@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Copy } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 // TODO: Replace antd Select with @signozhq/ui component when moving to design library
 import { Select } from 'antd';
 import { JsonView } from 'periscope/components/JsonView';

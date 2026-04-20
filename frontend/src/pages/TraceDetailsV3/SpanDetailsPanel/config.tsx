@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge } from '@signozhq/badge';
+import { Badge } from '@signozhq/ui';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 interface HighlightedOption {

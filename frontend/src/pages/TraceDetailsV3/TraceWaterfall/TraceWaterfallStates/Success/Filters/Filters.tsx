@@ -151,7 +151,7 @@ function Filters({
 	);
 
 	return (
-		<div className="filter-row">
+		<div className="trace-v3-filter-row">
 			<QueryBuilderSearchV2
 				query={{
 					...BASE_FILTER_QUERY,

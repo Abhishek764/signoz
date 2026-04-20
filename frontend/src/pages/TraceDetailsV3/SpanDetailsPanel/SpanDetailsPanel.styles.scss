@@ -57,6 +57,10 @@
 			flex-shrink: 0;
 		}
 
+		[role='tab'] {
+			color: var(--foreground);
+		}
+
 		[class*='tabs__list-wrapper'] {
 			padding-left: 0 !important;
 		}

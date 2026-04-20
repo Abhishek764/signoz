@@ -715,23 +715,33 @@ components:
       - cliCommand
       - cloudShellCommand
       type: object
+    CloudintegrationtypesAzureIntegrationConfig:
+      properties:
+        deploymentRegion:
+          type: string
+        resourceGroups:
+          items:
+            type: string
+          type: array
+        telemetryCollectionStrategy:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
+          type: array
+      required:
+      - deploymentRegion
+      - resourceGroups
+      - telemetryCollectionStrategy
+      type: object
     CloudintegrationtypesAzureLogsCollectionStrategy:
       properties:
-        categories:
+        categoryGroups:
           items:
             type: string
           type: array
       required:
-      - categories
+      - categoryGroups
       type: object
     CloudintegrationtypesAzureMetricsCollectionStrategy:
-      properties:
-        serviceNames:
-          items:
-            type: string
-          type: array
-      required:
-      - serviceNames
       type: object
     CloudintegrationtypesAzureServiceConfig:
       properties:
@@ -739,6 +749,9 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceLogsConfig'
         metrics:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceMetricsConfig'
+      required:
+      - logs
+      - metrics
       type: object
     CloudintegrationtypesAzureServiceLogsConfig:
       properties:
@@ -756,6 +769,10 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAzureLogsCollectionStrategy'
         metrics:
           $ref: '#/components/schemas/CloudintegrationtypesAzureMetricsCollectionStrategy'
+        resourceType:
+          type: string
+      required:
+      - resourceType
       type: object
     CloudintegrationtypesCloudIntegrationService:
       nullable: true
@@ -998,8 +1015,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
       type: object
     CloudintegrationtypesService:
       properties:

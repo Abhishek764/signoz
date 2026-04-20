@@ -17,8 +17,8 @@ type AzureConnectionArtifact struct {
 }
 
 type AzureServiceConfig struct {
-	Logs    *AzureServiceLogsConfig    `json:"logs,omitempty"`
-	Metrics *AzureServiceMetricsConfig `json:"metrics,omitempty"`
+	Logs    *AzureServiceLogsConfig    `json:"logs" required:"true"`
+	Metrics *AzureServiceMetricsConfig `json:"metrics" required:"true"`
 }
 
 type AzureServiceLogsConfig struct {
@@ -30,16 +30,21 @@ type AzureServiceMetricsConfig struct {
 }
 
 type AzureTelemetryCollectionStrategy struct {
-	Metrics *AzureMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
-	Logs    *AzureLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
+	ResourceType string                          `json:"resourceType" required:"true"`
+	Metrics      *AzureMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
+	Logs         *AzureLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
 }
 
-type AzureMetricsCollectionStrategy struct {
-	// Azure service namespaces to collect metrics from, e.g., "Microsoft.EventHub/namespaces"
-	ServiceNames []string `json:"serviceNames" required:"true" nullable:"false"`
-}
+// AzureMetricsCollectionStrategy no additional config required for metrics, will be added in future as required
+type AzureMetricsCollectionStrategy struct{}
 
 type AzureLogsCollectionStrategy struct {
 	// List of categories to enable for diagnostic settings, to start with it will have 'allLogs' and no filtering.
-	Categories []string `json:"categories" required:"true" nullable:"false"`
+	CategoryGroups []string `json:"categoryGroups" required:"true" nullable:"false"`
+}
+
+type AzureIntegrationConfig struct {
+	DeploymentRegion            string                              `json:"deploymentRegion" required:"true"`
+	ResourceGroups              []string                            `json:"resourceGroups" required:"true" nullable:"false"`
+	TelemetryCollectionStrategy []*AzureTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }

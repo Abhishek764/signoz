@@ -852,23 +852,35 @@ export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	cloudShellCommand: string;
 }
 
+export interface CloudintegrationtypesAzureIntegrationConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+	/**
+	 * @type array
+	 */
+	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
+}
+
 export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
 	/**
 	 * @type array
 	 */
-	categories: string[];
+	categoryGroups: string[];
 }
 
 export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
-	/**
-	 * @type array
-	 */
-	serviceNames: string[];
+	[key: string]: unknown;
 }
 
 export interface CloudintegrationtypesAzureServiceConfigDTO {
-	logs?: CloudintegrationtypesAzureServiceLogsConfigDTO;
-	metrics?: CloudintegrationtypesAzureServiceMetricsConfigDTO;
+	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
+	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
 }
 
 export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
@@ -888,6 +900,10 @@ export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
 export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
 	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
 	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	resourceType: string;
 }
 
 /**
@@ -1170,7 +1186,8 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 }
 
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
-	aws: CloudintegrationtypesAWSIntegrationConfigDTO;
+	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
+	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesServiceDTO {

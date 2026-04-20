@@ -5,21 +5,20 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // CursorSyncMode controls how chart cursors are synchronised across panels in a dashboard.
-type CursorSyncMode string
+type CursorSyncMode struct{ valuer.String }
 
-const (
-	CursorSyncModeCrosshair CursorSyncMode = "crosshair"
-	CursorSyncModeTooltip   CursorSyncMode = "tooltip"
-	CursorSyncModeNone      CursorSyncMode = "none"
+var (
+	CursorSyncModeCrosshair = CursorSyncMode{valuer.NewString("crosshair")}
+	CursorSyncModeTooltip   = CursorSyncMode{valuer.NewString("tooltip")}
 )
 
 var allowedCursorSyncModes = []CursorSyncMode{
 	CursorSyncModeCrosshair,
 	CursorSyncModeTooltip,
-	CursorSyncModeNone,
 }
 
 // DashboardPreference holds user-specific overrides for a single dashboard.
@@ -30,7 +29,7 @@ type DashboardPreference struct {
 func (p DashboardPreference) Validate() error {
 	if !slices.Contains(allowedCursorSyncModes, p.CursorSyncMode) {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
-			"invalid cursorSyncMode %q: must be one of crosshair, tooltip, none", p.CursorSyncMode)
+			"invalid cursorSyncMode %q: must be one of crosshair or tooltip", p.CursorSyncMode)
 	}
 	return nil
 }

@@ -1,15 +1,34 @@
-package slackblockkitrenderer
+package blockkit
 
 import (
 	"bytes"
 	"encoding/json"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/types/templatingtypes"
+	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
 	extensionast "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/util"
 )
+
+// Extender is a goldmark.Extender that registers the Block Kit node renderer
+// together with the GFM extensions it relies on (tables, strikethrough, task
+// lists).
+var Extender goldmark.Extender = &extender{}
+
+type extender struct{}
+
+func (e *extender) Extend(m goldmark.Markdown) {
+	extension.Table.Extend(m)
+	extension.Strikethrough.Extend(m)
+	extension.TaskList.Extend(m)
+	m.Renderer().AddOptions(
+		renderer.WithNodeRenderers(util.Prioritized(newRenderer(), 1)),
+	)
+}
 
 // listFrame tracks state for a single level of list nesting.
 type listFrame struct {
@@ -20,26 +39,26 @@ type listFrame struct {
 
 // listContext holds all state while processing a list tree.
 type listContext struct {
-	result             []RichTextList
+	result             []templatingtypes.RichTextList
 	stack              []listFrame
-	current            *RichTextList
+	current            *templatingtypes.RichTextList
 	currentItemInlines []interface{}
 }
 
 // tableContext holds state while processing a table.
 type tableContext struct {
-	rows               [][]TableCell
-	currentRow         []TableCell
+	rows               [][]templatingtypes.TableCell
+	currentRow         []templatingtypes.TableCell
 	currentCellInlines []interface{}
 	isHeader           bool
 }
 
-// Renderer converts Markdown AST to Slack Block Kit JSON.
-type Renderer struct {
+// nodeRenderer converts Markdown AST to Slack Block Kit JSON.
+type nodeRenderer struct {
 	blocks []interface{}
 	mrkdwn strings.Builder
 	// holds active styles for the current rich text element
-	styleStack []RichTextStyle
+	styleStack []templatingtypes.RichTextStyle
 	// holds the current list context while processing a list tree.
 	listCtx *listContext
 	// holds the current table context while processing a table.
@@ -49,13 +68,12 @@ type Renderer struct {
 	blockquoteDepth int
 }
 
-// NewRenderer returns a new block kit renderer.
-func NewRenderer() renderer.NodeRenderer {
-	return &Renderer{}
+func newRenderer() renderer.NodeRenderer {
+	return &nodeRenderer{}
 }
 
 // RegisterFuncs registers node rendering functions.
-func (r *Renderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+func (r *nodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	// Blocks
 	reg.Register(ast.KindDocument, r.renderDocument)
 	reg.Register(ast.KindHeading, r.renderHeading)
@@ -86,34 +104,34 @@ func (r *Renderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 // inRichTextMode returns true when we're inside a list or table context
 // in slack blockkit list and table items are rendered as rich_text elements
 // if more cases are found in future those needs to be added here.
-func (r *Renderer) inRichTextMode() bool {
+func (r *nodeRenderer) inRichTextMode() bool {
 	return r.listCtx != nil || r.tableCtx != nil
 }
 
-// currentStyle merges the stored style stack into RichTextStyle
+// currentStyle merges the stored style stack into templatingtypes.RichTextStyle
 // which can be applied on rich text elements.
-func (r *Renderer) currentStyle() *RichTextStyle {
-	s := RichTextStyle{}
+func (r *nodeRenderer) currentStyle() *templatingtypes.RichTextStyle {
+	s := templatingtypes.RichTextStyle{}
 	for _, f := range r.styleStack {
 		s.Bold = s.Bold || f.Bold
 		s.Italic = s.Italic || f.Italic
 		s.Strike = s.Strike || f.Strike
 		s.Code = s.Code || f.Code
 	}
-	if s == (RichTextStyle{}) {
+	if s == (templatingtypes.RichTextStyle{}) {
 		return nil
 	}
 	return &s
 }
 
-// flushMrkdwn collects markdown text and adds it as a SectionBlock with mrkdwn text
+// flushMrkdwn collects markdown text and adds it as a templatingtypes.SectionBlock with mrkdwn text
 // whenever starting a new block we flush markdown to render it as a separate block.
-func (r *Renderer) flushMrkdwn() {
+func (r *nodeRenderer) flushMrkdwn() {
 	text := strings.TrimSpace(r.mrkdwn.String())
 	if text != "" {
-		r.blocks = append(r.blocks, SectionBlock{
+		r.blocks = append(r.blocks, templatingtypes.SectionBlock{
 			Type: "section",
-			Text: &TextObject{
+			Text: &templatingtypes.TextObject{
 				Type: "mrkdwn",
 				Text: text,
 			},
@@ -123,7 +141,7 @@ func (r *Renderer) flushMrkdwn() {
 }
 
 // addInline adds an inline element to the appropriate context.
-func (r *Renderer) addInline(el interface{}) {
+func (r *nodeRenderer) addInline(el interface{}) {
 	if r.listCtx != nil {
 		r.listCtx.currentItemInlines = append(r.listCtx.currentItemInlines, el)
 	} else if r.tableCtx != nil {
@@ -133,7 +151,7 @@ func (r *Renderer) addInline(el interface{}) {
 
 // --- Document ---
 
-func (r *Renderer) renderDocument(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderDocument(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.blocks = nil
 		r.mrkdwn.Reset()
@@ -165,7 +183,7 @@ func (r *Renderer) renderDocument(w util.BufWriter, source []byte, node ast.Node
 
 // --- Heading ---
 
-func (r *Renderer) renderHeading(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderHeading(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.mrkdwn.WriteString("*")
 	} else {
@@ -176,7 +194,7 @@ func (r *Renderer) renderHeading(w util.BufWriter, source []byte, node ast.Node,
 
 // --- Paragraph ---
 
-func (r *Renderer) renderParagraph(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderParagraph(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		if r.mrkdwn.Len() > 0 {
 			text := r.mrkdwn.String()
@@ -194,17 +212,17 @@ func (r *Renderer) renderParagraph(w util.BufWriter, source []byte, node ast.Nod
 
 // --- ThematicBreak ---
 
-func (r *Renderer) renderThematicBreak(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderThematicBreak(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.flushMrkdwn()
-		r.blocks = append(r.blocks, DividerBlock{Type: "divider"})
+		r.blocks = append(r.blocks, templatingtypes.DividerBlock{Type: "divider"})
 	}
 	return ast.WalkContinue, nil
 }
 
 // --- CodeBlock (indented) ---
 
-func (r *Renderer) renderCodeBlock(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderCodeBlock(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -226,13 +244,13 @@ func (r *Renderer) renderCodeBlock(w util.BufWriter, source []byte, node ast.Nod
 	}
 
 	elements := []interface{}{
-		RichTextInline{Type: "text", Text: text},
+		templatingtypes.RichTextInline{Type: "text", Text: text},
 	}
 
-	r.blocks = append(r.blocks, RichTextBlock{
+	r.blocks = append(r.blocks, templatingtypes.RichTextBlock{
 		Type: "rich_text",
 		Elements: []interface{}{
-			RichTextPreformatted{
+			templatingtypes.RichTextPreformatted{
 				Type:     "rich_text_preformatted",
 				Elements: elements,
 				Border:   0,
@@ -244,7 +262,7 @@ func (r *Renderer) renderCodeBlock(w util.BufWriter, source []byte, node ast.Nod
 
 // --- FencedCodeBlock ---
 
-func (r *Renderer) renderFencedCodeBlock(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderFencedCodeBlock(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -266,7 +284,7 @@ func (r *Renderer) renderFencedCodeBlock(w util.BufWriter, source []byte, node a
 	}
 
 	elements := []interface{}{
-		RichTextInline{Type: "text", Text: text},
+		templatingtypes.RichTextInline{Type: "text", Text: text},
 	}
 
 	// If language is specified, collect it.
@@ -276,10 +294,10 @@ func (r *Renderer) renderFencedCodeBlock(w util.BufWriter, source []byte, node a
 		language = string(lang)
 	}
 	// Add the preformatted block to the blocks slice with the collected language.
-	r.blocks = append(r.blocks, RichTextBlock{
+	r.blocks = append(r.blocks, templatingtypes.RichTextBlock{
 		Type: "rich_text",
 		Elements: []interface{}{
-			RichTextPreformatted{
+			templatingtypes.RichTextPreformatted{
 				Type:     "rich_text_preformatted",
 				Elements: elements,
 				Border:   0,
@@ -293,7 +311,7 @@ func (r *Renderer) renderFencedCodeBlock(w util.BufWriter, source []byte, node a
 
 // --- Blockquote ---
 
-func (r *Renderer) renderBlockquote(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderBlockquote(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.blockquoteDepth++
 	} else {
@@ -304,7 +322,7 @@ func (r *Renderer) renderBlockquote(w util.BufWriter, source []byte, node ast.No
 
 // --- List ---
 
-func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderList(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	list := node.(*ast.List)
 
 	if entering {
@@ -321,7 +339,7 @@ func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, en
 			// Nested list: check if we already have some collected list items that needs to be flushed.
 			// in slack blockkit, list items with different levels of indentation are added as different rich_text_list blocks.
 			if len(r.listCtx.currentItemInlines) > 0 {
-				sec := RichTextBlock{
+				sec := templatingtypes.RichTextBlock{
 					Type:     "rich_text_section",
 					Elements: r.listCtx.currentItemInlines,
 				}
@@ -350,7 +368,7 @@ func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, en
 			itemCount: 0,
 		})
 
-		newList := &RichTextList{
+		newList := &templatingtypes.RichTextList{
 			Type:     "rich_text_list",
 			Style:    style,
 			Indent:   indent,
@@ -377,7 +395,7 @@ func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, en
 		if len(r.listCtx.stack) > 0 {
 			// Resume parent: start a new list segment at parent indent/style
 			parent := &r.listCtx.stack[len(r.listCtx.stack)-1]
-			newList := &RichTextList{
+			newList := &templatingtypes.RichTextList{
 				Type:     "rich_text_list",
 				Style:    parent.style,
 				Indent:   parent.indent,
@@ -390,13 +408,13 @@ func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, en
 			}
 			r.listCtx.current = newList
 		} else {
-			// Top-level list is done since all stack are popped: build RichTextBlock if non-empty
+			// Top-level list is done since all stack are popped: build templatingtypes.RichTextBlock if non-empty
 			if len(r.listCtx.result) > 0 {
 				elements := make([]interface{}, len(r.listCtx.result))
 				for i, l := range r.listCtx.result {
 					elements[i] = l
 				}
-				r.blocks = append(r.blocks, RichTextBlock{
+				r.blocks = append(r.blocks, templatingtypes.RichTextBlock{
 					Type:     "rich_text",
 					Elements: elements,
 				})
@@ -410,13 +428,13 @@ func (r *Renderer) renderList(w util.BufWriter, source []byte, node ast.Node, en
 
 // --- ListItem ---
 
-func (r *Renderer) renderListItem(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderListItem(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.listCtx.currentItemInlines = nil
 	} else {
 		// Only add if there are inlines (might be empty after nested list consumed them)
 		if len(r.listCtx.currentItemInlines) > 0 {
-			sec := RichTextBlock{
+			sec := templatingtypes.RichTextBlock{
 				Type:     "rich_text_section",
 				Elements: r.listCtx.currentItemInlines,
 			}
@@ -442,7 +460,7 @@ func (r *Renderer) renderListItem(w util.BufWriter, source []byte, node ast.Node
 // all inline items are parsed as separate AST items like list item, links, text, etc. are collected
 // using the addInline function and wrapped in a rich_text_section block.
 
-func (r *Renderer) renderTable(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTable(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.flushMrkdwn()
 		r.tableCtx = &tableContext{}
@@ -454,11 +472,11 @@ func (r *Renderer) renderTable(w util.BufWriter, source []byte, node ast.Node, e
 			maxCols := len(rows[0])
 			for i, row := range rows {
 				for len(row) < maxCols {
-					emptySec := RichTextBlock{
+					emptySec := templatingtypes.RichTextBlock{
 						Type:     "rich_text_section",
-						Elements: []interface{}{RichTextInline{Type: "text", Text: " "}},
+						Elements: []interface{}{templatingtypes.RichTextInline{Type: "text", Text: " "}},
 					}
-					row = append(row, TableCell{
+					row = append(row, templatingtypes.TableCell{
 						Type:     "rich_text",
 						Elements: []interface{}{emptySec},
 					})
@@ -466,7 +484,7 @@ func (r *Renderer) renderTable(w util.BufWriter, source []byte, node ast.Node, e
 				rows[i] = row
 			}
 		}
-		r.blocks = append(r.blocks, TableBlock{
+		r.blocks = append(r.blocks, templatingtypes.TableBlock{
 			Type: "table",
 			Rows: rows,
 		})
@@ -475,7 +493,7 @@ func (r *Renderer) renderTable(w util.BufWriter, source []byte, node ast.Node, e
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderTableHeader(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTableHeader(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.tableCtx.isHeader = true
 		r.tableCtx.currentRow = nil
@@ -487,7 +505,7 @@ func (r *Renderer) renderTableHeader(w util.BufWriter, source []byte, node ast.N
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderTableRow(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTableRow(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.tableCtx.currentRow = nil
 	} else {
@@ -497,16 +515,16 @@ func (r *Renderer) renderTableRow(w util.BufWriter, source []byte, node ast.Node
 	return ast.WalkContinue, nil
 }
 
-func (r *Renderer) renderTableCell(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTableCell(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
 		r.tableCtx.currentCellInlines = nil
 	} else {
 		// If header, make text bold for the collected inline items.
 		if r.tableCtx.isHeader {
 			for i, el := range r.tableCtx.currentCellInlines {
-				if inline, ok := el.(RichTextInline); ok {
+				if inline, ok := el.(templatingtypes.RichTextInline); ok {
 					if inline.Style == nil {
-						inline.Style = &RichTextStyle{Bold: true}
+						inline.Style = &templatingtypes.RichTextStyle{Bold: true}
 					} else {
 						inline.Style.Bold = true
 					}
@@ -517,16 +535,16 @@ func (r *Renderer) renderTableCell(w util.BufWriter, source []byte, node ast.Nod
 		// Ensure cell has at least one element for valid Block Kit payload
 		if len(r.tableCtx.currentCellInlines) == 0 {
 			r.tableCtx.currentCellInlines = []interface{}{
-				RichTextInline{Type: "text", Text: " "},
+				templatingtypes.RichTextInline{Type: "text", Text: " "},
 			}
 		}
 		// All inline items that are collected for a table cell are wrapped in a rich_text_section block.
-		sec := RichTextBlock{
+		sec := templatingtypes.RichTextBlock{
 			Type:     "rich_text_section",
 			Elements: r.tableCtx.currentCellInlines,
 		}
 		// The rich_text_section block is wrapped in a rich_text block.
-		cell := TableCell{
+		cell := templatingtypes.TableCell{
 			Type:     "rich_text",
 			Elements: []interface{}{sec},
 		}
@@ -538,7 +556,7 @@ func (r *Renderer) renderTableCell(w util.BufWriter, source []byte, node ast.Nod
 
 // --- TaskCheckBox ---
 
-func (r *Renderer) renderTaskCheckBox(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderTaskCheckBox(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -548,7 +566,7 @@ func (r *Renderer) renderTaskCheckBox(w util.BufWriter, source []byte, node ast.
 		text = "[x] "
 	}
 	if r.inRichTextMode() {
-		r.addInline(RichTextInline{Type: "text", Text: text})
+		r.addInline(templatingtypes.RichTextInline{Type: "text", Text: text})
 	} else {
 		r.mrkdwn.WriteString(text)
 	}
@@ -557,7 +575,7 @@ func (r *Renderer) renderTaskCheckBox(w util.BufWriter, source []byte, node ast.
 
 // --- Inline: Text ---
 
-func (r *Renderer) renderText(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderText(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -565,13 +583,13 @@ func (r *Renderer) renderText(w util.BufWriter, source []byte, node ast.Node, en
 	value := string(n.Segment.Value(source))
 
 	if r.inRichTextMode() {
-		r.addInline(RichTextInline{
+		r.addInline(templatingtypes.RichTextInline{
 			Type:  "text",
 			Text:  value,
 			Style: r.currentStyle(),
 		})
 		if n.HardLineBreak() || n.SoftLineBreak() {
-			r.addInline(RichTextInline{Type: "text", Text: "\n"})
+			r.addInline(templatingtypes.RichTextInline{Type: "text", Text: "\n"})
 		}
 	} else {
 		r.mrkdwn.WriteString(value)
@@ -587,11 +605,11 @@ func (r *Renderer) renderText(w util.BufWriter, source []byte, node ast.Node, en
 
 // --- Inline: Emphasis ---
 
-func (r *Renderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*ast.Emphasis)
 	if r.inRichTextMode() {
 		if entering {
-			s := RichTextStyle{}
+			s := templatingtypes.RichTextStyle{}
 			if n.Level == 1 {
 				s.Italic = true
 			} else {
@@ -617,10 +635,10 @@ func (r *Renderer) renderEmphasis(w util.BufWriter, source []byte, node ast.Node
 
 // --- Inline: Strikethrough ---
 
-func (r *Renderer) renderStrikethrough(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderStrikethrough(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if r.inRichTextMode() {
 		if entering {
-			r.styleStack = append(r.styleStack, RichTextStyle{Strike: true})
+			r.styleStack = append(r.styleStack, templatingtypes.RichTextStyle{Strike: true})
 		} else {
 			// the collected style gets used by the rich text element using currentStyle()
 			// so we remove this style from the stack.
@@ -636,7 +654,7 @@ func (r *Renderer) renderStrikethrough(w util.BufWriter, source []byte, node ast
 
 // --- Inline: CodeSpan ---
 
-func (r *Renderer) renderCodeSpan(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderCodeSpan(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
 		return ast.WalkContinue, nil
 	}
@@ -658,11 +676,11 @@ func (r *Renderer) renderCodeSpan(w util.BufWriter, source []byte, node ast.Node
 		}
 		style := r.currentStyle()
 		if style == nil {
-			style = &RichTextStyle{Code: true}
+			style = &templatingtypes.RichTextStyle{Code: true}
 		} else {
 			style.Code = true
 		}
-		r.addInline(RichTextInline{
+		r.addInline(templatingtypes.RichTextInline{
 			Type:  "text",
 			Text:  buf.String(),
 			Style: style,
@@ -690,7 +708,7 @@ func (r *Renderer) renderCodeSpan(w util.BufWriter, source []byte, node ast.Node
 
 // --- Inline: Link ---
 
-func (r *Renderer) renderLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderLink(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*ast.Link)
 	if r.inRichTextMode() {
 		if entering {
@@ -710,7 +728,7 @@ func (r *Renderer) renderLink(w util.BufWriter, source []byte, node ast.Node, en
 			})
 			// Once we've collected the text for the link (given it was present)
 			// let's add the link to the rich text block.
-			r.addInline(RichTextLink{
+			r.addInline(templatingtypes.RichTextLink{
 				Type:  "link",
 				URL:   string(n.Destination),
 				Text:  buf.String(),
@@ -732,6 +750,6 @@ func (r *Renderer) renderLink(w util.BufWriter, source []byte, node ast.Node, en
 
 // --- Image (skip) ---
 
-func (r *Renderer) renderImage(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+func (r *nodeRenderer) renderImage(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	return ast.WalkSkipChildren, nil
 }

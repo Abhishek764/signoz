@@ -1,7 +1,6 @@
 package markdownrenderer
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 )
@@ -29,8 +28,6 @@ func prettyJSON(s string) string {
 }
 
 func TestRenderSlackBlockKit(t *testing.T) {
-	renderer := NewRenderer()
-
 	tests := []struct {
 		name     string
 		markdown string
@@ -97,12 +94,11 @@ error: connection timeout after 30s
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := renderer.Render(context.Background(), tt.markdown, MarkdownFormatSlackBlockKit)
+			got, err := RenderSlackBlockKit(tt.markdown)
 			if err != nil {
 				t.Fatalf("Render error: %v", err)
 			}
 
-			// Verify output is valid JSON
 			if !json.Valid([]byte(got)) {
 				t.Fatalf("output is not valid JSON:\n%s", got)
 			}
@@ -116,8 +112,6 @@ error: connection timeout after 30s
 }
 
 func TestRenderSlackMrkdwn(t *testing.T) {
-	renderer := NewRenderer()
-
 	markdown := `# Alert Triggered
 
 - Service: **checkout-api**
@@ -140,7 +134,7 @@ error: connection timeout after 30s
 		"```\nMetric     | Value | Threshold\n-----------|-------|----------\nLatency    | 250ms | 100ms    \nError Rate | 5.2%  | 1%       \n```\n\n" +
 		"```\nerror: connection timeout after 30s\n```\n\n"
 
-	got, err := renderer.Render(context.Background(), markdown, MarkdownFormatSlackMrkdwn)
+	got, err := RenderSlackMrkdwn(markdown)
 	if err != nil {
 		t.Fatalf("Render error: %v", err)
 	}

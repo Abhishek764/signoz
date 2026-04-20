@@ -1,71 +1,62 @@
 package markdownrenderer
 
 import (
-	"context"
+	"bytes"
+	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/slackblockkitrenderer"
-	"github.com/SigNoz/signoz/pkg/templating/slackmrkdwnrenderer"
-	"github.com/SigNoz/signoz/pkg/templating/templatingextensions"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/blockkit"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/mrkdwn"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
 
-// newHTMLRenderer creates a new goldmark.Markdown instance for HTML rendering.
-func newHTMLRenderer() goldmark.Markdown {
-	return goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
-		goldmark.WithExtensions(templatingextensions.EscapeNoValue),
-	)
-}
+// htmlRenderer is built once and shared. Goldmark's built-in HTML path and
+// the novalue extension carry no mutable state, so a single goldmark.Markdown
+// is safe to Convert concurrently.
+var htmlRenderer = goldmark.New(goldmark.WithExtensions(extension.GFM, escapeNoValue))
 
-// newSlackBlockKitRenderer creates a new goldmark.Markdown instance for Slack Block Kit rendering.
-func newSlackBlockKitRenderer() goldmark.Markdown {
-	return goldmark.New(
-		goldmark.WithExtensions(slackblockkitrenderer.BlockKitV2),
-	)
-}
-
-// newSlackMrkdwnRenderer creates a new goldmark.Markdown instance for Slack mrkdwn rendering.
-func newSlackMrkdwnRenderer() goldmark.Markdown {
-	return goldmark.New(
-		goldmark.WithExtensions(slackmrkdwnrenderer.SlackMrkdwn),
-	)
-}
-
-type OutputFormat int
-
-const (
-	MarkdownFormatHTML OutputFormat = iota
-	MarkdownFormatSlackBlockKit
-	MarkdownFormatSlackMrkdwn
-	MarkdownFormatNoop
+// The Slack renderers hold per-document state on the node renderer (list
+// context, table context, style stack, blockquote/list prefixes). Two
+// goroutines calling Convert on the same goldmark.Markdown would corrupt
+// that state. A sync.Pool gives each concurrent caller its own instance
+// while still amortising the cost of building the pipeline.
+var (
+	blockkitPool = sync.Pool{
+		New: func() any {
+			return goldmark.New(goldmark.WithExtensions(blockkit.Extender))
+		},
+	}
+	mrkdwnPool = sync.Pool{
+		New: func() any {
+			return goldmark.New(goldmark.WithExtensions(mrkdwn.Extender))
+		},
+	}
 )
 
-// Renderer is the interface for rendering markdown to different formats.
-type Renderer interface {
-	// Render renders the markdown to the given output format.
-	Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error)
+// RenderHTML converts markdown to HTML.
+func RenderHTML(markdown string) (string, error) {
+	return render(htmlRenderer, markdown, "HTML")
 }
 
-type renderer struct {
+// RenderSlackBlockKit converts markdown to a Slack Block Kit JSON array.
+func RenderSlackBlockKit(markdown string) (string, error) {
+	md := blockkitPool.Get().(goldmark.Markdown)
+	defer blockkitPool.Put(md)
+	return render(md, markdown, "Slack Block Kit")
 }
 
-func NewRenderer() Renderer {
-	return &renderer{}
+// RenderSlackMrkdwn converts markdown to Slack's mrkdwn format.
+func RenderSlackMrkdwn(markdown string) (string, error) {
+	md := mrkdwnPool.Get().(goldmark.Markdown)
+	defer mrkdwnPool.Put(md)
+	return render(md, markdown, "Slack mrkdwn")
 }
 
-func (r *renderer) Render(ctx context.Context, markdown string, outputFormat OutputFormat) (string, error) {
-	switch outputFormat {
-	case MarkdownFormatHTML:
-		return r.renderHTML(ctx, markdown)
-	case MarkdownFormatSlackBlockKit:
-		return r.renderSlackBlockKit(ctx, markdown)
-	case MarkdownFormatSlackMrkdwn:
-		return r.renderSlackMrkdwn(ctx, markdown)
-	case MarkdownFormatNoop:
-		return markdown, nil
-	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown output format: %v", outputFormat)
+func render(md goldmark.Markdown, markdown string, format string) (string, error) {
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(markdown), &buf); err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to convert markdown to %s", format)
 	}
+	return buf.String(), nil
 }

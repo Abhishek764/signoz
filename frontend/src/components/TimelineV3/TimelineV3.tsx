@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
+import { resolveTimeFromInterval } from 'components/TimelineV2/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { toFixed } from 'utils/toFixed';
 
 import {
 	getIntervals,
+	getIntervalUnit,
 	getMinimumIntervalsBasedOnWidth,
 	Interval,
 } from './utils';
@@ -15,6 +18,8 @@ interface ITimelineV3Props {
 	endTimestamp: number;
 	timelineHeight: number;
 	offsetTimestamp: number;
+	/** Cursor X as a fraction of the timeline width (0–1). null = no cursor. */
+	cursorXPercent?: number | null;
 }
 
 function TimelineV3(props: ITimelineV3Props): JSX.Element {
@@ -23,23 +28,41 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 		endTimestamp,
 		timelineHeight,
 		offsetTimestamp,
+		cursorXPercent,
 	} = props;
 	const [intervals, setIntervals] = useState<Interval[]>([]);
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const isDarkMode = useIsDarkMode();
 
+	const spread = endTimestamp - startTimestamp;
+
 	useEffect(() => {
-		const spread = endTimestamp - startTimestamp;
 		if (spread < 0) {
 			return;
 		}
 
 		const minIntervals = getMinimumIntervalsBasedOnWidth(width);
 		const intervalisedSpread = (spread / minIntervals) * 1.0;
-		const intervals = getIntervals(intervalisedSpread, spread, offsetTimestamp);
+		const newIntervals = getIntervals(
+			intervalisedSpread,
+			spread,
+			offsetTimestamp,
+		);
 
-		setIntervals(intervals);
-	}, [startTimestamp, endTimestamp, width, offsetTimestamp]);
+		setIntervals(newIntervals);
+	}, [startTimestamp, endTimestamp, width, offsetTimestamp, spread]);
+
+	// Compute cursor time label using the same unit as timeline ticks
+	const cursorLabel = useMemo(() => {
+		if (cursorXPercent == null || spread <= 0) {
+			return null;
+		}
+
+		const timeAtCursor = offsetTimestamp + cursorXPercent * spread;
+		const unit = getIntervalUnit(spread, offsetTimestamp);
+		const formatted = toFixed(resolveTimeFromInterval(timeAtCursor, unit), 2);
+		return `${formatted}${unit.name}`;
+	}, [cursorXPercent, spread, offsetTimestamp]);
 
 	if (endTimestamp < startTimestamp) {
 		console.error(
@@ -51,12 +74,14 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 	}
 
 	const strokeColor = isDarkMode ? ' rgb(192,193,195,0.8)' : 'black';
+	const svgHeight = timelineHeight * 2.5;
+	const cursorX = cursorXPercent != null ? cursorXPercent * width : null;
 
 	return (
 		<div ref={ref as never} className="timeline-v3-container">
 			<svg
 				width={width}
-				height={timelineHeight * 2.5}
+				height={svgHeight}
 				xmlns="http://www.w3.org/2000/svg"
 				overflow="visible"
 			>
@@ -80,6 +105,13 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 						</g>
 					))}
 			</svg>
+
+			{/* Cursor time badge — DOM element for easy CSS styling */}
+			{cursorX !== null && cursorLabel && (
+				<div className="timeline-v3-cursor-badge" style={{ left: cursorX }}>
+					{cursorLabel}
+				</div>
+			)}
 		</div>
 	);
 }

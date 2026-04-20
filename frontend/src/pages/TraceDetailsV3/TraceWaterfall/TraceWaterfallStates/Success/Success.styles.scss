@@ -204,6 +204,16 @@
 		position: relative;
 		overflow: hidden;
 
+		.waterfall-crosshair {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 1px;
+			background: var(--l3-background);
+			pointer-events: none;
+			z-index: 1;
+		}
+
 		.timeline-row {
 			display: flex;
 			align-items: center;

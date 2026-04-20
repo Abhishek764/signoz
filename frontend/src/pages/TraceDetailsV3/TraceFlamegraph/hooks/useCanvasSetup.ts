@@ -4,6 +4,7 @@ export function useCanvasSetup(
 	canvasRef: RefObject<HTMLCanvasElement>,
 	containerRef: RefObject<HTMLDivElement>,
 	onDraw: () => void,
+	overlayCanvasRef?: RefObject<HTMLCanvasElement>,
 ): void {
 	const updateCanvasSize = useCallback(() => {
 		const canvas = canvasRef.current;
@@ -25,9 +26,19 @@ export function useCanvasSetup(
 		if (canvas.width !== newWidth || canvas.height !== newHeight) {
 			canvas.width = newWidth;
 			canvas.height = newHeight;
+
+			// Sync overlay canvas size with main canvas
+			const overlay = overlayCanvasRef?.current;
+			if (overlay) {
+				overlay.width = newWidth;
+				overlay.height = newHeight;
+				overlay.style.width = `${rect.width}px`;
+				overlay.style.height = `${viewportHeight}px`;
+			}
+
 			onDraw();
 		}
-	}, [canvasRef, containerRef, onDraw]);
+	}, [canvasRef, containerRef, onDraw, overlayCanvasRef]);
 
 	useEffect(() => {
 		const container = containerRef.current;

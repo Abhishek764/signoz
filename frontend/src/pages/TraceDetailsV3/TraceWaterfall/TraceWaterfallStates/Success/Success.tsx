@@ -34,6 +34,7 @@ import {
 	Link,
 	ListPlus,
 } from 'lucide-react';
+import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
@@ -362,9 +363,17 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
+	const timelineAreaRef = useRef<HTMLDivElement>(null);
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 	const prevHoveredSpanIdRef = useRef<string | null>(null);
 	const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const {
+		cursorXPercent,
+		cursorX,
+		onMouseMove: onCrosshairMove,
+		onMouseLeave: onCrosshairLeave,
+	} = useCrosshair({ containerRef: timelineAreaRef });
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {
@@ -656,6 +665,7 @@ function Success(props: ISuccessProps): JSX.Element {
 							endTimestamp={traceMetadata.endTime}
 							timelineHeight={10}
 							offsetTimestamp={0}
+							cursorXPercent={cursorXPercent}
 						/>
 					</div>
 				</div>
@@ -712,7 +722,15 @@ function Success(props: ISuccessProps): JSX.Element {
 					</ResizableBox>
 
 					{/* Right panel - timeline bars */}
-					<div className="waterfall-timeline">
+					<div
+						className="waterfall-timeline"
+						ref={timelineAreaRef}
+						onMouseMove={onCrosshairMove}
+						onMouseLeave={onCrosshairLeave}
+					>
+						{cursorX !== null && (
+							<div className="waterfall-crosshair" style={{ left: cursorX }} />
+						)}
 						{virtualItems.map((virtualRow) => {
 							const span = spans[virtualRow.index];
 							return (

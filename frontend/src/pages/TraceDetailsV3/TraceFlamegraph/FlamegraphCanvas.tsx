@@ -3,10 +3,12 @@ import { createPortal } from 'react-dom';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
+import { useCrosshair } from '../hooks/useCrosshair';
 import { EventTooltipContent } from '../SpanHoverCard/EventTooltipContent';
 import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
+import { useFlamegraphCrosshair } from './hooks/useFlamegraphCrosshair';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
 import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
 import { useFlamegraphHover } from './hooks/useFlamegraphHover';
@@ -24,8 +26,9 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		isFilterActive,
 	} = props;
 
-	const isDarkMode = useIsDarkMode(); //TODO: see if can be removed or use a new hook
+	const isDarkMode = useIsDarkMode();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const spanRectsRef = useRef<SpanRect[]>([]);
 	const eventRectsRef = useRef<EventRect[]>([]);
@@ -152,21 +155,39 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		setScrollTop,
 	});
 
-	useCanvasSetup(canvasRef, containerRef, drawFlamegraph);
+	useCanvasSetup(canvasRef, containerRef, drawFlamegraph, overlayCanvasRef);
+
+	const {
+		cursorXPercent,
+		cursorX,
+		onMouseMove: onCrosshairMove,
+		onMouseLeave: onCrosshairLeave,
+	} = useCrosshair({ containerRef });
+
+	useFlamegraphCrosshair({ overlayCanvasRef, cursorX });
 
 	const handleMouseMove = useCallback(
 		(e: React.MouseEvent): void => {
 			handleDragMouseMove(e);
 			handleHoverMouseMove(e);
+			if (!isDraggingRef.current) {
+				onCrosshairMove(e);
+			}
 		},
-		[handleDragMouseMove, handleHoverMouseMove],
+		[handleDragMouseMove, handleHoverMouseMove, onCrosshairMove, isDraggingRef],
 	);
 
 	const handleMouseLeave = useCallback((): void => {
 		isOverFlamegraphRef.current = false;
+		onCrosshairLeave();
 		handleDragMouseLeave();
 		handleHoverMouseLeave();
-	}, [isOverFlamegraphRef, handleDragMouseLeave, handleHoverMouseLeave]);
+	}, [
+		isOverFlamegraphRef,
+		onCrosshairLeave,
+		handleDragMouseLeave,
+		handleHoverMouseLeave,
+	]);
 
 	const tooltipElement = tooltipContent
 		? createPortal(
@@ -216,6 +237,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				endTimestamp={viewEndTs}
 				offsetTimestamp={viewStartTs - traceMetadata.startTime}
 				timelineHeight={10}
+				cursorXPercent={cursorXPercent}
 			/>
 			<div
 				ref={containerRef}
@@ -243,6 +265,16 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 					onMouseMove={handleMouseMove}
 					onMouseUp={handleMouseUp}
 					onClick={handleClick}
+				/>
+				<canvas
+					ref={overlayCanvasRef}
+					style={{
+						position: 'absolute',
+						top: 0,
+						left: 0,
+						width: '100%',
+						pointerEvents: 'none',
+					}}
 				/>
 			</div>
 		</div>

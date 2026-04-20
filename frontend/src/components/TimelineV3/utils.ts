@@ -8,6 +8,27 @@ import { toFixed } from 'utils/toFixed';
 
 export type { Interval };
 
+/**
+ * Select the interval unit matching the timeline's logic.
+ * Exported so crosshair labels use the same unit as timeline ticks.
+ */
+export function getIntervalUnit(
+	spread: number,
+	offsetTimestamp: number,
+): IIntervalUnit {
+	const minIntervals = 6;
+	const intervalSpread = spread / minIntervals;
+	const valueForUnitSelection = Math.max(offsetTimestamp, intervalSpread);
+	let unit: IIntervalUnit = INTERVAL_UNITS[0];
+	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {
+		if (valueForUnitSelection * INTERVAL_UNITS[idx].multiplier >= 1) {
+			unit = INTERVAL_UNITS[idx];
+			break;
+		}
+	}
+	return unit;
+}
+
 /** Fewer intervals than TimelineV2 for a cleaner flamegraph ruler. */
 export function getMinimumIntervalsBasedOnWidth(width: number): number {
 	if (width < 640) {

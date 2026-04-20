@@ -48,3 +48,15 @@ type AzureIntegrationConfig struct {
 	ResourceGroups              []string                            `json:"resourceGroups" required:"true" nullable:"false"`
 	TelemetryCollectionStrategy []*AzureTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }
+
+func NewAzureIntegrationConfig(
+	deploymentRegion string,
+	resourceGroups []string,
+	strategies []*AzureTelemetryCollectionStrategy,
+) *AzureIntegrationConfig {
+	return &AzureIntegrationConfig{
+		DeploymentRegion:            deploymentRegion,
+		ResourceGroups:              resourceGroups,
+		TelemetryCollectionStrategy: strategies,
+	}
+}

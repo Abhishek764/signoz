@@ -126,6 +126,13 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 			return nil, err
 		}
 		account.Config.AWS = awsConfig
+	case CloudProviderTypeAzure:
+		azureConfig := new(AzureAccountConfig)
+		err := json.Unmarshal([]byte(storableAccount.Config), azureConfig)
+		if err != nil {
+			return nil, err
+		}
+		account.Config.Azure = azureConfig
 	}
 
 	if storableAccount.LastAgentReport != nil {
@@ -186,6 +193,24 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 		}
 
 		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.AWS.Regions}}, nil
+	case CloudProviderTypeAzure:
+		if config.Azure == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "Azure config can not be nil for Azure provider")
+		}
+
+		if config.Azure.DeploymentRegion == "" {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment region is required for Azure provider")
+		}
+
+		if err := validateAzureRegion(config.Azure.DeploymentRegion); err != nil {
+			return nil, err
+		}
+
+		if len(config.Azure.ResourceGroups) == 0 {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one resource group is required for Azure provider")
+		}
+
+		return &AccountConfig{Azure: &AzureAccountConfig{DeploymentRegion: config.Azure.DeploymentRegion, ResourceGroups: config.Azure.ResourceGroups}}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -293,6 +318,10 @@ func (config *PostableAccountConfig) SetAgentVersion(agentVersion string) {
 func (config *AccountConfig) ToJSON() ([]byte, error) {
 	if config.AWS != nil {
 		return json.Marshal(config.AWS)
+	}
+
+	if config.Azure != nil {
+		return json.Marshal(config.Azure)
 	}
 
 	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")

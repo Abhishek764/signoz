@@ -123,7 +123,18 @@ type Dashboard struct {
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
-func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, config *ServiceConfig) *CloudIntegrationService {
+func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, provider CloudProviderType, config *ServiceConfig) (*CloudIntegrationService, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if config.AWS == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config is required for AWS service")
+		}
+	case CloudProviderTypeAzure:
+		if config.Azure == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "Azure config is required for Azure service")
+		}
+	}
+
 	return &CloudIntegrationService{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -135,7 +146,7 @@ func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.U
 		Type:               serviceID,
 		Config:             config,
 		CloudIntegrationID: cloudIntegrationID,
-	}
+	}, nil
 }
 
 func NewCloudIntegrationServiceFromStorable(stored *StorableCloudIntegrationService, config *ServiceConfig) *CloudIntegrationService {
@@ -192,6 +203,22 @@ func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*S
 		}
 
 		return &ServiceConfig{AWS: awsServiceConfig}, nil
+	case CloudProviderTypeAzure:
+		azureServiceConfig := new(AzureServiceConfig)
+
+		if storableServiceConfig.Azure.Logs != nil {
+			azureServiceConfig.Logs = &AzureServiceLogsConfig{
+				Enabled: storableServiceConfig.Azure.Logs.Enabled,
+			}
+		}
+
+		if storableServiceConfig.Azure.Metrics != nil {
+			azureServiceConfig.Metrics = &AzureServiceMetricsConfig{
+				Enabled: storableServiceConfig.Azure.Metrics.Enabled,
+			}
+		}
+
+		return &ServiceConfig{Azure: azureServiceConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -229,6 +256,10 @@ func (config *ServiceConfig) IsServiceEnabled(provider CloudProviderType) bool {
 		logsEnabled := config.AWS.Logs != nil && config.AWS.Logs.Enabled
 		metricsEnabled := config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
 		return logsEnabled || metricsEnabled
+	case CloudProviderTypeAzure:
+		logsEnabled := config.Azure.Logs != nil && config.Azure.Logs.Enabled
+		metricsEnabled := config.Azure.Metrics != nil && config.Azure.Metrics.Enabled
+		return logsEnabled || metricsEnabled
 	default:
 		return false
 	}
@@ -240,6 +271,8 @@ func (config *ServiceConfig) IsMetricsEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		return config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
+	case CloudProviderTypeAzure:
+		return config.Azure.Metrics != nil && config.Azure.Metrics.Enabled
 	default:
 		return false
 	}
@@ -250,6 +283,8 @@ func (config *ServiceConfig) IsLogsEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		return config.AWS.Logs != nil && config.AWS.Logs.Enabled
+	case CloudProviderTypeAzure:
+		return config.Azure.Logs != nil && config.Azure.Logs.Enabled
 	default:
 		return false
 	}

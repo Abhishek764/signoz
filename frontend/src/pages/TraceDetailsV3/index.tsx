@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+/* eslint-disable sonarjs/cognitive-complexity */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
@@ -33,6 +34,9 @@ function TraceDetailsV3(): JSX.Element {
 		}),
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
+	const [localUncollapsedNodes, setLocalUncollapsedNodes] = useState<
+		Set<string>
+	>(new Set());
 	const [selectedSpan, setSelectedSpan] = useState<SpanV3>();
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [isFilterActive, setIsFilterActive] = useState(false);
@@ -72,22 +76,70 @@ function TraceDetailsV3(): JSX.Element {
 		});
 	}, [urlQuery]);
 
+	// Once all spans are loaded (frontend mode), freeze query params so
+	// subsequent interestedSpanId changes don't trigger unnecessary refetches.
+	const fullDataLoadedRef = useRef(false);
+	const frozenParamsRef = useRef({
+		selectedSpanId: interestedSpanId.spanId,
+		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
+		uncollapsedSpans: uncollapsedNodes,
+	});
+
+	const queryParams = fullDataLoadedRef.current
+		? frozenParamsRef.current
+		: {
+				selectedSpanId: interestedSpanId.spanId,
+				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
+				uncollapsedSpans: uncollapsedNodes,
+		  };
+
 	const {
 		data: traceData,
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
 	} = useGetTraceV3({
 		traceId,
-		uncollapsedSpans: uncollapsedNodes,
-		selectedSpanId: interestedSpanId.spanId,
-		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
+		uncollapsedSpans: queryParams.uncollapsedSpans,
+		selectedSpanId: queryParams.selectedSpanId,
+		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
 	});
 
+	const allSpans = traceData?.payload?.spans || [];
+	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
+	const isFullDataLoaded =
+		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
+
+	// Lock the ref once we confirm all data is loaded
+	if (isFullDataLoaded && !fullDataLoadedRef.current) {
+		fullDataLoadedRef.current = true;
+		frozenParamsRef.current = {
+			selectedSpanId: interestedSpanId.spanId,
+			isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
+			uncollapsedSpans: uncollapsedNodes,
+		};
+	}
+
+	// Frontend mode: expand all parents by default when full data arrives
 	useEffect(() => {
-		if (traceData && traceData.payload && traceData.payload.uncollapsedSpans) {
+		if (isFullDataLoaded && allSpans.length > 0) {
+			const parentIds = new Set(
+				allSpans.filter((s) => s.has_children).map((s) => s.span_id),
+			);
+			setLocalUncollapsedNodes(parentIds);
+		}
+	}, [isFullDataLoaded, allSpans]);
+
+	// Backend mode: sync uncollapsed state from API response
+	useEffect(() => {
+		if (
+			!isFullDataLoaded &&
+			traceData &&
+			traceData.payload &&
+			traceData.payload.uncollapsedSpans
+		) {
 			setUncollapsedNodes(traceData.payload.uncollapsedSpans);
 		}
-	}, [traceData]);
+	}, [traceData, isFullDataLoaded]);
 
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 
@@ -149,6 +201,9 @@ function TraceDetailsV3(): JSX.Element {
 				interestedSpanId={interestedSpanId}
 				setInterestedSpanId={setInterestedSpanId}
 				uncollapsedNodes={uncollapsedNodes}
+				isFullDataLoaded={isFullDataLoaded}
+				localUncollapsedNodes={localUncollapsedNodes}
+				setLocalUncollapsedNodes={setLocalUncollapsedNodes}
 				selectedSpan={selectedSpan}
 				setSelectedSpan={setSelectedSpan}
 				filteredSpanIds={filteredSpanIds}
@@ -222,7 +277,7 @@ function TraceDetailsV3(): JSX.Element {
 								{
 									key: 'waterfall',
 									label: 'Waterfall',
-									children: waterfallChildren,
+									children: activeKeys.includes('waterfall') ? waterfallChildren : null,
 								},
 							]}
 						/>

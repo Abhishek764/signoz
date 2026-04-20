@@ -9,6 +9,7 @@ import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
 import NoData from './TraceWaterfallStates/NoData/NoData';
 import Success from './TraceWaterfallStates/Success/Success';
+import { getVisibleSpans } from './utils';
 
 import './TraceWaterfall.styles.scss';
 
@@ -21,6 +22,9 @@ export interface IInterestedSpan {
 interface ITraceWaterfallProps {
 	traceId: string;
 	uncollapsedNodes: string[];
+	isFullDataLoaded: boolean;
+	localUncollapsedNodes: Set<string>;
+	setLocalUncollapsedNodes: Dispatch<SetStateAction<Set<string>>>;
 	traceData:
 		| SuccessResponse<GetTraceV3SuccessResponse, unknown>
 		| ErrorResponse
@@ -43,6 +47,9 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		interestedSpanId,
 		traceId,
 		uncollapsedNodes,
+		isFullDataLoaded,
+		localUncollapsedNodes,
+		setLocalUncollapsedNodes,
 		setInterestedSpanId,
 		setSelectedSpan,
 		selectedSpan,
@@ -78,9 +85,18 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	}, [errorFetchingTraceData, isFetchingTraceData, traceData]);
 
 	// capture the spans from the response, since we do not need to do any manipulation on the same we will keep this as a simple constant [ memoized ]
-	const spans = useMemo(() => traceData?.payload?.spans || [], [
+	const allSpans = useMemo(() => traceData?.payload?.spans || [], [
 		traceData?.payload?.spans,
 	]);
+
+	// In frontend mode, compute visible spans from local collapse state.
+	// In backend mode, the API already returns only visible spans.
+	const spans = useMemo(() => {
+		if (!isFullDataLoaded) {
+			return allSpans;
+		}
+		return getVisibleSpans(allSpans, localUncollapsedNodes);
+	}, [allSpans, isFullDataLoaded, localUncollapsedNodes]);
 
 	// get the content based on the current state of the trace waterfall
 	const getContent = useMemo(() => {
@@ -108,6 +124,9 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						}}
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
+						isFullDataLoaded={isFullDataLoaded}
+						localUncollapsedNodes={localUncollapsedNodes}
+						setLocalUncollapsedNodes={setLocalUncollapsedNodes}
 						setInterestedSpanId={setInterestedSpanId}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
@@ -127,6 +146,9 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		filteredSpanIds,
 		interestedSpanId,
 		isFilterActive,
+		isFullDataLoaded,
+		localUncollapsedNodes,
+		setLocalUncollapsedNodes,
 		selectedSpan,
 		setInterestedSpanId,
 		setSelectedSpan,

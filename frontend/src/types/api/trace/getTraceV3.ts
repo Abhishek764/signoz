@@ -3,6 +3,7 @@ export interface GetTraceV3PayloadProps {
 	selectedSpanId: string;
 	uncollapsedSpans: string[];
 	isSelectedSpanIDUnCollapsed: boolean;
+	limit?: number; // Optional limit for number of spans to fetch, default can be set in API
 }
 
 export interface TraceDetailV3URLProps {

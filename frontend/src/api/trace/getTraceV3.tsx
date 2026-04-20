@@ -26,6 +26,7 @@ const getTraceV3 = async (
 	const postData: GetTraceV3PayloadProps = {
 		...props,
 		uncollapsedSpans,
+		limit: 10000,
 	};
 	const response = await axios.post<GetTraceV3SuccessResponse>(
 		`/traces/${props.traceId}/waterfall`,
@@ -59,7 +60,12 @@ const getTraceV3 = async (
 		statusCode: 200,
 		error: null,
 		message: 'Success',
-		payload: { ...rawPayload, spans, startTimestampMillis, endTimestampMillis },
+		payload: {
+			...rawPayload,
+			spans,
+			startTimestampMillis,
+			endTimestampMillis,
+		},
 	};
 };
 

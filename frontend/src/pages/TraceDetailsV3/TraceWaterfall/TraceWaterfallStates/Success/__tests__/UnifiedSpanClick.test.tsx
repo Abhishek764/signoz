@@ -192,6 +192,9 @@ function TestComponent(): JSX.Element {
 			traceMetadata={mockTraceMetadata}
 			interestedSpanId={{ spanId: '', isUncollapsed: false }}
 			uncollapsedNodes={mockSpans.map((s) => s.span_id)}
+			isFullDataLoaded={false}
+			localUncollapsedNodes={new Set()}
+			setLocalUncollapsedNodes={jest.fn()}
 			setInterestedSpanId={jest.fn()}
 			selectedSpan={selectedSpan}
 			setSelectedSpan={setSelectedSpan}
@@ -225,6 +228,9 @@ describe('Span Click User Flows', () => {
 				traceMetadata={mockTraceMetadata}
 				interestedSpanId={{ spanId: '', isUncollapsed: false }}
 				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
+				isFullDataLoaded={false}
+				localUncollapsedNodes={new Set()}
+				setLocalUncollapsedNodes={jest.fn()}
 				setInterestedSpanId={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}
@@ -404,6 +410,9 @@ describe('Span Click User Flows', () => {
 				traceMetadata={mockTraceMetadata}
 				interestedSpanId={{ spanId: '', isUncollapsed: false }}
 				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
+				isFullDataLoaded={false}
+				localUncollapsedNodes={new Set()}
+				setLocalUncollapsedNodes={jest.fn()}
 				setInterestedSpanId={jest.fn()}
 				selectedSpan={undefined}
 				setSelectedSpan={jest.fn()}

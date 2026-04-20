@@ -10,6 +10,7 @@ import {
 	useState,
 } from 'react';
 import { Badge } from '@signozhq/ui';
+import { Tooltip, TooltipProvider } from '@signozhq/ui';
 import {
 	createColumnHelper,
 	flexRender,
@@ -17,7 +18,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
-import { Button, Popover, Tooltip, Typography } from 'antd';
+import { Button, Popover, Typography } from 'antd';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
@@ -37,7 +38,7 @@ import {
 } from 'lucide-react';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
@@ -46,6 +47,87 @@ import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModa
 import { IInterestedSpan } from '../../TraceWaterfall';
 
 import './Success.styles.scss';
+
+/**
+ * Lazy event dot — only mounts the antd Popover when the user hovers.
+ * Avoids mounting N Popover instances per row during fast scroll.
+ */
+const LazyEventDotPopover = memo(function LazyEventDotPopover({
+	event,
+	spanTimestamp,
+	dotLeft,
+	isError,
+	dotBg,
+	dotBorder,
+}: {
+	event: EventV3;
+	spanTimestamp: number;
+	dotLeft: number;
+	isError: boolean;
+	dotBg: string;
+	dotBorder: string;
+}): JSX.Element {
+	const [showPopover, setShowPopover] = useState(false);
+	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const handleMouseEnter = useCallback((): void => {
+		timerRef.current = setTimeout(() => setShowPopover(true), 150);
+	}, []);
+
+	const handleMouseLeave = useCallback((): void => {
+		if (timerRef.current) {
+			clearTimeout(timerRef.current);
+			timerRef.current = null;
+		}
+		setShowPopover(false);
+	}, []);
+
+	const dot = (
+		<div
+			className={`event-dot ${isError ? 'error' : ''}`}
+			style={
+				{
+					left: `${dotLeft}%`,
+					'--event-dot-bg': isError ? undefined : dotBg,
+					'--event-dot-border': isError ? undefined : dotBorder,
+				} as React.CSSProperties
+			}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+		/>
+	);
+
+	if (!showPopover) {
+		return dot;
+	}
+
+	const eventTimeMs = event.timeUnixNano / 1e6;
+
+	return (
+		<Popover
+			open
+			content={
+				<EventTooltipContent
+					eventName={event.name}
+					timeOffsetMs={eventTimeMs - spanTimestamp}
+					isError={isError}
+					attributeMap={event.attributeMap || {}}
+				/>
+			}
+			trigger="hover"
+			rootClassName="span-hover-card-popover"
+			autoAdjustOverflow
+			arrow={false}
+			onOpenChange={(open): void => {
+				if (!open) {
+					setShowPopover(false);
+				}
+			}}
+		>
+			{dot}
+		</Popover>
+	);
+});
 
 // css config
 const CONNECTOR_WIDTH = 20;
@@ -90,6 +172,9 @@ interface ISuccessProps {
 	traceMetadata: ITraceMetadata;
 	interestedSpanId: IInterestedSpan;
 	uncollapsedNodes: string[];
+	isFullDataLoaded: boolean;
+	localUncollapsedNodes: Set<string>;
+	setLocalUncollapsedNodes: Dispatch<SetStateAction<Set<string>>>;
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 	selectedSpan: SpanV3 | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<SpanV3 | undefined>>;
@@ -232,20 +317,22 @@ const SpanOverview = memo(function SpanOverview({
 
 				{/* Action buttons — shown on hover via CSS, right-aligned */}
 				<span className="span-row-actions">
-					<Tooltip title="Copy Span Link">
-						<button type="button" className="span-action-btn" onClick={onSpanCopy}>
-							<Link size={12} />
-						</button>
-					</Tooltip>
-					<Tooltip title="Add to Trace Funnel">
-						<button
-							type="button"
-							className="span-action-btn"
-							onClick={handleFunnelClick}
-						>
-							<ListPlus size={12} />
-						</button>
-					</Tooltip>
+					<TooltipProvider delayDuration={200}>
+						<Tooltip title="Copy Span Link">
+							<button type="button" className="span-action-btn" onClick={onSpanCopy}>
+								<Link size={12} />
+							</button>
+						</Tooltip>
+						<Tooltip title="Add to Trace Funnel">
+							<button
+								type="button"
+								className="span-action-btn"
+								onClick={handleFunnelClick}
+							>
+								<ListPlus size={12} />
+							</button>
+						</Tooltip>
+					</TooltipProvider>
 				</span>
 			</div>
 		</SpanHoverCard>
@@ -347,32 +434,15 @@ export const SpanDuration = memo(function SpanDuration({
 					.map((c) => Math.round(Number(c) * 0.5))
 					.join(', ')})`;
 				return (
-					<Popover
+					<LazyEventDotPopover
 						key={`${span.span_id}-event-${event.name}-${event.timeUnixNano}`}
-						content={
-							<EventTooltipContent
-								eventName={event.name}
-								timeOffsetMs={eventTimeMs - span.timestamp}
-								isError={isError}
-								attributeMap={event.attributeMap || {}}
-							/>
-						}
-						trigger="hover"
-						rootClassName="span-hover-card-popover"
-						autoAdjustOverflow
-						arrow={false}
-					>
-						<div
-							className={`event-dot ${isError ? 'error' : ''}`}
-							style={
-								{
-									left: `${dotLeft}%`,
-									'--event-dot-bg': isError ? undefined : dotBg,
-									'--event-dot-border': isError ? undefined : dotBorder,
-								} as React.CSSProperties
-							}
-						/>
-					</Popover>
+						event={event}
+						spanTimestamp={span.timestamp}
+						dotLeft={dotLeft}
+						isError={isError}
+						dotBg={dotBg}
+						dotBorder={dotBorder}
+					/>
 				);
 			})}
 		</div>
@@ -394,6 +464,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		traceMetadata,
 		interestedSpanId,
 		uncollapsedNodes,
+		isFullDataLoaded,
+		localUncollapsedNodes,
+		setLocalUncollapsedNodes,
 		setInterestedSpanId,
 		setSelectedSpan,
 		selectedSpan,
@@ -447,13 +520,27 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
-			setInterestedSpanId({
-				spanId,
-				isUncollapsed: !collapse,
-				scrollToSpan: false,
-			});
+			if (isFullDataLoaded) {
+				// Frontend mode: toggle local state, no API call
+				setLocalUncollapsedNodes((prev) => {
+					const next = new Set(prev);
+					if (collapse) {
+						next.delete(spanId);
+					} else {
+						next.add(spanId);
+					}
+					return next;
+				});
+			} else {
+				// Backend mode: trigger API call (current behavior)
+				setInterestedSpanId({
+					spanId,
+					isUncollapsed: !collapse,
+					scrollToSpan: false,
+				});
+			}
 		},
-		[setInterestedSpanId],
+		[isFullDataLoaded, setLocalUncollapsedNodes, setInterestedSpanId],
 	);
 
 	const handleVirtualizerInstanceChanged = useCallback(
@@ -505,9 +592,9 @@ function Success(props: ISuccessProps): JSX.Element {
 				}, 20);
 			}
 
-			// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so
-			// do not trigger the API call
-			if (spans.length < 500) {
+			// In frontend mode all data is already loaded, no need to fetch more.
+			// In backend mode, skip auto-fetch when under 500 spans (nothing more to paginate).
+			if (isFullDataLoaded || spans.length < 500) {
 				return;
 			}
 
@@ -569,7 +656,9 @@ function Success(props: ISuccessProps): JSX.Element {
 						span={cellProps.row.original}
 						handleCollapseUncollapse={handleCollapseUncollapse}
 						isSpanCollapsed={
-							!uncollapsedNodes.includes(cellProps.row.original.span_id)
+							isFullDataLoaded
+								? !localUncollapsedNodes.has(cellProps.row.original.span_id)
+								: !uncollapsedNodes.includes(cellProps.row.original.span_id)
 						}
 						selectedSpan={selectedSpan}
 						handleSpanClick={handleSpanClick}
@@ -584,6 +673,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		[
 			handleCollapseUncollapse,
 			uncollapsedNodes,
+			isFullDataLoaded,
+			localUncollapsedNodes,
 			traceMetadata,
 			selectedSpan,
 			handleSpanClick,

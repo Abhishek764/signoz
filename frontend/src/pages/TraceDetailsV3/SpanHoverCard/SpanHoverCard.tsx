@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { memo, ReactNode, useCallback, useRef, useState } from 'react';
 import { Popover } from 'antd';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
@@ -56,11 +56,47 @@ interface SpanHoverCardProps {
 	children: ReactNode;
 }
 
-function SpanHoverCard({
+/**
+ * Lazy hover card — only mounts the expensive antd Popover when the user
+ * actually hovers over the element (after a short delay). During fast scrolling,
+ * rows mount and unmount without ever creating a Popover instance, avoiding
+ * expensive DOM/effect overhead from antd Tooltip/Trigger internals.
+ */
+const SpanHoverCard = memo(function SpanHoverCard({
 	span,
 	traceMetadata,
 	children,
 }: SpanHoverCardProps): JSX.Element {
+	const [showPopover, setShowPopover] = useState(false);
+	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const handleMouseEnter = useCallback((): void => {
+		timerRef.current = setTimeout(() => {
+			setShowPopover(true);
+		}, 200);
+	}, []);
+
+	const handleMouseLeave = useCallback((): void => {
+		if (timerRef.current) {
+			clearTimeout(timerRef.current);
+			timerRef.current = null;
+		}
+		setShowPopover(false);
+	}, []);
+
+	if (!showPopover) {
+		return (
+			// eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
+			<span
+				className="span-hover-card-wrapper"
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+			>
+				{children}
+			</span>
+		);
+	}
+
 	const durationMs = span.duration_nano / 1e6;
 	const relativeStartMs = span.timestamp - traceMetadata.startTime;
 
@@ -74,7 +110,7 @@ function SpanHoverCard({
 
 	return (
 		<Popover
-			mouseEnterDelay={0.2}
+			open
 			content={
 				<SpanTooltipContent
 					spanName={span.name}
@@ -88,10 +124,18 @@ function SpanHoverCard({
 			rootClassName="span-hover-card-popover"
 			autoAdjustOverflow
 			arrow={false}
+			onOpenChange={(open): void => {
+				if (!open) {
+					setShowPopover(false);
+				}
+			}}
 		>
-			{children}
+			{/* eslint-disable-next-line jsx-a11y/mouse-events-have-key-events */}
+			<span className="span-hover-card-wrapper" onMouseLeave={handleMouseLeave}>
+				{children}
+			</span>
 		</Popover>
 	);
-}
+});
 
 export default SpanHoverCard;

@@ -23,6 +23,10 @@ var (
 	AWSServiceS3Sync      = ServiceID{valuer.NewString("s3sync")}
 	AWSServiceSNS         = ServiceID{valuer.NewString("sns")}
 	AWSServiceSQS         = ServiceID{valuer.NewString("sqs")}
+
+	// Azure services
+	AzureServiceBlobStorage = ServiceID{valuer.NewString("blobstorage")}
+	AzureServiceFrontDoor   = ServiceID{valuer.NewString("frontdoor")}
 )
 
 func (ServiceID) Enum() []any {
@@ -40,6 +44,8 @@ func (ServiceID) Enum() []any {
 		AWSServiceS3Sync,
 		AWSServiceSNS,
 		AWSServiceSQS,
+		AzureServiceBlobStorage,
+		AzureServiceFrontDoor,
 	}
 }
 
@@ -59,6 +65,10 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AWSServiceS3Sync,
 		AWSServiceSNS,
 		AWSServiceSQS,
+	},
+	CloudProviderTypeAzure: {
+		AzureServiceBlobStorage,
+		AzureServiceFrontDoor,
 	},
 }
 

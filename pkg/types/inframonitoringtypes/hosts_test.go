@@ -13,12 +13,12 @@ import (
 func TestHostsListRequest_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     *HostsListRequest
+		req     *PostableHosts
 		wantErr bool
 	}{
 		{
 			name: "valid request",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -33,7 +33,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time zero",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  0,
 				End:    2000,
 				Limit:  100,
@@ -43,7 +43,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time negative",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  -1000,
 				End:    2000,
 				Limit:  100,
@@ -53,7 +53,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "end time zero",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    0,
 				Limit:  100,
@@ -63,7 +63,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time greater than end time",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  2000,
 				End:    1000,
 				Limit:  100,
@@ -73,7 +73,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time equal to end time",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    1000,
 				Limit:  100,
@@ -83,7 +83,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "limit zero",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  0,
@@ -93,7 +93,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "limit negative",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  -10,
@@ -103,7 +103,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "limit exceeds max",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  5001,
@@ -113,7 +113,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "offset negative",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -123,7 +123,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "filter by status ACTIVE",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -134,7 +134,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "filter by status INACTIVE",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -145,7 +145,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "filter by status empty (zero value)",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -155,18 +155,18 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "filter by status invalid value",
-			req: &HostsListRequest{
-				Start:          1000,
-				End:            2000,
-				Limit:          100,
-				Offset:         0,
+			req: &PostableHosts{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
 				Filter: &HostFilter{FilterByStatus: HostStatus{valuer.NewString("UNKNOWN")}},
 			},
 			wantErr: true,
 		},
 		{
 			name: "orderBy nil is valid",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -176,7 +176,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with valid key cpu and direction asc",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -194,7 +194,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with invalid key",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -212,7 +212,7 @@ func TestHostsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with valid key but invalid direction",
-			req: &HostsListRequest{
+			req: &PostableHosts{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,

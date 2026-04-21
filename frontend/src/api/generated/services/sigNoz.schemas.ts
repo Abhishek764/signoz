@@ -3117,35 +3117,7 @@ export enum InframonitoringtypesHostStatusDTO {
 	inactive = 'inactive',
 	'' = '',
 }
-export interface InframonitoringtypesHostsListRequestDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	end?: number;
-	filter?: InframonitoringtypesHostFilterDTO;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	orderBy?: Querybuildertypesv5OrderByDTO;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	start?: number;
-}
-
-export interface InframonitoringtypesHostsListResponseDTO {
+export interface InframonitoringtypesHostsDTO {
 	/**
 	 * @type boolean
 	 */
@@ -3267,6 +3239,34 @@ export interface InframonitoringtypesPodsListResponseDTO {
 	total?: number;
 	type?: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesPostableHostsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end?: number;
+	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start?: number;
 }
 
 export interface InframonitoringtypesRequiredMetricsCheckDTO {
@@ -6867,7 +6867,7 @@ export type Healthz503 = {
 };
 
 export type ListHosts200 = {
-	data: InframonitoringtypesHostsListResponseDTO;
+	data: InframonitoringtypesHostsDTO;
 	/**
 	 * @type string
 	 */

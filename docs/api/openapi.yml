@@ -2330,29 +2330,7 @@ components:
       - inactive
       - ""
       type: string
-    InframonitoringtypesHostsListRequest:
-      properties:
-        end:
-          format: int64
-          type: integer
-        filter:
-          $ref: '#/components/schemas/InframonitoringtypesHostFilter'
-        groupBy:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
-          nullable: true
-          type: array
-        limit:
-          type: integer
-        offset:
-          type: integer
-        orderBy:
-          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
-        start:
-          format: int64
-          type: integer
-      type: object
-    InframonitoringtypesHostsListResponse:
+    InframonitoringtypesHosts:
       properties:
         endTimeBeforeRetention:
           type: boolean
@@ -2441,6 +2419,28 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesResponseType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      type: object
+    InframonitoringtypesPostableHosts:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/InframonitoringtypesHostFilter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
       type: object
     InframonitoringtypesRequiredMetricsCheck:
       properties:
@@ -10039,7 +10039,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InframonitoringtypesHostsListRequest'
+              $ref: '#/components/schemas/InframonitoringtypesPostableHosts'
       responses:
         "200":
           content:
@@ -10047,7 +10047,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/InframonitoringtypesHostsListResponse'
+                    $ref: '#/components/schemas/InframonitoringtypesHosts'
                   status:
                     type: string
                 required:

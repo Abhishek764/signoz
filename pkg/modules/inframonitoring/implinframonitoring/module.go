@@ -47,12 +47,12 @@ func NewModule(
 	}
 }
 
-func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.HostsListRequest) (*inframonitoringtypes.HostsListResponse, error) {
+func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	resp := &inframonitoringtypes.HostsListResponse{}
+	resp := &inframonitoringtypes.Hosts{}
 
 	// default to cpu order by
 	if req.OrderBy == nil {
@@ -76,7 +76,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 
 	// 1. Check which required metrics exist and get earliest retention time.
 	// If any required metric is missing, return early with the list of missing metrics.
-	// 2. If metrics exist but req.End is before the earliest reported time, convey retention boundary.
+	// 2. If metrics exist but req.End is before the earliest reported time, return early with endTimeBeforeRetention=true.
 	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, hostsTableMetricNamesList)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		return resp, nil
 	}
 
-	// TODO: replace this separate ClickHouse query with a sub-query inside the main query builder query
+	// TOD(nikhilmantri0902): replace this separate ClickHouse query with a sub-query inside the main query builder query
 	// once QB supports sub-queries.
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
 	// Compute the cutoff once so every downstream query/subquery agrees on what "active" means.
@@ -136,7 +136,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		hostsFilterExpr = req.Filter.Expression
 	}
 
-	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newHostsTableListQuery())
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newListHostsQuery())
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err
@@ -145,10 +145,12 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	// Compute per-group active/inactive host counts.
 	// When host.name is in groupBy, each row = one host, so counts are derived
 	// directly from activeHostsMap in buildHostRecords (no extra query needed).
-	hostCounts := make(map[string]groupHostCounts)
+	// When host.name is not in groupBy, we need to run an additional query to get the counts per group for the current page,
+	// using the same filter expression as the main query (including user filters + page groups IN clause).
+	hostCounts := make(map[string]groupHostStatusCounts)
 	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
 	if !isHostNameInGroupBy {
-		hostCounts, err = m.getPerGroupActiveInactiveHostCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
+		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
 		if err != nil {
 			return nil, err
 		}

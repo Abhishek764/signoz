@@ -32,7 +32,7 @@ func (h *handler) ListHosts(rw http.ResponseWriter, req *http.Request) {
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	var parsedReq inframonitoringtypes.HostsListRequest
+	var parsedReq inframonitoringtypes.PostableHosts
 	if err := binding.JSON.BindBody(req.Body, &parsedReq); err != nil {
 		render.Error(rw, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse request body"))
 		return

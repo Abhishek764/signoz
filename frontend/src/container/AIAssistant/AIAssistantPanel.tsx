@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/tooltip';
+import { Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { Eraser, History, Maximize2, Plus, X } from 'lucide-react';
 

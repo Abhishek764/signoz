@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/tooltip';
+import { Tooltip } from '@signozhq/ui';
 import type { UploadFile } from 'antd';
 import { Upload } from 'antd';
 import { Mic, Paperclip, Send, Square, X } from 'lucide-react';

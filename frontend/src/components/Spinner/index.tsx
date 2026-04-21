@@ -7,7 +7,9 @@ import { SpinerStyle } from './styles';
 function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
 	return (
 		<SpinerStyle height={height} style={style}>
-			<Spin spinning size={size} tip={tip} indicator={<LoadingOutlined spin />} />
+			<Spin spinning size={size} tip={tip} indicator={<LoadingOutlined spin />}>
+				<div />
+			</Spin>
 		</SpinerStyle>
 	);
 }

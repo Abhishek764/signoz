@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/tooltip';
+import { Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';

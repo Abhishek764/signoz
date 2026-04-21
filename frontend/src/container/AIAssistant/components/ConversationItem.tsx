@@ -1,6 +1,6 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/tooltip';
+import { Tooltip } from '@signozhq/ui';
 import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
 
 import { Conversation } from '../types';

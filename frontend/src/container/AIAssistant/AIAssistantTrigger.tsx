@@ -1,5 +1,5 @@
 import { matchPath, useLocation } from 'react-router-dom';
-import { Tooltip } from '@signozhq/tooltip';
+import { Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { Bot } from 'lucide-react';
 

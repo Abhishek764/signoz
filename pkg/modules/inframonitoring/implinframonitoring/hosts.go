@@ -324,7 +324,7 @@ func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string, 
 }
 
 // getActiveHosts returns a set of host names that have reported metrics recently.
-// It queries distributed_metadata for hosts where last_reported_unix_milli >= 10 minutes ago.
+// It queries distributed_metadata for hosts where last_reported_unix_milli >= sinceUnixMilli.
 func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
 	sb := m.getActiveHostsQuery(metricNames, hostNameAttr, sinceUnixMilli)
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

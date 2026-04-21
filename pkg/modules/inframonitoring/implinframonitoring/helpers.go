@@ -302,9 +302,6 @@ func parseFullQueryResponse(
 
 // buildSamplesTblFingerprintSubQuery returns a SelectBuilder that selects distinct fingerprints
 // from the samples table for the given metric names andtime range.
-// The timeseries tables are ReplacingMergeTrees with bucketed granularity, so
-// WhichTSTableToUse widens the window — this subquery helps restricts to fingerprints
-// that actually have sample data in the requested range.
 func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, startMs, endMs int64) *sqlbuilder.SelectBuilder {
 	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
 		uint64(startMs), uint64(endMs),

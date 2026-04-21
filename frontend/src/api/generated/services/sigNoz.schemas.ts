@@ -3070,46 +3070,46 @@ export interface InframonitoringtypesHostRecordDTO {
 	/**
 	 * @type integer
 	 */
-	activeHostCount?: number;
+	activeHostCount: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	cpu?: number;
+	cpu: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	diskUsage?: number;
+	diskUsage: number;
 	/**
 	 * @type string
 	 */
-	hostName?: string;
+	hostName: string;
 	/**
 	 * @type integer
 	 */
-	inactiveHostCount?: number;
+	inactiveHostCount: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	load15?: number;
+	load15: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	memory?: number;
+	memory: number;
 	/**
 	 * @type object
 	 * @nullable true
 	 */
-	meta?: InframonitoringtypesHostRecordDTOMeta;
-	status?: InframonitoringtypesHostStatusDTO;
+	meta: InframonitoringtypesHostRecordDTOMeta;
+	status: InframonitoringtypesHostStatusDTO;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	wait?: number;
+	wait: number;
 }
 
 export enum InframonitoringtypesHostStatusDTO {
@@ -3121,18 +3121,18 @@ export interface InframonitoringtypesHostsDTO {
 	/**
 	 * @type boolean
 	 */
-	endTimeBeforeRetention?: boolean;
+	endTimeBeforeRetention: boolean;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	records?: InframonitoringtypesHostRecordDTO[] | null;
-	requiredMetricsCheck?: InframonitoringtypesRequiredMetricsCheckDTO;
+	records: InframonitoringtypesHostRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
-	total?: number;
-	type?: InframonitoringtypesResponseTypeDTO;
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
@@ -3222,7 +3222,7 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	end?: number;
+	end: number;
 	filter?: InframonitoringtypesHostFilterDTO;
 	/**
 	 * @type array
@@ -3232,7 +3232,7 @@ export interface InframonitoringtypesPostableHostsDTO {
 	/**
 	 * @type integer
 	 */
-	limit?: number;
+	limit: number;
 	/**
 	 * @type integer
 	 */
@@ -3242,7 +3242,7 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	start?: number;
+	start: number;
 }
 
 export interface InframonitoringtypesPostablePodsDTO {
@@ -3278,7 +3278,7 @@ export interface InframonitoringtypesRequiredMetricsCheckDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	missingMetrics?: string[] | null;
+	missingMetrics: string[] | null;
 }
 
 export enum InframonitoringtypesResponseTypeDTO {

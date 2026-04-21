@@ -3,7 +3,6 @@ package implinframonitoring
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
@@ -34,7 +33,7 @@ func (h *handler) ListHosts(rw http.ResponseWriter, req *http.Request) {
 
 	var parsedReq inframonitoringtypes.PostableHosts
 	if err := binding.JSON.BindBody(req.Body, &parsedReq); err != nil {
-		render.Error(rw, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse request body"))
+		render.Error(rw, err)
 		return
 	}
 
@@ -58,7 +57,7 @@ func (h *handler) ListPods(rw http.ResponseWriter, req *http.Request) {
 
 	var parsedReq inframonitoringtypes.PostablePods
 	if err := binding.JSON.BindBody(req.Body, &parsedReq); err != nil {
-		render.Error(rw, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse request body"))
+		render.Error(rw, err)
 		return
 	}
 

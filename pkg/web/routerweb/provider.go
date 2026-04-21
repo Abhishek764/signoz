@@ -98,8 +98,3 @@ func (provider *provider) serveIndex(rw http.ResponseWriter) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = rw.Write(provider.indexContents)
 }
-
-func (provider *provider) serveIndex(rw http.ResponseWriter) {
-	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = rw.Write(provider.indexContents)
-}

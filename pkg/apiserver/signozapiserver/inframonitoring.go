@@ -22,7 +22,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			Response:            new(inframonitoringtypes.Hosts),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodPost).GetError(); err != nil {

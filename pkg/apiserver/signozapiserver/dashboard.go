@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -134,6 +135,26 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	// TEMP dummy route to exercise the dashboard v2 schema in OpenAPI generation.
+	// Handler function is not invoked at spec-gen time; only OpenAPIDef types are
+	// walked. Reuses provider.dashboardHandler.Create to avoid wiring a real handler.
+	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.Create), handler.OpenAPIDef{
+		ID:                  "CreateDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Create dashboard v2",
+		Description:         "TEMP: dummy endpoint to exercise v2 spec shape while we iterate on plugin schema.",
+		Request:             new(dashboardtypesv2.DashboardData),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypesv2.DashboardData),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

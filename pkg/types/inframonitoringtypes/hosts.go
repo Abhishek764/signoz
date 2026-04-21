@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Hosts struct {
@@ -35,45 +34,6 @@ type HostRecord struct {
 	Meta              map[string]interface{} `json:"meta"`
 }
 
-type HostStatus struct {
-	valuer.String
-}
-
-var (
-	HostStatusActive   = HostStatus{valuer.NewString("active")}
-	HostStatusInactive = HostStatus{valuer.NewString("inactive")}
-	HostStatusNone     = HostStatus{valuer.NewString("")}
-)
-
-func (HostStatus) Enum() []any {
-	return []any{
-		HostStatusActive,
-		HostStatusInactive,
-		HostStatusNone,
-	}
-}
-
-const (
-	HostsOrderByCPU       = "cpu"
-	HostsOrderByMemory    = "memory"
-	HostsOrderByWait      = "wait"
-	HostsOrderByDiskUsage = "disk_usage"
-	HostsOrderByLoad15    = "load15"
-)
-
-var HostsValidOrderByKeys = []string{
-	HostsOrderByCPU,
-	HostsOrderByMemory,
-	HostsOrderByWait,
-	HostsOrderByDiskUsage,
-	HostsOrderByLoad15,
-}
-
-type HostFilter struct {
-	qbtypes.Filter `json:",inline"`
-	FilterByStatus HostStatus `json:"filterByStatus"`
-}
-
 type PostableHosts struct {
 	Start   int64                `json:"start"`
 	End     int64                `json:"end"`
@@ -82,6 +42,11 @@ type PostableHosts struct {
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit"`
+}
+
+type HostFilter struct {
+	qbtypes.Filter `json:",inline"`
+	FilterByStatus HostStatus `json:"filterByStatus"`
 }
 
 // Validate ensures HostsListRequest contains acceptable values.

@@ -47,13 +47,13 @@ const (
 type ValidationOption func(*validationConfig)
 
 type validationConfig struct {
-	skipLimitOffsetValidation bool
-	skipAggregationValidation bool
-	skipHavingValidation      bool
-	skipAggregationOrderBy    bool
-	skipSelectFieldValidation bool
-	skipGroupByValidation     bool
-	requestType               RequestType
+	skipLimitOffsetValidation      bool
+	skipAggregationValidation      bool
+	skipHavingValidation           bool
+	skipAggregationOrderBy         bool
+	skipSelectFieldValidation      bool
+	skipGroupByValidation          bool
+	WithTimestampGroupByValidation bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -113,9 +113,9 @@ func WithSkipGroupByValidation() ValidationOption {
 }
 
 // WithRequestType sets the request type for validation.
-func WithRequestType(requestType RequestType) ValidationOption {
+func WithTimestampGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
-		cfg.requestType = requestType
+		cfg.WithTimestampGroupByValidation = true
 	}
 }
 
@@ -185,9 +185,9 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
 			)
 		}
-		if cfg.requestType == RequestTypeTimeSeries && item.Name == "timestamp" {
+		if cfg.WithTimestampGroupByValidation && item.Name == "timestamp" {
 			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput, "group by on timestamp is not allowed for request type %s", cfg.requestType.StringValue(),
+				errors.CodeInvalidInput, "group by on timestamp is not allowed",
 			).WithAdditional("Timeseries request already accounts for timestamp in the response")
 		}
 	}
@@ -678,11 +678,13 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
-	case RequestTypeTimeSeries, RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation(), WithRequestType(requestType)}
+	case RequestTypeTimeSeries:
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
+	case RequestTypeScalar:
+		return []ValidationOption{WithSkipSelectFieldValidation()}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
-		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation(), WithRequestType(requestType)}
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:
-		return []ValidationOption{WithRequestType(requestType)}
+		return []ValidationOption{}
 	}
 }

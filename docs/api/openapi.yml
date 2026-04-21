@@ -2348,6 +2348,14 @@ components:
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
       type: object
+    InframonitoringtypesPodPhase:
+      enum:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - ""
+      type: string
     InframonitoringtypesPodRecord:
       properties:
         meta:
@@ -2376,33 +2384,11 @@ components:
           format: double
           type: number
         podPhase:
-          type: string
+          $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podUID:
           type: string
       type: object
-    InframonitoringtypesPodsListRequest:
-      properties:
-        end:
-          format: int64
-          type: integer
-        filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
-        groupBy:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
-          nullable: true
-          type: array
-        limit:
-          type: integer
-        offset:
-          type: integer
-        orderBy:
-          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
-        start:
-          format: int64
-          type: integer
-      type: object
-    InframonitoringtypesPodsListResponse:
+    InframonitoringtypesPods:
       properties:
         endTimeBeforeRetention:
           type: boolean
@@ -2427,6 +2413,28 @@ components:
           type: integer
         filter:
           $ref: '#/components/schemas/InframonitoringtypesHostFilter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      type: object
+    InframonitoringtypesPostablePods:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -10107,7 +10115,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InframonitoringtypesPodsListRequest'
+              $ref: '#/components/schemas/InframonitoringtypesPostablePods'
       responses:
         "200":
           content:
@@ -10115,7 +10123,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/InframonitoringtypesPodsListResponse'
+                    $ref: '#/components/schemas/InframonitoringtypesPods'
                   status:
                     type: string
                 required:

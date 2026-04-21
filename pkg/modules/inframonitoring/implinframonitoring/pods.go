@@ -6,221 +6,29 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var (
-	podUIDAttrKey       = "k8s.pod.uid"
-	podStartTimeAttrKey = "k8s.pod.start_time"
-)
-
-var podUIDGroupByKey = qbtypes.GroupByKey{
-	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          podUIDAttrKey,
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	},
-}
-
-var podsTableMetricNamesList = []string{
-	"k8s.pod.cpu.usage",
-	"k8s.pod.cpu_request_utilization",
-	"k8s.pod.cpu_limit_utilization",
-	"k8s.pod.memory.working_set",
-	"k8s.pod.memory_request_utilization",
-	"k8s.pod.memory_limit_utilization",
-	"k8s.pod.phase",
-}
-
-var podAttrKeysForMetadata = []string{
-	"k8s.pod.uid",
-	"k8s.pod.name",
-	"k8s.namespace.name",
-	"k8s.node.name",
-	"k8s.deployment.name",
-	"k8s.statefulset.name",
-	"k8s.daemonset.name",
-	"k8s.job.name",
-	"k8s.cronjob.name",
-	"k8s.cluster.name",
-	"k8s.pod.start_time",
-}
-
-var orderByToPodsQueryNames = map[string][]string{
-	inframonitoringtypes.PodsOrderByCPU:           {"A"},
-	inframonitoringtypes.PodsOrderByCPURequest:    {"B"},
-	inframonitoringtypes.PodsOrderByCPULimit:      {"C"},
-	inframonitoringtypes.PodsOrderByMemory:        {"D"},
-	inframonitoringtypes.PodsOrderByMemoryRequest: {"E"},
-	inframonitoringtypes.PodsOrderByMemoryLimit:   {"F"},
-	inframonitoringtypes.PodsOrderByPhase:         {"G"},
-}
-
-func phaseNumberToString(v float64) string {
+func phaseNumberToPodPhase(v float64) inframonitoringtypes.PodPhase {
 	switch int(v) {
 	case 1:
-		return "pending"
+		return inframonitoringtypes.PodPhasePending
 	case 2:
-		return "running"
+		return inframonitoringtypes.PodPhaseRunning
 	case 3:
-		return "succeeded"
+		return inframonitoringtypes.PodPhaseSucceeded
 	case 4:
-		return "failed"
+		return inframonitoringtypes.PodPhaseFailed
 	default:
-		return ""
-	}
-}
-
-func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
-	return &qbtypes.QueryRangeRequest{
-		RequestType: qbtypes.RequestTypeScalar,
-		CompositeQuery: qbtypes.CompositeQuery{
-			Queries: []qbtypes.QueryEnvelope{
-				// Query A: CPU usage
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "A",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.cpu.usage",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationSum,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query B: CPU request utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "B",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.cpu_request_utilization",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query C: CPU limit utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "C",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.cpu_limit_utilization",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query D: Memory working set
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "D",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.memory.working_set",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationSum,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query E: Memory request utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "E",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.memory_request_utilization",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query F: Memory limit utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "F",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.memory_limit_utilization",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query G: Pod phase (latest value per pod)
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "G",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.phase",
-								Temporality:      metrictypes.Unspecified,
-								TimeAggregation:  metrictypes.TimeAggregationLatest,
-								SpaceAggregation: metrictypes.SpaceAggregationMax,
-								ReduceTo:         qbtypes.ReduceToLast,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-			},
-		},
+		return inframonitoringtypes.PodPhaseNone
 	}
 }
 
 func (m *module) getTopPodGroups(
 	ctx context.Context,
 	orgID valuer.UUID,
-	req *inframonitoringtypes.PodsListRequest,
+	req *inframonitoringtypes.PostablePods,
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
@@ -266,7 +74,7 @@ func (m *module) getTopPodGroups(
 	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
 }
 
-func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringtypes.PodsListRequest) (map[string]map[string]string, error) {
+func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostablePods) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range podAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
@@ -322,7 +130,7 @@ func buildPodRecords(
 				record.PodMemoryLimit = v
 			}
 			if v, exists := metrics["G"]; exists {
-				record.PodPhase = phaseNumberToString(v)
+				record.PodPhase = phaseNumberToPodPhase(v)
 			}
 		}
 

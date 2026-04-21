@@ -8,28 +8,30 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-const (
-	PodsOrderByCPU           = "cpu"
-	PodsOrderByCPURequest    = "cpu_request"
-	PodsOrderByCPULimit      = "cpu_limit"
-	PodsOrderByMemory        = "memory"
-	PodsOrderByMemoryRequest = "memory_request"
-	PodsOrderByMemoryLimit   = "memory_limit"
-	PodsOrderByPhase         = "phase"
-)
-
-var PodsValidOrderByKeys = []string{
-	PodsOrderByCPU,
-	PodsOrderByCPURequest,
-	PodsOrderByCPULimit,
-	PodsOrderByMemory,
-	PodsOrderByMemoryRequest,
-	PodsOrderByMemoryLimit,
-	PodsOrderByPhase,
+type Pods struct {
+	Type                   ResponseType           `json:"type"`
+	Records                []PodRecord            `json:"records"`
+	Total                  int                    `json:"total"`
+	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
+	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
+	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
-// PodsListRequest is the request body for the v2 pods list API.
-type PodsListRequest struct {
+type PodRecord struct {
+	PodUID           string         `json:"podUID,omitempty"`
+	PodCPU           float64        `json:"podCPU"`
+	PodCPURequest    float64        `json:"podCPURequest"`
+	PodCPULimit      float64        `json:"podCPULimit"`
+	PodMemory        float64        `json:"podMemory"`
+	PodMemoryRequest float64        `json:"podMemoryRequest"`
+	PodMemoryLimit   float64        `json:"podMemoryLimit"`
+	PodPhase         PodPhase       `json:"podPhase"`
+	PodAge           int64          `json:"podAge"`
+	Meta             map[string]any `json:"meta"`
+}
+
+// PostablePods is the request body for the v2 pods list API.
+type PostablePods struct {
 	Start   int64                `json:"start"`
 	End     int64                `json:"end"`
 	Filter  *qbtypes.Filter      `json:"filter"`
@@ -39,8 +41,8 @@ type PodsListRequest struct {
 	Limit   int                  `json:"limit"`
 }
 
-// Validate ensures PodsListRequest contains acceptable values.
-func (req *PodsListRequest) Validate() error {
+// Validate ensures PostablePods contains acceptable values.
+func (req *PostablePods) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -91,34 +93,12 @@ func (req *PodsListRequest) Validate() error {
 }
 
 // UnmarshalJSON validates input immediately after decoding.
-func (req *PodsListRequest) UnmarshalJSON(data []byte) error {
-	type raw PodsListRequest
+func (req *PostablePods) UnmarshalJSON(data []byte) error {
+	type raw PostablePods
 	var decoded raw
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		return err
 	}
-	*req = PodsListRequest(decoded)
+	*req = PostablePods(decoded)
 	return req.Validate()
-}
-
-type PodsListResponse struct {
-	Type                   ResponseType           `json:"type"`
-	Records                []PodRecord            `json:"records"`
-	Total                  int                    `json:"total"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
-	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
-	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
-}
-
-type PodRecord struct {
-	PodUID           string         `json:"podUID,omitempty"`
-	PodCPU           float64        `json:"podCPU"`
-	PodCPURequest    float64        `json:"podCPURequest"`
-	PodCPULimit      float64        `json:"podCPULimit"`
-	PodMemory        float64        `json:"podMemory"`
-	PodMemoryRequest float64        `json:"podMemoryRequest"`
-	PodMemoryLimit   float64        `json:"podMemoryLimit"`
-	PodPhase         string         `json:"podPhase"`
-	PodAge           int64          `json:"podAge"`
-	Meta             map[string]any `json:"meta"`
 }

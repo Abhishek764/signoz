@@ -3136,6 +3136,13 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export enum InframonitoringtypesPodPhaseDTO {
+	pending = 'pending',
+	running = 'running',
+	succeeded = 'succeeded',
+	failed = 'failed',
+	'' = '',
+}
 /**
  * @nullable
  */
@@ -3184,45 +3191,14 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podMemoryRequest?: number;
-	/**
-	 * @type string
-	 */
-	podPhase?: string;
+	podPhase?: InframonitoringtypesPodPhaseDTO;
 	/**
 	 * @type string
 	 */
 	podUID?: string;
 }
 
-export interface InframonitoringtypesPodsListRequestDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	end?: number;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	orderBy?: Querybuildertypesv5OrderByDTO;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	start?: number;
-}
-
-export interface InframonitoringtypesPodsListResponseDTO {
+export interface InframonitoringtypesPodsDTO {
 	/**
 	 * @type boolean
 	 */
@@ -3248,6 +3224,34 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 */
 	end?: number;
 	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start?: number;
+}
+
+export interface InframonitoringtypesPostablePodsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end?: number;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -6875,7 +6879,7 @@ export type ListHosts200 = {
 };
 
 export type ListPods200 = {
-	data: InframonitoringtypesPodsListResponseDTO;
+	data: InframonitoringtypesPodsDTO;
 	/**
 	 * @type string
 	 */

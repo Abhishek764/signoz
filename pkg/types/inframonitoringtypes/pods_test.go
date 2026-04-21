@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPodsListRequest_Validate(t *testing.T) {
+func TestPostablePods_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     *PodsListRequest
+		req     *PostablePods
 		wantErr bool
 	}{
 		{
 			name: "valid request",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -33,7 +33,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time zero",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  0,
 				End:    2000,
 				Limit:  100,
@@ -43,7 +43,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time negative",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  -1000,
 				End:    2000,
 				Limit:  100,
@@ -53,7 +53,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "end time zero",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    0,
 				Limit:  100,
@@ -63,7 +63,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time greater than end time",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  2000,
 				End:    1000,
 				Limit:  100,
@@ -73,7 +73,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "start time equal to end time",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    1000,
 				Limit:  100,
@@ -83,7 +83,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "limit zero",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  0,
@@ -93,7 +93,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "limit negative",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  -10,
@@ -103,7 +103,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "limit exceeds max",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  5001,
@@ -113,7 +113,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "offset negative",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -123,7 +123,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy nil is valid",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -133,7 +133,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with valid key cpu and direction asc",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -151,7 +151,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with valid key phase and direction desc",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -169,7 +169,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with invalid key",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,
@@ -187,7 +187,7 @@ func TestPodsListRequest_Validate(t *testing.T) {
 		},
 		{
 			name: "orderBy with valid key but invalid direction",
-			req: &PodsListRequest{
+			req: &PostablePods{
 				Start:  1000,
 				End:    2000,
 				Limit:  100,

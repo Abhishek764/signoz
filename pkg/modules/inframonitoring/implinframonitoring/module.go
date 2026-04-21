@@ -162,12 +162,12 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	return resp, nil
 }
 
-func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PodsListRequest) (*inframonitoringtypes.PodsListResponse, error) {
+func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	resp := &inframonitoringtypes.PodsListResponse{}
+	resp := &inframonitoringtypes.Pods{}
 
 	if req.OrderBy == nil {
 		req.OrderBy = &qbtypes.OrderBy{

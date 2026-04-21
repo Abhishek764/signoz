@@ -14,8 +14,8 @@ import { useMutation } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	InframonitoringtypesPodsListRequestDTO,
 	InframonitoringtypesPostableHostsDTO,
+	InframonitoringtypesPostablePodsDTO,
 	ListHosts200,
 	ListPods200,
 	RenderErrorResponseDTO,
@@ -109,14 +109,14 @@ export const useListHosts = <
  * @summary List Pods for Infra Monitoring
  */
 export const listPods = (
-	inframonitoringtypesPodsListRequestDTO: BodyType<InframonitoringtypesPodsListRequestDTO>,
+	inframonitoringtypesPostablePodsDTO: BodyType<InframonitoringtypesPostablePodsDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListPods200>({
 		url: `/api/v2/infra_monitoring/pods`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: inframonitoringtypesPodsListRequestDTO,
+		data: inframonitoringtypesPostablePodsDTO,
 		signal,
 	});
 };
@@ -128,13 +128,13 @@ export const getListPodsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,
 		TError,
-		{ data: BodyType<InframonitoringtypesPodsListRequestDTO> },
+		{ data: BodyType<InframonitoringtypesPostablePodsDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listPods>>,
 	TError,
-	{ data: BodyType<InframonitoringtypesPodsListRequestDTO> },
+	{ data: BodyType<InframonitoringtypesPostablePodsDTO> },
 	TContext
 > => {
 	const mutationKey = ['listPods'];
@@ -148,7 +148,7 @@ export const getListPodsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listPods>>,
-		{ data: BodyType<InframonitoringtypesPodsListRequestDTO> }
+		{ data: BodyType<InframonitoringtypesPostablePodsDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -161,7 +161,7 @@ export const getListPodsMutationOptions = <
 export type ListPodsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof listPods>>
 >;
-export type ListPodsMutationBody = BodyType<InframonitoringtypesPodsListRequestDTO>;
+export type ListPodsMutationBody = BodyType<InframonitoringtypesPostablePodsDTO>;
 export type ListPodsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -174,13 +174,13 @@ export const useListPods = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,
 		TError,
-		{ data: BodyType<InframonitoringtypesPodsListRequestDTO> },
+		{ data: BodyType<InframonitoringtypesPostablePodsDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listPods>>,
 	TError,
-	{ data: BodyType<InframonitoringtypesPodsListRequestDTO> },
+	{ data: BodyType<InframonitoringtypesPostablePodsDTO> },
 	TContext
 > => {
 	const mutationOptions = getListPodsMutationOptions(options);

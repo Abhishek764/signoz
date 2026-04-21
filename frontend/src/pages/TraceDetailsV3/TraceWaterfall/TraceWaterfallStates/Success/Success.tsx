@@ -312,8 +312,11 @@ const SpanOverview = memo(function SpanOverview({
 					style={{ backgroundColor: color }}
 				/>
 
-				{/* Span name */}
-				<span className="tree-label">{span.name}</span>
+				{/* Span name + service name */}
+				<span className="tree-label">
+					{span.name}
+					<span className="tree-service-name">{span['service.name']}</span>
+				</span>
 
 				{/* Action buttons — shown on hover via CSS, right-aligned */}
 				<span className="span-row-actions">

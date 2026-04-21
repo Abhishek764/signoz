@@ -284,13 +284,15 @@ function PrettyView({
 	return (
 		<div className="pretty-view">
 			{searchable && (
-				<Input
-					className="pretty-view__search-input"
-					type="text"
-					placeholder="Search for a field..."
-					value={searchQuery}
-					onChange={(e): void => setSearchQuery(e.target.value)}
-				/>
+				<div className="pretty-view__search-wrapper">
+					<Input
+						className="pretty-view__search-input"
+						type="text"
+						placeholder="Search for a field..."
+						value={searchQuery}
+						onChange={(e): void => setSearchQuery(e.target.value)}
+					/>
+				</div>
 			)}
 
 			{showPinned && Object.keys(filteredPinnedData).length > 0 && (

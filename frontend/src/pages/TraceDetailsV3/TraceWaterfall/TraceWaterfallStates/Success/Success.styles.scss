@@ -378,6 +378,12 @@
 			white-space: nowrap;
 			flex: 1;
 			min-width: 0;
+
+			.tree-service-name {
+				margin-left: 18px;
+				color: var(--l3-foreground);
+				font-weight: 400;
+			}
 		}
 
 		.span-row-actions {

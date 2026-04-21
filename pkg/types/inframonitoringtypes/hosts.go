@@ -17,10 +17,6 @@ type Hosts struct {
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
-type RequiredMetricsCheck struct {
-	MissingMetrics []string `json:"missingMetrics"`
-}
-
 type HostRecord struct {
 	HostName          string                 `json:"hostName"`
 	Status            HostStatus             `json:"status"`
@@ -32,6 +28,10 @@ type HostRecord struct {
 	Load15            float64                `json:"load15"`
 	DiskUsage         float64                `json:"diskUsage"`
 	Meta              map[string]interface{} `json:"meta"`
+}
+
+type RequiredMetricsCheck struct {
+	MissingMetrics []string `json:"missingMetrics"`
 }
 
 type PostableHosts struct {

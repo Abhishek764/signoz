@@ -126,8 +126,6 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 					nextQuery,
 					{ panelTypes: PANEL_TYPES.LIST },
 					ROUTES.TRACES_EXPLORER,
-					undefined,
-					true,
 				);
 			} catch {
 				notifications.error({ message: SOMETHING_WENT_WRONG });
@@ -176,8 +174,6 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 					nextQuery,
 					{ panelTypes: PANEL_TYPES.TIME_SERIES },
 					ROUTES.TRACES_EXPLORER,
-					undefined,
-					true,
 				);
 			} catch {
 				notifications.error({ message: SOMETHING_WENT_WRONG });

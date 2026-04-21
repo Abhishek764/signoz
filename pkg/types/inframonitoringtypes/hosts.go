@@ -9,39 +9,39 @@ import (
 )
 
 type Hosts struct {
-	Type                   ResponseType           `json:"type"`
-	Records                []HostRecord           `json:"records"`
-	Total                  int                    `json:"total"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
-	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
+	Type                   ResponseType           `json:"type" required:"true"`
+	Records                []HostRecord           `json:"records" required:"true"`
+	Total                  int                    `json:"total" required:"true"`
+	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
+	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
 type HostRecord struct {
-	HostName          string                 `json:"hostName"`
-	Status            HostStatus             `json:"status"`
-	ActiveHostCount   int                    `json:"activeHostCount"`
-	InactiveHostCount int                    `json:"inactiveHostCount"`
-	CPU               float64                `json:"cpu"`
-	Memory            float64                `json:"memory"`
-	Wait              float64                `json:"wait"`
-	Load15            float64                `json:"load15"`
-	DiskUsage         float64                `json:"diskUsage"`
-	Meta              map[string]interface{} `json:"meta"`
+	HostName          string                 `json:"hostName" required:"true"`
+	Status            HostStatus             `json:"status" required:"true"`
+	ActiveHostCount   int                    `json:"activeHostCount" required:"true"`
+	InactiveHostCount int                    `json:"inactiveHostCount" required:"true"`
+	CPU               float64                `json:"cpu" required:"true"`
+	Memory            float64                `json:"memory" required:"true"`
+	Wait              float64                `json:"wait" required:"true"`
+	Load15            float64                `json:"load15" required:"true"`
+	DiskUsage         float64                `json:"diskUsage" required:"true"`
+	Meta              map[string]interface{} `json:"meta" required:"true"`
 }
 
 type RequiredMetricsCheck struct {
-	MissingMetrics []string `json:"missingMetrics"`
+	MissingMetrics []string `json:"missingMetrics" required:"true"`
 }
 
 type PostableHosts struct {
-	Start   int64                `json:"start"`
-	End     int64                `json:"end"`
+	Start   int64                `json:"start" required:"true"`
+	End     int64                `json:"end" required:"true"`
 	Filter  *HostFilter          `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
-	Limit   int                  `json:"limit"`
+	Limit   int                  `json:"limit" required:"true"`
 }
 
 type HostFilter struct {

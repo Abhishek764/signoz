@@ -2323,6 +2323,17 @@ components:
         wait:
           format: double
           type: number
+      required:
+      - hostName
+      - status
+      - activeHostCount
+      - inactiveHostCount
+      - cpu
+      - memory
+      - wait
+      - load15
+      - diskUsage
+      - meta
       type: object
     InframonitoringtypesHostStatus:
       enum:
@@ -2347,6 +2358,12 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesResponseType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableHosts:
       properties:
@@ -2369,6 +2386,10 @@ components:
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
       type: object
     InframonitoringtypesRequiredMetricsCheck:
       properties:
@@ -2377,6 +2398,8 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - missingMetrics
       type: object
     InframonitoringtypesResponseType:
       enum:

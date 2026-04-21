@@ -93,6 +93,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 		resp.Total = 0
 		return resp, nil
 	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	// TOD(nikhilmantri0902): replace this separate ClickHouse query with a sub-query inside the main query builder query
 	// once QB supports sub-queries.

@@ -10014,7 +10014,7 @@ paths:
         - VIEWER
       summary: List Hosts for Infra Monitoring
       tags:
-      - infra-monitoring
+      - inframonitoring
   /api/v2/livez:
     get:
       deprecated: false

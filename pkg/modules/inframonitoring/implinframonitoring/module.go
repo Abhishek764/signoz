@@ -201,13 +201,11 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		resp.Total = 0
 		return resp, nil
 	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
 
 	metadataMap, err := m.getPodsTableMetadata(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-	if metadataMap == nil {
-		metadataMap = make(map[string]map[string]string)
 	}
 
 	resp.Total = len(metadataMap)

@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func phaseNumberToPodPhase(v float64) inframonitoringtypes.PodPhase {
+func mapPhaseNumToString(v float64) inframonitoringtypes.PodPhase {
 	switch int(v) {
 	case 1:
 		return inframonitoringtypes.PodPhasePending
@@ -130,7 +130,7 @@ func buildPodRecords(
 				record.PodMemoryLimit = v
 			}
 			if v, exists := metrics["G"]; exists {
-				record.PodPhase = phaseNumberToPodPhase(v)
+				record.PodPhase = mapPhaseNumToString(v)
 			}
 		}
 

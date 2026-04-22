@@ -51,6 +51,7 @@
 		flex: 1;
 		min-width: 0; // allow shrinking below natural width when AI panel is open
 		z-index: 0;
+		background: var(--l1-background);
 
 		&.full-screen-content {
 			width: 100%;
@@ -129,22 +130,6 @@
 
 	.add-credit-card-btn {
 		box-shadow: none;
-	}
-}
-
-.isDarkMode {
-	.app-layout {
-		.app-content {
-			background: var(--background);
-		}
-	}
-}
-
-.isLightMode {
-	.app-layout {
-		.app-content {
-			background: var(--card);
-		}
 	}
 }
 

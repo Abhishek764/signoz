@@ -14,6 +14,7 @@ import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
+import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
@@ -211,6 +212,23 @@ function TraceDetailsV3(): JSX.Element {
 		],
 	);
 
+	const traceMetadataForHeader = useMemo(():
+		| TraceMetadataForHeader
+		| undefined => {
+		const payload = traceData?.payload;
+		if (!payload) {
+			return undefined;
+		}
+		const rootSpan = payload.spans?.find((s) => s.level === 0);
+		return {
+			startTimestampMillis: payload.startTimestampMillis,
+			endTimestampMillis: payload.endTimestampMillis,
+			rootServiceName: payload.rootServiceName,
+			rootServiceEntryPoint: payload.rootServiceEntryPoint,
+			rootSpanStatusCode: rootSpan?.response_status_code || '',
+		};
+	}, [traceData?.payload]);
+
 	const showNoData =
 		!isFetchingTraceData &&
 		(!!errorFetchingTraceData || !traceData?.payload?.spans?.length);
@@ -249,6 +267,7 @@ function TraceDetailsV3(): JSX.Element {
 				filterMetadata={filterMetadata}
 				onFilteredSpansChange={handleFilteredSpansChange}
 				noData={showNoData}
+				traceMetadata={traceMetadataForHeader}
 			/>
 
 			{showNoData ? (

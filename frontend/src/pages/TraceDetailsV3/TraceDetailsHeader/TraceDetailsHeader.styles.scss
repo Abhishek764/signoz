@@ -1,3 +1,7 @@
+.trace-details-header-wrapper {
+	flex-shrink: 0;
+}
+
 .trace-details-header {
 	display: flex;
 	align-items: center;
@@ -24,5 +28,21 @@
 	&__old-view-btn {
 		margin-left: auto;
 		flex-shrink: 0;
+	}
+
+	&__sub-header {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 4px 16px 8px;
+		font-size: 13px;
+		color: var(--l2-foreground);
+	}
+
+	&__sub-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		white-space: nowrap;
 	}
 }

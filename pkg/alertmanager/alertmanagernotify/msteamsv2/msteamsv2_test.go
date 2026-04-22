@@ -17,9 +17,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
@@ -34,11 +31,8 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
-	logger := slog.Default()
-	templater := alertmanagertemplate.New(tmpl, logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
 }
 
 // This is a test URL that has been modified to not be valid.
@@ -54,7 +48,7 @@ func TestMSTeamsV2Retry(t *testing.T) {
 		tmpl,
 		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -90,7 +84,7 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 				tmpl,
 				`{{ template "msteamsv2.default.titleLink" . }}`,
 				promslog.NewNopLogger(),
-				newTestProcessor(tmpl),
+				newTestTemplater(tmpl),
 			)
 			require.NoError(t, err)
 
@@ -173,7 +167,7 @@ func TestMSTeamsV2Templating(t *testing.T) {
 			tc.cfg.WebhookURL = &config.SecretURL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
 			tmpl := test.CreateTmpl(t)
-			pd, err := New(tc.cfg, tmpl, tc.titleLink, promslog.NewNopLogger(), newTestProcessor(tmpl))
+			pd, err := New(tc.cfg, tmpl, tc.titleLink, promslog.NewNopLogger(), newTestTemplater(tmpl))
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -215,7 +209,7 @@ func TestMSTeamsV2RedactedURL(t *testing.T) {
 		tmpl,
 		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -234,7 +228,7 @@ func TestPrepareContent(t *testing.T) {
 			tmpl,
 			`{{ template "msteamsv2.default.titleLink" . }}`,
 			promslog.NewNopLogger(),
-			newTestProcessor(tmpl),
+			newTestTemplater(tmpl),
 		)
 		require.NoError(t, err)
 
@@ -276,7 +270,7 @@ func TestPrepareContent(t *testing.T) {
 			tmpl,
 			`{{ template "msteamsv2.default.titleLink" . }}`,
 			promslog.NewNopLogger(),
-			newTestProcessor(tmpl),
+			newTestTemplater(tmpl),
 		)
 		require.NoError(t, err)
 
@@ -342,7 +336,7 @@ func TestMSTeamsV2ReadingURLFromFile(t *testing.T) {
 		tmpl,
 		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 

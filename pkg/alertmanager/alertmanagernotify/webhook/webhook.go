@@ -13,11 +13,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -33,26 +30,24 @@ const (
 
 // Notifier implements a Notifier for generic webhooks.
 type Notifier struct {
-	conf      *config.WebhookConfig
-	tmpl      *template.Template
-	logger    *slog.Logger
-	client    *http.Client
-	retrier   *notify.Retrier
-	processor alertmanagertypes.NotificationProcessor
+	conf    *config.WebhookConfig
+	tmpl    *template.Template
+	logger  *slog.Logger
+	client  *http.Client
+	retrier *notify.Retrier
 }
 
 // New returns a new Webhook.
-func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return &Notifier{
-		conf:      conf,
-		tmpl:      t,
-		logger:    l,
-		client:    client,
-		processor: proc,
+		conf:   conf,
+		tmpl:   t,
+		logger: l,
+		client: client,
 		// Webhooks are assumed to respond with 2xx response codes on a successful
 		// request and 5xx response codes are assumed to be recoverable.
 		retrier: &notify.Retrier{},
@@ -77,45 +72,43 @@ func truncateAlerts(maxAlerts uint64, alerts []*types.Alert) ([]*types.Alert, ui
 	return alerts, 0
 }
 
-// templateAlerts extracts custom templates from alert annotations, processes them,
-// and updates each alert's annotations with the rendered title and body
-// the idea is to send the templated annotations for title and body templates to the webhook endpoint.
-func (n *Notifier) templateAlerts(ctx context.Context, alerts []*types.Alert) error {
-	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
-	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
-		TitleTemplate:        customTitle,
-		BodyTemplate:         customBody,
-		DefaultTitleTemplate: alertmanagertypes.NoOpTemplateString,
-		DefaultBodyTemplate:  alertmanagertypes.NoOpTemplateString,
-	}, alerts, markdownrenderer.MarkdownFormatNoop)
-	if err != nil {
-		return err
-	}
-
+// stripPrivateAnnotations returns a copy of alerts with every private (`_`-
+// prefixed) annotation removed. These keys — templating inputs, threshold
+// metadata, related-link URLs — are internal inputs to the notifier, not
+// content the external webhook receiver should see. The original alert
+// objects are never mutated: they are shared with other receivers in the
+// fanout.
+func stripPrivateAnnotations(alerts []*types.Alert) []*types.Alert {
+	out := make([]*types.Alert, len(alerts))
 	for i, alert := range alerts {
-		if alert.Annotations == nil {
+		hasPrivate := false
+		for k := range alert.Annotations {
+			if alertmanagertypes.IsPrivateAnnotation(string(k)) {
+				hasPrivate = true
+				break
+			}
+		}
+		if !hasPrivate {
+			out[i] = alert
 			continue
 		}
-		// Update title_template annotation with rendered title, only if key exists and result is non-blank
-		if _, ok := alert.Annotations[ruletypes.AnnotationTitleTemplate]; ok && result.Title != "" {
-			alert.Annotations[ruletypes.AnnotationTitleTemplate] = model.LabelValue(result.Title)
+		cloned := *alert
+		cloned.Annotations = make(model.LabelSet, len(alert.Annotations))
+		for k, v := range alert.Annotations {
+			if alertmanagertypes.IsPrivateAnnotation(string(k)) {
+				continue
+			}
+			cloned.Annotations[k] = v
 		}
-		// Update body_template annotation with rendered body, only if key exists and result is non-blank
-		if _, ok := alert.Annotations[ruletypes.AnnotationBodyTemplate]; ok && i < len(result.Body) && result.Body[i] != "" {
-			alert.Annotations[ruletypes.AnnotationBodyTemplate] = model.LabelValue(result.Body[i])
-		}
+		out[i] = &cloned
 	}
-
-	return nil
+	return out
 }
 
 // Notify implements the Notifier interface.
 func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
 	alerts, numTruncated := truncateAlerts(n.conf.MaxAlerts, alerts)
-	// template alerts before preparing the notification data
-	if err := n.templateAlerts(ctx, alerts); err != nil {
-		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
-	}
+	alerts = stripPrivateAnnotations(alerts)
 	data := notify.GetTemplateData(ctx, n.tmpl, alerts, n.logger)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)

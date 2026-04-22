@@ -25,10 +25,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 )
@@ -71,7 +69,7 @@ type Server struct {
 	pipelineBuilder     *notify.PipelineBuilder
 	marker              *alertmanagertypes.MemMarker
 	tmpl                *template.Template
-	processor           alertmanagertypes.NotificationProcessor
+	notificationDeps    alertmanagertypes.NotificationDeps
 	emailTemplateStore  emailtypes.TemplateStore
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
@@ -247,10 +245,10 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
-	// Construct the alert notification processor
-	templater := alertmanagertemplate.New(server.tmpl, server.logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(server.logger)
-	server.processor = alertnotificationprocessor.New(templater, renderer, server.emailTemplateStore, server.logger)
+	server.notificationDeps = alertmanagertypes.NotificationDeps{
+		Templater:          alertmanagertemplate.New(server.tmpl, server.logger),
+		EmailTemplateStore: server.emailTemplateStore,
+	}
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -268,7 +266,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.processor)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.notificationDeps)
 		if err != nil {
 			return err
 		}
@@ -344,7 +342,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.processor, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.notificationDeps, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -427,7 +425,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 					server.alertmanagerConfig,
 					server.tmpl,
 					server.logger,
-					server.processor,
+					server.notificationDeps,
 					group.groupLabels,
 					group.alerts...,
 				)

@@ -42,11 +42,11 @@ type Notifier struct {
 	logger    *slog.Logger
 	client    *http.Client
 	retrier   *notify.Retrier
-	processor alertmanagertypes.NotificationProcessor
+	templater alertmanagertypes.Templater
 }
 
 // New returns a new OpsGenie notifier.
-func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, proc al
 		logger:    l,
 		client:    client,
 		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
-		processor: proc,
+		templater: templater,
 	}, nil
 }
 
@@ -128,40 +128,48 @@ func safeSplit(s, sep string) []string {
 	return b
 }
 
-// prepareContent extracts custom templates from alert annotations, runs the
-// notification processor, and returns a ready-to-use title (truncated to the
-// OpsGenie 130-rune limit) and description.
+// prepareContent expands alert templates and returns the OpsGenie-ready title
+// (truncated to the 130-rune limit) and HTML description. Custom bodies are
+// rendered to HTML and stitched together with <hr> dividers; default bodies
+// are joined with newlines (OpsGenie's legacy plain-text description).
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (string, string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
-	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Message,
 		DefaultBodyTemplate:  n.conf.Description,
-	}, alerts, markdownrenderer.MarkdownFormatHTML)
+	}, alerts)
 	if err != nil {
 		return "", "", err
 	}
 
-	title := result.Title
-	description := strings.Join(result.Body, "\n")
-
-	if result.IsCustomTemplated() {
-		// OpsGenie uses basic HTML for alert description previews, so we
-		// separate each per-alert body with an <hr> divider.
+	var description string
+	if result.IsDefaultBody {
+		description = strings.Join(result.Body, "\n")
+	} else {
 		var b strings.Builder
-		for i, part := range result.Body {
-			if i > 0 {
+		first := true
+		for _, part := range result.Body {
+			if part == "" {
+				continue
+			}
+			rendered, renderErr := markdownrenderer.RenderHTML(part)
+			if renderErr != nil {
+				return "", "", renderErr
+			}
+			if !first {
 				b.WriteString("<hr>")
 			}
 			b.WriteString("<div>")
-			b.WriteString(part)
+			b.WriteString(rendered)
 			b.WriteString("</div>")
+			first = false
 		}
 		description = b.String()
 	}
 
-	title, truncated := notify.TruncateInRunes(title, maxMessageLenRunes)
+	title, truncated := notify.TruncateInRunes(result.Title, maxMessageLenRunes)
 	if truncated {
 		n.logger.WarnContext(ctx, "Truncated message", slog.Int("max_runes", maxMessageLenRunes))
 	}

@@ -19,10 +19,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
@@ -37,11 +34,8 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
-	logger := slog.Default()
-	templater := alertmanagertemplate.New(tmpl, logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
 }
 
 func TestPagerDutyRetryV1(t *testing.T) {
@@ -53,7 +47,7 @@ func TestPagerDutyRetryV1(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -73,7 +67,7 @@ func TestPagerDutyRetryV2(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -97,7 +91,7 @@ func TestPagerDutyRedactedURLV1(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 	notifier.apiV1 = u.String()
@@ -119,7 +113,7 @@ func TestPagerDutyRedactedURLV2(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -144,7 +138,7 @@ func TestPagerDutyV1ServiceKeyFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 	notifier.apiV1 = u.String()
@@ -171,7 +165,7 @@ func TestPagerDutyV2RoutingKeyFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -329,7 +323,7 @@ func TestPagerDutyTemplating(t *testing.T) {
 			tc.cfg.URL = &config.URL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
 			tmpl := test.CreateTmpl(t)
-			pd, err := New(tc.cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+			pd, err := New(tc.cfg, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
 			require.NoError(t, err)
 			if pd.apiV1 != "" {
 				pd.apiV1 = u.String()
@@ -427,7 +421,7 @@ func TestEventSizeEnforcement(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -451,7 +445,7 @@ func TestEventSizeEnforcement(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -567,7 +561,7 @@ func TestPagerDutyEmptySrcHref(t *testing.T) {
 	}
 
 	pdTmpl := test.CreateTmpl(t)
-	pagerDuty, err := New(&pagerDutyConfig, pdTmpl, promslog.NewNopLogger(), newTestProcessor(pdTmpl))
+	pagerDuty, err := New(&pagerDutyConfig, pdTmpl, promslog.NewNopLogger(), newTestTemplater(pdTmpl))
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -635,7 +629,7 @@ func TestPagerDutyTimeout(t *testing.T) {
 			}
 
 			tmpl := test.CreateTmpl(t)
-			pd, err := New(&cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+			pd, err := New(&cfg, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -932,7 +926,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl,
 			promslog.NewNopLogger(),
-			newTestProcessor(tmpl),
+			newTestTemplater(tmpl),
 		)
 		require.NoError(t, err)
 
@@ -948,7 +942,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 		}
 
-		title, err := notifier.prepareContent(ctx, alerts)
+		title, err := notifier.prepareTitle(ctx, alerts)
 		require.NoError(t, err)
 		require.Equal(t, "HighCPU for Payment service (FIRING)", title)
 	})
@@ -962,7 +956,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl,
 			promslog.NewNopLogger(),
-			newTestProcessor(tmpl),
+			newTestTemplater(tmpl),
 		)
 		require.NoError(t, err)
 
@@ -976,7 +970,7 @@ func TestPrepareContent(t *testing.T) {
 						"service":   "api-server",
 					},
 					Annotations: model.LabelSet{
-						ruletypes.AnnotationTitleTemplate: "$rule_name on $service is in $status state",
+						ruletypes.AnnotationTitleTemplate: "$rule.name on $service is in $alert.status state",
 					},
 					StartsAt: time.Now().Add(-time.Hour),
 					EndsAt:   time.Now(),
@@ -984,7 +978,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 		}
 
-		title, err := notifier.prepareContent(ctx, alerts)
+		title, err := notifier.prepareTitle(ctx, alerts)
 		require.NoError(t, err)
 		require.Equal(t, "HighCPU on api-server is in resolved state", title)
 	})

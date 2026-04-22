@@ -16,9 +16,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
@@ -33,11 +30,8 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
-	logger := slog.Default()
-	templater := alertmanagertemplate.New(tmpl, logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
 }
 
 func TestOpsGenieRetry(t *testing.T) {
@@ -48,7 +42,7 @@ func TestOpsGenieRetry(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -73,7 +67,7 @@ func TestOpsGenieRedactedURL(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -100,7 +94,7 @@ func TestGettingOpsGegineApikeyFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -223,7 +217,7 @@ func TestOpsGenie(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			notifier, err := New(tc.cfg, tmpl, logger, newTestProcessor(tmpl))
+			notifier, err := New(tc.cfg, tmpl, logger, newTestTemplater(tmpl))
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -299,7 +293,7 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 		APIURL:       &config.URL{URL: u},
 		HTTPConfig:   &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
 	alert := &types.Alert{
 		Alert: model.Alert{
 			StartsAt: time.Now(),
@@ -342,7 +336,7 @@ func TestOpsGenieApiKeyFile(t *testing.T) {
 		APIURL:     &config.URL{URL: u},
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
 
 	require.NoError(t, err)
 	requests, _, err := notifierWithUpdate.createRequests(ctx)
@@ -354,7 +348,6 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("default template", func(t *testing.T) {
 		tmpl := test.CreateTmpl(t)
 		logger := promslog.NewNopLogger()
-		proc := newTestProcessor(tmpl)
 
 		notifier := &Notifier{
 			conf: &config.OpsGenieConfig{
@@ -363,7 +356,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl:      tmpl,
 			logger:    logger,
-			processor: proc,
+			templater: newTestTemplater(tmpl),
 		}
 
 		ctx := context.Background()
@@ -391,7 +384,6 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("custom template", func(t *testing.T) {
 		tmpl := test.CreateTmpl(t)
 		logger := promslog.NewNopLogger()
-		proc := newTestProcessor(tmpl)
 
 		notifier := &Notifier{
 			conf: &config.OpsGenieConfig{
@@ -400,7 +392,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl:      tmpl,
 			logger:    logger,
-			processor: proc,
+			templater: newTestTemplater(tmpl),
 		}
 
 		ctx := context.Background()
@@ -441,7 +433,7 @@ func TestPrepareContent(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "High request throughput for payment", title)
 		// Each alert body wrapped in <div>, separated by <hr>
-		require.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p><p></p></div><hr><div><p>Alert firing in NS: smart-the-rat</p><p></p></div>", desc)
+		require.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p>\n</div><hr><div><p>Alert firing in NS: smart-the-rat</p>\n</div>", desc)
 	})
 }
 

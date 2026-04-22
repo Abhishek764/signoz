@@ -6,17 +6,23 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
-jest.mock('@signozhq/drawer', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	DrawerWrapper: ({
-		content,
+		children,
+		footer,
 		open,
 	}: {
-		content?: ReactNode;
+		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
-}));
-
-jest.mock('@signozhq/sonner', () => ({
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 

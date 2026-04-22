@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button } from '@signozhq/button';
 import { Compass, ScrollText } from '@signozhq/icons';
+import { Button } from '@signozhq/ui';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
@@ -38,6 +38,7 @@ import {
 } from 'types/api/settings/getRetention';
 import { USER_ROLES } from 'types/roles';
 
+import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
 import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
@@ -683,7 +684,12 @@ function GeneralSettings({
 					{showCustomDomainSettings && activeLicense?.key && (
 						<div className="custom-domain-card-divider" />
 					)}
-					{activeLicense?.key && <LicenseKeyRow />}
+					{activeLicense?.key && (
+						<>
+							<LicenseKeyRow />
+							<LicenseRowDismissibleCallout />
+						</>
+					)}
 				</div>
 			)}
 

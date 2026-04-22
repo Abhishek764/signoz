@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';
@@ -9,6 +9,10 @@ import { Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+
+import containerPlusUrl from '@/assets/Icons/container-plus.svg';
+import helloWaveUrl from '@/assets/Icons/hello-wave.svg';
+import hurrayUrl from '@/assets/Icons/hurray.svg';
 
 import { DOCS_LINKS } from '../constants';
 
@@ -68,7 +72,7 @@ function DataSourceInfo({
 					<div className="workspace-ready-container">
 						<div className="workspace-ready-header">
 							<span className="workspace-ready-title">
-								<img src="/Icons/hurray.svg" alt="hurray" />
+								<img src={hurrayUrl} alt="hurray" />
 								Your workspace is ready
 							</span>
 
@@ -77,15 +81,9 @@ function DataSourceInfo({
 								color="primary"
 								size="sm"
 								className="periscope-btn primary"
-								prefixIcon={<img src="/Icons/container-plus.svg" alt="plus" />}
+								prefix={<img src={containerPlusUrl} alt="plus" />}
 								onClick={handleConnect}
-								role="button"
-								tabIndex={0}
-								onKeyDown={(e): void => {
-									if (e.key === 'Enter') {
-										handleConnect();
-									}
-								}}
+								// TODO - Support tabindex, keyboard events - @H4ad
 							>
 								Connect Data Source
 							</Button>
@@ -135,7 +133,7 @@ function DataSourceInfo({
 			<div className="hello-wave-container">
 				<div className="hello-wave-img-container">
 					<img
-						src="/Icons/hello-wave.svg"
+						src={helloWaveUrl}
 						alt="hello-wave"
 						className="hello-wave-img"
 						width={36}

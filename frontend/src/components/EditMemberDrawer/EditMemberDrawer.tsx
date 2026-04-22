@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Badge } from '@signozhq/badge';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { Badge, Button, DrawerWrapper, Input, toast } from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	getResetPasswordToken,
+	useCreateResetPasswordToken,
 	useDeleteUser,
+	useGetResetPasswordToken,
 	useGetUser,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -55,6 +52,27 @@ function getDeleteTooltip(
 	return undefined;
 }
 
+function getInviteButtonLabel(
+	isLoading: boolean,
+	existingToken: { expiresAt?: Date } | undefined,
+	isExpired: boolean,
+	notFound: boolean,
+): string {
+	if (isLoading) {
+		return 'Checking invite...';
+	}
+	if (existingToken && !isExpired) {
+		return 'Copy Invite Link';
+	}
+	if (isExpired) {
+		return 'Regenerate Invite Link';
+	}
+	if (notFound) {
+		return 'Generate Invite Link';
+	}
+	return 'Copy Invite Link';
+}
+
 function toSaveApiError(err: unknown): APIError {
 	return (
 		convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
@@ -83,9 +101,11 @@ function EditMemberDrawer({
 	const [localRole, setLocalRole] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
-	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [resetLink, setResetLink] = useState<string | null>(null);
+	const [resetLinkExpiresAt, setResetLinkExpiresAt] = useState<string | null>(
+		null,
+	);
 	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
 	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
@@ -120,6 +140,27 @@ function EditMemberDrawer({
 		isLoading: isMemberRolesLoading,
 		applyDiff,
 	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
+
+	// Token status query for invited users
+	const {
+		data: tokenQueryData,
+		isLoading: isLoadingTokenStatus,
+		isError: tokenNotFound,
+	} = useGetResetPasswordToken(
+		{ id: member?.id ?? '' },
+		{ query: { enabled: open && !!member?.id && isInvited } },
+	);
+
+	const existingToken = tokenQueryData?.data;
+	const isTokenExpired =
+		existingToken != null &&
+		new Date(String(existingToken.expiresAt)) < new Date();
+
+	// Create/regenerate token mutation
+	const {
+		mutateAsync: createTokenMutation,
+		isLoading: isGeneratingLink,
+	} = useCreateResetPasswordToken();
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
@@ -163,7 +204,7 @@ function EditMemberDrawer({
 			onSuccess: (): void => {
 				toast.success(
 					isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
-					{ richColors: true, position: 'top-right' },
+					{ position: 'top-right' },
 				);
 				setShowDeleteConfirm(false);
 				onComplete();
@@ -298,10 +339,7 @@ function EditMemberDrawer({
 			if (errors.length > 0) {
 				setSaveErrors(errors);
 			} else {
-				toast.success('Member details updated successfully', {
-					richColors: true,
-					position: 'top-right',
-				});
+				toast.success('Member details updated successfully');
 				onComplete();
 			}
 
@@ -338,19 +376,27 @@ function EditMemberDrawer({
 		if (!member) {
 			return;
 		}
-		setIsGeneratingLink(true);
 		try {
-			const response = await getResetPasswordToken({ id: member.id });
+			const response = await createTokenMutation({
+				pathParams: { id: member.id },
+			});
 			if (response?.data?.token) {
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
+				setResetLinkExpiresAt(
+					response.data.expiresAt
+						? formatTimezoneAdjustedTimestamp(
+								String(response.data.expiresAt),
+								DATE_TIME_FORMATS.DASH_DATETIME,
+						  )
+						: null,
+				);
 				setHasCopiedResetLink(false);
 				setLinkType(isInvited ? 'invite' : 'reset');
 				setShowResetLinkDialog(true);
 				onClose();
 			} else {
 				toast.error('Failed to generate password reset link', {
-					richColors: true,
 					position: 'top-right',
 				});
 			}
@@ -359,10 +405,8 @@ function EditMemberDrawer({
 				err as AxiosError<RenderErrorResponseDTO, unknown> | null,
 			);
 			showErrorModal(errMsg as APIError);
-		} finally {
-			setIsGeneratingLink(false);
 		}
-	}, [member, isInvited, onClose, showErrorModal]);
+	}, [member, isInvited, onClose, showErrorModal, createTokenMutation]);
 
 	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopyResetLink = useCallback((): void => {
@@ -376,15 +420,12 @@ function EditMemberDrawer({
 			linkType === 'invite'
 				? 'Invite link copied to clipboard'
 				: 'Reset link copied to clipboard';
-		toast.success(message, { richColors: true, position: 'top-right' });
+		toast.success(message);
 	}, [resetLink, copyToClipboard, linkType]);
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy link', {
-				richColors: true,
-				position: 'top-right',
-			});
+			toast.error('Failed to copy link');
 		}
 	}, [copyState.error]);
 
@@ -545,16 +586,21 @@ function EditMemberDrawer({
 	const drawerContent = (
 		<div className="edit-member-drawer__layout">
 			<div className="edit-member-drawer__body">{drawerBody}</div>
+		</div>
+	);
 
+	const footer = (
+		<div className="edit-member-drawer__footer">
 			{!isDeleted && (
-				<div className="edit-member-drawer__footer">
+				<>
 					<div className="edit-member-drawer__footer-left">
 						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
 							<span className="edit-member-drawer__tooltip-wrapper">
 								<Button
-									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
 									onClick={(): void => setShowDeleteConfirm(true)}
 									disabled={isRootUser || isSelf}
+									variant="link"
+									color="destructive"
 								>
 									<Trash2 size={12} />
 									{isInvited ? 'Revoke Invite' : 'Delete Member'}
@@ -566,21 +612,29 @@ function EditMemberDrawer({
 						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
 							<span className="edit-member-drawer__tooltip-wrapper">
 								<Button
-									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
 									onClick={handleGenerateResetLink}
-									disabled={isGeneratingLink || isRootUser}
+									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
+									variant="link"
+									color="warning"
 								>
 									<RefreshCw size={12} />
-									{isGeneratingLink && 'Generating...'}
-									{!isGeneratingLink && isInvited && 'Copy Invite Link'}
-									{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
+									{isGeneratingLink
+										? 'Generating...'
+										: isInvited
+										? getInviteButtonLabel(
+												isLoadingTokenStatus,
+												existingToken,
+												isTokenExpired,
+												tokenNotFound,
+										  )
+										: 'Generate Password Reset Link'}
 								</Button>
 							</span>
 						</Tooltip>
 					</div>
 
 					<div className="edit-member-drawer__footer-right">
-						<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
+						<Button variant="solid" color="secondary" onClick={handleClose}>
 							<X size={14} />
 							Cancel
 						</Button>
@@ -588,14 +642,13 @@ function EditMemberDrawer({
 						<Button
 							variant="solid"
 							color="primary"
-							size="sm"
 							disabled={!isDirty || isSaving || isRootUser}
 							onClick={handleSave}
 						>
 							{isSaving ? 'Saving...' : 'Save Member Details'}
 						</Button>
 					</div>
-				</div>
+				</>
 			)}
 		</div>
 	);
@@ -610,19 +663,20 @@ function EditMemberDrawer({
 					}
 				}}
 				direction="right"
-				type="panel"
 				showCloseButton
 				showOverlay={false}
-				allowOutsideClick
-				header={{ title: 'Member Details' }}
-				content={drawerContent}
-				className="edit-member-drawer"
-			/>
+				title="Member Details"
+				footer={footer}
+				width="wide"
+			>
+				{drawerContent}
+			</DrawerWrapper>
 
 			<ResetLinkDialog
 				open={showResetLinkDialog}
 				linkType={linkType}
 				resetLink={resetLink}
+				expiresAt={resetLinkExpiresAt}
 				hasCopied={hasCopiedResetLink}
 				onClose={(): void => {
 					setShowResetLinkDialog(false);

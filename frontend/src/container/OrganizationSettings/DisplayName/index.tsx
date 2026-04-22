@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Button, Input } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -60,7 +60,6 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		mutation: {
 			onSuccess: (_, { data }) => {
 				toast.success(t('success', { ns: 'common' }), {
-					richColors: true,
 					position: 'top-right',
 				});
 				updateOrg(orgId, data.displayName ?? '');

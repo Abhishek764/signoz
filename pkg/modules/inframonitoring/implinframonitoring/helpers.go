@@ -120,14 +120,21 @@ func parseAndSortGroups(
 				value = v
 			}
 		}
-		groups = append(groups, rankedGroup{labels: labels, value: value})
+		groups = append(groups, rankedGroup{
+			labels:       labels,
+			value:        value,
+			compositeKey: compositeKeyFromLabels(labels, groupBy),
+		})
 	}
 
 	sort.Slice(groups, func(i, j int) bool {
-		if direction == qbtypes.OrderDirectionAsc {
-			return groups[i].value < groups[j].value
+		if groups[i].value != groups[j].value {
+			if direction == qbtypes.OrderDirectionAsc {
+				return groups[i].value < groups[j].value
+			}
+			return groups[i].value > groups[j].value
 		}
-		return groups[i].value > groups[j].value
+		return groups[i].compositeKey < groups[j].compositeKey
 	})
 
 	return groups
@@ -144,7 +151,7 @@ func paginateWithBackfill(
 ) []map[string]string {
 	metricKeySet := make(map[string]bool, len(metricGroups))
 	for _, g := range metricGroups {
-		metricKeySet[compositeKeyFromLabels(g.labels, groupBy)] = true
+		metricKeySet[g.compositeKey] = true
 	}
 
 	metadataOnlyKeys := make([]string, 0)

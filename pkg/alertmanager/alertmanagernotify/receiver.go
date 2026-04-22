@@ -56,7 +56,7 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	}
 
 	for i, c := range nc.WebhookConfigs {
-		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l) })
+		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.EmailConfigs {
 		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {

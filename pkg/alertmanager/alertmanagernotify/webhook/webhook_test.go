@@ -9,18 +9,20 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
@@ -36,6 +38,7 @@ func TestWebhookRetry(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
+		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
 	if err != nil {
 		require.NoError(t, err)
@@ -99,6 +102,7 @@ func TestWebhookRedactedURL(t *testing.T) {
 
 	secret := "secret"
 	tmpl := test.CreateTmpl(t)
+	templater := alertmanagertemplate.New(tmpl, slog.Default())
 	notifier, err := New(
 		&config.WebhookConfig{
 			URL:        config.SecretTemplateURL(u.String()),
@@ -106,6 +110,7 @@ func TestWebhookRedactedURL(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
+		templater,
 	)
 	require.NoError(t, err)
 
@@ -129,6 +134,7 @@ func TestWebhookReadingURLFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
+		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
 	require.NoError(t, err)
 
@@ -190,6 +196,7 @@ func TestWebhookURLTemplating(t *testing.T) {
 				},
 				tmpl,
 				promslog.NewNopLogger(),
+				alertmanagertemplate.New(tmpl, slog.Default()),
 			)
 			require.NoError(t, err)
 
@@ -222,55 +229,102 @@ func TestWebhookURLTemplating(t *testing.T) {
 	}
 }
 
-func TestStripPrivateAnnotations(t *testing.T) {
-	t.Run("template annotations are removed from the copy, originals untouched", func(t *testing.T) {
-		// The original alert objects are shared with other receivers in the
-		// fanout and must not be mutated. The rendered values should not be
-		// sent to the webhook receiver at all.
-		origTitle := model.LabelValue("Alert: $labels.alertname")
-		origBody := model.LabelValue("Severity is $labels.severity")
-		in := []*types.Alert{
-			{Alert: model.Alert{
-				Labels: model.LabelSet{"alertname": "TestAlert", "severity": "critical"},
-				Annotations: model.LabelSet{
-					ruletypes.AnnotationTitleTemplate: origTitle,
-					ruletypes.AnnotationBodyTemplate:  origBody,
-					"summary":                         "keep this",
+func TestTemplateTitleBody(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
+	templater := alertmanagertemplate.New(tmpl, slog.Default())
+
+	notifier, err := New(
+		&config.WebhookConfig{
+			URL:        config.SecretTemplateURL("http://example.com"),
+			HTTPConfig: &commoncfg.HTTPClientConfig{},
+		},
+		tmpl,
+		slog.Default(),
+		templater,
+	)
+	require.NoError(t, err)
+
+	t.Run("annotations are updated with custom title and body templates", func(t *testing.T) {
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "TestAlert",
+						"severity":  "critical",
+					},
+					Annotations: model.LabelSet{
+						ruletypes.AnnotationTitleTemplate: "Alert: $labels.alertname",
+						ruletypes.AnnotationBodyTemplate:  "Severity is $labels.severity",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
 				},
-				StartsAt: time.Now(),
-				EndsAt:   time.Now().Add(time.Hour),
-			}},
+			},
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "TestAlert",
+						"severity":  "warning",
+					},
+					Annotations: model.LabelSet{
+						ruletypes.AnnotationTitleTemplate: "Alert: $labels.alertname",
+						ruletypes.AnnotationBodyTemplate:  "Severity is $labels.severity",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
 		}
 
-		out := stripPrivateAnnotations(in)
-		require.Len(t, out, 1)
+		ctx := context.Background()
+		err := notifier.templateTitleBody(ctx, alerts)
+		require.NoError(t, err)
 
-		_, hasTitle := out[0].Annotations[ruletypes.AnnotationTitleTemplate]
-		_, hasBody := out[0].Annotations[ruletypes.AnnotationBodyTemplate]
-		require.False(t, hasTitle, "title_template should be stripped from outgoing payload")
-		require.False(t, hasBody, "body_template should be stripped from outgoing payload")
-		require.Equal(t, model.LabelValue("keep this"), out[0].Annotations["summary"])
+		for _, a := range alerts {
+			_, hasTitleTmpl := a.Annotations[ruletypes.AnnotationTitleTemplate]
+			_, hasBodyTmpl := a.Annotations[ruletypes.AnnotationBodyTemplate]
+			require.False(t, hasTitleTmpl, "private title template key should be stripped")
+			require.False(t, hasBodyTmpl, "private body template key should be stripped")
+		}
 
-		// Original alert annotations remain so downstream receivers still see
-		// the raw templates.
-		require.Equal(t, origTitle, in[0].Annotations[ruletypes.AnnotationTitleTemplate])
-		require.Equal(t, origBody, in[0].Annotations[ruletypes.AnnotationBodyTemplate])
+		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[0].Annotations[templatedTitle])
+		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[1].Annotations[templatedTitle])
+		require.Equal(t, model.LabelValue("Severity is critical"), alerts[0].Annotations[templatedBody])
+		require.Equal(t, model.LabelValue("Severity is warning"), alerts[1].Annotations[templatedBody])
 	})
 
-	t.Run("alerts without template annotations are returned unchanged", func(t *testing.T) {
-		original := &types.Alert{Alert: model.Alert{
-			Labels: model.LabelSet{"alertname": "NoTemplateAlert"},
-			Annotations: model.LabelSet{
-				"summary": "keep this",
+	t.Run("annotations not updated when template keys are absent", func(t *testing.T) {
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "NoTemplateAlert",
+					},
+					Annotations: model.LabelSet{
+						"summary":     "keep this",
+						"description": "keep this too",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
 			},
-			StartsAt: time.Now(),
-			EndsAt:   time.Now().Add(time.Hour),
-		}}
+		}
 
-		out := stripPrivateAnnotations([]*types.Alert{original})
-		require.Len(t, out, 1)
-		// Pass-through optimization: when there's nothing to strip, the
-		// original pointer is reused rather than deep-copying.
-		require.Same(t, original, out[0])
+		ctx := context.Background()
+		err := notifier.templateTitleBody(ctx, alerts)
+		require.NoError(t, err)
+
+		_, hasTitleTemplate := alerts[0].Annotations[ruletypes.AnnotationTitleTemplate]
+		_, hasBodyTemplate := alerts[0].Annotations[ruletypes.AnnotationBodyTemplate]
+		require.False(t, hasTitleTemplate, "title_template should not be added when absent")
+		require.False(t, hasBodyTemplate, "body_template should not be added when absent")
+
+		_, hasTemplatedTitle := alerts[0].Annotations[templatedTitle]
+		_, hasTemplatedBody := alerts[0].Annotations[templatedBody]
+		require.False(t, hasTemplatedTitle, "templated_title should not be added when no custom templates")
+		require.False(t, hasTemplatedBody, "templated_body should not be added when no custom templates")
+
+		require.Equal(t, model.LabelValue("keep this"), alerts[0].Annotations["summary"])
+		require.Equal(t, model.LabelValue("keep this too"), alerts[0].Annotations["description"])
 	})
 }

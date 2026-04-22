@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Loader2, Plus } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -103,7 +103,7 @@ export default function HistorySidebar({
 				<span className="ai-history__heading">History</span>
 				<Button
 					variant="ghost"
-					size="xs"
+					size="sm"
 					onClick={handleNew}
 					aria-label="New conversation"
 					className="ai-history__new-btn"

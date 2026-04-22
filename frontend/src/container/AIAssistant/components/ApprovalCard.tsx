@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Check, Shield, X } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -98,7 +98,7 @@ export default function ApprovalCard({
 			<div className="ai-approval__actions">
 				<Button
 					variant="solid"
-					size="xs"
+					size="sm"
 					onClick={handleApprove}
 					disabled={isStreaming}
 				>
@@ -107,7 +107,7 @@ export default function ApprovalCard({
 				</Button>
 				<Button
 					variant="outlined"
-					size="xs"
+					size="sm"
 					onClick={handleReject}
 					disabled={isStreaming}
 				>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Checkbox, Radio } from 'antd';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
@@ -96,7 +96,7 @@ export default function InteractiveQuestion({
 					</Checkbox.Group>
 					<Button
 						variant="solid"
-						size="xs"
+						size="sm"
 						className="ai-question__submit"
 						disabled={selected.length === 0}
 						onClick={(): void => handleSubmit(selected)}

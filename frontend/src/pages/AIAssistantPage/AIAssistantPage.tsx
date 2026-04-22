@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';
@@ -81,7 +80,7 @@ export default function AIAssistantPage(): JSX.Element {
 					<Tooltip title="Clear chat">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={handleClear}
 							disabled={!activeId}
 							aria-label="Clear chat"
@@ -94,7 +93,7 @@ export default function AIAssistantPage(): JSX.Element {
 						<Button
 							variant="ghost"
 							size="sm"
-							prefixIcon={<Plus size={14} />}
+							prefix={<Plus size={14} />}
 							onClick={handleNewConversation}
 						>
 							New
@@ -104,7 +103,7 @@ export default function AIAssistantPage(): JSX.Element {
 					<Tooltip title="Minimize to panel">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={handleMinimize}
 							aria-label="Minimize to panel"
 						>

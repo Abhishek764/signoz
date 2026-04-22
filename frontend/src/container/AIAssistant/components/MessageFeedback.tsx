@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
@@ -109,7 +108,7 @@ export default function MessageFeedback({
 						className={`ai-message-feedback__btn${
 							copied ? ' ai-message-feedback__btn--active' : ''
 						}`}
-						size="xs"
+						size="icon"
 						variant="ghost"
 						onClick={handleCopy}
 					>
@@ -122,7 +121,7 @@ export default function MessageFeedback({
 						className={`ai-message-feedback__btn${
 							vote === 'positive' ? ' ai-message-feedback__btn--voted-up' : ''
 						}`}
-						size="xs"
+						size="icon"
 						variant="ghost"
 						onClick={(): void => handleVote('positive')}
 					>
@@ -135,7 +134,7 @@ export default function MessageFeedback({
 						className={`ai-message-feedback__btn${
 							vote === 'negative' ? ' ai-message-feedback__btn--voted-down' : ''
 						}`}
-						size="xs"
+						size="icon"
 						variant="ghost"
 						onClick={(): void => handleVote('negative')}
 					>
@@ -147,7 +146,7 @@ export default function MessageFeedback({
 					<Tooltip title="Regenerate">
 						<Button
 							className="ai-message-feedback__btn"
-							size="xs"
+							size="icon"
 							variant="ghost"
 							onClick={onRegenerate}
 						>

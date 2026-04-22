@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { Eraser, History, Maximize2, Plus, X } from 'lucide-react';
 
@@ -111,7 +110,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					<Tooltip title={showHistory ? 'Back to chat' : 'Chat history'}>
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={(): void => setShowHistory((v) => !v)}
 							aria-label="Toggle history"
 							className={showHistory ? 'ai-panel-btn--active' : ''}
@@ -123,7 +122,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					<Tooltip title="Clear chat">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={handleClear}
 							disabled={!activeConversationId || showHistory}
 							aria-label="Clear chat"
@@ -135,7 +134,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					<Tooltip title="New conversation">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={handleNew}
 							aria-label="New conversation"
 						>
@@ -146,7 +145,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					<Tooltip title="Open full screen">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={handleExpand}
 							disabled={!activeConversationId}
 							aria-label="Open full screen"
@@ -158,7 +157,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					<Tooltip title="Close">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={closeDrawer}
 							aria-label="Close panel"
 						>

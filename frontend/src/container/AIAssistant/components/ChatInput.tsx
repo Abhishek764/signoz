@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import type { UploadFile } from 'antd';
 import { Upload } from 'antd';
 import { Mic, Paperclip, Send, Square, X } from 'lucide-react';
@@ -122,7 +121,7 @@ export default function ChatInput({
 							<span className="ai-assistant-input__attachment-name">{f.name}</span>
 							<Button
 								variant="ghost"
-								size="xs"
+								size="icon"
 								className="ai-assistant-input__attachment-remove"
 								onClick={(): void => removeFile(f.uid)}
 								aria-label={`Remove ${f.name}`}
@@ -154,7 +153,7 @@ export default function ChatInput({
 				>
 					<Button
 						variant="ghost"
-						size="xs"
+						size="icon"
 						disabled={disabled}
 						aria-label="Attach file"
 					>
@@ -216,7 +215,7 @@ export default function ChatInput({
 					>
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							onClick={start}
 							disabled={disabled || !isSupported}
 							aria-label="Start voice input"
@@ -231,7 +230,7 @@ export default function ChatInput({
 					<Tooltip title="Stop generating">
 						<Button
 							variant="solid"
-							size="xs"
+							size="icon"
 							className="ai-assistant-input__send-btn ai-assistant-input__send-btn--stop"
 							onClick={onCancel}
 							aria-label="Stop generating"
@@ -242,7 +241,7 @@ export default function ChatInput({
 				) : (
 					<Button
 						variant="solid"
-						size="xs"
+						size="icon"
 						className="ai-assistant-input__send-btn"
 						onClick={isListening ? handleStopAndSend : handleSend}
 						disabled={disabled || (!text.trim() && pendingFiles.length === 0)}

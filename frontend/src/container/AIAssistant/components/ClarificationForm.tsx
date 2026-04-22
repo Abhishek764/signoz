@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { HelpCircle, Send } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -79,7 +79,7 @@ export default function ClarificationForm({
 			<div className="ai-clarification__actions">
 				<Button
 					variant="solid"
-					size="xs"
+					size="sm"
 					onClick={handleSubmit}
 					disabled={isStreaming}
 				>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { AlertCircle, Check, Loader2, X, Zap } from 'lucide-react';
 
 import { PageActionRegistry } from '../../pageActions/PageActionRegistry';
@@ -196,11 +196,11 @@ export default function ActionBlock({
 			)}
 
 			<div className="ai-action__actions">
-				<Button variant="solid" size="xs" onClick={execute}>
+				<Button variant="solid" size="sm" onClick={execute}>
 					<Check size={12} />
 					Apply
 				</Button>
-				<Button variant="outlined" size="xs" onClick={handleDismiss}>
+				<Button variant="outlined" size="sm" onClick={handleDismiss}>
 					<X size={12} />
 					Dismiss
 				</Button>

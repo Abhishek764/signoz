@@ -1,4 +1,4 @@
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Check, X } from 'lucide-react';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
@@ -67,13 +67,13 @@ export default function ConfirmBlock({
 		<div className="ai-block ai-confirm">
 			{message && <p className="ai-confirm__message">{message}</p>}
 			<div className="ai-confirm__actions">
-				<Button variant="solid" size="xs" onClick={(): void => handle('accepted')}>
+				<Button variant="solid" size="sm" onClick={(): void => handle('accepted')}>
 					<Check size={12} />
 					{acceptLabel}
 				</Button>
 				<Button
 					variant="outlined"
-					size="xs"
+					size="sm"
 					onClick={(): void => handle('rejected')}
 				>
 					<X size={12} />

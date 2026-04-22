@@ -1,6 +1,5 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
 
 import { Conversation } from '../types';
@@ -132,7 +131,7 @@ export default function ConversationItem({
 					<Tooltip title="Rename">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							className="ai-history__item-btn"
 							onClick={startEditing}
 							aria-label="Rename conversation"
@@ -143,7 +142,7 @@ export default function ConversationItem({
 					<Tooltip title="Delete">
 						<Button
 							variant="ghost"
-							size="xs"
+							size="icon"
 							className="ai-history__item-btn ai-history__item-btn--danger"
 							onClick={handleDelete}
 							aria-label="Delete conversation"

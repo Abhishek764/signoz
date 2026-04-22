@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button as PeriscopeButton } from '@signozhq/button';
-import { Tooltip as PeriscopeTooltip } from '@signozhq/tooltip';
-import { Button, Popover } from 'antd';
+import { Button, Tooltip } from '@signozhq/ui';
+import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
-import { openAIAssistant, useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import {
+	openAIAssistant,
+	useAIAssistantStore,
+} from 'container/AIAssistant/store/useAIAssistantStore';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
 
@@ -76,16 +78,15 @@ function HeaderRightSection({
 	return (
 		<div className="header-right-section-container">
 			{!isDrawerOpen && (
-				<PeriscopeTooltip title="AI Assistant">
-					<PeriscopeButton
+				<Tooltip title="AI Assistant">
+					<Button
 						variant="ghost"
-						size="xs"
+						size="icon"
 						onClick={openAIAssistant}
 						aria-label="Open AI Assistant"
-					>
-						<AIAssistantIcon size={18} />
-					</PeriscopeButton>
-				</PeriscopeTooltip>
+						prefix={<AIAssistantIcon />}
+					/>
+				</Tooltip>
 			)}
 
 			{enableFeedback && isLicenseEnabled && (
@@ -101,12 +102,11 @@ function HeaderRightSection({
 					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
-						className="share-feedback-btn periscope-btn ghost"
-						icon={<SquarePen size={14} />}
+						variant="ghost"
+						size="icon"
+						prefix={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
-					>
-						Feedback
-					</Button>
+					/>
 				</Popover>
 			)}
 
@@ -123,8 +123,9 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
-						icon={<Inbox size={14} />}
-						className="periscope-btn ghost announcements-btn"
+						variant="ghost"
+						size="icon"
+						prefix={<Inbox size={14} />}
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
 								page: location.pathname,
@@ -147,12 +148,11 @@ function HeaderRightSection({
 					onOpenChange={handleOpenShareURLModalChange}
 				>
 					<Button
-						className="share-link-btn periscope-btn ghost"
-						icon={<Globe size={14} />}
+						variant="ghost"
+						size="icon"
+						prefix={<Globe size={14} />}
 						onClick={handleOpenShareURLModal}
-					>
-						Share
-					</Button>
+					/>
 				</Popover>
 			)}
 		</div>

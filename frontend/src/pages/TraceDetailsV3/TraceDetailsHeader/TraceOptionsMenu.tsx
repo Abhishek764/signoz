@@ -19,15 +19,6 @@ function TraceOptionsMenu({
 				label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
 				onClick: onToggleTraceDetails,
 			},
-			{
-				key: 'colour-by',
-				label: 'Colour by',
-				children: [
-					{ key: 'colour-service', label: 'Service' },
-					{ key: 'colour-host', label: 'Host' },
-					{ key: 'colour-domain', label: 'Domain' },
-				],
-			},
 		],
 		[showTraceDetails, onToggleTraceDetails],
 	);

@@ -116,9 +116,6 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	if err != nil {
 		return nil, err
 	}
-	if metadataMap == nil {
-		metadataMap = make(map[string]map[string]string)
-	}
 
 	resp.Total = len(metadataMap)
 

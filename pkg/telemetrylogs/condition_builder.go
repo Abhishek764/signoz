@@ -6,6 +6,7 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -15,10 +16,11 @@ import (
 
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
+	fl flagger.Flagger
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
+func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
+	return &conditionBuilder{fm: fm, fl: fl}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -36,7 +38,7 @@ func (c *conditionBuilder) conditionFor(
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.IsBodyJSONEnabled(ctx, c.fl) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -56,7 +58,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// Check if this is a body JSON search - either by FieldContext
-	if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
+	if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.IsBodyJSONEnabled(ctx, c.fl) {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -167,7 +169,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
+		if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.IsBodyJSONEnabled(ctx, c.fl) {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -287,7 +289,7 @@ func (c *conditionBuilder) ConditionFor(
 	case telemetrytypes.FieldContextBody:
 		// Querying JSON fields already account for Nullability of fields
 		// so additional exists checks are not needed
-		if querybuilder.BodyJSONQueryEnabled {
+		if querybuilder.IsBodyJSONEnabled(ctx, c.fl) {
 			return condition, nil
 		}
 	}

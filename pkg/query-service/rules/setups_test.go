@@ -15,6 +15,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 )
 
 func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.TelemetryStore) (querier.Querier, *telemetrytypestest.MockMetadataStore) {
@@ -54,8 +56,8 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 	), metadataStore
 }
 
-func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
-
+func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+	t.Helper()
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
@@ -66,14 +68,16 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 	}
 	metadataStore.KeysMap = keysMap
 
-	logFieldMapper := telemetrylogs.NewFieldMapper()
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
+	fl := flaggertest.MustNew()
+	logFieldMapper := telemetrylogs.NewFieldMapper(fl)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, fl)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		providerSettings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.GetBodyJSONKey,
+		fl,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		providerSettings,
@@ -83,6 +87,7 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
+		fl,
 	)
 
 	return querier.New(
@@ -116,7 +121,7 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, flaggertest.MustNew())
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,
@@ -124,6 +129,7 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 		traceConditionBuilder,
 		traceAggExprRewriter,
 		telemetryStore,
+		nil,
 	)
 
 	return querier.New(

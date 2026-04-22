@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -60,6 +61,7 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 				Context:   context.Background(),
 				FieldKeys: keys,
 				Variables: tt.variables,
+				Flagger:   flaggertest.New(t),
 			}
 
 			_, err := PrepareWhereClause(tt.expr, opts)
@@ -83,6 +85,7 @@ func createTestVisitor(fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	return &filterExpressionVisitor{
 		logger:             slog.Default(),
 		fieldKeys:          fieldKeys,
+		flagger:            flaggertest.MustNew(),
 		ignoreNotFoundKeys: ignoreNotFoundKeys,
 		keysWithWarnings:   make(map[string]bool),
 		builder:            sqlbuilder.NewSelectBuilder(),
@@ -792,6 +795,7 @@ func visitComparisonOpts() (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	rsbOpts = FilterExprVisitorOpts{
 		FieldKeys:          visitTestKeys,
 		ConditionBuilder:   &resourceConditionBuilder{},
+		Flagger:            flaggertest.MustNew(),
 		Variables:          allVariable,
 		SkipResourceFilter: false,
 		SkipFullTextFilter: true,
@@ -801,6 +805,7 @@ func visitComparisonOpts() (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	sbOpts = FilterExprVisitorOpts{
 		FieldKeys:          visitTestKeys,
 		ConditionBuilder:   &conditionBuilder{},
+		Flagger:            flaggertest.MustNew(),
 		Variables:          allVariable,
 		SkipResourceFilter: true,
 		SkipFullTextFilter: false,

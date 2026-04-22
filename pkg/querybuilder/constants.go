@@ -9,7 +9,3 @@ const (
 var (
 	SkippableConditionLiterals = []string{SkipConditionLiteral, ErrorConditionLiteral}
 )
-
-var (
-	BodyJSONQueryEnabled bool
-)

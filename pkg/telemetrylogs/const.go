@@ -1,9 +1,11 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -41,7 +43,7 @@ const (
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
 
 	// messageSubColumn is the ClickHouse sub-column that body searches map to
-	// when BodyJSONQueryEnabled is true.
+	// when body_json_enabled feature flag is true.
 	messageSubField          = "message"
 	messageSubColumn         = "body_v2.message"
 	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
@@ -128,8 +130,8 @@ var (
 	}
 )
 
-func bodyAliasExpression() string {
-	if !querybuilder.BodyJSONQueryEnabled {
+func bodyAliasExpression(ctx context.Context, fl flagger.Flagger) string {
+	if !querybuilder.IsBodyJSONEnabled(ctx, fl) {
 		return LogsV2BodyColumn
 	}
 

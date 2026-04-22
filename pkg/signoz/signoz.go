@@ -32,7 +32,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -50,7 +49,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -183,7 +181,6 @@ func New(
 	// Initialize flagger from the available flagger provider factories
 	flaggerRegistry := flagger.MustNewRegistry()
 	flaggerProviderFactories := NewFlaggerProviderFactories(flaggerRegistry)
-	bodyJSONEnabledFlag := flagger.FeatureBodyJSONQuery
 	flagger, err := flagger.New(
 		ctx,
 		providerSettings,
@@ -194,8 +191,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	querybuilder.BodyJSONQueryEnabled = flagger.BooleanOrEmpty(ctx, bodyJSONEnabledFlag, featuretypes.FlaggerEvaluationContext{})
 
 	// Initialize web from the available web provider factories
 	web, err := factory.NewProviderFromNamedMap(
@@ -415,6 +410,7 @@ func New(
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
 	)
 
 	global, err := factory.NewProviderFromNamedMap(

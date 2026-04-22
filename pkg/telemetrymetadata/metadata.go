@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -63,6 +64,7 @@ type telemetryMetaStore struct {
 
 	fm                 qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
+	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 }
 
@@ -94,8 +96,12 @@ func NewTelemetryMetaStore(
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
 	columnEvolutionMetadataTblName string,
+	fl flagger.Flagger,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
+	
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
 
 	t := &telemetryMetaStore{
 		logger:                         metadataSettings.Logger(),
@@ -129,13 +135,10 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
+		fl: fl,
+		fm: fm,
+		conditionBuilder: conditionBuilder,
 	}
-
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
-
-	t.fm = fm
-	t.conditionBuilder = conditionBuilder
 
 	return t
 }
@@ -416,7 +419,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// body keys are gated behind the feature flag
-	queryBodyTable = queryBodyTable && querybuilder.BodyJSONQueryEnabled
+	queryBodyTable = queryBodyTable && querybuilder.IsBodyJSONEnabled(ctx, t.fl)
 
 	// requestedFieldKeySelectors is the set of names the user explicitly asked for.
 	// Used to ensure a name that is both a parent path AND a directly requested field still surfaces
@@ -676,7 +679,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// enrich body keys with promoted paths, indexes, and JSON access plans
-	if querybuilder.BodyJSONQueryEnabled {
+	if querybuilder.IsBodyJSONEnabled(ctx, t.fl) {
 		if err := t.enrichJSONKeys(ctx, fieldKeySelectors, keys, parentTypes); err != nil {
 			return nil, false, err
 		}
@@ -1409,6 +1412,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
+			Flagger:          t.fl,
 		})
 		if err != nil {
 			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))

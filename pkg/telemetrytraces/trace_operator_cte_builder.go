@@ -239,6 +239,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 				FieldMapper:        b.stmtBuilder.fm,
 				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
+				Flagger:            b.stmtBuilder.fl,
 				SkipResourceFilter: true,
 				StartNs:            b.start,
 				EndNs:              b.end,
@@ -560,6 +561,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 			keys,
 			telemetrytypes.FieldDataTypeString,
 			nil,
+			b.stmtBuilder.fl,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -676,6 +678,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 			keys,
 			telemetrytypes.FieldDataTypeString,
 			nil,
+			b.stmtBuilder.fl,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
@@ -822,6 +825,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 			keys,
 			telemetrytypes.FieldDataTypeString,
 			nil,
+			b.stmtBuilder.fl,
 		)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(

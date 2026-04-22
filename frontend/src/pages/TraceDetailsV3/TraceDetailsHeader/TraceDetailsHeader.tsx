@@ -153,6 +153,27 @@ function TraceDetailsHeader({
 					)}
 				</div>
 			)}
+
+			{/* {isPreviewFieldsOpen && (
+				<FloatingPanel
+					isOpen
+					width={350}
+					height={window.innerHeight - 100}
+					defaultPosition={{
+						x: window.innerWidth - 350 - 100,
+						y: 50,
+					}}
+					enableResizing={false}
+				>
+					<FieldsSettings
+						title="Preview fields"
+						fields={previewFields}
+						onFieldsChange={setPreviewFields}
+						onClose={(): void => setIsPreviewFieldsOpen(false)}
+						dataSource={DataSource.TRACES}
+					/>
+				</FloatingPanel>
+			)} */}
 		</div>
 	);
 }

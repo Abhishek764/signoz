@@ -19,6 +19,11 @@ function TraceOptionsMenu({
 				label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
 				onClick: onToggleTraceDetails,
 			},
+			// {
+			// 	key: 'preview-fields',
+			// 	label: 'Preview fields',
+			// 	onClick: (): void => setIsPreviewFieldsOpen(!isPreviewFieldsOpen),
+			// },
 		],
 		[showTraceDetails, onToggleTraceDetails],
 	);

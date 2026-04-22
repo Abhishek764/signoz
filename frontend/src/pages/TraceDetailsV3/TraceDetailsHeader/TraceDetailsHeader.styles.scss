@@ -1,5 +1,6 @@
 .trace-details-header-wrapper {
 	flex-shrink: 0;
+	position: relative;
 }
 
 .trace-details-header {
@@ -57,4 +58,5 @@
 		border-radius: 4px;
 		font-size: 12px;
 	}
+
 }

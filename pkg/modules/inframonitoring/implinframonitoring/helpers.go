@@ -434,6 +434,58 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 	return missingMetrics, globalMinFirstReported, nil
 }
 
+// getAttributesPresence returns the subset of attrNames that have ever been
+// reported as a label on any of the given metricNames. The result maps each
+// present attr name to true; attrs not in the map are absent.
+//
+// Presence is checked against distributed_metadata without a time-range
+// filter — the metadata table is append-only, so an attr that ever existed
+// for a metric stays visible. Callers decide "required but missing" via
+// lookup against their required list.
+//
+// Sibling to getMetricsExistenceAndEarliestTime — used by the onboarding API
+// to validate required resource attributes (e.g. host.name, k8s.pod.uid) for
+// each infra-monitoring tab.
+func (m *module) getAttributesPresence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
+	if len(metricNames) == 0 || len(attrNames) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("attr_name", "count(*) AS cnt")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
+		sb.In("attr_name", sqlbuilder.List(attrNames)),
+	)
+	sb.GroupBy("attr_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	present := make(map[string]bool, len(attrNames))
+	for rows.Next() {
+		var name string
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
+		}
+		if name != "" && cnt > 0 {
+			present[name] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return present, nil
+}
+
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,
 // within the given time range and metric names. It uses argMax(tuple(...), unix_milli) to ensure
 // we always pick attribute values from the latest timestamp for each group.

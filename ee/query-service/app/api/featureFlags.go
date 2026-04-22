@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
@@ -66,6 +67,18 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
 		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	bodyJSONQuery := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, evalCtx)
+	if querybuilder.BodyJSONQueryEnabled {
+		bodyJSONQuery = querybuilder.BodyJSONQueryEnabled
+	}
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureBodyJSONQuery.String()),
+		Active:     bodyJSONQuery,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

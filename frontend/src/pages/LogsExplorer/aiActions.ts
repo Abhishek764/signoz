@@ -13,15 +13,17 @@
  * so the query builder UI never reflects the change.
  */
 
-import { v4 as uuidv4 } from 'uuid';
-
-import { PageAction } from 'container/AIAssistant/pageActions/types';
+import {
+	ActionResult,
+	PageAction,
+} from 'container/AIAssistant/pageActions/types';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	Query,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { v4 as uuidv4 } from 'uuid';
 
 // ─── Shared param shape emitted by the AI ─────────────────────────────────────
 
@@ -104,14 +106,7 @@ export function logsRunQueryAction(
 							},
 							op: {
 								type: 'string',
-								enum: [
-									'=',
-									'!=',
-									'IN',
-									'NOT_IN',
-									'CONTAINS',
-									'NOT_CONTAINS',
-								],
+								enum: ['=', '!=', 'IN', 'NOT_IN', 'CONTAINS', 'NOT_CONTAINS'],
 							},
 							value: { type: 'string' },
 						},
@@ -122,9 +117,11 @@ export function logsRunQueryAction(
 			required: ['filters'],
 		},
 		autoApply: true,
-		execute: async ({ filters }) => {
+		execute: async ({ filters }): Promise<ActionResult> => {
 			const baseQuery = deps.currentQuery.builder.queryData[0];
-			if (!baseQuery) throw new Error('No active query found in Logs Explorer.');
+			if (!baseQuery) {
+				throw new Error('No active query found in Logs Explorer.');
+			}
 
 			const tagItems = filters.map(aiFilterToTagFilterItem);
 			const updatedBuilderQuery: IBuilderQuery = {
@@ -140,7 +137,7 @@ export function logsRunQueryAction(
 				summary: `Query updated with ${filters.length} filter(s) and re-run.`,
 			};
 		},
-		getContext: () => ({
+		getContext: (): Record<string, unknown> => ({
 			filters:
 				deps.currentQuery.builder.queryData[0]?.filters?.items?.map(
 					(f: TagFilterItem) => ({
@@ -178,9 +175,11 @@ export function logsAddFilterAction(
 			required: ['key', 'op', 'value'],
 		},
 		autoApply: true,
-		execute: async ({ key, op, value }) => {
+		execute: async ({ key, op, value }): Promise<ActionResult> => {
 			const baseQuery = deps.currentQuery.builder.queryData[0];
-			if (!baseQuery) throw new Error('No active query found in Logs Explorer.');
+			if (!baseQuery) {
+				throw new Error('No active query found in Logs Explorer.');
+			}
 
 			const existing = baseQuery.filters?.items ?? [];
 			const newItem = aiFilterToTagFilterItem({ key, op, value });
@@ -219,7 +218,7 @@ export function logsChangeViewAction(deps: {
 			},
 			required: ['view'],
 		},
-		execute: async ({ view }) => {
+		execute: async ({ view }): Promise<ActionResult> => {
 			deps.onChangeView(view);
 			return { summary: `Switched to the "${view}" view.` };
 		},
@@ -242,7 +241,7 @@ export function logsSaveViewAction(deps: {
 			},
 			required: ['name'],
 		},
-		execute: async ({ name }) => {
+		execute: async ({ name }): Promise<ActionResult> => {
 			await deps.onSaveView(name);
 			return { summary: `View "${name}" saved.` };
 		},

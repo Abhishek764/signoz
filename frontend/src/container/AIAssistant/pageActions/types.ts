@@ -7,7 +7,12 @@ export type JSONSchemaProperty =
 			description?: string;
 			items: JSONSchemaProperty | JSONSchemaObject;
 	  }
-	| { type: 'object'; description?: string; properties?: Record<string, JSONSchemaProperty>; required?: string[] };
+	| {
+			type: 'object';
+			description?: string;
+			properties?: Record<string, JSONSchemaProperty>;
+			required?: string[];
+	  };
 
 export type JSONSchemaObject = {
 	type: 'object';

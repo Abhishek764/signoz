@@ -18,13 +18,16 @@ import { PageAction } from './types';
  * stays stable and we don't re-register on every render.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function usePageActions(pageId: string, actions: PageAction<any>[]): void {
+export function usePageActions(
+	pageId: string,
+	actions: PageAction<any>[],
+): void {
 	useEffect(() => {
 		PageActionRegistry.register(pageId, actions);
 		return (): void => {
 			PageActionRegistry.unregister(pageId);
 		};
-	// Re-register when actions reference changes (e.g. new callbacks after store update)
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		// Re-register when actions reference changes (e.g. new callbacks after store update)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pageId, actions]);
 }

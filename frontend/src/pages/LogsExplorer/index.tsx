@@ -120,8 +120,7 @@ function LogsExplorer(): JSX.Element {
 				redirectWithQueryBuilderData,
 			}),
 			logsChangeViewAction({
-				onChangeView: (view) =>
-					handleChangeSelectedView(view as ExplorerViews),
+				onChangeView: (view) => handleChangeSelectedView(view as ExplorerViews),
 			}),
 			logsSaveViewAction({
 				// POC stub — logs a save request; wire to real API when available

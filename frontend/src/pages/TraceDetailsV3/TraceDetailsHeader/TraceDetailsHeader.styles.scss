@@ -45,4 +45,16 @@
 		gap: 6px;
 		white-space: nowrap;
 	}
+
+	&__separator {
+		color: var(--l2-foreground);
+		opacity: 0.5;
+	}
+
+	&__entry-point-badge {
+		padding: 2px 8px;
+		border: 1px solid var(--l2-border);
+		border-radius: 4px;
+		font-size: 12px;
+	}
 }

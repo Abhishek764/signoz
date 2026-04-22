@@ -2,11 +2,12 @@ import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
-import { ArrowLeft, CalendarClock, Timer } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Server, Timer } from 'lucide-react';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
@@ -43,7 +44,11 @@ function TraceDetailsHeader({
 	traceMetadata,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV2URLProps>();
-	const [showTraceDetails, setShowTraceDetails] = useState(false);
+	const [showTraceDetails, setShowTraceDetails] = useState(
+		() =>
+			localStorage.getItem(LOCALSTORAGE.TRACE_DETAILS_SHOW_TRACE_OVERVIEW) ===
+			'true',
+	);
 
 	const handleSwitchToOldView = useCallback((): void => {
 		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
@@ -64,7 +69,14 @@ function TraceDetailsHeader({
 	}, []);
 
 	const handleToggleTraceDetails = useCallback((): void => {
-		setShowTraceDetails((prev) => !prev);
+		setShowTraceDetails((prev) => {
+			const next = !prev;
+			localStorage.setItem(
+				LOCALSTORAGE.TRACE_DETAILS_SHOW_TRACE_OVERVIEW,
+				String(next),
+			);
+			return next;
+		});
 	}, []);
 
 	const durationMs = traceMetadata
@@ -121,17 +133,20 @@ function TraceDetailsHeader({
 			{showTraceDetails && traceMetadata && (
 				<div className="trace-details-header__sub-header">
 					<span className="trace-details-header__sub-item">
+						<Server size={13} />
+						{traceMetadata.rootServiceName}
+						<span className="trace-details-header__separator">—</span>
+						<span className="trace-details-header__entry-point-badge">
+							{traceMetadata.rootServiceEntryPoint}
+						</span>
+					</span>
+					<span className="trace-details-header__sub-item">
 						<Timer size={13} />
 						{parseFloat(formattedDuration.toFixed(2))} {timeUnitName}
 					</span>
 					<span className="trace-details-header__sub-item">
 						<CalendarClock size={13} />
-						{dayjs(traceMetadata.startTimestampMillis).format(
-							'HH:mm:ss — MMM D, YYYY',
-						)}
-					</span>
-					<span className="trace-details-header__sub-item">
-						{traceMetadata.rootServiceEntryPoint}
+						{dayjs(traceMetadata.startTimestampMillis).format('D MMM YYYY, HH:mm:ss')}
 					</span>
 					{traceMetadata.rootSpanStatusCode && (
 						<HttpStatusBadge statusCode={traceMetadata.rootSpanStatusCode} />

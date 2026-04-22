@@ -212,6 +212,30 @@ function App(): JSX.Element {
 		activeLicenseFetchError,
 	]);
 
+	useEffect(() => {
+		if (!isLoggedInState || isFetchingFeatureFlags) {
+			return;
+		}
+		const isAIAssistantEnabled =
+			featureFlags?.find((f) => f.name === FeatureKeys.AI_ASSISTANT_ENABLED)
+				?.active ?? false;
+
+		setRoutes((prev) => {
+			const hasAi = prev.some((r) => r.path === ROUTES.AI_ASSISTANT);
+			if (isAIAssistantEnabled === hasAi) {
+				return prev;
+			}
+			if (isAIAssistantEnabled) {
+				const aiRoute = defaultRoutes.find((r) => r.path === ROUTES.AI_ASSISTANT);
+				if (!aiRoute) {
+					return prev;
+				}
+				return [...prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT), aiRoute];
+			}
+			return prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT);
+		});
+	}, [isLoggedInState, isFetchingFeatureFlags, featureFlags]);
+
 	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {

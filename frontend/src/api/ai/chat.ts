@@ -14,9 +14,8 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env to override.
-const AI_BACKEND =
-	import.meta.env.VITE_AI_BACKEND_URL || 'http://localhost:8001';
+// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env (see vite.config `define`).
+const AI_BACKEND = process.env.VITE_AI_BACKEND_URL || 'http://localhost:8001';
 const BASE = `${AI_BACKEND}/api/v1/assistant`;
 
 function authHeaders(): Record<string, string> {

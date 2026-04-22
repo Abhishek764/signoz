@@ -123,6 +123,9 @@ export default defineConfig(
 				'process.env.TUNNEL_URL': JSON.stringify(env.VITE_TUNNEL_URL),
 				'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 				'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
+				'process.env.VITE_AI_BACKEND_URL': JSON.stringify(
+					env.VITE_AI_BACKEND_URL || 'http://localhost:8001',
+				),
 			},
 			build: {
 				sourcemap: true,

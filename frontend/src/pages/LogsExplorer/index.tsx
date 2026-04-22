@@ -28,6 +28,7 @@ import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -81,6 +82,8 @@ function LogsExplorer(): JSX.Element {
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+
 	const listQueryKeyRef = useRef<any>();
 
 	const chartQueryKeyRef = useRef<any>();
@@ -108,30 +111,38 @@ function LogsExplorer(): JSX.Element {
 		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
 
-	// ─── AI Assistant page actions ─────────────────────────────────────────────
+	// ─── AI Assistant page actions (only when license feature is on) ───────────
 	const aiActions = useMemo(
-		() => [
-			logsRunQueryAction({
-				currentQuery,
-				redirectWithQueryBuilderData,
-			}),
-			logsAddFilterAction({
-				currentQuery,
-				redirectWithQueryBuilderData,
-			}),
-			logsChangeViewAction({
-				onChangeView: (view) => handleChangeSelectedView(view as ExplorerViews),
-			}),
-			logsSaveViewAction({
-				// POC stub — logs a save request; wire to real API when available
-				onSaveView: async (name) => {
-					// eslint-disable-next-line no-console
-					console.info('[AI Assistant] Save view requested:', name);
-				},
-			}),
-		],
+		() =>
+			isAIAssistantEnabled
+				? [
+						logsRunQueryAction({
+							currentQuery,
+							redirectWithQueryBuilderData,
+						}),
+						logsAddFilterAction({
+							currentQuery,
+							redirectWithQueryBuilderData,
+						}),
+						logsChangeViewAction({
+							onChangeView: (view) => handleChangeSelectedView(view as ExplorerViews),
+						}),
+						logsSaveViewAction({
+							// POC stub — logs a save request; wire to real API when available
+							onSaveView: async (name) => {
+								// eslint-disable-next-line no-console
+								console.info('[AI Assistant] Save view requested:', name);
+							},
+						}),
+				  ]
+				: [],
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[currentQuery, redirectWithQueryBuilderData, handleChangeSelectedView],
+		[
+			isAIAssistantEnabled,
+			currentQuery,
+			redirectWithQueryBuilderData,
+			handleChangeSelectedView,
+		],
 	);
 	usePageActions('logs-explorer', aiActions);
 	// ───────────────────────────────────────────────────────────────────────────

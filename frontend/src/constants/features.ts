@@ -9,4 +9,6 @@ export enum FeatureKeys {
 	ANOMALY_DETECTION = 'anomaly_detection',
 	ONBOARDING_V3 = 'onboarding_v3',
 	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
+	/** When active, AI assistant UI, routes, and integrations are available. */
+	AI_ASSISTANT_ENABLED = 'ai_assistant_enabled',
 }

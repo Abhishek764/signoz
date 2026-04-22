@@ -9,6 +9,7 @@ import {
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
 
 import AnnouncementsModal from './AnnouncementsModal';
@@ -35,6 +36,7 @@ function HeaderRightSection({
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const handleOpenFeedbackModal = useCallback((): void => {
 		logEvent('Feedback: Clicked', {
@@ -77,7 +79,7 @@ function HeaderRightSection({
 
 	return (
 		<div className="header-right-section-container">
-			{!isDrawerOpen && (
+			{isAIAssistantEnabled && !isDrawerOpen && (
 				<Tooltip title="AI Assistant">
 					<Button
 						variant="ghost"

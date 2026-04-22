@@ -19,7 +19,6 @@ import {
 	submitFeedback,
 	updateThread,
 } from '../../../api/ai/chat';
-import { mockStreamChat } from '../mock/mockAIApi';
 import { PageActionRegistry } from '../pageActions/PageActionRegistry';
 import {
 	Conversation,
@@ -28,8 +27,6 @@ import {
 	MessageAttachment,
 	MessageBlock,
 } from '../types';
-
-const USE_MOCK_AI = import.meta.env.VITE_AI_MOCK === 'true';
 
 // ---------------------------------------------------------------------------
 // Types used by module-level helpers
@@ -389,33 +386,6 @@ function finalizeStreamingError(
 	});
 }
 
-/** Shared mock streaming path for sendMessage. */
-async function runMockStream(
-	payload: {
-		conversationId: string;
-		messages: { role: 'user' | 'assistant'; content: string }[];
-	},
-	set: StoreSetter,
-): Promise<void> {
-	for await (const event of mockStreamChat(payload)) {
-		if (event.type === 'message') {
-			if (event.delta) {
-				set((s) => {
-					const st = s.streams[payload.conversationId];
-					if (st) {
-						appendTextToStream(st, event.messageId, event.delta);
-					}
-				});
-			}
-			if (event.done) {
-				break;
-			}
-		} else if (event.type === 'done') {
-			break;
-		}
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Store interface
 // ---------------------------------------------------------------------------
@@ -635,9 +605,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			},
 
 			fetchThreads: async (): Promise<void> => {
-				if (USE_MOCK_AI) {
-					return;
-				}
 				set((s) => {
 					s.isLoadingThreads = true;
 				});
@@ -671,10 +638,6 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 			loadThread: async (threadId: string): Promise<void> => {
-				if (USE_MOCK_AI) {
-					return;
-				}
-
 				set((s) => {
 					s.isLoadingThread = true;
 					s.activeConversationId = threadId;
@@ -773,7 +736,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						state.activeConversationId = remaining[0]?.id ?? null;
 					}
 				});
-				if (conv?.threadId && !USE_MOCK_AI) {
+				if (conv?.threadId) {
 					updateThread(conv.threadId, { archived: true }).catch((err) => {
 						console.error('[AIAssistant] archiveThread failed:', err);
 					});
@@ -788,7 +751,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					}
 				});
 				const conv = get().conversations[id];
-				if (conv?.threadId && !USE_MOCK_AI) {
+				if (conv?.threadId) {
 					updateThread(conv.threadId, { title: trimmed ?? null }).catch((err) => {
 						console.error('[AIAssistant] renameThread failed:', err);
 					});
@@ -830,61 +793,43 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 
 				try {
-					if (USE_MOCK_AI) {
-						const history = get().conversations[convId].messages;
-						const contextPrefix = buildContextPrefix();
-						await runMockStream(
-							{
-								conversationId: convId,
-								messages: history.map((m, i) => ({
-									role: m.role as 'user' | 'assistant',
-									content:
-										contextPrefix && i === history.length - 1 && m.role === 'user'
-											? contextPrefix + m.content
-											: m.content,
-								})),
-							},
-							set,
-						);
-					} else {
-						let { threadId } = get().conversations[convId];
-						if (!threadId) {
-							threadId = await createThread();
-							// Re-key the conversation from client UUID to backend threadId
-							// so fetchThreads won't create a duplicate entry later.
-							const oldId = convId;
-							convId = threadId;
-							set((s) => {
-								const conv = s.conversations[oldId];
-								if (conv) {
-									conv.id = convId!;
-									conv.threadId = convId!;
-									s.conversations[convId!] = conv;
-									delete s.conversations[oldId];
-									if (s.activeConversationId === oldId) {
-										s.activeConversationId = convId!;
-									}
-									const stream = s.streams[oldId];
-									if (stream) {
-										s.streams[convId!] = stream;
-										delete s.streams[oldId];
-									}
+					let { threadId } = get().conversations[convId];
+					if (!threadId) {
+						threadId = await createThread();
+						// Re-key the conversation from client UUID to backend threadId
+						// so fetchThreads won't create a duplicate entry later.
+						const oldId = convId;
+						convId = threadId;
+						set((s) => {
+							const conv = s.conversations[oldId];
+							if (conv) {
+								conv.id = convId!;
+								conv.threadId = convId!;
+								s.conversations[convId!] = conv;
+								delete s.conversations[oldId];
+								if (s.activeConversationId === oldId) {
+									s.activeConversationId = convId!;
 								}
-							});
-						}
-						const contextPrefix = buildContextPrefix();
-						const executionId = await sendMessageToThread(
-							threadId,
-							contextPrefix + text,
-						);
-						const ctrl = newStreamController(convId);
-						await runStreamingLoop(executionId, {
-							conversationId: convId,
-							set,
-							signal: ctrl.signal,
+								const stream = s.streams[oldId];
+								if (stream) {
+									s.streams[convId!] = stream;
+									delete s.streams[oldId];
+								}
+							}
 						});
-						streamControllers.delete(convId);
 					}
+					const contextPrefix = buildContextPrefix();
+					const executionId = await sendMessageToThread(
+						threadId,
+						contextPrefix + text,
+					);
+					const ctrl = newStreamController(convId);
+					await runStreamingLoop(executionId, {
+						conversationId: convId,
+						set,
+						signal: ctrl.signal,
+					});
+					streamControllers.delete(convId);
 
 					finalizeStreamingMessage(convId, set, get);
 				} catch (err) {
@@ -961,7 +906,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 
 				// 2. Cancel the backend execution (fire-and-forget)
 				const conv = get().conversations[conversationId];
-				if (conv?.threadId && !USE_MOCK_AI) {
+				if (conv?.threadId) {
 					cancelExecution(conv.threadId).catch((err) => {
 						console.error('[AIAssistant] cancelExecution failed:', err);
 					});

@@ -44,6 +44,7 @@ import dayjs from 'dayjs';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
@@ -105,6 +106,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		showChangelogModal,
 		changelog,
 	} = useAppContext();
+
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const { notifications } = useNotifications();
 
@@ -869,7 +872,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						</Sentry.ErrorBoundary>
 					</div>
 
-					{isLoggedIn && (
+					{isLoggedIn && isAIAssistantEnabled && (
 						<>
 							<AIAssistantPanel />
 							<AIAssistantModal />

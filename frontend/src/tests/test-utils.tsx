@@ -218,6 +218,13 @@ export function getAppContextMock(
 				usage_limit: -1,
 				route: '',
 			},
+			{
+				name: FeatureKeys.AI_ASSISTANT_ENABLED,
+				active: false,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
@@ -282,14 +289,14 @@ export function AllTheProviders({
 		<QueryBuilderProvider>{children}</QueryBuilderProvider>
 	);
 
+	const appContextValue = getAppContextMock(roleValue, appContextOverridesValue);
+
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
 			<NuqsAdapter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={mockStored(roleValue)}>
-						<AppContext.Provider
-							value={getAppContextMock(roleValue, appContextOverridesValue)}
-						>
+						<AppContext.Provider value={appContextValue}>
 							<ResourceProvider>
 								<ErrorModalProvider>
 									<TimezoneProvider>

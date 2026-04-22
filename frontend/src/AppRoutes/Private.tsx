@@ -99,6 +99,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return <>{children}</>;
 	}
 
+	const isAIAssistantEnabled =
+		featureFlags?.find((f) => f.name === FeatureKeys.AI_ASSISTANT_ENABLED)
+			?.active ?? false;
+	if (pathname.startsWith('/ai-assistant/') && !isAIAssistantEnabled) {
+		return <Redirect to={ROUTES.HOME} />;
+	}
+
 	// Check for workspace access restriction (cloud only)
 	const isCloudPlatform = activeLicense?.platform === LicensePlatform.CLOUD;
 

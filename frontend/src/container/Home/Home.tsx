@@ -10,6 +10,7 @@ import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
@@ -299,6 +300,11 @@ export default function Home(): JSX.Element {
 					}
 					rightComponent={
 						<div className="home-header-right">
+							<HeaderRightSection
+								enableAnnouncements={false}
+								enableFeedback={false}
+								enableShare={false}
+							/>
 							{isWelcomeChecklistSkipped && (
 								<Popover
 									placement="bottomRight"

@@ -220,7 +220,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 		return make([]*authtypes.TransactionWithAuthorization, 0), nil
 	}
 
-	tuples, preResolved, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(
+	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(
 		transactions, subject, orgID, provider.managedRolesByTransaction,
 	)
 	if err != nil {
@@ -229,7 +229,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 
 	if len(tuples) == 0 {
 		return authtypes.NewTransactionWithAuthorizationFromBatchResults(
-			transactions, nil, preResolved, provider.managedRolesByTransaction,
+			transactions, nil, preResolved, roleCorrelations,
 		), nil
 	}
 
@@ -239,7 +239,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 	}
 
 	return authtypes.NewTransactionWithAuthorizationFromBatchResults(
-		transactions, batchResults, preResolved, provider.managedRolesByTransaction,
+		transactions, batchResults, preResolved, roleCorrelations,
 	), nil
 }
 

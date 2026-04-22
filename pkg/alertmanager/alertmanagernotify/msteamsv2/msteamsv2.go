@@ -304,7 +304,8 @@ func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
 		// Skip private (`_`-prefixed) annotations — templating inputs,
 		// threshold metadata, related-link URLs — and "summary", which default
 		// channels surface as the attachment pretext rather than a fact row.
-		if alertmanagertypes.IsPrivateAnnotation(string(k)) || string(k) == "summary" {
+		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) ||
+			alertmanagertypes.IsPrivateAnnotation(string(k)) {
 			continue
 		}
 		annotationsFacts = append(annotationsFacts, Fact{Title: string(k), Value: string(v)})

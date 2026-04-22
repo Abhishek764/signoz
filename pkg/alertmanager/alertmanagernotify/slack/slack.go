@@ -201,21 +201,6 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 	if err != nil {
 		return nil, err
 	}
-	// Custom bodies are authored in markdown; render each non-empty body to
-	// Slack's mrkdwn flavour. Default bodies skip this because the Text
-	// template above is already channel-ready.
-	if !result.IsDefaultBody {
-		for i, body := range result.Body {
-			if body == "" {
-				continue
-			}
-			rendered, renderErr := markdownrenderer.RenderSlackMrkdwn(body)
-			if renderErr != nil {
-				return nil, renderErr
-			}
-			result.Body[i] = rendered
-		}
-	}
 
 	title, truncated := notify.TruncateInRunes(result.Title, maxTitleLenRunes)
 	if truncated {
@@ -259,12 +244,21 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		if body == "" || i >= len(alerts) {
 			continue
 		}
+
+		// Custom bodies are authored in markdown; render each non-empty body to
+		// Slack's mrkdwn flavour. Default bodies skip this because the Text
+		// template is already channel-ready.
+		rendered, renderErr := markdownrenderer.RenderSlackMrkdwn(body)
+		if renderErr != nil {
+			return nil, renderErr
+		}
+
 		color := colorRed
 		if alerts[i].Resolved() {
 			color = colorGreen
 		}
 		attachments = append(attachments, attachment{
-			Text:     body,
+			Text:     rendered,
 			Color:    color,
 			MrkdwnIn: []string{"text"},
 			Actions:  buildRelatedLinkActions(alerts[i]),

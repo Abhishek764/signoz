@@ -16,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -134,14 +134,14 @@ func (ah *APIHandler) getOrCreateCloudIntegrationFactorAPIKey(ctx context.Contex
 	return factorAPIKey.Key, nil
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(ctx context.Context, orgId valuer.UUID) (*serviceaccounttypes.ServiceAccount, *basemodel.ApiError) {
+func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(ctx context.Context, orgId valuer.UUID) (*coretypes.ServiceAccount, *basemodel.ApiError) {
 	domain := ah.Signoz.Modules.ServiceAccount.Config().Email.Domain
-	cloudIntegrationServiceAccount := serviceaccounttypes.NewServiceAccount("integration", domain, serviceaccounttypes.ServiceAccountStatusActive, orgId)
+	cloudIntegrationServiceAccount := coretypes.NewServiceAccount("integration", domain, coretypes.ServiceAccountStatusActive, orgId)
 	cloudIntegrationServiceAccount, err := ah.Signoz.Modules.ServiceAccount.GetOrCreate(ctx, orgId, cloudIntegrationServiceAccount)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
 	}
-	err = ah.Signoz.Modules.ServiceAccount.SetRoleByName(ctx, orgId, cloudIntegrationServiceAccount.ID, authtypes.SigNozViewerRoleName)
+	err = ah.Signoz.Modules.ServiceAccount.SetRoleByName(ctx, orgId, cloudIntegrationServiceAccount.ID, coretypes.SigNozViewerRoleName)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
 	}

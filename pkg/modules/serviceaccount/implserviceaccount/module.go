@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -21,7 +21,7 @@ var (
 )
 
 type module struct {
-	store     serviceaccounttypes.Store
+	store     coretypes.Store
 	authz     authz.AuthZ
 	cache     cache.Cache
 	analytics analytics.Analytics
@@ -29,12 +29,12 @@ type module struct {
 	config    serviceaccount.Config
 }
 
-func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, cache cache.Cache, analytics analytics.Analytics, providerSettings factory.ProviderSettings, config serviceaccount.Config) serviceaccount.Module {
+func NewModule(store coretypes.Store, authz authz.AuthZ, cache cache.Cache, analytics analytics.Analytics, providerSettings factory.ProviderSettings, config serviceaccount.Config) serviceaccount.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount")
 	return &module{store: store, authz: authz, cache: cache, analytics: analytics, settings: settings, config: config}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAccount *serviceaccounttypes.ServiceAccount) error {
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAccount *coretypes.ServiceAccount) error {
 	err := module.store.Create(ctx, serviceAccount)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 	return nil
 }
 
-func (module *module) GetOrCreate(ctx context.Context, orgID valuer.UUID, serviceAccountWithRoles *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error) {
+func (module *module) GetOrCreate(ctx context.Context, orgID valuer.UUID, serviceAccountWithRoles *coretypes.ServiceAccount) (*coretypes.ServiceAccount, error) {
 	existingServiceAccount, err := module.GetActiveByOrgIDAndName(ctx, serviceAccountWithRoles.OrgID, serviceAccountWithRoles.Name)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
@@ -63,7 +63,7 @@ func (module *module) GetOrCreate(ctx context.Context, orgID valuer.UUID, servic
 	return serviceAccountWithRoles, nil
 }
 
-func (module *module) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*serviceaccounttypes.ServiceAccount, error) {
+func (module *module) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*coretypes.ServiceAccount, error) {
 	serviceAccount, err := module.store.GetActiveByOrgIDAndName(ctx, orgID, name)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (module *module) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.
 	return module.Get(ctx, orgID, serviceAccount.ID)
 }
 
-func (module *module) GetWithRoles(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccountWithRoles, error) {
+func (module *module) GetWithRoles(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*coretypes.ServiceAccountWithRoles, error) {
 	serviceAccountWithRoles, err := module.store.GetWithRoles(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (module *module) GetWithRoles(ctx context.Context, orgID valuer.UUID, id va
 	return serviceAccountWithRoles, nil
 }
 
-func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*coretypes.ServiceAccount, error) {
 	storableServiceAccount, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return storableServiceAccount, nil
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*coretypes.ServiceAccount, error) {
 	serviceAccounts, err := module.store.List(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*serviceac
 	return serviceAccounts, nil
 }
 
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *coretypes.ServiceAccount) error {
 	err := module.store.Update(ctx, orgID, input)
 	if err != nil {
 		return err
@@ -144,7 +144,7 @@ func (module *module) DeleteRole(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, coretypes.MustNewSubject(coretypes.TypeableServiceAccount, id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	err = serviceAccount.UpdateStatus(serviceaccounttypes.ServiceAccountStatusDeleted)
+	err = serviceAccount.UpdateStatus(coretypes.ServiceAccountStatusDeleted)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, serviceAccount.RoleNames(), authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.StringValue(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, serviceAccount.RoleNames(), coretypes.MustNewSubject(coretypes.TypeableServiceAccount, id.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return nil
 }
 
-func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *coretypes.FactorAPIKey) error {
 	err := module.store.CreateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		return err
@@ -214,7 +214,7 @@ func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serv
 	return nil
 }
 
-func (module *module) GetOrCreateFactorAPIKey(ctx context.Context, factorAPIKey *serviceaccounttypes.FactorAPIKey) (*serviceaccounttypes.FactorAPIKey, error) {
+func (module *module) GetOrCreateFactorAPIKey(ctx context.Context, factorAPIKey *coretypes.FactorAPIKey) (*coretypes.FactorAPIKey, error) {
 	existingFactorAPIKey, err := module.store.GetFactorAPIKeyByName(ctx, factorAPIKey.ServiceAccountID, factorAPIKey.Name)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
@@ -232,7 +232,7 @@ func (module *module) GetOrCreateFactorAPIKey(ctx context.Context, factorAPIKey 
 	return factorAPIKey, nil
 }
 
-func (module *module) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error) {
+func (module *module) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*coretypes.FactorAPIKey, error) {
 	factorAPIKey, err := module.store.GetFactorAPIKey(ctx, serviceAccountID, id)
 	if err != nil {
 		return nil, err
@@ -241,7 +241,7 @@ func (module *module) GetFactorAPIKey(ctx context.Context, serviceAccountID valu
 	return factorAPIKey, nil
 }
 
-func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error) {
+func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*coretypes.FactorAPIKey, error) {
 	factorAPIKeys, err := module.store.ListFactorAPIKey(ctx, serviceAccountID)
 	if err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID val
 	return factorAPIKeys, nil
 }
 
-func (module *module) UpdateFactorAPIKey(ctx context.Context, orgID valuer.UUID, serviceAccountID valuer.UUID, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+func (module *module) UpdateFactorAPIKey(ctx context.Context, orgID valuer.UUID, serviceAccountID valuer.UUID, factorAPIKey *coretypes.FactorAPIKey) error {
 	err := module.store.UpdateFactorAPIKey(ctx, serviceAccountID, factorAPIKey)
 	if err != nil {
 		return err
@@ -326,8 +326,8 @@ func (module *module) SetLastObservedAt(ctx context.Context, key string, lastObs
 	return module.store.UpdateLastObservedAt(ctx, key, lastObservedAt)
 }
 
-func (module *module) getOrGetSetAPIKey(ctx context.Context, key string) (*serviceaccounttypes.FactorAPIKey, error) {
-	factorAPIKey := new(serviceaccounttypes.FactorAPIKey)
+func (module *module) getOrGetSetAPIKey(ctx context.Context, key string) (*coretypes.FactorAPIKey, error) {
+	factorAPIKey := new(coretypes.FactorAPIKey)
 	err := module.cache.Get(ctx, emptyOrgID, apiKeyCacheKey(key), factorAPIKey)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
@@ -361,12 +361,12 @@ func (module *module) getOrGetSetIdentity(ctx context.Context, serviceAccountID 
 		return identity, nil
 	}
 
-	storableServiceAccount, err := module.store.GetByIDAndStatus(ctx, serviceAccountID, serviceaccounttypes.ServiceAccountStatusActive)
+	storableServiceAccount, err := module.store.GetByIDAndStatus(ctx, serviceAccountID, coretypes.ServiceAccountStatusActive)
 	if err != nil {
 		return nil, err
 	}
 
-	identity = storableServiceAccount.ToIdentity()
+	identity = authtypes.NewPrincipalServiceAccountIdentity(storableServiceAccount.ID, storableServiceAccount.OrgID, storableServiceAccount.Email, authtypes.IdentNProviderAPIKey)
 	err = module.cache.Set(ctx, emptyOrgID, identityCacheKey(serviceAccountID), identity, 0)
 	if err != nil {
 		return nil, err
@@ -375,7 +375,7 @@ func (module *module) getOrGetSetIdentity(ctx context.Context, serviceAccountID 
 	return identity, nil
 }
 
-func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.UUID, role *authtypes.Role) error {
+func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.UUID, role *coretypes.Role) error {
 	serviceAccount, err := module.GetWithRoles(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -386,7 +386,7 @@ func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.
 		return err
 	}
 
-	err = module.authz.ModifyGrant(ctx, orgID, serviceAccount.RoleNames(), []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.authz.ModifyGrant(ctx, orgID, serviceAccount.RoleNames(), []string{role.Name}, coretypes.MustNewSubject(coretypes.TypeableServiceAccount, id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}

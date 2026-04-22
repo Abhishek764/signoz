@@ -1,4 +1,4 @@
-package types
+package coretypes
 
 import (
 	"encoding/json"
@@ -19,13 +19,14 @@ type GettableInvite = Invite
 type Invite struct {
 	bun.BaseModel `bun:"table:user_invite"`
 
-	Identifiable
-	TimeAuditable
-	Name  string       `bun:"name,type:text" json:"name"`
-	Email valuer.Email `bun:"email,type:text" json:"email"`
-	Token string       `bun:"token,type:text" json:"token"`
-	Role  Role         `bun:"role,type:text" json:"role"`
-	OrgID valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
+	ID        valuer.UUID  `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt time.Time    `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time    `bun:"updated_at" json:"updatedAt"`
+	Name      string       `bun:"name,type:text" json:"name"`
+	Email     valuer.Email `bun:"email,type:text" json:"email"`
+	Token     string       `bun:"token,type:text" json:"token"`
+	Role      Role         `bun:"role,type:text" json:"role"`
+	OrgID     valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
 
 	InviteLink string `bun:"-" json:"inviteLink"`
 }
@@ -33,7 +34,7 @@ type Invite struct {
 type PostableInvite struct {
 	Name            string       `json:"name"`
 	Email           valuer.Email `json:"email"`
-	Role            Role         `json:"role"`
+	Role            LegacyRole   `json:"role"`
 	FrontendBaseUrl string       `json:"frontendBaseUrl"`
 }
 
@@ -65,18 +66,14 @@ func (request *PostableBulkInviteRequest) UnmarshalJSON(data []byte) error {
 
 func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
 	invite := &Invite{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		Name:  name,
-		Email: email,
-		Token: valuer.GenerateUUID().String(),
-		Role:  role,
-		OrgID: orgID,
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		ID:        valuer.GenerateUUID(),
+		Name:      name,
+		Email:     email,
+		Token:     valuer.GenerateUUID().String(),
+		Role:      role,
+		OrgID:     orgID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	return invite, nil

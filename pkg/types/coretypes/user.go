@@ -1,4 +1,4 @@
-package types
+package coretypes
 
 import (
 	"context"
@@ -36,25 +36,26 @@ var (
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:users"`
 
-	Identifiable
+	ID          valuer.UUID   `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt   time.Time     `bun:"created_at" json:"createdAt"`
+	UpdatedAt   time.Time     `bun:"updated_at" json:"updatedAt"`
 	DisplayName string        `bun:"display_name" json:"displayName"`
 	Email       valuer.Email  `bun:"email" json:"email"`
 	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
-	TimeAuditable
 }
 
 type DeprecatedUser struct {
 	*User
-	Role Role `json:"role"`
+	Role LegacyRole `json:"role"`
 }
 
 type UpdatableUser struct {
 	DisplayName string `json:"displayName" required:"true"`
 }
 
-type PostableRole struct {
+type PostableUserRole struct {
 	Name string `json:"name" required:"true"`
 }
 
@@ -80,18 +81,14 @@ func NewUser(displayName string, email valuer.Email, orgID valuer.UUID, status v
 	}
 
 	return &User{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
+		ID:          valuer.GenerateUUID(),
 		DisplayName: displayName,
 		Email:       email,
 		OrgID:       orgID,
 		IsRoot:      false,
 		Status:      status,
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}, nil
 }
 
@@ -105,22 +102,18 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 	}
 
 	return &User{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
+		ID:          valuer.GenerateUUID(),
 		DisplayName: displayName,
 		Email:       email,
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}, nil
 }
 
-func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
+func NewDeprecatedUserFromUserAndRole(user *User, role LegacyRole) *DeprecatedUser {
 	return &DeprecatedUser{
 		user,
 		role,
@@ -129,13 +122,14 @@ func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
 
 func NewUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *User {
 	return &User{
-		Identifiable:  deprecatedUser.Identifiable,
-		DisplayName:   deprecatedUser.DisplayName,
-		Email:         deprecatedUser.Email,
-		OrgID:         deprecatedUser.OrgID,
-		IsRoot:        deprecatedUser.IsRoot,
-		Status:        deprecatedUser.Status,
-		TimeAuditable: deprecatedUser.TimeAuditable,
+		ID:          deprecatedUser.ID,
+		DisplayName: deprecatedUser.DisplayName,
+		Email:       deprecatedUser.Email,
+		OrgID:       deprecatedUser.OrgID,
+		IsRoot:      deprecatedUser.IsRoot,
+		Status:      deprecatedUser.Status,
+		CreatedAt:   deprecatedUser.CreatedAt,
+		UpdatedAt:   deprecatedUser.UpdatedAt,
 	}
 }
 
@@ -148,7 +142,7 @@ func (u *User) Update(displayName string) {
 	u.UpdatedAt = time.Now()
 }
 
-func (u *DeprecatedUser) Update(displayName string, role Role) {
+func (u *DeprecatedUser) Update(displayName string, role LegacyRole) {
 	if displayName != "" {
 		u.DisplayName = displayName
 	}

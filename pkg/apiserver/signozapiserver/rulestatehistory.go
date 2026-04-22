@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/gorilla/mux"
@@ -24,7 +24,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

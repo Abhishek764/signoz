@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -29,13 +30,13 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(authtypes.PostableRole)
+	req := new(coretypes.PostableRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	role := authtypes.NewRole(req.Name, req.Description, authtypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID))
+	role := coretypes.NewRole(req.Name, req.Description, coretypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID))
 	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
@@ -55,7 +56,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, coretypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
 		return
 	}
 	roleID, err := valuer.NewUUID(id)
@@ -83,7 +84,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, coretypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
 		return
 	}
 	roleID, err := valuer.NewUUID(id)
@@ -94,10 +95,10 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 
 	relationStr, ok := mux.Vars(r)["relation"]
 	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, coretypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
 		return
 	}
-	relation, err := authtypes.NewRelation(relationStr)
+	relation, err := coretypes.NewRelation(relationStr)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -109,13 +110,13 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableObjects(objects))
+	render.Success(rw, http.StatusOK, coretypes.NewGettableObjects(objects))
 }
 
 func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
 	resources := handler.authz.GetResources(r.Context())
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableResources(resources))
+	render.Success(rw, http.StatusOK, coretypes.NewGettableResources(resources))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -149,7 +150,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(authtypes.PatchableRole)
+	req := new(coretypes.PatchableRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -190,7 +191,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relation, err := authtypes.NewRelation(mux.Vars(r)["relation"])
+	relation, err := coretypes.NewRelation(mux.Vars(r)["relation"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -207,13 +208,13 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(authtypes.PatchableObjects)
+	req := new(coretypes.PatchableObjects)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	additions, deletions, err := authtypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	additions, deletions, err := coretypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -259,20 +260,20 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transactions := make([]*authtypes.Transaction, 0)
+	transactions := make([]*coretypes.Transaction, 0)
 	if err := binding.JSON.BindBody(r.Body, &transactions); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+	subject, err := coretypes.NewSubject(coretypes.TypeableUser, claims.UserID, orgID, nil)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	tuples, err := authtypes.NewTuplesFromTransactions(transactions, subject, orgID)
+	tuples, err := coretypes.NewTuplesFromTransactions(transactions, subject, orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -284,5 +285,5 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableTransaction(transactions, results))
+	render.Success(rw, http.StatusOK, coretypes.NewGettableTransaction(transactions, results))
 }

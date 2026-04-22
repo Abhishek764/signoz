@@ -1,4 +1,4 @@
-package serviceaccounttypes
+package coretypes
 
 import (
 	"context"
@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -40,23 +38,25 @@ type ServiceAccountStatus struct{ valuer.String }
 type ServiceAccount struct {
 	bun.BaseModel `bun:"table:service_account,alias:service_account"`
 
-	types.Identifiable
-	types.TimeAuditable
-	Name   string               `bun:"name" json:"name" required:"true"`
-	Email  valuer.Email         `bun:"email" json:"email" required:"true"`
-	Status ServiceAccountStatus `bun:"status" json:"status" required:"true"`
-	OrgID  valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
+	ID        valuer.UUID          `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt time.Time            `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time            `bun:"updated_at" json:"updatedAt"`
+	Name      string               `bun:"name" json:"name" required:"true"`
+	Email     valuer.Email         `bun:"email" json:"email" required:"true"`
+	Status    ServiceAccountStatus `bun:"status" json:"status" required:"true"`
+	OrgID     valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
 }
 
 type ServiceAccountRole struct {
 	bun.BaseModel `bun:"table:service_account_role,alias:service_account_role"`
 
-	types.Identifiable
-	types.TimeAuditable
+	ID               valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt        time.Time   `bun:"created_at" json:"createdAt"`
+	UpdatedAt        time.Time   `bun:"updated_at" json:"updatedAt"`
 	ServiceAccountID valuer.UUID `bun:"service_account_id" json:"serviceAccountId" required:"true"`
 	RoleID           valuer.UUID `bun:"role_id" json:"roleId" required:"true"`
 
-	Role *authtypes.Role `bun:"rel:belongs-to,join:role_id=id" json:"role" required:"true"`
+	Role *Role `bun:"rel:belongs-to,join:role_id=id" json:"role" required:"true"`
 }
 
 type ServiceAccountWithRoles struct {
@@ -77,17 +77,13 @@ type UpdatableServiceAccount = PostableServiceAccount
 
 func NewServiceAccount(name string, emailDomain string, status ServiceAccountStatus, orgID valuer.UUID) *ServiceAccount {
 	return &ServiceAccount{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:   name,
-		Email:  valuer.MustNewEmail(fmt.Sprintf("%s@%s", name, emailDomain)),
-		Status: status,
-		OrgID:  orgID,
+		ID:        valuer.GenerateUUID(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      name,
+		Email:     valuer.MustNewEmail(fmt.Sprintf("%s@%s", name, emailDomain)),
+		Status:    status,
+		OrgID:     orgID,
 	}
 }
 
@@ -126,19 +122,15 @@ func (serviceAccount *ServiceAccount) ErrIfDeleted() error {
 	return nil
 }
 
-func (serviceAccount *ServiceAccount) AddRole(role *authtypes.Role) (*ServiceAccountRole, error) {
+func (serviceAccount *ServiceAccount) AddRole(role *Role) (*ServiceAccountRole, error) {
 	if err := serviceAccount.ErrIfDeleted(); err != nil {
 		return nil, err
 	}
 
 	return &ServiceAccountRole{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		ID:               valuer.GenerateUUID(),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
 		ServiceAccountID: serviceAccount.ID,
 		RoleID:           role.ID,
 		Role:             role,
@@ -163,29 +155,15 @@ func (serviceAccount *ServiceAccount) NewFactorAPIKey(name string, expiresAt uin
 	encodedKey := base64.StdEncoding.EncodeToString(key)
 
 	return &FactorAPIKey{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		ID:               valuer.GenerateUUID(),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
 		Name:             name,
 		Key:              encodedKey,
 		ExpiresAt:        expiresAt,
 		LastObservedAt:   time.Now(),
 		ServiceAccountID: serviceAccount.ID,
 	}, nil
-}
-
-func (serviceAccount *ServiceAccount) ToIdentity() *authtypes.Identity {
-	return &authtypes.Identity{
-		ServiceAccountID: serviceAccount.ID,
-		Principal:        authtypes.PrincipalServiceAccount,
-		OrgID:            serviceAccount.OrgID,
-		IdenNProvider:    authtypes.IdentNProviderAPIKey,
-		Email:            serviceAccount.Email,
-	}
 }
 
 func (serviceAccount *ServiceAccount) Traits() map[string]any {
@@ -222,8 +200,8 @@ func (serviceAccount *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (serviceAccount *ServiceAccountWithRoles) GetRoles() []*authtypes.Role {
-	roles := make([]*authtypes.Role, len(serviceAccount.ServiceAccountRoles))
+func (serviceAccount *ServiceAccountWithRoles) GetRoles() []*Role {
+	roles := make([]*Role, len(serviceAccount.ServiceAccountRoles))
 	for idx, serviceAccountRole := range serviceAccount.ServiceAccountRoles {
 		roles[idx] = serviceAccountRole.Role
 	}

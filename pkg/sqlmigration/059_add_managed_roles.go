@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -54,7 +54,7 @@ func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	managedRoles := []*authtypes.StorableRole{}
+	managedRoles := []*coretypes.StorableRole{}
 	for _, orgIDStr := range orgIDs {
 		orgID, err := valuer.NewUUID(orgIDStr)
 		if err != nil {
@@ -62,20 +62,20 @@ func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 		}
 
 		// signoz admin
-		signozAdminRole := authtypes.NewRole(authtypes.SigNozAdminRoleName, authtypes.SigNozAdminRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozAdminRole))
+		signozAdminRole := coretypes.NewRole(coretypes.SigNozAdminRoleName, coretypes.SigNozAdminRoleDescription, coretypes.RoleTypeManaged, orgID)
+		managedRoles = append(managedRoles, coretypes.NewStorableRoleFromRole(signozAdminRole))
 
 		// signoz editor
-		signozEditorRole := authtypes.NewRole(authtypes.SigNozEditorRoleName, authtypes.SigNozEditorRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozEditorRole))
+		signozEditorRole := coretypes.NewRole(coretypes.SigNozEditorRoleName, coretypes.SigNozEditorRoleDescription, coretypes.RoleTypeManaged, orgID)
+		managedRoles = append(managedRoles, coretypes.NewStorableRoleFromRole(signozEditorRole))
 
 		// signoz viewer
-		signozViewerRole := authtypes.NewRole(authtypes.SigNozViewerRoleName, authtypes.SigNozViewerRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozViewerRole))
+		signozViewerRole := coretypes.NewRole(coretypes.SigNozViewerRoleName, coretypes.SigNozViewerRoleDescription, coretypes.RoleTypeManaged, orgID)
+		managedRoles = append(managedRoles, coretypes.NewStorableRoleFromRole(signozViewerRole))
 
 		// signoz anonymous
-		signozAnonymousRole := authtypes.NewRole(authtypes.SigNozAnonymousRoleName, authtypes.SigNozAnonymousRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozAnonymousRole))
+		signozAnonymousRole := coretypes.NewRole(coretypes.SigNozAnonymousRoleName, coretypes.SigNozAnonymousRoleDescription, coretypes.RoleTypeManaged, orgID)
+		managedRoles = append(managedRoles, coretypes.NewStorableRoleFromRole(signozAnonymousRole))
 	}
 
 	if len(managedRoles) > 0 {

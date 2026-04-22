@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/gorilla/mux"
 )
@@ -446,7 +446,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -462,7 +462,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

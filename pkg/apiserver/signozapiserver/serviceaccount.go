@@ -5,8 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -16,14 +15,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Create service account",
 		Description:         "This endpoint creates a service account",
-		Request:             new(serviceaccounttypes.PostableServiceAccount),
+		Request:             new(coretypes.PostableServiceAccount),
 		RequestContentType:  "",
 		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -35,12 +34,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists the service accounts for an organisation",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*serviceaccounttypes.ServiceAccount, 0),
+		Response:            make([]*coretypes.ServiceAccount, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -52,7 +51,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets my service account",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(serviceaccounttypes.ServiceAccountWithRoles),
+		Response:            new(coretypes.ServiceAccountWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
@@ -69,12 +68,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets an existing service account",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(serviceaccounttypes.ServiceAccountWithRoles),
+		Response:            new(coretypes.ServiceAccountWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -86,12 +85,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets all the roles for the existing service account",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new([]*authtypes.Role),
+		Response:            new([]*coretypes.Role),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -101,14 +100,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Create service account role",
 		Description:         "This endpoint assigns a role to a service account",
-		Request:             new(serviceaccounttypes.PostableServiceAccountRole),
+		Request:             new(coretypes.PostableServiceAccountRole),
 		RequestContentType:  "",
 		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -125,7 +124,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -135,7 +134,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates my service account",
 		Description:         "This endpoint gets my service account",
-		Request:             new(serviceaccounttypes.UpdatableServiceAccount),
+		Request:             new(coretypes.UpdatableServiceAccount),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",
@@ -152,14 +151,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates a service account",
 		Description:         "This endpoint updates an existing service account",
-		Request:             new(serviceaccounttypes.UpdatableServiceAccount),
+		Request:             new(coretypes.UpdatableServiceAccount),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -176,7 +175,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -186,14 +185,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Create a service account key",
 		Description:         "This endpoint creates a service account key",
-		Request:             new(serviceaccounttypes.PostableFactorAPIKey),
+		Request:             new(coretypes.PostableFactorAPIKey),
 		RequestContentType:  "",
-		Response:            new(serviceaccounttypes.GettableFactorAPIKeyWithKey),
+		Response:            new(coretypes.GettableFactorAPIKeyWithKey),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -205,12 +204,12 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists the service account keys",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*serviceaccounttypes.GettableFactorAPIKey, 0),
+		Response:            make([]*coretypes.GettableFactorAPIKey, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -220,14 +219,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates a service account key",
 		Description:         "This endpoint updates an existing service account key",
-		Request:             new(serviceaccounttypes.UpdatableFactorAPIKey),
+		Request:             new(coretypes.UpdatableFactorAPIKey),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -244,7 +243,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

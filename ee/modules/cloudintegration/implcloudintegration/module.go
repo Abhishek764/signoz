@@ -12,10 +12,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -467,12 +466,12 @@ func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.
 
 func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (string, error) {
 	domain := module.serviceAccount.Config().Email.Domain
-	serviceAccount := serviceaccounttypes.NewServiceAccount("integration", domain, serviceaccounttypes.ServiceAccountStatusActive, orgID)
+	serviceAccount := coretypes.NewServiceAccount("integration", domain, coretypes.ServiceAccountStatusActive, orgID)
 	serviceAccount, err := module.serviceAccount.GetOrCreate(ctx, orgID, serviceAccount)
 	if err != nil {
 		return "", err
 	}
-	err = module.serviceAccount.SetRoleByName(ctx, orgID, serviceAccount.ID, authtypes.SigNozViewerRoleName)
+	err = module.serviceAccount.SetRoleByName(ctx, orgID, serviceAccount.ID, coretypes.SigNozViewerRoleName)
 	if err != nil {
 		return "", err
 	}

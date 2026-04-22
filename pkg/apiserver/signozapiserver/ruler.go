@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/gorilla/mux"
 )
@@ -18,7 +18,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Response:            make([]*ruletypes.Rule, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Description:         "This endpoint deletes an alert rule by ID",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Response:            make([]*ruletypes.PlannedMaintenance, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Description:         "This endpoint deletes a downtime schedule by ID",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

@@ -250,33 +250,6 @@ export interface AuthtypesGettableAuthDomainDTO {
 	updatedAt?: Date;
 }
 
-export interface AuthtypesGettableObjectsDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
-}
-
-/**
- * @nullable
- */
-export type AuthtypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface AuthtypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: AuthtypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 */
-	resources: AuthtypesResourceDTO[];
-}
-
 export interface AuthtypesGettableTokenDTO {
 	/**
 	 * @type string
@@ -294,18 +267,6 @@ export interface AuthtypesGettableTokenDTO {
 	 * @type string
 	 */
 	tokenType?: string;
-}
-
-export interface AuthtypesGettableTransactionDTO {
-	/**
-	 * @type boolean
-	 */
-	authorized: boolean;
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -379,14 +340,6 @@ export interface AuthtypesOIDCConfigDTO {
 	issuerAlias?: string;
 }
 
-export interface AuthtypesObjectDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type string
-	 */
-	selector: string;
-}
-
 export interface AuthtypesOrgSessionContextDTO {
 	authNSupport?: AuthtypesAuthNSupportDTO;
 	/**
@@ -405,26 +358,6 @@ export interface AuthtypesPasswordAuthNSupportDTO {
 	 * @type string
 	 */
 	provider?: string;
-}
-
-export interface AuthtypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesGettableObjectsDTO[] | null;
-}
-
-export interface AuthtypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
 }
 
 export interface AuthtypesPostableAuthDomainDTO {
@@ -450,66 +383,11 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
-export interface AuthtypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
 export interface AuthtypesPostableRotateTokenDTO {
 	/**
 	 * @type string
 	 */
 	refreshToken?: string;
-}
-
-export interface AuthtypesResourceDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-}
-
-export interface AuthtypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
 }
 
 /**
@@ -567,84 +445,8 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
-export interface AuthtypesTransactionDTO {
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
-}
-
 export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
-}
-
-export interface AuthtypesUserRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: Date;
-	/**
-	 * @type string
-	 */
-	id: string;
-	role: AuthtypesRoleDTO;
-	/**
-	 * @type string
-	 */
-	roleId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: Date;
-	/**
-	 * @type string
-	 */
-	userId: string;
-}
-
-export interface AuthtypesUserWithRolesDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	userRoles?: AuthtypesUserRoleDTO[] | null;
 }
 
 export interface CloudintegrationtypesAWSAccountConfigDTO {
@@ -2654,6 +2456,591 @@ export interface ConfigWechatConfigDTO {
 	 * @type string
 	 */
 	to_user?: string;
+}
+
+export interface CoretypesChangePasswordRequestDTO {
+	/**
+	 * @type string
+	 */
+	newPassword?: string;
+	/**
+	 * @type string
+	 */
+	oldPassword?: string;
+}
+
+export interface CoretypesDeprecatedUserDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesGettableFactorAPIKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expiresAt: number;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	lastObservedAt: Date;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesGettableFactorAPIKeyWithKeyDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	key: string;
+}
+
+export interface CoretypesGettableObjectsDTO {
+	resource: CoretypesResourceDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+/**
+ * @nullable
+ */
+export type CoretypesGettableResourcesDTORelations = {
+	[key: string]: string[];
+} | null;
+
+export interface CoretypesGettableResourcesDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	relations: CoretypesGettableResourcesDTORelations;
+	/**
+	 * @type array
+	 */
+	resources: CoretypesResourceDTO[];
+}
+
+export interface CoretypesGettableTransactionDTO {
+	/**
+	 * @type boolean
+	 */
+	authorized: boolean;
+	object: CoretypesObjectDTO;
+	/**
+	 * @type string
+	 */
+	relation: string;
+}
+
+export interface CoretypesInviteDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	inviteLink?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	role?: CoretypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesObjectDTO {
+	resource: CoretypesResourceDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
+}
+
+export interface CoretypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: CoretypesGettableObjectsDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: CoretypesGettableObjectsDTO[] | null;
+}
+
+export interface CoretypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
+export interface CoretypesPostableBulkInviteRequestDTO {
+	/**
+	 * @type array
+	 */
+	invites: CoretypesPostableInviteDTO[];
+}
+
+export interface CoretypesPostableFactorAPIKeyDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expiresAt: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface CoretypesPostableForgotPasswordDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseURL?: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+}
+
+export interface CoretypesPostableInviteDTO {
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseUrl?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+}
+
+export interface CoretypesPostableResetPasswordDTO {
+	/**
+	 * @type string
+	 */
+	password?: string;
+	/**
+	 * @type string
+	 */
+	token?: string;
+}
+
+export interface CoretypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface CoretypesPostableServiceAccountDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface CoretypesPostableServiceAccountRoleDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface CoretypesResetPasswordTokenDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	expiresAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	passwordId?: string;
+	/**
+	 * @type string
+	 */
+	token?: string;
+}
+
+export interface CoretypesResourceDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export interface CoretypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesServiceAccountRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role: CoretypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesServiceAccountWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	serviceAccountRoles: CoretypesServiceAccountRoleDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesTransactionDTO {
+	object: CoretypesObjectDTO;
+	/**
+	 * @type string
+	 */
+	relation: string;
+}
+
+export interface CoretypesUpdatableFactorAPIKeyDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expiresAt: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface CoretypesUpdatableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName: string;
+}
+
+export interface CoretypesUserDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CoretypesUserRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role: CoretypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: Date;
+	/**
+	 * @type string
+	 */
+	userId: string;
+}
+
+export interface CoretypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	userRoles?: CoretypesUserRoleDTO[] | null;
 }
 
 export interface DashboardtypesDashboardDTO {
@@ -5058,187 +5445,6 @@ export interface RuletypesThresholdBasicDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
-export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	expiresAt: number;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	lastObservedAt: Date;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	serviceAccountId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	key: string;
-}
-
-export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	expiresAt: number;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface ServiceaccounttypesPostableServiceAccountDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
-}
-
-export interface ServiceaccounttypesServiceAccountDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface ServiceaccounttypesServiceAccountRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	id: string;
-	role: AuthtypesRoleDTO;
-	/**
-	 * @type string
-	 */
-	roleId: string;
-	/**
-	 * @type string
-	 */
-	serviceAccountId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface ServiceaccounttypesServiceAccountWithRolesDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	expiresAt: number;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
 export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
@@ -5349,104 +5555,11 @@ export interface TypesAlertStatusDTO {
 	state?: string;
 }
 
-export interface TypesChangePasswordRequestDTO {
-	/**
-	 * @type string
-	 */
-	newPassword?: string;
-	/**
-	 * @type string
-	 */
-	oldPassword?: string;
-}
-
-export interface TypesDeprecatedUserDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
 	id: string;
-}
-
-export interface TypesInviteDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	inviteLink?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
 }
 
 export interface TypesOrganizationDTO {
@@ -5476,129 +5589,6 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 */
 	name?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface TypesPostableBulkInviteRequestDTO {
-	/**
-	 * @type array
-	 */
-	invites: TypesPostableInviteDTO[];
-}
-
-export interface TypesPostableForgotPasswordDTO {
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseURL?: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-}
-
-export interface TypesPostableInviteDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseUrl?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
-export interface TypesPostableResetPasswordDTO {
-	/**
-	 * @type string
-	 */
-	password?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-}
-
-export interface TypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface TypesResetPasswordTokenDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	expiresAt?: Date;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	passwordId?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-}
-
-export interface TypesUpdatableUserDTO {
-	/**
-	 * @type string
-	 */
-	displayName: string;
-}
-
-export interface TypesUserDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -5706,7 +5696,7 @@ export type AuthzCheck200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableTransactionDTO[];
+	data: CoretypesGettableTransactionDTO[];
 	/**
 	 * @type string
 	 */
@@ -5714,7 +5704,7 @@ export type AuthzCheck200 = {
 };
 
 export type AuthzResources200 = {
-	data: AuthtypesGettableResourcesDTO;
+	data: CoretypesGettableResourcesDTO;
 	/**
 	 * @type string
 	 */
@@ -6173,7 +6163,7 @@ export type GetResetPasswordTokenDeprecatedPathParameters = {
 	id: string;
 };
 export type GetResetPasswordTokenDeprecated200 = {
-	data: TypesResetPasswordTokenDTO;
+	data: CoretypesResetPasswordTokenDTO;
 	/**
 	 * @type string
 	 */
@@ -6189,7 +6179,7 @@ export type GetGlobalConfig200 = {
 };
 
 export type CreateInvite201 = {
-	data: TypesInviteDTO;
+	data: CoretypesInviteDTO;
 	/**
 	 * @type string
 	 */
@@ -6260,7 +6250,7 @@ export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesRoleDTO[];
+	data: CoretypesRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -6282,7 +6272,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: AuthtypesRoleDTO;
+	data: CoretypesRoleDTO;
 	/**
 	 * @type string
 	 */
@@ -6300,7 +6290,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableObjectsDTO[];
+	data: CoretypesGettableObjectsDTO[];
 	/**
 	 * @type string
 	 */
@@ -6359,7 +6349,7 @@ export type ListServiceAccounts200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesServiceAccountDTO[];
+	data: CoretypesServiceAccountDTO[];
 	/**
 	 * @type string
 	 */
@@ -6381,7 +6371,7 @@ export type GetServiceAccountPathParameters = {
 	id: string;
 };
 export type GetServiceAccount200 = {
-	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	data: CoretypesServiceAccountWithRolesDTO;
 	/**
 	 * @type string
 	 */
@@ -6398,7 +6388,7 @@ export type ListServiceAccountKeys200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
+	data: CoretypesGettableFactorAPIKeyDTO[];
 	/**
 	 * @type string
 	 */
@@ -6409,7 +6399,7 @@ export type CreateServiceAccountKeyPathParameters = {
 	id: string;
 };
 export type CreateServiceAccountKey201 = {
-	data: ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO;
+	data: CoretypesGettableFactorAPIKeyWithKeyDTO;
 	/**
 	 * @type string
 	 */
@@ -6432,7 +6422,7 @@ export type GetServiceAccountRoles200 = {
 	 * @type array
 	 * @nullable true
 	 */
-	data: AuthtypesRoleDTO[] | null;
+	data: CoretypesRoleDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -6455,7 +6445,7 @@ export type DeleteServiceAccountRolePathParameters = {
 	rid: string;
 };
 export type GetMyServiceAccount200 = {
-	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	data: CoretypesServiceAccountWithRolesDTO;
 	/**
 	 * @type string
 	 */
@@ -6466,7 +6456,7 @@ export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesDeprecatedUserDTO[];
+	data: CoretypesDeprecatedUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -6480,7 +6470,7 @@ export type GetUserDeprecatedPathParameters = {
 	id: string;
 };
 export type GetUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
+	data: CoretypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -6491,7 +6481,7 @@ export type UpdateUserDeprecatedPathParameters = {
 	id: string;
 };
 export type UpdateUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
+	data: CoretypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -6499,7 +6489,7 @@ export type UpdateUserDeprecated200 = {
 };
 
 export type GetMyUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
+	data: CoretypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -6818,7 +6808,7 @@ export type GetUsersByRoleID200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesUserDTO[];
+	data: CoretypesUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -7178,7 +7168,7 @@ export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesUserDTO[];
+	data: CoretypesUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -7189,7 +7179,7 @@ export type GetUserPathParameters = {
 	id: string;
 };
 export type GetUser200 = {
-	data: AuthtypesUserWithRolesDTO;
+	data: CoretypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */
@@ -7203,7 +7193,7 @@ export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };
 export type GetResetPasswordToken200 = {
-	data: TypesResetPasswordTokenDTO;
+	data: CoretypesResetPasswordTokenDTO;
 	/**
 	 * @type string
 	 */
@@ -7214,7 +7204,7 @@ export type CreateResetPasswordTokenPathParameters = {
 	id: string;
 };
 export type CreateResetPasswordToken201 = {
-	data: TypesResetPasswordTokenDTO;
+	data: CoretypesResetPasswordTokenDTO;
 	/**
 	 * @type string
 	 */
@@ -7228,7 +7218,7 @@ export type GetRolesByUserID200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesRoleDTO[];
+	data: CoretypesRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -7243,7 +7233,7 @@ export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
 	roleId: string;
 };
 export type GetMyUser200 = {
-	data: AuthtypesUserWithRolesDTO;
+	data: CoretypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */

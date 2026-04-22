@@ -3,7 +3,7 @@ package serviceaccount
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 type Config struct {
@@ -39,7 +39,7 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	if c.Email.Domain == "" {
-		return errors.New(errors.TypeInvalidInput, serviceaccounttypes.ErrCodeServiceAccountInvalidConfig, "email domain cannot be empty")
+		return errors.New(errors.TypeInvalidInput, coretypes.ErrCodeServiceAccountInvalidConfig, "email domain cannot be empty")
 	}
 
 	return nil

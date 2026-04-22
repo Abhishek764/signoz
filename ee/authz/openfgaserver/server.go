@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -33,18 +34,18 @@ func (server *Server) Stop(ctx context.Context) error {
 	return server.pkgAuthzService.Stop(ctx)
 }
 
-func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
+func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Relation, typeable coretypes.Typeable, selectors []coretypes.Selector, _ []coretypes.Selector) error {
 	subject := ""
 	switch claims.Principal {
 	case authtypes.PrincipalUser:
-		user, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+		user, err := coretypes.NewSubject(coretypes.TypeableUser, claims.UserID, orgID, nil)
 		if err != nil {
 			return err
 		}
 
 		subject = user
 	case authtypes.PrincipalServiceAccount:
-		serviceAccount, err := authtypes.NewSubject(authtypes.TypeableServiceAccount, claims.ServiceAccountID, orgID, nil)
+		serviceAccount, err := coretypes.NewSubject(coretypes.TypeableServiceAccount, claims.ServiceAccountID, orgID, nil)
 		if err != nil {
 			return err
 		}
@@ -73,11 +74,11 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 		}
 	}
 
-	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
+	return errors.Newf(errors.TypeForbidden, coretypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
-func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
+func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Relation, typeable coretypes.Typeable, selectors []coretypes.Selector, _ []coretypes.Selector) error {
+	subject, err := coretypes.NewSubject(coretypes.TypeableAnonymous, coretypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}
@@ -103,14 +104,14 @@ func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, o
 		}
 	}
 
-	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
+	return errors.Newf(errors.TypeForbidden, coretypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
-func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error) {
+func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openfgav1.TupleKey) (map[string]*coretypes.TupleKeyAuthorization, error) {
 	return server.pkgAuthzService.BatchCheck(ctx, tupleReq)
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
+func (server *Server) ListObjects(ctx context.Context, subject string, relation coretypes.Relation, typeable coretypes.Typeable) ([]*coretypes.Object, error) {
 	return server.pkgAuthzService.ListObjects(ctx, subject, relation, typeable)
 }
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/gorilla/mux"
 )
@@ -24,7 +24,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -44,7 +44,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -64,7 +64,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -84,7 +84,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -104,7 +104,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -124,7 +124,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
@@ -145,7 +145,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -166,7 +166,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -186,7 +186,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 		},
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -208,7 +208,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          true,                                 // this endpoint will be deprecated in future
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer), // agent role is viewer
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer), // agent role is viewer
 		},
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -228,7 +228,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer), // agent role is viewer
+			SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleViewer), // agent role is viewer
 		},
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err

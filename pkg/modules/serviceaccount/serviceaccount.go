@@ -7,28 +7,28 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
 	// Creates a new service account for an organization.
-	Create(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
+	Create(context.Context, valuer.UUID, *coretypes.ServiceAccount) error
 
 	// Gets a service account with roles by id.
-	GetWithRoles(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccountWithRoles, error)
+	GetWithRoles(context.Context, valuer.UUID, valuer.UUID) (*coretypes.ServiceAccountWithRoles, error)
 
 	// Gets or creates a service account by name
-	GetOrCreate(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error)
+	GetOrCreate(context.Context, valuer.UUID, *coretypes.ServiceAccount) (*coretypes.ServiceAccount, error)
 
 	// Gets a service account by id
-	Get(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
+	Get(context.Context, valuer.UUID, valuer.UUID) (*coretypes.ServiceAccount, error)
 
 	// List all service accounts for an organization.
-	List(context.Context, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error)
+	List(context.Context, valuer.UUID) ([]*coretypes.ServiceAccount, error)
 
 	// Updates an existing service account
-	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
+	Update(context.Context, valuer.UUID, *coretypes.ServiceAccount) error
 
 	// Assign a role to the service account. this is safe to retry
 	SetRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error
@@ -43,19 +43,19 @@ type Module interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Creates a new API key for a service account
-	CreateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) error
+	CreateFactorAPIKey(context.Context, *coretypes.FactorAPIKey) error
 
 	// Gets a factor API key by id
-	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error)
+	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*coretypes.FactorAPIKey, error)
 
 	// Gets or creates a factor api key by name
-	GetOrCreateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) (*serviceaccounttypes.FactorAPIKey, error)
+	GetOrCreateFactorAPIKey(context.Context, *coretypes.FactorAPIKey) (*coretypes.FactorAPIKey, error)
 
 	// Lists all the API keys for a service account
-	ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error)
+	ListFactorAPIKey(context.Context, valuer.UUID) ([]*coretypes.FactorAPIKey, error)
 
 	// Updates an existing API key for a service account
-	UpdateFactorAPIKey(context.Context, valuer.UUID, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
+	UpdateFactorAPIKey(context.Context, valuer.UUID, valuer.UUID, *coretypes.FactorAPIKey) error
 
 	// Set the last observed at for an api key.
 	SetLastObservedAt(context.Context, string, time.Time) error

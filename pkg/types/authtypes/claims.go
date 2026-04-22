@@ -3,9 +3,16 @@ package authtypes
 import (
 	"context"
 	"log/slog"
+	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]coretypes.Selector, error)
+type SelectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]coretypes.Selector, valuer.UUID, error)
 
 type claimsKey struct{}
 type accessTokenKey struct{}

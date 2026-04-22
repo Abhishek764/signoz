@@ -14,7 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -88,7 +88,7 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
-func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 	orgIDs := make([]string, len(orgs))
 	for idx, org := range orgs {
 		orgIDs[idx] = org.ID.StringValue()
@@ -99,9 +99,9 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 		return nil, valuer.UUID{}, err
 	}
 
-	return []authtypes.Selector{
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, authtypes.WildCardSelectorString),
+	return []coretypes.Selector{
+		coretypes.MustNewSelector(coretypes.TypeMetaResource, id.StringValue()),
+		coretypes.MustNewSelector(coretypes.TypeMetaResource, coretypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
 }
 
@@ -217,22 +217,22 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
+func (module *module) MustGetTypeables() []coretypes.Typeable {
 	return module.pkgDashboardModule.MustGetTypeables()
 }
 
-func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
-	return map[string][]*authtypes.Transaction{
-		authtypes.SigNozAnonymousRoleName: {
+func (module *module) MustGetManagedRoleTransactions() map[string][]*coretypes.Transaction {
+	return map[string][]*coretypes.Transaction{
+		coretypes.SigNozAnonymousRoleName: {
 			{
 				ID:       valuer.GenerateUUID(),
-				Relation: authtypes.RelationRead,
-				Object: *authtypes.MustNewObject(
-					authtypes.Resource{
-						Type: authtypes.TypeMetaResource,
+				Relation: coretypes.RelationRead,
+				Object: *coretypes.MustNewObject(
+					coretypes.Resource{
+						Type: coretypes.TypeMetaResource,
 						Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
 					},
-					authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
+					coretypes.MustNewSelector(coretypes.TypeMetaResource, "*"),
 				),
 			},
 		},

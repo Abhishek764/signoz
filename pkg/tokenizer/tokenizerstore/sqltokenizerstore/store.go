@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -34,7 +34,7 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 }
 
 func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
-	user := new(types.User)
+	user := new(coretypes.User)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -43,7 +43,7 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		Where("id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
 	return authtypes.NewPrincipalUserIdentity(userID, user.OrgID, user.Email, authtypes.IdentNProviderTokenizer), nil

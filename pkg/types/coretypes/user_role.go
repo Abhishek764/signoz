@@ -1,11 +1,10 @@
-package authtypes
+package coretypes
 
 import (
 	"context"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -49,7 +48,7 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 }
 
 type UserWithRoles struct {
-	*types.User
+	*User
 	UserRoles []*UserRole `json:"userRoles"`
 }
 

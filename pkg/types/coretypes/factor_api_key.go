@@ -1,4 +1,4 @@
-package serviceaccounttypes
+package coretypes
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -26,8 +25,9 @@ var (
 type FactorAPIKey struct {
 	bun.BaseModel `bun:"table:factor_api_key,alias:factor_api_key"`
 
-	types.Identifiable
-	types.TimeAuditable
+	ID               valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt        time.Time   `bun:"created_at" json:"createdAt"`
+	UpdatedAt        time.Time   `bun:"updated_at" json:"updatedAt"`
 	Name             string      `bun:"name"`
 	Key              string      `bun:"key"`
 	ExpiresAt        uint64      `bun:"expires_at"`
@@ -36,13 +36,14 @@ type FactorAPIKey struct {
 }
 
 type GettableFactorAPIKeyWithKey struct {
-	types.Identifiable
-	Key string `json:"key" required:"true"`
+	ID  valuer.UUID `json:"id" required:"true"`
+	Key string      `json:"key" required:"true"`
 }
 
 type GettableFactorAPIKey struct {
-	types.Identifiable
-	types.TimeAuditable
+	ID               valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt        time.Time   `bun:"created_at" json:"createdAt"`
+	UpdatedAt        time.Time   `bun:"updated_at" json:"updatedAt"`
 	Name             string      `json:"name" requrired:"true"`
 	ExpiresAt        uint64      `json:"expiresAt" required:"true"`
 	LastObservedAt   time.Time   `json:"lastObservedAt" required:"true"`
@@ -64,8 +65,9 @@ func NewGettableFactorAPIKeys(keys []*FactorAPIKey) []*GettableFactorAPIKey {
 
 	for idx, key := range keys {
 		gettables[idx] = &GettableFactorAPIKey{
-			Identifiable:     key.Identifiable,
-			TimeAuditable:    key.TimeAuditable,
+			ID:               key.ID,
+			CreatedAt:        key.CreatedAt,
+			UpdatedAt:        key.UpdatedAt,
 			Name:             key.Name,
 			ExpiresAt:        key.ExpiresAt,
 			LastObservedAt:   key.LastObservedAt,
@@ -78,9 +80,7 @@ func NewGettableFactorAPIKeys(keys []*FactorAPIKey) []*GettableFactorAPIKey {
 
 func NewGettableFactorAPIKeyWithKey(id valuer.UUID, key string) *GettableFactorAPIKeyWithKey {
 	return &GettableFactorAPIKeyWithKey{
-		Identifiable: types.Identifiable{
-			ID: id,
-		},
+		ID:  id,
 		Key: key,
 	}
 }

@@ -1,18 +1,18 @@
 package user
 
 import (
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type createUserOptions struct {
-	FactorPassword *types.FactorPassword
+	FactorPassword *coretypes.FactorPassword
 	RoleNames      []string
 }
 
 type CreateUserOption func(*createUserOptions)
 
-func WithFactorPassword(factorPassword *types.FactorPassword) CreateUserOption {
+func WithFactorPassword(factorPassword *coretypes.FactorPassword) CreateUserOption {
 	return func(o *createUserOptions) {
 		o.FactorPassword = factorPassword
 	}

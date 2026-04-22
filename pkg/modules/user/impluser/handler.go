@@ -10,8 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -35,14 +35,14 @@ func (handler *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.PostableInvite
+	var req coretypes.PostableInvite
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	invites, err := handler.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), &types.PostableBulkInviteRequest{
-		Invites: []types.PostableInvite{req},
+	invites, err := handler.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), &coretypes.PostableBulkInviteRequest{
+		Invites: []coretypes.PostableInvite{req},
 	})
 	if err != nil {
 		render.Error(rw, err)
@@ -62,7 +62,7 @@ func (handler *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var req types.PostableBulkInviteRequest
+	var req coretypes.PostableBulkInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
@@ -128,7 +128,7 @@ func (handler *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userWithRoles := &authtypes.UserWithRoles{
+	userWithRoles := &coretypes.UserWithRoles{
 		User:      user,
 		UserRoles: userRoles,
 	}
@@ -177,7 +177,7 @@ func (handler *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userWithRoles := &authtypes.UserWithRoles{
+	userWithRoles := &coretypes.UserWithRoles{
 		User:      user,
 		UserRoles: userRoles,
 	}
@@ -195,7 +195,7 @@ func (handler *handler) UpdateMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatableUser := new(types.UpdatableUser)
+	updatableUser := new(coretypes.UpdatableUser)
 	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
 		render.Error(w, err)
 		return
@@ -260,7 +260,7 @@ func (handler *handler) UpdateUserDeprecated(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user := types.DeprecatedUser{User: &types.User{}}
+	user := coretypes.DeprecatedUser{User: &coretypes.User{}}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		render.Error(w, err)
 		return
@@ -292,7 +292,7 @@ func (handler *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatableUser := new(types.UpdatableUser)
+	updatableUser := new(coretypes.UpdatableUser)
 	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
 		render.Error(w, err)
 		return
@@ -414,7 +414,7 @@ func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableResetPassword)
+	req := new(coretypes.PostableResetPassword)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		render.Error(w, err)
 		return
@@ -439,7 +439,7 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req types.ChangePasswordRequest
+	var req coretypes.ChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, err)
 		return
@@ -458,7 +458,7 @@ func (handler *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	req := new(types.PostableForgotPassword)
+	req := new(coretypes.PostableForgotPassword)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
@@ -497,7 +497,7 @@ func (handler *handler) GetRolesByUserID(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	roles := make([]*authtypes.Role, len(userRoles))
+	roles := make([]*coretypes.Role, len(userRoles))
 	for idx, userRole := range userRoles {
 		roles[idx] = userRole.Role
 	}
@@ -522,7 +522,7 @@ func (handler *handler) SetRoleByUserID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	postableRole := new(types.PostableRole)
+	postableRole := new(coretypes.PostableRole)
 	if err := json.NewDecoder(r.Body).Decode(postableRole); err != nil {
 		render.Error(w, err)
 		return

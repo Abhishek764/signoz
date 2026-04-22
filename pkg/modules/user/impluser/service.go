@@ -10,13 +10,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type service struct {
 	settings  factory.ScopedProviderSettings
-	store     types.UserStore
+	store     coretypes.UserStore
 	getter    user.Getter
 	setter    user.Setter
 	orgGetter organization.Getter
@@ -28,7 +28,7 @@ type service struct {
 
 func NewService(
 	providerSettings factory.ProviderSettings,
-	store types.UserStore,
+	store coretypes.UserStore,
 	getter user.Getter,
 	setter user.Setter,
 	orgGetter organization.Getter,
@@ -43,8 +43,8 @@ func NewService(
 		orgGetter: orgGetter,
 		authz:     authz,
 		config:    config,
-		stopC:    make(chan struct{}),
-		healthyC: make(chan struct{}),
+		stopC:     make(chan struct{}),
+		healthyC:  make(chan struct{}),
 	}
 }
 
@@ -147,8 +147,8 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		if err := s.authz.ModifyGrant(ctx,
 			orgID,
 			existingUserRoleNames,
-			[]string{authtypes.SigNozAdminRoleName},
-			authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+			[]string{coretypes.SigNozAdminRoleName},
+			coretypes.MustNewSubject(coretypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
 		); err != nil {
 			return err
 		}
@@ -165,7 +165,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 				ctx,
 				existingUser.OrgID,
 				existingUser.ID,
-				[]string{authtypes.SigNozAdminRoleName},
+				[]string{coretypes.SigNozAdminRoleName},
 			); err != nil {
 				return err
 			}
@@ -181,20 +181,20 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	// Create new root user
-	newUser, err := types.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
+	newUser, err := coretypes.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
 	if err != nil {
 		return err
 	}
 
-	factorPassword, err := types.NewFactorPassword(s.config.Password, newUser.ID.StringValue())
+	factorPassword, err := coretypes.NewFactorPassword(s.config.Password, newUser.ID.StringValue())
 	if err != nil {
 		return err
 	}
 
-	return s.setter.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRoleNames([]string{authtypes.SigNozAdminRoleName}))
+	return s.setter.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRoleNames([]string{coretypes.SigNozAdminRoleName}))
 }
 
-func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
+func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *coretypes.User) error {
 	existingRoot.PromoteToRoot()
 
 	if existingRoot.Email != s.config.Email {
@@ -214,7 +214,7 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 			return err
 		}
 
-		factorPassword, err := types.NewFactorPassword(s.config.Password, userID.StringValue())
+		factorPassword, err := coretypes.NewFactorPassword(s.config.Password, userID.StringValue())
 		if err != nil {
 			return err
 		}

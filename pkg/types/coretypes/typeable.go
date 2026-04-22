@@ -1,4 +1,4 @@
-package authtypes
+package coretypes
 
 import (
 	"encoding/json"

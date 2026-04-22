@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -29,13 +29,13 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.PostableServiceAccount)
+	req := new(coretypes.PostableServiceAccount)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceAccount := serviceaccounttypes.NewServiceAccount(req.Name, handler.module.Config().Email.Domain, serviceaccounttypes.ServiceAccountStatusActive, valuer.MustNewUUID(claims.OrgID))
+	serviceAccount := coretypes.NewServiceAccount(req.Name, handler.module.Config().Email.Domain, coretypes.ServiceAccountStatusActive, valuer.MustNewUUID(claims.OrgID))
 	err = handler.module.Create(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
@@ -145,7 +145,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.UpdatableServiceAccount)
+	req := new(coretypes.UpdatableServiceAccount)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -186,7 +186,7 @@ func (handler *handler) UpdateMe(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.UpdatableServiceAccount)
+	req := new(coretypes.UpdatableServiceAccount)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -227,7 +227,7 @@ func (handler *handler) SetRole(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.PostableServiceAccountRole)
+	req := new(coretypes.PostableServiceAccountRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -308,7 +308,7 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	req := new(serviceaccounttypes.PostableFactorAPIKey)
+	req := new(coretypes.PostableFactorAPIKey)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -333,7 +333,7 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, serviceaccounttypes.NewGettableFactorAPIKeyWithKey(factorAPIKey.ID, factorAPIKey.Key))
+	render.Success(rw, http.StatusCreated, coretypes.NewGettableFactorAPIKeyWithKey(factorAPIKey.ID, factorAPIKey.Key))
 }
 
 func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
@@ -362,7 +362,7 @@ func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	render.Success(rw, http.StatusOK, serviceaccounttypes.NewGettableFactorAPIKeys(factorAPIKeys))
+	render.Success(rw, http.StatusOK, coretypes.NewGettableFactorAPIKeys(factorAPIKeys))
 }
 
 func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
@@ -385,7 +385,7 @@ func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	req := new(serviceaccounttypes.UpdatableFactorAPIKey)
+	req := new(coretypes.UpdatableFactorAPIKey)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return

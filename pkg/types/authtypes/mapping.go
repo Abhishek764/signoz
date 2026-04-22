@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 type AttributeMapping struct {
@@ -68,13 +68,13 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	}
 
 	if temp.DefaultRole != "" {
-		if _, err := types.NewRole(strings.ToUpper(temp.DefaultRole)); err != nil {
+		if _, err := coretypes.NewLegacyRole(strings.ToUpper(temp.DefaultRole)); err != nil {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid default role %s", temp.DefaultRole)
 		}
 	}
 
 	for group, role := range temp.GroupMappings {
-		if _, err := types.NewRole(strings.ToUpper(role)); err != nil {
+		if _, err := coretypes.NewLegacyRole(strings.ToUpper(role)); err != nil {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid role %s for group %s", role, group)
 		}
 	}
@@ -83,25 +83,25 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.Role {
+func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) coretypes.LegacyRole {
 	if roleMapping == nil {
-		return types.RoleViewer
+		return coretypes.LegacyRoleViewer
 	}
 
 	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
-		if role, err := types.NewRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
+		if role, err := coretypes.NewLegacyRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
 			return role
 		}
 	}
 
 	if len(roleMapping.GroupMappings) > 0 && len(callbackIdentity.Groups) > 0 {
-		highestRole := types.RoleViewer
+		highestRole := coretypes.LegacyRoleViewer
 		found := false
 
 		for _, group := range callbackIdentity.Groups {
 			if mappedRole, exists := roleMapping.GroupMappings[group]; exists {
 				found = true
-				if role, err := types.NewRole(strings.ToUpper(mappedRole)); err == nil {
+				if role, err := coretypes.NewLegacyRole(strings.ToUpper(mappedRole)); err == nil {
 					if compareRoles(role, highestRole) > 0 {
 						highestRole = role
 					}
@@ -115,19 +115,19 @@ func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *Ca
 	}
 
 	if roleMapping.DefaultRole != "" {
-		if role, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
+		if role, err := coretypes.NewLegacyRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
 			return role
 		}
 	}
 
-	return types.RoleViewer
+	return coretypes.LegacyRoleViewer
 }
 
-func compareRoles(a, b types.Role) int {
-	order := map[types.Role]int{
-		types.RoleViewer: 0,
-		types.RoleEditor: 1,
-		types.RoleAdmin:  2,
+func compareRoles(a, b coretypes.LegacyRole) int {
+	order := map[coretypes.LegacyRole]int{
+		coretypes.LegacyRoleViewer: 0,
+		coretypes.LegacyRoleEditor: 1,
+		coretypes.LegacyRoleAdmin:  2,
 	}
 	return order[a] - order[b]
 }

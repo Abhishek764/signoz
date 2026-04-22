@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -244,9 +244,9 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 			OrgID:        user.OrgID,
 		})
 
-		managedRoleName, ok := authtypes.ExistingRoleToSigNozManagedRoleMap[types.Role(oldKey.Role)]
+		managedRoleName, ok := coretypes.ExistingRoleToSigNozManagedRoleMap[coretypes.LegacyRole(oldKey.Role)]
 		if !ok {
-			managedRoleName = authtypes.SigNozViewerRoleName
+			managedRoleName = coretypes.SigNozViewerRoleName
 		}
 
 		roleID, ok := roleMap[orgRoleKey{OrgID: user.OrgID, RoleName: managedRoleName}]

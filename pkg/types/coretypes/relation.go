@@ -1,4 +1,4 @@
-package authtypes
+package coretypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"

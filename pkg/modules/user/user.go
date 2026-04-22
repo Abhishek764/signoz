@@ -6,23 +6,23 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Setter interface {
 	// Creates the organization and the first user of that organization.
-	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*types.User, error)
+	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*coretypes.User, error)
 
 	// Creates a user and sends an analytics event.
-	CreateUser(ctx context.Context, user *types.User, opts ...CreateUserOption) error
+	CreateUser(ctx context.Context, user *coretypes.User, opts ...CreateUserOption) error
 
 	// Get or create a user. If a user with the same email and orgID already exists, it returns the existing user.
-	GetOrCreateUser(ctx context.Context, user *types.User, opts ...CreateUserOption) (*types.User, error)
+	GetOrCreateUser(ctx context.Context, user *coretypes.User, opts ...CreateUserOption) (*coretypes.User, error)
 
 	// Get or Create a reset password token for a user. If the password does not exist, a new one is randomly generated and inserted. The function
 	// is idempotent and can be called multiple times.
-	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error)
+	GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*coretypes.ResetPasswordToken, error)
 
 	// Updates password of a user using a reset password token. It also deletes all reset password tokens for the user.
 	// This is used to reset the password of a user when they forget their password.
@@ -34,16 +34,16 @@ type Setter interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser) (*types.DeprecatedUser, error)
-	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error)
+	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *coretypes.DeprecatedUser) (*coretypes.DeprecatedUser, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *coretypes.UpdatableUser) (*coretypes.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
-	UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error
-	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
+	UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *coretypes.DeprecatedUser) error
+	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *coretypes.User) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
-	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
+	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *coretypes.PostableBulkInviteRequest) ([]*coretypes.Invite, error)
 
 	// Roles
 	UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
@@ -55,21 +55,21 @@ type Setter interface {
 
 type Getter interface {
 	// Get root user by org id.
-	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error)
+	GetRootUserByOrgID(context.Context, valuer.UUID) (*coretypes.User, []*coretypes.UserRole, error)
 
 	// Get gets the users based on the given org id
-	ListDeprecatedUsersByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
-	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
+	ListDeprecatedUsersByOrgID(context.Context, valuer.UUID) ([]*coretypes.DeprecatedUser, error)
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*coretypes.User, error)
 
 	// Get deprecated user object by orgID and id.
-	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
-	GetUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.User, error)
+	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*coretypes.DeprecatedUser, error)
+	GetUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*coretypes.User, error)
 
 	// Get user by id.
-	Get(context.Context, valuer.UUID) (*types.DeprecatedUser, error)
+	Get(context.Context, valuer.UUID) (*coretypes.DeprecatedUser, error)
 
 	// List users by email and org ids.
-	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
+	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*coretypes.User, error)
 
 	// Count users by org id.
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
@@ -78,19 +78,19 @@ type Getter interface {
 	CountByOrgIDAndStatuses(context.Context, valuer.UUID, []string) (map[valuer.String]int64, error)
 
 	// Get factor password by user id.
-	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
+	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*coretypes.FactorPassword, error)
 
 	// Get reset password token by org id and user id.
-	GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error)
+	GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*coretypes.ResetPasswordToken, error)
 
 	// Gets single Non-Deleted user by email and org id
-	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
+	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*coretypes.User, error)
 
 	// Gets user_role with roles entries from db
-	GetRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
+	GetRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*coretypes.UserRole, error)
 
 	// Gets all the user with role using role id in an org id
-	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
+	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*coretypes.User, error)
 }
 
 type Handler interface {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -14,55 +15,55 @@ type AuthZ interface {
 	factory.ServiceWithHealthy
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, coretypes.Relation, coretypes.Typeable, []coretypes.Selector, []coretypes.Selector) error
 
 	// CheckWithTupleCreationWithoutClaims checks permissions for anonymous users.
-	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
+	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, coretypes.Relation, coretypes.Typeable, []coretypes.Selector, []coretypes.Selector) error
 
 	// BatchCheck accepts a map of ID → tuple and returns a map of ID → authorization result.
-	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error)
+	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*coretypes.TupleKeyAuthorization, error)
 
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
+	ListObjects(context.Context, string, coretypes.Relation, coretypes.Typeable) ([]*coretypes.Object, error)
 
 	// Creates the role.
-	Create(context.Context, valuer.UUID, *authtypes.Role) error
+	Create(context.Context, valuer.UUID, *coretypes.Role) error
 
 	// Gets the role if it exists or creates one.
-	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
+	GetOrCreate(context.Context, valuer.UUID, *coretypes.Role) (*coretypes.Role, error)
 
 	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*authtypes.Object, error)
+	GetObjects(context.Context, valuer.UUID, valuer.UUID, coretypes.Relation) ([]*coretypes.Object, error)
 
 	// Gets all the typeable resources registered from role registry.
-	GetResources(context.Context) []*authtypes.Resource
+	GetResources(context.Context) []*coretypes.Resource
 
 	// Patches the role.
-	Patch(context.Context, valuer.UUID, *authtypes.Role) error
+	Patch(context.Context, valuer.UUID, *coretypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
+	PatchObjects(context.Context, valuer.UUID, string, coretypes.Relation, []*coretypes.Object, []*coretypes.Object) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Gets the role
-	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
+	Get(context.Context, valuer.UUID, valuer.UUID) (*coretypes.Role, error)
 
 	// Gets the role by org_id and name
-	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
+	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*coretypes.Role, error)
 
 	// Lists all the roles for the organization.
-	List(context.Context, valuer.UUID) ([]*authtypes.Role, error)
+	List(context.Context, valuer.UUID) ([]*coretypes.Role, error)
 
 	//  Lists all the roles for the organization filtered by name
-	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*authtypes.Role, error)
+	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*coretypes.Role, error)
 
 	//  Lists all the roles for the organization filtered by ids
-	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*authtypes.Role, error)
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*coretypes.Role, error)
 
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, []string, string) error
@@ -74,16 +75,16 @@ type AuthZ interface {
 	ModifyGrant(context.Context, valuer.UUID, []string, []string, string) error
 
 	// Bootstrap the managed roles.
-	CreateManagedRoles(context.Context, valuer.UUID, []*authtypes.Role) error
+	CreateManagedRoles(context.Context, valuer.UUID, []*coretypes.Role) error
 
 	// Bootstrap managed roles transactions and user assignments
 	CreateManagedUserRoleTransactions(context.Context, valuer.UUID, valuer.UUID) error
 }
 
 type RegisterTypeable interface {
-	MustGetTypeables() []authtypes.Typeable
+	MustGetTypeables() []coretypes.Typeable
 
-	MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction
+	MustGetManagedRoleTransactions() map[string][]*coretypes.Transaction
 }
 
 type Handler interface {

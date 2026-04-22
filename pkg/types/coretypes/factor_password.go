@@ -1,4 +1,4 @@
-package types
+package coretypes
 
 import (
 	"encoding/json"
@@ -44,7 +44,7 @@ type PostableForgotPassword struct {
 type ResetPasswordToken struct {
 	bun.BaseModel `bun:"table:reset_password_token"`
 
-	Identifiable
+	ID         valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
 	Token      string      `bun:"token,type:text,notnull" json:"token"`
 	PasswordID valuer.UUID `bun:"password_id,type:text,notnull,unique" json:"passwordId"`
 	ExpiresAt  time.Time   `bun:"expires_at,type:timestamptz,nullzero" json:"expiresAt"`
@@ -53,11 +53,12 @@ type ResetPasswordToken struct {
 type FactorPassword struct {
 	bun.BaseModel `bun:"table:factor_password"`
 
-	Identifiable
-	Password  string `bun:"password,type:text,notnull" json:"password"`
-	Temporary bool   `bun:"temporary,type:boolean,notnull" json:"temporary"`
-	UserID    string `bun:"user_id,type:text,notnull,unique" json:"userId"`
-	TimeAuditable
+	ID        valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
+	Password  string      `bun:"password,type:text,notnull" json:"password"`
+	Temporary bool        `bun:"temporary,type:boolean,notnull" json:"temporary"`
+	UserID    string      `bun:"user_id,type:text,notnull,unique" json:"userId"`
+	CreatedAt time.Time   `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time   `bun:"updated_at" json:"updatedAt"`
 }
 
 func (request *ChangePasswordRequest) UnmarshalJSON(data []byte) error {
@@ -103,16 +104,12 @@ func NewFactorPassword(password string, userID string) (*FactorPassword, error) 
 	}
 
 	return &FactorPassword{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
+		ID:        valuer.GenerateUUID(),
 		Password:  string(hashedPassword),
 		Temporary: false,
 		UserID:    userID,
-		TimeAuditable: TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}, nil
 }
 
@@ -145,9 +142,7 @@ func NewHashedPassword(password string) (string, error) {
 
 func NewResetPasswordToken(passwordID valuer.UUID, expiresAt time.Time) (*ResetPasswordToken, error) {
 	return &ResetPasswordToken{
-		Identifiable: Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
+		ID:         valuer.GenerateUUID(),
 		Token:      valuer.GenerateUUID().String(),
 		PasswordID: passwordID,
 		ExpiresAt:  expiresAt,

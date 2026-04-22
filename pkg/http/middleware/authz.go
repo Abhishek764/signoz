@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -40,25 +41,25 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozEditorRoleName),
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozViewerRoleName),
+		selectors := []coretypes.Selector{
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozAdminRoleName),
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozEditorRoleName),
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozViewerRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
+			coretypes.RelationAssignee,
+			coretypes.TypeableRole,
 			selectors,
 			selectors,
 		)
 		if err != nil {
 			middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
-			if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
-				render.Error(rw, errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "only viewers/editors/admins can access this resource"))
+			if errors.Asc(err, coretypes.ErrCodeAuthZForbidden) {
+				render.Error(rw, errors.New(errors.TypeForbidden, coretypes.ErrCodeAuthZForbidden, "only viewers/editors/admins can access this resource"))
 				return
 			}
 
@@ -79,24 +80,24 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozEditorRoleName),
+		selectors := []coretypes.Selector{
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozAdminRoleName),
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozEditorRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
+			coretypes.RelationAssignee,
+			coretypes.TypeableRole,
 			selectors,
 			selectors,
 		)
 		if err != nil {
 			middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
-			if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
-				render.Error(rw, errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "only editors/admins can access this resource"))
+			if errors.Asc(err, coretypes.ErrCodeAuthZForbidden) {
+				render.Error(rw, errors.New(errors.TypeForbidden, coretypes.ErrCodeAuthZForbidden, "only editors/admins can access this resource"))
 				return
 			}
 
@@ -117,23 +118,23 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+		selectors := []coretypes.Selector{
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozAdminRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
+			coretypes.RelationAssignee,
+			coretypes.TypeableRole,
 			selectors,
 			selectors,
 		)
 		if err != nil {
 			middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
-			if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
-				render.Error(rw, errors.New(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "only admins can access this resource"))
+			if errors.Asc(err, coretypes.ErrCodeAuthZForbidden) {
+				render.Error(rw, errors.New(errors.TypeForbidden, coretypes.ErrCodeAuthZForbidden, "only admins can access this resource"))
 				return
 			}
 
@@ -153,16 +154,16 @@ func (middleware *AuthZ) SelfAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+		selectors := []coretypes.Selector{
+			coretypes.MustNewSelector(coretypes.TypeRole, coretypes.SigNozAdminRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(
 			req.Context(),
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
+			coretypes.RelationAssignee,
+			coretypes.TypeableRole,
 			selectors,
 			selectors,
 		)
@@ -185,7 +186,7 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation coretypes.Relation, typeable coretypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		claims, err := authtypes.ClaimsFromContext(ctx)
@@ -200,9 +201,9 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 			return
 		}
 
-		roleSelectors := []authtypes.Selector{}
+		roleSelectors := []coretypes.Selector{}
 		for _, role := range roles {
-			roleSelectors = append(roleSelectors, authtypes.MustNewSelector(authtypes.TypeRole, role))
+			roleSelectors = append(roleSelectors, coretypes.MustNewSelector(coretypes.TypeRole, role))
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(ctx, claims, valuer.MustNewUUID(claims.OrgID), relation, typeable, selectors, roleSelectors)
@@ -215,7 +216,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 	})
 }
 
-func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
+func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation coretypes.Relation, typeable coretypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)
@@ -230,9 +231,9 @@ func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation auth
 			return
 		}
 
-		roleSelectors := []authtypes.Selector{}
+		roleSelectors := []coretypes.Selector{}
 		for _, role := range roles {
-			roleSelectors = append(roleSelectors, authtypes.MustNewSelector(authtypes.TypeRole, role))
+			roleSelectors = append(roleSelectors, coretypes.MustNewSelector(coretypes.TypeRole, role))
 		}
 
 		err = middleware.authzService.CheckWithTupleCreationWithoutClaims(ctx, orgId, relation, typeable, selectors, roleSelectors)

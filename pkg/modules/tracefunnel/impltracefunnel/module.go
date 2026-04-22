@@ -6,7 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -30,10 +30,8 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 	funnel.CreatedBy = userID.String()
 
 	// Set up the user relationship
-	funnel.CreatedByUser = &types.User{
-		Identifiable: types.Identifiable{
-			ID: userID,
-		},
+	funnel.CreatedByUser = &coretypes.User{
+		ID: userID,
 	}
 
 	if funnel.ID.IsZero() {

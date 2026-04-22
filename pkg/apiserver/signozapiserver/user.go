@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -15,14 +15,14 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Create invite",
 		Description:         "This endpoint creates an invite for a user",
-		Request:             new(types.PostableInvite),
+		Request:             new(coretypes.PostableInvite),
 		RequestContentType:  "application/json",
-		Response:            new(types.Invite),
+		Response:            new(coretypes.Invite),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -32,13 +32,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:               []string{"users"},
 		Summary:            "Create bulk invite",
 		Description:        "This endpoint creates a bulk invite for a user",
-		Request:            new(types.PostableBulkInviteRequest),
+		Request:            new(coretypes.PostableBulkInviteRequest),
 		RequestContentType: "application/json",
 		Response:           nil,
 		SuccessStatusCode:  http.StatusCreated,
 		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:         false,
-		SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:    newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -50,12 +50,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists all users",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*types.DeprecatedUser, 0),
+		Response:            make([]*coretypes.DeprecatedUser, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -67,12 +67,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists all users for the organization",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*types.User, 0),
+		Response:            make([]*coretypes.User, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user I belong to",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.DeprecatedUser),
+		Response:            new(coretypes.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -101,7 +101,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user I belong to",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(authtypes.UserWithRoles),
+		Response:            new(coretypes.UserWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -116,7 +116,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Update my user v2",
 		Description:         "This endpoint updates the user I belong to",
-		Request:             new(types.UpdatableUser),
+		Request:             new(coretypes.UpdatableUser),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
@@ -135,12 +135,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user by id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.DeprecatedUser),
+		Response:            new(coretypes.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -152,12 +152,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user by id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(authtypes.UserWithRoles),
+		Response:            new(coretypes.UserWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -167,14 +167,14 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Update user",
 		Description:         "This endpoint updates the user by id",
-		Request:             new(types.DeprecatedUser),
+		Request:             new(coretypes.DeprecatedUser),
 		RequestContentType:  "application/json",
-		Response:            new(types.DeprecatedUser),
+		Response:            new(coretypes.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -184,14 +184,14 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Update user v2",
 		Description:         "This endpoint updates the user by id",
-		Request:             new(types.UpdatableUser),
+		Request:             new(coretypes.UpdatableUser),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -220,12 +220,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the reset password token by id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.ResetPasswordToken),
+		Response:            new(coretypes.ResetPasswordToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -237,12 +237,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the existing reset password token for a user.",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.ResetPasswordToken),
+		Response:            new(coretypes.ResetPasswordToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -254,12 +254,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.ResetPasswordToken),
+		Response:            new(coretypes.ResetPasswordToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -269,7 +269,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Reset password",
 		Description:         "This endpoint resets the password by token",
-		Request:             new(types.PostableResetPassword),
+		Request:             new(coretypes.PostableResetPassword),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
@@ -286,14 +286,14 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Updates my password",
 		Description:         "This endpoint updates the password of the user I belong to",
-		Request:             new(types.ChangePasswordRequest),
+		Request:             new(coretypes.ChangePasswordRequest),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Forgot password",
 		Description:         "This endpoint initiates the forgot password flow by sending a reset password email",
-		Request:             new(types.PostableForgotPassword),
+		Request:             new(coretypes.PostableForgotPassword),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
@@ -322,12 +322,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user roles by user id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*authtypes.Role, 0),
+		Response:            make([]*coretypes.Role, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -337,14 +337,14 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Set user roles",
 		Description:         "This endpoint assigns the role to the user roles by user id",
-		Request:             new(types.PostableRole),
+		Request:             new(coretypes.PostableRole),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -361,7 +361,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -373,12 +373,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the users having the role by role id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*types.User, 0),
+		Response:            make([]*coretypes.User, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(coretypes.LegacyRoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

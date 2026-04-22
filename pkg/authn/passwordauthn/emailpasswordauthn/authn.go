@@ -5,8 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -27,7 +27,7 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 	}
 
 	if !factorPassword.Equals(password) {
-		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
+		return nil, errors.New(errors.TypeUnauthenticated, coretypes.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
 	return authtypes.NewPrincipalUserIdentity(user.ID, orgID, user.Email, authtypes.IdentNProviderTokenizer), nil

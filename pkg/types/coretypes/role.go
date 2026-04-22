@@ -1,4 +1,4 @@
-package authtypes
+package coretypes
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/uptrace/bun"
@@ -43,16 +42,16 @@ var (
 )
 
 var (
-	ExistingRoleToSigNozManagedRoleMap = map[types.Role]string{
-		types.RoleAdmin:  SigNozAdminRoleName,
-		types.RoleEditor: SigNozEditorRoleName,
-		types.RoleViewer: SigNozViewerRoleName,
+	ExistingRoleToSigNozManagedRoleMap = map[LegacyRole]string{
+		LegacyRoleAdmin:  SigNozAdminRoleName,
+		LegacyRoleEditor: SigNozEditorRoleName,
+		LegacyRoleViewer: SigNozViewerRoleName,
 	}
 
-	SigNozManagedRoleToExistingLegacyRole = map[string]types.Role{
-		SigNozAdminRoleName:  types.RoleAdmin,
-		SigNozEditorRoleName: types.RoleEditor,
-		SigNozViewerRoleName: types.RoleViewer,
+	SigNozManagedRoleToExistingLegacyRole = map[string]LegacyRole{
+		SigNozAdminRoleName:  LegacyRoleAdmin,
+		SigNozEditorRoleName: LegacyRoleEditor,
+		SigNozViewerRoleName: LegacyRoleViewer,
 	}
 )
 
@@ -63,19 +62,21 @@ var (
 type StorableRole struct {
 	bun.BaseModel `bun:"table:role"`
 
-	types.Identifiable
-	types.TimeAuditable
-	Name        string `bun:"name,type:string" json:"name"`
-	Description string `bun:"description,type:string" json:"description"`
-	Type        string `bun:"type,type:string" json:"type"`
-	OrgID       string `bun:"org_id,type:string" json:"orgId"`
+	ID          valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt   time.Time   `bun:"created_at" json:"createdAt"`
+	UpdatedAt   time.Time   `bun:"updated_at" json:"updatedAt"`
+	Name        string      `bun:"name,type:string" json:"name"`
+	Description string      `bun:"description,type:string" json:"description"`
+	Type        string      `bun:"type,type:string" json:"type"`
+	OrgID       string      `bun:"org_id,type:string" json:"orgId"`
 }
 
 type Role struct {
 	bun.BaseModel `bun:"table:role"`
 
-	types.Identifiable
-	types.TimeAuditable
+	ID          valuer.UUID   `json:"id" bun:"id,pk,type:text" required:"true"`
+	CreatedAt   time.Time     `bun:"created_at" json:"createdAt"`
+	UpdatedAt   time.Time     `bun:"updated_at" json:"updatedAt"`
 	Name        string        `bun:"name,type:string" json:"name" required:"true"`
 	Description string        `bun:"description,type:string"  json:"description" required:"true"`
 	Type        valuer.String `bun:"type,type:string" json:"type" required:"true"`
@@ -93,35 +94,33 @@ type PatchableRole struct {
 
 func NewStorableRoleFromRole(role *Role) *StorableRole {
 	return &StorableRole{
-		Identifiable:  role.Identifiable,
-		TimeAuditable: role.TimeAuditable,
-		Name:          role.Name,
-		Description:   role.Description,
-		Type:          role.Type.String(),
-		OrgID:         role.OrgID.StringValue(),
+		ID:          role.ID,
+		CreatedAt:   role.CreatedAt,
+		UpdatedAt:   role.UpdatedAt,
+		Name:        role.Name,
+		Description: role.Description,
+		Type:        role.Type.String(),
+		OrgID:       role.OrgID.StringValue(),
 	}
 }
 
 func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
 	return &Role{
-		Identifiable:  storableRole.Identifiable,
-		TimeAuditable: storableRole.TimeAuditable,
-		Name:          storableRole.Name,
-		Description:   storableRole.Description,
-		Type:          valuer.NewString(storableRole.Type),
-		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
+		ID:          storableRole.ID,
+		CreatedAt:   storableRole.CreatedAt,
+		UpdatedAt:   storableRole.UpdatedAt,
+		Name:        storableRole.Name,
+		Description: storableRole.Description,
+		Type:        valuer.NewString(storableRole.Type),
+		OrgID:       valuer.MustNewUUID(storableRole.OrgID),
 	}
 }
 
 func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
 	return &Role{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+		ID:          valuer.GenerateUUID(),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 		Name:        name,
 		Description: description,
 		Type:        roleType,
@@ -254,7 +253,7 @@ func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deleti
 	return tuples, nil
 }
 
-func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
+func MustGetSigNozManagedRoleFromExistingRole(role LegacyRole) string {
 	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
 	if !ok {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))

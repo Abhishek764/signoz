@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -13,11 +13,11 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(sqlstore sqlstore.SQLStore) serviceaccounttypes.Store {
+func NewStore(sqlstore sqlstore.SQLStore) coretypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(ctx context.Context, storable *serviceaccounttypes.ServiceAccount) error {
+func (store *store) Create(ctx context.Context, storable *coretypes.ServiceAccount) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -25,14 +25,14 @@ func (store *store) Create(ctx context.Context, storable *serviceaccounttypes.Se
 		Model(storable).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountAlreadyExists, "service account with id: %s already exists", storable.ID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrCodeServiceAccountAlreadyExists, "service account with id: %s already exists", storable.ID)
 	}
 
 	return nil
 }
 
-func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
-	storable := new(serviceaccounttypes.ServiceAccount)
+func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*coretypes.ServiceAccount, error) {
+	storable := new(coretypes.ServiceAccount)
 
 	err := store.
 		sqlstore.
@@ -43,14 +43,14 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist in org: %s", id, orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist in org: %s", id, orgID)
 	}
 
 	return storable, nil
 }
 
-func (store *store) GetWithRoles(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccountWithRoles, error) {
-	storable := new(serviceaccounttypes.ServiceAccountWithRoles)
+func (store *store) GetWithRoles(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*coretypes.ServiceAccountWithRoles, error) {
+	storable := new(coretypes.ServiceAccountWithRoles)
 
 	err := store.
 		sqlstore.
@@ -63,14 +63,14 @@ func (store *store) GetWithRoles(ctx context.Context, orgID valuer.UUID, id valu
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist in org: %s", id, orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist in org: %s", id, orgID)
 	}
 
 	return storable, nil
 }
 
-func (store *store) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*serviceaccounttypes.ServiceAccount, error) {
-	storable := new(serviceaccounttypes.ServiceAccount)
+func (store *store) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*coretypes.ServiceAccount, error) {
+	storable := new(coretypes.ServiceAccount)
 
 	err := store.
 		sqlstore.
@@ -79,17 +79,17 @@ func (store *store) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UU
 		Model(storable).
 		Where("org_id = ?", orgID).
 		Where("name = ?", name).
-		Where("status = ?", serviceaccounttypes.ServiceAccountStatusActive).
+		Where("status = ?", coretypes.ServiceAccountStatusActive).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "active service account with name: %s doesn't exist in org: %s", name, orgID.String())
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeServiceAccountNotFound, "active service account with name: %s doesn't exist in org: %s", name, orgID.String())
 	}
 
 	return storable, nil
 }
 
-func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
-	storable := new(serviceaccounttypes.ServiceAccount)
+func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*coretypes.ServiceAccount, error) {
+	storable := new(coretypes.ServiceAccount)
 
 	err := store.
 		sqlstore.
@@ -99,14 +99,14 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist", id)
 	}
 
 	return storable, nil
 }
 
-func (store *store) GetByIDAndStatus(ctx context.Context, id valuer.UUID, status serviceaccounttypes.ServiceAccountStatus) (*serviceaccounttypes.ServiceAccount, error) {
-	storable := new(serviceaccounttypes.ServiceAccount)
+func (store *store) GetByIDAndStatus(ctx context.Context, id valuer.UUID, status coretypes.ServiceAccountStatus) (*coretypes.ServiceAccount, error) {
+	storable := new(coretypes.ServiceAccount)
 
 	err := store.
 		sqlstore.
@@ -117,14 +117,14 @@ func (store *store) GetByIDAndStatus(ctx context.Context, id valuer.UUID, status
 		Where("status = ?", status.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s and status: %s doesn't exist", id, status.StringValue())
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeServiceAccountNotFound, "service account with id: %s and status: %s doesn't exist", id, status.StringValue())
 	}
 
 	return storable, nil
 }
 
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	storable := new(serviceaccounttypes.ServiceAccount)
+	storable := new(coretypes.ServiceAccount)
 
 	count, err := store.
 		sqlstore.
@@ -140,8 +140,8 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 	return int64(count), nil
 }
 
-func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
-	storables := make([]*serviceaccounttypes.ServiceAccount, 0)
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*coretypes.ServiceAccount, error) {
+	storables := make([]*coretypes.ServiceAccount, 0)
 
 	err := store.
 		sqlstore.
@@ -157,7 +157,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceacco
 	return storables, nil
 }
 
-func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *serviceaccounttypes.ServiceAccount) error {
+func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *coretypes.ServiceAccount) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -167,13 +167,13 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *ser
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountAlreadyExists, "service account with name: %s already exists", storable.Name)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrCodeServiceAccountAlreadyExists, "service account with name: %s already exists", storable.Name)
 	}
 
 	return nil
 }
 
-func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccountRole *serviceaccounttypes.ServiceAccountRole) error {
+func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccountRole *coretypes.ServiceAccountRole) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -193,7 +193,7 @@ func (store *store) DeleteServiceAccountRoles(ctx context.Context, serviceAccoun
 		sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(serviceaccounttypes.ServiceAccountRole)).
+		Model(new(coretypes.ServiceAccountRole)).
 		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {
@@ -208,7 +208,7 @@ func (store *store) DeleteServiceAccountRole(ctx context.Context, serviceAccount
 		sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(serviceaccounttypes.ServiceAccountRole)).
+		Model(new(coretypes.ServiceAccountRole)).
 		Where("service_account_id = ?", serviceAccountID).
 		Where("role_id = ?", roleID).
 		Exec(ctx)
@@ -219,7 +219,7 @@ func (store *store) DeleteServiceAccountRole(ctx context.Context, serviceAccount
 	return nil
 }
 
-func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceaccounttypes.FactorAPIKey) error {
+func (store *store) CreateFactorAPIKey(ctx context.Context, storable *coretypes.FactorAPIKey) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -227,14 +227,14 @@ func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceacc
 		Model(storable).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
 	}
 
 	return nil
 }
 
-func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error) {
-	storable := new(serviceaccounttypes.FactorAPIKey)
+func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*coretypes.FactorAPIKey, error) {
+	storable := new(coretypes.FactorAPIKey)
 
 	err := store.
 		sqlstore.
@@ -245,14 +245,14 @@ func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer
 		Where("service_account_id = ?", serviceAccountID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
 	}
 
 	return storable, nil
 }
 
-func (store *store) GetFactorAPIKeyByKey(ctx context.Context, key string) (*serviceaccounttypes.FactorAPIKey, error) {
-	storable := new(serviceaccounttypes.FactorAPIKey)
+func (store *store) GetFactorAPIKeyByKey(ctx context.Context, key string) (*coretypes.FactorAPIKey, error) {
+	storable := new(coretypes.FactorAPIKey)
 
 	err := store.
 		sqlstore.
@@ -262,14 +262,14 @@ func (store *store) GetFactorAPIKeyByKey(ctx context.Context, key string) (*serv
 		Where("key = ?", key).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeAPIKeytNotFound, "api key with key: %s doesn't exist.", key)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeAPIKeytNotFound, "api key with key: %s doesn't exist.", key)
 	}
 
 	return storable, nil
 }
 
-func (store *store) GetFactorAPIKeyByName(ctx context.Context, serviceAccountID valuer.UUID, name string) (*serviceaccounttypes.FactorAPIKey, error) {
-	storable := new(serviceaccounttypes.FactorAPIKey)
+func (store *store) GetFactorAPIKeyByName(ctx context.Context, serviceAccountID valuer.UUID, name string) (*coretypes.FactorAPIKey, error) {
+	storable := new(coretypes.FactorAPIKey)
 
 	err := store.
 		sqlstore.
@@ -280,14 +280,14 @@ func (store *store) GetFactorAPIKeyByName(ctx context.Context, serviceAccountID 
 		Where("name = ?", name).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeAPIKeytNotFound, "api key with name: %s doesn't exist in service account: %s", name, serviceAccountID.String())
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeAPIKeytNotFound, "api key with name: %s doesn't exist in service account: %s", name, serviceAccountID.String())
 	}
 
 	return storable, nil
 }
 
 func (store *store) CountFactorAPIKeysByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	storable := new(serviceaccounttypes.FactorAPIKey)
+	storable := new(coretypes.FactorAPIKey)
 
 	count, err := store.
 		sqlstore.
@@ -305,8 +305,8 @@ func (store *store) CountFactorAPIKeysByOrgID(ctx context.Context, orgID valuer.
 	return int64(count), nil
 }
 
-func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error) {
-	storables := make([]*serviceaccounttypes.FactorAPIKey, 0)
+func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*coretypes.FactorAPIKey, error) {
+	storables := make([]*coretypes.FactorAPIKey, 0)
 
 	err := store.
 		sqlstore.
@@ -322,7 +322,7 @@ func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID value
 	return storables, nil
 }
 
-func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, storable *serviceaccounttypes.FactorAPIKey) error {
+func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, storable *coretypes.FactorAPIKey) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -332,7 +332,7 @@ func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID val
 		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists in service account: %s", storable.Name, storable.ServiceAccountID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists in service account: %s", storable.Name, storable.ServiceAccountID)
 	}
 
 	return nil
@@ -359,7 +359,7 @@ func (store *store) RevokeFactorAPIKey(ctx context.Context, serviceAccountID val
 		sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(serviceaccounttypes.FactorAPIKey)).
+		Model(new(coretypes.FactorAPIKey)).
 		Where("service_account_id = ?", serviceAccountID).
 		Where("id = ?", id).
 		Exec(ctx)
@@ -375,7 +375,7 @@ func (store *store) RevokeAllFactorAPIKeys(ctx context.Context, serviceAccountID
 		sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(serviceaccounttypes.FactorAPIKey)).
+		Model(new(coretypes.FactorAPIKey)).
 		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {

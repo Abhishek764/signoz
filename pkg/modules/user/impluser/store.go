@@ -8,8 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -20,11 +20,11 @@ type store struct {
 	settings factory.ProviderSettings
 }
 
-func NewStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) types.UserStore {
+func NewStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) coretypes.UserStore {
 	return &store{sqlstore: sqlstore, settings: settings}
 }
 
-func (store *store) CreatePassword(ctx context.Context, password *types.FactorPassword) error {
+func (store *store) CreatePassword(ctx context.Context, password *coretypes.FactorPassword) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -32,13 +32,13 @@ func (store *store) CreatePassword(ctx context.Context, password *types.FactorPa
 		Model(password).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrPasswordAlreadyExists, "password for user %s already exists", password.UserID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrPasswordAlreadyExists, "password for user %s already exists", password.UserID)
 	}
 
 	return nil
 }
 
-func (store *store) CreateUser(ctx context.Context, user *types.User) error {
+func (store *store) CreateUser(ctx context.Context, user *coretypes.User) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -46,13 +46,13 @@ func (store *store) CreateUser(ctx context.Context, user *types.User) error {
 		Model(user).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrUserAlreadyExists, "user with email %s already exists in org %s", user.Email, user.OrgID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrUserAlreadyExists, "user with email %s already exists in org %s", user.Email, user.OrgID)
 	}
 	return nil
 }
 
-func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, error) {
-	user := new(types.User)
+func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*coretypes.User, error) {
+	user := new(coretypes.User)
 
 	err := store.
 		sqlstore.
@@ -62,14 +62,14 @@ func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, e
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id %s does not exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeUserNotFound, "user with id %s does not exist", id)
 	}
 
 	return user, nil
 }
 
-func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.User, error) {
-	user := new(types.User)
+func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*coretypes.User, error) {
+	user := new(coretypes.User)
 
 	err := store.
 		sqlstore.
@@ -80,14 +80,14 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id %s does not exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeUserNotFound, "user with id %s does not exist", id)
 	}
 
 	return user, nil
 }
 
-func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
-	var users []*types.User
+func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*coretypes.User, error) {
+	var users []*coretypes.User
 
 	err := store.
 		sqlstore.
@@ -96,7 +96,7 @@ func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("email = ?", email).
-		Where("status != ?", types.UserStatusDeleted).
+		Where("status != ?", coretypes.UserStatusDeleted).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email
 	return users, nil
 }
 
-func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *coretypes.User) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -120,13 +120,13 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Where("id = ?", user.ID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user does not exist in org: %s", orgID)
+		return store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeUserNotFound, "user does not exist in org: %s", orgID)
 	}
 	return nil
 }
 
-func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
-	users := []*types.User{}
+func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*coretypes.User, error) {
+	users := []*coretypes.User{}
 
 	err := store.
 		sqlstore.
@@ -154,7 +154,7 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 
 	// get the password id
 
-	var password types.FactorPassword
+	var password coretypes.FactorPassword
 	err = tx.NewSelect().
 		Model(&password).
 		Where("user_id = ?", id).
@@ -165,7 +165,7 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 
 	// delete reset password request
 	_, err = tx.NewDelete().
-		Model(new(types.ResetPasswordToken)).
+		Model(new(coretypes.ResetPasswordToken)).
 		Where("password_id = ?", password.ID.String()).
 		Exec(ctx)
 	if err != nil {
@@ -174,7 +174,7 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 
 	// delete factor password
 	_, err = tx.NewDelete().
-		Model(new(types.FactorPassword)).
+		Model(new(coretypes.FactorPassword)).
 		Where("user_id = ?", id).
 		Exec(ctx)
 	if err != nil {
@@ -201,7 +201,7 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 
 	// delete user
 	_, err = tx.NewDelete().
-		Model(new(types.User)).
+		Model(new(coretypes.User)).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Exec(ctx)
@@ -229,7 +229,7 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 
 	// get the password id
 
-	var password types.FactorPassword
+	var password coretypes.FactorPassword
 	err = tx.NewSelect().
 		Model(&password).
 		Where("user_id = ?", id).
@@ -240,7 +240,7 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 
 	// delete reset password request
 	_, err = tx.NewDelete().
-		Model(new(types.ResetPasswordToken)).
+		Model(new(coretypes.ResetPasswordToken)).
 		Where("password_id = ?", password.ID.String()).
 		Exec(ctx)
 	if err != nil {
@@ -249,7 +249,7 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 
 	// delete factor password
 	_, err = tx.NewDelete().
-		Model(new(types.FactorPassword)).
+		Model(new(coretypes.FactorPassword)).
 		Where("user_id = ?", id).
 		Exec(ctx)
 	if err != nil {
@@ -277,8 +277,8 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	// soft delete user
 	now := time.Now()
 	_, err = tx.NewUpdate().
-		Model(new(types.User)).
-		Set("status = ?", types.UserStatusDeleted).
+		Model(new(coretypes.User)).
+		Set("status = ?", coretypes.UserStatusDeleted).
 		Set("updated_at = ?", now).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
@@ -295,7 +295,7 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	return nil
 }
 
-func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordToken *types.ResetPasswordToken) error {
+func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordToken *coretypes.ResetPasswordToken) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -303,14 +303,14 @@ func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordT
 		Model(resetPasswordToken).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrResetPasswordTokenAlreadyExists, "reset password token for password  %s already exists", resetPasswordToken.PasswordID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, coretypes.ErrResetPasswordTokenAlreadyExists, "reset password token for password  %s already exists", resetPasswordToken.PasswordID)
 	}
 
 	return nil
 }
 
-func (store *store) GetPassword(ctx context.Context, id valuer.UUID) (*types.FactorPassword, error) {
-	password := new(types.FactorPassword)
+func (store *store) GetPassword(ctx context.Context, id valuer.UUID) (*coretypes.FactorPassword, error) {
+	password := new(coretypes.FactorPassword)
 
 	err := store.
 		sqlstore.
@@ -320,14 +320,14 @@ func (store *store) GetPassword(ctx context.Context, id valuer.UUID) (*types.Fac
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password with id: %s does not exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrPasswordNotFound, "password with id: %s does not exist", id)
 	}
 
 	return password, nil
 }
 
-func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*types.FactorPassword, error) {
-	password := new(types.FactorPassword)
+func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*coretypes.FactorPassword, error) {
+	password := new(coretypes.FactorPassword)
 
 	err := store.
 		sqlstore.
@@ -337,13 +337,13 @@ func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID)
 		Where("user_id = ?", userID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password for user %s does not exist", userID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrPasswordNotFound, "password for user %s does not exist", userID)
 	}
 	return password, nil
 }
 
-func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*types.ResetPasswordToken, error) {
-	resetPasswordToken := new(types.ResetPasswordToken)
+func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*coretypes.ResetPasswordToken, error) {
+	resetPasswordToken := new(coretypes.ResetPasswordToken)
 
 	err := store.
 		sqlstore.
@@ -353,14 +353,14 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 		Where("password_id = ?", passwordID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token for password %s does not exist", passwordID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrResetPasswordTokenNotFound, "reset password token for password %s does not exist", passwordID)
 	}
 
 	return resetPasswordToken, nil
 }
 
-func (store *store) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error) {
-	resetPasswordToken := new(types.ResetPasswordToken)
+func (store *store) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*coretypes.ResetPasswordToken, error) {
+	resetPasswordToken := new(coretypes.ResetPasswordToken)
 
 	err := store.
 		sqlstore.
@@ -373,7 +373,7 @@ func (store *store) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, o
 		Where("users.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token for user %s does not exist", userID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrResetPasswordTokenNotFound, "reset password token for user %s does not exist", userID)
 	}
 
 	return resetPasswordToken, nil
@@ -381,7 +381,7 @@ func (store *store) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, o
 
 func (store *store) DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().
-		Model(&types.ResetPasswordToken{}).
+		Model(&coretypes.ResetPasswordToken{}).
 		Where("password_id = ?", passwordID).
 		Exec(ctx)
 	if err != nil {
@@ -391,8 +391,8 @@ func (store *store) DeleteResetPasswordTokenByPasswordID(ctx context.Context, pa
 	return nil
 }
 
-func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*types.ResetPasswordToken, error) {
-	resetPasswordRequest := new(types.ResetPasswordToken)
+func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*coretypes.ResetPasswordToken, error) {
+	resetPasswordRequest := new(coretypes.ResetPasswordToken)
 
 	err := store.
 		sqlstore.
@@ -402,27 +402,27 @@ func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*t
 		Where("token = ?", token).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token does not exist")
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrResetPasswordTokenNotFound, "reset password token does not exist")
 	}
 
 	return resetPasswordRequest, nil
 }
 
-func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.FactorPassword) error {
+func (store *store) UpdatePassword(ctx context.Context, factorPassword *coretypes.FactorPassword) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewUpdate().
 		Model(factorPassword).
 		Where("user_id = ?", factorPassword.UserID).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
+		return store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrPasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
 	}
 
 	return nil
 }
 
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	user := new(types.User)
+	user := new(coretypes.User)
 
 	count, err := store.
 		sqlstore.
@@ -439,7 +439,7 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 }
 
 func (store *store) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error) {
-	user := new(types.User)
+	user := new(coretypes.User)
 	var results []struct {
 		Status valuer.String `bun:"status"`
 		Count  int64         `bun:"count"`
@@ -474,8 +474,8 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 	})
 }
 
-func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
-	user := new(types.User)
+func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*coretypes.User, error) {
+	user := new(coretypes.User)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -485,13 +485,13 @@ func (store *store) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (
 		Where("is_root = ?", true).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "root user for org %s not found", orgID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeUserNotFound, "root user for org %s not found", orgID)
 	}
 	return user, nil
 }
 
-func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
-	users := []*types.User{}
+func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*coretypes.User, error) {
+	users := []*coretypes.User{}
 	err := store.
 		sqlstore.
 		BunDB().
@@ -507,8 +507,8 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 	return users, nil
 }
 
-func (store *store) GetUserByResetPasswordToken(ctx context.Context, token string) (*types.User, error) {
-	user := new(types.User)
+func (store *store) GetUserByResetPasswordToken(ctx context.Context, token string) (*coretypes.User, error) {
+	user := new(coretypes.User)
 
 	err := store.
 		sqlstore.
@@ -520,14 +520,14 @@ func (store *store) GetUserByResetPasswordToken(ctx context.Context, token strin
 		Where("reset_password_token.token = ?", token).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user not found for reset password token")
+		return nil, store.sqlstore.WrapNotFoundErrf(err, coretypes.ErrCodeUserNotFound, "user not found for reset password token")
 	}
 
 	return user, nil
 }
 
-func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, emails []string, statuses []string) ([]*types.User, error) {
-	users := []*types.User{}
+func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, emails []string, statuses []string) ([]*coretypes.User, error) {
+	users := []*coretypes.User{}
 
 	err := store.
 		sqlstore.
@@ -545,8 +545,8 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 	return users, nil
 }
 
-func (store *store) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {
-	users := []*types.User{}
+func (store *store) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*coretypes.User, error) {
+	users := []*coretypes.User{}
 
 	err := store.
 		sqlstore.

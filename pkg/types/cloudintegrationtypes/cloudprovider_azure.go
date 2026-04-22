@@ -30,9 +30,11 @@ type AzureServiceMetricsConfig struct {
 }
 
 type AzureTelemetryCollectionStrategy struct {
-	ResourceType string                          `json:"resourceType" required:"true"`
-	Metrics      *AzureMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
-	Logs         *AzureLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
+	//https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types
+	ResourceProvider string                          `json:"resourceProvider" required:"true"`
+	ResourceType     string                          `json:"resourceType" required:"true"`
+	Metrics          *AzureMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
+	Logs             *AzureLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
 }
 
 // AzureMetricsCollectionStrategy no additional config required for metrics, will be added in future as required.

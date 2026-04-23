@@ -125,7 +125,7 @@ export const listPods = (
 
 export const getListPodsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,
@@ -142,8 +142,8 @@ export const getListPodsMutationOptions = <
 	const mutationKey = ['listPods'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -163,7 +163,8 @@ export const getListPodsMutationOptions = <
 export type ListPodsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof listPods>>
 >;
-export type ListPodsMutationBody = BodyType<InframonitoringtypesPostablePodsDTO>;
+export type ListPodsMutationBody =
+	BodyType<InframonitoringtypesPostablePodsDTO>;
 export type ListPodsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -171,7 +172,7 @@ export type ListPodsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useListPods = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,

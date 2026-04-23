@@ -1,15 +1,6 @@
+// Copyright (c) 2026 SigNoz, Inc.
 // Copyright 2019 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package webhook
 
@@ -25,30 +16,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
-
-func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
-	logger := slog.Default()
-	templater := alertmanagertemplate.New(tmpl, logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
-}
 
 func TestWebhookRetry(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
@@ -59,7 +38,7 @@ func TestWebhookRetry(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
 	if err != nil {
 		require.NoError(t, err)
@@ -123,6 +102,7 @@ func TestWebhookRedactedURL(t *testing.T) {
 
 	secret := "secret"
 	tmpl := test.CreateTmpl(t)
+	templater := alertmanagertemplate.New(tmpl, slog.Default())
 	notifier, err := New(
 		&config.WebhookConfig{
 			URL:        config.SecretTemplateURL(u.String()),
@@ -130,7 +110,7 @@ func TestWebhookRedactedURL(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		templater,
 	)
 	require.NoError(t, err)
 
@@ -154,7 +134,7 @@ func TestWebhookReadingURLFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
 	require.NoError(t, err)
 
@@ -216,7 +196,7 @@ func TestWebhookURLTemplating(t *testing.T) {
 				},
 				tmpl,
 				promslog.NewNopLogger(),
-				newTestProcessor(tmpl),
+				alertmanagertemplate.New(tmpl, slog.Default()),
 			)
 			require.NoError(t, err)
 
@@ -249,9 +229,9 @@ func TestWebhookURLTemplating(t *testing.T) {
 	}
 }
 
-func TestTemplateAlerts(t *testing.T) {
+func TestTemplateTitleBody(t *testing.T) {
 	tmpl := test.CreateTmpl(t)
-	proc := newTestProcessor(tmpl)
+	templater := alertmanagertemplate.New(tmpl, slog.Default())
 
 	notifier, err := New(
 		&config.WebhookConfig{
@@ -260,7 +240,7 @@ func TestTemplateAlerts(t *testing.T) {
 		},
 		tmpl,
 		slog.Default(),
-		proc,
+		templater,
 	)
 	require.NoError(t, err)
 
@@ -297,15 +277,20 @@ func TestTemplateAlerts(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		err := notifier.templateAlerts(ctx, alerts)
+		err := notifier.templateTitleBody(ctx, alerts)
 		require.NoError(t, err)
 
-		// Both alerts should have their title_template updated to the rendered title
-		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[0].Annotations[ruletypes.AnnotationTitleTemplate])
-		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[1].Annotations[ruletypes.AnnotationTitleTemplate])
-		// Each alert should have its own body_template based on its labels
-		require.Equal(t, model.LabelValue("Severity is critical"), alerts[0].Annotations[ruletypes.AnnotationBodyTemplate])
-		require.Equal(t, model.LabelValue("Severity is warning"), alerts[1].Annotations[ruletypes.AnnotationBodyTemplate])
+		for _, a := range alerts {
+			_, hasTitleTmpl := a.Annotations[ruletypes.AnnotationTitleTemplate]
+			_, hasBodyTmpl := a.Annotations[ruletypes.AnnotationBodyTemplate]
+			require.False(t, hasTitleTmpl, "private title template key should be stripped")
+			require.False(t, hasBodyTmpl, "private body template key should be stripped")
+		}
+
+		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[0].Annotations[templatedTitle])
+		require.Equal(t, model.LabelValue("Alert: TestAlert"), alerts[1].Annotations[templatedTitle])
+		require.Equal(t, model.LabelValue("Severity is critical"), alerts[0].Annotations[templatedBody])
+		require.Equal(t, model.LabelValue("Severity is warning"), alerts[1].Annotations[templatedBody])
 	})
 
 	t.Run("annotations not updated when template keys are absent", func(t *testing.T) {
@@ -326,16 +311,19 @@ func TestTemplateAlerts(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		err := notifier.templateAlerts(ctx, alerts)
+		err := notifier.templateTitleBody(ctx, alerts)
 		require.NoError(t, err)
 
-		// title_template and body_template keys should NOT be added
 		_, hasTitleTemplate := alerts[0].Annotations[ruletypes.AnnotationTitleTemplate]
 		_, hasBodyTemplate := alerts[0].Annotations[ruletypes.AnnotationBodyTemplate]
 		require.False(t, hasTitleTemplate, "title_template should not be added when absent")
 		require.False(t, hasBodyTemplate, "body_template should not be added when absent")
 
-		// Existing annotations should remain untouched
+		_, hasTemplatedTitle := alerts[0].Annotations[templatedTitle]
+		_, hasTemplatedBody := alerts[0].Annotations[templatedBody]
+		require.False(t, hasTemplatedTitle, "templated_title should not be added when no custom templates")
+		require.False(t, hasTemplatedBody, "templated_body should not be added when no custom templates")
+
 		require.Equal(t, model.LabelValue("keep this"), alerts[0].Annotations["summary"])
 		require.Equal(t, model.LabelValue("keep this too"), alerts[0].Annotations["description"])
 	})

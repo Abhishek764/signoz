@@ -16,9 +16,9 @@ var (
 )
 
 var (
-	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation")}
-	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password")}
-	TemplateNameAPIKeyEvent              = TemplateName{valuer.NewString("api_key_event")}
+	TemplateNameInvitationEmail        = TemplateName{valuer.NewString("invitation")}
+	TemplateNameResetPassword          = TemplateName{valuer.NewString("reset_password")}
+	TemplateNameAPIKeyEvent            = TemplateName{valuer.NewString("api_key_event")}
 	TemplateNameAlertEmailNotification = TemplateName{valuer.NewString("alert_email_notification")}
 )
 

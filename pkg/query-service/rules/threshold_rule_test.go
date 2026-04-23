@@ -826,7 +826,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier := prepareQuerierForTraces(telemetryStore, keysMap)
@@ -869,7 +869,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
-					if name == "related_traces" {
+					if name == ruletypes.AnnotationRelatedTraces {
 						assert.NotEmpty(t, value, "case %d", idx)
 						assert.Contains(t, value, "GET")
 					}
@@ -986,7 +986,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
-					if name == "related_logs" {
+					if name == ruletypes.AnnotationRelatedLogs {
 						assert.NotEmpty(t, value, "case %d", idx)
 						assert.Contains(t, value, "testcontainer")
 					}

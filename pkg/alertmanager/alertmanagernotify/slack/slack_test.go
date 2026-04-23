@@ -1,15 +1,6 @@
+// Copyright (c) 2026 SigNoz, Inc.
 // Copyright 2019 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package slack
 
@@ -27,9 +18,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
@@ -44,11 +32,8 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
-	logger := slog.Default()
-	templater := alertmanagertemplate.New(tmpl, logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
 }
 
 func TestSlackRetry(t *testing.T) {
@@ -59,7 +44,7 @@ func TestSlackRetry(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -81,7 +66,7 @@ func TestSlackRedactedURL(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -105,7 +90,7 @@ func TestGettingSlackURLFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -129,7 +114,7 @@ func TestTrimmingSlackURLFromFile(t *testing.T) {
 		},
 		tmpl,
 		promslog.NewNopLogger(),
-		newTestProcessor(tmpl),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -224,7 +209,7 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 				},
 				tmpl,
 				promslog.NewNopLogger(),
-				newTestProcessor(tmpl),
+				newTestTemplater(tmpl),
 			)
 			require.NoError(t, err)
 
@@ -285,7 +270,7 @@ func TestSlackTimeout(t *testing.T) {
 				},
 				tmpl,
 				promslog.NewNopLogger(),
-				newTestProcessor(tmpl),
+				newTestTemplater(tmpl),
 			)
 			require.NoError(t, err)
 			notifier.postJSONFunc = func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error) {
@@ -333,7 +318,7 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("default template uses go text template config for title and body", func(t *testing.T) {
 		// When alerts have no custom annotation templates (title_template / body_template),
 		tmpl := test.CreateTmpl(t)
-		proc := newTestProcessor(tmpl)
+		templater := newTestTemplater(tmpl)
 		notifier := &Notifier{
 			conf: &config.SlackConfig{
 				Title:     `{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})`,
@@ -343,7 +328,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl:      tmpl,
 			logger:    slog.New(slog.DiscardHandler),
-			processor: proc,
+			templater: templater,
 		}
 
 		ctx := setupTestContext()
@@ -378,7 +363,7 @@ func TestPrepareContent(t *testing.T) {
 	t.Run("custom template produces 1+N attachments with per-alert color", func(t *testing.T) {
 		// When alerts carry custom $variable annotation templates (title_template / body_template)
 		tmpl := test.CreateTmpl(t)
-		proc := newTestProcessor(tmpl)
+		templater := newTestTemplater(tmpl)
 		notifier := &Notifier{
 			conf: &config.SlackConfig{
 				Title:     "default title fallback",
@@ -387,11 +372,11 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl:      tmpl,
 			logger:    slog.New(slog.DiscardHandler),
-			processor: proc,
+			templater: templater,
 		}
 		tmplText := func(s string) string { return s }
 
-		bodyTemplate := `## $rule_name
+		bodyTemplate := `## $rule.name
 
 **Service:** *$labels.service*
 **Instance:** *$labels.instance*
@@ -403,10 +388,10 @@ func TestPrepareContent(t *testing.T) {
 | Metric | Value |
 |--------|-------|
 | **Current** | *$value* |
-| **Threshold** | *$threshold* |
+| **Threshold** | *$threshold.value* |
 
-**Status:** $status | **Severity:** $severity`
-		titleTemplate := "[$status] $rule_name — $labels.service"
+**Status:** $alert.status | **Severity:** $labels.severity`
+		titleTemplate := "[$alert.status] $rule.name — $labels.service"
 
 		ctx := setupTestContext()
 		firingAlert := &types.Alert{
@@ -477,7 +462,7 @@ func TestPrepareContent(t *testing.T) {
 		// Verifies that addFieldsAndActions (called from Notify after prepareContent)
 		// correctly populates fields and actions on the attachment from config.
 		tmpl := test.CreateTmpl(t)
-		proc := newTestProcessor(tmpl)
+		templater := newTestTemplater(tmpl)
 		short := true
 		notifier := &Notifier{
 			conf: &config.SlackConfig{
@@ -495,7 +480,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 			tmpl:      tmpl,
 			logger:    slog.New(slog.DiscardHandler),
-			processor: proc,
+			templater: templater,
 		}
 		tmplText := func(s string) string { return s }
 
@@ -582,7 +567,7 @@ func TestSlackMessageField(t *testing.T) {
 	tmpl.ExternalURL = u
 
 	logger := slog.New(slog.DiscardHandler)
-	notifier, err := New(conf, tmpl, logger, newTestProcessor(tmpl))
+	notifier, err := New(conf, tmpl, logger, newTestTemplater(tmpl))
 	if err != nil {
 		t.Fatal(err)
 	}

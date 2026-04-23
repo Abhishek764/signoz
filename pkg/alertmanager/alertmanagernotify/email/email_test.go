@@ -1,31 +1,7 @@
+// Copyright (c) 2026 SigNoz, Inc.
 // Copyright 2019 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
-// Some tests require a running mail catcher. We use MailDev for this purpose,
-// it can work without or with authentication (LOGIN only). It exposes a REST
-// API which we use to retrieve and check the sent emails.
-//
-// Those tests are only executed when specific environment variables are set,
-// otherwise they are skipped. The tests must be run by the CI.
-//
-// To run the tests locally, you should start 2 MailDev containers:
-//
-// $ docker run --rm -p 1080:1080 -p 1025:1025 --entrypoint bin/maildev maildev/maildev:2.2.1 -v
-// $ docker run --rm -p 1081:1080 -p 1026:1025 --entrypoint bin/maildev maildev/maildev:2.2.1 --incoming-user user --incoming-pass pass -v
-//
-// $ EMAIL_NO_AUTH_CONFIG=testdata/noauth-local.yml EMAIL_AUTH_CONFIG=testdata/auth-local.yml make
-//
-// See also https://github.com/maildev/maildev for more details.
 package email
 
 import (
@@ -43,11 +19,10 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertnotificationprocessor"
 	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/emersion/go-smtp"
 	commoncfg "github.com/prometheus/common/config"
@@ -65,13 +40,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
-func newTestProcessor(tmpl *template.Template) alertmanagertypes.NotificationProcessor {
-	logger := slog.Default()
-	templater := alertmanagertemplate.New(tmpl, logger)
-	renderer := markdownrenderer.NewMarkdownRenderer(logger)
-	return alertnotificationprocessor.New(templater, renderer, filetemplatestore.NewEmptyStore(), logger)
-}
-
 const (
 	emailNoAuthConfigVar = "EMAIL_NO_AUTH_CONFIG"
 	emailAuthConfigVar   = "EMAIL_AUTH_CONFIG"
@@ -79,6 +47,18 @@ const (
 	emailTo   = "alerts@example.com"
 	emailFrom = "alertmanager@example.com"
 )
+
+// testTemplater returns a Templater bound to tmpl with a discard logger.
+func testTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
+}
+
+// testEmptyStore returns an email template store with no templates. When the
+// email notifier tries to render the alert_email_notification layout against
+// this, the Get call fails and prepareContent falls back to plain <div> wrap.
+func testEmptyStore() emailtypes.TemplateStore {
+	return filetemplatestore.NewEmptyStore()
+}
 
 // email represents an email returned by the MailDev REST API.
 // See https://github.com/djfarrelly/MailDev/blob/master/docs/rest.md.
@@ -200,7 +180,7 @@ func notifyEmailWithContext(ctx context.Context, t *testing.T, cfg *config.Email
 		return nil, false, err
 	}
 
-	email := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+	email := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
 
 	retry, err := email.Notify(ctx, firingAlert)
 	if err != nil {
@@ -744,7 +724,7 @@ func TestEmailRejected(t *testing.T) {
 	tmpl, firingAlert, err := prepare(cfg)
 	require.NoError(t, err)
 
-	e := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+	e := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
 
 	// Send the alert to mock SMTP server.
 	retry, err := e.Notify(context.Background(), firingAlert)
@@ -1098,14 +1078,13 @@ func TestPrepareContent(t *testing.T) {
 		alerts := []*types.Alert{a1, a2}
 
 		cfg := &config.EmailConfig{Headers: map[string]string{"Subject": "subj"}}
-		n := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
 
 		ctx := context.Background()
 		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
 		_, htmlBody, err := n.prepareContent(ctx, alerts, data)
 		require.NoError(t, err)
-		// Goldmark will append newlines inside paragraph tags.
-		require.Equal(t, "<div><p>line one</p><p></p></div><div><p>line two</p><p></p></div>", htmlBody)
+		require.Equal(t, "<div><p>line one</p>\n</div><div><p>line two</p>\n</div>", htmlBody)
 	})
 
 	t.Run("default template with HTML and custom title template", func(t *testing.T) {
@@ -1117,7 +1096,7 @@ func TestPrepareContent(t *testing.T) {
 			Alert: model.Alert{
 				Labels: model.LabelSet{},
 				Annotations: model.LabelSet{
-					model.LabelName(ruletypes.AnnotationTitleTemplate): model.LabelValue("fixed from $status"),
+					model.LabelName(ruletypes.AnnotationTitleTemplate): model.LabelValue("fixed from $alert.status"),
 				},
 				StartsAt: time.Now(),
 				EndsAt:   time.Now().Add(time.Hour),
@@ -1128,14 +1107,15 @@ func TestPrepareContent(t *testing.T) {
 			Headers: map[string]string{},
 			HTML:    "Status: {{ .Status }}",
 		}
-		n := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
 
 		ctx := context.Background()
 		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
-		title, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		subject, htmlBody, err := n.prepareContent(ctx, alerts, data)
 		require.NoError(t, err)
 		require.Equal(t, "Status: firing", htmlBody)
-		require.Equal(t, "fixed from firing", title)
+		// custom title supplied → prepareContent returns a subject override.
+		require.Equal(t, "fixed from firing", subject)
 	})
 
 	t.Run("default template without HTML", func(t *testing.T) {
@@ -1143,7 +1123,7 @@ func TestPrepareContent(t *testing.T) {
 		tmpl, err := template.FromGlobs([]string{})
 		require.NoError(t, err)
 		tmpl.ExternalURL, _ = url.Parse("http://am")
-		n := New(cfg, tmpl, promslog.NewNopLogger(), newTestProcessor(tmpl))
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
 
 		firingAlert := &types.Alert{
 			Alert: model.Alert{
@@ -1155,10 +1135,13 @@ func TestPrepareContent(t *testing.T) {
 		alerts := []*types.Alert{firingAlert}
 		ctx := context.Background()
 		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
-		title, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		subject, htmlBody, err := n.prepareContent(ctx, alerts, data)
 		require.NoError(t, err)
 		require.Equal(t, "", htmlBody)
-		require.Equal(t, "the email subject", title)
+		// No custom title annotation → empty subject signals "use the configured
+		// Subject header", which Notify then runs through the normal header
+		// template pipeline.
+		require.Equal(t, "", subject)
 	})
 }
 

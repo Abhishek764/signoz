@@ -1,15 +1,6 @@
+// Copyright (c) 2026 SigNoz, Inc.
 // Copyright 2019 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 package slack
 
@@ -52,13 +43,13 @@ type Notifier struct {
 	logger    *slog.Logger
 	client    *http.Client
 	retrier   *notify.Retrier
-	processor alertmanagertypes.NotificationProcessor
+	templater alertmanagertypes.Templater
 
 	postJSONFunc func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error)
 }
 
 // New returns a new Slack notification handler.
-func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -70,7 +61,7 @@ func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, proc alert
 		logger:       l,
 		client:       client,
 		retrier:      &notify.Retrier{},
-		processor:    proc,
+		templater:    templater,
 		postJSONFunc: notify.PostJSON,
 	}, nil
 }
@@ -192,19 +183,21 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	return retry, nil
 }
 
-// prepareContent extracts custom templates from alert annotations, runs the
-// notification processor, and returns the Slack attachment(s) ready to send.
+// prepareContent expands alert templates and returns the Slack attachment(s)
+// ready to send. When alerts carry a custom body template, one title-only
+// attachment plus one body attachment per alert is returned so that each alert
+// can get its own firing/resolved color and per-alert action buttons.
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tmplText func(string) string) ([]attachment, error) {
-	// Extract custom templates and process them
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
-	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
-		// use default body templating to prepare the attachment
-		// as default template uses plain text markdown rendering instead of blockkit
-		DefaultBodyTemplate: alertmanagertypes.NoOpTemplateString,
-	}, alerts, markdownrenderer.MarkdownFormatSlackMrkdwn)
+		// The default path renders the attachment body using the configured
+		// Text template (and Slack's own mrkdwn flavour) below, so the default
+		// body template here is left empty.
+		DefaultBodyTemplate: "",
+	}, alerts)
 	if err != nil {
 		return nil, err
 	}
@@ -214,14 +207,14 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		n.logger.WarnContext(ctx, "Truncated title", slog.Int("max_runes", maxTitleLenRunes))
 	}
 
-	if result.IsDefaultTemplatedBody {
+	if result.IsDefaultBody {
 		var markdownIn []string
 		if len(n.conf.MrkdwnIn) == 0 {
 			markdownIn = []string{"fallback", "pretext", "text"}
 		} else {
 			markdownIn = n.conf.MrkdwnIn
 		}
-		attachments := []attachment{
+		return []attachment{
 			{
 				Title:      title,
 				TitleLink:  tmplText(n.conf.TitleLink),
@@ -235,55 +228,57 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 				Color:      tmplText(n.conf.Color),
 				MrkdwnIn:   markdownIn,
 			},
-		}
-		return attachments, nil
+		}, nil
 	}
 
-	// Custom template path: one title attachment + one attachment per alert body.
-	// Each alert body gets its own attachment so we can set per-alert color
-	// (red for firing, green for resolved).
+	// Custom template path: one title attachment + one attachment per
+	// non-empty alert body. result.Body is positionally aligned with alerts,
+	// so we index alerts[i] directly and skip empty entries.
 	attachments := make([]attachment, 0, 1+len(result.Body))
-
-	// Title-only attachment (no color)
 	attachments = append(attachments, attachment{
 		Title:     title,
 		TitleLink: tmplText(n.conf.TitleLink),
 	})
 
 	for i, body := range result.Body {
-		color := colorRed // red for firing
-		if i < len(alerts) && alerts[i].Resolved() {
-			color = colorGreen // green for resolved
+		if body == "" || i >= len(alerts) {
+			continue
 		}
 
-		// If alert has related logs and traces, add them to the attachment as action buttons
-		var actionButtons []config.SlackAction
-		relatedLogsLink := alerts[i].Annotations[ruletypes.AnnotationRelatedLogs]
-		relatedTracesLink := alerts[i].Annotations[ruletypes.AnnotationRelatedTraces]
-		if relatedLogsLink != "" {
-			actionButtons = append(actionButtons, config.SlackAction{
-				Type: "button",
-				Text: "View Related Logs",
-				URL:  string(relatedLogsLink),
-			})
-		}
-		if relatedTracesLink != "" {
-			actionButtons = append(actionButtons, config.SlackAction{
-				Type: "button",
-				Text: "View Related Traces",
-				URL:  string(relatedTracesLink),
-			})
+		// Custom bodies are authored in markdown; render each non-empty body to
+		// Slack's mrkdwn flavour. Default bodies skip this because the Text
+		// template is already channel-ready.
+		rendered, renderErr := markdownrenderer.RenderSlackMrkdwn(body)
+		if renderErr != nil {
+			return nil, renderErr
 		}
 
+		color := colorRed
+		if alerts[i].Resolved() {
+			color = colorGreen
+		}
 		attachments = append(attachments, attachment{
-			Text:     body,
+			Text:     rendered,
 			Color:    color,
 			MrkdwnIn: []string{"text"},
-			Actions:  actionButtons,
+			Actions:  buildRelatedLinkActions(alerts[i]),
 		})
 	}
 
 	return attachments, nil
+}
+
+// buildRelatedLinkActions returns the "View Related Logs/Traces" action
+// buttons for an alert, or nil when no related-link annotations are present.
+func buildRelatedLinkActions(alert *types.Alert) []config.SlackAction {
+	var actions []config.SlackAction
+	if link := alert.Annotations[ruletypes.AnnotationRelatedLogs]; link != "" {
+		actions = append(actions, config.SlackAction{Type: "button", Text: "View Related Logs", URL: string(link)})
+	}
+	if link := alert.Annotations[ruletypes.AnnotationRelatedTraces]; link != "" {
+		actions = append(actions, config.SlackAction{Type: "button", Text: "View Related Traces", URL: string(link)})
+	}
+	return actions
 }
 
 // addFieldsAndActions populates fields and actions on the attachment from the Slack config.

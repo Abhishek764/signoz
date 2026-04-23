@@ -1,15 +1,6 @@
-// Copyright 2024 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright (c) 2026 SigNoz, Inc.
+// Copyright 2019 Prometheus Team
+// SPDX-License-Identifier: Apache-2.0
 
 package msteamsv2
 
@@ -26,7 +17,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -56,7 +46,7 @@ type Notifier struct {
 	retrier      *notify.Retrier
 	webhookURL   *config.SecretURL
 	postJSONFunc func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error)
-	processor    alertmanagertypes.NotificationProcessor
+	templater    alertmanagertypes.Templater
 }
 
 // https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1#adaptivecarditemschema
@@ -107,7 +97,7 @@ type teamsMessage struct {
 }
 
 // New returns a new notifier that uses the Microsoft Teams Power Platform connector.
-func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, proc alertmanagertypes.NotificationProcessor, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -122,7 +112,7 @@ func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *s
 		retrier:      &notify.Retrier{},
 		webhookURL:   c.WebhookURL,
 		postJSONFunc: notify.PostJSON,
-		processor:    proc,
+		templater:    templater,
 	}
 
 	return n, nil
@@ -210,35 +200,32 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	return shouldRetry, err
 }
 
-// prepareContent prepares the body blocks for the templated title and body.
+// prepareContent builds the Adaptive Card body blocks for the notification.
+// The first block is always the title; the remainder depends on whether the
+// alerts carried a custom body template.
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([]Body, error) {
-	// run the notification processor to get the title and body
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
-	result, err := n.processor.ProcessAlertNotification(ctx, alertmanagertypes.NotificationProcessorInput{
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
-		// the default body template is not used and instead we add collection of labels and annotations for each alert
-		DefaultBodyTemplate: alertmanagertypes.NoOpTemplateString,
-	}, alerts, markdownrenderer.MarkdownFormatNoop)
+		// Default body is not a template — it's built per-alert below from
+		// labels/annotations as Adaptive Card FactSets, so leave it empty.
+		DefaultBodyTemplate: "",
+	}, alerts)
 	if err != nil {
 		return nil, err
 	}
 
-	blocks := []Body{}
-
-	// common color for the title block
-	aggregateAlerts := types.Alerts(alerts...)
 	color := colorGrey
-	switch aggregateAlerts.Status() {
+	switch types.Alerts(alerts...).Status() {
 	case model.AlertFiring:
 		color = colorRed
 	case model.AlertResolved:
 		color = colorGreen
 	}
 
-	// add title block
-	blocks = append(blocks, Body{
+	blocks := []Body{{
 		Type:   "TextBlock",
 		Text:   result.Title,
 		Weight: "Bolder",
@@ -246,10 +233,9 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		Wrap:   true,
 		Style:  "heading",
 		Color:  color,
-	})
+	}}
 
-	// handle default templated body
-	if result.IsDefaultTemplatedBody {
+	if result.IsDefaultBody {
 		for _, alert := range alerts {
 			blocks = append(blocks, Body{
 				Type:   "TextBlock",
@@ -261,25 +247,27 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 			})
 			blocks = append(blocks, n.createLabelsAndAnnotationsBody(alert)...)
 		}
-	} else {
-		for i, body := range result.Body {
-			b := Body{
-				Type:  "TextBlock",
-				Text:  body,
-				Wrap:  true,
-				Color: colorGrey,
-			}
-			if i < len(alerts) {
-				if alerts[i].Resolved() {
-					b.Color = colorGreen
-				} else {
-					b.Color = colorRed
-				}
-			}
-			blocks = append(blocks, b)
-		}
+		return blocks, nil
 	}
 
+	// Custom body path: result.Body is positionally aligned with alerts;
+	// entries for alerts whose template rendered empty are kept as "" so we
+	// can skip them here without shifting the per-alert color index.
+	for i, body := range result.Body {
+		if body == "" || i >= len(alerts) {
+			continue
+		}
+		perAlertColor := colorRed
+		if alerts[i].Resolved() {
+			perAlertColor = colorGreen
+		}
+		blocks = append(blocks, Body{
+			Type:  "TextBlock",
+			Text:  body,
+			Wrap:  true,
+			Color: perAlertColor,
+		})
+	}
 	return blocks, nil
 }
 
@@ -313,7 +301,11 @@ func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
 
 	annotationsFacts := []Fact{}
 	for k, v := range alert.Annotations {
-		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) {
+		// Skip private (`_`-prefixed) annotations — templating inputs,
+		// threshold metadata, related-link URLs — and "summary", which default
+		// channels surface as the attachment pretext rather than a fact row.
+		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) ||
+			alertmanagertypes.IsPrivateAnnotation(string(k)) {
 			continue
 		}
 		annotationsFacts = append(annotationsFacts, Fact{Title: string(k), Value: string(v)})

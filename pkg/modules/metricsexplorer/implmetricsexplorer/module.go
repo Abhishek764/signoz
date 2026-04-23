@@ -42,7 +42,7 @@ type module struct {
 	ruleStore              ruletypes.RuleStore
 	dashboardModule        dashboard.Module
 	config                 metricsexplorer.Config
-	fl                     flagger.Flagger
+	flagger                flagger.Flagger
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
@@ -59,7 +59,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		ruleStore:              ruleStore,
 		dashboardModule:        dashboardModule,
 		config:                 cfg,
-		fl:                     fl,
+		flagger:                fl,
 	}
 }
 
@@ -958,7 +958,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		ConditionBuilder: m.condBuilder,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
 		FieldKeys:        keys,
-		Flagger:          m.fl,
+		Flagger:          m.flagger,
 		StartNs:          querybuilder.ToNanoSecs(uint64(startMillis)),
 		EndNs:            querybuilder.ToNanoSecs(uint64(endMillis)),
 	}

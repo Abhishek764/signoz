@@ -4681,7 +4681,18 @@ components:
           nullable: true
           type: boolean
         field_context:
-          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+          $ref: '#/components/schemas/SpantypesFieldContext'
+      type: object
+    SpantypesUpdatableSpanMapperGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          nullable: true
+          type: boolean
+        name:
+          nullable: true
+          type: string
       type: object
     TelemetrytypesFieldContext:
       enum:

@@ -176,7 +176,15 @@ const useBaseAggregateOptions = ({
 									return (
 										<ContextMenu.Item
 											key={key}
-											icon={isLoading ? <LoadingOutlined spin /> : icon}
+											icon={
+												isLoading ? (
+													<LoadingOutlined spin />
+												) : (
+													<span style={{ color: aggregateData?.seriesColor }}>
+														{icon}
+													</span>
+												)
+											}
 											onClick={(): void => onClick()}
 											disabled={isLoading}
 										>

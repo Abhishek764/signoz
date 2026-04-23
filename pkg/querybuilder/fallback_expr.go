@@ -12,18 +12,11 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/exp/maps"
 )
-
-// IsBodyJSONEnabled evaluates the body_json_enabled feature flag.
-func IsBodyJSONEnabled(ctx context.Context, fl flagger.Flagger) bool {
-	return fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
-}
 
 func CollisionHandledFinalExpr(
 	ctx context.Context,

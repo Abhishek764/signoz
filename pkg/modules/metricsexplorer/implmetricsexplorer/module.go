@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -41,10 +42,11 @@ type module struct {
 	ruleStore              ruletypes.RuleStore
 	dashboardModule        dashboard.Module
 	config                 metricsexplorer.Config
+	fl                     flagger.Flagger
 }
 
 // NewModule constructs the metrics module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
+func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config, fl flagger.Flagger) metricsexplorer.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
@@ -57,6 +59,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 		ruleStore:              ruleStore,
 		dashboardModule:        dashboardModule,
 		config:                 cfg,
+		fl:                     fl,
 	}
 }
 
@@ -955,6 +958,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		ConditionBuilder: m.condBuilder,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
 		FieldKeys:        keys,
+		Flagger:          m.fl,
 		StartNs:          querybuilder.ToNanoSecs(uint64(startMillis)),
 		EndNs:            querybuilder.ToNanoSecs(uint64(endMillis)),
 	}

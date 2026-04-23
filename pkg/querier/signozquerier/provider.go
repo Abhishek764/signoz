@@ -163,6 +163,7 @@ func newProvider(
 		metricFieldMapper,
 		metricConditionBuilder,
 		metricStmtBuilder,
+		flagger,
 	)
 
 	// Create bucket cache

@@ -755,8 +755,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	// filter arrays from keys — callers without a flagger (non-log signals) have body JSON disabled by definition.
-	if v.flagger != nil && IsBodyJSONEnabled(v.context, v.flagger) && functionName != "hasToken" {
+	if IsBodyJSONEnabled(v.context, v.flagger) && functionName != "hasToken" {
 		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, key := range keys {
 			if key.FieldDataType.IsArray() {

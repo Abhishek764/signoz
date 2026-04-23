@@ -4,20 +4,6 @@ import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 var (
 	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
-		"scope_name": {
-			Name:          "scope_name",
-			Description:   "Instrumentation scope name. Learn more about instrumentation scope [here](https://opentelemetry.io/docs/concepts/instrumentation-scope/)",
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  telemetrytypes.FieldContextScope,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
-		"scope_version": {
-			Name:          "scope_version",
-			Description:   "Instrumentation scope version.",
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  telemetrytypes.FieldContextScope,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		},
 		"trace_id": {
 			Name:          "trace_id",
 			Signal:        telemetrytypes.SignalTraces,

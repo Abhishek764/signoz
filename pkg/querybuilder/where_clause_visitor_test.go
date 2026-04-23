@@ -79,10 +79,8 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 }
 
 // createTestVisitor creates a filterExpressionVisitor for testing VisitKey.
-func createTestVisitor(t *testing.T, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey, ignoreNotFoundKeys bool) *filterExpressionVisitor {
-	t.Helper()
+func createTestVisitor(fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey, ignoreNotFoundKeys bool) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
-		context:            t.Context(),
 		logger:             slog.Default(),
 		fieldKeys:          fieldKeys,
 		ignoreNotFoundKeys: ignoreNotFoundKeys,
@@ -574,7 +572,7 @@ func TestVisitKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			visitor := createTestVisitor(t, tt.fieldKeys, tt.ignoreNotFoundKeys)
+			visitor := createTestVisitor(tt.fieldKeys, tt.ignoreNotFoundKeys)
 			keyCtx := parseKeyContext(tt.keyText)
 
 			if keyCtx == nil {
@@ -778,8 +776,7 @@ type visitComparisonCase struct {
 
 // visitComparisonOpts builds the two FilterExprVisitorOpts shared by all
 // TestVisitComparison_* tests.
-func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
-	t.Helper()
+func visitComparisonOpts() (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	allVariable := map[string]qbtypes.VariableItem{
 		"service": {
 			Type:  qbtypes.DynamicVariableType,
@@ -793,7 +790,6 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
 	rsbOpts = FilterExprVisitorOpts{
-		Context:            t.Context(),
 		FieldKeys:          visitTestKeys,
 		ConditionBuilder:   &resourceConditionBuilder{},
 		Variables:          allVariable,
@@ -803,7 +799,6 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		IgnoreNotFoundKeys: true,
 	}
 	sbOpts = FilterExprVisitorOpts{
-		Context:            t.Context(),
 		FieldKeys:          visitTestKeys,
 		ConditionBuilder:   &conditionBuilder{},
 		Variables:          allVariable,
@@ -819,7 +814,7 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 // TestVisitComparison_AND covers AND expressions with attribute keys (a, b, c →
 // TrueConditionLiteral in RSB) and resource keys (x, y, z → "{name}_cond" in RSB).
 func TestVisitComparison_AND(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			name:    "single attribute key",
@@ -897,7 +892,7 @@ func TestVisitComparison_AND(t *testing.T) {
 //   - NOT inside a comparison (e.g. NOT LIKE, NOT EXISTS): the inner NOT is folded
 //     into the operator token; conditionBuilder ignores it, so no extra NOT is emitted.
 func TestVisitComparison_NOT(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			// Unary NOT on an attribute key: NOT(SkipConditionLiteral) → SkipConditionLiteral (guard).
@@ -990,7 +985,7 @@ func TestVisitComparison_NOT(t *testing.T) {
 // SkipResourceFilter to false when an OR token is detected in the expression,
 // so resource keys become visible in sbOpts for all cases in this suite.
 func TestVisitComparison_OR(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			name:    "resource OR resource",
@@ -1091,7 +1086,7 @@ func TestVisitComparison_OR(t *testing.T) {
 // TestVisitComparison_Precedence covers AND/OR/NOT operator precedence
 // (AND binds tighter than OR; NOT binds tightest).
 func TestVisitComparison_Precedence(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			// a→true short-circuits OR.
@@ -1173,7 +1168,7 @@ func TestVisitComparison_Precedence(t *testing.T) {
 // VisitPrimary adds one extra layer of parens around real conditions;
 // TrueConditionLiteral passes through unwrapped.
 func TestVisitComparison_Parens(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			// RSB: SkipConditionLiteral passes through unwrapped. SB: VisitPrimary wraps in parens.
@@ -1276,7 +1271,7 @@ func TestVisitComparison_Parens(t *testing.T) {
 // rsbOpts has SkipFullTextFilter=true → TrueConditionLiteral.
 // sbOpts has SkipFullTextFilter=false, FullTextColumn=bodyCol → "body_cond".
 func TestVisitComparison_FullText(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			name:    "standalone full-text term",
@@ -1433,7 +1428,7 @@ func TestVisitComparison_FullText(t *testing.T) {
 // Equality with __all__ does NOT short-circuit — the variable resolves to the literal
 // "__all__" string and ConditionFor is called normally.
 func TestVisitComparison_AllVariable(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			name:    "IN allVariable alone",
@@ -1541,7 +1536,7 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 // sbOpts has SkipFunctionCalls=false; has/hasAny/hasAll only support FieldContextBody,
 // so calls on attribute/resource keys return an error.
 func TestVisitComparison_FunctionCalls(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			name:      "has on attribute key",
@@ -1620,7 +1615,7 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 // (no keys resolved); SkipConditionLiteral short-circuits OR and is stripped from AND.
 // sbOpts has IgnoreNotFoundKeys=false → key lookup appends an error.
 func TestVisitComparison_UnknownKeys(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
 			// RSB: unknown_key → SkipConditionLiteral (no keys resolved); stripped from AND; x_cond survives.
@@ -1687,7 +1682,7 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 // TestVisitComparison_SkippableLiteralValues guards against two distinct collision risks
 // involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):.
 func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
-	rsbOpts, sbOpts := visitComparisonOpts(t)
+	rsbOpts, sbOpts := visitComparisonOpts()
 
 	tests := []visitComparisonCase{
 		{

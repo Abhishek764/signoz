@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -30,7 +29,7 @@ type store struct {
 	logger                 *slog.Logger
 }
 
-func NewStore(telemetryStore telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, logger *slog.Logger, fl flagger.Flagger) rulestatehistorytypes.Store {
+func NewStore(telemetryStore telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, logger *slog.Logger) rulestatehistorytypes.Store {
 	fm := newFieldMapper()
 	return &store{
 		telemetryStore:         telemetryStore,

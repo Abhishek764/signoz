@@ -57,8 +57,8 @@
   "annotations": {
     "description": "Container $container in pod $pod ($namespace) exceeded memory threshold",
     "summary": "High container memory in $namespace/$pod",
-    "title_template": "[$status] High container memory in $namespace/$pod",
-    "body_template": "**Severity:** $severity\n**Status:** $status\n\n**Pod Details:**\n- **Namespace:** $namespace\n- **Pod:** $pod\n- **Container:** $container\n- **Node:** $node\n\n**Condition ($threshold_name):**\n- **Current:** $value\n- **Threshold:** $compare_op $threshold\n\n**Description:** Container $container in pod $pod ($namespace) has memory usage at $value, which crossed the $threshold_name threshold of $compare_op $threshold. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit"
+    "_title_template": "[$alert.status] High container memory in $labels.namespace/$labels.pod",
+    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Pod Details:**\n- **Namespace:** $labels.namespace\n- **Pod:** $labels.pod\n- **Container:** $labels.container\n- **Node:** $labels.node\n\n**Condition ($labels.threshold.name):**\n- **Current:** $alert.value\n- **Threshold:** $rule.threshold.op $rule.threshold.value\n\n**Description:** Container $labels.container in pod $labels.pod ($labels.namespace) has memory usage at $alert.value, which crossed the $labels.threshold.name threshold of $rule.threshold.op $rule.threshold.value. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit"
   },
   "notificationSettings": {
     "groupBy": [],

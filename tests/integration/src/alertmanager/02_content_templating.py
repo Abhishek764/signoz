@@ -111,7 +111,7 @@ CONTENT_TEMPLATING_TEST = [
                         "path": "/v2/alerts",
                         "json_body": {
                             "message": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p",
-                            "description": '<div><p><strong>Severity:</strong> critical<p></p><strong>Status:</strong> firing</p><p></p><p><strong>Pod Details:</strong></p><p></p><ul><p></p><li><strong>Namespace:</strong> production</li><p></p><li><strong>Pod:</strong> checkout-7d9c8b5f4-x2k9p</li><p></p><li><strong>Container:</strong> checkout</li><p></p><li><strong>Node:</strong> ip-10-0-1-23</li><p></p></ul><p></p><p><strong>Condition (critical):</strong></p><p></p><ul><p></p><li><strong>Current:</strong> 110</li><p></p><li><strong>Threshold:</strong> above 100</li><p></p></ul><p></p><p><strong>Description:</strong> Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.</p><p></p><p><strong>Runbook:</strong> <a href="https://signoz.io/docs/runbooks/container-memory-near-limit">https://signoz.io/docs/runbooks/container-memory-near-limit</a></p><p></p></div>',
+                            "description": '<div><p><strong>Severity:</strong> critical\n<strong>Status:</strong> firing</p>\n<p><strong>Pod Details:</strong></p>\n<ul>\n<li><strong>Namespace:</strong> production</li>\n<li><strong>Pod:</strong> checkout-7d9c8b5f4-x2k9p</li>\n<li><strong>Container:</strong> checkout</li>\n<li><strong>Node:</strong> ip-10-0-1-23</li>\n</ul>\n<p><strong>Condition (critical):</strong></p>\n<ul>\n<li><strong>Current:</strong> 110</li>\n<li><strong>Threshold:</strong> above 100</li>\n</ul>\n<p><strong>Description:</strong> Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.</p>\n<p><strong>Runbook:</strong> <a href="https://signoz.io/docs/runbooks/container-memory-near-limit">https://signoz.io/docs/runbooks/container-memory-near-limit</a></p>\n</div>',
                             "details": {
                                 "alertname": "content_templating_metrics",
                                 "container": "checkout",
@@ -265,7 +265,7 @@ CONTENT_TEMPLATING_TEST = [
                                         "node": "ip-10-0-1-23",
                                         "pod": "checkout-7d9c8b5f4-x2k9p",
                                     },
-                                    "annotations": {"title_template": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p"},
+                                    "annotations": {"templated_title": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p"},
                                 }
                             ],
                             "commonLabels": {
@@ -278,13 +278,13 @@ CONTENT_TEMPLATING_TEST = [
                                 "threshold.name": "critical",
                             },
                             "commonAnnotations": {
-                                "body_template": "**Severity:** critical\n**Status:** firing\n\n**Pod Details:**\n- **Namespace:** production\n- **Pod:** checkout-7d9c8b5f4-x2k9p\n- **Container:** checkout\n- **Node:** ip-10-0-1-23\n\n**Condition (critical):**\n- **Current:** 110\n- **Threshold:** above 100\n\n**Description:** Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit",
+                                "templated_body": "**Severity:** critical\n**Status:** firing\n\n**Pod Details:**\n- **Namespace:** production\n- **Pod:** checkout-7d9c8b5f4-x2k9p\n- **Container:** checkout\n- **Node:** ip-10-0-1-23\n\n**Condition (critical):**\n- **Current:** 110\n- **Threshold:** above 100\n\n**Description:** Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) has memory usage at 110, which crossed the critical threshold of above 100. Immediate investigation is recommended to prevent OOMKill.\n\n**Runbook:** https://signoz.io/docs/runbooks/container-memory-near-limit",
                                 "compare_op": "above",
                                 "description": "Container checkout in pod checkout-7d9c8b5f4-x2k9p (production) exceeded memory threshold",
                                 "match_type": "at_least_once",
                                 "summary": "High container memory in production/checkout-7d9c8b5f4-x2k9p",
                                 "threshold.value": "100",
-                                "title_template": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p",
+                                "templated_title": "[firing] High container memory in production/checkout-7d9c8b5f4-x2k9p",
                                 "value": "110",
                             },
                         },

@@ -56,8 +56,8 @@
   "annotations": {
     "description": "p90 latency high on $service_name",
     "summary": "p90 latency exceeded threshold on $service_name",
-    "title_template": "[$status] p90 latency high on $service_name",
-    "body_template": "**Severity:** $severity\n**Status:** $status\n\n**Service:** $service_name\n\n**Condition ($threshold_name):**\n- **Current:** $value\n- **Threshold:** $compare_op $threshold\n\n**Description:** p90 request latency on $service_name reached $value, crossing the $threshold_name threshold of $compare_op $threshold. Investigate downstream dependencies and recent deploys.\n\n**Runbook:** https://signoz.io/docs/runbooks/high-latency"
+    "_title_template": "[$alert.status] p90 latency high on $labels.service_name",
+    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Service:** $labels.service_name\n\n**Condition ($labels.threshold.name):**\n- **Current:** $alert.value\n- **Threshold:** $rule.threshold.op $rule.threshold.value\n\n**Description:** p90 request latency on $labels.service_name reached $alert.value, crossing the $labels.threshold.name threshold of $rule.threshold.op $rule.threshold.value. Investigate downstream dependencies and recent deploys.\n\n**Runbook:** https://signoz.io/docs/runbooks/high-latency"
   },
   "notificationSettings": {
     "groupBy": [],

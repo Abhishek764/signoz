@@ -27,26 +27,3 @@ func New(t *testing.T) flagger.Flagger {
 	}
 	return fl
 }
-
-// WithBodyJSON returns a Flagger with body_json_enabled set to the given value.
-func WithBodyJSON(t *testing.T, enabled bool) flagger.Flagger {
-	t.Helper()
-	registry := flagger.MustNewRegistry()
-	cfg := flagger.Config{}
-	if enabled {
-		cfg.Config.Boolean = map[string]bool{
-			flagger.FeatureBodyJSONQuery.String(): true,
-		}
-	}
-	fl, err := flagger.New(
-		context.Background(),
-		instrumentationtest.New().ToProviderSettings(),
-		cfg,
-		registry,
-		configflagger.NewFactory(registry),
-	)
-	if err != nil {
-		t.Fatalf("flaggertest.WithBodyJSON: %v", err)
-	}
-	return fl
-}

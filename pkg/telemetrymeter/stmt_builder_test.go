@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -165,7 +166,7 @@ func TestStatementBuilder(t *testing.T) {
 	}
 	mockMetadataStore.KeysMap = keys
 
-	metricStmtBuilder := telemetrymetrics.NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), mockMetadataStore, fm, cb)
+	metricStmtBuilder := telemetrymetrics.NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), mockMetadataStore, fm, cb, flaggertest.New(t))
 
 	statementBuilder := NewMeterQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

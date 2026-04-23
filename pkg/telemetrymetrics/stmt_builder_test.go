@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -239,6 +240,7 @@ func TestStatementBuilder(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
+		flaggertest.New(t),
 	)
 
 	for _, c := range cases {

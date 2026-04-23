@@ -3,6 +3,7 @@ package rules
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -25,6 +26,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		metadataStore,
 		metricFieldMapper,
 		metricConditionBuilder,
+		flaggertest.New(t),
 	)
 
 	return querier.New(

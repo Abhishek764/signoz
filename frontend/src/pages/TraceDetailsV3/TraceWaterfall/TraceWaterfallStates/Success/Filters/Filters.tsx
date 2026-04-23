@@ -1,17 +1,25 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Switch } from '@signozhq/ui';
 import { Button, Spin, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import {
+	convertExpressionToFilters,
+	removeKeysFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { TracesAggregatorOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	TracesAggregatorOperator,
+} from 'types/common/queryBuilder';
 
 import { BASE_FILTER_QUERY } from './constants';
 
@@ -44,6 +52,7 @@ function prepareQuery(filters: TagFilter, traceID: string): Query {
 							},
 						],
 					},
+					selectColumns: [],
 				},
 			],
 		},
@@ -64,22 +73,86 @@ function Filters({
 	const [filters, setFilters] = useState<TagFilter>(
 		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
 	);
+	const [expression, setExpression] = useState<string>('');
 	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
+	const expressionRef = useRef<string>('');
+	const containerRef = useRef<HTMLDivElement>(null);
 
-	const handleFilterChange = useCallback(
-		(value: TagFilter): void => {
-			if (value.items.length === 0) {
+	const runQuery = useCallback(
+		(value: string): void => {
+			const items = convertExpressionToFilters(value);
+			setFilters({ items, op: 'AND' });
+			// Clear results when expression produces no filters
+			if (items.length === 0) {
 				setFilteredSpanIds([]);
 				onFilteredSpansChange?.([], false);
 				setCurrentSearchedIndex(0);
 				setNoData(false);
 			}
-			setFilters(value);
 		},
 		[onFilteredSpansChange],
 	);
+
+	// onChange fires on every keystroke — only store the expression, don't trigger API
+	const handleExpressionChange = useCallback(
+		(value: string): void => {
+			setExpression(value);
+			expressionRef.current = value;
+			// Clear results when expression is emptied
+			if (!value.trim()) {
+				setFilters({ items: [], op: 'AND' });
+				setFilteredSpanIds([]);
+				onFilteredSpansChange?.([], false);
+				setCurrentSearchedIndex(0);
+				setNoData(false);
+			}
+		},
+		[onFilteredSpansChange],
+	);
+
+	// onRun fires on Ctrl+Enter
+	const handleRunQuery = useCallback(
+		(value: string): void => {
+			runQuery(value);
+		},
+		[runQuery],
+	);
+
+	// Run query on blur (click outside the filter input)
+	const handleBlur = useCallback((): void => {
+		runQuery(expressionRef.current);
+	}, [runQuery]);
+
+	// Derive toggle state from filters (updates only after runQuery, not on every keystroke)
+	const isHighlightErrors = useMemo(
+		() =>
+			filters.items.some(
+				(item) =>
+					item.key?.key === 'has_error' &&
+					(item.value === true || item.value === 'true'),
+			),
+		[filters],
+	);
+
+	const handleToggleHighlightErrors = useCallback(
+		(checked: boolean): void => {
+			// Always remove existing has_error first (whatever its value)
+			let newExpression = removeKeysFromExpression(expression, ['has_error']);
+			// Add back if turning ON
+			if (checked) {
+				newExpression = newExpression.trim()
+					? `${newExpression.trim()} AND has_error = true`
+					: `has_error = true`;
+			}
+			setExpression(newExpression);
+			expressionRef.current = newExpression;
+			runQuery(newExpression);
+		},
+		[expression, runQuery],
+	);
+
 	const { search } = useLocation();
 	const history = useHistory();
 
@@ -110,14 +183,14 @@ function Filters({
 			tableParams: {
 				pagination: {
 					offset: 0,
-					limit: 200,
+					limit: 10000,
 				},
 				selectColumns: [
 					{
-						key: 'name',
+						key: 'spanID',
 						dataType: 'string',
 						type: 'tag',
-						id: 'name--string--tag--true',
+						id: 'spanId--string--tag--true',
 						isIndexed: false,
 					},
 				],
@@ -152,16 +225,36 @@ function Filters({
 
 	return (
 		<div className="trace-v3-filter-row">
-			<QueryBuilderSearchV2
-				query={{
-					...BASE_FILTER_QUERY,
-					filters,
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+			<div
+				ref={containerRef}
+				onBlur={(e): void => {
+					// Only run if focus moved outside the filter container
+					if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+						handleBlur();
+					}
 				}}
-				onChange={handleFilterChange}
-				hideSpanScopeSelector={false}
-				skipQueryBuilderRedirect
-				selectProps={{ listHeight: 125 }}
-			/>
+			>
+				<QuerySearch
+					queryData={{
+						...BASE_FILTER_QUERY,
+						filters,
+						filter: { expression },
+					}}
+					onChange={handleExpressionChange}
+					onRun={handleRunQuery}
+					dataSource={DataSource.TRACES}
+					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+				/>
+			</div>
+			<div className="highlight-errors-toggle">
+				<Typography.Text>Highlight errors</Typography.Text>
+				<Switch
+					color="cherry"
+					value={isHighlightErrors}
+					onChange={handleToggleHighlightErrors}
+				/>
+			</div>
 			{filteredSpanIds.length > 0 && (
 				<div className="pre-next-toggle">
 					<Typography.Text>

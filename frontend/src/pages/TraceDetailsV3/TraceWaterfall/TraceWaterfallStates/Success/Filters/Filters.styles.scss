@@ -7,6 +7,19 @@
 		width: 100%;
 	}
 
+	.highlight-errors-toggle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-shrink: 0;
+		white-space: nowrap;
+
+		.ant-typography {
+			color: var(--l2-foreground);
+			font-size: 12px;
+		}
+	}
+
 	.pre-next-toggle {
 		display: flex;
 		flex-shrink: 0;

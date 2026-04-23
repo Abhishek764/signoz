@@ -67,10 +67,20 @@ SCHEMA = [
         pinned_at     TIMESTAMP NOT NULL,
         PRIMARY KEY (user_id, dashboard_id)
     )""",
+    """CREATE TABLE IF NOT EXISTS public_dashboard (
+        id                   TEXT PRIMARY KEY,
+        created_at           TIMESTAMP NOT NULL,
+        updated_at           TIMESTAMP NOT NULL,
+        time_range_enabled   BOOLEAN NOT NULL,
+        default_time_range   TEXT NOT NULL,
+        dashboard_id         TEXT NOT NULL,
+        UNIQUE (dashboard_id)
+    )""",
 ]
 
 # Drop in reverse-dependency order (safe even though we don't declare FKs).
 DROP_STATEMENTS = [
+    "DROP TABLE IF EXISTS public_dashboard",
     "DROP TABLE IF EXISTS pinned_dashboard",
     "DROP TABLE IF EXISTS tag_relations",
     "DROP TABLE IF EXISTS tag",
@@ -83,14 +93,6 @@ INDEXES = [
     """CREATE INDEX IF NOT EXISTS dashboard_list_updated_idx
        ON dashboard (org_id, updated_at DESC)
        WHERE deleted_at IS NULL""",
-
-    # tag delete + future tag-centric queries (PK on tag_relations leads with entity_id)
-    """CREATE INDEX IF NOT EXISTS tag_relations_tag_idx
-       ON tag_relations (tag_id)""",
-
-    # TTL purge of pins by dashboard_id (PK leads with user_id)
-    """CREATE INDEX IF NOT EXISTS pinned_dashboard_dashboard_idx
-       ON pinned_dashboard (dashboard_id)""",
 ]
 
 
@@ -157,11 +159,22 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
     print(f"Generating {num_orgs} orgs …")
 
     # --- 1. Tags ---
+    # 5% of orgs are "heavy" and get 200 tags (TAG_POOL + synthetic fillers)
+    # to exercise pagination / large-tag-list code paths.
+    HEAVY_TAG_COUNT = 200
+    heavy_org_count = max(1, num_orgs * 5 // 100) if num_orgs > 0 else 0
+    heavy_orgs = set(random.sample(orgs, heavy_org_count)) if heavy_org_count else set()
+
     tag_rows = []
     org_tag_index: dict[str, list[tuple[str, str]]] = {}
     for org_id in orgs:
         tags_for_org: list[tuple[str, str]] = []
-        for name in TAG_POOL:
+        names = list(TAG_POOL)
+        if org_id in heavy_orgs:
+            # Synthetic extras — namespaced so internal_name stays unique.
+            extras = [f"bulk/tag-{i:04d}" for i in range(HEAVY_TAG_COUNT - len(TAG_POOL))]
+            names.extend(extras)
+        for name in names:
             tag_id = str(uuid.uuid4())
             tags_for_org.append((tag_id, name))
             tag_rows.append({
@@ -175,6 +188,7 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
                 "updated_by": "seed-script",
             })
         org_tag_index[org_id] = tags_for_org
+    print(f"  Heavy orgs (200 tags each): {heavy_org_count}")
 
     insert_tag = text("""
         INSERT INTO tag (id, org_id, name, internal_name,
@@ -281,9 +295,40 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
             conn.execute(insert_pin, batch)
     print(f"  Pins inserted: {len(pin_rows)}")
 
+    # --- 5. Public dashboards (~10% of dashboards exposed publicly) ---
+    # default_time_range is parsed by time.ParseDuration in Go, so use Go-style durations.
+    time_ranges = ["5m", "15m", "1h", "6h", "24h", "168h"]
+    public_rows = []
+    for org_id in orgs:
+        dash_ids = org_dashboard_index[org_id]
+        picks = random.sample(dash_ids, len(dash_ids) // 10)
+        for dash_id in picks:
+            public_rows.append({
+                "id": str(uuid.uuid4()),
+                "dashboard_id": dash_id,
+                "time_range_enabled": random.random() < 0.5,
+                "default_time_range": random.choice(time_ranges),
+                "created_at": now,
+                "updated_at": now,
+            })
+
+    insert_public = text("""
+        INSERT INTO public_dashboard (id, dashboard_id,
+                                      time_range_enabled, default_time_range,
+                                      created_at, updated_at)
+        VALUES (:id, :dashboard_id,
+                :time_range_enabled, :default_time_range,
+                :created_at, :updated_at)
+    """)
+    for batch in chunked(public_rows, batch_size):
+        with engine.begin() as conn:
+            conn.execute(insert_public, batch)
+    print(f"  Public dashboards inserted: {len(public_rows)}")
+
     print("\nDone.")
     print(f"Summary: {num_orgs} orgs, {len(dash_rows)} dashboards, "
-          f"{len(tag_rows)} tags, {len(rel_rows)} tag relations, {len(pin_rows)} pins.")
+          f"{len(tag_rows)} tags, {len(rel_rows)} tag relations, "
+          f"{len(pin_rows)} pins, {len(public_rows)} public.")
 
 
 def main():

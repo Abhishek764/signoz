@@ -191,7 +191,6 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 
 	ctx := context.Background()
 
-
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keysMap := buildCompleteFieldKeyMap(releaseTime)
 
@@ -853,7 +852,6 @@ func TestAdjustKey(t *testing.T) {
 			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["user.id"][0],
 		},
 	}
-
 
 	fm := NewFieldMapper(false)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()

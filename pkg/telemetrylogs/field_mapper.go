@@ -238,7 +238,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	return newColumns, evolutionsEntries, nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey ) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err

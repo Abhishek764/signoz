@@ -331,4 +331,3 @@ func GetDashboardsFromAssets(
 
 	return dashboards
 }
-

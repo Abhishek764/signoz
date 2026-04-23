@@ -137,4 +137,3 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 		aH.QueryRangeV4(w, r)
 	}
 }
-

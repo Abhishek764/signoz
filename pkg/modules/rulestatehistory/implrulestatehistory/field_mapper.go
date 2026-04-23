@@ -38,7 +38,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return ruleStateHistoryColumns["labels"], nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, ) (string, error) {
+func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	col, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err

@@ -46,6 +46,7 @@ func NewTraceOperatorStatementBuilder(
 		metadataStore,
 		nil,
 		nil,
+		fl,
 	)
 
 	return &traceOperatorStatementBuilder{

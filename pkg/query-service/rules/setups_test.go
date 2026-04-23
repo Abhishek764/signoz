@@ -68,7 +68,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 	}
 	metadataStore.KeysMap = keysMap
 
-	fl := flaggertest.MustNew()
+	fl := flaggertest.New(t)
 	logFieldMapper := telemetrylogs.NewFieldMapper(fl)
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, fl)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
@@ -105,7 +105,8 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 	)
 }
 
-func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+	t.Helper()
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -121,7 +122,8 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, flaggertest.MustNew())
+	fl := flaggertest.New(t)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, fl)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,
@@ -129,7 +131,7 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 		traceConditionBuilder,
 		traceAggExprRewriter,
 		telemetryStore,
-		nil,
+		fl,
 	)
 
 	return querier.New(

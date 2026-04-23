@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -17,10 +18,11 @@ import (
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogs(t *testing.T) {
+	fl := flaggertest.New(t)
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	ctx := context.Background()
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap(releaseTime)
@@ -35,6 +37,7 @@ func TestFilterExprLogs(t *testing.T) {
 		JsonKeyToKey:     GetBodyJSONKey,
 		StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
 		EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
+		Flagger: fl,
 	}
 
 	testCases := []struct {
@@ -2429,8 +2432,9 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
 
 	// Define a comprehensive set of field keys to support all test cases
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
@@ -2457,6 +2461,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
+		Flagger: fl,
 	}
 
 	testCases := []struct {

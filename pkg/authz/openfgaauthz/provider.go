@@ -220,17 +220,13 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 		return make([]*authtypes.TransactionWithAuthorization, 0), nil
 	}
 
-	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(
-		transactions, subject, orgID, provider.managedRolesByTransaction,
-	)
+	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.managedRolesByTransaction)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(tuples) == 0 {
-		return authtypes.NewTransactionWithAuthorizationFromBatchResults(
-			transactions, nil, preResolved, roleCorrelations,
-		), nil
+		return authtypes.NewTransactionWithAuthorizationFromBatchResults(transactions, nil, preResolved, roleCorrelations), nil
 	}
 
 	batchResults, err := provider.server.BatchCheck(ctx, tuples)
@@ -238,9 +234,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 		return nil, err
 	}
 
-	return authtypes.NewTransactionWithAuthorizationFromBatchResults(
-		transactions, batchResults, preResolved, roleCorrelations,
-	), nil
+	return authtypes.NewTransactionWithAuthorizationFromBatchResults(transactions, batchResults, preResolved, roleCorrelations), nil
 }
 
 func buildManagedRolesByTransaction(registry []authz.RegisterTypeable) map[string][]string {

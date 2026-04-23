@@ -1,6 +1,8 @@
 package flagger
 
-import "github.com/SigNoz/signoz/pkg/types/featuretypes"
+import (
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+)
 
 var (
 	FeatureUseSpanMetrics    = featuretypes.MustNewName("use_span_metrics")
@@ -8,7 +10,7 @@ var (
 	FeatureHideRootUser      = featuretypes.MustNewName("hide_root_user")
 	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
 	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
-	FeatureBodyJSONQuery     = featuretypes.MustNewName("body_json_enabled")
+	FeatureBodyJSONQuery     = featuretypes.MustNewName("body_json_enabled") // Note: JSON Enabled is not restrictive of orgID, it is tenant level featureflag
 )
 
 func MustNewRegistry() featuretypes.Registry {

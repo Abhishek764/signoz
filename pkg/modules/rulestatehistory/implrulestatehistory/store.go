@@ -28,7 +28,6 @@ type store struct {
 	fieldMapper            qbtypes.FieldMapper
 	conditionBuilder       qbtypes.ConditionBuilder
 	logger                 *slog.Logger
-	flagger                flagger.Flagger
 }
 
 func NewStore(telemetryStore telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, logger *slog.Logger, fl flagger.Flagger) rulestatehistorytypes.Store {
@@ -39,7 +38,6 @@ func NewStore(telemetryStore telemetrystore.TelemetryStore, telemetryMetadataSto
 		fieldMapper:            fm,
 		conditionBuilder:       newConditionBuilder(fm),
 		logger:                 logger,
-		flagger:                fl,
 	}
 }
 
@@ -504,7 +502,6 @@ func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, st
 		FieldMapper:      s.fieldMapper,
 		ConditionBuilder: s.conditionBuilder,
 		FieldKeys:        fieldKeys,
-		Flagger:          s.flagger,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels", FieldContext: telemetrytypes.FieldContextAttribute},
 	}
 

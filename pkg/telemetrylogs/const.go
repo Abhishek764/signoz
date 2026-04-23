@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -130,8 +128,8 @@ var (
 	}
 )
 
-func bodyAliasExpression(ctx context.Context, fl flagger.Flagger) string {
-	if !querybuilder.IsBodyJSONEnabled(ctx, fl) {
+func bodyAliasExpression(ctx context.Context, bodyJSONEnabled bool) string {
+	if !bodyJSONEnabled {
 		return LogsV2BodyColumn
 	}
 

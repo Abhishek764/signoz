@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -23,7 +22,6 @@ type resourceFilterStatementBuilder[T any] struct {
 	metadataStore    telemetrytypes.MetadataStore
 	signal           telemetrytypes.Signal
 	source           telemetrytypes.Source
-	flagger          flagger.Flagger
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -44,7 +42,6 @@ func New[T any](
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	fl flagger.Flagger,
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
 	fm := NewFieldMapper()
@@ -58,7 +55,6 @@ func New[T any](
 		metadataStore:    metadataStore,
 		signal:           signal,
 		source:           source,
-		flagger:          fl,
 		fullTextColumn:   fullTextColumn,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
@@ -142,7 +138,6 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
-			Flagger:            b.flagger,
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,

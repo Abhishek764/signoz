@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/stretchr/testify/require"
@@ -13,10 +12,9 @@ import (
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL.
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
-	fl := flaggertest.New(t)
 	ctx := context.Background()
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	fm := NewFieldMapper(false)
+	cb := NewConditionBuilder(fm, false)
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := buildCompleteFieldKeyMap(releaseTime)
@@ -29,7 +27,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Flagger:          fl,
 	}
 
 	tests := []string{
@@ -54,9 +51,8 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings.
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
-	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	fm := NewFieldMapper(false)
+	cb := NewConditionBuilder(fm, false)
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := buildCompleteFieldKeyMap(releaseTime)
@@ -69,7 +65,6 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Flagger:          fl,
 	}
 
 	tests := []string{

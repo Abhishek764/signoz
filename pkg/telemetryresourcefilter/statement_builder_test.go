@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -362,7 +361,6 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 		mockMetadataStore,
 		nil,
 		nil,
-		flaggertest.New(t),
 	)
 
 	for _, c := range cases {
@@ -556,7 +554,6 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		mockMetadataStore,
 		nil,
 		nil,
-		flaggertest.New(t),
 	)
 
 	for _, c := range cases {
@@ -624,7 +621,6 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 		mockMetadataStore,
 		nil,
 		nil,
-		flaggertest.New(t),
 	)
 
 	for _, c := range cases {

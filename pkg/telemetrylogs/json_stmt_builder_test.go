@@ -8,7 +8,6 @@ import (
 	"time"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -1124,11 +1123,10 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 	t.Helper()
 
 	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
-	fl := flaggertest.WithBodyJSON(t, true)
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	fm := NewFieldMapper(true)
+	cb := NewConditionBuilder(fm, true)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, true)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1138,7 +1136,7 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
-		fl,
+		true,
 	)
 
 	return statementBuilder

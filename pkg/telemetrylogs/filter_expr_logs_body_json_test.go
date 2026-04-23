@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -16,9 +15,8 @@ import (
 
 // TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search.
 func TestFilterExprLogsBodyJSON(t *testing.T) {
-	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	fm := NewFieldMapper(false)
+	cb := NewConditionBuilder(fm, false)
 	// Define a comprehensive set of field keys to support all test cases
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := buildCompleteFieldKeyMap(releaseTime)
@@ -29,7 +27,6 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		Flagger:          fl,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "body"},
 		JsonKeyToKey:     GetBodyJSONKey,
 	}

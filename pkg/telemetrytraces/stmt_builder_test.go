@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -356,8 +355,7 @@ func TestStatementBuilder(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -366,7 +364,6 @@ func TestStatementBuilder(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	vars := map[string]qbtypes.VariableItem{
@@ -651,8 +648,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -661,7 +657,6 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	for _, c := range cases {
@@ -760,8 +755,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 			if mockMetadataStore.KeysMap == nil {
 				mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 			}
-			fl := flaggertest.New(t)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
@@ -770,7 +764,6 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				cb,
 				aggExprRewriter,
 				nil,
-				fl,
 			)
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
@@ -912,8 +905,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -922,7 +914,6 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	for _, c := range cases {
@@ -1128,8 +1119,7 @@ func TestAdjustKey(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
@@ -1137,7 +1127,6 @@ func TestAdjustKey(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	for _, c := range cases {
@@ -1402,8 +1391,7 @@ func TestAdjustKeys(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
@@ -1411,7 +1399,6 @@ func TestAdjustKeys(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	for _, c := range cases {

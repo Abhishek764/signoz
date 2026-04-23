@@ -10,7 +10,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,13 +48,12 @@ func auditFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 
 func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 	t.Helper()
-	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = auditFieldKeyMap()
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 	return NewAuditQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -65,7 +63,6 @@ func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		nil,
-		fl,
 	)
 }
 

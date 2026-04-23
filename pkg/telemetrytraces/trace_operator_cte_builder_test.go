@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -391,8 +390,7 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -401,7 +399,6 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	statementBuilder := NewTraceOperatorStatementBuilder(
@@ -411,7 +408,6 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 		cb,
 		traceStmtBuilder,
 		aggExprRewriter,
-		fl,
 	)
 
 	for _, c := range cases {
@@ -507,8 +503,7 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
 
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -517,7 +512,6 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 		cb,
 		aggExprRewriter,
 		nil,
-		fl,
 	)
 
 	statementBuilder := NewTraceOperatorStatementBuilder(
@@ -527,7 +521,6 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 		cb,
 		traceStmtBuilder,
 		aggExprRewriter,
-		fl,
 	)
 
 	for _, c := range cases {

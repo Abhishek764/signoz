@@ -2375,10 +2375,14 @@ components:
       type: string
     InframonitoringtypesPodRecord:
       properties:
+        failedPodCount:
+          type: integer
         meta:
           additionalProperties: {}
           nullable: true
           type: object
+        pendingPodCount:
+          type: integer
         podAge:
           format: int64
           type: integer
@@ -2404,6 +2408,25 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podUID:
           type: string
+        runningPodCount:
+          type: integer
+        succeededPodCount:
+          type: integer
+      required:
+      - podUID
+      - podCPU
+      - podCPURequest
+      - podCPULimit
+      - podMemory
+      - podMemoryRequest
+      - podMemoryLimit
+      - podPhase
+      - pendingPodCount
+      - runningPodCount
+      - succeededPodCount
+      - failedPodCount
+      - podAge
+      - meta
       type: object
     InframonitoringtypesPods:
       properties:
@@ -2422,6 +2445,12 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesResponseType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableHosts:
       properties:
@@ -10127,12 +10156,14 @@ paths:
         age (ms since start time). Each pod includes metadata attributes (namespace,
         node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
         cluster). Supports filtering via a filter expression, custom groupBy to aggregate
-        pods by any attribute, ordering by any of the seven metrics (cpu, cpu_request,
-        cpu_limit, memory, memory_request, memory_limit, phase), and pagination via
-        offset/limit. The response type is ''list'' for the default k8s.pod.uid grouping
-        or ''grouped_list'' for custom groupBy keys. Also reports missing required
-        metrics and whether the requested time range falls before the data retention
-        boundary.'
+        pods by any attribute, ordering by any of the six metrics (cpu, cpu_request,
+        cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
+        The response type is ''list'' for the default k8s.pod.uid grouping (each row
+        is one pod with its current phase) or ''grouped_list'' for custom groupBy
+        keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
+        runningPodCount, succeededPodCount, failedPodCount derived from each pod''s
+        latest phase in the window). Also reports missing required metrics and whether
+        the requested time range falls before the data retention boundary.'
       operationId: ListPods
       requestBody:
         content:

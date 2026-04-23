@@ -107,7 +107,7 @@ export const useListHosts = <
 	return useMutation(mutationOptions);
 };
 /**
- * Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod phase (pending/running/succeeded/failed), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the seven metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit, phase), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping or 'grouped_list' for custom groupBy keys. Also reports missing required metrics and whether the requested time range falls before the data retention boundary.
+ * Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod phase (pending/running/succeeded/failed), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping (each row is one pod with its current phase) or 'grouped_list' for custom groupBy keys (each row aggregates pods in the group with per-phase counts: pendingPodCount, runningPodCount, succeededPodCount, failedPodCount derived from each pod's latest phase in the window). Also reports missing required metrics and whether the requested time range falls before the data retention boundary.
  * @summary List Pods for Infra Monitoring
  */
 export const listPods = (
@@ -125,7 +125,7 @@ export const listPods = (
 
 export const getListPodsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,
@@ -142,8 +142,8 @@ export const getListPodsMutationOptions = <
 	const mutationKey = ['listPods'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -163,7 +163,8 @@ export const getListPodsMutationOptions = <
 export type ListPodsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof listPods>>
 >;
-export type ListPodsMutationBody = BodyType<InframonitoringtypesPostablePodsDTO>;
+export type ListPodsMutationBody =
+	BodyType<InframonitoringtypesPostablePodsDTO>;
 export type ListPodsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -171,7 +172,7 @@ export type ListPodsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useListPods = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,

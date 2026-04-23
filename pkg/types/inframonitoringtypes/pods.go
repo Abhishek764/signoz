@@ -9,25 +9,29 @@ import (
 )
 
 type Pods struct {
-	Type                   ResponseType           `json:"type"`
-	Records                []PodRecord            `json:"records"`
-	Total                  int                    `json:"total"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck"`
-	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
+	Type                   ResponseType           `json:"type" required:"true"`
+	Records                []PodRecord            `json:"records" required:"true"`
+	Total                  int                    `json:"total" required:"true"`
+	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
+	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
 type PodRecord struct {
-	PodUID           string         `json:"podUID,omitempty"`
-	PodCPU           float64        `json:"podCPU"`
-	PodCPURequest    float64        `json:"podCPURequest"`
-	PodCPULimit      float64        `json:"podCPULimit"`
-	PodMemory        float64        `json:"podMemory"`
-	PodMemoryRequest float64        `json:"podMemoryRequest"`
-	PodMemoryLimit   float64        `json:"podMemoryLimit"`
-	PodPhase         PodPhase       `json:"podPhase"`
-	PodAge           int64          `json:"podAge"`
-	Meta             map[string]any `json:"meta"`
+	PodUID            string         `json:"podUID" required:"true"`
+	PodCPU            float64        `json:"podCPU" required:"true"`
+	PodCPURequest     float64        `json:"podCPURequest" required:"true"`
+	PodCPULimit       float64        `json:"podCPULimit" required:"true"`
+	PodMemory         float64        `json:"podMemory" required:"true"`
+	PodMemoryRequest  float64        `json:"podMemoryRequest" required:"true"`
+	PodMemoryLimit    float64        `json:"podMemoryLimit" required:"true"`
+	PodPhase          PodPhase       `json:"podPhase" required:"true"`
+	PendingPodCount   int            `json:"pendingPodCount" required:"true"`
+	RunningPodCount   int            `json:"runningPodCount" required:"true"`
+	SucceededPodCount int            `json:"succeededPodCount" required:"true"`
+	FailedPodCount    int            `json:"failedPodCount" required:"true"`
+	PodAge            int64          `json:"podAge" required:"true"`
+	Meta              map[string]any `json:"meta" required:"true"`
 }
 
 // PostablePods is the request body for the v2 pods list API.

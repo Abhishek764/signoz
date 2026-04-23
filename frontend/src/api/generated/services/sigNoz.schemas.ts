@@ -3154,68 +3154,84 @@ export type InframonitoringtypesPodRecordDTOMeta = {
 
 export interface InframonitoringtypesPodRecordDTO {
 	/**
+	 * @type integer
+	 */
+	failedPodCount: number;
+	/**
 	 * @type object
 	 * @nullable true
 	 */
-	meta?: InframonitoringtypesPodRecordDTOMeta;
+	meta: InframonitoringtypesPodRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	pendingPodCount: number;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	podAge?: number;
+	podAge: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podCPU?: number;
+	podCPU: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podCPULimit?: number;
+	podCPULimit: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podCPURequest?: number;
+	podCPURequest: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podMemory?: number;
+	podMemory: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podMemoryLimit?: number;
+	podMemoryLimit: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podMemoryRequest?: number;
-	podPhase?: InframonitoringtypesPodPhaseDTO;
+	podMemoryRequest: number;
+	podPhase: InframonitoringtypesPodPhaseDTO;
 	/**
 	 * @type string
 	 */
-	podUID?: string;
+	podUID: string;
+	/**
+	 * @type integer
+	 */
+	runningPodCount: number;
+	/**
+	 * @type integer
+	 */
+	succeededPodCount: number;
 }
 
 export interface InframonitoringtypesPodsDTO {
 	/**
 	 * @type boolean
 	 */
-	endTimeBeforeRetention?: boolean;
+	endTimeBeforeRetention: boolean;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	records?: InframonitoringtypesPodRecordDTO[] | null;
-	requiredMetricsCheck?: InframonitoringtypesRequiredMetricsCheckDTO;
+	records: InframonitoringtypesPodRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
-	total?: number;
-	type?: InframonitoringtypesResponseTypeDTO;
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 

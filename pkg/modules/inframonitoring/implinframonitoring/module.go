@@ -224,13 +224,26 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
 	}
-	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery())
+
+	// Query G (per-pod latest phase) is meaningful only under list mode (k8s.pod.uid in groupBy).
+	// Under custom groupBy we use getPerGroupPodPhaseCounts to bucket pods per group.
+	isPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery(isPodUIDInGroupBy))
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err
 	}
 
-	resp.Records = buildPodRecords(queryResp, pageGroups, req.GroupBy, metadataMap, req.End)
+	var phaseCounts map[string]podPhaseCounts
+	if !isPodUIDInGroupBy {
+		phaseCounts, err = m.getPerGroupPodPhaseCounts(ctx, req, pageGroups)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, req.End)
 	resp.Warning = queryResp.Warning
 
 	return resp, nil

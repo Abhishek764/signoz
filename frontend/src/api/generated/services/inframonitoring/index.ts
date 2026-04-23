@@ -4,15 +4,13 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation } from 'react-query';
 import type {
 	MutationFunction,
 	UseMutationOptions,
 	UseMutationResult,
 } from 'react-query';
-import { useMutation } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	InframonitoringtypesPostableHostsDTO,
 	InframonitoringtypesPostablePodsDTO,
@@ -20,6 +18,9 @@ import type {
 	ListPods200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * Returns a paginated list of hosts with key infrastructure metrics: CPU usage (%), memory usage (%), I/O wait (%), disk usage (%), and 15-minute load average. Each host includes its current status (active/inactive based on metrics reported in the last 10 minutes) and metadata attributes (e.g., os.type). Supports filtering via a filter expression, filtering by host status, custom groupBy to aggregate hosts by any attribute, ordering by any of the five metrics, and pagination via offset/limit. The response type is 'list' for the default host.name grouping or 'grouped_list' for custom groupBy keys. Also reports missing required metrics and whether the requested time range falls before the data retention boundary.
@@ -40,7 +41,7 @@ export const listHosts = (
 
 export const getListHostsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listHosts>>,
@@ -57,8 +58,8 @@ export const getListHostsMutationOptions = <
 	const mutationKey = ['listHosts'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -78,7 +79,8 @@ export const getListHostsMutationOptions = <
 export type ListHostsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof listHosts>>
 >;
-export type ListHostsMutationBody = BodyType<InframonitoringtypesPostableHostsDTO>;
+export type ListHostsMutationBody =
+	BodyType<InframonitoringtypesPostableHostsDTO>;
 export type ListHostsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -86,7 +88,7 @@ export type ListHostsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useListHosts = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listHosts>>,

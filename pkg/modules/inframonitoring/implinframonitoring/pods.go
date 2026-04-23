@@ -285,12 +285,15 @@ func (m *module) getPerGroupPodPhaseCounts(
 		cteB.E("metric_name", podPhaseMetricName),
 		cteB.GE("unix_milli", req.Start),
 		cteB.L("unix_milli", req.End),
-		"fingerprint IN (SELECT fingerprint FROM time_series_fps)",
+		"fingerprint GLOBAL IN (SELECT fingerprint FROM time_series_fps)", // TODO(nikhilmantri0902): GLOBAL IN is added here because results were not accurate with IN and local table, why?
 	)
 	cteB.GroupBy("fingerprint")
 	cteBSQL, cteBArgs := cteB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// ----- CTE C: pod_phase_per_pod (no parameters) -----
+	// Collapse fingerprints -> pod via argMax over each fingerprint's
+	// latest_unix_milli. Time-anchored: the fp whose newest sample is most
+	// recent wins — consistent with argMax inside CTE B.
 	cteCSelectCols := []string{"tsfp.pod_uid AS pod_uid"}
 	cteCGroupBy := []string{"pod_uid"}
 	for _, key := range req.GroupBy {

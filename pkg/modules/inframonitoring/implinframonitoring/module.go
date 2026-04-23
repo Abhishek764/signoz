@@ -235,7 +235,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
-	var phaseCounts map[string]podPhaseCounts
+	phaseCounts := make(map[string]podPhaseCounts)
 	if !isPodUIDInGroupBy {
 		phaseCounts, err = m.getPerGroupPodPhaseCounts(ctx, req, pageGroups)
 		if err != nil {

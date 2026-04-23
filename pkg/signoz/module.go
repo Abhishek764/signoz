@@ -123,7 +123,7 @@ func NewModules(
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		ServiceAccount:   serviceAccount,
-		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger, fl)),
+		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 	}
 }

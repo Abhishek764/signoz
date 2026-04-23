@@ -55,7 +55,8 @@ type Email struct {
 
 // layoutData is the value passed to the alert_email_notification layout
 // template. It embeds NotificationTemplateData so templates can reference
-// `.Status`, `.Alerts`, `.ExternalURL`, etc. directly alongside the rendered
+// `.Alert.Status`, `.Alert.TotalFiring`, `.Alert.TotalResolved`,
+// `.NotificationTemplateData.ExternalURL`, etc. alongside the rendered
 // Title and per-alert Bodies.
 type layoutData struct {
 	alertmanagertypes.NotificationTemplateData

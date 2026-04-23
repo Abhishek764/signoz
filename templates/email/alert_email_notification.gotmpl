@@ -59,9 +59,9 @@
             <td align="center" style="padding:20px 20px 12px">
               <h2 style="margin:0 0 8px;font-size:20px;color:#333">{{.Title}}</h2>
               <p style="margin:0;font-size:14px;color:#666">
-                Status: <strong>{{.Status}}</strong>
-                {{if .TotalFiring}} | Firing: <strong style="color:#e53e3e">{{.TotalFiring}}</strong>{{end}}
-                {{if .TotalResolved}} | Resolved: <strong style="color:#38a169">{{.TotalResolved}}</strong>{{end}}
+                Status: <strong>{{.Alert.Status}}</strong>
+                {{if .Alert.TotalFiring}} | Firing: <strong style="color:#e53e3e">{{.Alert.TotalFiring}}</strong>{{end}}
+                {{if .Alert.TotalResolved}} | Resolved: <strong style="color:#38a169">{{.Alert.TotalResolved}}</strong>{{end}}
               </p>
             </td>
           </tr>
@@ -88,13 +88,13 @@
           </tr>
           {{end}}
 
-          {{if .ExternalURL}}
+          {{if .NotificationTemplateData.ExternalURL}}
           <tr>
             <td style="padding:16px 20px">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td align="center">
-                    <a href="{{.ExternalURL}}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:600;color:#fff;background:#4E74F8;text-decoration:none;border-radius:4px">
+                    <a href="{{.NotificationTemplateData.ExternalURL}}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:600;color:#fff;background:#4E74F8;text-decoration:none;border-radius:4px">
                       View in SigNoz
                     </a>
                   </td>

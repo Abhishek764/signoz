@@ -1,6 +1,5 @@
 import json
 from http import HTTPStatus
-from typing import List
 
 import docker
 import docker.errors
@@ -15,9 +14,7 @@ logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="maildev", scope="package")
-def maildev(
-    network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config
-) -> types.TestContainerDocker:
+def maildev(network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.TestContainerDocker:
     """
     Package-scoped fixture for MailDev container.
     Provides SMTP (port 1025) and HTTP API (port 1080) for email testing.
@@ -82,17 +79,14 @@ def maildev(
     )
 
 
-def get_all_mails(_maildev: types.TestContainerDocker) -> List[dict]:
+def get_all_mails(_maildev: types.TestContainerDocker) -> list[dict]:
     """
     Fetches all emails from the MailDev HTTP API.
     Returns list of dicts with keys: subject, html, text.
     """
     url = _maildev.host_configs["1080"].get("/email")
     response = requests.get(url, timeout=5)
-    assert response.status_code == HTTPStatus.OK, (
-        f"Failed to fetch emails from MailDev, "
-        f"status code: {response.status_code}, response: {response.text}"
-    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to fetch emails from MailDev, status code: {response.status_code}, response: {response.text}"
     emails = response.json()
     # logger.info("Emails: %s", json.dumps(emails, indent=2))
     return [
@@ -114,10 +108,7 @@ def verify_email_received(_maildev: types.TestContainerDocker, filters: dict) ->
     emails = get_all_mails(_maildev)
     for email in emails:
         logger.info("Email: %s", json.dumps(email, indent=2))
-        if all(
-            key in email and filter_value == email[key]
-            for key, filter_value in filters.items()
-        ):
+        if all(key in email and filter_value == email[key] for key, filter_value in filters.items()):
             return True
     return False
 
@@ -128,7 +119,4 @@ def delete_all_mails(_maildev: types.TestContainerDocker) -> None:
     """
     url = _maildev.host_configs["1080"].get("/email/all")
     response = requests.delete(url, timeout=5)
-    assert response.status_code == HTTPStatus.OK, (
-        f"Failed to delete emails from MailDev, "
-        f"status code: {response.status_code}, response: {response.text}"
-    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to delete emails from MailDev, status code: {response.status_code}, response: {response.text}"

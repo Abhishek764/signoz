@@ -214,7 +214,7 @@ class AMNotificationExpectation:
     wait_time_seconds: int
     # list of notifications to expect, as a single rule can trigger multiple notifications
     # spanning across different notifiers
-    notification_validations: List[NotificationValidation]
+    notification_validations: list[NotificationValidation]
 
 
 @dataclass(frozen=True)
@@ -224,7 +224,7 @@ class AlertManagerNotificationTestCase:
     # path to the rule file in testdata directory
     rule_path: str
     # list of alert data that will be inserted into the database for the rule to be triggered
-    alert_data: List[AlertData]
+    alert_data: list[AlertData]
     # configuration for the notification channel
     channel_config: dict[str, any]
     # notification expectations for the test case

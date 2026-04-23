@@ -127,9 +127,7 @@ def gateway(
 def make_http_mocks(
     request: pytest.FixtureRequest,
 ) -> Callable[[types.TestContainerDocker, list[Mapping]], None]:
-    def _make_http_mocks(
-        container: types.TestContainerDocker, mappings: list[Mapping]
-    ) -> None:
+    def _make_http_mocks(container: types.TestContainerDocker, mappings: list[Mapping]) -> None:
         Config.base_url = container.host_configs["8080"].get("/__admin")
 
         for mapping in mappings:

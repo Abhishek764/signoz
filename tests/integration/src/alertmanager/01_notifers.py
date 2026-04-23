@@ -1,21 +1,21 @@
-# pylint: disable=line-too-long
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Callable, List
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
-from fixtures.alertutils import (
+from fixtures.alerts import (
+    get_testdata_file_path,
     update_raw_channel_config,
     update_rule_channel_name,
     verify_notification_expectation,
 )
 from fixtures.logger import setup_logger
 from fixtures.maildev import delete_all_mails
-from fixtures.notification_channelutils import (
+from fixtures.notification_channel import (
     email_default_config,
     msteams_default_config,
     opsgenie_default_config,
@@ -23,7 +23,6 @@ from fixtures.notification_channelutils import (
     slack_default_config,
     webhook_default_config,
 )
-from fixtures.utils import get_testdata_file_path
 
 # tests to verify the notifiers sending out the notifications with expected content
 NOTIFIERS_TEST = [
@@ -198,9 +197,7 @@ NOTIFIERS_TEST = [
                                     "firing": {
                                         "Annotations": [
                                             "compare_op = above",
-                                            {
-                                                "description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"
-                                            },
+                                            {"description = This alert is fired when the defined metric (current value": "15) crosses the threshold (10)"},
                                             "match_type = at_least_once",
                                             "threshold.value = 10",
                                             "value = 15",
@@ -350,12 +347,12 @@ def test_notifier_templating(
     # wiremock container for webhook notifications
     notification_channel: types.TestContainerDocker,
     # function to create wiremock mocks
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     create_notification_channel: Callable[[dict], str],
     # function to create alert rule
     create_alert_rule: Callable[[dict], str],
     # Alert data insertion related fixture
-    insert_alert_data: Callable[[List[types.AlertData], datetime], None],
+    insert_alert_data: Callable[[list[types.AlertData], datetime], None],
     # Mail dev container for email verification
     maildev: types.TestContainerDocker,
     # test case from parametrize
@@ -365,23 +362,15 @@ def test_notifier_templating(
     channel_name = str(uuid.uuid4())
 
     # update channel config: set name and rewrite URLs to wiremock
-    channel_config = update_raw_channel_config(
-        notifier_test_case.channel_config, channel_name, notification_channel
-    )
+    channel_config = update_raw_channel_config(notifier_test_case.channel_config, channel_name, notification_channel)
     logger.info("Channel config: %s", {"channel_config": channel_config})
 
     # setup wiremock mocks for webhook-based notification validations
-    webhook_validations = [
-        v
-        for v in notifier_test_case.notification_expectation.notification_validations
-        if v.destination_type == "webhook"
-    ]
+    webhook_validations = [v for v in notifier_test_case.notification_expectation.notification_validations if v.destination_type == "webhook"]
     if len(webhook_validations) > 0:
         mock_mappings = [
             Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.POST, url=v.validation_data["path"]
-                ),
+                request=MappingRequest(method=HttpMethods.POST, url=v.validation_data["path"]),
                 response=MappingResponse(status=200, json_body={}),
                 persistent=False,
             )
@@ -392,10 +381,7 @@ def test_notifier_templating(
         logger.info("Mock mappings created")
 
     # clear mails if any destination is email
-    if any(
-        v.destination_type == "email"
-        for v in notifier_test_case.notification_expectation.notification_validations
-    ):
+    if any(v.destination_type == "email" for v in notifier_test_case.notification_expectation.notification_validations):
         delete_all_mails(maildev)
         logger.info("Mails deleted")
 
@@ -406,18 +392,16 @@ def test_notifier_templating(
     # insert alert data
     insert_alert_data(
         notifier_test_case.alert_data,
-        base_time=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
+        base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
 
     # create alert rule
     rule_path = get_testdata_file_path(notifier_test_case.rule_path)
-    with open(rule_path, "r", encoding="utf-8") as f:
+    with open(rule_path, encoding="utf-8") as f:
         rule_data = json.loads(f.read())
     update_rule_channel_name(rule_data, channel_name)
     rule_id = create_alert_rule(rule_data)
-    logger.info(
-        "rule created: %s", {"rule_id": rule_id, "rule_name": rule_data["alert"]}
-    )
+    logger.info("rule created: %s", {"rule_id": rule_id, "rule_name": rule_data["alert"]})
 
     # verify notification expectations
     verify_notification_expectation(

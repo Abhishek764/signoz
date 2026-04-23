@@ -35,16 +35,8 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
             "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__REQUIRE__TLS": "false",
             "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__FROM": "alertmanager@signoz.io",
             # PagerDuty API URL -> wiremock (default: https://events.pagerduty.com/v2/enqueue)
-            "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_PAGERDUTY__URL": notification_channel.container_configs[
-                "8080"
-            ].get(
-                "/v2/enqueue"
-            ),
+            "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_PAGERDUTY__URL": notification_channel.container_configs["8080"].get("/v2/enqueue"),
             # OpsGenie API URL -> wiremock (default: https://api.opsgenie.com/)
-            "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_OPSGENIE__API__URL": notification_channel.container_configs[
-                "8080"
-            ].get(
-                "/"
-            ),
+            "SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_OPSGENIE__API__URL": notification_channel.container_configs["8080"].get("/"),
         },
     )

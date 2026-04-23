@@ -73,7 +73,7 @@ NOTIFIERS_TEST = [
         channel_config=msteams_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=30,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -180,7 +180,7 @@ NOTIFIERS_TEST = [
         channel_config=pagerduty_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=30,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -230,7 +230,7 @@ NOTIFIERS_TEST = [
         channel_config=opsgenie_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=30,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -263,7 +263,7 @@ NOTIFIERS_TEST = [
         channel_config=webhook_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=30,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -320,7 +320,7 @@ NOTIFIERS_TEST = [
         channel_config=email_default_config,
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=30,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="email",

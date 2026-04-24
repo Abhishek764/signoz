@@ -92,36 +92,6 @@ func getSpecForType(t inframonitoringtypes.OnboardingType) (*onboardingSpec, err
 	return &spec, nil
 }
 
-// collectSpecUnions returns the de-duplicated unions of (default + optional)
-// metrics and required attrs across every bucket in a spec. Input order is
-// preserved (bucket order × within-bucket order) so downstream queries are
-// deterministic.
-func collectSpecUnions(spec onboardingSpec) (metrics, attrs []string) {
-	seenMetrics := make(map[string]bool)
-	seenAttrs := make(map[string]bool)
-	for _, b := range spec.Buckets {
-		for _, m := range b.DefaultMetrics {
-			if !seenMetrics[m] {
-				seenMetrics[m] = true
-				metrics = append(metrics, m)
-			}
-		}
-		for _, m := range b.OptionalMetrics {
-			if !seenMetrics[m] {
-				seenMetrics[m] = true
-				metrics = append(metrics, m)
-			}
-		}
-		for _, a := range b.RequiredAttrs {
-			if !seenAttrs[a] {
-				seenAttrs[a] = true
-				attrs = append(attrs, a)
-			}
-		}
-	}
-	return metrics, attrs
-}
-
 // partitionMetrics splits a metric-name list into those present (not in
 // missingMetrics) and those missing (in missingMetrics). Preserves input order.
 func partitionMetrics(metrics []string, missingMetrics map[string]bool) (present, missing []string) {

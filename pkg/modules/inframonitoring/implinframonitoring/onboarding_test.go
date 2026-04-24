@@ -156,27 +156,6 @@ func TestSplitBucket(t *testing.T) {
 	}
 }
 
-func TestCollectSpecUnions_Dedupes(t *testing.T) {
-	spec := onboardingSpec{
-		Buckets: []onboardingComponentBucket{
-			{
-				Component:       testComponent,
-				DefaultMetrics:  []string{"m1", "m2"},
-				OptionalMetrics: []string{"m1"}, // dup across dimensions
-				RequiredAttrs:   []string{"a1"},
-			},
-			{
-				Component:      testComponent,
-				DefaultMetrics: []string{"m2", "m3"}, // dup across buckets
-				RequiredAttrs:  []string{"a1", "a2"},
-			},
-		},
-	}
-	metrics, attrs := collectSpecUnions(spec)
-	require.Equal(t, []string{"m1", "m2", "m3"}, metrics)
-	require.Equal(t, []string{"a1", "a2"}, attrs)
-}
-
 func TestPartitionMetrics(t *testing.T) {
 	present, missing := partitionMetrics(
 		[]string{"a", "b", "c", "d"},

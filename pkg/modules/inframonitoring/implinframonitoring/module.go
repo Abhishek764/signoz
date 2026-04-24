@@ -61,7 +61,8 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 		return nil, err
 	}
 
-	allMetrics, allAttrs := collectSpecUnions(*spec)
+	allMetrics := spec.getAllMetrics()
+	allAttrs := spec.getAllAttrs()
 
 	missingMetricsList, _, err := m.getMetricsExistenceAndEarliestTime(ctx, allMetrics)
 	if err != nil {

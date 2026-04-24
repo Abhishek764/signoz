@@ -34,3 +34,20 @@ type onboardingComponentBucket struct {
 type onboardingSpec struct {
 	Buckets []onboardingComponentBucket
 }
+
+func (s onboardingSpec) getAllMetrics() []string {
+	var out []string
+	for _, b := range s.Buckets {
+		out = append(out, b.DefaultMetrics...)
+		out = append(out, b.OptionalMetrics...)
+	}
+	return out
+}
+
+func (s onboardingSpec) getAllAttrs() []string {
+	var out []string
+	for _, b := range s.Buckets {
+		out = append(out, b.RequiredAttrs...)
+	}
+	return out
+}

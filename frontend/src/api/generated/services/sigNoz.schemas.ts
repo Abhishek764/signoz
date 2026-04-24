@@ -3257,65 +3257,65 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @type object
 	 * @nullable true
 	 */
-	meta?: InframonitoringtypesPodRecordDTOMeta;
+	meta: InframonitoringtypesPodRecordDTOMeta;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	podAge?: number;
+	podAge: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podCPU?: number;
+	podCPU: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podCPULimit?: number;
+	podCPULimit: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podCPURequest?: number;
+	podCPURequest: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podMemory?: number;
+	podMemory: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podMemoryLimit?: number;
+	podMemoryLimit: number;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	podMemoryRequest?: number;
-	podPhase?: InframonitoringtypesPodPhaseDTO;
+	podMemoryRequest: number;
+	podPhase: InframonitoringtypesPodPhaseDTO;
 	/**
 	 * @type string
 	 */
-	podUID?: string;
+	podUID: string;
 }
 
 export interface InframonitoringtypesPodsDTO {
 	/**
 	 * @type boolean
 	 */
-	endTimeBeforeRetention?: boolean;
+	endTimeBeforeRetention: boolean;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	records?: InframonitoringtypesPodRecordDTO[] | null;
-	requiredMetricsCheck?: InframonitoringtypesRequiredMetricsCheckDTO;
+	records: InframonitoringtypesPodRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
 	 */
-	total?: number;
-	type?: InframonitoringtypesResponseTypeDTO;
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
@@ -3352,7 +3352,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	end?: number;
+	end: number;
 	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
@@ -3362,7 +3362,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 	/**
 	 * @type integer
 	 */
-	limit?: number;
+	limit: number;
 	/**
 	 * @type integer
 	 */
@@ -3372,7 +3372,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	start?: number;
+	start: number;
 }
 
 export interface InframonitoringtypesRequiredMetricsCheckDTO {

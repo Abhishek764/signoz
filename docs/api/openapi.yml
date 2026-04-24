@@ -2506,6 +2506,17 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podUID:
           type: string
+      required:
+      - podUID
+      - podCPU
+      - podCPURequest
+      - podCPULimit
+      - podMemory
+      - podMemoryRequest
+      - podMemoryLimit
+      - podPhase
+      - podAge
+      - meta
       type: object
     InframonitoringtypesPods:
       properties:
@@ -2524,6 +2535,12 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesResponseType'
         warning:
           $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableHosts:
       properties:
@@ -2572,6 +2589,10 @@ components:
         start:
           format: int64
           type: integer
+      required:
+      - start
+      - end
+      - limit
       type: object
     InframonitoringtypesRequiredMetricsCheck:
       properties:

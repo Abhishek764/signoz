@@ -419,7 +419,6 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			rr.Data[name] = val
 		}
-		mergeSpanAttributeColumns(rr.Data)
 		outRows = append(outRows, &rr)
 	}
 	if err := rows.Err(); err != nil {

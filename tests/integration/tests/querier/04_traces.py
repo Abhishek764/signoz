@@ -787,9 +787,9 @@ def test_traces_list_with_select_fields(
         signoz,
         token,
         start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
+            (datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000
         ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[payload],
     )

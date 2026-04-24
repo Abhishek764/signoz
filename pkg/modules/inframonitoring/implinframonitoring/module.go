@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -45,6 +46,75 @@ func NewModule(
 		logger:                 providerSettings.Logger,
 		config:                 cfg,
 	}
+}
+
+// GetOnboarding runs a per-type readiness check: for the requested
+// infra-monitoring tab, reports which required metrics and attributes are
+// present vs missing, grouped by the collector component that produces them.
+// Ready is true iff every missing list is empty.
+func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableOnboarding) (*inframonitoringtypes.Onboarding, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	spec, ok := onboardingSpecs[req.Type]
+	if !ok {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no onboarding spec for type: %s", req.Type)
+	}
+
+	allMetrics, allAttrs := collectSpecUnions(spec)
+
+	missingMetricsList, _, err := m.getMetricsExistenceAndEarliestTime(ctx, allMetrics)
+	if err != nil {
+		return nil, err
+	}
+	missingMetrics := make(map[string]bool, len(missingMetricsList))
+	for _, name := range missingMetricsList {
+		missingMetrics[name] = true
+	}
+
+	presentAttrs, err := m.getAttributesPresence(ctx, allMetrics, allAttrs)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Onboarding{
+		Type:                         req.Type,
+		PresentDefaultEnabledMetrics: []inframonitoringtypes.MetricsComponentEntry{},
+		PresentOptionalMetrics:       []inframonitoringtypes.MetricsComponentEntry{},
+		PresentRequiredAttributes:    []inframonitoringtypes.AttributesComponentEntry{},
+		MissingDefaultEnabledMetrics: []inframonitoringtypes.MissingMetricsComponentEntry{},
+		MissingOptionalMetrics:       []inframonitoringtypes.MissingMetricsComponentEntry{},
+		MissingRequiredAttributes:    []inframonitoringtypes.MissingAttributesComponentEntry{},
+	}
+
+	for _, b := range spec.Buckets {
+		s := splitBucket(b, missingMetrics, presentAttrs)
+		if s.PresentDefault != nil {
+			resp.PresentDefaultEnabledMetrics = append(resp.PresentDefaultEnabledMetrics, *s.PresentDefault)
+		}
+		if s.PresentOptional != nil {
+			resp.PresentOptionalMetrics = append(resp.PresentOptionalMetrics, *s.PresentOptional)
+		}
+		if s.PresentAttrs != nil {
+			resp.PresentRequiredAttributes = append(resp.PresentRequiredAttributes, *s.PresentAttrs)
+		}
+		if s.MissingDefault != nil {
+			resp.MissingDefaultEnabledMetrics = append(resp.MissingDefaultEnabledMetrics, *s.MissingDefault)
+		}
+		if s.MissingOptional != nil {
+			resp.MissingOptionalMetrics = append(resp.MissingOptionalMetrics, *s.MissingOptional)
+		}
+		if s.MissingAttrs != nil {
+			resp.MissingRequiredAttributes = append(resp.MissingRequiredAttributes, *s.MissingAttrs)
+		}
+	}
+
+	resp.Ready = len(resp.MissingDefaultEnabledMetrics) == 0 &&
+		len(resp.MissingOptionalMetrics) == 0 &&
+		len(resp.MissingRequiredAttributes) == 0
+
+	return resp, nil
 }
 
 func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (*inframonitoringtypes.Hosts, error) {

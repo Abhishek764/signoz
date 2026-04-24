@@ -19,8 +19,8 @@ import (
 func TestFilterExprLogs(t *testing.T) {
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	ctx := context.Background()
-	fm := NewFieldMapper(false)
-	cb := NewConditionBuilder(fm, false)
+	fm := NewFieldMapper(querybuilder.Options{})
+	cb := NewConditionBuilder(fm, querybuilder.Options{})
 
 	// Define a comprehensive set of field keys to support all test cases
 	keys := buildCompleteFieldKeyMap(releaseTime)
@@ -2429,8 +2429,8 @@ func TestFilterExprLogs(t *testing.T) {
 
 // TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	fm := NewFieldMapper(false)
-	cb := NewConditionBuilder(fm, false)
+	fm := NewFieldMapper(querybuilder.Options{})
+	cb := NewConditionBuilder(fm, querybuilder.Options{})
 
 	// Define a comprehensive set of field keys to support all test cases
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)

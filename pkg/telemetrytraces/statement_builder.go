@@ -510,7 +510,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, false)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, querybuilder.Options{})
 		if err != nil {
 			return nil, err
 		}
@@ -658,7 +658,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, false)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil, querybuilder.Options{})
 		if err != nil {
 			return nil, err
 		}

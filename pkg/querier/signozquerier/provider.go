@@ -81,7 +81,7 @@ func newProvider(
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, false)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, querybuilder.Options{})
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
@@ -101,17 +101,19 @@ func newProvider(
 		traceAggExprRewriter,
 	)
 
-	bodyJSONEnabled := fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	logOpts := querybuilder.Options{
+		BodyJSONEnabled: fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})),
+	}
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper(bodyJSONEnabled)
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, bodyJSONEnabled)
+	logFieldMapper := telemetrylogs.NewFieldMapper(logOpts)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, logOpts)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		settings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.GetBodyJSONKey,
-		bodyJSONEnabled,
+		logOpts,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		settings,
@@ -121,7 +123,7 @@ func newProvider(
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
-		bodyJSONEnabled,
+		logOpts,
 	)
 
 	// Create audit statement builder
@@ -133,7 +135,7 @@ func newProvider(
 		auditFieldMapper,
 		auditConditionBuilder,
 		nil,
-		false,
+		querybuilder.Options{},
 	)
 	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
 		settings,

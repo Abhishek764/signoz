@@ -13,8 +13,8 @@ import (
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL.
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(false)
-	cb := NewConditionBuilder(fm, false)
+	fm := NewFieldMapper(querybuilder.Options{})
+	cb := NewConditionBuilder(fm, querybuilder.Options{})
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := buildCompleteFieldKeyMap(releaseTime)
@@ -51,8 +51,8 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings.
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
-	fm := NewFieldMapper(false)
-	cb := NewConditionBuilder(fm, false)
+	fm := NewFieldMapper(querybuilder.Options{})
+	cb := NewConditionBuilder(fm, querybuilder.Options{})
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := buildCompleteFieldKeyMap(releaseTime)

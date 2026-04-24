@@ -56,15 +56,15 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 	}
 	metadataStore.KeysMap = keysMap
 
-	logFieldMapper := telemetrylogs.NewFieldMapper(false)
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, false)
+	logFieldMapper := telemetrylogs.NewFieldMapper(querybuilder.Options{})
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, querybuilder.Options{})
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		providerSettings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.GetBodyJSONKey,
-		false,
+		querybuilder.Options{},
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		providerSettings,
@@ -74,7 +74,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
-		false,
+		querybuilder.Options{},
 	)
 
 	return querier.New(
@@ -109,7 +109,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, false)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, querybuilder.Options{})
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,

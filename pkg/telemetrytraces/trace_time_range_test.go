@@ -34,7 +34,7 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 		Signal:        telemetrytypes.SignalTraces,
 	}}
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, false)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, querybuilder.Options{})
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

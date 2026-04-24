@@ -6,6 +6,7 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
@@ -165,7 +166,7 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(false)
+	fm := NewFieldMapper(querybuilder.Options{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -273,7 +274,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(false)
+			fm := NewFieldMapper(querybuilder.Options{})
 			result, err := fm.FieldFor(ctx, 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
@@ -514,7 +515,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(false)
+			fm := NewFieldMapper(querybuilder.Options{})
 
 			tsStart := uint64(tc.tsStartTime.UnixNano())
 			tsEnd := uint64(tc.tsEndTime.UnixNano())
@@ -963,7 +964,7 @@ func TestFieldForWithMaterialized(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(false)
+	fm := NewFieldMapper(querybuilder.Options{})
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

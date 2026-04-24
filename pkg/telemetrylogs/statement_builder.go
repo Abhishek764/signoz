@@ -22,7 +22,7 @@ type logQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
-	bodyJSONEnabled           bool
+	opts                      querybuilder.Options
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -38,7 +38,7 @@ func NewLogQueryStatementBuilder(
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	bodyJSONEnabled bool,
+	opts querybuilder.Options,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
 
@@ -62,7 +62,7 @@ func NewLogQueryStatementBuilder(
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
 		jsonKeyToKey:              jsonKeyToKey,
-		bodyJSONEnabled:           bodyJSONEnabled,
+		opts:                      opts,
 	}
 }
 
@@ -77,7 +77,7 @@ func (b *logQueryStatementBuilder) Build(
 ) (*qbtypes.Statement, error) {
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
-	keySelectors, warnings := getKeySelectors(ctx, query, b.bodyJSONEnabled)
+	keySelectors, warnings := getKeySelectors(ctx, query, b.opts)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (b *logQueryStatementBuilder) Build(
 	return stmt, nil
 }
 
-func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
+func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], opts querybuilder.Options) ([]*telemetrytypes.FieldKeySelector, []string) {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 	var warnings []string
 
@@ -160,7 +160,7 @@ func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtype
 	// When the new JSON body experience is enabled, warn the user if they use the bare
 	// "body" key in the filter — queries on plain "body" default to body.message:string.
 	// TODO(Piyush): Setup better for coming FTS support.
-	if bodyJSONEnabled {
+	if opts.BodyJSONEnabled {
 		for _, sel := range keySelectors {
 			if sel.Name == LogsV2BodyColumn {
 				warnings = append(warnings, bodySearchDefaultWarning)
@@ -280,7 +280,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2SeverityNumberColumn)
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression(ctx, b.bodyJSONEnabled))
+		sb.SelectMore(bodyAliasExpression(ctx, b.opts.BodyJSONEnabled))
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)
@@ -381,7 +381,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys,
-			telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, b.bodyJSONEnabled)
+			telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, b.opts)
 		if err != nil {
 			return nil, err
 		}
@@ -535,7 +535,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	for _, gb := range query.GroupBy {
 		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys,
-			telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, b.bodyJSONEnabled)
+			telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, b.opts)
 		if err != nil {
 			return nil, err
 		}
@@ -647,7 +647,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
-			BodyJSONEnabled:    b.bodyJSONEnabled,
+			BodyJSONEnabled:    b.opts.BodyJSONEnabled,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,

@@ -14,12 +14,12 @@ import (
 )
 
 type conditionBuilder struct {
-	fm              qbtypes.FieldMapper
-	bodyJSONEnabled bool
+	fm   qbtypes.FieldMapper
+	opts querybuilder.Options
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, bodyJSONEnabled bool) *conditionBuilder {
-	return &conditionBuilder{fm: fm, bodyJSONEnabled: bodyJSONEnabled}
+func NewConditionBuilder(fm qbtypes.FieldMapper, opts querybuilder.Options) *conditionBuilder {
+	return &conditionBuilder{fm: fm, opts: opts}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -37,7 +37,7 @@ func (c *conditionBuilder) conditionFor(
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && c.bodyJSONEnabled && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && c.opts.BodyJSONEnabled && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -57,7 +57,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// Check if this is a body JSON search - either by FieldContext
-	if key.FieldContext == telemetrytypes.FieldContextBody && !c.bodyJSONEnabled {
+	if key.FieldContext == telemetrytypes.FieldContextBody && !c.opts.BodyJSONEnabled {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -168,7 +168,7 @@ func (c *conditionBuilder) conditionFor(
 	// in the UI based query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if key.FieldContext == telemetrytypes.FieldContextBody && !c.bodyJSONEnabled {
+		if key.FieldContext == telemetrytypes.FieldContextBody && !c.opts.BodyJSONEnabled {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -288,7 +288,7 @@ func (c *conditionBuilder) ConditionFor(
 	case telemetrytypes.FieldContextBody:
 		// Querying JSON fields already account for Nullability of fields
 		// so additional exists checks are not needed
-		if c.bodyJSONEnabled {
+		if c.opts.BodyJSONEnabled {
 			return condition, nil
 		}
 	}

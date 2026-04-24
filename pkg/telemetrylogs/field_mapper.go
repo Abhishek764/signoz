@@ -12,6 +12,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -66,11 +67,11 @@ var (
 )
 
 type fieldMapper struct {
-	bodyJSONEnabled bool
+	opts querybuilder.Options
 }
 
-func NewFieldMapper(bodyJSONEnabled bool) qbtypes.FieldMapper {
-	return &fieldMapper{bodyJSONEnabled: bodyJSONEnabled}
+func NewFieldMapper(opts querybuilder.Options) qbtypes.FieldMapper {
+	return &fieldMapper{opts: opts}
 }
 
 func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
@@ -97,7 +98,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
-		if m.bodyJSONEnabled {
+		if m.opts.BodyJSONEnabled {
 			if key.Name == messageSubField {
 				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
@@ -106,7 +107,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 		// Fall back to legacy body column
 		return []*schema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
-		if key.Name == LogsV2BodyColumn && m.bodyJSONEnabled {
+		if key.Name == LogsV2BodyColumn && m.opts.BodyJSONEnabled {
 			return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 		}
 		col, ok := logsV2Columns[key.Name]
@@ -114,7 +115,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_v2 if feature flag is enabled and we have a body condition builder
-				if m.bodyJSONEnabled {
+				if m.opts.BodyJSONEnabled {
 					// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 					// i.e return both the body json and body json promoted and let the evolutions decide which one to use
 					// based on the query range time.

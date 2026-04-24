@@ -4,7 +4,19 @@ export default {
 	data: {
 		resources: [
 			{
+				name: 'role',
+				type: 'role',
+			},
+			{
+				name: 'roles',
+				type: 'metaresources',
+			},
+			{
 				name: 'dashboard',
+				type: 'metaresource',
+			},
+			{
+				name: 'public-dashboard',
 				type: 'metaresource',
 			},
 			{
@@ -12,11 +24,11 @@ export default {
 				type: 'metaresources',
 			},
 			{
-				name: 'role',
-				type: 'role',
+				name: 'service-account',
+				type: 'metaresource',
 			},
 			{
-				name: 'roles',
+				name: 'service-accounts',
 				type: 'metaresources',
 			},
 		],

@@ -22,7 +22,7 @@ type logQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
-	opts                      querybuilder.Options
+	opts                      qbtypes.Options
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -38,7 +38,7 @@ func NewLogQueryStatementBuilder(
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	opts querybuilder.Options,
+	opts qbtypes.Options,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
 
@@ -108,7 +108,7 @@ func (b *logQueryStatementBuilder) Build(
 	return stmt, nil
 }
 
-func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], opts querybuilder.Options) ([]*telemetrytypes.FieldKeySelector, []string) {
+func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], opts qbtypes.Options) ([]*telemetrytypes.FieldKeySelector, []string) {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 	var warnings []string
 

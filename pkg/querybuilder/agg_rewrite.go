@@ -21,7 +21,7 @@ type aggExprRewriter struct {
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
-	opts             Options
+	opts             qbtypes.Options
 }
 
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
@@ -32,7 +32,7 @@ func NewAggExprRewriter(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	opts Options,
+	opts qbtypes.Options,
 ) *aggExprRewriter {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
 
@@ -142,7 +142,7 @@ type exprVisitor struct {
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
-	opts             Options
+	opts             qbtypes.Options
 	Modified         bool
 	chArgs           []any
 	isRate           bool
@@ -158,7 +158,7 @@ func newExprVisitor(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	opts Options,
+	opts qbtypes.Options,
 ) *exprVisitor {
 	return &exprVisitor{
 		ctx:              ctx,
@@ -262,7 +262,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, Options{})
+			expr, exprArgs, err := CollisionHandledFinalExpr(v.ctx, v.startNs, v.endNs, &fieldKey, v.fieldMapper, v.conditionBuilder, v.fieldKeys, dataType, v.jsonKeyToKey, v.opts)
 			if err != nil {
 				return err
 			}

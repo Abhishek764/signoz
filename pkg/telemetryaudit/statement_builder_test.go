@@ -53,7 +53,7 @@ func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, querybuilder.Options{})
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, qbtypes.Options{})
 
 	return NewAuditQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

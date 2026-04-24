@@ -12,7 +12,6 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -67,10 +66,10 @@ var (
 )
 
 type fieldMapper struct {
-	opts querybuilder.Options
+	opts qbtypes.Options
 }
 
-func NewFieldMapper(opts querybuilder.Options) qbtypes.FieldMapper {
+func NewFieldMapper(opts qbtypes.Options) qbtypes.FieldMapper {
 	return &fieldMapper{opts: opts}
 }
 

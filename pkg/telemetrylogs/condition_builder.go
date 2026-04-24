@@ -15,10 +15,10 @@ import (
 
 type conditionBuilder struct {
 	fm   qbtypes.FieldMapper
-	opts querybuilder.Options
+	opts qbtypes.Options
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, opts querybuilder.Options) *conditionBuilder {
+func NewConditionBuilder(fm qbtypes.FieldMapper, opts qbtypes.Options) *conditionBuilder {
 	return &conditionBuilder{fm: fm, opts: opts}
 }
 

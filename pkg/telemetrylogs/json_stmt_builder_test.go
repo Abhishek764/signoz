@@ -1123,10 +1123,10 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 	t.Helper()
 
 	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
-	fm := NewFieldMapper(querybuilder.Options{BodyJSONEnabled: true})
-	cb := NewConditionBuilder(fm, querybuilder.Options{BodyJSONEnabled: true})
+	fm := NewFieldMapper(qbtypes.Options{BodyJSONEnabled: true})
+	cb := NewConditionBuilder(fm, qbtypes.Options{BodyJSONEnabled: true})
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, querybuilder.Options{BodyJSONEnabled: true})
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, qbtypes.Options{BodyJSONEnabled: true})
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1136,7 +1136,7 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
-		querybuilder.Options{BodyJSONEnabled: true},
+		qbtypes.Options{BodyJSONEnabled: true},
 	)
 
 	return statementBuilder

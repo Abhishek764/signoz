@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
@@ -81,7 +82,7 @@ func newProvider(
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, querybuilder.Options{})
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, qbtypes.Options{})
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
@@ -101,7 +102,7 @@ func newProvider(
 		traceAggExprRewriter,
 	)
 
-	logOpts := querybuilder.Options{
+	logOpts := qbtypes.Options{
 		BodyJSONEnabled: fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})),
 	}
 	// Create log statement builder
@@ -135,7 +136,7 @@ func newProvider(
 		auditFieldMapper,
 		auditConditionBuilder,
 		nil,
-		querybuilder.Options{},
+		qbtypes.Options{},
 	)
 	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
 		settings,

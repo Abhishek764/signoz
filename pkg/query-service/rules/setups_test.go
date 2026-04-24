@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 )
@@ -56,15 +57,15 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 	}
 	metadataStore.KeysMap = keysMap
 
-	logFieldMapper := telemetrylogs.NewFieldMapper(querybuilder.Options{})
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, querybuilder.Options{})
+	logFieldMapper := telemetrylogs.NewFieldMapper(qbtypes.Options{})
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, qbtypes.Options{})
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		providerSettings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.GetBodyJSONKey,
-		querybuilder.Options{},
+		qbtypes.Options{},
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		providerSettings,
@@ -74,7 +75,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
-		querybuilder.Options{},
+		qbtypes.Options{},
 	)
 
 	return querier.New(
@@ -109,7 +110,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, querybuilder.Options{})
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, qbtypes.Options{})
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,

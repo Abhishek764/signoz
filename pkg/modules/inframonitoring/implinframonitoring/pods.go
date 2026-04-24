@@ -90,6 +90,7 @@ func buildPodRecords(
 			}
 		}
 
+		// set pod phase + counts based on whether pod uid is in group by (list vs grouped_list)
 		if isPodUIDInGroupBy { // derive phase + count=1 from query G
 			if metrics, ok := metricsMap[compositeKey]; ok {
 				if v, exists := metrics["G"]; exists {
@@ -108,7 +109,7 @@ func buildPodRecords(
 					}
 				}
 			}
-		} else { // derive counts from phaseCounts; PodPhase stays PodPhaseNone
+		} else { // derive counts from phaseCounts; PodPhase stays PodPhaseNone because it doesn't make sense under groupBy other than pod uid
 			if c, ok := phaseCounts[compositeKey]; ok {
 				record.PendingPodCount = c.Pending
 				record.RunningPodCount = c.Running
@@ -118,10 +119,9 @@ func buildPodRecords(
 			}
 		}
 
-		if attrs, ok := metadataMap[compositeKey]; ok && isKeyInGroupByAttrs(groupBy, podUID) {
+		if attrs, ok := metadataMap[compositeKey]; ok && isPodUIDInGroupBy {
 			// the condition above ensures we deduce age only if pod uid is in group by because if
 			// it's not in group by then we might have multiple pod uids in the same group and hence then podAge wont make sense
-
 			if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
 				if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
 					startTimeMs := t.UnixMilli()

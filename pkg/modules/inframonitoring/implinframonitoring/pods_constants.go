@@ -174,6 +174,12 @@ func (m *module) newPodsTableListQuery(includePhaseQuery bool) *qbtypes.QueryRan
 		// Query G: Pod phase (latest value per pod). Only meaningful when
 		// k8s.pod.uid is in groupBy — under custom groupBy this query is
 		// replaced by getPerGroupPodPhaseCounts which buckets pods per group.
+		// SpaceAggregationMax is a workaround: ideally we'd use a "last"
+		// space aggregation to pick the last-seen phase when multiple
+		// fingerprints exist for a single pod.uid. Max yields the correct
+		// phase in the common single-fingerprint case, and in the rare
+		// multi-fingerprint case returns the most-severe phase observed.
+		// TODO(nikhilmantri0902): switch to SpaceAggregationLast once supported by querier.
 		queries = append(queries, qbtypes.QueryEnvelope{
 			Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{

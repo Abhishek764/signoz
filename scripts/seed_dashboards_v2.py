@@ -20,11 +20,25 @@ Usage:
 
 import argparse
 import json
+import os
 import random
 import uuid
 from datetime import datetime, timedelta
 
 from sqlalchemy import create_engine, text
+
+
+# Perses sample dashboard (panels, layouts, variables, etc.) — used as the
+# base body for every seeded dashboard so `data` is a realistic size (~12KB
+# compact) instead of a few hundred bytes. Each dashboard only overrides the
+# display name + description; everything else (panels, layouts...) is shared.
+_PERSES_JSON_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "pkg", "types", "dashboardtypes", "dashboardtypesv2", "testdata",
+    "perses.json",
+)
+with open(_PERSES_JSON_PATH) as _f:
+    _PERSES_BASE = json.load(_f)
 
 
 # ---------- Schema ----------
@@ -129,19 +143,23 @@ def internal_of(name: str) -> str:
 
 
 def make_data(name: str, description: str) -> str:
-    """Minimal v2-shape JSON blob carrying just name + description."""
+    """
+    v2-shape JSON blob: metadata wrapper + Perses body with name/description
+    overridden per dashboard. Shallow-copies only the two levels we mutate so
+    panels/layouts/etc. are shared across dashboards (safe because we only
+    serialize — never mutate — the resulting dict).
+    """
+    body = {
+        **_PERSES_BASE,
+        "display": {**_PERSES_BASE["display"], "name": name, "description": description},
+    }
     return json.dumps({
         "metadata": {
             "schemaVersion": "v6",
             "image": "",
             "uploadedGrafana": False,
         },
-        "data": {
-            "display": {
-                "name": name,
-                "description": description,
-            },
-        },
+        "data": body,
     })
 
 

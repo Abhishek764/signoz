@@ -20,6 +20,8 @@ func mapPhaseNumToString(v float64) inframonitoringtypes.PodPhase {
 		return inframonitoringtypes.PodPhaseSucceeded
 	case 4:
 		return inframonitoringtypes.PodPhaseFailed
+	case 5:
+		return inframonitoringtypes.PodPhaseUnknown
 	default:
 		return inframonitoringtypes.PodPhaseNone
 	}
@@ -134,7 +136,10 @@ func buildPodRecords(
 			}
 		}
 
-		if attrs, ok := metadataMap[compositeKey]; ok {
+		if attrs, ok := metadataMap[compositeKey]; ok && isKeyInGroupByAttrs(groupBy, podUID) {
+			// the condition above ensures we deduce age only if pod uid is in group by because if
+			// it's not in group by then we might have multiple pod uids in the same group and hence then podAge wont make sense
+
 			if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
 				if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
 					startTimeMs := t.UnixMilli()

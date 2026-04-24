@@ -3243,6 +3243,7 @@ export enum InframonitoringtypesPodPhaseDTO {
 	running = 'running',
 	succeeded = 'succeeded',
 	failed = 'failed',
+	unknown = 'unknown',
 	'' = '',
 }
 /**

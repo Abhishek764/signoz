@@ -11,6 +11,7 @@ var (
 	PodPhaseRunning   = PodPhase{valuer.NewString("running")}
 	PodPhaseSucceeded = PodPhase{valuer.NewString("succeeded")}
 	PodPhaseFailed    = PodPhase{valuer.NewString("failed")}
+	PodPhaseUnknown   = PodPhase{valuer.NewString("unknown")}
 	PodPhaseNone      = PodPhase{valuer.NewString("")}
 )
 
@@ -20,6 +21,7 @@ func (PodPhase) Enum() []any {
 		PodPhaseRunning,
 		PodPhaseSucceeded,
 		PodPhaseFailed,
+		PodPhaseUnknown,
 		PodPhaseNone,
 	}
 }

@@ -2473,6 +2473,7 @@ components:
       - running
       - succeeded
       - failed
+      - unknown
       - ""
       type: string
     InframonitoringtypesPodRecord:

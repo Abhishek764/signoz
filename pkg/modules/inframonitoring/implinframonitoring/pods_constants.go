@@ -177,8 +177,12 @@ func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 							{
 								MetricName:       "k8s.pod.phase",
 								TimeAggregation:  metrictypes.TimeAggregationLatest,
-								SpaceAggregation: metrictypes.SpaceAggregationMax,
-								ReduceTo:         qbtypes.ReduceToLast,
+								SpaceAggregation: metrictypes.SpaceAggregationMax, // Space aggregation here should ideally have been something
+								// like spaceaggregation last to pick up the last seen phase of the pod in case of more than one fingerprint for a pod uid for pod phase.
+								// but since the chance of that happening is very low and we don't have spaceaggregation last,
+								// we have picked max which will give us the correct phase in majority of cases and in worst case will give us the most severe phase in case of multiple fingerprints for a pod uid for pod phase.
+								// TODO(nikhilmantri0902): Add spaceaggregation last once supported and use that here.
+								ReduceTo: qbtypes.ReduceToLast,
 							},
 						},
 						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},

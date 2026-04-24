@@ -202,18 +202,21 @@ func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringt
 
 // getPerGroupPodPhaseCounts computes per-group pod counts bucketed by each
 // pod's latest phase in the requested window. Mirrors getPerGroupHostStatusCounts
-// but uses 3 CTEs because pod phase classification needs the sample VALUE
-// (not just "did it report"), so attributes_metadata can't carry it.
+// but needs the sample VALUE (not just "did it report"), so attributes_metadata
+// can't carry it.
 //
 // Pipeline:
 //
-//	CTE A (time_series_fps):  fp ↔ (pod_uid, groupBy cols) from time_series table.
-//	                          User filter + page-groups filter applied here.
-//	CTE B (pod_phase_samples): fp → (latest phase value, its timestamp) via
-//	                          argMax(value, unix_milli) on samples table.
-//	CTE C (pod_phase_per_pod): collapse fp → pod via argMax over per-fp latest
-//	                          timestamp (latest-reported fp wins).
-//	Outer:                    per-group uniqExactIf into 4 phase buckets.
+//	timeSeriesFPs:      fp ↔ (pod_uid, groupBy cols) from the time_series table.
+//	                    User filter + page-groups filter applied here.
+//	latestPhasePerPod:  GLOBAL INNER JOIN samples × timeSeriesFPs, collapsed to
+//	                    the latest phase per pod via argMax(value, unix_milli).
+//	                    One step — the JOIN projects pod_uid + groupBy cols
+//	                    down to the sample row, so no fp-level intermediate.
+//	countPodsPerPhase:  per-group uniqExactIf into 5 phase buckets.
+//
+// GLOBAL on the JOIN: right side resolves through a distributed table; without
+// it each shard evaluates locally → partial fp set → under-counts.
 //
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupPodPhaseCounts(
@@ -248,23 +251,23 @@ func (m *module) getPerGroupPodPhaseCounts(
 		valueCol = "last"
 	}
 
-	// ----- CTE A: time_series_fps -----
-	cteA := sqlbuilder.NewSelectBuilder()
-	cteASelectCols := []string{
+	// ----- timeSeriesFPs -----
+	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
+	timeSeriesFPsSelectCols := []string{
 		"fingerprint",
-		fmt.Sprintf("JSONExtractString(labels, %s) AS pod_uid", cteA.Var(podUIDAttrKey)),
+		fmt.Sprintf("JSONExtractString(labels, %s) AS pod_uid", timeSeriesFPs.Var(podUIDAttrKey)),
 	}
 	for _, key := range req.GroupBy {
-		cteASelectCols = append(cteASelectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", cteA.Var(key.Name), quoteIdentifier(key.Name)),
+		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", timeSeriesFPs.Var(key.Name), quoteIdentifier(key.Name)),
 		)
 	}
-	cteA.Select(cteASelectCols...)
-	cteA.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTSTable))
-	cteA.Where(
-		cteA.E("metric_name", podPhaseMetricName),
-		cteA.GE("unix_milli", adjustedStart),
-		cteA.L("unix_milli", adjustedEnd),
+	timeSeriesFPs.Select(timeSeriesFPsSelectCols...)
+	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTSTable))
+	timeSeriesFPs.Where(
+		timeSeriesFPs.E("metric_name", podPhaseMetricName),
+		timeSeriesFPs.GE("unix_milli", adjustedStart),
+		timeSeriesFPs.L("unix_milli", adjustedEnd),
 	)
 	if filterExpr != "" {
 		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
@@ -272,82 +275,74 @@ func (m *module) getPerGroupPodPhaseCounts(
 			return nil, err
 		}
 		if filterClause != nil {
-			cteA.AddWhereClause(filterClause)
+			timeSeriesFPs.AddWhereClause(filterClause)
 		}
 	}
-	cteAGroupBy := []string{"fingerprint", "pod_uid"}
+	timeSeriesFPsGroupBy := []string{"fingerprint", "pod_uid"}
 	for _, key := range req.GroupBy {
-		cteAGroupBy = append(cteAGroupBy, quoteIdentifier(key.Name))
+		timeSeriesFPsGroupBy = append(timeSeriesFPsGroupBy, quoteIdentifier(key.Name))
 	}
-	cteA.GroupBy(cteAGroupBy...)
-	cteASQL, cteAArgs := cteA.BuildWithFlavor(sqlbuilder.ClickHouse)
+	timeSeriesFPs.GroupBy(timeSeriesFPsGroupBy...)
+	timeSeriesFPsSQL, timeSeriesFPsArgs := timeSeriesFPs.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	// ----- CTE B: pod_phase_samples -----
-	cteB := sqlbuilder.NewSelectBuilder()
-	cteB.Select(
-		"fingerprint",
-		fmt.Sprintf("argMax(%s, unix_milli) AS phase_value", valueCol),
-		"max(unix_milli) AS latest_unix_milli",
-	)
-	cteB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
-	cteB.Where(
-		cteB.E("metric_name", podPhaseMetricName),
-		cteB.GE("unix_milli", req.Start),
-		cteB.L("unix_milli", req.End),
-		"fingerprint GLOBAL IN (SELECT fingerprint FROM time_series_fps)", // TODO(nikhilmantri0902): GLOBAL IN is added here because results were not accurate with IN and local table, why?
-	)
-	cteB.GroupBy("fingerprint")
-	cteBSQL, cteBArgs := cteB.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	// ----- CTE C: pod_phase_per_pod (no parameters) -----
-	// Collapse fingerprints -> pod via argMax over each fingerprint's
-	// latest_unix_milli. Time-anchored: the fp whose newest sample is most
-	// recent wins — consistent with argMax inside CTE B.
-	cteCSelectCols := []string{"tsfp.pod_uid AS pod_uid"}
-	cteCGroupBy := []string{"pod_uid"}
+	// ----- latestPhasePerPod -----
+	// GLOBAL INNER JOIN samples × timeSeriesFPs, collapsed to the latest phase
+	// per pod via argMax(value, unix_milli). Replaces a prior 2-CTE chain
+	// (fp → latest-per-fp, then fp → pod) — one step because the JOIN
+	// projects pod_uid + groupBy cols down to the sample row.
+	latestPhasePerPod := sqlbuilder.NewSelectBuilder()
+	latestPhasePerPodSelectCols := []string{"tsfp.pod_uid AS pod_uid"}
+	latestPhasePerPodGroupBy := []string{"pod_uid"}
 	for _, key := range req.GroupBy {
 		col := quoteIdentifier(key.Name)
-		cteCSelectCols = append(cteCSelectCols, fmt.Sprintf("tsfp.%s AS %s", col, col))
-		cteCGroupBy = append(cteCGroupBy, col)
+		latestPhasePerPodSelectCols = append(latestPhasePerPodSelectCols, fmt.Sprintf("tsfp.%s AS %s", col, col))
+		latestPhasePerPodGroupBy = append(latestPhasePerPodGroupBy, col)
 	}
-	cteCSelectCols = append(cteCSelectCols,
-		"argMax(sph.phase_value, sph.latest_unix_milli) AS phase_value",
+	latestPhasePerPodSelectCols = append(latestPhasePerPodSelectCols,
+		fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS phase_value", valueCol),
 	)
-	cteCSQL := fmt.Sprintf(
-		"SELECT %s FROM time_series_fps AS tsfp INNER JOIN pod_phase_samples AS sph ON tsfp.fingerprint = sph.fingerprint WHERE tsfp.pod_uid != '' GROUP BY %s",
-		strings.Join(cteCSelectCols, ", "),
-		strings.Join(cteCGroupBy, ", "),
+	latestPhasePerPod.Select(latestPhasePerPodSelectCols...)
+	latestPhasePerPod.From(fmt.Sprintf(
+		"%s.%s AS samples GLOBAL INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
+		telemetrymetrics.DBName, samplesTable,
+	))
+	latestPhasePerPod.Where(
+		latestPhasePerPod.E("samples.metric_name", podPhaseMetricName),
+		latestPhasePerPod.GE("samples.unix_milli", req.Start),
+		latestPhasePerPod.L("samples.unix_milli", req.End),
+		"tsfp.pod_uid != ''",
 	)
+	latestPhasePerPod.GroupBy(latestPhasePerPodGroupBy...)
+	latestPhasePerPodSQL, latestPhasePerPodArgs := latestPhasePerPod.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	// ----- Outer SELECT -----
-	outerSelectCols := make([]string, 0, len(req.GroupBy)+4)
-	outerGroupBy := make([]string, 0, len(req.GroupBy))
+	// ----- countPodsPerPhase (outer SELECT) -----
+	countPodsPerPhaseSelectCols := make([]string, 0, len(req.GroupBy)+5)
+	countPodsPerPhaseGroupBy := make([]string, 0, len(req.GroupBy))
 	for _, key := range req.GroupBy {
 		col := quoteIdentifier(key.Name)
-		outerSelectCols = append(outerSelectCols, col)
-		outerGroupBy = append(outerGroupBy, col)
+		countPodsPerPhaseSelectCols = append(countPodsPerPhaseSelectCols, col)
+		countPodsPerPhaseGroupBy = append(countPodsPerPhaseGroupBy, col)
 	}
-	outerSelectCols = append(outerSelectCols,
+	countPodsPerPhaseSelectCols = append(countPodsPerPhaseSelectCols,
 		"uniqExactIf(pod_uid, phase_value = 1) AS pending_count",
 		"uniqExactIf(pod_uid, phase_value = 2) AS running_count",
 		"uniqExactIf(pod_uid, phase_value = 3) AS succeeded_count",
 		"uniqExactIf(pod_uid, phase_value = 4) AS failed_count",
 		"uniqExactIf(pod_uid, phase_value = 5) AS unknown_count",
 	)
-	outerSQL := fmt.Sprintf(
-		"SELECT %s FROM pod_phase_per_pod GROUP BY %s",
-		strings.Join(outerSelectCols, ", "),
-		strings.Join(outerGroupBy, ", "),
+	countPodsPerPhaseSQL := fmt.Sprintf(
+		"SELECT %s FROM latest_phase_per_pod GROUP BY %s",
+		strings.Join(countPodsPerPhaseSelectCols, ", "),
+		strings.Join(countPodsPerPhaseGroupBy, ", "),
 	)
 
 	// Combine CTEs + outer.
 	cteFragments := []string{
-		fmt.Sprintf("time_series_fps AS (%s)", cteASQL),
-		fmt.Sprintf("pod_phase_samples AS (%s)", cteBSQL),
-		fmt.Sprintf("pod_phase_per_pod AS (%s)", cteCSQL),
+		fmt.Sprintf("time_series_fps AS (%s)", timeSeriesFPsSQL),
+		fmt.Sprintf("latest_phase_per_pod AS (%s)", latestPhasePerPodSQL),
 	}
-	finalSQL := querybuilder.CombineCTEs(cteFragments) + outerSQL
-	finalArgs := querybuilder.PrependArgs([][]any{cteAArgs, cteBArgs}, nil)
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + countPodsPerPhaseSQL
+	finalArgs := querybuilder.PrependArgs([][]any{timeSeriesFPsArgs, latestPhasePerPodArgs}, nil)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {

@@ -1,7 +1,6 @@
 package telemetrylogs
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
@@ -128,7 +127,7 @@ var (
 	}
 )
 
-func bodyAliasExpression(ctx context.Context, bodyJSONEnabled bool) string {
+func bodyAliasExpression(bodyJSONEnabled bool) string {
 	if !bodyJSONEnabled {
 		return LogsV2BodyColumn
 	}

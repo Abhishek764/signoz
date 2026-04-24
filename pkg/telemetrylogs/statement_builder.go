@@ -77,7 +77,7 @@ func (b *logQueryStatementBuilder) Build(
 ) (*qbtypes.Statement, error) {
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
-	keySelectors, warnings := getKeySelectors(ctx, query, b.opts)
+	keySelectors, warnings := getKeySelectors(query, b.opts)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (b *logQueryStatementBuilder) Build(
 	return stmt, nil
 }
 
-func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], opts qbtypes.Options) ([]*telemetrytypes.FieldKeySelector, []string) {
+func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], opts qbtypes.Options) ([]*telemetrytypes.FieldKeySelector, []string) {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 	var warnings []string
 
@@ -280,7 +280,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2SeverityNumberColumn)
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression(ctx, b.opts.BodyJSONEnabled))
+		sb.SelectMore(bodyAliasExpression(b.opts.BodyJSONEnabled))
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)

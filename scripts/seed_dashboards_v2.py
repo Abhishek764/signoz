@@ -28,17 +28,36 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 
 
-# Perses sample dashboard (panels, layouts, variables, etc.) — used as the
-# base body for every seeded dashboard so `data` is a realistic size (~12KB
-# compact) instead of a few hundred bytes. Each dashboard only overrides the
-# display name + description; everything else (panels, layouts...) is shared.
-_PERSES_JSON_PATH = os.path.join(
+# Perses sample dashboard — used as the base body for every seeded dashboard.
+# The --big-data flag multiplies its `panels` dict in-memory to produce a
+# larger blob (~150KB) without committing a separate fixture file.
+_PERSES_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "..", "pkg", "types", "dashboardtypes", "dashboardtypesv2", "testdata",
     "perses.json",
 )
-with open(_PERSES_JSON_PATH) as _f:
-    _PERSES_BASE = json.load(_f)
+_BIG_PANEL_MULT = 16  # 12 panels × 16 ≈ 150KB compact
+
+_PERSES_BASE = None  # populated by main() before seed() runs
+
+
+def load_perses_base(big: bool):
+    global _PERSES_BASE
+    with open(_PERSES_PATH) as f:
+        base = json.load(f)
+    if big:
+        ## increases the size of the file by a lot. All the extra panels are not added to the layout however
+        panels = base["panels"]
+        base["panels"] = {
+            (pid if i == 0 else f"{pid}__{i}"): panel
+            for i in range(_BIG_PANEL_MULT)
+            for pid, panel in panels.items()
+        }
+    _PERSES_BASE = base
+    compact_size = len(json.dumps(_PERSES_BASE))
+    tag = f"big-data ×{_BIG_PANEL_MULT}" if big else "default"
+    print(f"Perses body: {tag} ({compact_size} bytes compact, "
+          f"{len(_PERSES_BASE['panels'])} panels)")
 
 
 # ---------- Schema ----------
@@ -227,9 +246,30 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
     print(f"  Users generated: {total_users}  (not persisted)")
 
     # --- 3. Dashboards + tag relations ---
-    dash_rows = []
-    rel_rows = []
+    # Stream inserts: hold only `batch_size` rows in memory at a time, then flush
+    # and drop. Keeps peak RSS bounded even when `data` blobs are ~150KB each.
+    insert_dash = text("""
+        INSERT INTO dashboard (id, org_id, data, locked,
+                               created_at, created_by, updated_at, updated_by)
+        VALUES (:id, :org_id, :data, :locked,
+                :created_at, :created_by, :updated_at, :updated_by)
+    """)
+    insert_rel = text("""
+        INSERT INTO tag_relations (tag_id, entity_type, entity_id, org_id)
+        VALUES (:tag_id, :entity_type, :entity_id, :org_id)
+    """)
+
+    dash_buf: list[dict] = []
+    rel_buf: list[dict] = []
+    total_dash = 0
+    total_rel = 0
     org_dashboard_index: dict[str, list[str]] = {}
+
+    target_dash = num_orgs * dashboards_per_org
+    dash_log_every = max(batch_size, target_dash // 20)  # ~20 progress lines total
+    next_dash_log = dash_log_every
+    print(f"  Seeding {target_dash} dashboards …")
+
     for org_id in orgs:
         users = org_users[org_id]
         org_tags = org_tag_index[org_id]
@@ -244,7 +284,7 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
             created_at = now - timedelta(days=random.randint(0, 90))
             updated_at = created_at + timedelta(days=random.randint(0, 10))
 
-            dash_rows.append({
+            dash_buf.append({
                 "id": dash_id,
                 "org_id": org_id,
                 "data": make_data(title, description),
@@ -260,33 +300,45 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
             if num_tags > 0:
                 sample = random.sample(org_tags, min(num_tags, len(org_tags)))
                 for tag_id, _name in sample:
-                    rel_rows.append({
+                    rel_buf.append({
                         "tag_id": tag_id,
                         "entity_type": "dashboard",
                         "entity_id": dash_id,
                         "org_id": org_id,
                     })
+
+            if len(dash_buf) >= batch_size:
+                with engine.begin() as conn:
+                    conn.execute(insert_dash, dash_buf)
+                total_dash += len(dash_buf)
+                dash_buf.clear()
+                if total_dash >= next_dash_log:
+                    print(f"    {total_dash}/{target_dash} dashboards  "
+                          f"({100 * total_dash // target_dash}%)  "
+                          f"— {total_rel} tag_relations so far")
+                    next_dash_log += dash_log_every
+            if len(rel_buf) >= batch_size:
+                with engine.begin() as conn:
+                    conn.execute(insert_rel, rel_buf)
+                total_rel += len(rel_buf)
+                rel_buf.clear()
+
         org_dashboard_index[org_id] = dash_ids
 
-    insert_dash = text("""
-        INSERT INTO dashboard (id, org_id, data, locked,
-                               created_at, created_by, updated_at, updated_by)
-        VALUES (:id, :org_id, :data, :locked,
-                :created_at, :created_by, :updated_at, :updated_by)
-    """)
-    for batch in chunked(dash_rows, batch_size):
+    # Flush tails.
+    if dash_buf:
         with engine.begin() as conn:
-            conn.execute(insert_dash, batch)
-    print(f"  Dashboards inserted: {len(dash_rows)}")
+            conn.execute(insert_dash, dash_buf)
+        total_dash += len(dash_buf)
+        dash_buf.clear()
+    if rel_buf:
+        with engine.begin() as conn:
+            conn.execute(insert_rel, rel_buf)
+        total_rel += len(rel_buf)
+        rel_buf.clear()
 
-    insert_rel = text("""
-        INSERT INTO tag_relations (tag_id, entity_type, entity_id, org_id)
-        VALUES (:tag_id, :entity_type, :entity_id, :org_id)
-    """)
-    for batch in chunked(rel_rows, batch_size):
-        with engine.begin() as conn:
-            conn.execute(insert_rel, batch)
-    print(f"  Tag relations inserted: {len(rel_rows)}")
+    print(f"  Dashboards inserted: {total_dash}")
+    print(f"  Tag relations inserted: {total_rel}")
 
     # --- 4. Pinned dashboards (max 10 per user per the spec) ---
     pin_rows = []
@@ -344,8 +396,8 @@ def seed(engine, num_orgs: int, dashboards_per_org: int, batch_size: int = 500):
     print(f"  Public dashboards inserted: {len(public_rows)}")
 
     print("\nDone.")
-    print(f"Summary: {num_orgs} orgs, {len(dash_rows)} dashboards, "
-          f"{len(tag_rows)} tags, {len(rel_rows)} tag relations, "
+    print(f"Summary: {num_orgs} orgs, {total_dash} dashboards, "
+          f"{len(tag_rows)} tags, {total_rel} tag relations, "
           f"{len(pin_rows)} pins, {len(public_rows)} public.")
 
 
@@ -362,10 +414,16 @@ def main():
                         help="Random seed for deterministic output.")
     parser.add_argument("--fresh", action="store_true",
                         help="Drop all seed tables before creating (clean slate).")
+    parser.add_argument("--big-data", action="store_true",
+                        help="Use the larger 'many panels' Perses sample for each "
+                             "dashboard's data blob (bigger on-disk footprint, "
+                             "useful for JSON-path / blob-size perf tests).")
     args = parser.parse_args()
 
     if args.seed is not None:
         random.seed(args.seed)
+
+    load_perses_base(args.big_data)
 
     engine = create_engine(args.dsn)
 

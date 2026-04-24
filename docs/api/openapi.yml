@@ -2515,6 +2515,8 @@ components:
           type: integer
         succeededPodCount:
           type: integer
+        unknownPodCount:
+          type: integer
       required:
       - podUID
       - podCPU
@@ -2528,6 +2530,7 @@ components:
       - runningPodCount
       - succeededPodCount
       - failedPodCount
+      - unknownPodCount
       - podAge
       - meta
       type: object
@@ -10404,12 +10407,13 @@ paths:
         The response type is ''list'' for the default k8s.pod.uid grouping (each row
         is one pod with its current phase) or ''grouped_list'' for custom groupBy
         keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
-        runningPodCount, succeededPodCount, failedPodCount derived from each pod''s
-        latest phase in the window). Also reports missing required metrics and whether
-        the requested time range falls before the data retention boundary. Numeric
-        metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest,
-        podMemoryLimit, podAge) return -1 as a sentinel when no data is available
-        for that field; frontends should render ''—'' rather than the literal value.'
+        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived
+        from each pod''s latest phase in the window). Also reports missing required
+        metrics and whether the requested time range falls before the data retention
+        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
+        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
+        data is available for that field; frontends should render ''—'' rather than
+        the literal value.'
       operationId: ListPods
       requestBody:
         content:

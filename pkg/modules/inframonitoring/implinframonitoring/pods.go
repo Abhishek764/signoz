@@ -103,6 +103,8 @@ func buildPodRecords(
 						record.SucceededPodCount = 1
 					case inframonitoringtypes.PodPhaseFailed:
 						record.FailedPodCount = 1
+					case inframonitoringtypes.PodPhaseUnknown:
+						record.UnknownPodCount = 1
 					}
 				}
 			}
@@ -112,6 +114,7 @@ func buildPodRecords(
 				record.RunningPodCount = c.Running
 				record.SucceededPodCount = c.Succeeded
 				record.FailedPodCount = c.Failed
+				record.UnknownPodCount = c.Unknown
 			}
 		}
 
@@ -329,6 +332,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 		"uniqExactIf(pod_uid, phase_value = 2) AS running_count",
 		"uniqExactIf(pod_uid, phase_value = 3) AS succeeded_count",
 		"uniqExactIf(pod_uid, phase_value = 4) AS failed_count",
+		"uniqExactIf(pod_uid, phase_value = 5) AS unknown_count",
 	)
 	outerSQL := fmt.Sprintf(
 		"SELECT %s FROM pod_phase_per_pod GROUP BY %s",
@@ -354,12 +358,12 @@ func (m *module) getPerGroupPodPhaseCounts(
 	result := make(map[string]podPhaseCounts)
 	for rows.Next() {
 		groupVals := make([]string, len(req.GroupBy))
-		scanPtrs := make([]any, 0, len(req.GroupBy)+4)
+		scanPtrs := make([]any, 0, len(req.GroupBy)+5)
 		for i := range groupVals {
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}
-		var pending, running, succeeded, failed uint64
-		scanPtrs = append(scanPtrs, &pending, &running, &succeeded, &failed)
+		var pending, running, succeeded, failed, unknown uint64
+		scanPtrs = append(scanPtrs, &pending, &running, &succeeded, &failed, &unknown)
 
 		if err := rows.Scan(scanPtrs...); err != nil {
 			return nil, err
@@ -369,6 +373,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 			Running:   int(running),
 			Succeeded: int(succeeded),
 			Failed:    int(failed),
+			Unknown:   int(unknown),
 		}
 	}
 	if err := rows.Err(); err != nil {

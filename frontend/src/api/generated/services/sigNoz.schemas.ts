@@ -3315,6 +3315,10 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @type integer
 	 */
 	succeededPodCount: number;
+	/**
+	 * @type integer
+	 */
+	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesPodsDTO {

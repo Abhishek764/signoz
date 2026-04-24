@@ -30,6 +30,7 @@ type PodRecord struct {
 	RunningPodCount   int                    `json:"runningPodCount" required:"true"`
 	SucceededPodCount int                    `json:"succeededPodCount" required:"true"`
 	FailedPodCount    int                    `json:"failedPodCount" required:"true"`
+	UnknownPodCount   int                    `json:"unknownPodCount" required:"true"`
 	PodAge            int64                  `json:"podAge" required:"true"`
 	Meta              map[string]interface{} `json:"meta" required:"true"`
 }

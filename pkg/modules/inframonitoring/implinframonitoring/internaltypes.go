@@ -21,4 +21,5 @@ type podPhaseCounts struct {
 	Running   int
 	Succeeded int
 	Failed    int
+	Unknown   int
 }

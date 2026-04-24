@@ -16,8 +16,8 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-func mapPhaseNumToString(v float64) inframonitoringtypes.PodPhase {
-	switch int(v) {
+func mapPhaseNumToString(podPhase int) inframonitoringtypes.PodPhase {
+	switch podPhase {
 	case 1:
 		return inframonitoringtypes.PodPhasePending
 	case 2:
@@ -93,8 +93,8 @@ func buildPodRecords(
 		// set pod phase + counts based on whether pod uid is in group by (list vs grouped_list)
 		if isPodUIDInGroupBy { // derive phase + count=1 from query G
 			if metrics, ok := metricsMap[compositeKey]; ok {
-				if v, exists := metrics["G"]; exists {
-					record.PodPhase = mapPhaseNumToString(v)
+				if podPhaseFloatVal, exists := metrics["G"]; exists {
+					record.PodPhase = mapPhaseNumToString(int(podPhaseFloatVal))
 					switch record.PodPhase {
 					case inframonitoringtypes.PodPhasePending:
 						record.PendingPodCount = 1
@@ -237,7 +237,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
 
 	// Resolve tables. Same convention as hosts (distributed names from helpers).
-	adjustedStart, adjustedEnd, distributedTSTable, _ := telemetrymetrics.WhichTSTableToUse(
+	adjustedStart, adjustedEnd, _, localTimeSeriesTable := telemetrymetrics.WhichTSTableToUse(
 		uint64(req.Start), uint64(req.End), nil,
 	)
 	samplesTable := telemetrymetrics.WhichSamplesTableToUse(
@@ -263,7 +263,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 		)
 	}
 	timeSeriesFPs.Select(timeSeriesFPsSelectCols...)
-	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTSTable))
+	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", podPhaseMetricName),
 		timeSeriesFPs.GE("unix_milli", adjustedStart),
@@ -303,7 +303,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 	)
 	latestPhasePerPod.Select(latestPhasePerPodSelectCols...)
 	latestPhasePerPod.From(fmt.Sprintf(
-		"%s.%s AS samples GLOBAL INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
+		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
 		telemetrymetrics.DBName, samplesTable,
 	))
 	latestPhasePerPod.Where(

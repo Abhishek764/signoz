@@ -66,10 +66,10 @@ export const saveNewViewHandler = ({
 };
 
 export const generateRGBAFromHex = (hex: string, opacity: number): string =>
-	`rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(
+	`rgba(${Number.parseInt(hex.slice(1, 3), 16)}, ${Number.parseInt(
 		hex.slice(3, 5),
 		16,
-	)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`;
+	)}, ${Number.parseInt(hex.slice(5, 7), 16)}, ${opacity})`;
 
 export const getExplorerToolBarVisibility = (dataSource: string): boolean => {
 	try {

@@ -12,7 +12,7 @@ export function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 		}
 	});
 
-	const timestampsArr = Array.from(timestamps);
+	const timestampsArr = [...timestamps];
 	timestampsArr.sort((a, b) => a - b);
 
 	return timestampsArr;
@@ -23,7 +23,7 @@ export function fillMissingXAxisTimestamps(
 	data: Array<{ values?: [number, string][] }>,
 ): (number | null)[][] {
 	// Ensure we work with a sorted, de‑duplicated list of x-axis timestamps
-	const canonicalTimestamps = Array.from(new Set(timestampArr)).sort(
+	const canonicalTimestamps = [...new Set(timestampArr)].sort(
 		(a, b) => a - b,
 	);
 

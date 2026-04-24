@@ -18,7 +18,7 @@ function SampleLogsResponseDisplay({
 		return <div className="sample-logs-notice-container">Loading...</div>;
 	}
 
-	if (logs.length < 1) {
+	if (logs.length === 0) {
 		return <div className="sample-logs-notice-container">No logs found</div>;
 	}
 

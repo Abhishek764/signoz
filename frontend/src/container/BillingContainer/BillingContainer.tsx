@@ -389,7 +389,7 @@ export default function BillingContainer(): JSX.Element {
 
 			downloadLink.href = csvUrl;
 			downloadLink.download = csv.fileName;
-			document.body.appendChild(downloadLink); // Required for Firefox
+			document.body.append(downloadLink); // Required for Firefox
 			downloadLink.click();
 
 			// Clean up

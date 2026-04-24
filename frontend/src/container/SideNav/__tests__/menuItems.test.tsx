@@ -69,6 +69,6 @@ describe('getUserSettingsDropdownMenuItems', () => {
 		expect(keys[1]).toBe('divider');
 		expect(keys[2]).toBe('workspace');
 		expect(keys[3]).toBe('account');
-		expect(keys[keys.length - 1]).toBe('logout');
+		expect(keys.at(-1)).toBe('logout');
 	});
 });

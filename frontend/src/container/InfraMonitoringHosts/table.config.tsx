@@ -159,7 +159,7 @@ export const hostColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	return {
 		meta: {
-			...(host.meta ?? {}),
+			...host.meta,
 			host_name: host.hostName ?? '',
 			'host.name': host.hostName ?? '',
 			os_type: host.os ?? '',

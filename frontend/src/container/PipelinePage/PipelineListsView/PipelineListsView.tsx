@@ -112,7 +112,7 @@ function PipelineListsView({
 
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
 		string | undefined
-	>(undefined);
+	>();
 	const expandedPipelineData = useCallback(
 		() => currPipelineData?.find((p) => p.id === expandedPipelineId),
 		[currPipelineData, expandedPipelineId],

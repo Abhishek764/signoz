@@ -114,7 +114,7 @@ export function useVariableFetchState(
 		const quoted = unsettledParents.map((p) => `"${p}"`);
 		const names =
 			quoted.length > 1
-				? `${quoted.slice(0, -1).join(', ')} and ${quoted[quoted.length - 1]}`
+				? `${quoted.slice(0, -1).join(', ')} and ${quoted.at(-1)}`
 				: quoted[0];
 		return `Waiting for options of ${names} to load.`;
 	}, [variableFetchState, variableType, unsettledParents]);

@@ -153,7 +153,7 @@ export function K8sExpandedRow<T>({
 
 	const formattedData = useMemo(() => {
 		if (!data?.data) {
-			return undefined;
+			return;
 		}
 
 		const rows = data.data.map((item) => renderRowData(item, groupBy));

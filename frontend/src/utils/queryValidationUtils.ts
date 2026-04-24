@@ -62,7 +62,7 @@ class QueryErrorListener {
 	private isSimilarError = (msg1: string, msg2: string): boolean => {
 		// Consider errors similar if they're for the same core issue
 		const normalize = (msg: string): string =>
-			msg.toLowerCase().replace(/['"`]/g, 'quote').replace(/\s+/g, ' ').trim();
+			msg.toLowerCase().replaceAll(/['"`]/g, 'quote').replaceAll(/\s+/g, ' ').trim();
 
 		return normalize(msg1) === normalize(msg2);
 	};

@@ -7,10 +7,10 @@ import getGridColor from '../../uPlotLib/utils/getGridColor';
 import { buildYAxisSizeCalculator } from '../utils/axis';
 import { AxisProps, ConfigBuilder } from './types';
 
-const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
+const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = new Set([
 	PANEL_TYPES.TIME_SERIES,
 	PANEL_TYPES.BAR,
-];
+]);
 
 /**
  * Builder for uPlot axis configuration
@@ -71,7 +71,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 
 		if (
 			panelType &&
-			PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.includes(panelType)
+			PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.has(panelType)
 		) {
 			return uPlotXAxisValuesFormat as uPlot.Axis.Values;
 		}

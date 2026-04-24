@@ -112,7 +112,7 @@ function Retention({
 	): void => {
 		interacted.current = true;
 		const { value } = e.target;
-		const integerValue = parseInt(value, 10);
+		const integerValue = Number.parseInt(value, 10);
 
 		if (value.length > 0 && integerValue.toString() === value) {
 			const parsedValue = Math.abs(integerValue);

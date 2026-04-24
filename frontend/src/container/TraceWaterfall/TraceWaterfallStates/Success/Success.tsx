@@ -452,7 +452,7 @@ function Success(props: ISuccessProps): JSX.Element {
 
 		if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
 			setInterestedSpanId({
-				spanId: spans[spans.length - 1].spanId,
+				spanId: spans.at(-1).spanId,
 				isUncollapsed: false,
 			});
 		}
@@ -463,7 +463,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	);
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
 		Span | undefined
-	>(undefined);
+	>();
 	const handleAddSpanToFunnel = useCallback((span: Span): void => {
 		setIsAddSpanToFunnelModalOpen(true);
 		setSelectedSpanToAddToFunnel(span);

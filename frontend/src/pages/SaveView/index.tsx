@@ -46,7 +46,7 @@ import { deleteViewHandler } from './utils';
 
 import './SaveView.styles.scss';
 
-const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
+const allowedRoles = new Set([USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR]);
 
 function SaveView(): JSX.Element {
 	const { pathname } = useLocation();
@@ -243,7 +243,7 @@ function SaveView(): JSX.Element {
 					DATE_TIME_FORMATS.DASH_TIME_DATE,
 				);
 
-				const isEditDeleteSupported = allowedRoles.includes(user.role as string);
+				const isEditDeleteSupported = allowedRoles.has(user.role as string);
 
 				return (
 					<div className="column-render">
@@ -283,7 +283,7 @@ function SaveView(): JSX.Element {
 						<div className="view-details">
 							<div className="view-tag">
 								<Typography.Text className="tag-text">
-									{view.createdBy.substring(0, 1).toUpperCase()}
+									{view.createdBy.slice(0, 1).toUpperCase()}
 								</Typography.Text>
 							</div>
 							<Typography.Text className="view-created-by">

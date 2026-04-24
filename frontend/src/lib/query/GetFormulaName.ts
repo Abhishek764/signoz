@@ -5,14 +5,14 @@ const MAX_QUERIES = 20;
 function GetFormulaName(
 	formulas: { name: string; [key: string]: any }[] = [],
 ): string | null {
-	if (!formulas.length) {
+	if (formulas.length === 0) {
 		return 'F1';
 	}
 	if (formulas.length === MAX_QUERIES) {
 		return null;
 	}
 	const formulasNameNumbered = sortBy(
-		formulas.map(({ name }: { name: string }) => parseInt(name.slice(1), 10)),
+		formulas.map(({ name }: { name: string }) => Number.parseInt(name.slice(1), 10)),
 		(e) => e,
 	);
 

@@ -32,7 +32,7 @@ function RenameFunnel({
 			{
 				funnel_id: funnelId,
 				funnel_name: newFunnelName,
-				timestamp: new Date().getTime(),
+				timestamp: Date.now(),
 			},
 			{
 				onSuccess: () => {
@@ -83,7 +83,7 @@ function RenameFunnel({
 				className: 'funnel-modal__cancel-btn',
 				onClick: handleCancel,
 			}}
-			getContainer={document.getElementById('root') || undefined}
+			getContainer={document.querySelector('#root') || undefined}
 			destroyOnClose
 		>
 			<div className="funnel-modal-content">

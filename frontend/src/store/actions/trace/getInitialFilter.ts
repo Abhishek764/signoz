@@ -129,7 +129,7 @@ export const GetInitialTraceFilter = (
 					// remove maxDuration and minDuration filter from initial selection logic
 					.filter((e) => !['maxDuration', 'minDuration'].includes(e))
 					.forEach((preKey) => {
-						if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
+						if (isTraceFilterEnum(key) && diff.some((v) => v === key)) {
 							// const preValue = preSelectedFilter?.get(key) || [];
 							const preValue = getUserSelected.currentValue?.get(key) || [];
 							// preSelectedFilter?.set(key, [...new Set([...preValue, preKey])]);

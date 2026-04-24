@@ -68,7 +68,7 @@ export const DATE_TIME_FORMATS = {
 
 export const convert24hTo12h = (format: string): string =>
 	format
-		.replace(/\bHH:mm:ss\.SSS\b/g, 'hh:mm:ss.SSS A')
-		.replace(/\bHH:mm:ss\b/g, 'hh:mm:ss A')
-		.replace(/\bHH:mm\b/g, 'hh:mm A')
-		.replace(/\bh:mm:ss\b/g, 'h:mm:ss A');
+		.replaceAll(/\bHH:mm:ss\.SSS\b/g, 'hh:mm:ss.SSS A')
+		.replaceAll(/\bHH:mm:ss\b/g, 'hh:mm:ss A')
+		.replaceAll(/\bHH:mm\b/g, 'hh:mm A')
+		.replaceAll(/\bh:mm:ss\b/g, 'h:mm:ss A');

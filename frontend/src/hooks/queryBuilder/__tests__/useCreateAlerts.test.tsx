@@ -167,7 +167,7 @@ describe('useCreateAlerts', () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any);
 
-		const widget = buildWidget(undefined);
+		const widget = buildWidget();
 		const { result } = renderHook(() => useCreateAlerts(widget));
 
 		act(() => {
@@ -183,7 +183,7 @@ describe('useCreateAlerts', () => {
 	});
 
 	it('does nothing when widget is undefined', () => {
-		const { result } = renderHook(() => useCreateAlerts(undefined));
+		const { result } = renderHook(() => useCreateAlerts());
 
 		act(() => {
 			result.current();

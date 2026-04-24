@@ -32,7 +32,7 @@ function findLinkForAlertType(
 ): HTMLElement {
 	const link = links.find(
 		(el) =>
-			el.closest('[data-testid]')?.getAttribute('data-testid') ===
+			el.closest('[data-testid]').dataset.testid ===
 			`alert-type-card-${alertType}`,
 	);
 	expect(link).toBeTruthy();

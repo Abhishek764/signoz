@@ -67,10 +67,10 @@ function Duration(): JSX.Element {
 		const minDuration = duration.minDuration || '0';
 
 		if (preLocalMaxDuration.current === undefined) {
-			preLocalMaxDuration.current = parseFloat(maxDuration);
+			preLocalMaxDuration.current = Number.parseFloat(maxDuration);
 		}
 		if (preLocalMinDuration.current === undefined) {
-			preLocalMinDuration.current = parseFloat(minDuration);
+			preLocalMinDuration.current = Number.parseFloat(minDuration);
 		}
 
 		setPreMax(getMs(maxDuration));
@@ -100,7 +100,7 @@ function Duration(): JSX.Element {
 
 			preFilter.forEach((value, key) => {
 				const values = Object.keys(value);
-				if (key !== 'duration' && values.length) {
+				if (key !== 'duration' && values.length > 0) {
 					preUserSelected.set(key, values);
 				}
 			});
@@ -148,7 +148,6 @@ function Duration(): JSX.Element {
 			updatedUrl(min as number, max as number);
 		},
 		1500,
-		undefined,
 	);
 
 	const onChangeMaxHandler: ChangeEventHandler<HTMLInputElement> = (event) => {

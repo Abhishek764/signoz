@@ -138,9 +138,7 @@ describe('SignUp Component - Regular Signup', () => {
 			await user.type(confirmPasswordInput, 'password456');
 			await user.tab(); // Blur the confirm password field to trigger validation
 
-			expect(
-				await screen.findByText(/passwords don't match/i),
-			).toBeInTheDocument();
+			await expect(screen.findByText(/passwords don't match/i)).resolves.toBeInTheDocument();
 		});
 
 		it('clears password mismatch error when passwords match', async () => {
@@ -157,9 +155,7 @@ describe('SignUp Component - Regular Signup', () => {
 			await user.type(confirmPasswordInput, 'password456');
 			await user.tab(); // Blur the confirm password field to trigger validation
 
-			expect(
-				await screen.findByText(/passwords don't match/i),
-			).toBeInTheDocument();
+			await expect(screen.findByText(/passwords don't match/i)).resolves.toBeInTheDocument();
 
 			await user.clear(confirmPasswordInput);
 			await user.type(confirmPasswordInput, 'password123');

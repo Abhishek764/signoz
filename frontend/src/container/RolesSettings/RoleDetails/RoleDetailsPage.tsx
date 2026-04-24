@@ -94,7 +94,7 @@ function RoleDetailsPage(): JSX.Element {
 
 	const initialConfig = useMemo(() => {
 		if (!objectsData?.data || !activePermission) {
-			return undefined;
+			return;
 		}
 		return objectsToPermissionConfig(
 			objectsData.data,

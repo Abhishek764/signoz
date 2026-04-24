@@ -33,7 +33,7 @@ function EditRules(): JSX.Element {
 	const ruleId = params.get(QueryParams.ruleId);
 	const { t } = useTranslation('common');
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && String(ruleId).length > 0;
 
 	const { isLoading, data, isRefetching, isError, error } = useGetRuleByID(
 		{ id: ruleId || '' },

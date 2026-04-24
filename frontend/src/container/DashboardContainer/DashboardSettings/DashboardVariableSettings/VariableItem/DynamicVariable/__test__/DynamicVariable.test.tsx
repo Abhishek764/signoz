@@ -216,9 +216,7 @@ describe('DynamicVariable Component', () => {
 		expect(optionsContainer).not.toBeNull();
 
 		// Find the option with Logs text content
-		const logsOption = Array.from(
-			optionsContainer?.querySelectorAll('.ant-select-item-option-content') || [],
-		)
+		const logsOption = [...optionsContainer?.querySelectorAll('.ant-select-item-option-content') || []]
 			.find((element) => element.textContent === 'Logs')
 			?.closest('.ant-select-item-option');
 

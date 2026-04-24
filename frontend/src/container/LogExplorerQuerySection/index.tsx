@@ -59,9 +59,7 @@ function LogExplorerQuerySection({
 	);
 
 	const queryComponents = useMemo(
-		(): QueryBuilderProps['queryComponents'] => ({
-			...(panelTypes === PANEL_TYPES.LIST ? { renderOrderBy } : {}),
-		}),
+		(): QueryBuilderProps['queryComponents'] => ((panelTypes === PANEL_TYPES.LIST ? { renderOrderBy } : {})),
 		[panelTypes, renderOrderBy],
 	);
 

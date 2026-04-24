@@ -353,7 +353,7 @@ describe('CreateAlertV2 utils', () => {
 
 		it('returns undefined for unknown values', () => {
 			expect(normalizeOperator('gibberish')).toBeUndefined();
-			expect(normalizeOperator(undefined)).toBeUndefined();
+			expect(normalizeOperator()).toBeUndefined();
 			expect(normalizeOperator('')).toBeUndefined();
 		});
 	});
@@ -378,7 +378,7 @@ describe('CreateAlertV2 utils', () => {
 
 		it('returns undefined for unknown values', () => {
 			expect(normalizeMatchType('gibberish')).toBeUndefined();
-			expect(normalizeMatchType(undefined)).toBeUndefined();
+			expect(normalizeMatchType()).toBeUndefined();
 			expect(normalizeMatchType('')).toBeUndefined();
 		});
 	});

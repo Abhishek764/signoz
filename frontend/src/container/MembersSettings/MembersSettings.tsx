@@ -21,7 +21,7 @@ function MembersSettings(): JSX.Element {
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
-	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
+	const pageParam = Number.parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
 	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done - for search

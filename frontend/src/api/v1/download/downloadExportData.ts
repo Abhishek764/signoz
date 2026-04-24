@@ -37,11 +37,11 @@ export const downloadExportData = async (
 		const filename =
 			response.headers['content-disposition']
 				?.split('filename=')[1]
-				?.replace(/["']/g, '') || `exported_data.${props.format || 'txt'}`;
+				?.replaceAll(/["']/g, '') || `exported_data.${props.format || 'txt'}`;
 
 		link.setAttribute('download', filename);
 
-		document.body.appendChild(link);
+		document.body.append(link);
 		link.click();
 		link.remove();
 		URL.revokeObjectURL(url);

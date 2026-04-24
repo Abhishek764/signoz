@@ -188,7 +188,7 @@ const useOptionsMenu = ({
 		const searchedAttributesDataList = Object.values(
 			searchedAttributesDataV5?.data.data.keys || {},
 		).flat();
-		if (searchedAttributesDataList.length) {
+		if (searchedAttributesDataList.length > 0) {
 			if (dataSource === DataSource.LOGS) {
 				const logsSelectedColumns: TelemetryFieldKey[] = defaultLogsSelectedColumns.map(
 					(e) => ({

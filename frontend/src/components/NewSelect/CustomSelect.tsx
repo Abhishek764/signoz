@@ -152,7 +152,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			try {
 				const parts = text.split(
 					new RegExp(
-						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
+						`(${searchQuery.replaceAll(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
 						'gi',
 					),
 				);
@@ -160,7 +160,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					<>
 						{parts.map((part, i) => {
 							// Create a deterministic but unique key
-							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+							const uniqueKey = `${text.slice(0, 3)}-${part.slice(0, 3)}-${i}`;
 
 							return part.toLowerCase() === searchQuery.toLowerCase() ? (
 								<span key={uniqueKey} className="highlight-text">

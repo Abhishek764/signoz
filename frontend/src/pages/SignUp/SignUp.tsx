@@ -76,7 +76,7 @@ function SignUp(): JSX.Element {
 				});
 
 				setLoading(false);
-			} catch (error) {
+			} catch {
 				notifications.error({
 					message: 'Something went wrong',
 				});

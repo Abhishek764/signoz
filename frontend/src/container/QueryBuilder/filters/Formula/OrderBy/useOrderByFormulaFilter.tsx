@@ -97,7 +97,7 @@ export const useOrderByFormulaFilter = ({
 	}, [searchText]);
 
 	const generateOptions = (options: IOption[]): IOption[] => {
-		const currentCustomValue = options.find(
+		const currentCustomValue = options.some(
 			(keyOption) =>
 				getRemoveOrderFromValue(keyOption.value) === debouncedSearchText,
 		)

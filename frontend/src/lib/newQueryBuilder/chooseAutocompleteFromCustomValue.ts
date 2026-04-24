@@ -29,7 +29,7 @@ export const chooseAutocompleteFromCustomValue = (
 	sourceList: BaseAutocompleteData[],
 	value: string,
 	dataType?: DataTypes | 'number',
-	fieldType?: MetricsType | undefined,
+	fieldType?: MetricsType  ,
 ): BaseAutocompleteData => {
 	const dataTypeToUse = getDataTypeForCustomValue(dataType);
 	const firstBaseAutoCompleteValue = sourceList.find(

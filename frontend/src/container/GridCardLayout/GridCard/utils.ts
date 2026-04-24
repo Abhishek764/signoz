@@ -160,7 +160,7 @@ export const isDataAvailableByPanelType = (
 		}
 	};
 
-	return Boolean(getPanelData()?.length);
+	return Boolean(getPanelData()?.length > 0);
 };
 
 interface HandleGraphClickParams {

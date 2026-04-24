@@ -67,7 +67,7 @@ export const prepareStatusCodeBarChartsConfig = ({
 
 		const label = query ? getLegend(series, query, baseLabelName) : baseLabelName;
 
-		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+		const currentStepInterval = get(stepIntervals, series.queryName);
 
 		config.addSeries({
 			scaleKey: 'y',

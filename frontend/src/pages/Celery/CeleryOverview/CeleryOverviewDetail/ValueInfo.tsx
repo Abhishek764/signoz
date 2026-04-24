@@ -69,7 +69,7 @@ export default function ValueInfo({
 	const getValues = useCallback(
 		() =>
 			queries.map((query) => {
-				const value = parseFloat(
+				const value = Number.parseFloat(
 					query.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
 						?.values?.[0]?.value || 'NaN',
 				);
@@ -90,12 +90,12 @@ export default function ValueInfo({
 		if (avgLatency === 'NaN') {
 			return 'NaN';
 		}
-		const numericValue = parseFloat(avgLatency);
+		const numericValue = Number.parseFloat(avgLatency);
 		return (numericValue / 1000000).toFixed(2);
 	}, [avgLatency]);
 
 	const getColorBasedOnValue = (value: string): string => {
-		const numericValue = parseFloat(value);
+		const numericValue = Number.parseFloat(value);
 		if (value === 'NaN') {
 			return 'gray';
 		}
@@ -109,7 +109,7 @@ export default function ValueInfo({
 	};
 
 	const getColorForLatency = (value: string): string => {
-		const numericValue = parseFloat(value);
+		const numericValue = Number.parseFloat(value);
 		if (value === 'NaN') {
 			return 'gray';
 		}
@@ -123,7 +123,7 @@ export default function ValueInfo({
 	};
 
 	const getColorForErrorRate = (value: string): string => {
-		const numericValue = parseFloat(value);
+		const numericValue = Number.parseFloat(value);
 		if (value === 'NaN') {
 			return 'gray';
 		}

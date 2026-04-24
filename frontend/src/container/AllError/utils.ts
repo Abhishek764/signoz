@@ -39,14 +39,14 @@ export const getOrder = (order: string | null): Order => {
 
 export const getLimit = (limit: string | null): number => {
 	if (limit) {
-		return parseInt(limit, 10);
+		return Number.parseInt(limit, 10);
 	}
 	return 10;
 };
 
 export const getOffSet = (offset: string | null): number => {
 	if (offset && typeof offset === 'string') {
-		return parseInt(offset, 10);
+		return Number.parseInt(offset, 10);
 	}
 	return 0;
 };
@@ -88,7 +88,7 @@ export const getNanoSeconds = (date: string): string =>
 
 export const getUpdatePageSize = (pageSize: string | null): number => {
 	if (pageSize) {
-		return parseInt(pageSize, 10);
+		return Number.parseInt(pageSize, 10);
 	}
 	return 10;
 };

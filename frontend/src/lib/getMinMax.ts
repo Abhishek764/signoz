@@ -17,7 +17,7 @@ const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
 	const match = /^(\d+)([mhdw])$/.exec(time);
 
 	if (match) {
-		return { time: parseInt(match[1], 10), unit: match[2] };
+		return { time: Number.parseInt(match[1], 10), unit: match[2] };
 	}
 
 	return {
@@ -49,7 +49,7 @@ const GetMinMax = (
 	dateTimeRange?: [number, number],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {
-	let maxTime = new Date().getTime();
+	let maxTime = Date.now();
 	let minTime = 0;
 
 	if (interval === '1m') {
@@ -110,7 +110,7 @@ const GetMinMax = (
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 60 }).getTime();
 		minTime = minTimeAgo;
 	} else if (['3h', '4h', '6h', '12h'].includes(interval)) {
-		const h = parseInt(interval.replace('h', ''), 10);
+		const h = Number.parseInt(interval.replace('h', ''), 10);
 		const minTimeAgo = getMinAgo({ minutes: h * 60 }).getTime();
 		minTime = minTimeAgo;
 	} else if (interval === 'custom') {

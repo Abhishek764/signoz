@@ -32,9 +32,7 @@ function QuerySection(): JSX.Element {
 		const shouldRenderCustomOrderBy =
 			panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE;
 
-		return {
-			...(shouldRenderCustomOrderBy ? { renderOrderBy } : {}),
-		};
+		return (shouldRenderCustomOrderBy ? { renderOrderBy } : {});
 	}, [panelTypes, renderOrderBy]);
 
 	const isListViewPanel = useMemo(

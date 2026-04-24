@@ -120,7 +120,7 @@ export const useContextLogData = ({
 					setLastLog(reversedCurrentLogs[0]);
 				} else {
 					setLogs([...currentLogs]);
-					setLastLog(currentLogs[currentLogs.length - 1]);
+					setLastLog(currentLogs.at(-1));
 				}
 			}
 		},

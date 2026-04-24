@@ -61,9 +61,7 @@ describe('useLegendActions', () => {
 
 		return {
 			target: {
-				dataset: {
-					...(isMarker ? { isLegendMarker: 'true' } : {}),
-				},
+				dataset: (isMarker ? { isLegendMarker: 'true' } : {}),
 				closest: jest.fn(() =>
 					legendItemId !== undefined
 						? { dataset: { legendItemId: String(legendItemId) } }

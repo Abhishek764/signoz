@@ -185,8 +185,8 @@ export function getDurationInfo(
 	const minutesMatch = durationString.match(minutesRegex);
 
 	// Convert extracted values to integers, defaulting to 0 if not found
-	const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
-	const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+	const hours = hoursMatch ? Number.parseInt(hoursMatch[1], 10) : 0;
+	const minutes = minutesMatch ? Number.parseInt(minutesMatch[1], 10) : 0;
 
 	// If there are no minutes and only hours, return the hours
 	if (hours > 0 && minutes === 0) {
@@ -265,7 +265,7 @@ export function formatWithTimezone(
 		dayjs(dateValue).tz(timezone).utcOffset(),
 	);
 
-	return `${parsedDate?.substring(0, 19)}${targetOffset}`;
+	return `${parsedDate?.slice(0, 19)}${targetOffset}`;
 }
 
 export function handleTimeConversion(

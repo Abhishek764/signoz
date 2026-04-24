@@ -680,10 +680,10 @@ function NewWidget({
 				clickhouseQueries: currentQuery.clickhouse_sql.map((q) => ({
 					name: q.name,
 					query: (q.query ?? '')
-						.replace(/--[^\n]*/g, '') // strip line comments
-						.replace(/\/\*[\s\S]*?\*\//g, '') // strip block comments
-						.replace(/'(?:[^'\\]|\\.|'')*'/g, "'?'") // replace single-quoted strings (handles \' and '' escapes)
-						.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '?'), // replace numeric literals (int, float, scientific)
+						.replaceAll(/--[^\n]*/g, '') // strip line comments
+						.replaceAll(/\/\*[\s\S]*?\*\//g, '') // strip block comments
+						.replaceAll(/'(?:[^'\\]|\\.|'')*'/g, "'?'") // replace single-quoted strings (handles \' and '' escapes)
+						.replaceAll(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '?'), // replace numeric literals (int, float, scientific)
 					disabled: q.disabled,
 				})),
 			}),

@@ -55,7 +55,7 @@ export const getUpdatedStepInterval = (evalWindow?: string): number => {
 export const getSelectedQueryOptions = (
 	queries: Array<
 		| IBuilderQuery
-		| IBuilderTraceOperator
+		 
 		| IBuilderFormula
 		| IClickHouseQuery
 		| IPromQLQuery

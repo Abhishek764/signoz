@@ -156,7 +156,7 @@ export default function TooltipPlugin({
 		function updateCursorLock(): void {
 			const plot = getPlot(controller);
 			if (plot) {
-				// @ts-ignore uPlot cursor lock is not working as expected
+				// @ts-expect-error uPlot cursor lock is not working as expected
 				plot.cursor._lock = controller.pinned;
 			}
 		}

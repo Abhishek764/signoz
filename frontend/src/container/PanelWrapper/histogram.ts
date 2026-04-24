@@ -67,7 +67,7 @@ export function join(
 		}
 	}
 
-	const data = [Array.from(xVals).sort((a, b) => a - b)];
+	const data = [[...xVals].sort((a, b) => a - b)];
 
 	const alignedLen = data[0].length;
 
@@ -84,7 +84,7 @@ export function join(
 		for (let si = 1; si < t.length; si++) {
 			const ys = t[si];
 
-			const yVals = Array(alignedLen).fill(undefined);
+			const yVals = Array(alignedLen).fill();
 
 			const nullMode = nullModes ? nullModes[ti][si] : NULL_RETAIN;
 
@@ -194,7 +194,7 @@ export const buildHistogramData = (
 	const seriesValues: number[] = [];
 	data?.forEach((item) => {
 		item.values.forEach((value) => {
-			seriesValues.push(parseFloat(value[1]) || 0);
+			seriesValues.push(Number.parseFloat(value[1]) || 0);
 		});
 	});
 
@@ -213,7 +213,7 @@ export const buildHistogramData = (
 	}
 
 	const min = seriesValues[0];
-	const max = seriesValues[seriesValues.length - 1];
+	const max = seriesValues.at(-1);
 
 	const range = max - min;
 	const targetSize = range / bucketCount;
@@ -239,7 +239,7 @@ export const buildHistogramData = (
 	data?.forEach((item) => {
 		const newFrame: number[] = [];
 		item.values.forEach((value) => {
-			newFrame.push(parseFloat(value[1]) || 0);
+			newFrame.push(Number.parseFloat(value[1]) || 0);
 		});
 		frames.push(newFrame);
 	});

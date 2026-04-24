@@ -63,7 +63,7 @@ export function useDashboardVariableSelectHelper({
 
 	const [tempSelection, setTempSelection] = useState<
 		string | string[] | undefined
-	>(undefined);
+	>();
 
 	const selectedValueStringified = useMemo(
 		() => getSelectValue(selectedValue, variableData),

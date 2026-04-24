@@ -46,13 +46,13 @@ function TimeInput({
 	};
 
 	const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		let newHours = e.target.value.replace(/\D/g, '');
+		let newHours = e.target.value.replaceAll(/\D/g, '');
 
 		if (newHours.length > 2) {
 			newHours = newHours.slice(0, 2);
 		}
 
-		if (newHours && parseInt(newHours, 10) > 23) {
+		if (newHours && Number.parseInt(newHours, 10) > 23) {
 			newHours = '23';
 		}
 		setHours(newHours);
@@ -60,11 +60,11 @@ function TimeInput({
 	};
 
 	const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		let newMinutes = e.target.value.replace(/\D/g, '');
+		let newMinutes = e.target.value.replaceAll(/\D/g, '');
 		if (newMinutes.length > 2) {
 			newMinutes = newMinutes.slice(0, 2);
 		}
-		if (newMinutes && parseInt(newMinutes, 10) > 59) {
+		if (newMinutes && Number.parseInt(newMinutes, 10) > 59) {
 			newMinutes = '59';
 		}
 		setMinutes(newMinutes);
@@ -72,11 +72,11 @@ function TimeInput({
 	};
 
 	const handleSecondsChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		let newSeconds = e.target.value.replace(/\D/g, '');
+		let newSeconds = e.target.value.replaceAll(/\D/g, '');
 		if (newSeconds.length > 2) {
 			newSeconds = newSeconds.slice(0, 2);
 		}
-		if (newSeconds && parseInt(newSeconds, 10) > 59) {
+		if (newSeconds && Number.parseInt(newSeconds, 10) > 59) {
 			newSeconds = '59';
 		}
 		setSeconds(newSeconds);

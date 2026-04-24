@@ -19,7 +19,7 @@ export const parseQueryIntoSelectedTags = (
 			if (Array.isArray(parsedQuerySelectedTags)) {
 				selectedTags = parsedQuerySelectedTags;
 			}
-		} catch (error) {
+		} catch {
 			// error while parsing
 		}
 	}

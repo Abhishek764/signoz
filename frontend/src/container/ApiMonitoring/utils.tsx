@@ -928,7 +928,7 @@ export const extractPortAndEndpoint = (
 		const endpoint = parsedUrl.pathname + parsedUrl.search;
 
 		return { port, endpoint };
-	} catch (error) {
+	} catch {
 		// If URL parsing fails, return default values
 		return { port: '-', endpoint: url };
 	}
@@ -2577,7 +2577,7 @@ export const getFormattedChartData = (
 };
 
 const getStatusCodeClass = (statusCode: string): string => {
-	const code = parseInt(statusCode, 10);
+	const code = Number.parseInt(statusCode, 10);
 
 	if (Number.isNaN(code)) {
 		return 'Other';
@@ -2647,7 +2647,7 @@ export const groupStatusCodes = (
 	});
 
 	// Create a sorted array of all timestamps
-	const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+	const sortedTimestamps = [...allTimestamps].sort((a, b) => a - b);
 	// Initialize values and counters for each timestamp with zeros for each group
 	const timestampValues: Record<string, Record<number, number>> = {};
 	const timestampCounts: Record<string, Record<number, number>> = {};
@@ -2672,7 +2672,7 @@ export const groupStatusCodes = (
 
 		series.values.forEach((value) => {
 			const timestamp = value[0];
-			const numValue = parseFloat(value[1]);
+			const numValue = Number.parseFloat(value[1]);
 			if (!Number.isNaN(numValue)) {
 				timestampValues[statusClass][timestamp] += numValue;
 				timestampCounts[statusClass][timestamp] += 1;
@@ -3072,14 +3072,14 @@ export const getAllEndpointsWidgetData = (
 	return widget;
 };
 
-const keysToRemove = [SPAN_ATTRIBUTES.HTTP_URL, 'A', 'B', 'C', 'F1'];
+const keysToRemove = new Set([SPAN_ATTRIBUTES.HTTP_URL, 'A', 'B', 'C', 'F1']);
 
 export const getGroupByFiltersFromGroupByValues = (
 	rowData: any,
 	groupBy: BaseAutocompleteData[],
 ): IBuilderQuery['filters'] => {
 	const items = Object.keys(rowData)
-		.filter((key) => !keysToRemove.includes(key))
+		.filter((key) => !keysToRemove.has(key))
 		.map((key) => {
 			const groupByAttribute = groupBy.find((gb) => gb.key === key);
 			return {
@@ -3240,7 +3240,7 @@ export const createGroupByFiltersForBarChart = (
 	requestData: GraphClickMetaData,
 ): TagFilterItem[] =>
 	groupBy
-		.map((gb) => {
+		.flatMap((gb) => {
 			const value = requestData[gb.key];
 			const [startStatusCode, endStatusCode] = getStartAndEndStatusCode(value);
 			return value
@@ -3259,8 +3259,7 @@ export const createGroupByFiltersForBarChart = (
 						},
 				  ]
 				: [];
-		})
-		.flat();
+		});
 
 export const getCustomFiltersForBarChart = (
 	metric:

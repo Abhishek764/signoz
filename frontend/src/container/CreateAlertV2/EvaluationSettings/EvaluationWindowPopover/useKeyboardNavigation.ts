@@ -20,11 +20,7 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 			return [];
 		}
 
-		return Array.from(
-			containerRef.current.querySelectorAll(
-				'.evaluation-window-content-list-item[tabindex="0"]',
-			),
-		) as HTMLElement[];
+		return [...containerRef.current.querySelectorAll('.evaluation-window-content-list-item[tabindex="0"]')] as HTMLElement[];
 	}, []);
 
 	const getInteractiveElements = useCallback((): HTMLElement[] => {
@@ -39,11 +35,7 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 			return [];
 		}
 
-		return Array.from(
-			detailsSection.querySelectorAll(
-				'input, select, button, [tabindex="0"], [tabindex="-1"]',
-			),
-		) as HTMLElement[];
+		return [...detailsSection.querySelectorAll('input, select, button, [tabindex="0"], [tabindex="-1"]')] as HTMLElement[];
 	}, []);
 
 	const getCurrentIndex = useCallback((items: HTMLElement[]): number => {
@@ -128,8 +120,8 @@ export const useKeyboardNavigationForEvaluationWindowPopover = ({
 			return;
 		}
 
-		const value = activeElement.getAttribute('data-value');
-		const sectionId = activeElement.getAttribute('data-section-id');
+		const value = activeElement.dataset.value;
+		const sectionId = activeElement.dataset.sectionId;
 
 		if (value && sectionId) {
 			onSelect(value, sectionId);

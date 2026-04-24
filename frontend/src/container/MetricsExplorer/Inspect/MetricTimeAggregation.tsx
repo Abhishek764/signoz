@@ -66,7 +66,7 @@ function MetricTimeAggregation({
 						onChange={(e): void => {
 							dispatchMetricInspectionOptions({
 								type: 'SET_TIME_AGGREGATION_INTERVAL',
-								payload: parseInt(e.target.value, 10),
+								payload: Number.parseInt(e.target.value, 10),
 							});
 						}}
 						onWheel={(e): void => (e.target as HTMLInputElement).blur()}

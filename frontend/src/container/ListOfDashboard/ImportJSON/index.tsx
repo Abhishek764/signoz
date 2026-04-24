@@ -53,7 +53,7 @@ function ImportJSON({
 		const { fileList } = info;
 		const reader = new FileReader();
 
-		const lastFile = fileList[fileList.length - 1];
+		const lastFile = fileList.at(-1);
 
 		if (lastFile.originFileObj) {
 			reader.onload = async (event): Promise<void> => {
@@ -67,7 +67,7 @@ function ImportJSON({
 							setEditorValue(JSON.stringify(parsedValue, null, 2));
 							setIsUploadJSONError(false);
 						}
-					} catch (error) {
+					} catch {
 						setIsUploadJSONError(true);
 					}
 				}

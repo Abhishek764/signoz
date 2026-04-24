@@ -5,10 +5,10 @@ import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 /** 8-bit alpha from a two-digit hex string (e.g. "40" → 64/255). */
 function rgbaFromHexColor(hexColor: string, alphaByteHex: string): string {
 	const hex = hexColor.replace('#', '');
-	const r = parseInt(hex.slice(0, 2), 16);
-	const g = parseInt(hex.slice(2, 4), 16);
-	const b = parseInt(hex.slice(4, 6), 16);
-	const a = parseInt(alphaByteHex, 16) / 255;
+	const r = Number.parseInt(hex.slice(0, 2), 16);
+	const g = Number.parseInt(hex.slice(2, 4), 16);
+	const b = Number.parseInt(hex.slice(4, 6), 16);
+	const a = Number.parseInt(alphaByteHex, 16) / 255;
 	return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 

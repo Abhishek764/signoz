@@ -174,8 +174,8 @@ function UpdateContextLinks({
 	const handleAddUrlParameter = (): void => {
 		const isLastParamEmpty =
 			params.length > 0 &&
-			params[params.length - 1].key.trim() === '' &&
-			params[params.length - 1].value.trim() === '';
+			params.at(-1).key.trim() === '' &&
+			params.at(-1).value.trim() === '';
 		const canAddParam = params.length === 0 || !isLastParamEmpty;
 
 		if (canAddParam) {

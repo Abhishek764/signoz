@@ -31,10 +31,10 @@ import {
 import { ILogsReducer } from 'types/reducer/logs';
 import { withBasePath } from 'utils/basePath';
 
-const supportedLogsOrder = [
+const supportedLogsOrder = new Set([
 	OrderPreferenceItems.ASC,
 	OrderPreferenceItems.DESC,
-];
+]);
 
 function getLogsOrder(): OrderPreferenceItems {
 	// set the value of order from the URL only when order query param is present and the user is landing on the old logs explorer page
@@ -43,7 +43,7 @@ function getLogsOrder(): OrderPreferenceItems {
 
 		if (orderParam) {
 			// check if the order passed is supported else pass the default order
-			if (supportedLogsOrder.includes(orderParam as OrderPreferenceItems)) {
+			if (supportedLogsOrder.has(orderParam as OrderPreferenceItems)) {
 				return orderParam as OrderPreferenceItems;
 			}
 
@@ -187,7 +187,7 @@ export const LogsReducer = (
 
 		case GET_NEXT_LOG_LINES: {
 			const idEnd =
-				state.logs.length > 0 ? state.logs[state.logs.length - 1].id : '';
+				state.logs.length > 0 ? state.logs.at(-1).id : '';
 			return {
 				...state,
 				idStart: '',

@@ -28,7 +28,7 @@ const createGroupByFilters = (
 	requestData: GraphClickMetaData,
 ): TagFilterItem[] =>
 	groupBy
-		.map((gb) => {
+		.flatMap((gb) => {
 			const value = requestData[gb.key];
 			return value
 				? [
@@ -40,8 +40,7 @@ const createGroupByFilters = (
 						},
 				  ]
 				: [];
-		})
-		.flat();
+		});
 
 // Helper to build filters for a single query, give priority to group by filters
 const buildQueryFilters = (

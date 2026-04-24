@@ -277,7 +277,7 @@ export default function TableViewActions(
 	const textToCopy = useMemo(() => {
 		let text = fieldData.value;
 		try {
-			text = text.replace(/^"|"$/g, '');
+			text = text.replaceAll(/^"|"$/g, '');
 		} catch (error) {
 			console.error(
 				'Failed to remove starting and ending quotes from the value',
@@ -301,7 +301,7 @@ export default function TableViewActions(
 		if (record.field !== 'timestamp') {
 			return '';
 		}
-		return fieldData.value.replace(/^["']|["']$/g, '');
+		return fieldData.value.replaceAll(/^["']|["']$/g, '');
 	}, [record.field, fieldData.value]);
 
 	const renderFieldContent = useCallback((): JSX.Element => {

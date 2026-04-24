@@ -92,7 +92,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		}
 
 		return currentQuery.builder.queryData.map((query, index) => ({
-			label: query.queryName || String.fromCharCode(65 + index),
+			label: query.queryName || String.fromCodePoint(65 + index),
 			value: index,
 		}));
 	}, [currentQuery?.builder?.queryData]);

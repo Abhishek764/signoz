@@ -214,7 +214,7 @@ export function onTagKeySelect(
 	if (
 		typeof value === 'string' &&
 		options &&
-		options.find((option) => option.value === value)
+		options.some((option) => option.value === value)
 	) {
 		setSelectedKey(value);
 		setLocalSelectedTags((tags) => [

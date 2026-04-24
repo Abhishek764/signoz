@@ -45,7 +45,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 	const { name: PanelName, isOpen: IsPanelOpen } = props;
 
 	const isDefaultOpen =
-		filterToFetchData.find((e) => e === PanelName) !== undefined;
+		filterToFetchData.some((e) => e === PanelName) !== undefined;
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -145,9 +145,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 	const onCloseHandler = (): void => {
 		const preSelectedFilter = new Map(selectedFilter);
 		// removing the filter from filter to fetch the data
-		const preFilterToFetchTheData = [
-			...filterToFetchData.filter((name) => name !== PanelName),
-		];
+		const preFilterToFetchTheData = filterToFetchData.filter((name) => name !== PanelName);
 
 		// preSelectedFilter.delete(PanelName);
 

@@ -116,7 +116,7 @@ export function useBarChartStacking({
 
 	useLayoutEffect(() => {
 		if (!isStackedBarChart || !config) {
-			return undefined;
+			return;
 		}
 		return setupStackingHooks(config, applyStackingToChart, isUpdatingChartRef);
 	}, [isStackedBarChart, config, applyStackingToChart]);

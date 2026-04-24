@@ -120,7 +120,7 @@ export function Filter(props: FilterProps): JSX.Element {
 					attribute as AllTraceFilterKeys,
 				)
 			) {
-				if (!values || !values.length) {
+				if (!values || values.length === 0) {
 					return [];
 				}
 				let minValue = '';

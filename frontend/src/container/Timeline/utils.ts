@@ -30,11 +30,11 @@ export const getIntervalSpread = ({
 
 	const MIN_INTERVALS = 5;
 	const baseSpread = localSpread;
-	const intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
+	const intervalSpread = (baseSpread / MIN_INTERVALS) * 1;
 	const integerPartString = intervalSpread.toString().split('.')[0];
 	const integerPartLength = integerPartString.length;
 	const intervalSpreadNormalized =
-		intervalSpread < 1.0
+		intervalSpread < 1
 			? intervalSpread
 			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
 			  10 ** (integerPartLength - 1);

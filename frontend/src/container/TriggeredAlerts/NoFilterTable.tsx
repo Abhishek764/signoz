@@ -38,8 +38,8 @@ function NoFilterTable({
 			key: 'alertName',
 			width: 100,
 			sorter: (a, b): number =>
-				(a.labels?.alertname?.charCodeAt(0) || 0) -
-				(b.labels?.alertname?.charCodeAt(0) || 0),
+				(a.labels?.alertname?.codePointAt(0) || 0) -
+				(b.labels?.alertname?.codePointAt(0) || 0),
 			render: (data): JSX.Element => {
 				const name = data?.alertname || '';
 				return <Typography>{name}</Typography>;

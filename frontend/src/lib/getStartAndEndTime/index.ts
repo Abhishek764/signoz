@@ -21,7 +21,7 @@ const GetStartAndEndTime = ({
 	minTime,
 	maxTime,
 }: GetStartAndEndTimeProps): Payload => {
-	const end = new Date().getTime();
+	const end = Date.now();
 	const endString = getMicroSeconds({ time: end });
 
 	if (type === 'LAST_5_MIN') {

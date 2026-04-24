@@ -27,7 +27,7 @@ describe('getLogIndicatorType', () => {
 		expect(getLogIndicatorType(log)).toBe('TRACE');
 	});
 
-	it('severity_text should be used when severity_number is absent ', () => {
+	it('severity_text should be used when severity_number is absent', () => {
 		const log = {
 			date: '2024-02-29T12:34:46Z',
 			timestamp: 1646115296,
@@ -157,7 +157,7 @@ describe('logIndicatorBySeverityNumber', () => {
 	];
 	logLevelExpectations.forEach((e) => {
 		for (let sevNum = e.minSevNumber; sevNum <= e.maxSevNumber; sevNum++) {
-			const sevText = (Math.random() + 1).toString(36).substring(2);
+			const sevText = (Math.random() + 1).toString(36).slice(2);
 
 			const log = {
 				date: '2024-02-29T12:34:46Z',

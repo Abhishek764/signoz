@@ -111,7 +111,7 @@ export function prepareHistogramPanelData({
 
 	const sorted = [...seriesValues].sort((a, b) => a - b);
 	const min = sorted[0];
-	const max = sorted[sorted.length - 1];
+	const max = sorted.at(-1);
 	const range = max - min;
 	const smallestDelta = computeSmallestDelta(sorted);
 	let bucketSize = selectBucketSize({

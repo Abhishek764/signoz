@@ -32,7 +32,7 @@ describe('variableFetchStoreUtils', () => {
 		});
 
 		it('should return false for undefined', () => {
-			expect(isSettled(undefined)).toBe(false);
+			expect(isSettled()).toBe(false);
 		});
 	});
 

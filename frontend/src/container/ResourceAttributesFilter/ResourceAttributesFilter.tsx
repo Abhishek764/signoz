@@ -146,7 +146,7 @@ function ResourceAttributesFilter({
 						}
 					/>
 
-					{queries.length || staging.length || selectedQuery.length ? (
+					{queries.length > 0 || staging.length > 0 || selectedQuery.length > 0 ? (
 						<Button
 							onClick={handleClearAll}
 							icon={<CloseCircleFilled />}

@@ -75,8 +75,8 @@ export const useAlertHistoryQueryParams = (): {
 		(relativeTimeParam === 'null' ? null : relativeTimeParam) ||
 		DEFAULT_TIME_RANGE;
 
-	const intStartTime = parseInt(startTime || '0', 10);
-	const intEndTime = parseInt(endTime || '0', 10);
+	const intStartTime = Number.parseInt(startTime || '0', 10);
+	const intEndTime = Number.parseInt(endTime || '0', 10);
 	const hasStartAndEndParams = !!intStartTime && !!intEndTime;
 
 	const { maxTime, minTime } = useMemo(() => {
@@ -207,7 +207,7 @@ type GetAlertRuleDetailsStatsProps = GetAlertRuleDetailsApiProps & {
 export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => {
 	const { ruleId, startTime, endTime } = useAlertHistoryQueryParams();
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && String(ruleId).length > 0;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
 		[REACT_QUERY_KEY.ALERT_RULE_STATS, ruleId, startTime, endTime],
@@ -237,7 +237,7 @@ type GetAlertRuleDetailsTopContributorsProps = GetAlertRuleDetailsApiProps & {
 export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopContributorsProps => {
 	const { ruleId, startTime, endTime } = useAlertHistoryQueryParams();
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && String(ruleId).length > 0;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
 		[REACT_QUERY_KEY.ALERT_RULE_TOP_CONTRIBUTORS, ruleId, startTime, endTime],
@@ -273,14 +273,14 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 	const { updatedOrder, offset } = useMemo(
 		() => ({
 			updatedOrder: params.get(urlKey.order) ?? OrderPreferenceItems.ASC,
-			offset: parseInt(params.get(urlKey.offset) ?? '0', 10),
+			offset: Number.parseInt(params.get(urlKey.offset) ?? '0', 10),
 		}),
 		[params],
 	);
 
 	const timelineFilter = params.get('timelineFilter');
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && String(ruleId).length > 0;
 	const hasStartAndEnd = startTime !== null && endTime !== null;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(
@@ -369,9 +369,9 @@ export const useTimelineTable = ({
 		[pathname, safeNavigate],
 	);
 
-	const offsetInt = parseInt(offset, 10);
+	const offsetInt = Number.parseInt(offset, 10);
 	const pageSize = params.get('pageSize') ?? String(TIMELINE_TABLE_PAGE_SIZE);
-	const pageSizeInt = parseInt(pageSize, 10);
+	const pageSizeInt = Number.parseInt(pageSize, 10);
 
 	const paginationConfig: TablePaginationConfig = {
 		pageSize: pageSizeInt,
@@ -461,7 +461,7 @@ export const useAlertRuleDuplicate = ({
 
 				const rules = allAlertsData?.data;
 				if (rules && rules.length > 0) {
-					const clonedAlert = rules[rules.length - 1];
+					const clonedAlert = rules.at(-1);
 					params.set(QueryParams.ruleId, String(clonedAlert.id));
 					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 				}
@@ -571,7 +571,7 @@ type GetAlertRuleDetailsTimelineGraphProps = GetAlertRuleDetailsApiProps & {
 export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTimelineGraphProps => {
 	const { ruleId, startTime, endTime } = useAlertHistoryQueryParams();
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && String(ruleId).length > 0;
 	const hasStartAndEnd = startTime !== null && endTime !== null;
 
 	const { isLoading, isRefetching, isError, data } = useQuery(

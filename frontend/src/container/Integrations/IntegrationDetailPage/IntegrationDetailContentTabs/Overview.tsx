@@ -43,7 +43,7 @@ function Overview(props: OverviewProps): JSX.Element {
 					<ul className="assets-list">
 						{assetsCount.map((count, index) => {
 							if (count === 0) {
-								return undefined;
+								return;
 							}
 							return (
 								<li key={assetLabelMap[index]}>

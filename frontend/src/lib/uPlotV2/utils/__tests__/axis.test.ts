@@ -20,7 +20,7 @@ describe('axis utils', () => {
 			// internally the type is string but it is an array of strings
 			const mockAxis: Axis = { font: (['12px sans-serif'] as unknown) as string };
 
-			expect(calculateTextWidth(mockSelf, mockAxis, undefined)).toBe(0);
+			expect(calculateTextWidth(mockSelf, mockAxis)).toBe(0);
 			expect(calculateTextWidth(mockSelf, mockAxis, [])).toBe(0);
 		});
 
@@ -143,7 +143,7 @@ describe('axis utils', () => {
 			} as unknown) as uPlot;
 
 			if (typeof sizeCalculator === 'number') {
-				throw new Error('Size calculator is a number');
+				throw new TypeError('Size calculator is a number');
 			}
 
 			const result = sizeCalculator(self, ['10', '20'], 0, 2);
@@ -176,7 +176,7 @@ describe('axis utils', () => {
 			const expected = Math.ceil(12 + gap + 50 / dpr);
 
 			if (typeof sizeCalculator === 'number') {
-				throw new Error('Size calculator is a number');
+				throw new TypeError('Size calculator is a number');
 			}
 
 			const result = sizeCalculator(self, ['short', 'the-longest'], 0, 0);
@@ -207,7 +207,7 @@ describe('axis utils', () => {
 			const expected = Math.ceil(gap + 40 / dpr);
 
 			if (typeof sizeCalculator === 'number') {
-				throw new Error('Size calculator is a number');
+				throw new TypeError('Size calculator is a number');
 			}
 
 			const result = sizeCalculator(self, ['1', '123'], 0, 1);

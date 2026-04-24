@@ -68,7 +68,7 @@ export function getIntervals(
 	const integerPartString = intervalSpread.toString().split('.')[0];
 	const integerPartLength = integerPartString.length;
 	const intervalSpreadNormalized =
-		intervalSpread < 1.0
+		intervalSpread < 1
 			? intervalSpread
 			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
 			  10 ** (integerPartLength - 1);

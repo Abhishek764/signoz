@@ -282,7 +282,7 @@ export const isResourceEmpty = (
 	queries: IResourceAttributeProps['queries'],
 	staging: IResourceAttributeProps['staging'],
 	selectedQuery: IResourceAttributeProps['selectedQuery'],
-): boolean => !!(queries.length || staging.length || selectedQuery.length);
+): boolean => !!(queries.length > 0 || staging.length > 0 || selectedQuery.length > 0);
 
 export const mappingWithRoutesAndKeys = (
 	pathname: string,

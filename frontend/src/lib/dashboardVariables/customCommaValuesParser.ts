@@ -5,7 +5,7 @@ export const commaValuesParser = (query: string): (string | number)[] => {
 	const match = query.match(/(?:\\,|[^,])+/g) ?? [];
 
 	const options: string[] = match.map((text) => {
-		text = text.replace(/\\,/g, ',');
+		text = text.replaceAll(/\\,/g, ',');
 		const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
 		if (textMatch.length === 3) {
 			const [, , value] = textMatch;

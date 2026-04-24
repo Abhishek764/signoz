@@ -53,7 +53,7 @@ export const convertHoursValueToRelevantUnit = (
 
 			if (
 				convertedValue >= 1 &&
-				convertedValue === parseInt(`${convertedValue}`, 10)
+				convertedValue === Number.parseInt(`${convertedValue}`, 10)
 			) {
 				return { value: convertedValue, timeUnitValue: timeUnit.value };
 			}

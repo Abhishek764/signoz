@@ -535,7 +535,7 @@ function QueryAddOns({
 						>
 							<Radio.Button
 								className={
-									selectedViews.find((view) => view.key === addOn.key)
+									selectedViews.some((view) => view.key === addOn.key)
 										? 'selected-view tab'
 										: 'tab'
 								}

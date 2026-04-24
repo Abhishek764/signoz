@@ -114,7 +114,7 @@ function GraphView({
 					drawStyle: 'line',
 					lineInterpolation: 'spline',
 					show: true,
-					label: String.fromCharCode(65 + (index % 26)),
+					label: String.fromCodePoint(65 + (index % 26)),
 					stroke: inspectMetricsTimeSeries[index]?.strokeColor,
 					width: 2,
 					spanGaps: true,

@@ -30,8 +30,8 @@ export const PlotContextProvider = ({
 	children,
 }: PropsWithChildren): JSX.Element => {
 	const uPlotInstanceRef = useRef<uPlot | null>(null);
-	const activeSeriesIndex = useRef<number | undefined>(undefined);
-	const idRef = useRef<string | undefined>(undefined);
+	const activeSeriesIndex = useRef<number | undefined>();
+	const idRef = useRef<string | undefined>();
 	const shouldSavePreferencesRef = useRef<boolean>(false);
 
 	const setPlotContextInitialState = useCallback(

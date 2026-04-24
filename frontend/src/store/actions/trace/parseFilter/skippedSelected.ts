@@ -14,7 +14,7 @@ export const parseIsSkippedSelection = (query: string): ParsedUrl<boolean> => {
 			if (typeof parsedValue === 'boolean') {
 				current = parsedValue;
 			}
-		} catch (error) {
+		} catch {
 			current = false;
 		}
 	}

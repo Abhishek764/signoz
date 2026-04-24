@@ -14,7 +14,7 @@ export interface IDashboardsListQueryParams {
 export const DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY =
 	'dashboardsListQueryParams';
 
-const SUPPORTED_COLUMN_KEYS = ['createdAt', 'updatedAt'];
+const SUPPORTED_COLUMN_KEYS = new Set(['createdAt', 'updatedAt']);
 const SUPPORTED_ORDER_KEYS = ['ascend', 'descend'];
 
 function useDashboardsListQueryParams(): {
@@ -37,7 +37,7 @@ function useDashboardsListQueryParams(): {
 	] = useState<IDashboardsListQueryParams>({
 		columnKey:
 			orderColumnKeyQueryParam &&
-			SUPPORTED_COLUMN_KEYS.includes(orderColumnKeyQueryParam)
+			SUPPORTED_COLUMN_KEYS.has(orderColumnKeyQueryParam)
 				? orderColumnKeyQueryParam
 				: 'updatedAt',
 		order:

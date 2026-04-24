@@ -25,7 +25,7 @@ function OverlayScrollbar({
 					autoHide: 'scroll',
 					theme: isDarkMode ? 'os-theme-light' : 'os-theme-dark',
 				},
-				...(customOptions || {}),
+				...customOptions,
 			} as PartialOptions),
 		[customOptions, isDarkMode],
 	);

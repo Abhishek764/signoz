@@ -67,7 +67,7 @@ function useGetYAxisUnit(
 					currentMetricNames.push(metricName);
 				}
 			});
-			return currentMetricNames.length ? currentMetricNames : null;
+			return currentMetricNames.length > 0 ? currentMetricNames : null;
 		}
 		// Else, return all metric names
 		stagedQuery?.builder?.queryData?.forEach((query) => {
@@ -76,7 +76,7 @@ function useGetYAxisUnit(
 				currentMetricNames.push(metricName);
 			}
 		});
-		return currentMetricNames.length ? currentMetricNames : null;
+		return currentMetricNames.length > 0 ? currentMetricNames : null;
 	}, [
 		selectedQueryName,
 		stagedQuery?.builder?.queryData,

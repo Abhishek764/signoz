@@ -123,7 +123,7 @@ const useBaseAggregateOptions = ({
 					{label}
 				</ContextMenu.Item>
 			));
-		} catch (error) {
+		} catch {
 			return [];
 		}
 	}, [contextLinks, processedVariables, onClose, aggregateData, query]);

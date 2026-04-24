@@ -34,7 +34,7 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 		const query = mapQueryDataFromApi(compositeQuery);
 		return { query, name, id, panelType: compositeQuery.panelType, extraData };
 	}
-	return undefined;
+	return;
 };
 
 export const omitIdFromQuery = (query: Query | null): any => ({
@@ -198,7 +198,7 @@ export const deleteViewHandler = ({
 
 export const trimViewName = (viewName: string): string => {
 	if (viewName.length > 20) {
-		return `${viewName.substring(0, 20)}...`;
+		return `${viewName.slice(0, 20)}...`;
 	}
 	return viewName;
 };

@@ -114,7 +114,7 @@ export const GetSpansAggregate = (
 				},
 			});
 		}
-	} catch (error) {
+	} catch {
 		dispatch({
 			type: UPDATE_SPANS_AGGREGATE,
 			payload: {

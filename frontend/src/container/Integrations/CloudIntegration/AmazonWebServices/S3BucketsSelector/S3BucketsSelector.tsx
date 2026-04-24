@@ -65,7 +65,7 @@ function S3BucketsSelector({
 		// Create a Set to get unique values
 		const uniqueRegions = new Set([...accountRegions, ...initialRegions]);
 
-		return Array.from(uniqueRegions);
+		return [...uniqueRegions];
 	}, [activeAccount, initialBucketsByRegion]);
 
 	// Check if a region is disabled (not in account's regions)

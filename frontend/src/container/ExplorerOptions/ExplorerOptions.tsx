@@ -86,7 +86,7 @@ import {
 
 import './ExplorerOptions.styles.scss';
 
-const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
+const allowedRoles = new Set([USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR]);
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ExplorerOptions({
@@ -660,7 +660,7 @@ function ExplorerOptions({
 		[isDarkMode],
 	);
 
-	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
+	const isEditDeleteSupported = allowedRoles.has(user.role as string);
 
 	const [
 		isRecentlyUsedSavedViewSelected,

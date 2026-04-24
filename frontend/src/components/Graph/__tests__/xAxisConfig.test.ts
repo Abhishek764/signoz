@@ -9,7 +9,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'millisecond');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.millisecond,
 				);
 			}
@@ -17,7 +17,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'second');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.second,
 				);
 			}
@@ -25,7 +25,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'minute');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.minute,
 				);
 			}
@@ -33,7 +33,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'hour');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.hour,
 				);
 			}
@@ -41,7 +41,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'day');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.day,
 				);
 			}
@@ -49,7 +49,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'week');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.week,
 				);
 			}
@@ -57,7 +57,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'month');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.month,
 				);
 			}
@@ -65,7 +65,7 @@ describe('xAxisConfig for Chart', () => {
 				const start = dayjs();
 				const end = start.add(10, 'year');
 
-				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toEqual(
+				expect(convertTimeRange(start.valueOf(), end.valueOf()).unitName).toStrictEqual(
 					TIME_UNITS.year,
 				);
 			}

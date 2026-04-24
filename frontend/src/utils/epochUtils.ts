@@ -26,7 +26,7 @@ interface ValidationResult {
  */
 function normalizeToSeconds(epoch: EpochInput): number {
 	if (!Number.isFinite(epoch)) {
-		throw new Error('Epoch value must be a finite number');
+		throw new TypeError('Epoch value must be a finite number');
 	}
 
 	// Heuristic:

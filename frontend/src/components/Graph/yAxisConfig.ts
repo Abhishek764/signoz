@@ -25,7 +25,7 @@ export const getYAxisFormattedValue = (
 	format: string,
 	precision: PrecisionOption = 2, // default precision requested
 ): string => {
-	const numValue = parseFloat(value);
+	const numValue = Number.parseFloat(value);
 
 	// Handle non-numeric or special values first.
 	if (isNaN(numValue)) {
@@ -79,10 +79,10 @@ export const getYAxisFormattedValue = (
 		}
 
 		const formatter = getValueFormat(format);
-		const formattedValue = formatter(numValue, computeDecimals(), undefined);
+		const formattedValue = formatter(numValue, computeDecimals());
 		if (formattedValue.text && formattedValue.text.includes('.')) {
 			formattedValue.text = formatDecimalWithLeadingZeros(
-				parseFloat(formattedValue.text),
+				Number.parseFloat(formattedValue.text),
 				precision,
 			);
 		}

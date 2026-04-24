@@ -32,7 +32,7 @@ export const interceptorsResponse = (
 ): Promise<AxiosResponse<any>> => {
 	if ((value.config as any)?.metadata) {
 		const duration =
-			new Date().getTime() - (value.config as any).metadata.startTime;
+			Date.now() - (value.config as any).metadata.startTime;
 
 		if (duration > RESPONSE_TIMEOUT_THRESHOLD && value.config.url !== '/event') {
 			eventEmitter.emit(Events.SLOW_API_WARNING, true, {
@@ -55,7 +55,7 @@ export const interceptorsRequestResponse = (
 ): InternalAxiosRequestConfig => {
 	// Attach metadata safely (not sent with the request)
 	Object.defineProperty(value, 'metadata', {
-		value: { startTime: new Date().getTime() },
+		value: { startTime: Date.now() },
 		enumerable: false, // Prevents it from being included in the request
 	});
 
@@ -143,7 +143,7 @@ export const interceptorRejected = async (
 							Logout();
 						}
 					}
-				} catch (error) {
+				} catch {
 					Logout();
 				}
 			}
@@ -160,7 +160,7 @@ export const interceptorRejected = async (
 
 const interceptorRejectedBase = async (
 	value: AxiosResponse<any>,
-): Promise<AxiosResponse<any>> => Promise.reject(value);
+): Promise<AxiosResponse<any>> => { throw value; };
 
 const instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,

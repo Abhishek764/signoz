@@ -120,13 +120,13 @@ export type BuilderClickHouseResource = Record<string, IClickHouseQuery>;
 export type BuilderPromQLResource = Record<string, IPromQLQuery>;
 export type BuilderQueryDataResourse = Record<
 	string,
-	IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
+	IBuilderQuery | IBuilderFormula  
 >;
 
 export type MapData =
 	| IBuilderQuery
 	| IBuilderFormula
-	| IBuilderTraceOperator
+	 
 	| IClickHouseQuery
 	| IPromQLQuery;
 

@@ -31,15 +31,13 @@ export function Section(props: SectionProps): JSX.Element {
 
 	const defaultOpenPanes = useMemo(
 		() =>
-			Array.from(
-				new Set([
-					...Object.keys(selectedFilters || {}),
-					'hasError',
-					'durationNano',
-					'serviceName',
-					'deployment.environment',
-				]),
-			),
+			[...new Set([
+	...Object.keys(selectedFilters || {}),
+	'hasError',
+	'durationNano',
+	'serviceName',
+	'deployment.environment'
+])],
 		[selectedFilters],
 	);
 

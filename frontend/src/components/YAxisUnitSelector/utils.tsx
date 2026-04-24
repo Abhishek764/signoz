@@ -68,7 +68,7 @@ export function mergeCategories(
 		}
 	});
 
-	return Array.from(mapOfCategories.values());
+	return [...mapOfCategories.values()];
 }
 
 export function getYAxisCategories(source: YAxisSource): YAxisCategory[] {

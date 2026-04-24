@@ -56,7 +56,7 @@ export function formatUniversalUnit(
 		const formatted = formatter(scaled.value, decimals);
 		if (formatted.text && formatted.text.includes('.')) {
 			formatted.text = formatDecimalWithLeadingZeros(
-				parseFloat(formatted.text),
+				Number.parseFloat(formatted.text),
 				precision,
 			);
 		}
@@ -70,7 +70,7 @@ export function formatUniversalUnit(
 		const formatted = formatter(value, decimals);
 		if (formatted.text && formatted.text.includes('.')) {
 			formatted.text = formatDecimalWithLeadingZeros(
-				parseFloat(formatted.text),
+				Number.parseFloat(formatted.text),
 				precision,
 			);
 		}
@@ -82,7 +82,7 @@ export function formatUniversalUnit(
 	const formatted = formatter(value, decimals);
 	if (formatted.text && formatted.text.includes('.')) {
 		formatted.text = formatDecimalWithLeadingZeros(
-			parseFloat(formatted.text),
+			Number.parseFloat(formatted.text),
 			precision,
 		);
 	}

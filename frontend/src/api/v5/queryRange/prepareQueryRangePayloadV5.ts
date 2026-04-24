@@ -243,7 +243,7 @@ export function parseAggregations(
 		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
 		if (alias) {
 			// Remove quotes if present
-			alias = alias.replace(/^['"]|['"]$/g, '');
+			alias = alias.replaceAll(/^['"]|['"]$/g, '');
 			result.push({ expression: expr, alias });
 		} else {
 			result.push({ expression: expr });
@@ -634,8 +634,8 @@ export const prepareQueryRangePayloadV5 = ({
 	// Create V5 payload
 	const queryPayload: QueryRangePayloadV5 = {
 		schemaVersion: 'v1',
-		start: startTime ? startTime * 1e3 : parseInt(start, 10) * 1e3,
-		end: endTime ? endTime * 1e3 : parseInt(end, 10) * 1e3,
+		start: startTime ? startTime * 1e3 : Number.parseInt(start, 10) * 1e3,
+		end: endTime ? endTime * 1e3 : Number.parseInt(end, 10) * 1e3,
 		requestType,
 		compositeQuery: {
 			queries,

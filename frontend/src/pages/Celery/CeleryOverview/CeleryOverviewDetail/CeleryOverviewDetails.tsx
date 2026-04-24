@@ -43,7 +43,7 @@ export default function CeleryOverviewDetails({
 				case 'kind_string':
 					return getFiltersFromKeyValue('kind_string', value, '');
 				default:
-					return undefined;
+					return;
 			}
 		});
 

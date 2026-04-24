@@ -10,7 +10,7 @@ function findMinMaxValues(data: QueryDataV3[]): [number, number] {
 	data?.forEach((entry) => {
 		entry.series?.forEach((series) => {
 			series.values.forEach((valueObj) => {
-				const value = parseFloat(valueObj.value);
+				const value = Number.parseFloat(valueObj.value);
 				if (isFinite(value)) {
 					min = Math.min(min, value);
 					max = Math.max(max, value);
@@ -288,7 +288,7 @@ function getMinMax(data: any): { minValue: number; maxValue: number } {
 	const flattened = arrays.flat().map(Number);
 
 	// Get min and max, with fallback of 0 for min
-	const minValue = flattened.length ? Math.min(...flattened) : 0;
+	const minValue = flattened.length > 0 ? Math.min(...flattened) : 0;
 	const maxValue = Math.max(...flattened);
 
 	const { adjustedMin, adjustedMax } = adjustMinMax(minValue, maxValue);

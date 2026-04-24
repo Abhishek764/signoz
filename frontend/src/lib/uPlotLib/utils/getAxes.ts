@@ -6,11 +6,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { uPlotXAxisValuesFormat } from './constants';
 import getGridColor from './getGridColor';
 
-const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
+const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = new Set([
 	PANEL_TYPES.TIME_SERIES,
 	PANEL_TYPES.BAR,
 	PANEL_TYPES.PIE,
-];
+]);
 
 const getAxes = ({
 	isDarkMode,
@@ -38,7 +38,7 @@ const getAxes = ({
 			width: 0.3, // Width of the tick lines,
 			show: true,
 		},
-		...(PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.includes(panelType)
+		...(PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.has(panelType)
 			? {
 					values: uPlotXAxisValuesFormat,
 			  }

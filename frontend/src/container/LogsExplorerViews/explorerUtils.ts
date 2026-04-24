@@ -17,7 +17,7 @@ import { v4 } from 'uuid';
 export const getListQuery = (
 	stagedQuery: Query | null,
 ): IBuilderQuery | null => {
-	if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+	if (!stagedQuery || stagedQuery.builder.queryData.length === 0) {
 		return null;
 	}
 

@@ -74,7 +74,7 @@ interface FieldItemProps {
 	name: string;
 	buttonIcon: ReactNode;
 	buttonOnClick: (props: {
-		fieldData: IInterestingFields | ISelectedFields;
+		fieldData: IInterestingFields  ;
 		fieldIndex: number;
 	}) => void;
 	fieldData: IField;

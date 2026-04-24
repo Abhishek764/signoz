@@ -24,13 +24,7 @@ export function isInspectEnabled(
 export function getAllTimestampsOfMetrics(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 ): number[] {
-	return Array.from(
-		new Set(
-			inspectMetricsTimeSeries
-				.flatMap((series) => series.values.map((value) => value.timestamp))
-				.sort((a, b) => a - b),
-		),
-	);
+	return [...new Set(inspectMetricsTimeSeries.flatMap((series) => series.values.map((value) => value.timestamp)).sort((a, b) => a - b))];
 }
 
 export function getDefaultTimeAggregationInterval(
@@ -119,7 +113,7 @@ export function applyTimeAggregation(
 					timeAggregatedSeriesMap.set(intervalBucket, []);
 				}
 
-				groupedTimestamps.get(intervalBucket)?.push(parseFloat(value));
+				groupedTimestamps.get(intervalBucket)?.push(Number.parseFloat(value));
 				timeAggregatedSeriesMap.get(intervalBucket)?.push({
 					timestamp,
 					value,
@@ -129,13 +123,13 @@ export function applyTimeAggregation(
 				});
 			});
 
-			const aggregatedValues = Array.from(groupedTimestamps.entries()).map(
+			const aggregatedValues = [...groupedTimestamps.entries()].map(
 				([intervalStart, values]) => {
 					let aggregatedValue: number;
 
 					switch (timeAggregationOption) {
 						case TimeAggregationOptions.LATEST:
-							aggregatedValue = values[values.length - 1];
+							aggregatedValue = values.at(-1);
 							break;
 						case TimeAggregationOptions.SUM:
 							aggregatedValue = values.reduce((sum, val) => sum + val, 0);
@@ -154,7 +148,7 @@ export function applyTimeAggregation(
 							aggregatedValue = values.length;
 							break;
 						default:
-							aggregatedValue = values[values.length - 1];
+							aggregatedValue = values.at(-1);
 					}
 
 					return {
@@ -212,12 +206,12 @@ export function applySpaceAggregation(
 				if (!timestampValuesMap.has(timestamp)) {
 					timestampValuesMap.set(timestamp, []);
 				}
-				timestampValuesMap.get(timestamp)?.push(parseFloat(value));
+				timestampValuesMap.get(timestamp)?.push(Number.parseFloat(value));
 			});
 		});
 
 		// Aggregate values based on selected space aggregation option
-		const aggregatedValues = Array.from(timestampValuesMap.entries()).map(
+		const aggregatedValues = [...timestampValuesMap.entries()].map(
 			([timestamp, values]) => {
 				let aggregatedValue: number;
 
@@ -340,7 +334,7 @@ export function onGraphClick(
 	setPopoverOptions({
 		x: e.clientX,
 		y: e.clientY,
-		value: parseFloat(closestPoint?.value ?? '0'),
+		value: Number.parseFloat(closestPoint?.value ?? '0'),
 		timestamp: closestPoint?.timestamp,
 		timeSeries: series,
 	});
@@ -393,7 +387,7 @@ export function getSpaceAggregatedDataFromTimeSeries(
 	}
 
 	const appliedLabels =
-		Array.from(spaceAggregatedSeriesMap.keys())[0]
+		[...spaceAggregatedSeriesMap.keys()][0]
 			?.split(',')
 			.map((label) => label.split(':')[0]) || [];
 

@@ -11,6 +11,6 @@ export const getOptionsFromKeys = (
 	}));
 
 	return options.filter(
-		({ value }) => !selectedKeys.find((key) => key === value),
+		({ value }) => !selectedKeys.some((key) => key === value),
 	);
 };

@@ -33,11 +33,11 @@ describe('useOrderedColumns', () => {
 			}),
 		);
 
-		expect(result.current.orderedColumns).toEqual([
+		expect(result.current.orderedColumns).toStrictEqual([
 			col('body'),
 			col('timestamp'),
 		]);
-		expect(result.current.orderedColumnIds).toEqual(['body', 'timestamp']);
+		expect(result.current.orderedColumnIds).toStrictEqual(['body', 'timestamp']);
 	});
 
 	it('hasSingleColumn is true when exactly one column is not state-indicator', () => {
@@ -98,7 +98,7 @@ describe('useOrderedColumns', () => {
 		]);
 
 		// Derived-only: orderedColumns should remain until draggedColumns (URL/localStorage) updates.
-		expect(result.current.orderedColumns.map((c) => c.key)).toEqual([
+		expect(result.current.orderedColumns.map((c) => c.key)).toStrictEqual([
 			'a',
 			'b',
 			'c',
@@ -201,7 +201,7 @@ describe('useOrderedColumns', () => {
 			{ initialProps: { draggedColumns: [] as unknown[] } },
 		);
 
-		expect(result.current.orderedColumns.map((column) => column.key)).toEqual([
+		expect(result.current.orderedColumns.map((column) => column.key)).toStrictEqual([
 			'a',
 			'b',
 			'c',
@@ -213,7 +213,7 @@ describe('useOrderedColumns', () => {
 			rerender({ draggedColumns: [{ title: 'from-url' }] as unknown[] });
 		});
 
-		expect(result.current.orderedColumns.map((column) => column.key)).toEqual([
+		expect(result.current.orderedColumns.map((column) => column.key)).toStrictEqual([
 			'c',
 			'b',
 			'a',

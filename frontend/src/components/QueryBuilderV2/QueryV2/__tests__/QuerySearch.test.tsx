@@ -222,9 +222,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			timeout: 2000,
 		});
 
-		const lastArgs = mockedGetKeysOnMount.mock.calls[
-			mockedGetKeysOnMount.mock.calls.length - 1
-		]?.[0] as { signal: unknown; searchText: string };
+		const lastArgs = mockedGetKeysOnMount.mock.calls.at(-1)?.[0] as { signal: unknown; searchText: string };
 		expect(lastArgs).toMatchObject({ signal: DataSource.LOGS, searchText: '' });
 	});
 

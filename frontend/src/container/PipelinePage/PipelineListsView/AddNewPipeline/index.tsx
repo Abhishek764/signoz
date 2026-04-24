@@ -32,7 +32,7 @@ function AddNewPipeline({
 			createdAt: new Date().toISOString(),
 			createdBy: user?.displayName || '',
 			name: values.name,
-			alias: values.name.replace(/\s/g, ''),
+			alias: values.name.replaceAll(/\s/g, ''),
 			description: values.description,
 			filter: values.filter,
 			config: [],

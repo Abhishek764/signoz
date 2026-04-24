@@ -8,10 +8,10 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 
 type IOperators =
 	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.universal
-	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.string
-	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.bool
-	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.int64
-	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.float64;
+	 
+	 
+	 
+	 ;
 
 export const useOperators = (
 	key: string,

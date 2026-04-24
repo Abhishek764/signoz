@@ -36,7 +36,7 @@ const getStartTimeAndEndTimeFromTimeRange = (
 	if (isValidFormat) {
 		const match = timeRange.match(CUSTOM_TIME_REGEX) as RegExpMatchArray;
 
-		const timeValue = parseInt(match[1] as string, 10);
+		const timeValue = Number.parseInt(match[1] as string, 10);
 		const timeUnit = match[2] as string;
 
 		switch (timeUnit) {

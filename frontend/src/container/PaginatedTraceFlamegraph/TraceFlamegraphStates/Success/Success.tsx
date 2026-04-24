@@ -138,7 +138,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			}
 
 			if (endIndex === spans.length - 1) {
-				setFirstSpanAtFetchLevel(spans[spans.length - 1][0].spanId);
+				setFirstSpanAtFetchLevel(spans.at(-1)[0].spanId);
 			}
 		},
 		[setFirstSpanAtFetchLevel, spans],

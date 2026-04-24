@@ -43,9 +43,9 @@ function ErrorDetails(): JSX.Element {
 				errorId !== null &&
 				groupId !== null &&
 				timestamp !== null &&
-				errorId.length !== 0 &&
-				groupId.length !== 0 &&
-				timestamp.length !== 0,
+				errorId.length > 0 &&
+				groupId.length > 0 &&
+				timestamp.length > 0,
 		},
 	);
 

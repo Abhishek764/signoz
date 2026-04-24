@@ -29,7 +29,7 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 			});
 		}
 		return value;
-	} catch (e) {
+	} catch {
 		return {};
 	}
 };
@@ -110,7 +110,7 @@ export function jsonToDataNodes(
 
 export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 	return Object.keys(obj).reduce((acc: AnyObject, k: string): AnyObject => {
-		const pre = prefix.length ? `${prefix}.` : '';
+		const pre = prefix.length > 0 ? `${prefix}.` : '';
 		if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
 			Object.assign(acc, flattenObject(obj[k], pre + k));
 		} else {
@@ -142,7 +142,7 @@ export const generateFieldKeyForArray = (
 };
 
 export const removeObjectFromString = (str: string): string =>
-	str.replace(/\[object Object\]./g, '');
+	str.replaceAll(/\[object Object\]./g, '');
 
 // Split `str` on the first occurrence of `delimiter`
 // For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
@@ -220,7 +220,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// @ts-ignore
+			// @ts-expect-error
 			outputJson[key] = logData[key as keyof ILog];
 		}
 	});
@@ -239,7 +239,7 @@ const determineType = (val: unknown): DataTypes => {
 			return DataTypes.bool;
 		}
 
-		const numberValue = parseFloat(val);
+		const numberValue = Number.parseFloat(val);
 
 		if (!Number.isNaN(numberValue)) {
 			return isFloat(numberValue) ? DataTypes.Float64 : DataTypes.Int64;
@@ -273,17 +273,17 @@ export const getDataTypes = (value: unknown): DataTypes => {
 // prevent html rendering in the value
 export const escapeHtml = (unsafe: string): string =>
 	unsafe
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#039;');
+		.replaceAll(/&/g, '&amp;')
+		.replaceAll(/</g, '&lt;')
+		.replaceAll(/>/g, '&gt;')
+		.replaceAll(/"/g, '&quot;')
+		.replaceAll(/'/g, '&#039;');
 
 // parse field value to remove escaping characters
 export const parseFieldValue = (value: string): string => {
 	try {
 		return JSON.parse(value);
-	} catch (error) {
+	} catch {
 		return value;
 	}
 };
@@ -292,11 +292,11 @@ export const parseFieldValue = (value: string): string => {
 // the log line readable
 export const removeEscapeCharacters = (str: string): string =>
 	(str ?? '')
-		.replace(/\\x1[bB][[0-9;]*m/g, '')
-		.replace(/\\u001[bB][[0-9;]*m/g, '')
-		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
-		.replace(/\\u[0-9A-Fa-f]{4}/g, '')
-		.replace(/\\[btnfrv0'"\\]/g, '');
+		.replaceAll(/\\x1[bB][[0-9;]*m/g, '')
+		.replaceAll(/\\u001[bB][[0-9;]*m/g, '')
+		.replaceAll(/\\x[0-9A-Fa-f]{2}/g, '')
+		.replaceAll(/\\u[0-9A-Fa-f]{4}/g, '')
+		.replaceAll(/\\[btnfrv0'"\\]/g, '');
 
 // we need to remove the escape from the escaped characters as some recievers like file log escape the unicode escape characters.
 // example: Log [\u001B[32;1mThis is bright green\u001B[0m] is being sent as [\\u001B[32;1mThis is bright green\\u001B[0m]
@@ -304,24 +304,24 @@ export const removeEscapeCharacters = (str: string): string =>
 // so we need to remove this escapes to render the color properly
 export const unescapeString = (str: string): string =>
 	(str ?? '')
-		.replace(/\\n/g, '\n') // Replaces escaped newlines
-		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
-		.replace(/\\t/g, '\t') // Replaces escaped tabs
-		.replace(/\\b/g, '\b') // Replaces escaped backspaces
-		.replace(/\\f/g, '\f') // Replaces escaped form feeds
-		.replace(/\\v/g, '\v') // Replaces escaped vertical tabs
-		.replace(/\\'/g, "'") // Replaces escaped single quotes
-		.replace(/\\"/g, '"') // Replaces escaped double quotes
-		.replace(/\\\\/g, '\\') // Replaces escaped backslashes
-		.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
-			String.fromCharCode(parseInt(hex, 16)),
+		.replaceAll(/\\n/g, '\n') // Replaces escaped newlines
+		.replaceAll(/\\r/g, '\r') // Replaces escaped carriage returns
+		.replaceAll(/\\t/g, '\t') // Replaces escaped tabs
+		.replaceAll(/\\b/g, '\b') // Replaces escaped backspaces
+		.replaceAll(/\\f/g, '\f') // Replaces escaped form feeds
+		.replaceAll(/\\v/g, '\v') // Replaces escaped vertical tabs
+		.replaceAll(/\\'/g, "'") // Replaces escaped single quotes
+		.replaceAll(/\\"/g, '"') // Replaces escaped double quotes
+		.replaceAll(/\\\\/g, '\\') // Replaces escaped backslashes
+		.replaceAll(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
+			String.fromCodePoint(Number.parseInt(hex, 16)),
 		) // Replaces hexadecimal escape sequences
-		.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
-			String.fromCharCode(parseInt(hex, 16)),
+		.replaceAll(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
+			String.fromCodePoint(Number.parseInt(hex, 16)),
 		); // Replaces Unicode escape sequences
 
 export function removeExtraSpaces(input: string): string {
-	return input.replace(/\s+/g, ' ').trim();
+	return input.replaceAll(/\s+/g, ' ').trim();
 }
 
 export function findKeyPath(

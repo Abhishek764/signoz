@@ -349,7 +349,7 @@ export function unionTagFilterItems(
 		unionMap.set(keyOp, item);
 	});
 
-	return Array.from(unionMap?.values());
+	return [...unionMap?.values()];
 }
 
 export interface HandleRunProps {

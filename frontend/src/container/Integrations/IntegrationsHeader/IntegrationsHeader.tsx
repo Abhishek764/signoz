@@ -61,7 +61,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 				setIsSubmittingRequestForIntegration(false);
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Something went wrong', {
 				position: 'top-right',
 			});

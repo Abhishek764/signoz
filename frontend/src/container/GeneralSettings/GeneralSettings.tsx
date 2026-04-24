@@ -453,7 +453,7 @@ function GeneralSettings({
 					}));
 				}
 			}
-		} catch (error) {
+		} catch {
 			notifications.error({
 				message: 'Error',
 				description: t('retention_failed_message'),

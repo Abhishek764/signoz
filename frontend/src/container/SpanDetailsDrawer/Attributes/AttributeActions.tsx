@@ -46,7 +46,7 @@ export default function AttributeActions({
 	const textToCopy = useMemo(() => {
 		const str = record.value == null ? '' : String(record.value);
 		// Remove surrounding double-quotes only (e.g., JSON-encoded string values)
-		return str.replace(/^"|"$/g, '');
+		return str.replaceAll(/^"|"$/g, '');
 	}, [record.value]);
 
 	const handleFilterIn = useCallback(async (): Promise<void> => {

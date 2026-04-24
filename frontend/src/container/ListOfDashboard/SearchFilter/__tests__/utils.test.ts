@@ -48,7 +48,7 @@ describe('executeSearchQueries', () => {
 			value: 'first dashboard',
 		};
 
-		expect(executeSearchQueries([query], dashboards)).toEqual([firstDashboard]);
+		expect(executeSearchQueries([query], dashboards)).toStrictEqual([firstDashboard]);
 	});
 
 	it('should filter dashboards with special characters', () => {
@@ -59,6 +59,6 @@ describe('executeSearchQueries', () => {
 			value: 'third dashboard (with special characters +?\\)',
 		};
 
-		expect(executeSearchQueries([query], dashboards)).toEqual([thirdDashboard]);
+		expect(executeSearchQueries([query], dashboards)).toStrictEqual([thirdDashboard]);
 	});
 });

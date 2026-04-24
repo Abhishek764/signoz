@@ -58,7 +58,7 @@ const formatSingleValue = (v: string | number | boolean): string => {
 			return v;
 		}
 		// Quote and escape single quotes in strings
-		return `'${v.replace(/'/g, "\\'")}'`;
+		return `'${v.replaceAll(/'/g, "\\'")}'`;
 	}
 	// Convert numbers and booleans to strings without quotes
 	return String(v);

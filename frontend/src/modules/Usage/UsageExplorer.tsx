@@ -82,7 +82,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 
 	useEffect(() => {
 		if (selectedTime && selectedInterval) {
-			const maxTime = new Date().getTime() * 1000000;
+			const maxTime = Date.now() * 1000000;
 			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
 
 			getUsageData(minTime, maxTime, selectedInterval.value, selectedService);
@@ -116,7 +116,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 						onSelect={(value): void => {
 							setSelectedTime(
 								// eslint-disable-next-line eqeqeq
-								timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
+								timeDaysOptions.filter((item) => item.value == Number.parseInt(value))[0],
 							);
 						}}
 						value={selectedTime.label}
@@ -132,7 +132,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 					<Select
 						onSelect={(value): void => {
 							setSelectedInterval(
-								interval.filter((item) => item.value === parseInt(value))[0],
+								interval.filter((item) => item.value === Number.parseInt(value))[0],
 							);
 						}}
 						value={selectedInterval.label}

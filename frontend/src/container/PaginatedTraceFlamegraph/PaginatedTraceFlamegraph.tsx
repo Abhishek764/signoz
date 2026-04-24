@@ -157,12 +157,12 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 									</section>
 									<section className="progress-service">
 										<Progress
-											percent={parseFloat(value.toFixed(2))}
+											percent={Number.parseFloat(value.toFixed(2))}
 											className="service-progress-indicator"
 											showInfo={false}
 										/>
 										<Typography.Text className="percent-value">
-											{parseFloat(value.toFixed(2))}%
+											{Number.parseFloat(value.toFixed(2))}%
 										</Typography.Text>
 									</section>
 								</div>

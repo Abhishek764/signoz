@@ -45,7 +45,7 @@ function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
 		if (breadcrumbNameMap[url] === undefined) {
 			return (
 				<Breadcrumb.Item key={url}>
-					<Link to={url}>{url.split('/').slice(-1)[0]}</Link>
+					<Link to={url}>{url.split('/').at(-1)}</Link>
 				</Breadcrumb.Item>
 			);
 		}

@@ -159,7 +159,7 @@ const processContextLinks = (
 			const processedParams: Record<string, string> = {};
 
 			// 3. Process each parameter
-			Array.from(searchParams.entries()).forEach(([key, value]) => {
+			[...searchParams.entries()].forEach(([key, value]) => {
 				// 4. Decode twice to handle double encoding
 				let decodedValue = decodeURIComponent(value);
 				try {

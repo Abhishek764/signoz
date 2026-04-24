@@ -982,7 +982,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 									<div className="ingestion-key-value">
 										<Typography.Text>
-											{APIKey?.value?.substring(0, 2)}********
+											{APIKey?.value?.slice(0, 2)}********
 											{APIKey?.value
 												?.substring(APIKey?.value?.length ? APIKey.value.length - 2 : 0)
 												?.trim()}

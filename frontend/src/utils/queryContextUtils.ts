@@ -308,7 +308,7 @@ function determineContextBoundaries(
 				token.type === FilterQueryLexer.RPAREN
 			) {
 				if (openBrackets.length > 0) {
-					const matchingOpen = openBrackets[openBrackets.length - 1];
+					const matchingOpen = openBrackets.at(-1);
 					bracketContext = {
 						start: matchingOpen.token.start,
 						end: token.stop,
@@ -1499,7 +1499,7 @@ export function getCurrentQueryPair(
 
 			// If no match found and cursor is at the end, return the last pair
 			if (cursorIndex >= query.length && queryPairs.length > 0) {
-				return queryPairs[queryPairs.length - 1];
+				return queryPairs.at(-1);
 			}
 		}
 

@@ -99,7 +99,7 @@ export function HavingFilter({
 
 	const handleSearch = useCallback(
 		(search: string): void => {
-			const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
+			const trimmedSearch = search.replaceAll(/\s\s+/g, ' ').trimStart();
 
 			const currentSearch = isMulti
 				? trimmedSearch

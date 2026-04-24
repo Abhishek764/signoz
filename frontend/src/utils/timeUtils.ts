@@ -37,7 +37,7 @@ export const getRemainingDays = (billingEndDate: number): number => {
 	const endDate = new Date(billingEndDate * 1000); // Convert seconds to milliseconds
 
 	// Calculate the time difference in milliseconds
-	// @ts-ignore
+	// @ts-expect-error
 	const timeDifference = endDate - startDate;
 
 	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
@@ -161,7 +161,7 @@ export const epochToTimeString = (epochMs: number): string => {
 export const normalizeTimeToMs = (timestamp: number | string): number => {
 	let ts = timestamp;
 	if (typeof timestamp === 'string') {
-		ts = Math.trunc(parseInt(timestamp, 10));
+		ts = Math.trunc(Number.parseInt(timestamp, 10));
 	}
 	ts = Number(ts);
 

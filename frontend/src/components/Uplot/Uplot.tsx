@@ -72,7 +72,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 			}
 
 			// Clean up tooltip overlay that might be detached
-			const overlay = document.getElementById('overlay');
+			const overlay = document.querySelector('#overlay');
 			if (overlay) {
 				// Remove all child elements from overlay
 				while (overlay.firstChild) {

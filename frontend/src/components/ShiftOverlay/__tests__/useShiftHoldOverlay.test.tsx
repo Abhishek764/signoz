@@ -83,7 +83,7 @@ describe('useShiftHoldOverlay', () => {
 
 	it('does not activate in typing context (input)', () => {
 		const input = document.createElement('input');
-		document.body.appendChild(input);
+		document.body.append(input);
 
 		const { result } = renderHook(() => useShiftHoldOverlay({}));
 

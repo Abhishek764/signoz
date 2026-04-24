@@ -47,7 +47,7 @@ import {
 
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const [selectedData, setSelectedData] = useState<any>(undefined);
+	const [selectedData, setSelectedData] = useState<any>();
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 
 	const servicename = decodeURIComponent(encodedServiceName);

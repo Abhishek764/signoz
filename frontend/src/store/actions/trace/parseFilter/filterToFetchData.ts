@@ -19,7 +19,7 @@ export const parseFilterToFetchData = (
 			if (Array.isArray(parsedValue)) {
 				filterToFetchData.push(...parsedValue);
 			}
-		} catch (error) {
+		} catch {
 			// error while parsing json
 		}
 	}

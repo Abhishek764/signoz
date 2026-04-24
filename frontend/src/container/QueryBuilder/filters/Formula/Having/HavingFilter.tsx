@@ -28,7 +28,7 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		currentFormValue.value,
 	);
 
-	const columnName = formula.expression.replace(/ /g, '').toUpperCase();
+	const columnName = formula.expression.replaceAll(/ /g, '').toUpperCase();
 
 	const aggregatorOptions: SelectOption<string, string>[] = useMemo(
 		() => [{ label: columnName, value: columnName }],
@@ -113,7 +113,7 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 	};
 
 	const handleSearch = (search: string): void => {
-		const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
+		const trimmedSearch = search.replaceAll(/\s\s+/g, ' ').trimStart();
 
 		const currentSearch = isMulti
 			? trimmedSearch

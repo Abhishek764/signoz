@@ -69,7 +69,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	const handleCollapseChange = (key: string | string[]): void => {
-		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
+		const lastKey = Array.isArray(key) ? key.at(-1) : key;
 		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
 			panelKey: lastKey,
 		});

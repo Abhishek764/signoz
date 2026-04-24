@@ -176,7 +176,7 @@ function LogsExplorerViewsContainer({
 		},
 		{
 			...(activeLogId &&
-				!logs.length && {
+				logs.length === 0 && {
 					start: minTime,
 					end: maxTime,
 				}),

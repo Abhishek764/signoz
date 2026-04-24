@@ -37,7 +37,7 @@ function CreateFunnel({
 		createFunnelMutation.mutate(
 			{
 				funnel_name: funnelName,
-				timestamp: new Date().getTime(),
+				timestamp: Date.now(),
 			},
 			{
 				onSuccess: (data) => {
@@ -119,7 +119,7 @@ function CreateFunnel({
 				className: 'funnel-modal__cancel-btn',
 				onClick: handleCancel,
 			}}
-			getContainer={document.getElementById('root') || undefined}
+			getContainer={document.querySelector('#root') || undefined}
 			destroyOnClose
 		>
 			<div className="funnel-modal-content">

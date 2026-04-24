@@ -607,7 +607,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			try {
 				const parts = text.split(
 					new RegExp(
-						`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
+						`(${searchQuery.replaceAll(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`,
 						'gi',
 					),
 				);
@@ -615,7 +615,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					<>
 						{parts.map((part, i) => {
 							// Create a unique key that doesn't rely on array index
-							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+							const uniqueKey = `${text.slice(0, 3)}-${part.slice(0, 3)}-${i}`;
 
 							return part.toLowerCase() === searchQuery.toLowerCase() ? (
 								<span key={uniqueKey} className="highlight-text">
@@ -819,7 +819,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const getLastVisibleChipIndex = useCallback((): number => {
 		const visibleIndices = getVisibleChipIndices();
 		return visibleIndices.length > 0
-			? visibleIndices[visibleIndices.length - 1]
+			? visibleIndices.at(-1)
 			: -1;
 	}, [getVisibleChipIndices]);
 

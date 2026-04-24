@@ -91,7 +91,7 @@ describe('Legend Scroll Position Preservation', () => {
 
 		const legend = document.createElement('div');
 		legend.className = 'u-legend';
-		mockChart.root.appendChild(legend);
+		mockChart.root.append(legend);
 
 		const addEventListenerSpy = jest.spyOn(legend, 'addEventListener');
 
@@ -126,7 +126,7 @@ describe('Legend Scroll Position Preservation', () => {
 		legend.className = 'u-legend';
 		legend.scrollTop = 0;
 		legend.scrollLeft = 0;
-		mockChart.root.appendChild(legend);
+		mockChart.root.append(legend);
 
 		// Mock requestAnimationFrame
 		const mockRequestAnimationFrame = jest.fn((callback) => callback());
@@ -188,7 +188,7 @@ describe('Legend Scroll Position Preservation', () => {
 		bottomLegend.className = 'u-legend';
 		bottomLegend.scrollTop = 0;
 		bottomLegend.scrollLeft = 0;
-		bottomChart.root.appendChild(bottomLegend);
+		bottomChart.root.append(bottomLegend);
 
 		// Execute bottom legend ready hook
 		if (bottomOptions.hooks?.ready) {
@@ -206,7 +206,7 @@ describe('Legend Scroll Position Preservation', () => {
 		rightLegend.className = 'u-legend';
 		rightLegend.scrollTop = 0;
 		rightLegend.scrollLeft = 0;
-		rightChart.root.appendChild(rightLegend);
+		rightChart.root.append(rightLegend);
 
 		// Execute right legend ready hook
 		if (rightOptions.hooks?.ready) {

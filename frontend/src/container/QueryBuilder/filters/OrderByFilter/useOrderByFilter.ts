@@ -68,7 +68,7 @@ export const useOrderByFilter = ({
 
 	const generateOptions = useCallback(
 		(options: IOption[]): IOption[] => {
-			const currentCustomValue = options.find(
+			const currentCustomValue = options.some(
 				(keyOption) =>
 					getRemoveOrderFromValue(keyOption.value) === debouncedSearchText,
 			)

@@ -22,8 +22,8 @@ export const getTimeRangeFromQueryRangeRequest = (
 	});
 
 	return {
-		startTime: (parseInt(globalStartTime, 10) * 1e3) / 1000,
-		endTime: (parseInt(globalEndTime, 10) * 1e3) / 1000,
+		startTime: (Number.parseInt(globalStartTime, 10) * 1e3) / 1000,
+		endTime: (Number.parseInt(globalEndTime, 10) * 1e3) / 1000,
 	};
 };
 

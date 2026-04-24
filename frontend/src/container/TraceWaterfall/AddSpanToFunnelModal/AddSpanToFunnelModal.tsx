@@ -93,8 +93,7 @@ function AddSpanToFunnelModal({
 	const [activeView, setActiveView] = useState<ModalView>(ModalView.LIST);
 	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [selectedFunnelId, setSelectedFunnelId] = useState<string | undefined>(
-		undefined,
-	);
+		);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 	const [triggerSave, setTriggerSave] = useState<boolean>(false);
 	const [isUnsavedChanges, setIsUnsavedChanges] = useState<boolean>(false);

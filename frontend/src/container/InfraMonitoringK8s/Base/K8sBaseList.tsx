@@ -163,7 +163,7 @@ export function K8sBaseList<T>({
 
 	const formattedItemsData = useMemo(() => {
 		if (!pageData) {
-			return undefined;
+			return;
 		}
 
 		const rows = pageData.map((item) => renderRowData(item, groupBy));

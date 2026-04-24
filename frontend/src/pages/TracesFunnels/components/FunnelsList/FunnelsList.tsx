@@ -67,7 +67,7 @@ export function FunnelListItem({
 				<div className="funnel-item__user">
 					{funnel.user_email && (
 						<div className="funnel-item__user-avatar">
-							{funnel.user_email.substring(0, 1).toUpperCase()}
+							{funnel.user_email.slice(0, 1).toUpperCase()}
 						</div>
 					)}
 					<div>{funnel.user_email}</div>

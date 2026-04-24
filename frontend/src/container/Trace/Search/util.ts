@@ -75,12 +75,12 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 		// Split the tagValues by ',' and remove any quotes
 		const filters = formattedTagValues
 			.split(',')
-			.map((e) => e.replaceAll(/"/g, ''));
+			.map((e) => e.replaceAll('"', ''));
 
 		// Check for errors in the filters
 		filters.forEach((e) => {
 			const firstChar = e.charAt(0);
-			const lastChar = e.charAt(e.length - 1);
+			const lastChar = e.at(-1);
 			isError = firstChar === '"' && lastChar === '"' ? true : isError;
 		});
 
@@ -111,7 +111,7 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 };
 
 const formatValues = (values: TagValueTypes[]): string =>
-	values.map((e) => `"${e.toString().replaceAll(/"/g, '')}"`).join(',');
+	values.map((e) => `"${e.toString().replaceAll('"', '')}"`).join(',');
 
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	let isError = false;

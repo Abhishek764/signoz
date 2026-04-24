@@ -226,7 +226,7 @@ function QueryBuilderSearchV2(
 			currentFilterItem?.key?.dataType,
 			currentFilterItem?.key?.type ?? '',
 			isArray(currentFilterItem?.value)
-				? currentFilterItem?.value?.[currentFilterItem.value.length - 1]
+				? currentFilterItem?.value.at(-1)
 				: currentFilterItem?.value,
 		],
 		[
@@ -306,7 +306,7 @@ function QueryBuilderSearchV2(
 				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
 			tagType: currentFilterItem?.key?.type ?? '',
 			searchText: isArray(currentFilterItem?.value)
-				? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
+				? String(currentFilterItem?.value.at(-1)) ||
 				  ''
 				: currentFilterItem?.value?.toString() || '',
 		},
@@ -798,8 +798,8 @@ function QueryBuilderSearchV2(
 			const values: string[] = [];
 			const { tagValue } = getTagToken(searchValue);
 			if (isArray(tagValue)) {
-				if (!isEmpty(tagValue[tagValue.length - 1])) {
-					values.push(tagValue[tagValue.length - 1]);
+				if (!isEmpty(tagValue.at(-1))) {
+					values.push(tagValue.at(-1));
 				}
 			} else if (!isEmpty(tagValue)) {
 				values.push(tagValue);
@@ -855,7 +855,7 @@ function QueryBuilderSearchV2(
 			const computedTagValue =
 				tag.value &&
 				Array.isArray(tag.value) &&
-				tag.value[tag.value.length - 1] === ''
+				tag.value.at(-1) === ''
 					? tag.value?.slice(0, -1)
 					: tag.value ?? '';
 			filterTags.items.push({
@@ -887,7 +887,7 @@ function QueryBuilderSearchV2(
 	const isLastQuery = useMemo(
 		() =>
 			isEqual(
-				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
+				currentQuery.builder.queryData.at(-1),
 				query,
 			),
 		[currentQuery, query],

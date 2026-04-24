@@ -66,7 +66,7 @@ export function deriveResourcesForRelation(
 		.filter((r) => supportedTypes.includes(r.type))
 		.map((r) => ({
 			id: r.name,
-			label: capitalize(r.name).replace(/_/g, ' '),
+			label: capitalize(r.name).replaceAll(/_/g, ' '),
 			options: [],
 		}));
 }

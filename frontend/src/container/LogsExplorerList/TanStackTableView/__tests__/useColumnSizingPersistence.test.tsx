@@ -39,7 +39,7 @@ describe('useColumnSizingPersistence', () => {
 			useColumnSizingPersistence([col('body'), col('timestamp')]),
 		);
 
-		expect(result.current.columnSizing).toEqual({});
+		expect(result.current.columnSizing).toStrictEqual({});
 	});
 
 	it('parses flat ColumnSizingState from localStorage', () => {
@@ -49,7 +49,7 @@ describe('useColumnSizingPersistence', () => {
 			useColumnSizingPersistence([col('body'), col('timestamp')]),
 		);
 
-		expect(result.current.columnSizing).toEqual({ body: 400, timestamp: 180 });
+		expect(result.current.columnSizing).toStrictEqual({ body: 400, timestamp: 180 });
 	});
 
 	it('parses PersistedColumnSizing wrapper with sizing + columnIdsSignature', () => {
@@ -65,14 +65,14 @@ describe('useColumnSizingPersistence', () => {
 			useColumnSizingPersistence([col('body'), col('timestamp')]),
 		);
 
-		expect(result.current.columnSizing).toEqual({ body: 300 });
+		expect(result.current.columnSizing).toStrictEqual({ body: 300 });
 	});
 
 	it('drops invalid numeric entries when reading from localStorage', () => {
 		mockGet.mockReturnValue(
 			JSON.stringify({
 				body: 200,
-				bad: NaN,
+				bad: Number.NaN,
 				zero: 0,
 				neg: -1,
 				str: 'wide',
@@ -83,7 +83,7 @@ describe('useColumnSizingPersistence', () => {
 			useColumnSizingPersistence([col('body'), col('bad'), col('zero')]),
 		);
 
-		expect(result.current.columnSizing).toEqual({ body: 200 });
+		expect(result.current.columnSizing).toStrictEqual({ body: 200 });
 	});
 
 	it('returns empty sizing when JSON is invalid', () => {
@@ -94,7 +94,7 @@ describe('useColumnSizingPersistence', () => {
 			useColumnSizingPersistence([col('body')]),
 		);
 
-		expect(result.current.columnSizing).toEqual({});
+		expect(result.current.columnSizing).toStrictEqual({});
 		spy.mockRestore();
 	});
 
@@ -115,7 +115,7 @@ describe('useColumnSizingPersistence', () => {
 			},
 		);
 
-		expect(result.current.columnSizing).toEqual({ body: 400 });
+		expect(result.current.columnSizing).toStrictEqual({ body: 400 });
 
 		act(() => {
 			rerender({
@@ -123,7 +123,7 @@ describe('useColumnSizingPersistence', () => {
 			});
 		});
 
-		expect(result.current.columnSizing).toEqual({ body: 400 });
+		expect(result.current.columnSizing).toStrictEqual({ body: 400 });
 	});
 
 	it('updates setColumnSizing manually', () => {
@@ -135,7 +135,7 @@ describe('useColumnSizingPersistence', () => {
 			result.current.setColumnSizing({ body: 500 });
 		});
 
-		expect(result.current.columnSizing).toEqual({ body: 500 });
+		expect(result.current.columnSizing).toStrictEqual({ body: 500 });
 	});
 
 	it('debounces writes to localStorage', () => {
@@ -162,7 +162,7 @@ describe('useColumnSizingPersistence', () => {
 	it('does not persist when ordered columns signature effect runs with empty ids early — still debounces empty sizing', () => {
 		const { result } = renderHook(() => useColumnSizingPersistence([]));
 
-		expect(result.current.columnSizing).toEqual({});
+		expect(result.current.columnSizing).toStrictEqual({});
 
 		act(() => {
 			jest.advanceTimersByTime(250);

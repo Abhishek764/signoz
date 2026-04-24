@@ -76,7 +76,7 @@ export const useTag = (
 			const { tagKey } = getTagToken(value);
 			const parts = tagKey.split('-');
 			// this is done to ensure that `hello-world` also gets converted to `body CONTAINS hello-world`
-			let id = parts[parts.length - 1];
+			let id = parts.at(-1);
 			let key = parts.slice(0, -1).join('-');
 			if (parts.length === 1) {
 				id = '';

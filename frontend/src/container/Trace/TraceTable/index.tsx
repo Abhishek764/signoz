@@ -194,7 +194,7 @@ function TraceTable(): JSX.Element {
 
 	const totalObject = omit(statusFilter, [...(selectedStatusFilter || [])]);
 	const totalCount = Object.values(totalObject).reduce(
-		(a, b) => parseInt(String(a), 10) + parseInt(String(b), 10),
+		(a, b) => Number.parseInt(String(a), 10) + Number.parseInt(String(b), 10),
 		0,
 	) as number;
 

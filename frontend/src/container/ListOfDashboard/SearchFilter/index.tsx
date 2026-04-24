@@ -171,9 +171,9 @@ function SearchFilter({
 			{optionsData && (
 				<Select
 					placeholder={
-						!queries.length &&
-						!staging.length &&
-						!selectedValues.length &&
+						queries.length === 0 &&
+						staging.length === 0 &&
+						selectedValues.length === 0 &&
 						'Search or Filter results'
 					}
 					size="small"

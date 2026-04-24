@@ -69,7 +69,7 @@ describe('shouldOpenNewTab decision logic', () => {
 		const shouldOpenNewTab = (options?: { newTab?: boolean }): boolean =>
 			Boolean(options?.newTab);
 		expect(shouldOpenNewTab()).toBe(false);
-		expect(shouldOpenNewTab(undefined)).toBe(false);
+		expect(shouldOpenNewTab()).toBe(false);
 	});
 
 	it('returns false when options provided without newTab', () => {

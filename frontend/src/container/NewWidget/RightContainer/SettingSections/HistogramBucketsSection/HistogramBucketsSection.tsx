@@ -47,7 +47,7 @@ export default function HistogramBucketsSection({
 					precision={2}
 					placeholder="Default: Auto"
 					step={0.1}
-					min={0.0}
+					min={0}
 					rootClassName="histogram-settings__bucket-input"
 					onChange={(val): void => {
 						setBucketWidth(val || 0);

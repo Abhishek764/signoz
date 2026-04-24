@@ -158,20 +158,20 @@ export const placement = (function () {
 		element.style.maxHeight = '';
 
 		// Cross-axis: calculate and apply max size constraint
-		const crossMarginBefore = parseInt(styles[crossAxis.marginBefore]);
-		const crossMarginAfter = parseInt(styles[crossAxis.marginAfter]);
+		const crossMarginBefore = Number.parseInt(styles[crossAxis.marginBefore]);
+		const crossMarginAfter = Number.parseInt(styles[crossAxis.marginAfter]);
 		const crossMarginTotal = crossMarginBefore + crossMarginAfter;
 		const crossAvailableSpace =
 			bounds[crossAxis.after] - bounds[crossAxis.before] - crossMarginTotal;
-		const crossMaxSize = parseInt(styles[crossAxis.maxSize]);
+		const crossMaxSize = Number.parseInt(styles[crossAxis.maxSize]);
 
 		(!crossMaxSize || crossAvailableSpace < crossMaxSize) &&
 			(element.style[crossAxis.maxSize] = `${crossAvailableSpace}px`);
 
 		// Main-axis: calculate space on both sides
 		const mainMarginTotal =
-			parseInt(styles[mainAxis.marginBefore]) +
-			parseInt(styles[mainAxis.marginAfter]);
+			Number.parseInt(styles[mainAxis.marginBefore]) +
+			Number.parseInt(styles[mainAxis.marginAfter]);
 		const spaceBefore =
 			anchorRect[mainAxis.before] - bounds[mainAxis.before] - mainMarginTotal;
 		const spaceAfter =
@@ -185,7 +185,7 @@ export const placement = (function () {
 		// Apply main-axis max size constraint
 		const mainAvailableSpace =
 			side === mainAxis.before ? spaceBefore : spaceAfter;
-		const mainMaxSize = parseInt(styles[mainAxis.maxSize]);
+		const mainMaxSize = Number.parseInt(styles[mainAxis.maxSize]);
 
 		(!mainMaxSize || mainAvailableSpace < mainMaxSize) &&
 			(element.style[mainAxis.maxSize] = `${mainAvailableSpace}px`);

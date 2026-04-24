@@ -48,7 +48,7 @@ jest.mock('uplot', () => {
 		mockUPlotConstructor(opts, data, target);
 
 		const rootEl = document.createElement('div');
-		target.appendChild(rootEl);
+		target.append(rootEl);
 
 		const inst: MockUPlotInstance = {
 			root: rootEl,
@@ -84,7 +84,7 @@ const createMockConfig = (): UPlotConfigBuilder => {
 			hooks: {},
 			cursor: {},
 		}),
-		getId: jest.fn().mockReturnValue(undefined),
+		getId: jest.fn().mockReturnValue(),
 		getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
 		getSeriesSpanGapsOptions: jest.fn().mockReturnValue([]),
 	} as unknown) as UPlotConfigBuilder;
@@ -220,8 +220,8 @@ describe('UPlotChart', () => {
 			const [opts] = mockUPlotConstructor.mock.calls[0];
 			expect(opts.width).toBe(500);
 			expect(opts.height).toBe(300);
-			expect(opts.axes).toEqual([{ scale: 'y' }]);
-			expect(opts.cursor).toEqual({ show: true });
+			expect(opts.axes).toStrictEqual([{ scale: 'y' }]);
+			expect(opts.cursor).toStrictEqual({ show: true });
 		});
 
 		it('skips creation when width or height is 0', () => {
@@ -346,8 +346,8 @@ describe('UPlotChart', () => {
 			});
 
 			const [, receivedData] = mockUPlotConstructor.mock.calls[0];
-			expect(receivedData[0]).toEqual([0, 50, 100]);
-			expect(receivedData[1]).toEqual([1, null, 2]);
+			expect(receivedData[0]).toStrictEqual([0, 50, 100]);
+			expect(receivedData[1]).toStrictEqual([1, null, 2]);
 		});
 
 		it('passes data through unchanged when no gap exceeds the numeric threshold', () => {
@@ -396,8 +396,8 @@ describe('UPlotChart', () => {
 			);
 
 			const receivedData = instances[0].setData.mock.calls[0][0];
-			expect(receivedData[0]).toEqual([0, 50, 100]);
-			expect(receivedData[1]).toEqual([3, null, 4]);
+			expect(receivedData[0]).toStrictEqual([0, 50, 100]);
+			expect(receivedData[1]).toStrictEqual([3, null, 4]);
 		});
 	});
 

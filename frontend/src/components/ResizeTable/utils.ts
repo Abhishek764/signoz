@@ -68,9 +68,9 @@ export const getNewColumnData: GetNewColumnDataFunction = ({
 	if (checked && dynamicColumns) {
 		return prevColumns
 			? [
-					...prevColumns.slice(0, prevColumns.length - 1),
+					...prevColumns.slice(0, - 1),
 					dynamicColumns[index],
-					prevColumns[prevColumns.length - 1],
+					prevColumns.at(-1),
 			  ]
 			: undefined;
 	}

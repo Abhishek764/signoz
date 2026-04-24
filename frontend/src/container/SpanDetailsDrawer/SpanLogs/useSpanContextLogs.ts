@@ -179,7 +179,7 @@ export const useSpanContextLogs = ({
 
 		return {
 			firstSpanLog: sortedLogs[0],
-			lastSpanLog: sortedLogs[sortedLogs.length - 1],
+			lastSpanLog: sortedLogs.at(-1),
 		};
 	}, [spanLogs]);
 	// Phase 2: Fetch context logs before first span log

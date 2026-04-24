@@ -123,7 +123,7 @@ export const formUrlParams = (params: Record<string, any>): string => {
 		try {
 			encodedValue = decodeURIComponent(value);
 			encodedValue = encodeURIComponent(encodedValue);
-		} catch (error) {
+		} catch {
 			encodedValue = '';
 		}
 		if (index === 0) {

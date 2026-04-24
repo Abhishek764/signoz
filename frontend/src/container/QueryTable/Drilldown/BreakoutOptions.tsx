@@ -86,9 +86,9 @@ function BreakoutOptions({
 		});
 
 		// Filter out already selected groupBy keys
-		const groupByKeys = groupBy.map((item: BaseAutocompleteData) => item.key);
+		const groupByKeys = new Set(groupBy.map((item: BaseAutocompleteData) => item.key));
 		return transformedOptions.filter(
-			(item: BreakoutAttributeType) => !groupByKeys.includes(item.key),
+			(item: BreakoutAttributeType) => !groupByKeys.has(item.key),
 		);
 	}, [data, groupBy]);
 

@@ -5,5 +5,5 @@ export function getMaskedKey(key: string): string {
 	if (!key || key.length < 4) {
 		return key || 'N/A';
 	}
-	return `${key.substring(0, 2)}·······${key.slice(-2).trim()}`;
+	return `${key.slice(0, 2)}·······${key.slice(-2).trim()}`;
 }

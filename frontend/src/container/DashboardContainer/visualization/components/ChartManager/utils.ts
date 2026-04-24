@@ -33,7 +33,7 @@ function roundToDecimalPrecision(
 	// regex to match the decimal precision for the given decimal precision
 	const regex = new RegExp(`^-?\\d*\\.?0*\\d{0,${decimalPrecision}}`);
 	const matched = value ? value.toFixed(decimalPrecision).match(regex) : null;
-	return matched ? parseFloat(matched[0]) : 0;
+	return matched ? Number.parseFloat(matched[0]) : 0;
 }
 
 /** Build table dataset from uPlot options and aligned data */

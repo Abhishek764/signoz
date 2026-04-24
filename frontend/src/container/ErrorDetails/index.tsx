@@ -99,7 +99,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			};
 
 			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
-		} catch (error) {
+		} catch {
 			notifications.error({
 				message: t('something_went_wrong'),
 			});

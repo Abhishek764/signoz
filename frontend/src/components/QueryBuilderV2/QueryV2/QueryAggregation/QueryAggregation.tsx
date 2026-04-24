@@ -23,7 +23,7 @@ function QueryAggregationOptions({
 	panelType?: string;
 	onAggregationIntervalChange: (value: number) => void;
 	onChange?: (value: string) => void;
-	queryData: IBuilderQuery | IBuilderTraceOperator;
+	queryData: IBuilderQuery  ;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
 		if (panelType === PANEL_TYPES.VALUE) {

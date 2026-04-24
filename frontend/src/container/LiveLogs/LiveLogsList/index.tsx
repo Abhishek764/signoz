@@ -48,7 +48,7 @@ function LiveLogsList({
 
 	// get only data from the logs object
 	const formattedLogs: ILog[] = useMemo(
-		() => logs.map((log) => log?.data).flat(),
+		() => logs.flatMap((log) => log?.data),
 		[logs],
 	);
 
@@ -153,7 +153,7 @@ function LiveLogsList({
 			{(formattedLogs.length === 0 || isLoading || isLoadingList) &&
 				renderLoading()}
 
-			{formattedLogs.length !== 0 && (
+			{formattedLogs.length > 0 && (
 				<InfinityWrapperStyled>
 					{options.format === OptionFormatTypes.TABLE ? (
 						<TanStackTableView

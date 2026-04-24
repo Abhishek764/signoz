@@ -216,7 +216,7 @@ describe('MetricDetails utils', () => {
 		});
 
 		it('should create query with default values for unknown metric type', () => {
-			const query = getMetricDetailsQuery(TEST_METRIC_NAME, undefined);
+			const query = getMetricDetailsQuery(TEST_METRIC_NAME);
 
 			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,

@@ -26,7 +26,7 @@ import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataMode
 const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	const builderQueries: Record<
 		string,
-		IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
+		IBuilderQuery | IBuilderFormula  
 	> = {};
 	const builderQueryTypes: Record<
 		string,

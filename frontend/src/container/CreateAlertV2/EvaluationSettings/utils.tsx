@@ -99,7 +99,7 @@ export function buildAlertScheduleFromRRule(
 		}
 
 		// Handle literal \n in string
-		let finalRRuleString = rruleString.replace(/\\n/g, '\n');
+		let finalRRuleString = rruleString.replaceAll(/\\n/g, '\n');
 
 		if (date) {
 			const dt = dayjs(date);
@@ -117,7 +117,7 @@ export function buildAlertScheduleFromRRule(
 
 			const dtStartStr = dtWithTime
 				.toISOString()
-				.replace(/[-:]/g, '')
+				.replaceAll(/[-:]/g, '')
 				.replace(/\.\d{3}Z$/, 'Z');
 
 			if (!/DTSTART/i.test(finalRRuleString)) {
@@ -136,7 +136,7 @@ export function buildAlertScheduleFromRRule(
 		});
 
 		return occurrences;
-	} catch (error) {
+	} catch {
 		return null;
 	}
 }
@@ -251,7 +251,7 @@ export function buildAlertScheduleFromCustomSchedule(
 
 		if (repeatEvery === 'month') {
 			const targetDays = occurence
-				.map((day) => parseInt(day, 10))
+				.map((day) => Number.parseInt(day, 10))
 				.filter((day) => !Number.isNaN(day));
 			occurrences = generateMonthlyOccurrences(
 				targetDays,
@@ -296,7 +296,7 @@ export function buildAlertScheduleFromCustomSchedule(
 export function isValidRRule(rruleString: string): boolean {
 	try {
 		// normalize escaped \n
-		const finalRRuleString = rruleString.replace(/\\n/g, '\n');
+		const finalRRuleString = rruleString.replaceAll(/\\n/g, '\n');
 		rrulestr(finalRRuleString); // will throw if invalid
 		return true;
 	} catch {

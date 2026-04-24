@@ -16,16 +16,16 @@ export const parseQueryIntoCurrent = (
 		try {
 			const parsedValue = JSON.parse(decodeURIComponent(selected));
 			if (Number.isInteger(parsedValue)) {
-				current = parseInt(parsedValue, 10);
+				current = Number.parseInt(parsedValue, 10);
 			}
 		} catch (error) {
-			console.error('error while parsing json: ', error);
+			console.error('error while parsing json:', error);
 		}
 	}
 
 	if (selected) {
 		return {
-			currentValue: parseInt(selected, 10),
+			currentValue: Number.parseInt(selected, 10),
 			urlValue: current,
 		};
 	}

@@ -74,7 +74,7 @@ describe('InfraMonitoringHosts utils', () => {
 				cpu: 0.5,
 				memory: 0.4,
 				wait: 0.01,
-				load15: 1.0,
+				load15: 1,
 				os: 'linux',
 				cpuTimeSeries: emptyTimeSeries,
 				memoryTimeSeries: emptyTimeSeries,

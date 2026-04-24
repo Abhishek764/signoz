@@ -159,7 +159,7 @@ function HavingFilter({
 		if (tokens.length === 0) {
 			return false;
 		}
-		const lastToken = tokens[tokens.length - 1];
+		const lastToken = tokens.at(-1);
 		// Check if the last token is exactly an operator or ends with an operator and space
 		return havingOperators.some((op) => {
 			const opWithSpace = `${op.value} `;
@@ -253,7 +253,7 @@ function HavingFilter({
 					if (
 						!text.endsWith(' ') &&
 						tokens.length >= 2 &&
-						havingOperators.some((op) => op.value === tokens[tokens.length - 2])
+						havingOperators.some((op) => op.value === tokens.at(-2))
 					) {
 						return null;
 					}
@@ -261,8 +261,8 @@ function HavingFilter({
 					// Suggest key/operator pairs and ( for grouping
 					if (
 						tokens.length === 0 ||
-						conjunctions.some((c) => tokens[tokens.length - 1] === c.value.trim()) ||
-						tokens[tokens.length - 1] === '('
+						conjunctions.some((c) => tokens.at(-1) === c.value.trim()) ||
+						tokens.at(-1) === '('
 					) {
 						return {
 							from: context.pos,
@@ -275,7 +275,7 @@ function HavingFilter({
 
 					// Show suggestions when typing
 					if (tokens.length > 0) {
-						const lastToken = tokens[tokens.length - 1];
+						const lastToken = tokens.at(-1);
 						const filteredOptions = options.filter((opt) =>
 							opt.label.toLowerCase().includes(lastToken.toLowerCase()),
 						);
@@ -293,8 +293,8 @@ function HavingFilter({
 					// Suggest conjunctions after a value and a space
 					if (
 						tokens.length > 0 &&
-						(isNumber(tokens[tokens.length - 1]) ||
-							tokens[tokens.length - 1] === ')') &&
+						(isNumber(tokens.at(-1)) ||
+							tokens.at(-1) === ')') &&
 						text.endsWith(' ')
 					) {
 						return {

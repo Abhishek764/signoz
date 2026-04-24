@@ -62,7 +62,7 @@ export function RequestIntegrationBtn({
 
 				setIsSubmittingRequestForIntegration(false);
 			}
-		} catch (error) {
+		} catch {
 			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',

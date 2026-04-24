@@ -69,7 +69,7 @@ export function mergeAlignedDataTables(
 
 	// Sorted, merged x-axis used by the final result.
 	const alignedData: (number | null | undefined)[][] = [
-		Array.from(mergedXValues).sort((a, b) => a - b),
+		[...mergedXValues].sort((a, b) => a - b),
 	];
 
 	const alignedLength = alignedData[0].length;
@@ -89,7 +89,7 @@ export function mergeAlignedDataTables(
 		for (let seriesIndex = 1; seriesIndex < table.length; seriesIndex++) {
 			const seriesValues = table[seriesIndex];
 
-			const alignedSeriesValues = Array(alignedLength).fill(undefined);
+			const alignedSeriesValues = Array(alignedLength).fill();
 
 			const nullHandlingMode = nullModes
 				? nullModes[tableIndex][seriesIndex]

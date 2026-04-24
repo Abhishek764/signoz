@@ -8,7 +8,7 @@ import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
 export const convertQueriesToURLQuery = (
 	queries: IQueryStructure[],
 ): string => {
-	if (!queries || !queries.length) {
+	if (!queries || queries.length === 0) {
 		return '';
 	}
 
@@ -35,11 +35,11 @@ export const executeSearchQueries = (
 	queries: IQueryStructure[] = [],
 	searchData: Dashboard[] = [],
 ): Dashboard[] => {
-	if (!searchData.length || !queries.length) {
+	if (searchData.length === 0 || queries.length === 0) {
 		return searchData;
 	}
 	const escapeRegExp = (regExp: string): string =>
-		regExp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		regExp.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 	queries.forEach((query: IQueryStructure) => {
 		const { operator } = query;
@@ -53,14 +53,14 @@ export const executeSearchQueries = (
 			try {
 				const searchSpace =
 					flattenDeep([searchPayload[categoryLowercase]]).filter(Boolean) || null;
-				if (!searchSpace || !searchSpace.length) {
+				if (!searchSpace || searchSpace.length === 0) {
 					return resolveOperator(false, operator);
 				}
 
 				for (const searchSpaceItem of searchSpace) {
 					if (searchSpaceItem) {
 						for (const queryValue of value) {
-							if (searchSpaceItem.match(escapeRegExp(queryValue))) {
+							if (escapeRegExp(queryValue).test(searchSpaceItem)) {
 								return resolveOperator(true, operator);
 							}
 						}
@@ -136,7 +136,7 @@ export function OptionsValueResolution(
 			options: uniqWith(
 				map(
 					flattenDeep(
-						// @ts-ignore
+						// @ts-expect-error
 						map(searchData, (searchItem) => searchItem.data.tags).filter(Boolean),
 					),
 					(tag) => ({ name: tag }),

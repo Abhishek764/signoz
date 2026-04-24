@@ -28,7 +28,7 @@ function TriggeredAlerts({
 				</NoTableContainer>
 			) : (
 				<div>
-					{selectedFilter.length !== 0 && selectedGroup.length === 0 ? (
+					{selectedFilter.length > 0 && selectedGroup.length === 0 ? (
 						<NoTableContainer>
 							<NoFilterTable selectedFilter={selectedFilter} allAlerts={allAlerts} />
 						</NoTableContainer>

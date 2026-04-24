@@ -9,7 +9,7 @@ const getOrCreateLegendList = (
 	id: string,
 	isLonger: boolean,
 ): HTMLUListElement => {
-	const legendContainer = document.getElementById(id);
+	const legendContainer = document.querySelector(`#${id}`);
 	let listContainer = legendContainer?.querySelector('ul');
 
 	if (!listContainer) {
@@ -26,7 +26,7 @@ const getOrCreateLegendList = (
 		listContainer.style.flexWrap = 'wrap';
 		listContainer.style.justifyContent = 'center';
 		listContainer.style.fontSize = '0.75rem';
-		legendContainer?.appendChild(listContainer);
+		legendContainer?.append(listContainer);
 	}
 
 	return listContainer;
@@ -64,7 +64,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 			// li.style.marginTop = '5px';
 
 			li.onclick = (): void => {
-				// @ts-ignore
+				// @ts-expect-error
 				const { type } = chart.config;
 				if (type === 'pie' || type === 'doughnut') {
 					// Pie and doughnut charts only have a single dataset and visibility is per item
@@ -101,11 +101,11 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 				textContainer.style.textDecoration = item.hidden ? 'line-through' : '';
 
 				const text = document.createTextNode(item.text);
-				textContainer.appendChild(text);
+				textContainer.append(text);
 
-				li.appendChild(boxSpan);
-				li.appendChild(textContainer);
-				ul.appendChild(li);
+				li.append(boxSpan);
+				li.append(textContainer);
+				ul.append(li);
 			}
 		});
 	},

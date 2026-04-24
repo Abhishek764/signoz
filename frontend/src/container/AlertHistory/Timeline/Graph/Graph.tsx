@@ -38,12 +38,12 @@ function HorizontalTimelineGraph({
 
 		const timestamps = [
 			...data.map((item) => item.start / 1000),
-			data[data.length - 1].end / 1000, // end value of last entry
+			data.at(-1).end / 1000, // end value of last entry
 		];
 
 		const states = [
 			...data.map((item) => ALERT_STATUS[item.state]),
-			ALERT_STATUS[data[data.length - 1].state], // Same state as the last entry
+			ALERT_STATUS[data.at(-1).state], // Same state as the last entry
 		];
 
 		return [timestamps, states];

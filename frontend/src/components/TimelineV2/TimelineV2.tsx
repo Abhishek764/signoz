@@ -29,7 +29,7 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 		}
 
 		const minIntervals = getMinimumIntervalsBasedOnWidth(width);
-		const intervalisedSpread = (spread / minIntervals) * 1.0;
+		const intervalisedSpread = (spread / minIntervals) * 1;
 		setIntervals(getIntervals(intervalisedSpread, spread));
 	}, [startTimestamp, endTimestamp, width]);
 

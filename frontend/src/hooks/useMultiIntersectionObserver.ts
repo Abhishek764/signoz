@@ -24,7 +24,7 @@ export function useMultiIntersectionObserver(
 	);
 
 	useEffect(() => {
-		if (!elementsRef.current.length) {
+		if (elementsRef.current.length === 0) {
 			return;
 		}
 

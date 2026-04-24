@@ -394,7 +394,7 @@ export function QueryBuilderProvider({
 				const currentArray: (
 					| IBuilderQuery
 					| IBuilderFormula
-					| IBuilderTraceOperator
+					 
 				)[] = prevState.builder[type];
 
 				const filteredArray = currentArray.filter((_, i) => index !== i);
@@ -412,7 +412,7 @@ export function QueryBuilderProvider({
 				const currentArray: (
 					| IBuilderQuery
 					| IBuilderFormula
-					| IBuilderTraceOperator
+					 
 				)[] = prevState.builder[type];
 
 				const filteredArray = currentArray.filter((_, i) => index !== i);
@@ -1055,20 +1055,18 @@ export function QueryBuilderProvider({
 			},
 		};
 
-		redirectWithQueryBuilderData({
-			...{
-				...currentQueryData,
-				...updateStepInterval({
-					builder: currentQueryData.builder,
-					clickhouse_sql: currentQueryData.clickhouse_sql,
-					promql: currentQueryData.promql,
-					id: currentQueryData.id,
-					queryType,
-					unit: currentQueryData.unit,
-				}),
-			},
-			queryType,
-		});
+		redirectWithQueryBuilderData(({
+	...currentQueryData,
+	...updateStepInterval({
+		builder: currentQueryData.builder,
+		clickhouse_sql: currentQueryData.clickhouse_sql,
+		promql: currentQueryData.promql,
+		id: currentQueryData.id,
+		queryType,
+		unit: currentQueryData.unit
+	}),
+	queryType
+}));
 	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
 
 	useEffect(() => {

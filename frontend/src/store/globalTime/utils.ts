@@ -44,8 +44,8 @@ export function parseCustomTimeRange(
 	}
 
 	const [minStr, maxStr] = selectedTime.split(CUSTOM_TIME_SEPARATOR);
-	const minTime = parseInt(minStr, 10);
-	const maxTime = parseInt(maxStr, 10);
+	const minTime = Number.parseInt(minStr, 10);
+	const maxTime = Number.parseInt(maxStr, 10);
 
 	if (Number.isNaN(minTime) || Number.isNaN(maxTime)) {
 		return null;

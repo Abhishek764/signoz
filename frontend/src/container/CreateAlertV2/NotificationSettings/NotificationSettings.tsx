@@ -31,7 +31,7 @@ function NotificationSettings(): JSX.Element {
 						type: 'SET_RE_NOTIFICATION',
 						payload: {
 							enabled: notificationSettings.reNotification.enabled,
-							value: parseInt(e.target.value, 10),
+							value: Number.parseInt(e.target.value, 10),
 							unit: notificationSettings.reNotification.unit,
 							conditions: notificationSettings.reNotification.conditions,
 						},

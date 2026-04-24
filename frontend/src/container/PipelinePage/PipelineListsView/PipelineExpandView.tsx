@@ -57,7 +57,7 @@ function PipelineExpandView({
 				for (let i = 0; i < pipelineData.config.length - 1; i += 1) {
 					pipelineData.config[i].output = pipelineData.config[i + 1].id;
 				}
-				delete pipelineData.config[pipelineData.config.length - 1]?.output;
+				delete pipelineData.config.at(-1)?.output;
 				setExpandedPipelineData(pipelineData);
 			}
 		},

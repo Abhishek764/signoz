@@ -440,8 +440,8 @@ function ClientSideQBSearch(
 			const values: Array<string | number | boolean> = [];
 			const { tagValue } = getTagToken(searchValue);
 			if (isArray(tagValue)) {
-				if (!isEmpty(tagValue[tagValue.length - 1])) {
-					values.push(tagValue[tagValue.length - 1]);
+				if (!isEmpty(tagValue.at(-1))) {
+					values.push(tagValue.at(-1));
 				}
 			} else if (!isEmpty(tagValue)) {
 				values.push(tagValue);
@@ -488,7 +488,7 @@ function ClientSideQBSearch(
 			const computedTagValue =
 				tag.value &&
 				Array.isArray(tag.value) &&
-				tag.value[tag.value.length - 1] === ''
+				tag.value.at(-1) === ''
 					? tag.value?.slice(0, -1)
 					: tag.value ?? '';
 			filterTags.items.push({
@@ -610,7 +610,7 @@ function ClientSideQBSearch(
 				searchValue={searchValue}
 				className={className}
 				rootClassName="query-builder-search client-side-qb-search"
-				disabled={!attributeKeys.length}
+				disabled={attributeKeys.length === 0}
 				style={selectStyle}
 				onSearch={handleSearch}
 				onSelect={handleDropdownSelect}

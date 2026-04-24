@@ -26,7 +26,7 @@ export const parseFilterExclude = (
 					}
 				});
 			}
-		} catch (error) {
+		} catch {
 			// parsing the value
 		}
 	}

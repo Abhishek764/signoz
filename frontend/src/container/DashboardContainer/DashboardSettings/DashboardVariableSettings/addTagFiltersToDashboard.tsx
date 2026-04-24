@@ -46,7 +46,7 @@ const updateQueryFilters = (
 	});
 
 	// if yet the filter key doesn't get added then add it
-	if (!newItems.find((item) => item.key?.key === currentFilterKey)) {
+	if (!newItems.some((item) => item.key?.key === currentFilterKey)) {
 		newItems.push(filter);
 	}
 

@@ -605,7 +605,7 @@ export const getCategorySelectOptionByName = (
 	name?: YAxisCategoryNames,
 ): { name: string; id: UniversalYAxisUnit }[] => {
 	const categories = getYAxisCategories(YAxisSource.DASHBOARDS);
-	if (!categories.length) {
+	if (categories.length === 0) {
 		return [];
 	}
 	return (

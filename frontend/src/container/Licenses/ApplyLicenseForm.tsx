@@ -40,7 +40,7 @@ function ApplyLicenseForm({
 			await apply({
 				key: params.key,
 			});
-			await Promise.all([licenseRefetch()]);
+			[await licenseRefetch()];
 			notifications.success({
 				message: 'Success',
 				description: t('license_applied'),

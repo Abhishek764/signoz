@@ -72,7 +72,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		fireEvent.click(formatButton);
 
 		const getMenuItems = (): Element[] =>
-			Array.from(document.querySelectorAll('.menu-items .item'));
+			[...document.querySelectorAll('.menu-items .item')];
 		const findItemByLabel = (label: string): Element | undefined =>
 			getMenuItems().find((el) => (el.textContent || '').includes(label));
 
@@ -136,9 +136,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		fireEvent.click(fontButton);
 
 		// Choose MEDIUM
-		const optionButtons = Array.from(
-			document.querySelectorAll('.font-size-dropdown .option-btn'),
-		);
+		const optionButtons = [...document.querySelectorAll('.font-size-dropdown .option-btn')];
 		const mediumBtn = optionButtons[1] as HTMLElement;
 		fireEvent.click(mediumBtn);
 

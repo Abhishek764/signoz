@@ -28,7 +28,7 @@ export default function ThresholdsSection({
 		<SettingsSection
 			title="Thresholds"
 			icon={<Antenna size={14} />}
-			defaultOpen={!!thresholds.length}
+			defaultOpen={thresholds.length > 0}
 		>
 			<ThresholdSelector
 				thresholds={thresholds}

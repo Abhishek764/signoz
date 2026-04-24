@@ -188,12 +188,10 @@ function WidgetGraphComponent({
 					layout,
 					widgets: [
 						...(dashboardData.data.widgets || []),
-						{
-							...{
-								...widget,
-								id: uuid,
-							},
-						},
+						({
+	...widget,
+	id: uuid
+}),
 					],
 				},
 			},

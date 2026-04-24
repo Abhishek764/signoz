@@ -17,7 +17,7 @@ function ServiceDashboards({
 }): JSX.Element {
 	const dashboards = service?.assets?.dashboards || [];
 	const { safeNavigate } = useSafeNavigate();
-	if (!dashboards.length) {
+	if (dashboards.length === 0) {
 		return <></>;
 	}
 

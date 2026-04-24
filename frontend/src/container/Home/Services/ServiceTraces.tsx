@@ -39,7 +39,7 @@ export default function ServiceTraces({
 
 	const { user, activeLicense } = useAppContext();
 
-	const now = new Date().getTime();
+	const now = Date.now();
 	const [timeRange, setTimeRange] = useState({
 		startTime: now - homeInterval,
 		endTime: now,

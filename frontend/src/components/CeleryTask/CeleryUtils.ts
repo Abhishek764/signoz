@@ -104,11 +104,11 @@ export const createFiltersFromData = (
 	op: string;
 	value: string;
 }> => {
-	const excludeKeys = ['A', 'A_without_unit'];
+	const excludeKeys = new Set(['A', 'A_without_unit']);
 
 	return (
 		Object.entries(data)
-			.filter(([key]) => !excludeKeys.includes(key))
+			.filter(([key]) => !excludeKeys.has(key))
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			.map(([key, value]) => ({
 				id: uuidv4(),

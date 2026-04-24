@@ -90,7 +90,7 @@ export const ValidatePagerChannel = (p: PagerChannel): string => {
 	// validate details json
 	try {
 		JSON.parse(p.details || '{}');
-	} catch (e) {
+	} catch {
 		return 'failed to parse additional information, please enter a valid json';
 	}
 

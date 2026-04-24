@@ -197,8 +197,7 @@ const mockSpans = [
 // Shared TestComponent for all tests
 function TestComponent(): JSX.Element {
 	const [selectedSpan, setSelectedSpan] = React.useState<Span | undefined>(
-		undefined,
-	);
+		);
 
 	return (
 		<Success
@@ -226,7 +225,7 @@ describe('Span Click User Flows', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		// Clear all URL parameters
-		Array.from(mockUrlQuery.keys()).forEach((key) => mockUrlQuery.delete(key));
+		[...mockUrlQuery.keys()].forEach((key) => mockUrlQuery.delete(key));
 	});
 
 	it('clicking span updates URL with spanId parameter', async () => {

@@ -56,7 +56,7 @@ const showErrorNotification = (error: APIError): void => {
 function PublicDashboardSetting(): JSX.Element {
 	const [publicDashboardData, setPublicDashboardData] = useState<
 		PublicDashboardMetaProps | undefined
-	>(undefined);
+	>();
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
 	const [defaultTimeRange, setDefaultTimeRange] = useState(DEFAULT_TIME_RANGE);
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();

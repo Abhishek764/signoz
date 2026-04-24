@@ -18,7 +18,7 @@ function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 		}
 	});
 
-	const timestampsArr = Array.from(timestamps);
+	const timestampsArr = [...timestamps];
 	timestampsArr.sort((a, b) => a - b);
 
 	return timestampsArr;
@@ -51,7 +51,7 @@ function fillMissingXAxisTimestamps(
 
 			// Find missing timestamps by iterating Set directly (avoid Array.from + filter)
 			const missingTimestamps: number[] = [];
-			const allTimestampsArray = Array.from(allTimestampsSet);
+			const allTimestampsArray = [...allTimestampsSet];
 			for (let k = 0; k < allTimestampsArray.length; k++) {
 				const timestamp = allTimestampsArray[k];
 				if (!existingTimestamps.has(timestamp)) {
@@ -65,7 +65,7 @@ function fillMissingXAxisTimestamps(
 			}
 
 			// Build sorted array of values
-			const sortedTimestamps = Array.from(valuesMap.keys()).sort((a, b) => a - b);
+			const sortedTimestamps = [...valuesMap.keys()].sort((a, b) => a - b);
 			const yValues = sortedTimestamps.map((timestamp) => {
 				const value = valuesMap.get(timestamp);
 				return value !== undefined ? value : null;

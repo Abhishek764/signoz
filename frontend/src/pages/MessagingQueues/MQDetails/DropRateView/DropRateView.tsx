@@ -138,7 +138,7 @@ export function getColumns(
 				}
 				return (
 					<Typography.Text>
-						{(typeof text === 'string' ? parseFloat(text) : text).toFixed(2)} %
+						{(typeof text === 'string' ? Number.parseFloat(text) : text).toFixed(2)} %
 					</Typography.Text>
 				);
 			}

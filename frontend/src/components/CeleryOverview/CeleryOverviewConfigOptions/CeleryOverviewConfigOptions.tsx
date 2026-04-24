@@ -51,7 +51,7 @@ export function FilterSelect({
 	// Memoize options to include the typed value if not present
 	const mergedOptions = useMemo(() => {
 		if (
-			!!searchValue.trim().length &&
+			searchValue.trim().length > 0 &&
 			!options.some((opt) => opt.value === searchValue)
 		) {
 			return [{ value: searchValue, label: searchValue }, ...options];

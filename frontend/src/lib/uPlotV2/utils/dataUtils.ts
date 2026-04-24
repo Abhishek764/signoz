@@ -24,7 +24,7 @@ export function isInvalidPlotValue(value: unknown): boolean {
 		}
 
 		// Try to parse the string as a number
-		const parsedNumber = parseFloat(value);
+		const parsedNumber = Number.parseFloat(value);
 
 		// If parsing failed or resulted in a non-finite number, it's invalid
 		if (Number.isNaN(parsedNumber) || !Number.isFinite(parsedNumber)) {
@@ -45,7 +45,7 @@ export function normalizePlotValue(
 
 	// Convert string numbers to actual numbers
 	if (typeof value === 'string') {
-		return parseFloat(value);
+		return Number.parseFloat(value);
 	}
 
 	// Already a valid number

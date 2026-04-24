@@ -74,7 +74,7 @@ export const useAutoComplete = (
 			if (isMulti) {
 				setSearchValue((prev: string) => {
 					const matches = prev?.matchAll(tagRegexp);
-					const [match] = matches ? Array.from(matches) : [];
+					const [match] = matches ? [...matches] : [];
 					const [, , , matchTagValue] = match;
 					const data = parse(matchTagValue).data.flat();
 					return replaceStringWithMaxLength(prev, data as string[], value);
@@ -106,7 +106,7 @@ export const useAutoComplete = (
 
 			if (event.key === 'Backspace' && !searchValue) {
 				event.stopPropagation();
-				const last = tags[tags.length - 1];
+				const last = tags.at(-1);
 				handleClearTag(last);
 			}
 		},

@@ -47,7 +47,7 @@ function LogsContextList({
 	const [page, setPage] = useState<number>(1);
 
 	const firstLog = useMemo(() => logs[0], [logs]);
-	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
+	const lastLog = useMemo(() => logs.at(-1), [logs]);
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
 	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
@@ -192,7 +192,7 @@ function LogsContextList({
 			)}
 
 			<ListContainer $isDarkMode={isDarkMode}>
-				{((!logs.length && !isFetching) || isError) && (
+				{((logs.length === 0 && !isFetching) || isError) && (
 					<EmptyText>No Data</EmptyText>
 				)}
 				{isFetching && <Spinner size="large" height="10rem" />}

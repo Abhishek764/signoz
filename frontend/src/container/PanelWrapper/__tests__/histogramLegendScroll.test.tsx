@@ -59,7 +59,7 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 
 		const legend = document.createElement('div');
 		legend.className = 'u-legend';
-		mockChart.root.appendChild(legend);
+		mockChart.root.append(legend);
 
 		const addEventListenerSpy = jest.spyOn(legend, 'addEventListener');
 
@@ -100,7 +100,7 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 		const legend = document.createElement('div');
 		legend.className = 'u-legend';
 		legend.scrollTop = 0;
-		mockChart.root.appendChild(legend);
+		mockChart.root.append(legend);
 
 		// Mock requestAnimationFrame
 		const mockRequestAnimationFrame = jest.fn((callback) => callback());

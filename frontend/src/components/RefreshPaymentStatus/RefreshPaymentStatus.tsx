@@ -24,7 +24,7 @@ function RefreshPaymentStatus({
 		try {
 			await refreshPaymentStatus();
 
-			await Promise.all([activeLicenseRefetch()]);
+			[await activeLicenseRefetch()];
 		} catch (e) {
 			console.error(e);
 		}

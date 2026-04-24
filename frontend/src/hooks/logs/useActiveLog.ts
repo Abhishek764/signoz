@@ -100,7 +100,7 @@ export const useActiveLog = (): UseActiveLog => {
 			fieldValue: string,
 			operator: string,
 			dataType?: DataTypes,
-			fieldType?: MetricsType | undefined,
+			fieldType?: MetricsType  ,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(

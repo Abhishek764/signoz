@@ -26,7 +26,7 @@ function QueryBuilderSearchWrapper({
 		const tagFiltersLength = tagFilters.items.length;
 
 		if (
-			(!tagFiltersLength && (!filters || !filters.items.length)) ||
+			(!tagFiltersLength && (!filters || filters.items.length === 0)) ||
 			tagFiltersLength === filters?.items.length ||
 			!contextQuery
 		) {

@@ -49,9 +49,9 @@ function DynamicColumnTable({
 		setColumnsData((prevColumns) =>
 			prevColumns
 				? [
-						...prevColumns.slice(0, prevColumns.length - 1),
+						...prevColumns.slice(0, - 1),
 						...visibleColumns,
-						prevColumns[prevColumns.length - 1],
+						prevColumns.at(-1),
 				  ]
 				: undefined,
 		);

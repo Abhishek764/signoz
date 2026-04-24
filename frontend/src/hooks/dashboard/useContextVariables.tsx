@@ -168,7 +168,7 @@ function useContextVariables({
 
 // Utility function to create combined pattern for variable matching
 const createCombinedPattern = (matcher: string): RegExp => {
-	const escapedMatcher = matcher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const escapedMatcher = matcher.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	const varNamePattern = '[a-zA-Z_\\-][a-zA-Z0-9_.\\-]*';
 	const variablePatterns = [
 		`\\{\\{\\s*?\\.(${varNamePattern})\\s*?\\}\\}`, // {{.var}}

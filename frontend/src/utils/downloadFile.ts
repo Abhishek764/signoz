@@ -7,7 +7,7 @@ export function downloadFile(content: string, filename: string): Promise<void> {
 			const link = document.createElement('a');
 			link.href = url;
 			link.setAttribute('download', filename);
-			document.body.appendChild(link);
+			document.body.append(link);
 			link.click();
 
 			// Clean up after the download

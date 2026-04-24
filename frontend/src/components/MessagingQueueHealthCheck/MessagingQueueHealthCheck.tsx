@@ -26,9 +26,9 @@ function MessagingQueueHealthCheck({
 		isFetching: consumerLoading,
 	} = useOnboardingStatus(
 		{
-			enabled: !!serviceToInclude.filter(
+			enabled: serviceToInclude.filter(
 				(service) => service === MessagingQueueHealthCheckService.Consumers,
-			).length,
+			).length > 0,
 		},
 		MessagingQueueHealthCheckService.Consumers,
 	);
@@ -40,9 +40,9 @@ function MessagingQueueHealthCheck({
 		isFetching: producerLoading,
 	} = useOnboardingStatus(
 		{
-			enabled: !!serviceToInclude.filter(
+			enabled: serviceToInclude.filter(
 				(service) => service === MessagingQueueHealthCheckService.Producers,
-			).length,
+			).length > 0,
 		},
 		MessagingQueueHealthCheckService.Producers,
 	);
@@ -54,9 +54,9 @@ function MessagingQueueHealthCheck({
 		isFetching: kafkaLoading,
 	} = useOnboardingStatus(
 		{
-			enabled: !!serviceToInclude.filter(
+			enabled: serviceToInclude.filter(
 				(service) => service === MessagingQueueHealthCheckService.Kafka,
-			).length,
+			).length > 0,
 		},
 		MessagingQueueHealthCheckService.Kafka,
 	);

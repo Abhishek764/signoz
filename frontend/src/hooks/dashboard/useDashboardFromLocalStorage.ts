@@ -55,7 +55,7 @@ export function updateLocalStorageDashboardVariable(
 ): void {
 	const all = readAll();
 	all[dashboardId] = {
-		...(all[dashboardId] ?? {}),
+		...all[dashboardId],
 		[id]:
 			isDynamic && allSelected
 				? {

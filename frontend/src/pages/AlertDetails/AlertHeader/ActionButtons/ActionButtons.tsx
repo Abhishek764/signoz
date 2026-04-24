@@ -104,7 +104,7 @@ function AlertActionButtons({
 	// state for immediate UI feedback rather than waiting for onSuccess of handleAlertStateTiggle to updating the alertRuleState
 	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState<
 		undefined | boolean
-	>(undefined);
+	>();
 
 	useEffect(() => {
 		if (alertRuleState === undefined) {

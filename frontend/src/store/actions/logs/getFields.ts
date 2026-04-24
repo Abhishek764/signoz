@@ -4,7 +4,7 @@ import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_FIELDS } from 'types/actions/logs';
 
-const IGNORED_SELECTED_FIELDS = ['timestamp'];
+const IGNORED_SELECTED_FIELDS = new Set(['timestamp']);
 
 export const GetLogsFields = (): ((
 	dispatch: Dispatch<AppActions>,
@@ -16,7 +16,7 @@ export const GetLogsFields = (): ((
 			payload: {
 				interesting: response.payload.interesting,
 				selected: response.payload.selected.filter(
-					(field) => !IGNORED_SELECTED_FIELDS.includes(field.name),
+					(field) => !IGNORED_SELECTED_FIELDS.has(field.name),
 				),
 			},
 		});

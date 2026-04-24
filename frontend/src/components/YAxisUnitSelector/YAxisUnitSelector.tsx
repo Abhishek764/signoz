@@ -61,9 +61,7 @@ function YAxisUnitSelector({
 		}
 
 		// Check aliases (from the mapping) using array iteration
-		const aliases = Array.from(
-			UniversalYAxisUnitMappings[currentOption.value as UniversalYAxisUnit] ?? [],
-		);
+		const aliases = [...UniversalYAxisUnitMappings[currentOption.value as UniversalYAxisUnit] ?? []];
 
 		return aliases.some((alias) => alias.toLowerCase().includes(search));
 	};

@@ -85,9 +85,9 @@ export function isolatedPointFilter(
 
 	filtered.push(...findSandwichedIndices(gaps, yData, uPlotInstance));
 
-	if (gaps[gaps.length - 1][1] === lastPos) {
+	if (gaps.at(-1)[1] === lastPos) {
 		filtered.push(lastIdx);
 	}
 
-	return filtered.length ? filtered : null;
+	return filtered.length > 0 ? filtered : null;
 }

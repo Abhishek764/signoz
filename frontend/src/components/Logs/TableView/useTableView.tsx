@@ -55,7 +55,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				title: name,
 				dataIndex: name,
 				accessorKey: name,
-				id: name.toLowerCase().replace(/\./g, '_'),
+				id: name.toLowerCase().replaceAll(/\./g, '_'),
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {

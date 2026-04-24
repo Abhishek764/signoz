@@ -106,7 +106,7 @@ export function isFunctionOperator(operator: string): boolean {
 
 	// Check if it's a NOT function operator (e.g., "NOT has")
 	if (sanitizedOperator.toUpperCase().startsWith(OPERATORS.NOT)) {
-		const operatorWithoutNot = sanitizedOperator.substring(4).toLowerCase();
+		const operatorWithoutNot = sanitizedOperator.slice(4).toLowerCase();
 		return functionOperators.some(
 			(func) => func.toLowerCase() === operatorWithoutNot,
 		);
@@ -123,7 +123,7 @@ export function isNonValueOperator(operator: string): boolean {
 	}
 	// Check if it's a NOT non-value operator (e.g., "NOT EXISTS")
 	if (upperOperator.startsWith(OPERATORS.NOT)) {
-		const operatorWithoutNot = upperOperator.substring(4).trim(); // Remove "NOT " prefix
+		const operatorWithoutNot = upperOperator.slice(4).trim(); // Remove "NOT " prefix
 		return NON_VALUE_OPERATORS.includes(operatorWithoutNot);
 	}
 	return false;

@@ -61,12 +61,12 @@ export function parseGoTime(
 	const regex = /(\d+)([hms])/g;
 	const matches = [...input.matchAll(regex)];
 
-	const nonZero = matches.find(([, value]) => parseInt(value, 10) > 0);
+	const nonZero = matches.find(([, value]) => Number.parseInt(value, 10) > 0);
 	if (!nonZero) {
 		return { time: 1, unit: UniversalYAxisUnit.MINUTES };
 	}
 
-	const time = parseInt(nonZero[1], 10);
+	const time = Number.parseInt(nonZero[1], 10);
 	const unitMap: Record<string, UniversalYAxisUnit> = {
 		h: UniversalYAxisUnit.HOURS,
 		m: UniversalYAxisUnit.MINUTES,

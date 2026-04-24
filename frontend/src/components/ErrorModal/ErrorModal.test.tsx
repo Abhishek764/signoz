@@ -180,7 +180,7 @@ it('should close the modal when the onCancel event is triggered', async () => {
 
 	await waitFor(() => {
 		// check if the modal is not visible
-		const modal = document.getElementsByClassName('ant-modal');
+		const modal = document.querySelectorAll('.ant-modal');
 		const style = window.getComputedStyle(modal[0]);
 		expect(style.display).toBe('none');
 	});

@@ -16,16 +16,16 @@ export const parseQueryIntoPageSize = (
 		try {
 			const parsedValue = JSON.parse(decodeURIComponent(selected));
 			if (Number.isInteger(parsedValue)) {
-				current = parseInt(parsedValue, 10);
+				current = Number.parseInt(parsedValue, 10);
 			}
-		} catch (error) {
+		} catch {
 			console.error('error while parsing json');
 		}
 	}
 
 	if (selected) {
 		return {
-			currentValue: parseInt(selected, 10),
+			currentValue: Number.parseInt(selected, 10),
 			urlValue: current,
 		};
 	}

@@ -286,7 +286,7 @@ function QuerySearch({
 						}
 					});
 				}
-				setKeySuggestions(Array.from(merged.values()));
+				setKeySuggestions([...merged.values()]);
 
 				// Force reopen the completion if editor is available and focused
 				if (editorRef.current) {
@@ -339,7 +339,7 @@ function QuerySearch({
 		// If value contains single quotes, escape them and wrap in single quotes
 		if (value.includes("'")) {
 			// Replace single quotes with escaped single quotes
-			const escapedValue = value.replace(/'/g, "\\'");
+			const escapedValue = value.replaceAll(/'/g, "\\'");
 			return `'${escapedValue}'`;
 		}
 
@@ -899,12 +899,12 @@ function QuerySearch({
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
 			if (queryContext.queryPairs && queryContext.queryPairs.length > 0) {
-				const usedKeys = queryContext.queryPairs.map((pair) => pair.key);
+				const usedKeys = new Set(queryContext.queryPairs.map((pair) => pair.key));
 
 				// Add boost to unused keys to prioritize them
 				options = options.map((option) => ({
 					...option,
-					boost: usedKeys.includes(option.label) ? -10 : 10,
+					boost: usedKeys.has(option.label) ? -10 : 10,
 				}));
 			}
 

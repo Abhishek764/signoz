@@ -151,7 +151,7 @@ function ServiceMetrics({
 	const { user, activeLicense } = useAppContext();
 
 	const [timeRange, setTimeRange] = useState(() => {
-		const now = new Date().getTime();
+		const now = Date.now();
 		return {
 			startTime: now - homeInterval,
 			endTime: now,

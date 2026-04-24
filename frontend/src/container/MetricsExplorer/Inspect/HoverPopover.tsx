@@ -64,13 +64,13 @@ function HoverPopover({
 			step === InspectionStep.COMPLETED &&
 			metricInspectionAppliedOptions.spaceAggregationLabels.length === 0
 		) {
-			return undefined;
+			return;
 		}
 		if (step === InspectionStep.COMPLETED && options.timeSeries?.title) {
 			return options.timeSeries.title;
 		}
 		if (!options.timeSeries) {
-			return undefined;
+			return;
 		}
 		return (
 			<TimeSeriesLabel

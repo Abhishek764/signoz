@@ -297,7 +297,7 @@ describe('MultiIngestionSettings Page', () => {
 		server.use(
 			rest.get('*/api/v2/gateway/ingestion_keys', (req, res, ctx) => {
 				if (req.url.pathname.endsWith('/search')) {
-					return undefined;
+					return;
 				}
 				getHandler();
 				return res(ctx.status(200), ctx.json(getResponse));

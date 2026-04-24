@@ -21,7 +21,7 @@ describe('ServicesUsingMetrics', () => {
 		jest.clearAllMocks();
 	});
 
-	test('should render the ServicesUsingMetrics component', async () => {
+	it('should render the ServicesUsingMetrics component', async () => {
 		// Mock successful API response
 		mockUseGetTopLevelOperations.mockReturnValue({
 			data: {
@@ -89,7 +89,7 @@ describe('ServicesUsingMetrics', () => {
 		expect(screen.getByText(/error rate \(% of total\)/i)).toBeInTheDocument();
 	});
 
-	test('should render the ServicesUsingMetrics component with loading', async () => {
+	it('should render the ServicesUsingMetrics component with loading', async () => {
 		// Mock loading state
 		mockUseGetTopLevelOperations.mockReturnValue({
 			data: undefined,
@@ -123,7 +123,7 @@ describe('ServicesUsingMetrics', () => {
 		expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
 	});
 
-	test('should not render if the data is not present', async () => {
+	it('should not render if the data is not present', async () => {
 		// Mock successful API response with data
 		mockUseGetTopLevelOperations.mockReturnValue({
 			data: {

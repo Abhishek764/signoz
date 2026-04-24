@@ -205,7 +205,7 @@ function QueryBuilderSearch({
 
 	const onChangeHandler = (value: string[]): void => {
 		if (!isMulti) {
-			handleSearch(value[value.length - 1]);
+			handleSearch(value.at(-1));
 		}
 	};
 
@@ -290,7 +290,7 @@ function QueryBuilderSearch({
 			].find((key) => key?.key === getRemovePrefixFromKey(tagKey));
 
 			const computedTagValue =
-				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
+				tagValue && Array.isArray(tagValue) && tagValue.at(-1) === ''
 					? tagValue?.slice(0, -1)
 					: tagValue ?? '';
 
@@ -320,7 +320,7 @@ function QueryBuilderSearch({
 	const isLastQuery = useMemo(
 		() =>
 			isEqual(
-				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
+				currentQuery.builder.queryData.at(-1),
 				query,
 			),
 		[currentQuery, query],

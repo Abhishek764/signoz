@@ -97,8 +97,8 @@ export const prepareQueryRangePayload = ({
 	});
 
 	const queryPayload: QueryRangePayload = {
-		start: startTime ? startTime * 1e3 : parseInt(start, 10) * 1e3,
-		end: endTime ? endTime * 1e3 : parseInt(end, 10) * 1e3,
+		start: startTime ? startTime * 1e3 : Number.parseInt(start, 10) * 1e3,
+		end: endTime ? endTime * 1e3 : Number.parseInt(end, 10) * 1e3,
 		step: getStep({
 			start: allowSelectedIntervalForStepGen
 				? start

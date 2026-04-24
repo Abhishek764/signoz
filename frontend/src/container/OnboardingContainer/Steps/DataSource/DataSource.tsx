@@ -129,7 +129,7 @@ export default function DataSource(): JSX.Element {
 
 				setIsSubmittingRequestForDataSource(false);
 			}
-		} catch (error) {
+		} catch {
 			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',

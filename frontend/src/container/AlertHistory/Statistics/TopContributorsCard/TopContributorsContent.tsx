@@ -5,7 +5,7 @@ function TopContributorsContent({
 	topContributorsData,
 	totalCurrentTriggers,
 }: TopContributorsCardProps): JSX.Element {
-	const isEmpty = !topContributorsData.length;
+	const isEmpty = topContributorsData.length === 0;
 
 	if (isEmpty) {
 		return (

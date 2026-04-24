@@ -44,7 +44,7 @@ export function validateCreateAlertState(
 		if (!threshold.label) {
 			return 'Please enter a label for each threshold';
 		}
-		if (!notificationSettings.routingPolicies && !threshold.channels.length) {
+		if (!notificationSettings.routingPolicies && threshold.channels.length === 0) {
 			return 'Please select at least one channel for each threshold or enable routing policies';
 		}
 	}
@@ -231,7 +231,7 @@ export function buildCreateThresholdAlertRulePayload(
 	const thresholds: BasicThreshold[] = thresholdState.thresholds.map(
 		(threshold) => ({
 			name: threshold.label,
-			target: parseFloat(threshold.thresholdValue.toString()),
+			target: Number.parseFloat(threshold.thresholdValue.toString()),
 			matchType: thresholdState.matchType,
 			op: thresholdState.operator,
 			channels: threshold.channels,

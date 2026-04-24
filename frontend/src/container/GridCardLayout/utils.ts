@@ -51,7 +51,7 @@ export function applyRowCollapse(
 			maxY = Math.max(maxY, w.y + w.h);
 		});
 		const currentRowWidget = dashboardLayout.find((w) => w.i === id);
-		if (currentRowWidget && widgetsInsideTheRow.length) {
+		if (currentRowWidget && widgetsInsideTheRow.length > 0) {
 			maxY -= currentRowWidget.h + currentRowWidget.y;
 		}
 
@@ -94,7 +94,7 @@ export function applyRowCollapse(
 			maxY = Math.max(maxY, w.y + w.h);
 		});
 		const currentRowWidget = dashboardLayout[currentIdx];
-		if (currentRowWidget && widgetsInsideTheRow.length) {
+		if (currentRowWidget && widgetsInsideTheRow.length > 0) {
 			maxY -= currentRowWidget.h + currentRowWidget.y;
 		}
 
@@ -233,12 +233,10 @@ export function updateBarStepInterval(
 		...query,
 		builder: {
 			...query?.builder,
-			queryData: [
-				...(query?.builder?.queryData ?? []).map((queryData) => ({
+			queryData: (query?.builder?.queryData ?? []).map((queryData) => ({
 					...queryData,
 					stepInterval: getBarSteps(queryData),
 				})),
-			],
 		},
 	};
 }

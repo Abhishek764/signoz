@@ -63,7 +63,7 @@ function TraceID(): JSX.Element {
 				preFilter.set('traceID', { traceID: value });
 				preFilter.forEach((value, key) => {
 					const values = Object.keys(value);
-					if (key !== 'duration' && values.length) {
+					if (key !== 'duration' && values.length > 0) {
 						preUserSelected.set(key, values);
 					}
 				});

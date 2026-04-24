@@ -74,7 +74,7 @@ export const formulasNames: string[] = Array.from(
 	(_, i) => `F${i + 1}`,
 );
 const alpha: number[] = Array.from(Array(MAX_QUERIES), (_, i) => i + 65);
-export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
+export const alphabet: string[] = alpha.map((str) => String.fromCodePoint(str));
 
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',

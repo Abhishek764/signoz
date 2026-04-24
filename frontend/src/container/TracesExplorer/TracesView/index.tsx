@@ -131,7 +131,7 @@ function TracesView({
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	useEffect(() => {
-		if (!isLoading && !isFetching && !isError && (tableData || []).length !== 0) {
+		if (!isLoading && !isFetching && !isError && (tableData || []).length > 0) {
 			logEvent('Traces Explorer: Data present', {
 				panelType: 'TRACE',
 			});
@@ -140,7 +140,7 @@ function TracesView({
 
 	return (
 		<Container>
-			{(tableData || []).length !== 0 && (
+			{(tableData || []).length > 0 && (
 				<ActionsContainer>
 					<Typography>
 						This tab only shows Root Spans. More details
@@ -180,7 +180,7 @@ function TracesView({
 					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
 				)}
 
-			{(tableData || []).length !== 0 && (
+			{(tableData || []).length > 0 && (
 				<ResizeTable
 					loading={isLoading}
 					columns={columns}

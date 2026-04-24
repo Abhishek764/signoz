@@ -12,7 +12,7 @@ export function getItemIcon(id: string): string {
 	if (!id) {
 		return ITEM_ICONS[0];
 	}
-	return ITEM_ICONS[id.charCodeAt(id.length - 1) % ITEM_ICONS.length];
+	return ITEM_ICONS[id.codePointAt(id.length - 1) % ITEM_ICONS.length];
 }
 
 export const checkListStepToPreferenceKeyMap = {

@@ -103,7 +103,7 @@ export function CmdKPalette({
 			}
 		});
 
-		return Array.from(map.entries());
+		return [...map.entries()];
 	})();
 
 	const handleInvoke = (action: CmdAction): void => {

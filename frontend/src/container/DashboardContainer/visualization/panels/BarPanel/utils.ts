@@ -96,7 +96,7 @@ export function prepareBarPanelConfig({
 			? getLegend(series, currentQuery, baseLabelName)
 			: baseLabelName;
 
-		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+		const currentStepInterval = get(stepIntervals, series.queryName);
 
 		builder.addSeries({
 			scaleKey: 'y',

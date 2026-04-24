@@ -182,7 +182,7 @@ const generateTooltipContent = (
 						show: item.show || false,
 						color,
 						label,
-						// @ts-ignore
+						// @ts-expect-error
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
@@ -213,7 +213,7 @@ const generateTooltipContent = (
 	const headerDiv = document.createElement('div');
 	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');
 	headerDiv.textContent = isHistogramGraphs ? '' : tooltipTitle;
-	container.appendChild(headerDiv);
+	container.append(headerDiv);
 
 	// Use DocumentFragment for better performance when adding multiple elements
 	const fragment = document.createDocumentFragment();
@@ -239,13 +239,13 @@ const generateTooltipContent = (
 			text.classList.add('focus');
 		}
 
-		div.appendChild(squareBox);
-		div.appendChild(text);
-		fragment.appendChild(div);
+		div.append(squareBox);
+		div.append(text);
+		fragment.append(div);
 	}
 
 	if (fragment.hasChildNodes()) {
-		container.appendChild(fragment);
+		container.append(fragment);
 	}
 
 	return container;
@@ -300,12 +300,12 @@ const tooltipPlugin = ({
 	// Create overlay once and reuse it
 	const initOverlay = (): void => {
 		if (!overlay) {
-			overlay = document.getElementById('overlay');
+			overlay = document.querySelector('#overlay');
 			if (!overlay) {
 				overlay = document.createElement('div');
 				overlay.id = 'overlay';
 				overlay.style.cssText = 'display: none; position: absolute;';
-				document.body.appendChild(overlay);
+				document.body.append(overlay);
 			}
 		}
 	};
@@ -410,7 +410,7 @@ const tooltipPlugin = ({
 				// Only show tooltip if there's actual content
 				if (content.children.length > 1) {
 					if (customTooltipElement) {
-						content.appendChild(customTooltipElement);
+						content.append(customTooltipElement);
 					}
 					// Clear and set new content in one operation
 					overlay.replaceChildren(content);

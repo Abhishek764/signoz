@@ -29,7 +29,7 @@ function StepsTransitionResults(): JSX.Element {
 
 	const [stepAOrder, stepBOrder] = useMemo(() => {
 		const [a, b] = selectedTransition.split('_to_');
-		return [parseInt(a, 10), parseInt(b, 10)];
+		return [Number.parseInt(a, 10), Number.parseInt(b, 10)];
 	}, [selectedTransition]);
 
 	return (

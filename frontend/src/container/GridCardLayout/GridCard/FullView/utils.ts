@@ -19,7 +19,7 @@ function convertToTwoDecimalsOrZero(value: number): number {
 		value !== -Infinity
 	) {
 		const result = value ? value.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/) : null;
-		return result ? parseFloat(result[0]) : 0;
+		return result ? Number.parseFloat(result[0]) : 0;
 	}
 	return 0;
 }
@@ -54,7 +54,7 @@ export const getDefaultTableDataSet = (
 export const getAbbreviatedLabel = (label: string): string => {
 	let newLabel = label;
 	if (label.length > 30) {
-		newLabel = `${label.substring(0, 30)}...`;
+		newLabel = `${label.slice(0, 30)}...`;
 	}
 	return newLabel;
 };

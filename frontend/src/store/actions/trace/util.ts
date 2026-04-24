@@ -13,7 +13,7 @@ export interface ParsedUrl<T> {
 export function isTraceFilterEnum(
 	value: TraceFilterEnum | string,
 ): value is TraceFilterEnum {
-	return !!AllTraceFilterEnum.find((enums) => enums === value);
+	return !!AllTraceFilterEnum.some((enums) => enums === value);
 }
 
 export const updateURL = (
@@ -30,7 +30,7 @@ export const updateURL = (
 	const search = new URLSearchParams(window.location.search);
 	const preResult: { key: string; value: string }[] = [];
 
-	const keyToSkip = [
+	const keyToSkip = new Set([
 		'selected',
 		'filterToFetchData',
 		'selectedTags',
@@ -41,10 +41,10 @@ export const updateURL = (
 		'spanAggregateOrder',
 		'spanAggregateCurrentPageSize',
 		'spanAggregateOrderParam',
-	];
+	]);
 
 	search.forEach((value, key) => {
-		if (!keyToSkip.includes(key)) {
+		if (!keyToSkip.has(key)) {
 			preResult.push({
 				key,
 				value,
@@ -91,4 +91,4 @@ export const stripTimestampsFromQuery = (query: string): string =>
 	query
 		.replace(/(\?|&)startTime=\d+/, '')
 		.replace(/&endTime=\d+/, '')
-		.replace(/[?&]relativeTime=[^&]+/g, '');
+		.replaceAll(/[?&]relativeTime=[^&]+/g, '');

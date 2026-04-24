@@ -92,6 +92,6 @@ export function getProcessorUpdatedRow<T extends ProcessorData>(
 	for (let i = 0; i < data.length - 1; i += 1) {
 		data[i].output = data[i + 1].id;
 	}
-	delete data[data.length - 1].output;
+	delete data.at(-1).output;
 	return data;
 }

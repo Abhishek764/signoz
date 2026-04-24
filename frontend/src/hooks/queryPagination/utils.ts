@@ -9,7 +9,7 @@ export const checkIsValidPaginationData = (
 		Number.isInteger(limit) &&
 			limit > 0 &&
 			offset >= 0 &&
-			perPageOptions.find((option) => option === limit),
+			perPageOptions.some((option) => option === limit),
 	);
 
 export const getDefaultPaginationConfig = (

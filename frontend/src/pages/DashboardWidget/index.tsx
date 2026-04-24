@@ -63,8 +63,7 @@ function DashboardWidgetInternal({
 	graphType: PANEL_TYPES;
 }): JSX.Element | null {
 	const [dashboardData, setDashboardData] = useState<Dashboard | undefined>(
-		undefined,
-	);
+		);
 
 	const { transformDashboardVariables } = useTransformDashboardVariables(
 		dashboardId,

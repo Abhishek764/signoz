@@ -139,7 +139,7 @@ function Duration({
 					attribute as AllTraceFilterKeys,
 				)
 			) {
-				if (!values || !values.length) {
+				if (!values || values.length === 0) {
 					return [];
 				}
 				let minValue = '';

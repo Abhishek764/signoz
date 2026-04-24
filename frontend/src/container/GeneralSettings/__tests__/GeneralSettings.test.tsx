@@ -255,7 +255,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Find and click the Days option
 			const options = document.querySelectorAll('.ant-select-item');
-			const daysOption = Array.from(options).find((opt) =>
+			const daysOption = [...options].find((opt) =>
 				opt.textContent?.includes('Days'),
 			);
 			expect(daysOption).toBeInTheDocument();

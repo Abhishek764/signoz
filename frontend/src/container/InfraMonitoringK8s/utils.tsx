@@ -27,7 +27,7 @@ export const usePageSize = (
 		// Retrieve the stored page size from local storage on component mount
 		const storageValue = get(storageKey);
 		if (storageValue) {
-			setPageSize(parseInt(storageValue, 10));
+			setPageSize(Number.parseInt(storageValue, 10));
 		}
 	}, [storageKey]);
 

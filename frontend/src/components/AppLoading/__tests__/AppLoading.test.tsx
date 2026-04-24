@@ -23,7 +23,7 @@ describe('AppLoading', () => {
 
 	it('should render loading screen with dark theme by default', () => {
 		// Mock localStorage to return dark theme (or undefined for default)
-		mockGet.mockReturnValue(undefined);
+		mockGet.mockReturnValue();
 
 		render(<AppLoading />);
 
@@ -40,7 +40,7 @@ describe('AppLoading', () => {
 
 	it('should have proper structure and content', () => {
 		// Mock localStorage to return dark theme
-		mockGet.mockReturnValue(undefined);
+		mockGet.mockReturnValue();
 
 		render(<AppLoading />);
 

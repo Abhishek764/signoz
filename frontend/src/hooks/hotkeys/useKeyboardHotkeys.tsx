@@ -34,7 +34,7 @@ const KeyboardHotkeysContext = createContext<KeyboardHotkeysContextReturnValue>(
 	},
 );
 
-const IGNORE_INPUTS = ['input', 'textarea', 'cm-editor']; // Inputs in which hotkey events will be ignored
+const IGNORE_INPUTS = new Set(['input', 'textarea', 'cm-editor']); // Inputs in which hotkey events will be ignored
 
 export function useKeyboardHotkeys(): KeyboardHotkeysContextReturnValue {
 	const context = useContext(KeyboardHotkeysContext);
@@ -87,7 +87,7 @@ export function KeyboardHotkeysProvider({
 		const isCodeMirrorEditor =
 			(target as HTMLElement).closest('.cm-editor') !== null;
 		if (
-			IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase()) ||
+			IGNORE_INPUTS.has((target as HTMLElement).tagName.toLowerCase()) ||
 			isCodeMirrorEditor
 		) {
 			return;

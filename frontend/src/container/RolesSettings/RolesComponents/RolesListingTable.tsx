@@ -33,7 +33,7 @@ function RolesListingTable({
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
-	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
+	const pageParam = Number.parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
 	const setCurrentPage = useCallback(

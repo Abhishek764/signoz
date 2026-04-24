@@ -104,8 +104,8 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j][1] = String(
-				parseFloat(values[j]?.[1] || '0') +
-					parseFloat(series[i + 1].values[j]?.[1] || '0'),
+				Number.parseFloat(values[j]?.[1] || '0') +
+					Number.parseFloat(series[i + 1].values[j]?.[1] || '0'),
 			);
 		}
 
@@ -128,8 +128,8 @@ function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j].value = String(
-				parseFloat(values[j]?.value || '0') +
-					parseFloat(series[i + 1].values[j]?.value || '0'),
+				Number.parseFloat(values[j]?.value || '0') +
+					Number.parseFloat(series[i + 1].values[j]?.value || '0'),
 			);
 		}
 
@@ -549,7 +549,7 @@ export const getUPlotChartOptions = ({
 						};
 
 						const seriesEls = legend.querySelectorAll('.u-series');
-						const seriesArray = Array.from(seriesEls);
+						const seriesArray = [...seriesEls];
 						seriesArray.forEach((seriesEl, index) => {
 							// Add tooltip and proper text wrapping for legends
 							const thElement = seriesEl.querySelector('th');
@@ -568,14 +568,14 @@ export const getUPlotChartOptions = ({
 
 								// Add back the marker
 								if (markerClone) {
-									fragment.appendChild(markerClone);
+									fragment.append(markerClone);
 								}
 
 								// Create text wrapper
 								const textSpan = document.createElement('span');
 								textSpan.className = 'legend-text';
 								textSpan.textContent = legendText;
-								fragment.appendChild(textSpan);
+								fragment.append(textSpan);
 
 								// Replace the children in a single operation
 								thElement.replaceChildren(fragment);
@@ -639,7 +639,7 @@ export const getUPlotChartOptions = ({
 											tooltipElement.style.top = `${rect.top - 35}px`;
 										}
 
-										document.body.appendChild(tooltipElement);
+										document.body.append(tooltipElement);
 									}, 15);
 								};
 
@@ -681,7 +681,7 @@ export const getUPlotChartOptions = ({
 											return { [index]: true };
 										}
 										if (prev[index] === true) {
-											return undefined;
+											return;
 										}
 										return { [index]: true };
 									});

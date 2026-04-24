@@ -21,8 +21,7 @@ function AlertRuleProvider({
 	children: React.ReactNode;
 }): JSX.Element {
 	const [alertRuleState, setAlertRuleState] = useState<string | undefined>(
-		undefined,
-	);
+		);
 
 	const value = React.useMemo(
 		() => ({

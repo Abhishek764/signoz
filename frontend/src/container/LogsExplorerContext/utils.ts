@@ -24,12 +24,12 @@ const PRIORITY_CATEGORIES = [
 	['container.id', 'container.name'],
 ];
 
-const SERVICE_AND_ENVIRONMENT_KEYS = [
+const SERVICE_AND_ENVIRONMENT_KEYS = new Set([
 	'service.name',
 	'deployment.environment',
 	'env',
 	'environment',
-];
+]);
 
 export const getFiltersFromResources = (
 	resources: ILog['resources_string'],
@@ -49,7 +49,7 @@ export const getFiltersFromResources = (
 	});
 
 export const isServiceOrEnvironmentAttribute = (key: string): boolean =>
-	SERVICE_AND_ENVIRONMENT_KEYS.includes(key);
+	SERVICE_AND_ENVIRONMENT_KEYS.has(key);
 
 export const getServiceAndEnvironmentFilterItems = (
 	items: TagFilterItem[],
@@ -100,8 +100,6 @@ export const updateFilters = (filters: TagFilter): TagFilter => {
 	return {
 		...filters,
 		// deduplication
-		items: Array.from(
-			new Map(selectedItems.map((item) => [item.key?.key || '', item])).values(),
-		),
+		items: [...new Map(selectedItems.map((item) => [item.key?.key || '', item])).values()],
 	};
 };

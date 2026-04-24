@@ -56,16 +56,14 @@ export function useMemberRoleManager(
 			);
 
 			/// TODO: re-enable deletes once BE for this is streamlined
-			const allOps = [
-				...toAdd.map((role) => ({
+			const allOps = toAdd.map((role) => ({
 					roleName: role.name ?? 'unknown',
 					run: (): ReturnType<typeof setRole> =>
 						setRole({
 							pathParams: { id: userId },
 							data: { name: role.name ?? '' },
 						}),
-				})),
-			];
+				}));
 
 			const results = await Promise.allSettled(allOps.map((op) => op.run()));
 

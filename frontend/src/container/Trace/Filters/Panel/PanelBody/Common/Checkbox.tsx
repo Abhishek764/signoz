@@ -39,7 +39,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const isUserSelected =
-		(userSelectedFilter.get(name) || []).find((e) => e === keyValue) !==
+		(userSelectedFilter.get(name) || []).some((e) => e === keyValue) !==
 		undefined;
 
 	const { notifications } = useNotifications();
@@ -60,7 +60,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				preUserSelectedMap.set(name, [keyValue]);
 			} else {
 				const isValuePresent =
-					isTopicPresent.find((e) => e === keyValue) !== undefined;
+					isTopicPresent.some((e) => e === keyValue) !== undefined;
 
 				// check the value if present then remove the value or isChecked
 				if (isValuePresent) {
@@ -75,9 +75,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			}
 
 			if (newSelectedMap.get(name)?.find((e) => e === keyValue)) {
-				newSelectedMap.set(name, [
-					...(newSelectedMap.get(name) || []).filter((e) => e !== keyValue),
-				]);
+				newSelectedMap.set(name, (newSelectedMap.get(name) || []).filter((e) => e !== keyValue));
 			} else {
 				newSelectedMap.set(name, [
 					...new Set([...(newSelectedMap.get(name) || []), keyValue]),
@@ -112,8 +110,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 				updatedFilter.set(name, {
 					[`${keyValue}`]: '-1',
-					...(filter.get(name) || {}),
-					...(updatedFilter.get(name) || {}),
+					...filter.get(name),
+					...updatedFilter.get(name),
 				});
 
 				dispatch({

@@ -167,7 +167,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			if (status === 'success' && rules) {
 				setData(rules);
 				setTimeout(() => {
-					const clonedAlert = rules[rules.length - 1];
+					const clonedAlert = rules.at(-1);
 					params.set(QueryParams.ruleId, String(clonedAlert.id));
 					safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 				}, 2000);
@@ -253,8 +253,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: 'state',
 			sorter: (a, b): number =>
-				(b.state ? b.state.charCodeAt(0) : 1000) -
-				(a.state ? a.state.charCodeAt(0) : 1000),
+				(b.state ? b.state.codePointAt(0) : 1000) -
+				(a.state ? a.state.codePointAt(0) : 1000),
 			render: (value): JSX.Element => <Status status={value} />,
 			sortOrder: sortedInfo.columnKey === 'state' ? sortedInfo.order : null,
 		},

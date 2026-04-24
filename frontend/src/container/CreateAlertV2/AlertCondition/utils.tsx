@@ -55,7 +55,7 @@ export function getCategorySelectOptionByName(
 	}
 
 	const categories = getYAxisCategories(YAxisSource.ALERTS);
-	if (!categories.length) {
+	if (categories.length === 0) {
 		return [];
 	}
 
@@ -344,7 +344,7 @@ export const getMatchTypeTooltip = (
 		}
 
 		case AlertThresholdMatchType.LAST: {
-			const lastPoint = dataPoints[dataPoints.length - 1];
+			const lastPoint = dataPoints.at(-1);
 			return (
 				<TooltipContent>
 					<div className="tooltip-description">

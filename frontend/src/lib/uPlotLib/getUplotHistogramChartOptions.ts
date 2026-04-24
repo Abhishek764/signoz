@@ -212,7 +212,7 @@ export const getUplotHistogramChartOptions = ({
 						}
 
 						const seriesEls = legend.querySelectorAll('.u-series');
-						const seriesArray = Array.from(seriesEls);
+						const seriesArray = [...seriesEls];
 						seriesArray.forEach((seriesEl, index) => {
 							// Add click handlers for marker and text separately
 							const thElement = seriesEl.querySelector('th');

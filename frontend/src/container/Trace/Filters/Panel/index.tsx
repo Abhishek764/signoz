@@ -12,7 +12,7 @@ function Panel(props: PanelProps): JSX.Element {
 	const { name } = props;
 
 	const isDefaultOpen =
-		traces.filterToFetchData.find((e) => e === name) !== undefined;
+		traces.filterToFetchData.some((e) => e === name) !== undefined;
 
 	return (
 		<>

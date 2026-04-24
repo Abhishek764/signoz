@@ -405,7 +405,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			if (shouldUpdateUserPreference) {
 				updateUserPreferenceMutation({
 					name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
-					value: [...Object.keys(selectedResourceAttributes)],
+					value: Object.keys(selectedResourceAttributes),
 				});
 
 				setShouldUpdateUserPreference(false);

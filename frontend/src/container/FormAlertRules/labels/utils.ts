@@ -2,7 +2,7 @@ import { Labels } from 'types/api/alerts/def';
 
 import { ILabelRecord } from './types';
 
-const hiddenLabels = ['severity', 'description'];
+const hiddenLabels = new Set(['severity', 'description']);
 
 export const createQuery = (
 	selectedItems: Array<string | string[]> = [],
@@ -20,7 +20,7 @@ export const flattenLabels = (labels: Labels): ILabelRecord[] => {
 	const recs: ILabelRecord[] = [];
 
 	Object.keys(labels).forEach((key) => {
-		if (!hiddenLabels.includes(key)) {
+		if (!hiddenLabels.has(key)) {
 			recs.push({
 				key,
 				value: labels[key] || '',
@@ -38,13 +38,13 @@ export const prepareLabels = (
 	const labels: Labels = {};
 
 	recs.forEach((rec) => {
-		if (!hiddenLabels.includes(rec.key)) {
+		if (!hiddenLabels.has(rec.key)) {
 			labels[rec.key] = rec.value;
 		}
 	});
 	if (alertLabels) {
 		Object.keys(alertLabels).forEach((key) => {
-			if (hiddenLabels.includes(key)) {
+			if (hiddenLabels.has(key)) {
 				labels[key] = alertLabels[key];
 			}
 		});

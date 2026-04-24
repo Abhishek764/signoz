@@ -217,7 +217,7 @@ function ListView({
 			!isLoading &&
 			!isFetching &&
 			!isError &&
-			transformedQueryTableData.length !== 0
+			transformedQueryTableData.length > 0
 		) {
 			logEvent('Traces Explorer: Data present', {
 				panelType,
@@ -266,7 +266,7 @@ function ListView({
 				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
 			)}
 
-			{!isError && transformedQueryTableData.length !== 0 && (
+			{!isError && transformedQueryTableData.length > 0 && (
 				<ResizeTable
 					tableLayout="fixed"
 					pagination={false}

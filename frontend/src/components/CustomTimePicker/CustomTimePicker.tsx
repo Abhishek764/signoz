@@ -147,7 +147,7 @@ function CustomTimePicker({
 			return `Last ${selectedTime}`;
 		}
 
-		const value = parseInt(match[1], 10);
+		const value = Number.parseInt(match[1], 10);
 		const unit = match[2];
 
 		// Map unit abbreviations to full words
@@ -312,7 +312,7 @@ function CustomTimePicker({
 
 			const match = inputValue.match(/^(\d+)([mhdw])$/) as RegExpMatchArray;
 
-			const value = parseInt(match[1], 10);
+			const value = Number.parseInt(match[1], 10);
 			const unit = match[2];
 
 			const currentTime = dayjs();

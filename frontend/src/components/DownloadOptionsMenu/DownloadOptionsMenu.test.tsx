@@ -13,7 +13,7 @@ import '@testing-library/jest-dom';
 import { DownloadFormats, DownloadRowCounts } from './constants';
 import DownloadOptionsMenu from './DownloadOptionsMenu';
 
-const mockDownloadExportData = jest.fn().mockResolvedValue(undefined);
+const mockDownloadExportData = jest.fn().mockResolvedValue();
 jest.mock('api/v1/download/downloadExportData', () => ({
 	downloadExportData: (...args: any[]): any => mockDownloadExportData(...args),
 	default: (...args: any[]): any => mockDownloadExportData(...args),
@@ -94,7 +94,7 @@ describe.each([
 	const testId = `periscope-btn-download-${dataSource}`;
 
 	beforeEach(() => {
-		mockDownloadExportData.mockReset().mockResolvedValue(undefined);
+		mockDownloadExportData.mockReset().mockResolvedValue();
 		(message.success as jest.Mock).mockReset();
 		(message.error as jest.Mock).mockReset();
 		mockUseQueryBuilder.mockReturnValue({
@@ -213,7 +213,7 @@ describe.each([
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
 			expect(query.spec.groupBy).toBeUndefined();
-			expect(query.spec.having).toEqual({ expression: '' });
+			expect(query.spec.having).toStrictEqual({ expression: '' });
 		});
 	});
 
@@ -238,7 +238,7 @@ describe.each([
 			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
-			expect(query.spec.selectFields).toEqual([
+			expect(query.spec.selectFields).toStrictEqual([
 				expect.objectContaining({
 					name: 'http.status',
 					fieldDataType: 'int64',
@@ -322,7 +322,7 @@ describe('DownloadOptionsMenu for traces with queryTraceOperator', () => {
 	const testId = `periscope-btn-download-${dataSource}`;
 
 	beforeEach(() => {
-		mockDownloadExportData.mockReset().mockResolvedValue(undefined);
+		mockDownloadExportData.mockReset().mockResolvedValue();
 		(message.success as jest.Mock).mockReset();
 	});
 

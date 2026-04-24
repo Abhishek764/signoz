@@ -523,7 +523,7 @@ function DashboardsList(): JSX.Element {
 								<div className="created-by">
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
-											{dashboard.createdBy?.substring(0, 1).toUpperCase()}
+											{dashboard.createdBy?.slice(0, 1).toUpperCase()}
 										</Typography.Text>
 									</div>
 									<Typography.Text className="dashboard-created-by">
@@ -547,7 +547,7 @@ function DashboardsList(): JSX.Element {
 									</Typography.Text>
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
-											{dashboard.lastUpdatedBy?.substring(0, 1).toUpperCase()}
+											{dashboard.lastUpdatedBy?.slice(0, 1).toUpperCase()}
 										</Typography.Text>
 									</div>
 									<Typography.Text className="dashboard-created-by">
@@ -939,7 +939,7 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.createdBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards[0]?.createdBy?.substring(0, 1).toUpperCase()}
+												{dashboards[0]?.createdBy?.slice(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
 												{dashboards[0]?.createdBy}
@@ -957,7 +957,7 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards[0]?.updatedBy?.substring(0, 1).toUpperCase()}
+												{dashboards[0]?.updatedBy?.slice(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
 												{dashboards[0]?.updatedBy}

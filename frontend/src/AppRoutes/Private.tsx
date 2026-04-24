@@ -60,7 +60,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (org && org.length > 0 && org[0].id !== undefined) {
 			return org[0];
 		}
-		return undefined;
+		return;
 	}, [org]);
 
 	const { data: usersData, isFetching: isFetchingUsers } = useListUsers({
@@ -192,7 +192,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (isPrivate) {
 			if (isLoggedInState) {
 				const route = routePermission[key];
-				if (route && route.find((e) => e === user.role) === undefined) {
+				if (route && route.some((e) => e === user.role) === undefined) {
 					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
 			} else {

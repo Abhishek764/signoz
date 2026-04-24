@@ -150,7 +150,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	}, [metrics]);
 
 	const optionsData = useMemo((): ExtendedSelectOption[] => {
-		if (!metrics.length) {
+		if (metrics.length === 0) {
 			return [];
 		}
 

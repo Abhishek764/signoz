@@ -9,7 +9,7 @@ export function getRandomNumber(min: number, max: number): number {
 }
 
 const getRandomColor = (): string => {
-	const index = parseInt(getRandomNumber(0, colors.length - 1).toString(), 10);
+	const index = Number.parseInt(getRandomNumber(0, colors.length - 1).toString(), 10);
 	return colors[index];
 };
 
@@ -32,7 +32,7 @@ export function hexToRgba(hex: string, alpha: number = 1): string {
 	}
 
 	// Parse the r, g, b values
-	const bigint = parseInt(hexColor, 16);
+	const bigint = Number.parseInt(hexColor, 16);
 	const r = (bigint >> 16) & 255;
 	const g = (bigint >> 8) & 255;
 	const b = bigint & 255;
@@ -62,7 +62,7 @@ export const spanServiceNameToColorMapping = (
 
 	const serviceToColorMap: { [key: string]: string } = {};
 
-	Array.from(allServiceMap).forEach(([serviceName, signozColor], idx) => {
+	[...allServiceMap].forEach(([serviceName, signozColor], idx) => {
 		serviceToColorMap[`${serviceName}`] =
 			signozColor || colors[idx % colors.length];
 	});

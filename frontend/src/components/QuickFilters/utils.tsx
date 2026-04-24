@@ -19,8 +19,8 @@ const getFilterName = (str: string): string => {
 	// replace . and _ with space
 	// capitalize the first letter of each word
 	return str
-		.replace(/\./g, ' ')
-		.replace(/_/g, ' ')
+		.replaceAll(/\./g, ' ')
+		.replaceAll(/_/g, ' ')
 		.split(' ')
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 		.join(' ');

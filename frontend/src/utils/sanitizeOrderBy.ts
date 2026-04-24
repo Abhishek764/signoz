@@ -26,7 +26,7 @@ export function sanitizeOrderByForExplorer(
 		Sentry.captureEvent({
 			message: `Invalid orderBy: current: ${JSON.stringify(
 				current,
-			)} - allowed: ${JSON.stringify(Array.from(allowed))}`,
+			)} - allowed: ${JSON.stringify([...allowed])}`,
 			level: 'warning',
 		});
 	}

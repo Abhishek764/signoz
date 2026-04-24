@@ -25,7 +25,7 @@ export const parseSelectedFilter = (
 					}
 				});
 			}
-		} catch (error) {
+		} catch {
 			// if the parsing error happens
 		}
 	}

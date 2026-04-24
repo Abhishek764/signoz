@@ -44,7 +44,7 @@ function ForgotPassword({
 
 	const errorMessage = useMemo(() => {
 		if (!mutationError) {
-			return undefined;
+			return;
 		}
 
 		try {

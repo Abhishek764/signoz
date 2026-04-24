@@ -61,7 +61,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 					setIsInvitingMembers?.(false);
 					toggleModal(false);
 				}, 2000);
-			} catch (error) {
+			} catch {
 				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',

@@ -20,7 +20,7 @@ interface ITagToken {
 
 export function getTagToken(tag: string): ITagToken {
 	const matches = tag?.matchAll(tagRegexp);
-	const [match] = matches ? Array.from(matches) : [];
+	const [match] = matches ? [...matches] : [];
 
 	if (match) {
 		const [, matchTagKey, matchTagOperator, matchTagValue] = match;
@@ -131,7 +131,7 @@ export function replaceStringWithMaxLength(
 	 * We need to escape the special characters in the lastSearchValue else the
 	 * new RegExp fails with error range out of order in char class
 	 */
-	const escapedLastSearchValue = lastSearchValue.replace(
+	const escapedLastSearchValue = lastSearchValue.replaceAll(
 		/[-/\\^$*+?.()|[\]{}]/g,
 		'\\$&',
 	);

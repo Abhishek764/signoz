@@ -144,7 +144,7 @@ function ColumnView({
 	const selectedColumns = useMemo(
 		() =>
 			tableColumns.map((field) => ({
-				id: field.key?.toString().toLowerCase().replace(/\./g, '_'), // IMP - Replace dots with underscores as reordering does not work well for accessorKey with dots
+				id: field.key?.toString().toLowerCase().replaceAll(/\./g, '_'), // IMP - Replace dots with underscores as reordering does not work well for accessorKey with dots
 				// accessorKey: field.name,
 				accessorFn: (row: Record<string, string>): string =>
 					row[field.key as string] as string,

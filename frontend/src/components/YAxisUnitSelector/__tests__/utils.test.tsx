@@ -16,8 +16,8 @@ describe('YAxisUnitSelector utils', () => {
 
 		it('returns null or self for unknown units', () => {
 			expect(mapMetricUnitToUniversalUnit('unknown_unit')).toBe('unknown_unit');
-			expect(mapMetricUnitToUniversalUnit('')).toBe(null);
-			expect(mapMetricUnitToUniversalUnit(undefined)).toBe(null);
+			expect(mapMetricUnitToUniversalUnit('')).toBeNull();
+			expect(mapMetricUnitToUniversalUnit()).toBeNull();
 		});
 	});
 
@@ -31,7 +31,7 @@ describe('YAxisUnitSelector utils', () => {
 		it('returns original unit for unknown units', () => {
 			expect(getUniversalNameFromMetricUnit('unknown_unit')).toBe('unknown_unit');
 			expect(getUniversalNameFromMetricUnit('')).toBe('-');
-			expect(getUniversalNameFromMetricUnit(undefined)).toBe('-');
+			expect(getUniversalNameFromMetricUnit()).toBe('-');
 		});
 
 		it('handles case variations', () => {
@@ -62,7 +62,7 @@ describe('YAxisUnitSelector utils', () => {
 				},
 			];
 			const mergedCategories = mergeCategories(categories1, categories2);
-			expect(mergedCategories).toEqual([
+			expect(mergedCategories).toStrictEqual([
 				{
 					name: YAxisCategoryNames.Data,
 					units: [

@@ -155,7 +155,7 @@ const checkFilterValues = (
 	Object.values(AllTraceFilterKeyValue).forEach((filter) => {
 		try {
 			expect(getByText(filter)).toBeInTheDocument();
-		} catch (error) {
+		} catch {
 			// If getByText fails, try getAllByText
 			expect(getAllByText(filter)[0]).toBeInTheDocument();
 		}
@@ -280,10 +280,8 @@ describe('TracesExplorer - Filters', () => {
 		const okCheckbox = getByText('Ok');
 		fireEvent.click(okCheckbox);
 		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toEqual(
+			redirectWithQueryBuilderData.mock.calls.at(-1)[0].builder.queryData[0].filters.items,
+		).toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: {
@@ -302,10 +300,8 @@ describe('TracesExplorer - Filters', () => {
 		const errorCheckbox = getByText('Error');
 		fireEvent.click(errorCheckbox);
 		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toEqual(
+			redirectWithQueryBuilderData.mock.calls.at(-1)[0].builder.queryData[0].filters.items,
+		).toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: {
@@ -329,9 +325,9 @@ describe('TracesExplorer - Filters', () => {
 		const { findByText, getByTestId } = render(<Filter setOpen={jest.fn()} />);
 
 		// check if the default query is applied - composite query has filters - serviceName : demo-app and name : HTTP GET /customer
-		expect(await findByText('demo-app')).toBeInTheDocument();
+		await expect(findByText('demo-app')).resolves.toBeInTheDocument();
 		expect(getByTestId('serviceName-demo-app')).toBeChecked();
-		expect(await findByText('HTTP GET /customer')).toBeInTheDocument();
+		await expect(findByText('HTTP GET /customer')).resolves.toBeInTheDocument();
 		expect(getByTestId('name-HTTP GET /customer')).toBeChecked();
 	});
 
@@ -427,10 +423,8 @@ describe('TracesExplorer - Filters', () => {
 
 		// check if checked and present in query
 		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toEqual(
+			redirectWithQueryBuilderData.mock.calls.at(-1)[0].builder.queryData[0].filters.items,
+		).toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: {
@@ -461,10 +455,8 @@ describe('TracesExplorer - Filters', () => {
 
 		// check if cleared and not present in query
 		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).not.toEqual(
+			redirectWithQueryBuilderData.mock.calls.at(-1)[0].builder.queryData[0].filters.items,
+		).not.toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: {
@@ -486,10 +478,8 @@ describe('TracesExplorer - Filters', () => {
 
 		// check if reset id done
 		expect(
-			redirectWithQueryBuilderData.mock.calls[
-				redirectWithQueryBuilderData.mock.calls.length - 1
-			][0].builder.queryData[0].filters.items,
-		).toEqual([]);
+			redirectWithQueryBuilderData.mock.calls.at(-1)[0].builder.queryData[0].filters.items,
+		).toStrictEqual([]);
 	});
 });
 
@@ -502,7 +492,7 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 
 let capturedPayload: QueryRangePayloadV5;
 
-describe('TracesExplorer - ', () => {
+describe('TracesExplorer -', () => {
 	const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/traces`;
 
 	const setupServer = (): void => {
@@ -571,7 +561,7 @@ describe('TracesExplorer - ', () => {
 
 		expect(
 			(capturedPayload.compositeQuery.queries[0].spec as any).order,
-		).toEqual([{ key: { name: 'timestamp' }, direction: 'desc' }]);
+		).toStrictEqual([{ key: { name: 'timestamp' }, direction: 'desc' }]);
 	});
 
 	it.skip('trace explorer - table view', async () => {
@@ -606,7 +596,7 @@ describe('TracesExplorer - ', () => {
 			'/traces-explorer/?panelType=trace&selectedExplorerView=trace',
 		]);
 
-		expect(await screen.findByText('Root Service Name')).toBeInTheDocument();
+		await expect(screen.findByText('Root Service Name')).resolves.toBeInTheDocument();
 
 		// assert table headers
 		expect(getByText('Root Operation Name')).toBeInTheDocument();
@@ -625,7 +615,7 @@ describe('TracesExplorer - ', () => {
 		fireEvent.click(traceId);
 
 		// assert redirection - should go to /trace/:traceId
-		expect(window.location.href).toEqual(
+		expect(window.location.href).toBe(
 			'http://localhost/trace/5765b60ba7cc4ddafe8bdaa9c1b4b246',
 		);
 	});
@@ -658,10 +648,10 @@ describe('TracesExplorer - ', () => {
 			expect(capturedPayload).toBeDefined();
 			expect(
 				(capturedPayload?.compositeQuery?.queries[0].spec as any).order,
-			).toEqual(defaultOrderBy);
+			).toStrictEqual(defaultOrderBy);
 			expect(
 				(capturedPayload?.compositeQuery?.queries[0].spec as any).order,
-			).not.toEqual(orderBy);
+			).not.toStrictEqual(orderBy);
 		});
 	});
 
@@ -686,7 +676,7 @@ describe('TracesExplorer - ', () => {
 		fireEvent.click(hideExplorerOption);
 
 		// explorer options should hide and show btn should be present
-		expect(await screen.findByTestId('show-explorer-option')).toBeInTheDocument();
+		await expect(screen.findByTestId('show-explorer-option')).resolves.toBeInTheDocument();
 		expect(screen.queryByTestId('hide-toolbar')).toBeNull();
 
 		// show explorer options
@@ -695,7 +685,7 @@ describe('TracesExplorer - ', () => {
 		fireEvent.click(showExplorerOption);
 
 		// explorer options should show and hide btn should be present
-		expect(await screen.findByTestId('hide-toolbar')).toBeInTheDocument();
+		await expect(screen.findByTestId('hide-toolbar')).resolves.toBeInTheDocument();
 	});
 
 	it('select a view options - assert and save this view', async () => {
@@ -713,9 +703,7 @@ describe('TracesExplorer - ', () => {
 
 		fireEvent.mouseDown(viewSearchInput);
 
-		expect(
-			await screen.findByRole('option', { name: 'R-test panel' }),
-		).toBeInTheDocument();
+		await expect(screen.findByRole('option', { name: 'R-test panel' })).resolves.toBeInTheDocument();
 
 		// save this view
 		fireEvent.click(await screen.findByText('Save this view'));
@@ -756,7 +744,7 @@ describe('TracesExplorer - ', () => {
 		expect(createDashboardBtn).toBeInTheDocument();
 		fireEvent.click(createDashboardBtn);
 
-		expect(await screen.findByText('Export Panel')).toBeInTheDocument();
+		await expect(screen.findByText('Export Panel')).resolves.toBeInTheDocument();
 		const createDashboardModal = document.querySelector(
 			'.ant-modal-content',
 		) as HTMLElement;

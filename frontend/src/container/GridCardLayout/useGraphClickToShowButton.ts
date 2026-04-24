@@ -96,7 +96,7 @@ export const useGraphClickToShowButton = ({
 			return;
 		}
 
-		graphRef.current?.appendChild(menuList);
+		graphRef.current?.append(menuList);
 
 		// After appending, get menu dimensions and adjust if needed so it stays within the graph boundaries
 		const menuBounds = menuList.getBoundingClientRect();
@@ -134,7 +134,7 @@ export const useGraphClickToShowButton = ({
 				item.onClick(xValue, yValue, mouseX, mouseY, metric, queryData);
 				cleanup();
 			};
-			menuList.appendChild(listItem);
+			menuList.append(listItem);
 		});
 
 		activeButtonRef.current = menuList;

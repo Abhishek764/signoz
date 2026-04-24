@@ -14,10 +14,10 @@ export const getSortedSeriesData = (
 			return -1;
 		}
 		const avgA =
-			a.values.reduce((acc, curr) => acc + parseFloat(curr[1]), 0) /
+			a.values.reduce((acc, curr) => acc + Number.parseFloat(curr[1]), 0) /
 			a.values.length;
 		const avgB =
-			b.values.reduce((acc, curr) => acc + parseFloat(curr[1]), 0) /
+			b.values.reduce((acc, curr) => acc + Number.parseFloat(curr[1]), 0) /
 			b.values.length;
 		return avgB - avgA;
 	});

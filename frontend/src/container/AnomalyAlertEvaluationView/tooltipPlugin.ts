@@ -13,8 +13,8 @@ const tooltipPlugin = (
 	let isMouseOverPlot = false;
 
 	function formatValue(value: string | number | Date): string | number | Date {
-		if (typeof value === 'string' && !Number.isNaN(parseFloat(value))) {
-			return parseFloat(value).toFixed(3);
+		if (typeof value === 'string' && !Number.isNaN(Number.parseFloat(value))) {
+			return Number.parseFloat(value).toFixed(3);
 		}
 		if (typeof value === 'number') {
 			return value.toFixed(3);
@@ -121,7 +121,7 @@ const tooltipPlugin = (
 		tooltip = document.createElement('div');
 		tooltip.className = 'uplot-tooltip';
 		tooltip.style.display = 'none';
-		u.over.appendChild(tooltip);
+		u.over.append(tooltip);
 
 		// Add event listeners
 		u.over.addEventListener('mouseenter', () => {

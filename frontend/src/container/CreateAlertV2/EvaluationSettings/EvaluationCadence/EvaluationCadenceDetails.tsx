@@ -67,7 +67,7 @@ function EvaluationCadenceDetails({
 			: EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS;
 
 	useEffect(() => {
-		if (!evaluationCadence.custom.occurence.length) {
+		if (evaluationCadence.custom.occurence.length === 0) {
 			const today = new Date();
 			const dayOfWeek = today.getDay();
 			const dayOfMonth = today.getDate();
@@ -253,7 +253,7 @@ function EvaluationCadenceDetails({
 			}
 			return (
 				!evaluationCadence.custom.repeatEvery ||
-				!evaluationCadence.custom.occurence.length ||
+				evaluationCadence.custom.occurence.length === 0 ||
 				!evaluationCadence.custom.startAt ||
 				!evaluationCadence.custom.timezone
 			);

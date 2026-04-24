@@ -10,7 +10,7 @@ const getLabelName = (
 	}
 
 	const keysArray = Object.keys(metric);
-	if (legends.length !== 0) {
+	if (legends.length > 0) {
 		const variables = legends
 			.split('{{')
 			.filter((e) => e)
@@ -32,7 +32,7 @@ const getLabelName = (
 	const preArray = index !== -1 ? keysArray.slice(0, index) : [];
 	const postArray = keysArray.slice(index + 1, keysArray.length);
 
-	if (index === undefined && preArray.length === 0 && postArray.length) {
+	if (index === undefined && preArray.length === 0 && postArray.length > 0) {
 		return query;
 	}
 

@@ -34,7 +34,7 @@ function dispatchPermission(
 		});
 
 		setTimeout(() => {
-			const copiedPermissions = pendingPermissions.slice();
+			const copiedPermissions = [...pendingPermissions];
 			pendingPermissions = [];
 			ctx = null;
 

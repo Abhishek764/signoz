@@ -21,7 +21,7 @@ interface RangePickerModalProps {
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler: (
 		dateTimeRange: DateTimeRangeType,
-		lexicalContext?: LexicalContext | undefined,
+		lexicalContext?: LexicalContext  ,
 	) => void;
 	selectedTime: string;
 	onTimeChange?: (

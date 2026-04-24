@@ -3,9 +3,9 @@ import { colors } from 'lib/getRandomColor';
 
 // Function to determine if a color is "red-like" based on its RGB values
 export function isRedLike(hex: string): boolean {
-	const r = parseInt(hex.slice(1, 3), 16);
-	const g = parseInt(hex.slice(3, 5), 16);
-	const b = parseInt(hex.slice(5, 7), 16);
+	const r = Number.parseInt(hex.slice(1, 3), 16);
+	const g = Number.parseInt(hex.slice(3, 5), 16);
+	const b = Number.parseInt(hex.slice(5, 7), 16);
 	return r > 180 && r > g * 1.4 && r > b * 1.4;
 }
 

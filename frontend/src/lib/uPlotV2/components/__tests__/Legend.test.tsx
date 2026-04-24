@@ -14,7 +14,7 @@ import { useLegendActions } from '../../hooks/useLegendActions';
 import Legend from '../Legend/Legend';
 import { LegendPosition } from '../types';
 
-const mockWriteText = jest.fn().mockResolvedValue(undefined);
+const mockWriteText = jest.fn().mockResolvedValue();
 let clipboardSpy: jest.SpyInstance | undefined;
 
 jest.mock('react-virtuoso', () => ({

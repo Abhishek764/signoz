@@ -103,7 +103,7 @@ export const pipelineApiResponseMockData: Pipeline = {
 	disabled: false,
 	deployStatus: 'IN_PROGRESS',
 	deployResult: 'Deployment started',
-	lastHash: 'q��҂�&覣ʝup��\u0003���q�6�\u001e�<ѥIb�',
+	lastHash: 'q��҂�&覣ʝup��\u0003���q�6�\u001E�<ѥIb�',
 	lastConf:
 		'[{"id":"a3675a0c-ff73-4ddb-be39-4351ace69231","orderId":"1","name":"Moving pipeline new","alias":"movingpipelinenew","enabled":false,"filter":"attributes.method == POST","config":[{"type":"copy","id":"mv1","name":"mymove","from":"attributes.method","to":"attributes.method11"}],"createdBy":"nityananda@signoz.io","createdAt":"2023-03-07T16:55:27.789595116Z"},{"id":"4453c8b0-c0fd-42bf-bf09-7cc1b04ccdc9","orderId":"2","name":"Apache common parser","alias":"apachecommonparser","enabled":false,"filter":"attributes.source == nginx","config":[{"type":"grok_parser","id":"grokusecommon","name":"grok use common asd","output":"renameauth","parse_to":"attributes","pattern":"%{COMMONAPACHELOG}","parse_from":"body"},{"type":"move","id":"renameauth","name":"rename auth","from":"attributes.auth","to":"attributes.username"}],"createdBy":"nityananda@signoz.io","createdAt":"2023-03-07T16:56:53.36071141Z"}]',
 	pipelines: pipelineMockData,

@@ -85,7 +85,7 @@ function convertTimeSeriesData(
 			const { index, alias } = aggregation;
 			const seriesData = aggregation[seriesKey];
 
-			if (!seriesData || !seriesData.length) {
+			if (!seriesData || seriesData.length === 0) {
 				return [];
 			}
 

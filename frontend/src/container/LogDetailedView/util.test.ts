@@ -10,20 +10,20 @@ import {
 describe('recursiveParseJSON', () => {
 	it('should return an empty object if the input is not valid JSON', () => {
 		const result = recursiveParseJSON('not valid JSON');
-		expect(result).toEqual({});
+		expect(result).toStrictEqual({});
 	});
 
 	it('should return the parsed JSON object for valid JSON input', () => {
 		const jsonString = '{"name": "John", "age": 30}';
 		const result = recursiveParseJSON(jsonString);
-		expect(result).toEqual({ name: 'John', age: 30 });
+		expect(result).toStrictEqual({ name: 'John', age: 30 });
 	});
 
 	it('should recursively parse nested JSON objects', () => {
 		const jsonString =
 			'{"name": "John", "age": 30, "address": {"street": "123 Main St", "city": "Anytown", "state": "CA"}}';
 		const result = recursiveParseJSON(jsonString);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			name: 'John',
 			age: 30,
 			address: {
@@ -37,19 +37,19 @@ describe('recursiveParseJSON', () => {
 	it('should recursively parse nested JSON arrays', () => {
 		const jsonString = '[1, 2, [3, 4], {"foo": "bar"}]';
 		const result = recursiveParseJSON(jsonString);
-		expect(result).toEqual([1, 2, [3, 4], { foo: 'bar' }]);
+		expect(result).toStrictEqual([1, 2, [3, 4], { foo: 'bar' }]);
 	});
 
 	it('should recursively parse deeply nested JSON objects', () => {
 		const jsonString = '{"foo": {"bar": {"baz": {"qux": {"value": 42}}}}}';
 		const result = recursiveParseJSON(jsonString);
-		expect(result).toEqual({ foo: { bar: { baz: { qux: { value: 42 } } } } });
+		expect(result).toStrictEqual({ foo: { bar: { baz: { qux: { value: 42 } } } } });
 	});
 
 	it('should handle JSON input that contains escaped characters', () => {
 		const jsonString = '{"name": "John\\", \\"Doe", "age": 30}';
 		const result = recursiveParseJSON(jsonString);
-		expect(result).toEqual({ name: 'John", "Doe', age: 30 });
+		expect(result).toStrictEqual({ name: 'John", "Doe', age: 30 });
 	});
 });
 
@@ -72,14 +72,14 @@ describe('flattenObject in the objects recursively', () => {
 			f: 4,
 		};
 
-		expect(flattenObject(nestedObj)).toEqual(expected);
+		expect(flattenObject(nestedObj)).toStrictEqual(expected);
 	});
 
 	it('should return an empty object when input is empty', () => {
 		const nestedObj = {};
 		const expected = {};
 
-		expect(flattenObject(nestedObj)).toEqual(expected);
+		expect(flattenObject(nestedObj)).toStrictEqual(expected);
 	});
 
 	it('should handle non-nested objects correctly', () => {
@@ -94,7 +94,7 @@ describe('flattenObject in the objects recursively', () => {
 			c: 3,
 		};
 
-		expect(flattenObject(nestedObj)).toEqual(expected);
+		expect(flattenObject(nestedObj)).toStrictEqual(expected);
 	});
 
 	it('should handle null and undefined correctly', () => {
@@ -107,7 +107,7 @@ describe('flattenObject in the objects recursively', () => {
 			b: undefined,
 		};
 
-		expect(flattenObject(nestedObj)).toEqual(expected);
+		expect(flattenObject(nestedObj)).toStrictEqual(expected);
 	});
 
 	it('should handle arrays correctly', () => {
@@ -120,7 +120,7 @@ describe('flattenObject in the objects recursively', () => {
 			b: 2,
 		};
 
-		expect(flattenObject(objWithArray)).toEqual(expected);
+		expect(flattenObject(objWithArray)).toStrictEqual(expected);
 	});
 
 	it('should handle nested objects in arrays correctly', () => {
@@ -133,7 +133,7 @@ describe('flattenObject in the objects recursively', () => {
 			d: 3,
 		};
 
-		expect(flattenObject(objWithArray)).toEqual(expected);
+		expect(flattenObject(objWithArray)).toStrictEqual(expected);
 	});
 
 	it('should handle objects with arrays and nested objects correctly', () => {
@@ -150,7 +150,7 @@ describe('flattenObject in the objects recursively', () => {
 			e: 5,
 		};
 
-		expect(flattenObject(complexObj)).toEqual(expected);
+		expect(flattenObject(complexObj)).toStrictEqual(expected);
 	});
 });
 
@@ -212,7 +212,7 @@ describe('getSanitizedLogBody', () => {
 	});
 
 	it('should handle ANSI color codes correctly', () => {
-		const input = '\x1b[32mHello\x1b[0m World';
+		const input = '\x1B[32mHello\x1B[0m World';
 		const result = getSanitizedLogBody(input);
 
 		// Should convert ANSI codes to HTML spans
@@ -320,7 +320,7 @@ describe('getSanitizedLogBody', () => {
 	});
 
 	it('should handle ANSI codes with HTML escaping', () => {
-		const input = '\x1b[32mHello\x1b[0m <script>World</script>';
+		const input = '\x1B[32mHello\x1B[0m <script>World</script>';
 		const result = getSanitizedLogBody(input, { shouldEscapeHtml: true });
 
 		// Should handle both ANSI codes and HTML escaping

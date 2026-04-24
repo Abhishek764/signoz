@@ -32,7 +32,7 @@ function PipelineSimulationResult({
 		return <div>Loading...</div>;
 	}
 
-	if (outputLogs.length < 1) {
+	if (outputLogs.length === 0) {
 		return <div>No logs found</div>;
 	}
 

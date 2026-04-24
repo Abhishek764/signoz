@@ -163,7 +163,7 @@ function LogDetailInner({
 	}, [log.id, logs, onNavigateLog, onScrollToLog, selectedView]);
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+		if (!stagedQuery || stagedQuery.builder.queryData.length === 0) {
 			return null;
 		}
 

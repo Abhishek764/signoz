@@ -84,8 +84,8 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 		const spanObject = {
 			id: span[1],
 			name: span[4],
-			value: parseInt(span[6], 10),
-			time: parseInt(span[6], 10),
+			value: Number.parseInt(span[6], 10),
+			time: Number.parseInt(span[6], 10),
 			startTime: span[0],
 			tags: getSpanTags(span),
 			children: [],
@@ -121,7 +121,7 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 
 	const spanTree: ITraceTree[] = [];
 	const missingSpanTree: ITraceTree[] = [];
-	const referencedTraceIds: string[] = Array.from(traceIdSet);
+	const referencedTraceIds: string[] = [...traceIdSet];
 	Object.keys(spanMap).forEach((spanId) => {
 		const isRoot = spanMap[spanId].childReferences?.some(
 			(refs) => refs.SpanId === '',

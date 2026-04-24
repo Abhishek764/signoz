@@ -82,7 +82,7 @@ const createTimezoneEntry = (
 		name: displayName,
 		value,
 		offset,
-		searchIndex: offset.replace(/ /g, ''),
+		searchIndex: offset.replaceAll(/ /g, ''),
 		...(hasDivider && { hasDivider }),
 	};
 };

@@ -109,8 +109,8 @@ export const useXAxisTimeUnit = (
 			};
 			const time = getTimeStamp(timeStamp as Date | number);
 
-			minTimeLocal = Math.min(parseInt(time.toString(), 10), minTimeLocal);
-			maxTimeLocal = Math.max(parseInt(time.toString(), 10), maxTimeLocal);
+			minTimeLocal = Math.min(Number.parseInt(time.toString(), 10), minTimeLocal);
+			maxTimeLocal = Math.max(Number.parseInt(time.toString(), 10), maxTimeLocal);
 		});
 
 		localTime = {

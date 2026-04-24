@@ -69,13 +69,11 @@ export function useServiceAccountRoleManager(
 			);
 
 			// TODO: re-enable deletes once BE for this is streamlined
-			const allOperations = [
-				...addedRoles.map((role) => ({
+			const allOperations = addedRoles.map((role) => ({
 					role,
 					run: (): ReturnType<typeof createRole> =>
 						createRole({ pathParams: { id: accountId }, data: { id: role.id } }),
-				})),
-			];
+				}));
 
 			const results = await Promise.allSettled(
 				allOperations.map((op) => op.run()),

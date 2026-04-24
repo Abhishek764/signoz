@@ -36,7 +36,7 @@ export const convertVariablesToDbFormat = (
 	variblesArr.reduce((result, obj: IDashboardVariable) => {
 		const { id } = obj;
 
-		// @ts-ignore
+		// @ts-expect-error
 		result[id] = obj;
 		return result;
 	}, {});
@@ -249,7 +249,7 @@ export const buildDependencyGraph = (
 				desc.add(d);
 			}
 		}
-		transitiveDescendants[node] = Array.from(desc);
+		transitiveDescendants[node] = [...desc];
 	}
 
 	return {
@@ -389,7 +389,7 @@ function formatQueryValue(val: string): string {
 	if (!Number.isNaN(numValue) && Number.isFinite(numValue)) {
 		return val;
 	}
-	return `'${val.replace(/'/g, "\\'")}'`;
+	return `'${val.replaceAll(/'/g, "\\'")}'`;
 }
 
 function buildQueryPart(attribute: string, values: string[]): string {

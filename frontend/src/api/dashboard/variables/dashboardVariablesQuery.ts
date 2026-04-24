@@ -21,12 +21,12 @@ const dashboardVariablesQuery = async (
 		});
 
 		const timeVariables: Record<string, number> = {
-			start_timestamp_ms: parseInt(start, 10) * 1e3,
-			end_timestamp_ms: parseInt(end, 10) * 1e3,
-			start_timestamp_nano: parseInt(start, 10) * 1e9,
-			end_timestamp_nano: parseInt(end, 10) * 1e9,
-			start_timestamp: parseInt(start, 10),
-			end_timestamp: parseInt(end, 10),
+			start_timestamp_ms: Number.parseInt(start, 10) * 1e3,
+			end_timestamp_ms: Number.parseInt(end, 10) * 1e3,
+			start_timestamp_nano: Number.parseInt(start, 10) * 1e9,
+			end_timestamp_nano: Number.parseInt(end, 10) * 1e9,
+			start_timestamp: Number.parseInt(start, 10),
+			end_timestamp: Number.parseInt(end, 10),
 		};
 
 		const payload = { ...props };

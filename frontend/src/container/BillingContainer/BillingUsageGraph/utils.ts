@@ -49,9 +49,9 @@ export const convertDataToMetricRangePayload = (
 
 	const sortedData = payload.sort((a: any, b: any) => {
 		const sumA = a.values.reduce((acc: any, val: any) => acc + val[1], 0);
-		const avgA = a.values.length ? sumA / a.values.length : 0;
+		const avgA = a.values.length > 0 ? sumA / a.values.length : 0;
 		const sumB = b.values.reduce((acc: any, val: any) => acc + val[1], 0);
-		const avgB = b.values.length ? sumB / b.values.length : 0;
+		const avgB = b.values.length > 0 ? sumB / b.values.length : 0;
 
 		return sumA === sumB ? avgB - avgA : sumB - sumA;
 	});
@@ -102,7 +102,7 @@ const formatDate = (timestamp: number): string =>
 	dayjs.unix(timestamp).format(DATE_TIME_FORMATS.US_DATE);
 
 export function csvFileName(csvData: QuantityData[]): string {
-	if (!csvData.length) {
+	if (csvData.length === 0) {
 		return `billing-usage.csv`;
 	}
 

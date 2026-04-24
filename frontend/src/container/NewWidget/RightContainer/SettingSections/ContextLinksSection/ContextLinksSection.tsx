@@ -22,7 +22,7 @@ export default function ContextLinksSection({
 		<SettingsSection
 			title="Context Links"
 			icon={<LinkIcon size={14} />}
-			defaultOpen={!!contextLinks.linksData.length}
+			defaultOpen={contextLinks.linksData.length > 0}
 		>
 			<div className="context-links-section">
 				<ContextLinks

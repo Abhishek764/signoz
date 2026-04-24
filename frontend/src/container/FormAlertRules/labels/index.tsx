@@ -159,7 +159,7 @@ function LabelSelect({
 					onBlur={handleBlur}
 				/>
 
-				{queries.length || staging.length || currentVal ? (
+				{queries.length > 0 || staging.length > 0 || currentVal ? (
 					<Button
 						onClick={handleClearAll}
 						icon={<CloseCircleFilled />}

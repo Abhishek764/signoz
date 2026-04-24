@@ -398,7 +398,7 @@ export const getAttributeDataFromOnboardingStatus = (
 	}
 
 	return {
-		overallStatus: attributeDataWithError.length ? 'error' : 'success',
+		overallStatus: attributeDataWithError.length > 0 ? 'error' : 'success',
 		allAvailableAttributes,
 		attributeDataWithError,
 	};

@@ -90,7 +90,7 @@ export function useExportRawData({
 
 				await downloadExportData({ format, body: queryPayload });
 				message.success('Export completed successfully');
-			} catch (error) {
+			} catch {
 				message.error(`Failed to export ${dataSource}. Please try again.`);
 			} finally {
 				setIsDownloading(false);

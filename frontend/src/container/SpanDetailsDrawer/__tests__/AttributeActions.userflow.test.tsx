@@ -313,9 +313,7 @@ describe('AttributeActions User Flow Tests', () => {
 			// Verify the new call contains only the new filter (replacement behavior)
 			await waitFor(() => {
 				const lastCall =
-					mockRedirectWithQueryBuilderData.mock.calls[
-						mockRedirectWithQueryBuilderData.mock.calls.length - 1
-					];
+					mockRedirectWithQueryBuilderData.mock.calls.at(-1);
 				const queryData = lastCall[0].builder.queryData[0];
 				const httpMethodFilters = queryData.filters.items.filter(
 					(item: any) => item.key.key === 'http.method',

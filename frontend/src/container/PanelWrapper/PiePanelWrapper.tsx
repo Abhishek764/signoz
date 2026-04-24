@@ -74,7 +74,7 @@ function PiePanelWrapper({
 
 	pieChartData = pieChartData.filter(
 		(arc) =>
-			arc.value && !isNaN(parseFloat(arc.value)) && parseFloat(arc.value) > 0,
+			arc.value && !isNaN(Number.parseFloat(arc.value)) && Number.parseFloat(arc.value) > 0,
 	);
 
 	let size = 0;
@@ -96,7 +96,7 @@ function PiePanelWrapper({
 
 	// Calculate total value for center display
 	const totalValue = pieChartData.reduce(
-		(sum, data) => sum + parseFloat(data.value || '0'),
+		(sum, data) => sum + Number.parseFloat(data.value || '0'),
 		0,
 	);
 
@@ -176,7 +176,7 @@ function PiePanelWrapper({
 
 	return (
 		<div className="piechart-wrapper">
-			{!pieChartData.length && <div className="piechart-no-data">No data</div>}
+			{pieChartData.length === 0 && <div className="piechart-no-data">No data</div>}
 			{pieChartData.length > 0 && (
 				<>
 					<div className="piechart-container" ref={chartRef}>
@@ -188,7 +188,7 @@ function PiePanelWrapper({
 										label: string;
 										value: string;
 										color: string;
-									}): number => parseFloat(data.value)}
+									}): number => Number.parseFloat(data.value)}
 									outerRadius={radius}
 									innerRadius={innerRadius}
 									padAngle={0.01}
@@ -230,11 +230,11 @@ function PiePanelWrapper({
 
 												// Shorten label if too long
 												const shortenedLabel =
-													label.length > 15 ? `${label.substring(0, 12)}...` : label;
+													label.length > 15 ? `${label.slice(0, 12)}...` : label;
 
 												const shouldShowLabel =
-													parseFloat(arc.data.value) /
-														pieChartData.reduce((sum, d) => sum + parseFloat(d.value), 0) >
+													Number.parseFloat(arc.data.value) /
+														pieChartData.reduce((sum, d) => sum + Number.parseFloat(d.value), 0) >
 													0.03;
 
 												return (

@@ -25,7 +25,7 @@ export const reverseParser = (
 			) {
 				// for operators that need string type value, here we append single
 				// quotes. if the content has single quote they would be removed
-				queryString += `'${query.value?.replace(/'/g, '')}'`;
+				queryString += `'${query.value?.replaceAll(/'/g, '')}'`;
 			} else {
 				queryString += query.value;
 			}

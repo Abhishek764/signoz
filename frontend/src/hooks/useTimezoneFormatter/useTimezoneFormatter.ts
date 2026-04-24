@@ -46,7 +46,7 @@ function useTimezoneFormatter({
 		}
 
 		// Sort entries by timestamp (oldest first)
-		const sortedEntries = Array.from(cache.entries()).sort(
+		const sortedEntries = [...cache.entries()].sort(
 			(a, b) => a[1].timestamp - b[1].timestamp,
 		);
 

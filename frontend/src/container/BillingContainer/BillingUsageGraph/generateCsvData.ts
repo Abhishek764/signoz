@@ -105,23 +105,23 @@ const generateCsvData = (quantityData: QuantityData[]): any[] => {
 
 	const csvData: CsvData[] = formattedData.map((dataPoint) => ({
 		Date: dataPoint.date,
-		'Metrics Vol (Mn samples)': parseFloat(dataPoint.metric.total.toFixed(2)),
-		'Metrics Cost ($)': parseFloat(dataPoint.metric.cost.toFixed(2)),
-		'Traces Vol (GBs)': parseFloat(dataPoint.trace.total.toFixed(2)),
-		'Traces Cost ($)': parseFloat(dataPoint.trace.cost.toFixed(2)),
-		'Logs Vol (GBs)': parseFloat(dataPoint.log.total.toFixed(2)),
-		'Logs Cost ($)': parseFloat(dataPoint.log.cost.toFixed(2)),
+		'Metrics Vol (Mn samples)': Number.parseFloat(dataPoint.metric.total.toFixed(2)),
+		'Metrics Cost ($)': Number.parseFloat(dataPoint.metric.cost.toFixed(2)),
+		'Traces Vol (GBs)': Number.parseFloat(dataPoint.trace.total.toFixed(2)),
+		'Traces Cost ($)': Number.parseFloat(dataPoint.trace.cost.toFixed(2)),
+		'Logs Vol (GBs)': Number.parseFloat(dataPoint.log.total.toFixed(2)),
+		'Logs Cost ($)': Number.parseFloat(dataPoint.log.cost.toFixed(2)),
 	}));
 
 	// Add totals row
 	csvData.push({
 		Date: 'Total',
-		'Metrics Vol (Mn samples)': parseFloat(totals.metric.total.toFixed(2)),
-		'Metrics Cost ($)': parseFloat(totals.metric.cost.toFixed(2)),
-		'Traces Vol (GBs)': parseFloat(totals.trace.total.toFixed(2)),
-		'Traces Cost ($)': parseFloat(totals.trace.cost.toFixed(2)),
-		'Logs Vol (GBs)': parseFloat(totals.log.total.toFixed(2)),
-		'Logs Cost ($)': parseFloat(totals.log.cost.toFixed(2)),
+		'Metrics Vol (Mn samples)': Number.parseFloat(totals.metric.total.toFixed(2)),
+		'Metrics Cost ($)': Number.parseFloat(totals.metric.cost.toFixed(2)),
+		'Traces Vol (GBs)': Number.parseFloat(totals.trace.total.toFixed(2)),
+		'Traces Cost ($)': Number.parseFloat(totals.trace.cost.toFixed(2)),
+		'Logs Vol (GBs)': Number.parseFloat(totals.log.total.toFixed(2)),
+		'Logs Cost ($)': Number.parseFloat(totals.log.cost.toFixed(2)),
 	});
 
 	return csvData;

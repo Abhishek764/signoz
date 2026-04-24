@@ -100,7 +100,7 @@ export default function EnvironmentDetails(): JSX.Element {
 
 				setIsSubmittingRequestForEnvironment(false);
 			}
-		} catch (error) {
+		} catch {
 			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',

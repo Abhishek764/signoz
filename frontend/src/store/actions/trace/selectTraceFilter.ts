@@ -25,7 +25,7 @@ export const SelectedTraceFilter = (props: {
 		filter.set(props.topic, [props.value]);
 	} else {
 		const isValuePresent =
-			isTopicPresent.find((e) => e === props.value) !== undefined;
+			isTopicPresent.some((e) => e === props.value) !== undefined;
 
 		// check the value if present then remove the value
 		if (isValuePresent) {

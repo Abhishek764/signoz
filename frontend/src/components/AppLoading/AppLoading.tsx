@@ -13,7 +13,7 @@ function AppLoading(): JSX.Element {
 		try {
 			const theme = get(LOCALSTORAGE.THEME);
 			return theme !== THEME_MODE.LIGHT; // Return true for dark, false for light
-		} catch (error) {
+		} catch {
 			// If localStorage is not available, default to dark theme
 			return true;
 		}

@@ -226,7 +226,7 @@ export function useGraphClickHandler(
 		data?: any,
 	): Promise<void> => {
 		const id = `${type}_button`;
-		const buttonElement = document.getElementById(id);
+		const buttonElement = document.querySelector(`#${id}`);
 		buttonRef.current = buttonElement;
 
 		if (xValue) {

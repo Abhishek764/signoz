@@ -284,7 +284,7 @@ describe('GuardAuthZ', () => {
 
 		expect(
 			screen.getAllByText(
-				new RegExp(permission.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+				new RegExp(permission.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')),
 			).length,
 		).toBeGreaterThan(0);
 		expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();

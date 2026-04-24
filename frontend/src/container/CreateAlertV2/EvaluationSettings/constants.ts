@@ -91,7 +91,7 @@ export const getRollingWindowDescription = (duration?: string): string => {
 	if (duration) {
 		const match = duration.match(/^(\d+)([mhs])/);
 		if (match) {
-			const value = parseInt(match[1], 10);
+			const value = Number.parseInt(match[1], 10);
 			const unit = match[2];
 
 			if (unit === 'm' && !Number.isNaN(value)) {
@@ -121,7 +121,7 @@ export const getRollingWindowDescription = (duration?: string): string => {
 			timeWindow = '5-minute';
 			examples = '14:01:00-14:06:00, 14:02:00-14:07:00';
 		} else if (duration.includes('h')) {
-			const hours = parseInt(duration, 10);
+			const hours = Number.parseInt(duration, 10);
 			if (!Number.isNaN(hours)) {
 				timeWindow = `${hours}-hour`;
 				const endHour = 14 + hours;
@@ -131,7 +131,7 @@ export const getRollingWindowDescription = (duration?: string): string => {
 				)}:00:00, 14:01:00-${String(endHour).padStart(2, '0')}:01:00`;
 			}
 		} else if (duration.includes('m')) {
-			const minutes = parseInt(duration, 10);
+			const minutes = Number.parseInt(duration, 10);
 			if (!Number.isNaN(minutes)) {
 				timeWindow = `${minutes}-minute`;
 				const endMinutes1 = 1 + minutes;

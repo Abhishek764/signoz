@@ -57,7 +57,7 @@ export const useGetValueFromWidget = (
 			return 'Error';
 		}
 
-		const value = parseFloat(
+		const value = Number.parseFloat(
 			query.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
 				?.values?.[0]?.value || 'NaN',
 		);

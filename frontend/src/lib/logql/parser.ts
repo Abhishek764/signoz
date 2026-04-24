@@ -16,7 +16,7 @@ const validateMultiValue = (queryToken: string): boolean => {
 	const queryValues = [];
 	let start;
 	let isQuoteStart = false;
-	if (queryToken[0] === '(' && queryToken[queryToken.length - 1] === ')') {
+	if (queryToken[0] === '(' && queryToken.at(-1) === ')') {
 		for (let idx = 1; idx < queryToken.length - 1; idx += 1) {
 			if (queryToken[idx] === "'") {
 				if (queryToken[idx - 1] === '\\') {
@@ -39,7 +39,7 @@ const validateMultiValue = (queryToken: string): boolean => {
 export const parseQuery = (queryString): any => {
 	let parsedRaw = [];
 	const generateQuery = (queryToken): void => {
-		const prevToken = parsedRaw[parsedRaw.length - 1];
+		const prevToken = parsedRaw.at(-1);
 
 		// Is a QUERY_KEY
 		if (
@@ -57,7 +57,7 @@ export const parseQuery = (queryString): any => {
 				Object.values({
 					...QueryOperatorsMultiVal,
 					...QueryOperatorsSingleVal,
-				}).find((op) => op.toLowerCase() === queryToken.toLowerCase())
+				}).some((op) => op.toLowerCase() === queryToken.toLowerCase())
 			) {
 				parsedRaw.push({
 					type: QueryTypes.QUERY_OPERATOR,
@@ -99,7 +99,7 @@ export const parseQuery = (queryString): any => {
 			});
 		} else if (prevToken && prevToken.type === QueryTypes.QUERY_VALUE) {
 			if (
-				Object.values(ConditionalOperators).find(
+				Object.values(ConditionalOperators).some(
 					(op) => op.toLowerCase() === queryToken.toLowerCase(),
 				)
 			) {

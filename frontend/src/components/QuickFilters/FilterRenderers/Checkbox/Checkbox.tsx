@@ -30,7 +30,7 @@ import { isKeyMatch } from './utils';
 
 import './Checkbox.styles.scss';
 
-const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
+const SELECTED_OPERATORS = new Set([OPERATORS['='], 'in']);
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 
 const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
@@ -194,7 +194,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		);
 
 		if (filterSync) {
-			if (SELECTED_OPERATORS.includes(filterSync.op)) {
+			if (SELECTED_OPERATORS.has(filterSync.op)) {
 				if (isArray(filterSync.value)) {
 					filterSync.value.forEach((val) => {
 						filterState[String(val)] = true;
@@ -532,14 +532,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			...currentQuery,
 			builder: {
 				...currentQuery.builder,
-				queryData: [
-					...currentQuery.builder.queryData.map((q, idx) => {
+				queryData: currentQuery.builder.queryData.map((q, idx) => {
 						if (idx === activeQueryIndex) {
 							return query;
 						}
 						return q;
 					}),
-				],
 			},
 		};
 
@@ -553,7 +551,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const isEmptyStateWithDocsEnabled =
 		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(source) &&
 		!searchText &&
-		!attributeValues.length;
+		attributeValues.length === 0;
 
 	return (
 		<div className="checkbox-filter">
@@ -577,7 +575,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
-					{isOpen && !!attributeValues.length && (
+					{isOpen && attributeValues.length > 0 && (
 						<Typography.Text
 							className="clear-all"
 							onClick={(e): void => {
@@ -593,7 +591,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			</section>
 			{isOpen &&
 				(isLoading || isLoadingKeyValueSuggestions) &&
-				!attributeValues.length && (
+				attributeValues.length === 0 && (
 					<section className="loading">
 						<Skeleton paragraph={{ rows: 4 }} />
 					</section>

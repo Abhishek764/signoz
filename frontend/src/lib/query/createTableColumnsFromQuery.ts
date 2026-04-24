@@ -402,7 +402,7 @@ const fillAggregationData = (
 	value: string,
 	unusedColumnsKeys: Set<keyof RowData>,
 ): void => {
-	column.data.push(parseFloat(value).toFixed(2));
+	column.data.push(Number.parseFloat(value).toFixed(2));
 	unusedColumnsKeys.delete(column.field);
 };
 
@@ -473,7 +473,7 @@ const fillDataFromSeries = (
 
 				fillAggregationData(
 					column,
-					parseFloat(seria.values[0].value).toFixed(2),
+					Number.parseFloat(seria.values[0].value).toFixed(2),
 					unusedColumnsKeys,
 				);
 				return;

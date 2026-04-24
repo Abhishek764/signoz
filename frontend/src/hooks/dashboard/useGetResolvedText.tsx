@@ -78,7 +78,7 @@ function useGetResolvedText({
 	}, [processedDashboardVariables, maxValues]);
 
 	const combinedPattern = useMemo(() => {
-		const escapedMatcher = matcher.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const escapedMatcher = matcher.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 		const variablePatterns = [
 			`\\{\\{\\s*?\\.([^\\s}]+?)\\s*?\\}\\}`, // {{.var}}
 			`\\{\\{\\s*([^\\s}]+?)\\s*\\}\\}`, // {{var}}

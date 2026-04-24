@@ -135,7 +135,7 @@ describe('MembersSettings (integration)', () => {
 
 		await user.click(screen.getByRole('button', { name: /invite member/i }));
 
-		expect(await screen.findAllByPlaceholderText('john@signoz.io')).toHaveLength(
+		await expect(screen.findAllByPlaceholderText('john@signoz.io')).resolves.toHaveLength(
 			3,
 		);
 	});

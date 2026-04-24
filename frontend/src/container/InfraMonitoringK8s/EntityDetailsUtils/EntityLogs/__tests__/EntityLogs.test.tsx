@@ -68,7 +68,7 @@ describe('EntityLogs', () => {
 					capturedQueryRangePayloads.push(await req.json());
 
 					const lastPayload =
-						capturedQueryRangePayloads[capturedQueryRangePayloads.length - 1];
+						capturedQueryRangePayloads.at(-1);
 
 					const queryData = (lastPayload as any)?.compositeQuery?.builderQueries
 						?.A as IBuilderQuery;
@@ -108,7 +108,7 @@ describe('EntityLogs', () => {
 		});
 
 		await waitFor(() => {
-			expect(capturedQueryRangePayloads.length).toBe(1);
+			expect(capturedQueryRangePayloads).toHaveLength(1);
 		});
 
 		await waitFor(async () => {
@@ -131,7 +131,7 @@ describe('EntityLogs', () => {
 		});
 
 		await waitFor(() => {
-			expect(capturedQueryRangePayloads.length).toBe(2);
+			expect(capturedQueryRangePayloads).toHaveLength(2);
 		});
 
 		const firstPayload = capturedQueryRangePayloads[0];

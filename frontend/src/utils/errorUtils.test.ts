@@ -40,6 +40,6 @@ describe('retryOn429', () => {
 
 	it('returns false for null/undefined errors', () => {
 		expect(retryOn429(0, null)).toBe(false);
-		expect(retryOn429(0, undefined)).toBe(false);
+		expect(retryOn429(0)).toBe(false);
 	});
 });

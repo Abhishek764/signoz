@@ -4,7 +4,7 @@ import durationPlugin from 'dayjs/plugin/duration';
 dayjs.extend(durationPlugin);
 
 export const getMs = (value: string): string =>
-	parseFloat(
+	Number.parseFloat(
 		dayjs
 			.duration({
 				milliseconds: parseInt(value, 10) / 1000000,

@@ -217,28 +217,6 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return module.pkgDashboardModule.MustGetTypeables()
-}
-
-func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
-	return map[string][]*authtypes.Transaction{
-		authtypes.SigNozAnonymousRoleName: {
-			{
-				ID:       valuer.GenerateUUID(),
-				Relation: authtypes.RelationRead,
-				Object: *authtypes.MustNewObject(
-					authtypes.Resource{
-						Type: authtypes.TypeMetaResource,
-						Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
-					},
-					authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
-				),
-			},
-		},
-	}
-}
-
 func (module *module) deletePublic(ctx context.Context, _ valuer.UUID, dashboardID valuer.UUID) error {
 	return module.store.DeletePublic(ctx, dashboardID.StringValue())
 }

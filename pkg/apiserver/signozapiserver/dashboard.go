@@ -84,7 +84,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
 		authtypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
+		authtypes.TypeableMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
@@ -104,7 +104,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{authtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
 		authtypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
+		authtypes.TypeableMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
@@ -132,7 +132,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{authtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

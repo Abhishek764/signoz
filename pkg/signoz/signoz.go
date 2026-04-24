@@ -100,7 +100,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, []authz.OnBeforeRoleDelete, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
+	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
@@ -322,11 +322,8 @@ func New(
 		return nil, err
 	}
 
-	// Initialize query parser (needed for dashboard module)
+	// Initialize query parser
 	queryParser := queryparser.New(providerSettings)
-
-	// Initialize dashboard module (needed for authz registry)
-	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
 
 	// Initialize user getter
 	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
@@ -341,7 +338,7 @@ func New(
 	}
 
 	// Initialize authz
-	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, onBeforeRoleDelete, dashboard)
+	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, onBeforeRoleDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -349,6 +346,9 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize dashboard module (no longer needs to be before authz — registry is independent)
+	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(

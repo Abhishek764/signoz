@@ -25,11 +25,17 @@ var (
 )
 
 var (
-	TypeableUser           = &typeableUser{}
-	TypeableServiceAccount = &typeableServiceAccount{}
-	TypeableAnonymous      = &typeableAnonymous{}
-	TypeableRole           = &typeableRole{}
-	TypeableOrganization   = &typeableOrganization{}
+	TypeableUser           Typeable = new(typeableUser)
+	TypeableServiceAccount Typeable = new(typeableServiceAccount)
+	TypeableAnonymous      Typeable = new(typeableAnonymous)
+	TypeableRole           Typeable = new(typeableRole)
+	TypeableOrganization   Typeable = new(typeableOrganization)
+
+	TypeableMetaResourceDashboard        = MustNewTypeableMetaResource(MustNewName("dashboard"))
+	TypeableMetaResourcePublicDashboard  = MustNewTypeableMetaResource(MustNewName("public-dashboard"))
+	TypeableMetaResourcesDashboards      = MustNewTypeableMetaResources(MustNewName("dashboards"))
+	TypeableMetaResourceServiceAccount   = MustNewTypeableMetaResource(MustNewName("service-account"))
+	TypeableMetaResourcesServiceAccounts = MustNewTypeableMetaResources(MustNewName("service-accounts"))
 )
 
 type Typeable interface {

@@ -202,14 +202,6 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{dashboardtypes.TypeableMetaResourceDashboard, dashboardtypes.TypeableMetaResourcesDashboards}
-}
-
-func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
-	return nil
-}
-
 // CreatePublic is not supported.
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")

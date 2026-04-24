@@ -25,19 +25,19 @@ type provider struct {
 	openfgaServer      *openfgaserver.Server
 	licensing          licensing.Licensing
 	store              authtypes.RoleStore
-	registry           []authz.RegisterTypeable
+	registry           authz.Registry
 	settings           factory.ScopedProviderSettings
 	onBeforeRoleDelete []authz.OnBeforeRoleDelete
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry authz.Registry) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
 		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, licensing, onBeforeRoleDelete, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
-	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, openfgaDataStore)
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry authz.Registry) (authz.AuthZ, error) {
+	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, openfgaDataStore, registry)
 	pkgAuthzService, err := pkgOpenfgaAuthzProvider.New(ctx, settings, config)
 	if err != nil {
 		return nil, err
@@ -210,12 +210,7 @@ func (provider *provider) GetOrCreate(ctx context.Context, orgID valuer.UUID, ro
 
 func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource {
 	resources := make([]*authtypes.Resource, 0)
-	for _, register := range provider.registry {
-		for _, typeable := range register.MustGetTypeables() {
-			resources = append(resources, &authtypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
-		}
-	}
-	for _, typeable := range provider.MustGetTypeables() {
+	for _, typeable := range provider.registry.GetTypeables() {
 		resources = append(resources, &authtypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
 	}
 
@@ -234,7 +229,7 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 	}
 
 	objects := make([]*authtypes.Object, 0)
-	for _, objectType := range provider.getUniqueTypes() {
+	for _, objectType := range provider.registry.GetUniqueTypes() {
 		if !slices.Contains(authtypes.TypeableRelations[objectType], relation) {
 			continue
 		}
@@ -318,9 +313,6 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 	return provider.store.Delete(ctx, orgID, id)
 }
 
-func (provider *provider) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{authtypes.TypeableRole, authtypes.TypeableResourcesRoles}
-}
 
 func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := []*openfgav1.TupleKey{}
@@ -359,15 +351,8 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 }
 
 func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
-	transactionsByRole := make(map[string][]*authtypes.Transaction)
-	for _, register := range provider.registry {
-		for roleName, txns := range register.MustGetManagedRoleTransactions() {
-			transactionsByRole[roleName] = append(transactionsByRole[roleName], txns...)
-		}
-	}
-
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for roleName, transactions := range transactionsByRole {
+	for roleName, transactions := range provider.registry.GetManagedRoleTransactions() {
 		for _, txn := range transactions {
 			typeable := authtypes.MustNewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
 			txnTuples, err := typeable.Tuples(
@@ -395,7 +380,7 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 	subject := authtypes.MustNewSubject(authtypes.TypeableRole, roleName, orgID, &authtypes.RelationAssignee)
 
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for _, objectType := range provider.getUniqueTypes() {
+	for _, objectType := range provider.registry.GetUniqueTypes() {
 		typeTuples, err := provider.ReadTuples(ctx, &openfgav1.ReadRequestTupleKey{
 			User:   subject,
 			Object: objectType.StringValue() + ":",
@@ -425,27 +410,3 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 	return nil
 }
 
-func (provider *provider) getUniqueTypes() []authtypes.Type {
-	seen := make(map[string]struct{})
-	uniqueTypes := make([]authtypes.Type, 0)
-	for _, register := range provider.registry {
-		for _, typeable := range register.MustGetTypeables() {
-			typeKey := typeable.Type().StringValue()
-			if _, ok := seen[typeKey]; ok {
-				continue
-			}
-			seen[typeKey] = struct{}{}
-			uniqueTypes = append(uniqueTypes, typeable.Type())
-		}
-	}
-	for _, typeable := range provider.MustGetTypeables() {
-		typeKey := typeable.Type().StringValue()
-		if _, ok := seen[typeKey]; ok {
-			continue
-		}
-		seen[typeKey] = struct{}{}
-		uniqueTypes = append(uniqueTypes, typeable.Type())
-	}
-
-	return uniqueTypes
-}

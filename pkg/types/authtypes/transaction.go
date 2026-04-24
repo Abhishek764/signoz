@@ -33,6 +33,24 @@ func NewTransaction(relation Relation, object Object) (*Transaction, error) {
 	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
 }
 
+func MustNewTransaction(relation Relation, object Object) *Transaction {
+	txn, err := NewTransaction(relation, object)
+	if err != nil {
+		panic(err)
+	}
+	return txn
+}
+
+// MustNewWildcardTransaction creates a Transaction granting the given relation
+// on all instances (*) of the given typeable. This is the standard way to
+// express managed role permissions in the authz registry.
+func MustNewWildcardTransaction(typeable Typeable, relation Relation) *Transaction {
+	return MustNewTransaction(relation, *MustNewObject(
+		Resource{Type: typeable.Type(), Name: typeable.Name()},
+		MustNewSelector(typeable.Type(), "*"),
+	))
+}
+
 func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
 	gettableTransactions := make([]*GettableTransaction, len(results))
 	for i, result := range results {

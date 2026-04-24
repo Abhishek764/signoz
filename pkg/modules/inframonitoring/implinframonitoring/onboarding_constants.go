@@ -46,22 +46,20 @@ var (
 	}
 )
 
-// onboardingComponentBucket is a single collector component's contribution
-// toward a single infra-monitoring tab's readiness. Any of the three dimension
-// slices (DefaultMetrics, OptionalMetrics, RequiredAttrs) may be empty — the
-// bucketizer in Phase 4 skips empty dimensions.
-type onboardingComponentBucket struct {
-	Component         inframonitoringtypes.AssociatedComponent
-	DefaultMetrics    []string
-	OptionalMetrics   []string
-	RequiredAttrs     []string
-	DocumentationLink string
-}
-
-// onboardingSpec defines, for one OnboardingType, the full set of
-// component-scoped buckets that must be satisfied for the tab to be ready.
-type onboardingSpec struct {
-	Buckets []onboardingComponentBucket
+// onboardingSpecs is the single lookup table the module consults for a type's
+// readiness contract. Every OnboardingType value must have an entry here.
+var onboardingSpecs = map[inframonitoringtypes.OnboardingType]onboardingSpec{
+	inframonitoringtypes.OnboardingTypeHosts:        hostsSpec,
+	inframonitoringtypes.OnboardingTypeProcesses:    processesSpec,
+	inframonitoringtypes.OnboardingTypePods:         podsSpec,
+	inframonitoringtypes.OnboardingTypeNodes:        nodesSpec,
+	inframonitoringtypes.OnboardingTypeDeployments:  deploymentsSpec,
+	inframonitoringtypes.OnboardingTypeDaemonsets:   daemonsetsSpec,
+	inframonitoringtypes.OnboardingTypeStatefulsets: statefulsetsSpec,
+	inframonitoringtypes.OnboardingTypeJobs:         jobsSpec,
+	inframonitoringtypes.OnboardingTypeNamespaces:   namespacesSpec,
+	inframonitoringtypes.OnboardingTypeClusters:     clustersSpec,
+	inframonitoringtypes.OnboardingTypeVolumes:      volumesSpec,
 }
 
 // Per-type specs. Every metric and attribute is spelled out in its own spec
@@ -360,20 +358,4 @@ var volumesSpec = onboardingSpec{
 			DocumentationLink: docLinkK8sAttributesProcessor,
 		},
 	},
-}
-
-// onboardingSpecs is the single lookup table the module consults for a type's
-// readiness contract. Every OnboardingType value must have an entry here.
-var onboardingSpecs = map[inframonitoringtypes.OnboardingType]onboardingSpec{
-	inframonitoringtypes.OnboardingTypeHosts:        hostsSpec,
-	inframonitoringtypes.OnboardingTypeProcesses:    processesSpec,
-	inframonitoringtypes.OnboardingTypePods:         podsSpec,
-	inframonitoringtypes.OnboardingTypeNodes:        nodesSpec,
-	inframonitoringtypes.OnboardingTypeDeployments:  deploymentsSpec,
-	inframonitoringtypes.OnboardingTypeDaemonsets:   daemonsetsSpec,
-	inframonitoringtypes.OnboardingTypeStatefulsets: statefulsetsSpec,
-	inframonitoringtypes.OnboardingTypeJobs:         jobsSpec,
-	inframonitoringtypes.OnboardingTypeNamespaces:   namespacesSpec,
-	inframonitoringtypes.OnboardingTypeClusters:     clustersSpec,
-	inframonitoringtypes.OnboardingTypeVolumes:      volumesSpec,
 }

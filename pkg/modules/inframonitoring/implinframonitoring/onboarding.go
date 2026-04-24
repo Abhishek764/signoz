@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 )
 
@@ -80,6 +81,15 @@ func splitBucket(b onboardingComponentBucket, missingMetrics, presentAttrs map[s
 	}
 
 	return s
+}
+
+// getSpecForType returns the onboardingSpec for a given OnboardingType, or an error if the type is invalid.
+func getSpecForType(t inframonitoringtypes.OnboardingType) (*onboardingSpec, error) {
+	spec, ok := onboardingSpecs[t]
+	if !ok {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no onboarding spec for type: %s", t)
+	}
+	return &spec, nil
 }
 
 // collectSpecUnions returns the de-duplicated unions of (default + optional)

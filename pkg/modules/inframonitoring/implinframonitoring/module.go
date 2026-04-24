@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -57,12 +56,12 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 		return nil, err
 	}
 
-	spec, ok := onboardingSpecs[req.Type]
-	if !ok {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no onboarding spec for type: %s", req.Type)
+	spec, err := getSpecForType(req.Type)
+	if err != nil {
+		return nil, err
 	}
 
-	allMetrics, allAttrs := collectSpecUnions(spec)
+	allMetrics, allAttrs := collectSpecUnions(*spec)
 
 	missingMetricsList, _, err := m.getMetricsExistenceAndEarliestTime(ctx, allMetrics)
 	if err != nil {

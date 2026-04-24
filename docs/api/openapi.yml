@@ -10322,7 +10322,9 @@ paths:
         five metrics, and pagination via offset/limit. The response type is ''list''
         for the default host.name grouping or ''grouped_list'' for custom groupBy
         keys. Also reports missing required metrics and whether the requested time
-        range falls before the data retention boundary.'
+        range falls before the data retention boundary. Numeric metric fields (cpu,
+        memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available
+        for that field; frontends should render ''—'' rather than the literal value.'
       operationId: ListHosts
       requestBody:
         content:
@@ -10389,7 +10391,10 @@ paths:
         cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
         The response type is ''list'' for the default k8s.pod.uid grouping or ''grouped_list''
         for custom groupBy keys. Also reports missing required metrics and whether
-        the requested time range falls before the data retention boundary.'
+        the requested time range falls before the data retention boundary. Numeric
+        metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest,
+        podMemoryLimit, podAge) return -1 as a sentinel when no data is available
+        for that field; frontends should render ''—'' rather than the literal value.'
       operationId: ListPods
       requestBody:
         content:

@@ -201,10 +201,7 @@ func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringt
 }
 
 // getPerGroupPodPhaseCounts computes per-group pod counts bucketed by each
-// pod's latest phase in the requested window. Mirrors getPerGroupHostStatusCounts
-// but needs the sample VALUE (not just "did it report"), so attributes_metadata
-// can't carry it.
-//
+// pod's latest phase in the requested window.
 // Pipeline:
 //
 //	timeSeriesFPs:      fp ↔ (pod_uid, groupBy cols) from the time_series table.
@@ -214,9 +211,6 @@ func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringt
 //	                    One step — the JOIN projects pod_uid + groupBy cols
 //	                    down to the sample row, so no fp-level intermediate.
 //	countPodsPerPhase:  per-group uniqExactIf into 5 phase buckets.
-//
-// GLOBAL on the JOIN: right side resolves through a distributed table; without
-// it each shard evaluates locally → partial fp set → under-counts.
 //
 // Groups absent from the result map have implicit zero counts (caller default).
 func (m *module) getPerGroupPodPhaseCounts(

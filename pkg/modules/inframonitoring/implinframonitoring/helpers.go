@@ -434,19 +434,17 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 	return missingMetrics, globalMinFirstReported, nil
 }
 
-// getAttributesPresence returns the subset of attrNames that have ever been
+// getAttributesExistence returns the subset of attrNames that have ever been
 // reported as a label on any of the given metricNames. The result maps each
 // present attr name to true; attrs not in the map are absent.
-//
 // Presence is checked against distributed_metadata without a time-range
 // filter — the metadata table is append-only, so an attr that ever existed
 // for a metric stays visible. Callers decide "required but missing" via
 // lookup against their required list.
-//
 // Sibling to getMetricsExistenceAndEarliestTime — used by the onboarding API
 // to validate required resource attributes (e.g. host.name, k8s.pod.uid) for
 // each infra-monitoring tab.
-func (m *module) getAttributesPresence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
+func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
 	if len(metricNames) == 0 || len(attrNames) == 0 {
 		return map[string]bool{}, nil
 	}

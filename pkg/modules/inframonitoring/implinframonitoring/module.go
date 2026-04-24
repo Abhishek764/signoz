@@ -73,7 +73,7 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 		missingMetrics[name] = true
 	}
 
-	presentAttrs, err := m.getAttributesPresence(ctx, allMetrics, allAttrs)
+	presentAttrs, err := m.getAttributesExistence(ctx, allMetrics, allAttrs)
 	if err != nil {
 		return nil, err
 	}

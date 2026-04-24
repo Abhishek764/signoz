@@ -33,7 +33,6 @@ const (
 	PodsOrderByMemory        = "memory"
 	PodsOrderByMemoryRequest = "memory_request"
 	PodsOrderByMemoryLimit   = "memory_limit"
-	PodsOrderByPhase         = "phase"
 )
 
 var PodsValidOrderByKeys = []string{
@@ -43,5 +42,4 @@ var PodsValidOrderByKeys = []string{
 	PodsOrderByMemory,
 	PodsOrderByMemoryRequest,
 	PodsOrderByMemoryLimit,
-	PodsOrderByPhase,
 }

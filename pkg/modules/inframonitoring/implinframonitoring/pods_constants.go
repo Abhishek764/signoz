@@ -51,7 +51,6 @@ var orderByToPodsQueryNames = map[string][]string{
 	inframonitoringtypes.PodsOrderByMemory:        {"D"},
 	inframonitoringtypes.PodsOrderByMemoryRequest: {"E"},
 	inframonitoringtypes.PodsOrderByMemoryLimit:   {"F"},
-	inframonitoringtypes.PodsOrderByPhase:         {"G"},
 }
 
 func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {

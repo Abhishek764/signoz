@@ -100,8 +100,9 @@ func buildPodRecords(
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
 		podUID := labels[podUIDAttrKey]
 
-		record := inframonitoringtypes.PodRecord{
+		record := inframonitoringtypes.PodRecord{ // initialize with default values
 			PodUID:           podUID,
+			PodPhase:         inframonitoringtypes.PodPhaseNone,
 			PodCPU:           -1,
 			PodCPURequest:    -1,
 			PodCPULimit:      -1,

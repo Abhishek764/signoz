@@ -196,5 +196,3 @@ Register the migration in `pkg/signoz/provider.go`.
 - [ ] Selector callbacks use `NewSelector` (not `MustNewSelector`) for user-supplied IDs
 - [ ] OpenAPI `SecuritySchemes` use `newScopedSecuritySchemes` with exact scope strings
 - [ ] Migration backfills FGA tuples for existing organizations
-- [ ] `make go-build-community` and `make go-build-enterprise` compile
-- [ ] `make go-test` passes

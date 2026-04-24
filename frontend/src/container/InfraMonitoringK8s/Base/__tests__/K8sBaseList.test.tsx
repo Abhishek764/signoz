@@ -37,6 +37,10 @@ jest.mock('utils/navigation', () => ({
 
 const openInNewTabMock = openInNewTab as jest.Mock;
 
+// Mock Date.now to prevent flaky tests due to time-dependent values
+const MOCK_NOW = 1700000000000; // Fixed timestamp
+jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
+
 // Mock DrawerWrapper to avoid CSS issues with jsdom
 // SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
 jest.mock('@signozhq/ui', () => ({
@@ -99,8 +103,8 @@ function renderComponent<T>({
 
 describe('K8sBaseList', () => {
 	describe('with items in the list', () => {
-		const itemId = Math.random().toString(36).substring(7);
-		const itemId2 = Math.random().toString(36).substring(7);
+		const itemId = Math.random().toString(36).slice(7);
+		const itemId2 = Math.random().toString(36).slice(7);
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 		const fetchListDataMock = jest.fn<
 			ReturnType<K8sBaseListProps<{ id: string; title: string }>['fetchListData']>,
@@ -159,10 +163,10 @@ describe('K8sBaseList', () => {
 
 		it('should render all the items in the list', async () => {
 			await waitFor(async () => {
-				expect(await screen.findByText(`PodId:${itemId}`)).toBeInTheDocument();
-				expect(await screen.findByText(`PodTitle:${itemId}`)).toBeInTheDocument();
-				expect(await screen.findByText(`PodId:${itemId2}`)).toBeInTheDocument();
-				expect(await screen.findByText(`PodTitle:${itemId2}`)).toBeInTheDocument();
+				await expect(screen.findByText(`PodId:${itemId}`)).resolves.toBeInTheDocument();
+				await expect(screen.findByText(`PodTitle:${itemId}`)).resolves.toBeInTheDocument();
+				await expect(screen.findByText(`PodId:${itemId2}`)).resolves.toBeInTheDocument();
+				await expect(screen.findByText(`PodTitle:${itemId2}`)).resolves.toBeInTheDocument();
 			});
 		});
 
@@ -174,7 +178,7 @@ describe('K8sBaseList', () => {
 			const [filters] = fetchListDataMock.mock.calls[0];
 			expect(filters.limit).toBe(10);
 			expect(filters.offset).toBe(0);
-			expect(filters.filters).toEqual({ items: [], op: 'AND' });
+			expect(filters.filters).toStrictEqual({ items: [], op: 'AND' });
 			expect(filters.groupBy).toBeUndefined();
 			expect(filters.orderBy).toBeUndefined();
 		});
@@ -188,6 +192,7 @@ describe('K8sBaseList', () => {
 			await waitFor(() => {
 				const selectedItem = onUrlUpdateMock.mock.calls
 					.map((call) => call[0].searchParams.get('selectedItem'))
+					.filter(Boolean)
 					.pop();
 				expect(selectedItem).toBe(`PodId:${itemId}`);
 			});
@@ -353,8 +358,8 @@ describe('K8sBaseList', () => {
 			});
 
 			const [filters] = fetchListDataMock.mock.calls[0];
-			expect(filters.orderBy).toEqual({ columnName: 'cpu', order: 'desc' });
-			expect(filters.groupBy).toEqual(groupByValue);
+			expect(filters.orderBy).toStrictEqual({ columnName: 'cpu', order: 'desc' });
+			expect(filters.groupBy).toStrictEqual(groupByValue);
 			expect(filters.offset).toBe(20); // (3 - 1) * 10 = 20
 			expect(filters.limit).toBe(10);
 		});
@@ -1297,7 +1302,7 @@ describe('K8sBaseList', () => {
 
 			// Try to remove the Id column (canBeHidden=false)
 			act(() => {
-				// eslint-disable-next-line no-restricted-syntax
+				// oxlint-disable-next-line signoz/no-zustand-getstate-in-hooks
 				useInfraMonitoringTableColumnsStore
 					.getState()
 					.removeColumn(InfraMonitoringEntity.PODS, 'id');

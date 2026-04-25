@@ -143,8 +143,10 @@ var nodesSpec = onboardingSpec{
 			Component: componentK8sClusterReceiver,
 			DefaultMetrics: []string{
 				"k8s.node.allocatable_cpu",
-				"k8s.node.allocatable_memory",
-				"k8s.node.condition_ready",
+				"k8s.node.allocatable_memory", // k8s.node.allocatable_cpu and k8s.node.allocatable_memory are
+				// controlled by allocatable_types_to_report config option (Check // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L805-L806)
+				"k8s.node.condition_ready", // # k8s.node.condition_* metrics (k8s.node.condition_ready, k8s.node.condition_memory_pressure, etc) are controlled# by node_conditions_to_report config option.
+				//  By default, only k8s.node.condition_ready is enabled. (Check https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L802)
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},
@@ -327,7 +329,8 @@ var clustersSpec = onboardingSpec{
 			Component: componentK8sClusterReceiver,
 			DefaultMetrics: []string{
 				"k8s.node.allocatable_cpu",
-				"k8s.node.allocatable_memory",
+				"k8s.node.allocatable_memory", //k8s.node.allocatable_cpu and k8s.node.allocatable_memory are
+				// controlled by allocatable_types_to_report config option (Check // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/4f9a578b210a6dcb9f9bf47942f27208b5765298/receiver/k8sclusterreceiver/metadata.yaml#L805-L806)
 			},
 			DocumentationLink: docLinkK8sClusterReceiver,
 		},

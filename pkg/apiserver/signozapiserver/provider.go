@@ -25,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -51,6 +52,7 @@ type provider struct {
 	flaggerHandler          flagger.Handler
 	dashboardModule         dashboard.Module
 	dashboardHandler        dashboard.Handler
+	systemDashboardHandler  systemdashboard.Handler
 	metricsExplorerHandler  metricsexplorer.Handler
 	infraMonitoringHandler  inframonitoring.Handler
 	gatewayHandler          gateway.Handler
@@ -82,6 +84,7 @@ func NewFactory(
 	flaggerHandler flagger.Handler,
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
+	systemDashboardHandler systemdashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
@@ -116,6 +119,7 @@ func NewFactory(
 			flaggerHandler,
 			dashboardModule,
 			dashboardHandler,
+			systemDashboardHandler,
 			metricsExplorerHandler,
 			infraMonitoringHandler,
 			gatewayHandler,
@@ -152,6 +156,7 @@ func newProvider(
 	flaggerHandler flagger.Handler,
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
+	systemDashboardHandler systemdashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
@@ -186,6 +191,7 @@ func newProvider(
 		flaggerHandler:          flaggerHandler,
 		dashboardModule:         dashboardModule,
 		dashboardHandler:        dashboardHandler,
+		systemDashboardHandler:  systemDashboardHandler,
 		metricsExplorerHandler:  metricsExplorerHandler,
 		infraMonitoringHandler:  infraMonitoringHandler,
 		gatewayHandler:          gatewayHandler,
@@ -251,6 +257,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSystemDashboardRoutes(router); err != nil {
 		return err
 	}
 

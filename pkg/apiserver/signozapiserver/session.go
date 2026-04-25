@@ -10,24 +10,28 @@ import (
 )
 
 func (provider *provider) addSessionRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/sessions/email_password", handler.New(provider.authZ.OpenAccess(provider.sessionHandler.CreateSessionByEmailPassword), handler.OpenAPIDef{
-		ID:                  "CreateSessionByEmailPassword",
-		Tags:                []string{"sessions"},
-		Summary:             "Create session by email and password",
-		Description:         "This endpoint creates a session for a user using email and password.",
-		Request:             new(authtypes.PostableEmailPasswordSession),
-		RequestContentType:  "application/json",
-		Response:            new(authtypes.GettableToken),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	}, handler.WithAuditDef(handler.AuditDef{
-		ResourceKind: "session",
-		Action:       audittypes.ActionCreate,
-		Category:     audittypes.ActionCategoryAccessControl,
-	}))).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/sessions/email_password", handler.New(
+		provider.authZ.OpenAccess(provider.sessionHandler.CreateSessionByEmailPassword),
+		handler.OpenAPIDef{
+			ID:                  "CreateSessionByEmailPassword",
+			Tags:                []string{"sessions"},
+			Summary:             "Create session by email and password",
+			Description:         "This endpoint creates a session for a user using email and password.",
+			Request:             new(authtypes.PostableEmailPasswordSession),
+			RequestContentType:  "application/json",
+			Response:            new(authtypes.GettableToken),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind: "session",
+			Action:       audittypes.ActionCreate,
+			Category:     audittypes.ActionCategoryAccessControl,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -48,45 +52,53 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/sessions/rotate", handler.New(provider.authZ.OpenAccess(provider.sessionHandler.RotateSession), handler.OpenAPIDef{
-		ID:                  "RotateSession",
-		Tags:                []string{"sessions"},
-		Summary:             "Rotate session",
-		Description:         "This endpoint rotates the session",
-		Request:             new(authtypes.PostableRotateToken),
-		RequestContentType:  "application/json",
-		Response:            new(authtypes.GettableToken),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	}, handler.WithAuditDef(handler.AuditDef{
-		ResourceKind: "session",
-		Action:       audittypes.ActionUpdate,
-		Category:     audittypes.ActionCategoryAccessControl,
-	}))).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/sessions/rotate", handler.New(
+		provider.authZ.OpenAccess(provider.sessionHandler.RotateSession),
+		handler.OpenAPIDef{
+			ID:                  "RotateSession",
+			Tags:                []string{"sessions"},
+			Summary:             "Rotate session",
+			Description:         "This endpoint rotates the session",
+			Request:             new(authtypes.PostableRotateToken),
+			RequestContentType:  "application/json",
+			Response:            new(authtypes.GettableToken),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind: "session",
+			Action:       audittypes.ActionUpdate,
+			Category:     audittypes.ActionCategoryAccessControl,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/sessions", handler.New(provider.authZ.OpenAccess(provider.sessionHandler.DeleteSession), handler.OpenAPIDef{
-		ID:                  "DeleteSession",
-		Tags:                []string{"sessions"},
-		Summary:             "Delete session",
-		Description:         "This endpoint deletes the session",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	}, handler.WithAuditDef(handler.AuditDef{
-		ResourceKind: "session",
-		Action:       audittypes.ActionDelete,
-		Category:     audittypes.ActionCategoryAccessControl,
-	}))).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/sessions", handler.New(
+		provider.authZ.OpenAccess(provider.sessionHandler.DeleteSession),
+		handler.OpenAPIDef{
+			ID:                  "DeleteSession",
+			Tags:                []string{"sessions"},
+			Summary:             "Delete session",
+			Description:         "This endpoint deletes the session",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind: "session",
+			Action:       audittypes.ActionDelete,
+			Category:     audittypes.ActionCategoryAccessControl,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/gorilla/mux"
@@ -181,20 +182,29 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.CreateFactorAPIKey), handler.OpenAPIDef{
-		ID:                  "CreateServiceAccountKey",
-		Tags:                []string{"serviceaccount"},
-		Summary:             "Create a service account key",
-		Description:         "This endpoint creates a service account key",
-		Request:             new(serviceaccounttypes.PostableFactorAPIKey),
-		RequestContentType:  "",
-		Response:            new(serviceaccounttypes.GettableFactorAPIKeyWithKey),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(
+		provider.authZ.AdminAccess(provider.serviceAccountHandler.CreateFactorAPIKey),
+		handler.OpenAPIDef{
+			ID:                  "CreateServiceAccountKey",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Create a service account key",
+			Description:         "This endpoint creates a service account key",
+			Request:             new(serviceaccounttypes.PostableFactorAPIKey),
+			RequestContentType:  "",
+			Response:            new(serviceaccounttypes.GettableFactorAPIKeyWithKey),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    "factor-api-key",
+			Action:          audittypes.ActionCreate,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -232,20 +242,29 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.RevokeFactorAPIKey), handler.OpenAPIDef{
-		ID:                  "RevokeServiceAccountKey",
-		Tags:                []string{"serviceaccount"},
-		Summary:             "Revoke a service account key",
-		Description:         "This endpoint revokes an existing service account key",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(
+		provider.authZ.AdminAccess(provider.serviceAccountHandler.RevokeFactorAPIKey),
+		handler.OpenAPIDef{
+			ID:                  "RevokeServiceAccountKey",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Revoke a service account key",
+			Description:         "This endpoint revokes an existing service account key",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    "factor-api-key",
+			Action:          audittypes.ActionDelete,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

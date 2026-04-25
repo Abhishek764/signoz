@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 )
@@ -22,7 +23,11 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithAuditDef(handler.AuditDef{
+		ResourceKind: "session",
+		Action:       audittypes.ActionCreate,
+		Category:     audittypes.ActionCategoryAccessControl,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -56,7 +61,11 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithAuditDef(handler.AuditDef{
+		ResourceKind: "session",
+		Action:       audittypes.ActionUpdate,
+		Category:     audittypes.ActionCategoryAccessControl,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -73,7 +82,11 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	}, handler.WithAuditDef(handler.AuditDef{
+		ResourceKind: "session",
+		Action:       audittypes.ActionDelete,
+		Category:     audittypes.ActionCategoryAccessControl,
+	}))).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

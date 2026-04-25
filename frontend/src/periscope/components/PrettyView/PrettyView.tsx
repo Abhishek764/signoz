@@ -122,7 +122,7 @@ function PrettyView({
 								: String(context.fieldValue);
 						setCopy(text);
 						toast.success('Copied to clipboard', {
-							richColors: true,
+							richColors: false,
 							position: 'top-right',
 						});
 					},

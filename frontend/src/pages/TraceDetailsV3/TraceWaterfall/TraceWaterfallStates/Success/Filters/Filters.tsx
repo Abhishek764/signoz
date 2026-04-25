@@ -1,19 +1,18 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Switch } from '@signozhq/ui';
-import { Button, Spin, Tooltip, Typography } from 'antd';
+import { Switch, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
+import { toast } from '@signozhq/ui';
+import { Button, Popover, Spin, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import {
-	convertExpressionToFilters,
-	removeKeysFromExpression,
-} from 'components/QueryBuilderV2/utils';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Search, X } from 'lucide-react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -22,6 +21,11 @@ import {
 } from 'types/common/queryBuilder';
 
 import { BASE_FILTER_QUERY } from './constants';
+import { useHighlightErrors } from './hooks/useHighlightErrors';
+import {
+	SpanCategory,
+	useSpanCategoryFilter,
+} from './hooks/useSpanCategoryFilter';
 
 import './Filters.styles.scss';
 
@@ -64,12 +68,19 @@ function Filters({
 	endTime,
 	traceID,
 	onFilteredSpansChange = (): void => {},
+	isExpanded,
+	onExpand,
+	onCollapse,
 }: {
 	startTime: number;
 	endTime: number;
 	traceID: string;
 	onFilteredSpansChange?: (spanIds: string[], isFilterActive: boolean) => void;
+	isExpanded: boolean;
+	onExpand: () => void;
+	onCollapse: () => void;
 }): JSX.Element {
+	const [, setCopy] = useCopyToClipboard();
 	const [filters, setFilters] = useState<TagFilter>(
 		BASE_FILTER_QUERY.filters || { items: [], op: 'AND' },
 	);
@@ -125,33 +136,23 @@ function Filters({
 		runQuery(expressionRef.current);
 	}, [runQuery]);
 
-	// Derive toggle state from filters (updates only after runQuery, not on every keystroke)
-	const isHighlightErrors = useMemo(
-		() =>
-			filters.items.some(
-				(item) =>
-					item.key?.key === 'has_error' &&
-					(item.value === true || item.value === 'true'),
-			),
-		[filters],
-	);
-
-	const handleToggleHighlightErrors = useCallback(
-		(checked: boolean): void => {
-			// Always remove existing has_error first (whatever its value)
-			let newExpression = removeKeysFromExpression(expression, ['has_error']);
-			// Add back if turning ON
-			if (checked) {
-				newExpression = newExpression.trim()
-					? `${newExpression.trim()} AND has_error = true`
-					: `has_error = true`;
-			}
-			setExpression(newExpression);
-			expressionRef.current = newExpression;
-			runQuery(newExpression);
-		},
-		[expression, runQuery],
-	);
+	// Expression-based filter hooks
+	const filterProps = {
+		expression,
+		filters,
+		setExpression,
+		expressionRef,
+		runQuery,
+	};
+	const {
+		isHighlightErrors,
+		handleToggle: handleToggleHighlightErrors,
+	} = useHighlightErrors(filterProps);
+	const {
+		selectedCategory,
+		categories,
+		handleCategoryChange,
+	} = useSpanCategoryFilter(filterProps);
 
 	const { search } = useLocation();
 	const history = useHistory();
@@ -223,13 +224,100 @@ function Filters({
 		},
 	);
 
+	const highlightErrorsToggle = (
+		<div className="highlight-errors-toggle">
+			<Typography.Text>Highlight errors</Typography.Text>
+			<Switch
+				color="cherry"
+				value={isHighlightErrors}
+				onChange={handleToggleHighlightErrors}
+			/>
+		</div>
+	);
+
+	const statusIndicators = (
+		<>
+			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
+			{error && (
+				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
+					<InfoCircleOutlined size={14} />
+				</Tooltip>
+			)}
+			{noData && (
+				<Typography.Text className="no-results">No results found</Typography.Text>
+			)}
+		</>
+	);
+
+	// --- COLLAPSED VIEW ---
+	if (!isExpanded) {
+		return (
+			<div className="trace-v3-filter-row collapsed">
+				<Popover
+					content={
+						expression ? (
+							<div className="filter-pill-popover">
+								<div className="filter-pill-popover__header">
+									<Typography.Text>Search query</Typography.Text>
+									<Button
+										type="text"
+										size="small"
+										icon={<Copy size={12} />}
+										onClick={(): void => {
+											setCopy(expression);
+											toast.success('Copied to clipboard', {
+												richColors: false,
+												position: 'top-right',
+											});
+										}}
+									/>
+								</div>
+								<div className="filter-pill-popover__expression">{expression}</div>
+							</div>
+						) : null
+					}
+					trigger="hover"
+					placement="bottomLeft"
+					arrow={false}
+					overlayStyle={{ maxWidth: 400 }}
+				>
+					{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+					<div className="filter-pill" onClick={onExpand}>
+						<Search size={12} />
+						<span className="filter-pill__text">{expression || 'Search...'}</span>
+						{expression && <span className="filter-pill__indicator" />}
+					</div>
+				</Popover>
+				{highlightErrorsToggle}
+				{statusIndicators}
+			</div>
+		);
+	}
+
+	// --- EXPANDED VIEW ---
 	return (
-		<div className="trace-v3-filter-row">
+		<div className="trace-v3-filter-row expanded">
+			<ToggleGroup
+				type="single"
+				value={selectedCategory}
+				onChange={(value): void => {
+					if (value) {
+						handleCategoryChange(value as SpanCategory);
+					}
+				}}
+				size="sm"
+			>
+				{categories.map((category) => (
+					<ToggleGroupItem key={category} value={category}>
+						{category}
+					</ToggleGroupItem>
+				))}
+			</ToggleGroup>
 			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
 			<div
+				className="filter-search-container"
 				ref={containerRef}
 				onBlur={(e): void => {
-					// Only run if focus moved outside the filter container
 					if (!containerRef.current?.contains(e.relatedTarget as Node)) {
 						handleBlur();
 					}
@@ -245,14 +333,6 @@ function Filters({
 					onRun={handleRunQuery}
 					dataSource={DataSource.TRACES}
 					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
-				/>
-			</div>
-			<div className="highlight-errors-toggle">
-				<Typography.Text>Highlight errors</Typography.Text>
-				<Switch
-					color="cherry"
-					value={isHighlightErrors}
-					onChange={handleToggleHighlightErrors}
 				/>
 			</div>
 			{filteredSpanIds.length > 0 && (
@@ -280,15 +360,14 @@ function Filters({
 					/>
 				</div>
 			)}
-			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
-			{error && (
-				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
-					<InfoCircleOutlined size={14} />
-				</Tooltip>
-			)}
-			{noData && (
-				<Typography.Text className="no-results">No results found</Typography.Text>
-			)}
+			<Button
+				type="text"
+				icon={<X size={14} />}
+				onClick={onCollapse}
+				className="filter-collapse-btn"
+			/>
+			{highlightErrorsToggle}
+			{statusIndicators}
 		</div>
 	);
 }

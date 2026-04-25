@@ -21,13 +21,19 @@
 		&.trace-v3-filter-row {
 			padding: 0;
 		}
-		max-width: 850px;
-		flex: 1;
 		min-width: 0;
+
+		&:not(&--expanded) {
+			margin-left: auto;
+		}
+
+		&--expanded {
+			max-width: none;
+			flex: 1;
+		}
 	}
 
 	&__old-view-btn {
-		margin-left: auto;
 		flex-shrink: 0;
 	}
 

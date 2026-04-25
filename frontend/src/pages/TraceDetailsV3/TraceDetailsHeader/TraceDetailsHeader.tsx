@@ -33,14 +33,14 @@ export interface TraceMetadataForHeader {
 interface TraceDetailsHeaderProps {
 	filterMetadata: FilterMetadata;
 	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
-	noData?: boolean;
+	isDataLoaded?: boolean;
 	traceMetadata?: TraceMetadataForHeader;
 }
 
 function TraceDetailsHeader({
 	filterMetadata,
 	onFilteredSpansChange,
-	noData,
+	isDataLoaded,
 	traceMetadata,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV2URLProps>();
@@ -49,6 +49,7 @@ function TraceDetailsHeader({
 			localStorage.getItem(LOCALSTORAGE.TRACE_DETAILS_SHOW_TRACE_OVERVIEW) ===
 			'true',
 	);
+	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
 	const handleSwitchToOldView = useCallback((): void => {
 		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
@@ -89,43 +90,58 @@ function TraceDetailsHeader({
 	return (
 		<div className="trace-details-header-wrapper">
 			<div className="trace-details-header">
-				<Button
-					variant="solid"
-					color="secondary"
-					size="sm"
-					className="trace-details-header__back-btn"
-					onClick={handlePreviousBtnClick}
-				>
-					<ArrowLeft size={14} />
-				</Button>
-				<KeyValueLabel
-					badgeKey="Trace ID"
-					badgeValue={traceID || ''}
-					maxCharacters={100}
-				/>
-				{!noData && (
+				{!isFilterExpanded && (
 					<>
-						<div className="trace-details-header__filter">
+						<Button
+							variant="solid"
+							color="secondary"
+							size="md"
+							className="trace-details-header__back-btn"
+							onClick={handlePreviousBtnClick}
+						>
+							<ArrowLeft size={14} />
+						</Button>
+						<KeyValueLabel
+							badgeKey="Trace ID"
+							badgeValue={traceID || ''}
+							maxCharacters={100}
+						/>
+					</>
+				)}
+				{isDataLoaded && (
+					<>
+						<div
+							className={`trace-details-header__filter${
+								isFilterExpanded ? ' trace-details-header__filter--expanded' : ''
+							}`}
+						>
 							<Filters
 								startTime={filterMetadata.startTime}
 								endTime={filterMetadata.endTime}
 								traceID={filterMetadata.traceId}
 								onFilteredSpansChange={onFilteredSpansChange}
+								isExpanded={isFilterExpanded}
+								onExpand={(): void => setIsFilterExpanded(true)}
+								onCollapse={(): void => setIsFilterExpanded(false)}
 							/>
 						</div>
-						<Button
-							variant="solid"
-							color="secondary"
-							size="sm"
-							className="trace-details-header__old-view-btn"
-							onClick={handleSwitchToOldView}
-						>
-							Old View
-						</Button>
-						<TraceOptionsMenu
-							showTraceDetails={showTraceDetails}
-							onToggleTraceDetails={handleToggleTraceDetails}
-						/>
+						{!isFilterExpanded && (
+							<>
+								<Button
+									variant="solid"
+									color="secondary"
+									size="sm"
+									className="trace-details-header__old-view-btn"
+									onClick={handleSwitchToOldView}
+								>
+									Old View
+								</Button>
+								<TraceOptionsMenu
+									showTraceDetails={showTraceDetails}
+									onToggleTraceDetails={handleToggleTraceDetails}
+								/>
+							</>
+						)}
 					</>
 				)}
 			</div>

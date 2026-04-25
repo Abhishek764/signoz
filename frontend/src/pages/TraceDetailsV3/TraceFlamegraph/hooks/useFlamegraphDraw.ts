@@ -229,10 +229,7 @@ export function useFlamegraphDraw(
 	const eventRectsRef = eventRectsRefProp ?? eventRectsRefInternal;
 
 	const filteredSpanIdsSet = useMemo(
-		() =>
-			isFilterActive && filteredSpanIds && filteredSpanIds.length > 0
-				? new Set(filteredSpanIds)
-				: null,
+		() => (isFilterActive && filteredSpanIds ? new Set(filteredSpanIds) : null),
 		[filteredSpanIds, isFilterActive],
 	);
 

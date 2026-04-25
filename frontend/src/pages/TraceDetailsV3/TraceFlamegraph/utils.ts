@@ -211,7 +211,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 	// Alpha is applied to bar + events only; label is drawn after restoring alpha to 1
 	// so text stays readable against the faded bar.
 	if (shouldDim) {
-		ctx.globalAlpha = 0.4;
+		ctx.globalAlpha = 0.15;
 	}
 
 	ctx.beginPath();

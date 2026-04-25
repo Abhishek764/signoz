@@ -17,6 +17,18 @@ type groupHostStatusCounts struct {
 	Inactive int
 }
 
+// bucketSplit carries the up-to-six entries a single spec bucket contributes
+// to an onboarding response. Any field may be nil if the bucket doesn't
+// populate that dimension.
+type bucketSplit struct {
+	PresentDefault  *inframonitoringtypes.MetricsComponentEntry
+	PresentOptional *inframonitoringtypes.MetricsComponentEntry
+	PresentAttrs    *inframonitoringtypes.AttributesComponentEntry
+	MissingDefault  *inframonitoringtypes.MissingMetricsComponentEntry
+	MissingOptional *inframonitoringtypes.MissingMetricsComponentEntry
+	MissingAttrs    *inframonitoringtypes.MissingAttributesComponentEntry
+}
+
 // onboardingComponentBucket is a single collector component's contribution
 // toward a single infra-monitoring tab's readiness. Any of the three dimension
 // slices (DefaultMetrics, OptionalMetrics, RequiredAttrs) may be empty — the

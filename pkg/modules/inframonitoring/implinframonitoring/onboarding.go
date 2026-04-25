@@ -8,25 +8,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 )
 
-// bucketSplit carries the up-to-six entries a single spec bucket contributes
-// to an onboarding response. Any field may be nil if the bucket doesn't
-// populate that dimension.
-type bucketSplit struct {
-	PresentDefault  *inframonitoringtypes.MetricsComponentEntry
-	PresentOptional *inframonitoringtypes.MetricsComponentEntry
-	PresentAttrs    *inframonitoringtypes.AttributesComponentEntry
-	MissingDefault  *inframonitoringtypes.MissingMetricsComponentEntry
-	MissingOptional *inframonitoringtypes.MissingMetricsComponentEntry
-	MissingAttrs    *inframonitoringtypes.MissingAttributesComponentEntry
-}
-
 // splitBucket partitions one component bucket's metric and attribute lists
-// against the module-wide missing/present sets into up to six response entries.
+// against the module-wide missing sets into up to six response entries.
 // Empty partitions are left nil so callers can skip them.
-func splitBucket(b onboardingComponentBucket, missingMetrics, presentAttrs map[string]bool) bucketSplit {
+func splitBucket(b onboardingComponentBucket, missingMetrics, missingAttrs map[string]bool) bucketSplit {
 	var s bucketSplit
-
-	presentDef, missDef := partitionMetrics(b.DefaultMetrics, missingMetrics)
+	presentDef, missDef := partitionList(b.DefaultMetrics, missingMetrics)
 	if len(presentDef) > 0 {
 		s.PresentDefault = &inframonitoringtypes.MetricsComponentEntry{
 			Metrics:             presentDef,
@@ -44,7 +31,7 @@ func splitBucket(b onboardingComponentBucket, missingMetrics, presentAttrs map[s
 		}
 	}
 
-	presentOpt, missOpt := partitionMetrics(b.OptionalMetrics, missingMetrics)
+	presentOpt, missOpt := partitionList(b.OptionalMetrics, missingMetrics)
 	if len(presentOpt) > 0 {
 		s.PresentOptional = &inframonitoringtypes.MetricsComponentEntry{
 			Metrics:             presentOpt,
@@ -62,7 +49,7 @@ func splitBucket(b onboardingComponentBucket, missingMetrics, presentAttrs map[s
 		}
 	}
 
-	presentA, missA := partitionAttrs(b.RequiredAttrs, presentAttrs)
+	presentA, missA := partitionList(b.RequiredAttrs, missingAttrs)
 	if len(presentA) > 0 {
 		s.PresentAttrs = &inframonitoringtypes.AttributesComponentEntry{
 			Attributes:          presentA,
@@ -92,30 +79,17 @@ func getSpecForType(t inframonitoringtypes.OnboardingType) (*onboardingSpec, err
 	return &spec, nil
 }
 
-// partitionMetrics splits a metric-name list into those present (not in
-// missingMetrics) and those missing (in missingMetrics). Preserves input order.
-func partitionMetrics(metrics []string, missingMetrics map[string]bool) (present, missing []string) {
-	for _, m := range metrics {
-		if missingMetrics[m] {
-			missing = append(missing, m)
+// partitionList splits items into those NOT in `missing` and those in `missing`.
+// Preserves input order.
+func partitionList(items []string, missing map[string]bool) (present, miss []string) {
+	for _, x := range items {
+		if missing[x] {
+			miss = append(miss, x)
 		} else {
-			present = append(present, m)
+			present = append(present, x)
 		}
 	}
-	return present, missing
-}
-
-// partitionAttrs splits a required-attrs list into present and missing based
-// on the presentAttrs set returned by getAttributesPresence. Preserves input order.
-func partitionAttrs(attrs []string, presentAttrs map[string]bool) (present, missing []string) {
-	for _, a := range attrs {
-		if presentAttrs[a] {
-			present = append(present, a)
-		} else {
-			missing = append(missing, a)
-		}
-	}
-	return present, missing
+	return present, miss
 }
 
 func buildMissingDefaultMetricsMessage(metrics []string, componentName string) string {
@@ -133,12 +107,8 @@ func buildMissingOptionalMetricsMessage(metrics []string, componentName string) 
 }
 
 func buildMissingRequiredAttrsMessage(attrs []string, componentName string) string {
-	noun := "attribute"
-	if len(attrs) > 1 {
-		noun = "attributes"
-	}
 	return fmt.Sprintf(
-		"Missing required %s %s from %s. Learn how to configure here.",
-		noun, strings.Join(attrs, ", "), componentName,
+		"Missing required attributes %s from %s. Learn how to configure here.",
+		strings.Join(attrs, ", "), componentName,
 	)
 }

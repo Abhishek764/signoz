@@ -434,21 +434,21 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 	return missingMetrics, globalMinFirstReported, nil
 }
 
-// getAttributesExistence returns the subset of attrNames that have ever been
-// reported as a label on any of the given metricNames. The result maps each
-// present attr name to true; attrs not in the map are absent.
+// getAttributesExistence returns the subset of attrNames that are missing —
+// i.e. have never been reported as a label on any of the given metricNames.
 // Presence is checked against distributed_metadata without a time-range
 // filter — the metadata table is append-only, so an attr that ever existed
-// for a metric stays visible. Callers decide "required but missing" via
-// lookup against their required list.
+// for a metric stays visible.
 // Sibling to getMetricsExistenceAndEarliestTime — used by the onboarding API
 // to validate required resource attributes (e.g. host.name, k8s.pod.uid) for
 // each infra-monitoring tab.
-func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
-	if len(metricNames) == 0 || len(attrNames) == 0 {
-		return map[string]bool{}, nil
+func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNames []string) ([]string, error) {
+	if len(attrNames) == 0 {
+		return nil, nil
 	}
-
+	if len(metricNames) == 0 {
+		return nil, errors.NewInternalf(errors.CodeInternal, "getAttributesExistence: metricNames must not be empty")
+	}
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("attr_name", "count(*) AS cnt")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
@@ -481,7 +481,13 @@ func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNa
 		return nil, err
 	}
 
-	return present, nil
+	var missing []string
+	for _, a := range attrNames {
+		if !present[a] {
+			missing = append(missing, a)
+		}
+	}
+	return missing, nil
 }
 
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,

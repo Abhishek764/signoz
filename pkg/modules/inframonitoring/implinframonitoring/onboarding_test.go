@@ -30,14 +30,14 @@ func TestSplitBucket(t *testing.T) {
 		name           string
 		bucket         onboardingComponentBucket
 		missingMetrics map[string]bool
-		presentAttrs   map[string]bool
+		missingAttrs   map[string]bool
 		want           want
 	}{
 		{
 			name:           "empty bucket — nothing to emit",
 			bucket:         onboardingComponentBucket{Component: testComponent, DocumentationLink: testDocLink},
 			missingMetrics: map[string]bool{},
-			presentAttrs:   map[string]bool{},
+			missingAttrs:   map[string]bool{},
 			want:           want{},
 		},
 		{
@@ -48,7 +48,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{},
-			presentAttrs:   map[string]bool{},
+			missingAttrs:   map[string]bool{},
 			want: want{
 				presentDefault: []string{"m1", "m2"},
 			},
@@ -61,7 +61,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{"m1": true, "m2": true},
-			presentAttrs:   map[string]bool{},
+			missingAttrs:   map[string]bool{},
 			want: want{
 				missingDefault: []string{"m1", "m2"},
 			},
@@ -74,7 +74,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{"m2": true},
-			presentAttrs:   map[string]bool{},
+			missingAttrs:   map[string]bool{},
 			want: want{
 				presentDefault: []string{"m1", "m3"},
 				missingDefault: []string{"m2"},
@@ -88,7 +88,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{"opt1": true, "opt2": true},
-			presentAttrs:   map[string]bool{},
+			missingAttrs:   map[string]bool{},
 			want: want{
 				missingOptional: []string{"opt1", "opt2"},
 			},
@@ -101,7 +101,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{},
-			presentAttrs:   map[string]bool{"a1": true, "a2": true},
+			missingAttrs:   map[string]bool{},
 			want: want{
 				presentAttrs: []string{"a1", "a2"},
 			},
@@ -114,7 +114,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{},
-			presentAttrs:   map[string]bool{},
+			missingAttrs:   map[string]bool{"a1": true},
 			want: want{
 				missingAttrs: []string{"a1"},
 			},
@@ -129,7 +129,7 @@ func TestSplitBucket(t *testing.T) {
 				DocumentationLink: testDocLink,
 			},
 			missingMetrics: map[string]bool{"d2": true, "o1": true},
-			presentAttrs:   map[string]bool{"a1": true},
+			missingAttrs:   map[string]bool{"a2": true},
 			want: want{
 				presentDefault:  []string{"d1"},
 				missingDefault:  []string{"d2"},
@@ -143,7 +143,7 @@ func TestSplitBucket(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := splitBucket(tt.bucket, tt.missingMetrics, tt.presentAttrs)
+			got := splitBucket(tt.bucket, tt.missingMetrics, tt.missingAttrs)
 
 			requireMetricsEntry(t, "presentDefault", got.PresentDefault, tt.want.presentDefault, false)
 			requireMetricsEntry(t, "presentOptional", got.PresentOptional, tt.want.presentOptional, false)
@@ -156,22 +156,13 @@ func TestSplitBucket(t *testing.T) {
 	}
 }
 
-func TestPartitionMetrics(t *testing.T) {
-	present, missing := partitionMetrics(
+func TestPartitionList(t *testing.T) {
+	present, missing := partitionList(
 		[]string{"a", "b", "c", "d"},
 		map[string]bool{"b": true, "d": true},
 	)
 	require.Equal(t, []string{"a", "c"}, present)
 	require.Equal(t, []string{"b", "d"}, missing)
-}
-
-func TestPartitionAttrs(t *testing.T) {
-	present, missing := partitionAttrs(
-		[]string{"a", "b", "c"},
-		map[string]bool{"a": true, "c": true},
-	)
-	require.Equal(t, []string{"a", "c"}, present)
-	require.Equal(t, []string{"b"}, missing)
 }
 
 func TestMissingMessageTemplates(t *testing.T) {
@@ -184,7 +175,7 @@ func TestMissingMessageTemplates(t *testing.T) {
 		buildMissingOptionalMetricsMessage([]string{"m1"}, "comp"),
 	)
 	require.Equal(t,
-		"Missing required attribute a1 from comp. Learn how to configure here.",
+		"Missing required attributes a1 from comp. Learn how to configure here.",
 		buildMissingRequiredAttrsMessage([]string{"a1"}, "comp"),
 	)
 	require.Equal(t,

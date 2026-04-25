@@ -68,14 +68,18 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 	if err != nil {
 		return nil, err
 	}
-	missingMetrics := make(map[string]bool, len(missingMetricsList))
+	missingMetricsMap := make(map[string]bool, len(missingMetricsList))
 	for _, name := range missingMetricsList {
-		missingMetrics[name] = true
+		missingMetricsMap[name] = true
 	}
 
-	presentAttrs, err := m.getAttributesExistence(ctx, allMetrics, allAttrs)
+	missingAttrsList, err := m.getAttributesExistence(ctx, allMetrics, allAttrs)
 	if err != nil {
 		return nil, err
+	}
+	missingAttrsMap := make(map[string]bool, len(missingAttrsList))
+	for _, name := range missingAttrsList {
+		missingAttrsMap[name] = true
 	}
 
 	resp := &inframonitoringtypes.Onboarding{
@@ -89,7 +93,7 @@ func (m *module) GetOnboarding(ctx context.Context, orgID valuer.UUID, req *infr
 	}
 
 	for _, b := range spec.Buckets {
-		s := splitBucket(b, missingMetrics, presentAttrs)
+		s := splitBucket(b, missingMetricsMap, missingAttrsMap)
 		if s.PresentDefault != nil {
 			resp.PresentDefaultEnabledMetrics = append(resp.PresentDefaultEnabledMetrics, *s.PresentDefault)
 		}

@@ -23,7 +23,7 @@ jobs:
           node-version: lts/*
       - name: install
         run: |
-          cd tests/e2e && yarn install --frozen-lockfile
+          cd tests/e2e && yarn install --immutable
       - name: fmt
         run: |
           cd tests/e2e && yarn fmt:check
@@ -59,7 +59,7 @@ jobs:
           cd tests && uv sync
       - name: yarn-install
         run: |
-          cd tests/e2e && yarn install --frozen-lockfile
+          cd tests/e2e && yarn install --immutable
       - name: playwright-browsers
         run: |
           cd tests/e2e && yarn playwright install --with-deps ${{ matrix.project }}

@@ -10,8 +10,13 @@ node_modules
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
+frontend/.pnp.*
 frontend/i18n-translations-hash.json
 *.pnp.js
+
+# Yarn Berry
+frontend/.yarn/cache
+frontend/.yarn/install-state.gz
 
 # testing
 frontend/coverage

@@ -66,6 +66,7 @@ module.exports = {
 	rules: {
 		// Asset migration — base-path safety
 		'rulesdir/no-unsupported-asset-pattern': 'error',
+		'rulesdir/prefer-signoz-ui-icons': 'warn',
 
 		// Code quality rules
 		'prefer-const': 'error', // Enforces const for variables never reassigned

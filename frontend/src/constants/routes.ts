@@ -89,6 +89,7 @@ const ROUTES = {
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
 	AI_ASSISTANT: '/ai-assistant/:conversationId',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
+	MCP_SERVER: '/settings/mcp-server',
 } as const;
 
 export default ROUTES;

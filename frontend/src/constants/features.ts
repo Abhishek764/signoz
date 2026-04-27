@@ -11,4 +11,5 @@ export enum FeatureKeys {
 	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
 	/** When active, AI assistant UI, routes, and integrations are available. */
 	AI_ASSISTANT_ENABLED = 'ai_assistant_enabled',
+	BODY_JSON_ENABLED = 'body_json_enabled',
 }

@@ -795,7 +795,8 @@ export interface CloudintegrationtypesAccountDTO {
 }
 
 export interface CloudintegrationtypesAccountConfigDTO {
-	aws: CloudintegrationtypesAWSAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -827,6 +828,86 @@ export interface CloudintegrationtypesAssetsDTO {
 	 * @nullable true
 	 */
 	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
+}
+
+export interface CloudintegrationtypesAzureAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	cliCommand: string;
+	/**
+	 * @type string
+	 */
+	cloudPowerShellCommand: string;
+}
+
+export interface CloudintegrationtypesAzureIntegrationConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+	/**
+	 * @type array
+	 */
+	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
+}
+
+export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	categoryGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
+	[key: string]: unknown;
+}
+
+export interface CloudintegrationtypesAzureServiceConfigDTO {
+	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
+	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
+}
+
+export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	resourceProvider: string;
+	/**
+	 * @type string
+	 */
+	resourceType: string;
 }
 
 /**
@@ -890,7 +971,8 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {
-	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
+	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
+	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -1024,16 +1106,17 @@ export interface CloudintegrationtypesOldAWSCollectionStrategyDTO {
 	s3_buckets?: CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets;
 }
 
-export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem = {
-	/**
-	 * @type string
-	 */
-	filter_pattern?: string;
-	/**
-	 * @type string
-	 */
-	log_group_name_prefix?: string;
-};
+export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem =
+	{
+		/**
+		 * @type string
+		 */
+		filter_pattern?: string;
+		/**
+		 * @type string
+		 */
+		log_group_name_prefix?: string;
+	};
 
 export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
 	/**
@@ -1045,16 +1128,17 @@ export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
 		| null;
 }
 
-export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem = {
-	/**
-	 * @type array
-	 */
-	MetricNames?: string[];
-	/**
-	 * @type string
-	 */
-	Namespace?: string;
-};
+export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem =
+	{
+		/**
+		 * @type array
+		 */
+		MetricNames?: string[];
+		/**
+		 * @type string
+		 */
+		Namespace?: string;
+	};
 
 export interface CloudintegrationtypesOldAWSMetricsStrategyDTO {
 	/**
@@ -1072,7 +1156,8 @@ export interface CloudintegrationtypesPostableAccountDTO {
 }
 
 export interface CloudintegrationtypesPostableAccountConfigDTO {
-	aws: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -1107,7 +1192,8 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 }
 
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
-	aws: CloudintegrationtypesAWSIntegrationConfigDTO;
+	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
+	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesServiceDTO {
@@ -1135,7 +1221,8 @@ export interface CloudintegrationtypesServiceDTO {
 }
 
 export interface CloudintegrationtypesServiceConfigDTO {
-	aws: CloudintegrationtypesAWSServiceConfigDTO;
+	aws?: CloudintegrationtypesAWSServiceConfigDTO;
+	azure?: CloudintegrationtypesAzureServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -1152,6 +1239,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	s3sync = 's3sync',
 	sns = 'sns',
 	sqs = 'sqs',
+	storageaccountsblob = 'storageaccountsblob',
+	cdnprofile = 'cdnprofile',
 }
 export interface CloudintegrationtypesServiceMetadataDTO {
 	/**
@@ -1184,11 +1273,24 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 }
 
 export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
-	config: CloudintegrationtypesAccountConfigDTO;
+	config: CloudintegrationtypesUpdatableAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
 }
 
 export interface CloudintegrationtypesUpdatableServiceDTO {
@@ -3023,12 +3125,17 @@ export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string
 	 */
-	external_url?: string;
+	external_url: string;
 	identN?: GlobaltypesIdentNConfigDTO;
 	/**
 	 * @type string
 	 */
-	ingestion_url?: string;
+	ingestion_url: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	mcp_url: string | null;
 }
 
 export interface GlobaltypesIdentNConfigDTO {
@@ -3051,6 +3158,131 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface InframonitoringtypesHostFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByStatus?: InframonitoringtypesHostStatusDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesHostRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesHostRecordDTO {
+	/**
+	 * @type integer
+	 */
+	activeHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpu: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	diskUsage: number;
+	/**
+	 * @type string
+	 */
+	hostName: string;
+	/**
+	 * @type integer
+	 */
+	inactiveHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	load15: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memory: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesHostRecordDTOMeta;
+	status: InframonitoringtypesHostStatusDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	wait: number;
+}
+
+export enum InframonitoringtypesHostStatusDTO {
+	active = 'active',
+	inactive = 'inactive',
+	'' = '',
+}
+export interface InframonitoringtypesHostsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesHostRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesPostableHostsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesRequiredMetricsCheckDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingMetrics: string[] | null;
+}
+
+export enum InframonitoringtypesResponseTypeDTO {
+	list = 'list',
+	grouped_list = 'grouped_list',
+}
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -3469,10 +3701,7 @@ export interface PromotetypesPromotePathDTO {
 }
 
 export interface PromotetypesWrappedIndexDTO {
-	/**
-	 * @type string
-	 */
-	column_type?: string;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type integer
 	 */
@@ -4774,7 +5003,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4899,7 +5128,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4984,8 +5213,8 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	algorithm?: string;
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	matchType: RuletypesMatchTypeDTO;
-	op: RuletypesCompareOperatorDTO;
+	matchType?: RuletypesMatchTypeDTO;
+	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 */
@@ -5243,6 +5472,187 @@ export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
 
+export enum SpantypesFieldContextDTO {
+	attribute = 'attribute',
+	resource = 'resource',
+}
+export interface SpantypesGettableSpanMapperGroupsDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesSpanMapperGroupDTO[];
+}
+
+export interface SpantypesPostableSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	field_context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperGroupDTO {
+	category: SpantypesSpanMapperGroupCategoryDTO;
+	condition: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	field_context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	group_id: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesSpanMapperConfigDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	sources: SpantypesSpanMapperSourceDTO[] | null;
+}
+
+export interface SpantypesSpanMapperGroupDTO {
+	category: SpantypesSpanMapperGroupCategoryDTO;
+	condition: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesSpanMapperGroupCategoryDTO {
+	[key: string]: unknown;
+}
+
+export interface SpantypesSpanMapperGroupConditionDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	resource: string[] | null;
+}
+
+export enum SpantypesSpanMapperOperationDTO {
+	move = 'move',
+	copy = 'copy',
+}
+export interface SpantypesSpanMapperSourceDTO {
+	context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	key: string;
+	operation: SpantypesSpanMapperOperationDTO;
+	/**
+	 * @type integer
+	 */
+	priority: number;
+}
+
+export interface SpantypesUpdatableSpanMapperDTO {
+	config?: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	field_context?: SpantypesFieldContextDTO;
+}
+
+export interface SpantypesUpdatableSpanMapperGroupDTO {
+	condition?: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	name?: string | null;
+}
+
 export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
@@ -5331,6 +5741,237 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 }
 
 export type TimeDurationDTO = number;
+
+export type TracedetailtypesEventDTOAttributeMap = { [key: string]: unknown };
+
+export interface TracedetailtypesEventDTO {
+	/**
+	 * @type object
+	 */
+	attributeMap?: TracedetailtypesEventDTOAttributeMap;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
+	{ [key: string]: number } | null;
+
+export interface TracedetailtypesGettableWaterfallTraceDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	serviceNameToTotalDurationMap?: TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	spans?: TracedetailtypesWaterfallSpanDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export interface TracedetailtypesPostableWaterfallDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesWaterfallSpanDTOAttributes = {
+	[key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesWaterfallSpanDTOResource = {
+	[key: string]: string;
+} | null;
+
+export interface TracedetailtypesWaterfallSpanDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	attributes?: TracedetailtypesWaterfallSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	events?: TracedetailtypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	resource?: TracedetailtypesWaterfallSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
 
 export interface TypesAlertStatusDTO {
 	/**
@@ -6462,6 +7103,71 @@ export type GetMyServiceAccount200 = {
 	status: string;
 };
 
+export type ListSpanMapperGroupsParams = {
+	/**
+	 * @description undefined
+	 */
+	category?: SpantypesSpanMapperGroupCategoryDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	enabled?: boolean | null;
+};
+
+export type ListSpanMapperGroups200 = {
+	data: SpantypesGettableSpanMapperGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSpanMapperGroup201 = {
+	data: SpantypesSpanMapperGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSpanMapperGroupPathParameters = {
+	groupId: string;
+};
+export type UpdateSpanMapperGroupPathParameters = {
+	groupId: string;
+};
+export type ListSpanMappersPathParameters = {
+	groupId: string;
+};
+export type ListSpanMappers200 = {
+	data: SpantypesGettableSpanMapperGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSpanMapperPathParameters = {
+	groupId: string;
+};
+export type CreateSpanMapper201 = {
+	data: SpantypesSpanMapperDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSpanMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
+export type UpdateSpanMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
@@ -6630,6 +7336,14 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListHosts200 = {
+	data: InframonitoringtypesHostsDTO;
 	/**
 	 * @type string
 	 */
@@ -7252,6 +7966,17 @@ export type GetMyUser200 = {
 
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetWaterfallPathParameters = {
+	traceID: string;
+};
+export type GetWaterfall200 = {
+	data: TracedetailtypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */

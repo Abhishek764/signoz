@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -89,6 +91,27 @@ function LogsExplorer(): JSX.Element {
 	const chartQueryKeyRef = useRef<any>();
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const queryClient = useQueryClient();
+	const handleCancelQuery = useCallback(() => {
+		if (listQueryKeyRef.current) {
+			queryClient.cancelQueries(listQueryKeyRef.current);
+		}
+		if (chartQueryKeyRef.current) {
+			queryClient.cancelQueries(chartQueryKeyRef.current);
+		}
+		setIsCancelled(true);
+		// Reset loading state — the views container unmounts when cancelled, so
+		// no child will call setIsLoadingQueries(false) otherwise.
+		setIsLoadingQueries(false);
+	}, [queryClient]);
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
@@ -134,7 +157,7 @@ function LogsExplorer(): JSX.Element {
 								console.info('[AI Assistant] Save view requested:', name);
 							},
 						}),
-				  ]
+					]
 				: [],
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -155,9 +178,8 @@ function LogsExplorer(): JSX.Element {
 		setShowFilters((prev) => !prev);
 	};
 
-	const {
-		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+	const { redirectWithQuery: redirectWithOptionsData } =
+		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
 	// Get and parse stored columns from localStorage
 	const logListOptionsFromLocalStorage = useMemo(() => {
@@ -347,10 +369,12 @@ function LogsExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
-									listQueryKeyRef={listQueryKeyRef}
-									chartQueryKeyRef={chartQueryKeyRef}
+									onStageRunQuery={(): void => {
+										setIsCancelled(false);
+										handleRunQuery();
+									}}
 									isLoadingQueries={isLoadingQueries}
+									handleCancelQuery={handleCancelQuery}
 									showLiveLogs={showLiveLogs}
 								/>
 							}
@@ -366,14 +390,18 @@ function LogsExplorer(): JSX.Element {
 								</ExplorerCard>
 							</div>
 							<div className="logs-explorer-views">
-								<LogsExplorerViewsContainer
-									listQueryKeyRef={listQueryKeyRef}
-									chartQueryKeyRef={chartQueryKeyRef}
-									setIsLoadingQueries={setIsLoadingQueries}
-									setWarning={setWarning}
-									showLiveLogs={showLiveLogs}
-									handleChangeSelectedView={handleChangeSelectedView}
-								/>
+								{isCancelled ? (
+									<QueryCancelledPlaceholder subText='Click "Run Query" to load logs.' />
+								) : (
+									<LogsExplorerViewsContainer
+										listQueryKeyRef={listQueryKeyRef}
+										chartQueryKeyRef={chartQueryKeyRef}
+										setIsLoadingQueries={setIsLoadingQueries}
+										setWarning={setWarning}
+										showLiveLogs={showLiveLogs}
+										handleChangeSelectedView={handleChangeSelectedView}
+									/>
+								)}
 							</div>
 						</div>
 					</section>

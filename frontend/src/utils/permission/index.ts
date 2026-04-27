@@ -134,4 +134,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	ALERT_TYPE_SELECTION: ['ADMIN', 'EDITOR'],
 	AI_ASSISTANT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
+	MCP_SERVER: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

@@ -143,3 +143,40 @@ type Layout struct {
 	Kind dashboard.LayoutKind `json:"kind"`
 	Spec any                  `json:"spec"`
 }
+
+func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return clearOneOfParentShape(s)
+}
+
+func (l *Layout) UnmarshalJSON(data []byte) error {
+	kind, specJSON, err := splitKindSpec(data)
+	if err != nil {
+		return err
+	}
+	factory, ok := layoutSpecs[dashboard.LayoutKind(kind)]
+	if !ok {
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown layout kind %q", kind)
+	}
+	spec, err := decodeSpec(specJSON, factory(), kind)
+	if err != nil {
+		return err
+	}
+	l.Kind = dashboard.LayoutKind(kind)
+	l.Spec = spec
+	return nil
+}
+
+func (Layout) JSONSchemaOneOf() []any {
+	return []any{
+		LayoutEnvelope[dashboard.GridLayoutSpec]{Kind: string(dashboard.KindGridLayout)},
+	}
+}
+
+type LayoutEnvelope[S any] struct {
+	Kind string `json:"kind" required:"true"`
+	Spec S      `json:"spec" required:"true"`
+}
+
+func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToOneValue(s, v.Kind)
+}

@@ -63,7 +63,7 @@ type PanelPluginVariant[S any] struct {
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToLiteral(s, v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -114,7 +114,7 @@ type QueryPluginVariant[S any] struct {
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToLiteral(s, v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -162,7 +162,7 @@ type VariablePluginVariant[S any] struct {
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToLiteral(s, v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -212,7 +212,7 @@ type VariableEnvelope[S any] struct {
 }
 
 func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToLiteral(s, v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -258,7 +258,7 @@ type DatasourcePluginVariant[S any] struct {
 }
 
 func (v DatasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToLiteral(s, v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -299,7 +299,7 @@ type LayoutEnvelope[S any] struct {
 }
 
 func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToLiteral(s, v.Kind)
+	return restrictKindToOneValue(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -387,10 +387,10 @@ func clearOneOfParentShape(s *jsonschema.Schema) error {
 	return nil
 }
 
-// restrictKindToLiteral ensures that the schema only allows one Kind value for a type.
+// restrictKindToOneValue ensures that the schema only allows one Kind value for a type.
 // For eg. PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)} should
 // only allow "signoz/TimeSeriesPanel" in its kind field
-func restrictKindToLiteral(schema *jsonschema.Schema, kind string) error {
+func restrictKindToOneValue(schema *jsonschema.Schema, kind string) error {
 	kindProp, ok := schema.Properties["kind"]
 	if !ok || kindProp.TypeObject == nil {
 		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")

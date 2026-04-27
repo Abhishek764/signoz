@@ -15,7 +15,7 @@ import './AIAssistant.styles.scss';
 /**
  * Global floating modal for the AI Assistant.
  *
- * - Triggered by Cmd+P (Mac) / Ctrl+P (Windows/Linux)
+ * - Triggered by Cmd+J (Mac) / Ctrl+J (Windows/Linux)
  * - Escape or the × button fully closes it
  * - The − (minimize) button collapses to the side panel
  * - Mounted once in AppLayout; always in the DOM, conditionally visible
@@ -41,15 +41,15 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
-			// Cmd+P (Mac) / Ctrl+P (Win/Linux) — toggle modal
-			if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
-				// Don't intercept Cmd+P inside input/textarea — those are for the user
+			// Cmd+J (Mac) / Ctrl+J (Win/Linux) — toggle modal
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+				// Don't intercept Cmd+J inside input/textarea — those are for the user
 				const tag = (e.target as HTMLElement).tagName;
 				if (tag === 'INPUT' || tag === 'TEXTAREA') {
 					return;
 				}
 
-				e.preventDefault(); // stop browser print dialog
+				e.preventDefault();
 				if (isOpen) {
 					closeModal();
 				} else {
@@ -130,7 +130,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					<div className="ai-modal__title">
 						<AIAssistantIcon size={16} />
 						<span>AI Assistant</span>
-						<kbd className="ai-modal__shortcut">⌘P</kbd>
+						<kbd className="ai-modal__shortcut">⌘J</kbd>
 					</div>
 
 					<div className="ai-modal__actions">

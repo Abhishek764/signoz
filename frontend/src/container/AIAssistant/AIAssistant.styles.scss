@@ -1,4 +1,6 @@
-// ─── Global modal (Cmd+P) ─────────────────────────────────────────────────────
+// ─── Global modal (Cmd+J) ─────────────────────────────────────────────────────
+
+$ai-radius: 4px;
 
 .ai-modal-backdrop {
 	position: fixed;
@@ -28,7 +30,7 @@
 	height: 80vh;
 	background: var(--l1-background);
 	border: 1px solid var(--l1-border);
-	border-radius: 12px;
+	border-radius: $ai-radius;
 	overflow: hidden;
 	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
 	animation: ai-modal-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -71,7 +73,7 @@
 	color: var(--l3-foreground, #6b7280);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: 4px;
+	border-radius: $ai-radius;
 	padding: 1px 5px;
 	letter-spacing: 0;
 	line-height: 1.6;
@@ -234,6 +236,20 @@
 	padding: 8px 12px 12px;
 }
 
+.ai-conversation__disclaimer {
+	flex-shrink: 0;
+	padding: 8px 16px;
+	font-size: 10px;
+	line-height: 1.4;
+	margin-top: 4px;
+	color: var(--l3-foreground, var(--l2-foreground));
+	text-align: center;
+}
+
+.ai-assistant-panel .ai-conversation__disclaimer {
+	padding: 8px 12px;
+}
+
 // ─── Scrollbar mixin ─────────────────────────────────────────────────────────
 
 @mixin ai-scrollbar($width: 0.3rem) {
@@ -326,7 +342,7 @@
 	gap: 8px;
 	padding: 10px 14px;
 	border: 1px solid var(--l2-border);
-	border-radius: 8px;
+	border-radius: $ai-radius;
 	background: var(--l1-background);
 	color: var(--l2-foreground);
 	font-size: 12.5px;
@@ -372,7 +388,7 @@
 }
 
 .ai-message__bubble {
-	border-radius: 12px;
+	border-radius: $ai-radius;
 	padding: 10px 14px;
 	font-size: 13px;
 	line-height: 1.6;
@@ -380,7 +396,7 @@
 	.ai-message--user & {
 		background: var(--primary, var(--bg-robin-500));
 		color: #fff;
-		border-bottom-right-radius: 3px;
+		border-bottom-right-radius: $ai-radius;
 	}
 
 	.ai-message--assistant & {
@@ -391,7 +407,7 @@
 		gap: 10px;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
-		border-bottom-left-radius: 3px;
+		border-bottom-left-radius: $ai-radius;
 	}
 }
 
@@ -526,7 +542,7 @@
 	code {
 		font-family: 'Geist Mono', 'Fira Code', monospace;
 		font-size: 11.5px;
-		border-radius: 3px;
+		border-radius: $ai-radius;
 		padding: 1px 4px;
 		background: var(--l3-background);
 		color: var(--l1-foreground);
@@ -545,7 +561,7 @@
 		display: block;
 		padding: 10px;
 		overflow-x: auto;
-		border-radius: 6px;
+		border-radius: $ai-radius;
 		white-space: pre;
 	}
 
@@ -674,14 +690,14 @@
 .ai-message__attachment-image {
 	max-width: 200px;
 	max-height: 160px;
-	border-radius: 6px;
+	border-radius: $ai-radius;
 	object-fit: cover;
 }
 
 .ai-message__attachment-file {
 	font-size: 11px;
 	padding: 3px 8px;
-	border-radius: 4px;
+	border-radius: $ai-radius;
 	background: var(--l3-background);
 	color: var(--l2-foreground);
 	max-width: 180px;
@@ -732,15 +748,16 @@
 .ai-assistant-input {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	background: var(--l2-background);
-	border-radius: 10px;
-	padding: 8px 10px;
-	border: 1px solid var(--l2-border);
+	gap: 10px;
+	background: var(--l1-background);
+	border-radius: $ai-radius;
+	padding: 12px;
+	border: 1px solid var(--l1-border);
 	transition: border-color 0.15s;
+	position: relative;
 
 	&:focus-within {
-		border-color: var(--primary, var(--bg-robin-500));
+		border-color: var(--l1-border);
 	}
 }
 
@@ -750,13 +767,51 @@
 	gap: 6px;
 }
 
+.ai-assistant-input__context-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.ai-assistant-input__context-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	background: var(--l2-background);
+	border: 1px solid var(--l1-border);
+	border-radius: $ai-radius;
+	padding: 4px 6px 4px 8px;
+	color: var(--l1-foreground);
+	max-width: 220px;
+
+	button {
+		height: auto !important;
+		min-height: 0 !important;
+		width: auto !important;
+	}
+}
+
+.ai-assistant-input__context-tag-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ai-assistant-input__context-tag-remove {
+	flex-shrink: 0;
+	padding: 0 !important;
+	height: auto !important;
+	min-height: 0 !important;
+}
+
 .ai-assistant-input__attachment-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
 	font-size: 11px;
 	background: var(--l3-background);
-	border-radius: 4px;
+	border-radius: $ai-radius;
 	padding: 2px 6px 2px 8px;
 	color: var(--l2-foreground);
 	max-width: 180px;
@@ -781,18 +836,50 @@
 	gap: 8px;
 }
 
+.ai-assistant-input__composer {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: $ai-radius;
+	padding: 4px;
+}
+
+.ai-assistant-input__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.ai-assistant-input__left-actions,
+.ai-assistant-input__right-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.ai-assistant-input__attach-btn {
+	color: var(--l3-foreground, var(--l2-foreground));
+}
+
+.ai-assistant-input__context-btn {
+	flex-shrink: 0;
+	gap: 6px;
+	border-style: dashed !important;
+	padding-inline: 12px !important;
+}
+
 // Attach + send buttons rendered by @signozhq/ui Button — no extra rules needed.
 
 .ai-assistant-input__textarea {
-	flex: 1;
+	display: block;
+	width: 100%;
 	background: transparent;
 	border: none;
 	outline: none;
 	resize: none;
 	color: var(--l1-foreground);
-	font-size: 13px;
+	font-size: 12px;
 	line-height: 1.5;
-	max-height: 160px;
 	overflow-y: auto;
 	font-family: inherit;
 	@include ai-scrollbar(0.2rem);
@@ -805,7 +892,7 @@
 
 .ai-assistant-input__send-btn {
 	flex-shrink: 0;
-	border-radius: 6px;
+	border-radius: $ai-radius;
 
 	&--stop {
 		background: var(--bg-cherry-500, #ef4444) !important;
@@ -815,6 +902,45 @@
 			opacity: 0.85;
 		}
 	}
+}
+
+.ai-context-picker {
+	min-width: 220px;
+	max-width: 320px;
+	border: 1px solid var(--l2-border);
+	border-radius: $ai-radius;
+	background: var(--l1-background);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+	padding: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.ai-context-picker__item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	border: none;
+	border-radius: $ai-radius;
+	background: transparent;
+	color: var(--l1-foreground);
+	font-size: 11px;
+	padding: 8px !important;
+	cursor: pointer;
+	text-align: left;
+
+	&:hover {
+		background: var(--l2-background);
+		color: var(--l1-foreground);
+		cursor: pointer;
+	}
+}
+
+.ai-context-picker__empty {
+	font-size: 12px;
+	color: var(--l3-foreground, var(--l2-foreground));
+	padding: 7px 8px;
 }
 
 // ─── Mic button ───────────────────────────────────────────────────────────────
@@ -927,7 +1053,7 @@
 .ai-block {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: 8px;
+	border-radius: $ai-radius;
 	padding: 12px 14px;
 	margin: 8px 0;
 
@@ -1226,7 +1352,9 @@
 	background: var(--primary, var(--bg-robin-500));
 	color: #fff;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-	transition: transform 0.15s, box-shadow 0.15s;
+	transition:
+		transform 0.15s,
+		box-shadow 0.15s;
 
 	&:hover {
 		transform: scale(1.08);
@@ -1338,7 +1466,7 @@
 	align-items: center;
 	gap: 7px;
 	padding: 6px 8px;
-	border-radius: 6px;
+	border-radius: $ai-radius;
 	cursor: pointer;
 	min-width: 0;
 	position: relative;
@@ -1446,7 +1574,7 @@
 
 .ai-tool-step {
 	border: 1px solid var(--l2-border);
-	border-radius: 6px;
+	border-radius: $ai-radius;
 	overflow: hidden;
 	font-size: 12px;
 	// Fill bubble width so tool steps align with the text above/below
@@ -1545,7 +1673,7 @@
 	font-size: 11px;
 	color: var(--l2-foreground);
 	background: var(--l2-background);
-	border-radius: 4px;
+	border-radius: $ai-radius;
 	padding: 5px 7px;
 	margin: 0;
 	overflow-x: auto;
@@ -1557,7 +1685,7 @@
 
 .ai-thinking-step {
 	border: 1px solid var(--l2-border);
-	border-radius: 6px;
+	border-radius: $ai-radius;
 	overflow: hidden;
 	margin: 4px 0;
 	font-size: 12px;
@@ -1611,7 +1739,7 @@
 
 .ai-approval {
 	border: 1px solid var(--bg-amber-500, #f59e0b);
-	border-radius: 8px;
+	border-radius: $ai-radius;
 	padding: 10px 12px;
 	background: rgba(245, 158, 11, 0.05);
 	display: flex;
@@ -1652,7 +1780,7 @@
 	font-family: var(--font-mono, monospace);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: 4px;
+	border-radius: $ai-radius;
 	padding: 1px 5px;
 	color: var(--l2-foreground);
 }
@@ -1695,7 +1823,7 @@
 	font-family: var(--font-mono, monospace);
 	font-size: 11px;
 	background: var(--l2-background);
-	border-radius: 4px;
+	border-radius: $ai-radius;
 	padding: 5px 7px;
 	margin: 0;
 	overflow-x: auto;
@@ -1728,7 +1856,7 @@
 
 .ai-clarification {
 	border: 1px solid var(--l2-border);
-	border-radius: 8px;
+	border-radius: $ai-radius;
 	padding: 10px 12px;
 	background: var(--l2-background);
 	display: flex;
@@ -1807,7 +1935,7 @@
 .ai-clarification__select {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: 5px;
+	border-radius: $ai-radius;
 	padding: 5px 8px;
 	font-size: 13px;
 	color: var(--l1-foreground);

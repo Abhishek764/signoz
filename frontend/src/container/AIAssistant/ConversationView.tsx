@@ -31,7 +31,7 @@ export default function ConversationView({
 
 	const handleSend = useCallback(
 		(text: string, attachments?: MessageAttachment[]) => {
-			sendMessage(text, attachments);
+			void sendMessage(text, attachments);
 		},
 		[sendMessage],
 	);
@@ -41,6 +41,7 @@ export default function ConversationView({
 	}, [cancelStream, conversationId]);
 
 	const messages = conversation?.messages ?? [];
+	const showDisclaimer = messages.length > 0;
 	const inputDisabled =
 		isStreamingHere ||
 		isLoadingThread ||
@@ -68,6 +69,11 @@ export default function ConversationView({
 				messages={messages}
 				isStreaming={isStreamingHere}
 			/>
+			{showDisclaimer && (
+				<div className="ai-conversation__disclaimer" role="note" aria-live="polite">
+					SigNoz AI can make mistakes. Please double-check responses.
+				</div>
+			)}
 			<div className="ai-conversation__input-wrapper">
 				<ChatInput
 					onSend={handleSend}

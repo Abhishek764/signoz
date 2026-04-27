@@ -262,6 +262,7 @@ async function runStreamingLoop(
 						diff: event.diff ?? null,
 					};
 					st.streamingStatus = 'awaiting_approval';
+					st.isStreaming = false;
 				}
 			});
 			break;
@@ -284,6 +285,7 @@ async function runStreamingLoop(
 						})),
 					};
 					st.streamingStatus = 'awaiting_clarification';
+					st.isStreaming = false;
 				}
 			});
 			break;
@@ -361,6 +363,11 @@ function finalizeStreamingMessage(
 		}
 		delete s.streams[conversationId];
 	});
+}
+
+function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
+	const stream = get().streams[conversationId];
+	return Boolean(stream?.pendingApproval || stream?.pendingClarification);
 }
 
 /**
@@ -655,12 +662,49 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							createdAt: new Date(detail.createdAt).getTime(),
 							updatedAt: new Date(detail.updatedAt).getTime(),
 						};
+						if (detail.pendingApproval || detail.pendingClarification) {
+							s.streams[threadId] = {
+								isStreaming: false,
+								streamingContent: '',
+								streamingStatus: detail.pendingApproval
+									? 'awaiting_approval'
+									: 'awaiting_clarification',
+								streamingEvents: [],
+								streamingMessageId: null,
+								pendingApproval: detail.pendingApproval
+									? {
+											approvalId: detail.pendingApproval.approvalId,
+											executionId: detail.pendingApproval.executionId,
+											actionType: detail.pendingApproval.actionType,
+											resourceType: detail.pendingApproval.resourceType,
+											summary: detail.pendingApproval.summary,
+											// Thread detail summary does not currently include a diff payload.
+											diff: null,
+										}
+									: null,
+								pendingClarification: detail.pendingClarification
+									? {
+											clarificationId: detail.pendingClarification.clarificationId,
+											executionId: detail.pendingClarification.executionId,
+											message: detail.pendingClarification.message,
+											discoveredContext:
+												detail.pendingClarification.discoveredContext ?? null,
+											fields: detail.pendingClarification.fields ?? [],
+										}
+									: null,
+							};
+						}
 						s.isLoadingThread = false;
 					});
 
 					// Reconnect to SSE if backend execution is still running
 					// and we don't already have an active SSE reader for this thread
-					if (detail.activeExecutionId && !streamControllers.has(threadId)) {
+					if (
+						detail.activeExecutionId &&
+						!streamControllers.has(threadId) &&
+						!detail.pendingApproval &&
+						!detail.pendingClarification
+					) {
 						set((s) => {
 							resetStreamingState(s, threadId);
 						});
@@ -674,7 +718,9 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						} finally {
 							streamControllers.delete(threadId);
 						}
-						finalizeStreamingMessage(threadId, set, get);
+						if (!hasPendingInput(threadId, get)) {
+							finalizeStreamingMessage(threadId, set, get);
+						}
 					}
 				} catch (err) {
 					if (err instanceof DOMException && err.name === 'AbortError') {
@@ -831,7 +877,9 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					});
 					streamControllers.delete(convId);
 
-					finalizeStreamingMessage(convId, set, get);
+					if (!hasPendingInput(convId, get)) {
+						finalizeStreamingMessage(convId, set, get);
+					}
 				} catch (err) {
 					// Abort errors are expected when the user cancels — not a failure
 					if (err instanceof DOMException && err.name === 'AbortError') {
@@ -854,8 +902,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					const st = s.streams[conversationId];
 					if (st) {
 						st.pendingApproval = null;
+						st.isStreaming = true;
+						st.streamingStatus = 'resumed';
+					} else {
+						resetStreamingState(s, conversationId);
 					}
-					resetStreamingState(s, conversationId);
 				});
 
 				try {
@@ -867,7 +918,9 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						signal: ctrl.signal,
 					});
 					streamControllers.delete(conversationId);
-					finalizeStreamingMessage(conversationId, set, get);
+					if (!hasPendingInput(conversationId, get)) {
+						finalizeStreamingMessage(conversationId, set, get);
+					}
 				} catch (err) {
 					if (err instanceof DOMException && err.name === 'AbortError') {
 						return;
@@ -949,8 +1002,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					const st = s.streams[conversationId];
 					if (st) {
 						st.pendingClarification = null;
+						st.isStreaming = true;
+						st.streamingStatus = 'resumed';
+					} else {
+						resetStreamingState(s, conversationId);
 					}
-					resetStreamingState(s, conversationId);
 				});
 
 				try {
@@ -962,7 +1018,9 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						signal: ctrl.signal,
 					});
 					streamControllers.delete(conversationId);
-					finalizeStreamingMessage(conversationId, set, get);
+					if (!hasPendingInput(conversationId, get)) {
+						finalizeStreamingMessage(conversationId, set, get);
+					}
 				} catch (err) {
 					if (err instanceof DOMException && err.name === 'AbortError') {
 						return;
@@ -987,17 +1045,19 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				isDrawerOpen: false,
 				answeredBlocks: {},
 			}),
-			onRehydrateStorage: () => (state: any): void => {
-				if (!state) {
-					return;
-				}
-				if (
-					(state.isDrawerOpen || state.isModalOpen) &&
-					!state.activeConversationId
-				) {
-					state.startNewConversation();
-				}
-			},
+			onRehydrateStorage:
+				() =>
+				(state: any): void => {
+					if (!state) {
+						return;
+					}
+					if (
+						(state.isDrawerOpen || state.isModalOpen) &&
+						!state.activeConversationId
+					) {
+						state.startNewConversation();
+					}
+				},
 		},
 	),
 );

@@ -28,7 +28,12 @@ function authHeaders(): Record<string, string> {
 // ---------------------------------------------------------------------------
 
 export type SSEEvent =
-	| { type: 'status'; executionId: string; state: string; eventId: number }
+	| {
+			type: 'status';
+			executionId: string;
+			state: ExecutionState;
+			eventId: number;
+	  }
 	| {
 			type: 'message';
 			executionId: string;
@@ -47,15 +52,20 @@ export type SSEEvent =
 	| {
 			type: 'tool_call';
 			executionId: string;
+			messageId: string | null;
+			toolCallId: string | null;
 			toolName: string;
-			toolInput: unknown;
+			toolInput: Record<string, unknown>;
 			eventId: number;
 	  }
 	| {
 			type: 'tool_result';
 			executionId: string;
+			messageId: string | null;
+			toolCallId: string | null;
+			success: boolean;
 			toolName: string;
-			result: unknown;
+			result: Record<string, unknown>;
 			eventId: number;
 	  }
 	| {
@@ -103,6 +113,38 @@ export interface ClarificationFieldRaw {
 	required?: boolean;
 	options?: string[] | null;
 	default?: string | string[] | null;
+}
+
+export type ExecutionState =
+	| 'queued'
+	| 'running'
+	| 'awaiting_approval'
+	| 'awaiting_clarification'
+	| 'resumed'
+	| 'completed'
+	| 'failed'
+	| 'canceled';
+
+export interface ApprovalSummary {
+	approvalId: string;
+	executionId: string;
+	sourceMessageId: string;
+	state: string;
+	actionType: string;
+	resourceType: string;
+	summary: string;
+	createdAt: string;
+}
+
+export interface ClarificationSummary {
+	clarificationId: string;
+	executionId: string;
+	sourceMessageId: string;
+	state: string;
+	message: string;
+	discoveredContext: Record<string, unknown> | null;
+	fields: ClarificationFieldRaw[];
+	createdAt: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,8 +207,8 @@ export interface ThreadDetailResponse {
 	createdAt: string;
 	updatedAt: string;
 	messages: MessageSummary[];
-	pendingApproval: unknown | null;
-	pendingClarification: unknown | null;
+	pendingApproval: ApprovalSummary | null;
+	pendingClarification: ClarificationSummary | null;
 }
 
 export async function listThreads(
@@ -423,10 +465,16 @@ export async function clarifyExecution(
 }
 
 /** Cancel the active execution on a thread. */
+export interface CancelResponse {
+	executionId: string;
+	previousState: string;
+	state: string;
+}
+
 export async function cancelExecution(
 	threadId: string,
 	signal?: AbortSignal,
-): Promise<void> {
+): Promise<CancelResponse> {
 	const res = await fetch(`${BASE}/cancel`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -439,6 +487,7 @@ export async function cancelExecution(
 			`Failed to cancel: ${res.status} ${res.statusText} — ${body}`,
 		);
 	}
+	return res.json();
 }
 
 // ---------------------------------------------------------------------------

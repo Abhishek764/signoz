@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui';
-import { HelpCircle, Send } from 'lucide-react';
+import { HelpCircle, Send, X } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { ClarificationField, PendingClarification } from '../types';
@@ -20,6 +20,7 @@ export default function ClarificationForm({
 	clarification,
 }: ClarificationFormProps): JSX.Element {
 	const submitClarification = useAIAssistantStore((s) => s.submitClarification);
+	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
 	const isStreaming = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.isStreaming ?? false,
 	);
@@ -27,10 +28,10 @@ export default function ClarificationForm({
 	const initialAnswers = Object.fromEntries(
 		clarification.fields.map((f) => [f.id, f.default ?? '']),
 	);
-	const [answers, setAnswers] = useState<Record<string, unknown>>(
-		initialAnswers,
-	);
+	const [answers, setAnswers] =
+		useState<Record<string, unknown>>(initialAnswers);
 	const [submitted, setSubmitted] = useState(false);
+	const [cancelled, setCancelled] = useState(false);
 
 	const setField = (id: string, value: unknown): void => {
 		setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -45,6 +46,11 @@ export default function ClarificationForm({
 		);
 	};
 
+	const handleCancel = (): void => {
+		setCancelled(true);
+		cancelStream(conversationId);
+	};
+
 	if (submitted) {
 		return (
 			<div className="ai-clarification ai-clarification--submitted">
@@ -52,6 +58,15 @@ export default function ClarificationForm({
 				<span className="ai-clarification__status-text">
 					Answers submitted — resuming…
 				</span>
+			</div>
+		);
+	}
+
+	if (cancelled) {
+		return (
+			<div className="ai-clarification ai-clarification--submitted">
+				<X size={13} className="ai-clarification__icon" />
+				<span className="ai-clarification__status-text">Request cancelled.</span>
 			</div>
 		);
 	}
@@ -79,12 +94,23 @@ export default function ClarificationForm({
 			<div className="ai-clarification__actions">
 				<Button
 					variant="solid"
+					color="primary"
 					size="sm"
 					onClick={handleSubmit}
 					disabled={isStreaming}
 				>
 					<Send size={12} />
 					Submit
+				</Button>
+				<Button
+					variant="outlined"
+					color="secondary"
+					size="sm"
+					onClick={handleCancel}
+					disabled={isStreaming}
+				>
+					<X size={12} />
+					Cancel request
 				</Button>
 			</div>
 		</div>

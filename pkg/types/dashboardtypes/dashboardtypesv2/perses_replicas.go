@@ -1,0 +1,96 @@
+package dashboardtypesv2
+
+import (
+	v1 "github.com/perses/perses/pkg/model/api/v1"
+	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/perses/perses/pkg/model/api/v1/dashboard"
+	"github.com/perses/perses/pkg/model/api/v1/variable"
+)
+
+// ══════════════════════════════════════════════
+// Datasource
+// ══════════════════════════════════════════════
+
+type DatasourceSpec struct {
+	Display *common.Display  `json:"display,omitempty"`
+	Default bool             `json:"default"`
+	Plugin  DatasourcePlugin `json:"plugin"`
+}
+
+// ══════════════════════════════════════════════
+// Panel
+// ══════════════════════════════════════════════
+
+type Panel struct {
+	Kind string    `json:"kind"`
+	Spec PanelSpec `json:"spec"`
+}
+
+type PanelSpec struct {
+	Display *v1.PanelDisplay `json:"display,omitempty"`
+	Plugin  PanelPlugin      `json:"plugin"`
+	Queries []Query          `json:"queries,omitempty"`
+	Links   []v1.Link        `json:"links,omitempty"`
+}
+
+// ══════════════════════════════════════════════
+// Query
+// ══════════════════════════════════════════════
+
+type Query struct {
+	Kind string    `json:"kind"`
+	Spec QuerySpec `json:"spec"`
+}
+
+type QuerySpec struct {
+	Name   string      `json:"name,omitempty"`
+	Plugin QueryPlugin `json:"plugin"`
+}
+
+// ══════════════════════════════════════════════
+// Variable
+// ══════════════════════════════════════════════
+
+// Variable is the list/text sum type. Spec is set to *ListVariableSpec or
+// *TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
+// discriminated oneOf (see JSONSchemaOneOf).
+type Variable struct {
+	Kind variable.Kind `json:"kind"`
+	Spec any           `json:"spec"`
+}
+
+// ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
+// fields + Name) but with a typed VariablePlugin replacing common.Plugin.
+type ListVariableSpec struct {
+	Display         *variable.Display      `json:"display,omitempty"`
+	DefaultValue    *variable.DefaultValue `json:"defaultValue,omitempty"`
+	AllowAllValue   bool                   `json:"allowAllValue"`
+	AllowMultiple   bool                   `json:"allowMultiple"`
+	CustomAllValue  string                 `json:"customAllValue,omitempty"`
+	CapturingRegexp string                 `json:"capturingRegexp,omitempty"`
+	Sort            *variable.Sort         `json:"sort,omitempty"`
+	Plugin          VariablePlugin         `json:"plugin"`
+	Name            string                 `json:"name"`
+}
+
+// TextVariableSpec mirrors dashboard.TextVariableSpec (variable.TextSpec +
+// Name). No plugin.
+type TextVariableSpec struct {
+	Display  *variable.Display `json:"display,omitempty"`
+	Value    string            `json:"value"`
+	Constant bool              `json:"constant,omitempty"`
+	Name     string            `json:"name"`
+}
+
+// ══════════════════════════════════════════════
+// Layout
+// ══════════════════════════════════════════════
+
+// Layout is the dashboard layout sum type. Spec is populated by UnmarshalJSON
+// with the concrete layout spec struct (today only dashboard.GridLayoutSpec)
+// based on Kind. No plugin is involved, so we reuse the Perses spec types as
+// leaf imports.
+type Layout struct {
+	Kind dashboard.LayoutKind `json:"kind"`
+	Spec any                  `json:"spec"`
+}

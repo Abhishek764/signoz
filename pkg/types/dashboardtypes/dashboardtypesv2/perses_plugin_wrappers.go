@@ -28,18 +28,6 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
 }
 
-func (PanelPlugin) JSONSchemaOneOf() []any {
-	return []any{
-		panelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)},
-		panelPluginVariant[BarChartPanelSpec]{Kind: string(PanelKindBarChart)},
-		panelPluginVariant[NumberPanelSpec]{Kind: string(PanelKindNumber)},
-		panelPluginVariant[PieChartPanelSpec]{Kind: string(PanelKindPieChart)},
-		panelPluginVariant[TablePanelSpec]{Kind: string(PanelKindTable)},
-		panelPluginVariant[HistogramPanelSpec]{Kind: string(PanelKindHistogram)},
-		panelPluginVariant[ListPanelSpec]{Kind: string(PanelKindList)},
-	}
-}
-
 func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 	kind, specJSON, err := splitKindSpec(data)
 	if err != nil {
@@ -58,13 +46,25 @@ func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type panelPluginVariant[S any] struct {
+func (PanelPlugin) JSONSchemaOneOf() []any {
+	return []any{
+		PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)},
+		PanelPluginVariant[BarChartPanelSpec]{Kind: string(PanelKindBarChart)},
+		PanelPluginVariant[NumberPanelSpec]{Kind: string(PanelKindNumber)},
+		PanelPluginVariant[PieChartPanelSpec]{Kind: string(PanelKindPieChart)},
+		PanelPluginVariant[TablePanelSpec]{Kind: string(PanelKindTable)},
+		PanelPluginVariant[HistogramPanelSpec]{Kind: string(PanelKindHistogram)},
+		PanelPluginVariant[ListPanelSpec]{Kind: string(PanelKindList)},
+	}
+}
+
+type PanelPluginVariant[S any] struct {
 	Kind string `json:"kind" required:"true"`
 	Spec S      `json:"spec" required:"true"`
 }
 
-func (v panelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return applyKindEnum(s, v.Kind)
+func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToLiteral(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -78,17 +78,6 @@ type QueryPlugin struct {
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
-}
-
-func (QueryPlugin) JSONSchemaOneOf() []any {
-	return []any{
-		queryPluginVariant[BuilderQuerySpec]{Kind: string(QueryKindBuilder)},
-		queryPluginVariant[CompositeQuerySpec]{Kind: string(QueryKindComposite)},
-		queryPluginVariant[FormulaSpec]{Kind: string(QueryKindFormula)},
-		queryPluginVariant[PromQLQuerySpec]{Kind: string(QueryKindPromQL)},
-		queryPluginVariant[ClickHouseSQLQuerySpec]{Kind: string(QueryKindClickHouseSQL)},
-		queryPluginVariant[TraceOperatorSpec]{Kind: string(QueryKindTraceOperator)},
-	}
 }
 
 func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
@@ -109,13 +98,24 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type queryPluginVariant[S any] struct {
+func (QueryPlugin) JSONSchemaOneOf() []any {
+	return []any{
+		QueryPluginVariant[BuilderQuerySpec]{Kind: string(QueryKindBuilder)},
+		QueryPluginVariant[CompositeQuerySpec]{Kind: string(QueryKindComposite)},
+		QueryPluginVariant[FormulaSpec]{Kind: string(QueryKindFormula)},
+		QueryPluginVariant[PromQLQuerySpec]{Kind: string(QueryKindPromQL)},
+		QueryPluginVariant[ClickHouseSQLQuerySpec]{Kind: string(QueryKindClickHouseSQL)},
+		QueryPluginVariant[TraceOperatorSpec]{Kind: string(QueryKindTraceOperator)},
+	}
+}
+
+type QueryPluginVariant[S any] struct {
 	Kind string `json:"kind" required:"true"`
 	Spec S      `json:"spec" required:"true"`
 }
 
-func (v queryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return applyKindEnum(s, v.Kind)
+func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToLiteral(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -129,14 +129,6 @@ type VariablePlugin struct {
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
-}
-
-func (VariablePlugin) JSONSchemaOneOf() []any {
-	return []any{
-		variablePluginVariant[DynamicVariableSpec]{Kind: string(VariableKindDynamic)},
-		variablePluginVariant[QueryVariableSpec]{Kind: string(VariableKindQuery)},
-		variablePluginVariant[CustomVariableSpec]{Kind: string(VariableKindCustom)},
-	}
 }
 
 func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
@@ -157,59 +149,21 @@ func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type variablePluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
-}
-
-func (v variablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return applyKindEnum(s, v.Kind)
-}
-
-// ══════════════════════════════════════════════
-// Datasource plugin
-// ══════════════════════════════════════════════
-
-type DatasourcePlugin struct {
-	Kind DatasourcePluginKind `json:"kind"`
-	Spec any                  `json:"spec"`
-}
-
-func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
-}
-
-func (DatasourcePlugin) JSONSchemaOneOf() []any {
+func (VariablePlugin) JSONSchemaOneOf() []any {
 	return []any{
-		datasourcePluginVariant[struct{}]{Kind: string(DatasourceKindSigNoz)},
+		VariablePluginVariant[DynamicVariableSpec]{Kind: string(VariableKindDynamic)},
+		VariablePluginVariant[QueryVariableSpec]{Kind: string(VariableKindQuery)},
+		VariablePluginVariant[CustomVariableSpec]{Kind: string(VariableKindCustom)},
 	}
 }
 
-func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
-	if err != nil {
-		return err
-	}
-	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
-	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q", kind)
-	}
-	spec, err := decodeSpec(specJSON, factory(), kind)
-	if err != nil {
-		return err
-	}
-	p.Kind = DatasourcePluginKind(kind)
-	p.Spec = spec
-	return nil
-}
-
-type datasourcePluginVariant[S any] struct {
+type VariablePluginVariant[S any] struct {
 	Kind string `json:"kind" required:"true"`
 	Spec S      `json:"spec" required:"true"`
 }
 
-func (v datasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return applyKindEnum(s, v.Kind)
+func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToLiteral(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -218,13 +172,6 @@ func (v datasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) erro
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
-}
-
-func (Variable) JSONSchemaOneOf() []any {
-	return []any{
-		variableEnvelope[ListVariableSpec]{Kind: string(variable.KindList)},
-		variableEnvelope[TextVariableSpec]{Kind: string(variable.KindText)},
-	}
 }
 
 func (v *Variable) UnmarshalJSON(data []byte) error {
@@ -253,13 +200,66 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type variableEnvelope[S any] struct {
+func (Variable) JSONSchemaOneOf() []any {
+	return []any{
+		VariableEnvelope[ListVariableSpec]{Kind: string(variable.KindList)},
+		VariableEnvelope[TextVariableSpec]{Kind: string(variable.KindText)},
+	}
+}
+
+type VariableEnvelope[S any] struct {
 	Kind string `json:"kind" required:"true"`
 	Spec S      `json:"spec" required:"true"`
 }
 
-func (v variableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return applyKindEnum(s, v.Kind)
+func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToLiteral(s, v.Kind)
+}
+
+// ══════════════════════════════════════════════
+// Datasource plugin
+// ══════════════════════════════════════════════
+
+type DatasourcePlugin struct {
+	Kind DatasourcePluginKind `json:"kind"`
+	Spec any                  `json:"spec"`
+}
+
+func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return clearOneOfParentShape(s)
+}
+
+func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
+	kind, specJSON, err := splitKindSpec(data)
+	if err != nil {
+		return err
+	}
+	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
+	if !ok {
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q", kind)
+	}
+	spec, err := decodeSpec(specJSON, factory(), kind)
+	if err != nil {
+		return err
+	}
+	p.Kind = DatasourcePluginKind(kind)
+	p.Spec = spec
+	return nil
+}
+
+func (DatasourcePlugin) JSONSchemaOneOf() []any {
+	return []any{
+		DatasourcePluginVariant[struct{}]{Kind: string(DatasourceKindSigNoz)},
+	}
+}
+
+type DatasourcePluginVariant[S any] struct {
+	Kind string `json:"kind" required:"true"`
+	Spec S      `json:"spec" required:"true"`
+}
+
+func (v DatasourcePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToLiteral(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -268,12 +268,6 @@ func (v variableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 
 func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
-}
-
-func (Layout) JSONSchemaOneOf() []any {
-	return []any{
-		layoutEnvelope[dashboard.GridLayoutSpec]{Kind: string(dashboard.KindGridLayout)},
-	}
 }
 
 func (l *Layout) UnmarshalJSON(data []byte) error {
@@ -294,13 +288,19 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type layoutEnvelope[S any] struct {
+func (Layout) JSONSchemaOneOf() []any {
+	return []any{
+		LayoutEnvelope[dashboard.GridLayoutSpec]{Kind: string(dashboard.KindGridLayout)},
+	}
+}
+
+type LayoutEnvelope[S any] struct {
 	Kind string `json:"kind" required:"true"`
 	Spec S      `json:"spec" required:"true"`
 }
 
-func (v layoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return applyKindEnum(s, v.Kind)
+func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToLiteral(s, v.Kind)
 }
 
 // ══════════════════════════════════════════════
@@ -396,11 +396,11 @@ func clearOneOfParentShape(s *jsonschema.Schema) error {
 	return nil
 }
 
-// applyKindEnum narrows the `kind` property of a oneOf variant schema to a
+// restrictKindToLiteral narrows the `kind` property of a oneOf variant schema to a
 // single permitted string, producing `kind: { type: string, enum: [kind] }`.
 // Each variant calls this from PrepareJSONSchema because Go generics can't
 // propagate struct tag values (so we can't write enum:"..." on Kind).
-func applyKindEnum(schema *jsonschema.Schema, kind string) error {
+func restrictKindToLiteral(schema *jsonschema.Schema, kind string) error {
 	kindProp, ok := schema.Properties["kind"]
 	if !ok || kindProp.TypeObject == nil {
 		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")

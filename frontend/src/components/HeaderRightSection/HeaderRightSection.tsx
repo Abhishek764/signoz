@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Dot } from '@signozhq/icons';
 import { Button, Tooltip } from '@signozhq/ui';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -8,6 +9,7 @@ import {
 	openAIAssistant,
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
+import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { Globe, Inbox, SquarePen } from 'lucide-react';
@@ -76,19 +78,45 @@ function HeaderRightSection({
 
 	const isLicenseEnabled = isEnterpriseSelfHostedUser || isCloudUser;
 	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
+	const isModalOpen = useAIAssistantStore((s) => s.isModalOpen);
+	const pendingUserInputCount: number = useAIAssistantStore(
+		selectPendingUserInputStreamCount,
+	);
+	const showHeaderPendingBadge =
+		pendingUserInputCount > 0 && !isDrawerOpen && !isModalOpen;
 
 	return (
 		<div className="header-right-section-container">
 			{isAIAssistantEnabled && !isDrawerOpen && (
-				<Tooltip title="AI Assistant">
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={openAIAssistant}
-						aria-label="Open AI Assistant"
-						prefix={<AIAssistantIcon />}
-					/>
-				</Tooltip>
+				<div className="header-ai-assistant-btn-container">
+					{showHeaderPendingBadge ? (
+						<span className="header-ai-assistant-btn__badge" aria-hidden>
+							<span className="header-ai-assistant-btn__pulse-dot">
+								<Dot size={36} />
+							</span>
+						</span>
+					) : null}
+
+					<Tooltip title="AI Assistant">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={openAIAssistant}
+							aria-label={
+								showHeaderPendingBadge
+									? pendingUserInputCount === 1
+										? 'Open AI Assistant, 1 action needs your response'
+										: `Open AI Assistant, ${pendingUserInputCount} actions need your response`
+									: 'Open AI Assistant'
+							}
+							prefix={
+								<span className="header-ai-assistant-btn__prefix">
+									<AIAssistantIcon />
+								</span>
+							}
+						/>
+					</Tooltip>
+				</div>
 			)}
 
 			{enableFeedback && isLicenseEnabled && (

@@ -1,0 +1,42 @@
+package impltag
+
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/modules/tag"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+type module struct {
+	store tagtypes.Store
+}
+
+func NewModule(store tagtypes.Store) tag.Module {
+	return &module{store: store}
+}
+
+func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
+	if len(postable) == 0 {
+		return []*tagtypes.Tag{}, nil
+	}
+
+	toCreate, matched, err := tagtypes.Resolve(ctx, m.store, orgID, postable, createdBy)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := m.store.Create(ctx, toCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(matched, created...), nil
+}
+
+func (m *module) LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType valuer.String, entityID valuer.UUID, tagIDs []valuer.UUID) error {
+	if len(tagIDs) == 0 {
+		return nil
+	}
+	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, entityType, entityID, tagIDs))
+}

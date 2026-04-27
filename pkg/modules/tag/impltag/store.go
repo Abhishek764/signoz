@@ -1,0 +1,66 @@
+package impltag
+
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/tagtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+type store struct {
+	sqlstore sqlstore.SQLStore
+}
+
+func NewStore(sqlstore sqlstore.SQLStore) tagtypes.Store {
+	return &store{sqlstore: sqlstore}
+}
+
+func (s *store) List(ctx context.Context, orgID valuer.UUID) ([]*tagtypes.Tag, error) {
+	tags := make([]*tagtypes.Tag, 0)
+	err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&tags).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
+func (s *store) Create(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.Tag, error) {
+	if len(tags) == 0 {
+		return tags, nil
+	}
+	// DO UPDATE on a self-set is a deliberate no-op write whose only purpose
+	// is to make RETURNING fire on conflicting rows. Without it, RETURNING is
+	// silent on the conflict path and we'd have to refetch by internal name to
+	// learn the existing rows' IDs after a concurrent-insert race.
+	err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(&tags).
+		On("CONFLICT (org_id, internal_name) DO UPDATE").
+		Set("internal_name = EXCLUDED.internal_name").
+		Returning("*").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
+func (s *store) CreateRelations(ctx context.Context, relations []*tagtypes.TagRelation) error {
+	if len(relations) == 0 {
+		return nil
+	}
+	_, err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(&relations).
+		On("CONFLICT (entity_id, tag_id) DO NOTHING").
+		Exec(ctx)
+	return err
+}

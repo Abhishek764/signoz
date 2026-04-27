@@ -660,7 +660,7 @@ def test_non_existent_metrics_returns_404(
     )
 
 
-def test_non_existent__internal_metrics_returns_warning(
+def test_non_existent_internal_metrics_returns_no_warning(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -683,11 +683,7 @@ def test_non_existent__internal_metrics_returns_warning(
     response = make_query_request(signoz, token, start_2h, end_ms, [query])
     assert response.status_code == HTTPStatus.OK
     data = response.json()
-    warnings = get_all_warnings(data)
-    assert len(warnings) == 1
-    assert warnings[0]["message"].startswith(
-        f"no data found for the metric {metric_name}"
-    )
+    assert get_all_warnings(data) == []
 
 # Verify /api/v1/fields/values filters label values by metricNamespace prefix.
 # Inserts metrics under ns.a and ns.b, then asserts a specific prefix returns

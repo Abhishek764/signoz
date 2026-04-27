@@ -426,12 +426,18 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	}
 	nonExistentMetrics := []string{}
 	var dormantMetricsWarningMsg string
-	// question: should we maintain a list of all internal metrics, cuz what if a user defines a metric with these prefixes?
+	// internal metrics aren't user-controlled — skip errors/warnings for them since users can't act on them
 	isInternalMetric := func(n string) bool { return strings.HasPrefix(n, "signoz.") || strings.HasPrefix(n, "signoz_") }
-	if len(missingMetrics) > 0 {
-		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
-		for _, missingMetricName := range missingMetrics {
-			if ts, ok := lastSeenInfo[missingMetricName]; (ok && ts > 0) || isInternalMetric(missingMetricName) {
+	externalMissingMetrics := make([]string, 0, len(missingMetrics))
+	for _, m := range missingMetrics {
+		if !isInternalMetric(m) {
+			externalMissingMetrics = append(externalMissingMetrics, m)
+		}
+	}
+	if len(externalMissingMetrics) > 0 {
+		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, externalMissingMetrics...)
+		for _, missingMetricName := range externalMissingMetrics {
+			if ts, ok := lastSeenInfo[missingMetricName]; ok && ts > 0 {
 				continue
 			}
 			nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
@@ -442,17 +448,15 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			return nil, errors.NewNotFoundf(errors.CodeNotFound, "the following metrics were not found: %s", strings.Join(nonExistentMetrics, ", "))
 		}
 		lastSeenStr := func(name string) string {
-			if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
-				ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
-				return fmt.Sprintf("%s (last seen %s)", name, ago)
-			}
-			return name // this case will come only for internal metrics
+			ts := lastSeenInfo[name]
+			ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
+			return fmt.Sprintf("%s (last seen %s)", name, ago)
 		}
-		if len(missingMetrics) == 1 {
-			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
+		if len(externalMissingMetrics) == 1 {
+			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(externalMissingMetrics[0]))
 		} else {
-			parts := make([]string, len(missingMetrics))
-			for i, m := range missingMetrics {
+			parts := make([]string, len(externalMissingMetrics))
+			for i, m := range externalMissingMetrics {
 				parts[i] = lastSeenStr(m)
 			}
 			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))

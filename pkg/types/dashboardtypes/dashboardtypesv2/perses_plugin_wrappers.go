@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/go-playground/validator/v10"
 	"github.com/perses/perses/pkg/model/api/v1/dashboard"
-	"github.com/perses/perses/pkg/model/api/v1/variable"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -162,56 +161,6 @@ type VariablePluginVariant[S any] struct {
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return restrictKindToOneValue(s, v.Kind)
-}
-
-// ══════════════════════════════════════════════
-// Variable envelope (list/text sum type)
-// ══════════════════════════════════════════════
-
-func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
-	return clearOneOfParentShape(s)
-}
-
-func (v *Variable) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
-	if err != nil {
-		return err
-	}
-	switch kind {
-	case string(variable.KindList):
-		spec, err := decodeSpec(specJSON, new(ListVariableSpec), kind)
-		if err != nil {
-			return err
-		}
-		v.Kind = variable.KindList
-		v.Spec = spec
-	case string(variable.KindText):
-		spec, err := decodeSpec(specJSON, new(TextVariableSpec), kind)
-		if err != nil {
-			return err
-		}
-		v.Kind = variable.KindText
-		v.Spec = spec
-	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable kind %q", kind)
-	}
-	return nil
-}
-
-func (Variable) JSONSchemaOneOf() []any {
-	return []any{
-		VariableEnvelope[ListVariableSpec]{Kind: string(variable.KindList)},
-		VariableEnvelope[TextVariableSpec]{Kind: string(variable.KindText)},
-	}
-}
-
-type VariableEnvelope[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
-}
-
-func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return restrictKindToOneValue(s, v.Kind)
 }
 

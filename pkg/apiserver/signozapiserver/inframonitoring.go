@@ -48,5 +48,24 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/infra_monitoring/nodes", handler.New(
+		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListNodes),
+		handler.OpenAPIDef{
+			ID:                  "ListNodes",
+			Tags:                []string{"inframonitoring"},
+			Summary:             "List Nodes for Infra Monitoring",
+			Description:         "Returns a paginated list of Kubernetes nodes with key metrics: CPU usage, CPU allocatable, memory working set, memory allocatable, and per-group readyNodeCount / notReadyNodeCount derived from each node's latest k8s.node.condition_ready value in the window. Each node includes metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is 'list' for the default k8s.node.name grouping (each row is one node with its current condition string: ready / not_ready / '') or 'grouped_list' for custom groupBy keys (each row aggregates nodes in the group with readyNodeCount and notReadyNodeCount; condition stays empty). Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is available for that field; frontends should render '—' rather than the literal value.",
+			Request:             new(inframonitoringtypes.PostableNodes),
+			RequestContentType:  "application/json",
+			Response:            new(inframonitoringtypes.Nodes),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

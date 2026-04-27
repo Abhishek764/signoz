@@ -3243,6 +3243,78 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export enum InframonitoringtypesNodeConditionDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	'' = '',
+}
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNodeRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesNodeRecordDTO {
+	condition: InframonitoringtypesNodeConditionDTO;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesNodeRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeCPUAllocatable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeMemoryAllocatable: number;
+	/**
+	 * @type string
+	 */
+	nodeName: string;
+	/**
+	 * @type integer
+	 */
+	notReadyNodeCount: number;
+	/**
+	 * @type integer
+	 */
+	readyNodeCount: number;
+}
+
+export interface InframonitoringtypesNodesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesNodeRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export enum InframonitoringtypesPodPhaseDTO {
 	pending = 'pending',
 	running = 'running',
@@ -3352,6 +3424,34 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 */
 	end: number;
 	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNodesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -7231,6 +7331,14 @@ export type Healthz503 = {
 
 export type ListHosts200 = {
 	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNodes200 = {
+	data: InframonitoringtypesNodesDTO;
 	/**
 	 * @type string
 	 */

@@ -53,7 +53,7 @@ type validationConfig struct {
 	skipAggregationOrderBy         bool
 	skipSelectFieldValidation      bool
 	skipGroupByValidation          bool
-	WithTimestampGroupByValidation bool
+	withTimestampGroupByValidation bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -115,7 +115,7 @@ func WithSkipGroupByValidation() ValidationOption {
 // WithRequestType sets the request type for validation.
 func WithTimestampGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
-		cfg.WithTimestampGroupByValidation = true
+		cfg.withTimestampGroupByValidation = true
 	}
 }
 
@@ -185,7 +185,7 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
 			)
 		}
-		if cfg.WithTimestampGroupByValidation && item.Name == "timestamp" {
+		if cfg.withTimestampGroupByValidation && item.Name == "timestamp" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput, "group by on timestamp is not allowed",
 			).WithAdditional("Timeseries request already accounts for timestamp in the response")

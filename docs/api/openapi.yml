@@ -2771,8 +2771,6 @@ components:
         value:
           type: string
       type: object
-    Dashboardtypesv2TextboxVariableSpec:
-      type: object
     Dashboardtypesv2ThresholdFormat:
       enum:
       - text
@@ -2878,13 +2876,11 @@ components:
       - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpec'
       - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpec'
       - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpec'
     Dashboardtypesv2VariablePluginKind:
       enum:
       - signoz/DynamicVariable
       - signoz/QueryVariable
       - signoz/CustomVariable
-      - signoz/TextboxVariable
       type: string
     Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpec:
       properties:
@@ -2918,18 +2914,6 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/Dashboardtypesv2QueryVariableSpec'
-      required:
-      - kind
-      - spec
-      type: object
-    Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpec:
-      properties:
-        kind:
-          enum:
-          - signoz/TextboxVariable
-          type: string
-        spec:
-          $ref: '#/components/schemas/Dashboardtypesv2TextboxVariableSpec'
       required:
       - kind
       - spec

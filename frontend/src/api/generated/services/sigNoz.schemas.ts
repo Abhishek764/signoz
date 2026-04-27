@@ -3534,10 +3534,6 @@ export interface Dashboardtypesv2TextVariableSpecDTO {
 	value?: string;
 }
 
-export interface Dashboardtypesv2TextboxVariableSpecDTO {
-	[key: string]: unknown;
-}
-
 export enum Dashboardtypesv2ThresholdFormatDTO {
 	text = 'text',
 	background = 'background',
@@ -3637,14 +3633,12 @@ export interface Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDa
 export type Dashboardtypesv2VariablePluginDTO =
 	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpecDTO
 	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpecDTO
-	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTO
-	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTO;
+	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTO;
 
 export enum Dashboardtypesv2VariablePluginKindDTO {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 	'signoz/QueryVariable' = 'signoz/QueryVariable',
 	'signoz/CustomVariable' = 'signoz/CustomVariable',
-	'signoz/TextboxVariable' = 'signoz/TextboxVariable',
 }
 export enum Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTOKind {
 	'signoz/CustomVariable' = 'signoz/CustomVariable',
@@ -3680,18 +3674,6 @@ export interface Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTy
 	 */
 	kind: Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpecDTOKind;
 	spec: Dashboardtypesv2QueryVariableSpecDTO;
-}
-
-export enum Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTOKind {
-	'signoz/TextboxVariable' = 'signoz/TextboxVariable',
-}
-export interface Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTO {
-	/**
-	 * @enum signoz/TextboxVariable
-	 * @type string
-	 */
-	kind: Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTOKind;
-	spec: Dashboardtypesv2TextboxVariableSpecDTO;
 }
 
 export interface ErrorsJSONDTO {

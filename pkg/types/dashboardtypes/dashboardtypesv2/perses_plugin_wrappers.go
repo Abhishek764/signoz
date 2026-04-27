@@ -26,7 +26,7 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
+	kind, specJSON, err := extractKindAndSpec(data)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
+	kind, specJSON, err := extractKindAndSpec(data)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
+	kind, specJSON, err := extractKindAndSpec(data)
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (DatasourcePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
+	kind, specJSON, err := extractKindAndSpec(data)
 	if err != nil {
 		return err
 	}
@@ -251,9 +251,9 @@ var (
 	}
 )
 
-// splitKindSpec parses a {"kind": "...", "spec": {...}} envelope and returns
+// extractKindAndSpec parses a {"kind": "...", "spec": {...}} envelope and returns
 // kind and the raw spec bytes for typed decoding.
-func splitKindSpec(data []byte) (string, []byte, error) {
+func extractKindAndSpec(data []byte) (string, []byte, error) {
 	var head struct {
 		Kind string          `json:"kind"`
 		Spec json.RawMessage `json:"spec"`

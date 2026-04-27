@@ -67,7 +67,7 @@ func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (v *Variable) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
+	kind, specJSON, err := extractKindAndSpec(data)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 func (l *Layout) UnmarshalJSON(data []byte) error {
-	kind, specJSON, err := splitKindSpec(data)
+	kind, specJSON, err := extractKindAndSpec(data)
 	if err != nil {
 		return err
 	}

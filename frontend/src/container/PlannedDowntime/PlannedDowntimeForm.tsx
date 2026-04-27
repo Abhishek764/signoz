@@ -5,7 +5,7 @@ import React, {
 	useMemo,
 	useState,
 } from 'react';
-import { CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import {
 	Button,
 	DatePicker,
@@ -16,6 +16,7 @@ import {
 	Select,
 	SelectProps,
 	Spin,
+	Tooltip,
 	Typography,
 } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
@@ -78,6 +79,7 @@ interface PlannedDowntimeFormData {
 	recurrence?: RuletypesRecurrenceDTO | null;
 	alertRules: DefaultOptionType[];
 	timezone?: string;
+	labelExpression?: string;
 }
 
 const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
@@ -151,6 +153,7 @@ export function PlannedDowntimeForm(
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
 				name: values.name,
+				labelExpression: values.labelExpression || undefined,
 				schedule: {
 					startTime: new Date(
 						handleTimeConversion(
@@ -286,6 +289,7 @@ export function PlannedDowntimeForm(
 				),
 			} as RuletypesRecurrenceDTO,
 			timezone: initialValues.schedule?.timezone as string,
+			labelExpression: initialValues.labelExpression || '',
 		};
 		return formData;
 	}, [initialValues, alertOptions]);
@@ -566,6 +570,22 @@ export function PlannedDowntimeForm(
 						</Select>
 					</Form.Item>
 				</div>
+				<Form.Item
+					label={
+						<span>
+							Label Expression&nbsp;
+							<Tooltip title='Filter by alert labels. Examples: env == "prod", region == "us-east-1" && severity == "critical"'>
+								<InfoCircleOutlined />
+							</Tooltip>
+						</span>
+					}
+					name="labelExpression"
+				>
+					<Input.TextArea
+						placeholder='e.g. env == "prod" && region == "us-east-1"'
+						autoSize={{ minRows: 2, maxRows: 4 }}
+					/>
+				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
 						<Button

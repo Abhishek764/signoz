@@ -22,11 +22,10 @@ const (
 	VariableKindDynamic VariablePluginKind = "signoz/DynamicVariable"
 	VariableKindQuery   VariablePluginKind = "signoz/QueryVariable"
 	VariableKindCustom  VariablePluginKind = "signoz/CustomVariable"
-	VariableKindTextbox VariablePluginKind = "signoz/TextboxVariable"
 )
 
 func (VariablePluginKind) Enum() []any {
-	return []any{VariableKindDynamic, VariableKindQuery, VariableKindCustom, VariableKindTextbox}
+	return []any{VariableKindDynamic, VariableKindQuery, VariableKindCustom}
 }
 
 type DynamicVariableSpec struct {
@@ -43,8 +42,6 @@ type QueryVariableSpec struct {
 type CustomVariableSpec struct {
 	CustomValue string `json:"customValue" validate:"required" required:"true"`
 }
-
-type TextboxVariableSpec struct{}
 
 // ══════════════════════════════════════════════
 // SigNoz query plugin specs — aliased from querybuildertypesv5

@@ -59,11 +59,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 				"kind": "TextVariable",
 				"spec": {
 					"name": "mytext",
-					"value": "default",
-					"plugin": {
-						"kind": "signoz/TextboxVariable",
-						"spec": {}
-					}
+					"value": "default"
 				}
 			}
 		],

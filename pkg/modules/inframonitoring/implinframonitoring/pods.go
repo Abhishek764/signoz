@@ -280,11 +280,11 @@ func (m *module) getPerGroupPodPhaseCounts(
 		countPodsPerPhaseGroupBy = append(countPodsPerPhaseGroupBy, col)
 	}
 	countPodsPerPhaseSelectCols = append(countPodsPerPhaseSelectCols,
-		"uniqExactIf(pod_uid, phase_value = 1) AS pending_count",
-		"uniqExactIf(pod_uid, phase_value = 2) AS running_count",
-		"uniqExactIf(pod_uid, phase_value = 3) AS succeeded_count",
-		"uniqExactIf(pod_uid, phase_value = 4) AS failed_count",
-		"uniqExactIf(pod_uid, phase_value = 5) AS unknown_count",
+		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS pending_count", inframonitoringtypes.PodPhaseNumPending),
+		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS running_count", inframonitoringtypes.PodPhaseNumRunning),
+		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS succeeded_count", inframonitoringtypes.PodPhaseNumSucceeded),
+		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS failed_count", inframonitoringtypes.PodPhaseNumFailed),
+		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS unknown_count", inframonitoringtypes.PodPhaseNumUnknown),
 	)
 	countPodsPerPhaseSQL := fmt.Sprintf(
 		"SELECT %s FROM latest_phase_per_pod GROUP BY %s",

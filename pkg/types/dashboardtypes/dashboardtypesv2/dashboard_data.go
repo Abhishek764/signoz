@@ -48,20 +48,6 @@ func UnmarshalAndValidateJSON(data []byte) (*DashboardData, error) {
 }
 
 // ══════════════════════════════════════════════
-// Plugin kind → spec factory maps
-// ══════════════════════════════════════════════
-
-var (
-	compositeSubQueryTypeToPluginKind = map[qb.QueryType]QueryPluginKind{
-		qb.QueryTypeBuilder:       QueryKindBuilder,
-		qb.QueryTypeFormula:       QueryKindFormula,
-		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
-		qb.QueryTypePromQL:        QueryKindPromQL,
-		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
-	}
-)
-
-// ══════════════════════════════════════════════
 // Cross-field validation
 // ══════════════════════════════════════════════
 
@@ -121,3 +107,13 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 	}
 	return nil
 }
+
+var (
+	compositeSubQueryTypeToPluginKind = map[qb.QueryType]QueryPluginKind{
+		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeFormula:       QueryKindFormula,
+		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
+		qb.QueryTypePromQL:        QueryKindPromQL,
+		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
+	}
+)

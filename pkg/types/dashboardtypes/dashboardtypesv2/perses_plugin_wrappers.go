@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/go-playground/validator/v10"
-	"github.com/perses/perses/pkg/model/api/v1/dashboard"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -239,13 +238,6 @@ var (
 	}
 	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
 		DatasourceKindSigNoz: func() any { return new(struct{}) },
-	}
-
-	// layoutSpecs is the layout sum type factory. Perses only defines
-	// KindGridLayout today; adding a new kind upstream surfaces as an
-	// "unknown layout kind" runtime error here until we add it.
-	layoutSpecs = map[dashboard.LayoutKind]func() any{
-		dashboard.KindGridLayout: func() any { return new(dashboard.GridLayoutSpec) },
 	}
 
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{

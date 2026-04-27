@@ -144,6 +144,13 @@ type Layout struct {
 	Spec any                  `json:"spec"`
 }
 
+// layoutSpecs is the layout sum type factory. Perses only defines
+// KindGridLayout today; adding a new kind upstream surfaces as an
+// "unknown layout kind" runtime error here until we add it.
+var layoutSpecs = map[dashboard.LayoutKind]func() any{
+	dashboard.KindGridLayout: func() any { return new(dashboard.GridLayoutSpec) },
+}
+
 func (Layout) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
 }

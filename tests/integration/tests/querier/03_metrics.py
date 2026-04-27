@@ -665,6 +665,7 @@ def test_non_existent_internal_metrics_returns_no_warning(
     data = response.json()
     assert get_all_warnings(data) == []
 
+
 # Verify /api/v1/fields/values filters label values by metricNamespace prefix.
 # Inserts metrics under ns.a and ns.b, then asserts a specific prefix returns
 # only matching values while a common prefix returns both.

@@ -289,7 +289,7 @@ func clearOneOfParentShape(s *jsonschema.Schema) error {
 
 // restrictKindToOneValue ensures that the schema only allows one Kind value for a type.
 // For eg. PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)} should
-// only allow "signoz/TimeSeriesPanel" in its kind field
+// only allow "signoz/TimeSeriesPanel" in its kind field.
 func restrictKindToOneValue(schema *jsonschema.Schema, kind string) error {
 	kindProp, ok := schema.Properties["kind"]
 	if !ok || kindProp.TypeObject == nil {

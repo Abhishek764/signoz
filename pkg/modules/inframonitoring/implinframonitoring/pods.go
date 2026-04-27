@@ -70,25 +70,25 @@ func buildPodRecords(
 			}
 		}
 
-		if c, ok := phaseCounts[compositeKey]; ok {
-			record.PendingPodCount = c.Pending
-			record.RunningPodCount = c.Running
-			record.SucceededPodCount = c.Succeeded
-			record.FailedPodCount = c.Failed
-			record.UnknownPodCount = c.Unknown
+		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
+			record.PendingPodCount = phaseCountsForGroup.Pending
+			record.RunningPodCount = phaseCountsForGroup.Running
+			record.SucceededPodCount = phaseCountsForGroup.Succeeded
+			record.FailedPodCount = phaseCountsForGroup.Failed
+			record.UnknownPodCount = phaseCountsForGroup.Unknown
 
 			// In list mode each group is one pod; the count==1 bucket identifies the phase.
 			if isPodUIDInGroupBy {
 				switch {
-				case c.Pending == 1:
+				case phaseCountsForGroup.Pending == 1:
 					record.PodPhase = inframonitoringtypes.PodPhasePending
-				case c.Running == 1:
+				case phaseCountsForGroup.Running == 1:
 					record.PodPhase = inframonitoringtypes.PodPhaseRunning
-				case c.Succeeded == 1:
+				case phaseCountsForGroup.Succeeded == 1:
 					record.PodPhase = inframonitoringtypes.PodPhaseSucceeded
-				case c.Failed == 1:
+				case phaseCountsForGroup.Failed == 1:
 					record.PodPhase = inframonitoringtypes.PodPhaseFailed
-				case c.Unknown == 1:
+				case phaseCountsForGroup.Unknown == 1:
 					record.PodPhase = inframonitoringtypes.PodPhaseUnknown
 				}
 			}

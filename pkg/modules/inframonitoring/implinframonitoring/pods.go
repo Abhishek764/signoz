@@ -16,30 +16,10 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-func mapPhaseNumToString(podPhase int) inframonitoringtypes.PodPhase {
-	switch podPhase {
-	case 1:
-		return inframonitoringtypes.PodPhasePending
-	case 2:
-		return inframonitoringtypes.PodPhaseRunning
-	case 3:
-		return inframonitoringtypes.PodPhaseSucceeded
-	case 4:
-		return inframonitoringtypes.PodPhaseFailed
-	case 5:
-		return inframonitoringtypes.PodPhaseUnknown
-	default:
-		return inframonitoringtypes.PodPhaseNone
-	}
-}
-
-// buildPodRecords assembles the page records.
-//
-// isPodUIDInGroupBy=true (list mode): one row = one pod. PodPhase is read from
-// query G's result, and the matching *PodCount field is set to 1.
-//
-// isPodUIDInGroupBy=false (grouped_list mode): rows are groups. PodPhase stays
-// PodPhaseNone; *PodCount fields come from phaseCounts (zeros when group missing).
+// buildPodRecords assembles the page records. Phase counts come from
+// phaseCounts in both modes. In list mode (isPodUIDInGroupBy=true) each
+// group is one pod, so exactly one count is 1; PodPhase is derived from
+// which one. In grouped_list mode PodPhase stays PodPhaseNone.
 func buildPodRecords(
 	isPodUIDInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
@@ -90,32 +70,27 @@ func buildPodRecords(
 			}
 		}
 
-		// set pod phase + counts based on whether pod uid is in group by (list vs grouped_list)
-		if isPodUIDInGroupBy { // derive phase + count=1 from query G
-			if metrics, ok := metricsMap[compositeKey]; ok {
-				if podPhaseFloatVal, exists := metrics["G"]; exists {
-					record.PodPhase = mapPhaseNumToString(int(podPhaseFloatVal))
-					switch record.PodPhase {
-					case inframonitoringtypes.PodPhasePending:
-						record.PendingPodCount = 1
-					case inframonitoringtypes.PodPhaseRunning:
-						record.RunningPodCount = 1
-					case inframonitoringtypes.PodPhaseSucceeded:
-						record.SucceededPodCount = 1
-					case inframonitoringtypes.PodPhaseFailed:
-						record.FailedPodCount = 1
-					case inframonitoringtypes.PodPhaseUnknown:
-						record.UnknownPodCount = 1
-					}
+		if c, ok := phaseCounts[compositeKey]; ok {
+			record.PendingPodCount = c.Pending
+			record.RunningPodCount = c.Running
+			record.SucceededPodCount = c.Succeeded
+			record.FailedPodCount = c.Failed
+			record.UnknownPodCount = c.Unknown
+
+			// In list mode each group is one pod; the count==1 bucket identifies the phase.
+			if isPodUIDInGroupBy {
+				switch {
+				case c.Pending == 1:
+					record.PodPhase = inframonitoringtypes.PodPhasePending
+				case c.Running == 1:
+					record.PodPhase = inframonitoringtypes.PodPhaseRunning
+				case c.Succeeded == 1:
+					record.PodPhase = inframonitoringtypes.PodPhaseSucceeded
+				case c.Failed == 1:
+					record.PodPhase = inframonitoringtypes.PodPhaseFailed
+				case c.Unknown == 1:
+					record.PodPhase = inframonitoringtypes.PodPhaseUnknown
 				}
-			}
-		} else { // derive counts from phaseCounts; PodPhase stays PodPhaseNone because it doesn't make sense under groupBy other than pod uid
-			if c, ok := phaseCounts[compositeKey]; ok {
-				record.PendingPodCount = c.Pending
-				record.RunningPodCount = c.Running
-				record.SucceededPodCount = c.Succeeded
-				record.FailedPodCount = c.Failed
-				record.UnknownPodCount = c.Unknown
 			}
 		}
 
@@ -159,8 +134,7 @@ func (m *module) getTopPodGroups(
 		},
 	}
 
-	// Ranking never needs query G (phase removed from valid orderBy keys).
-	for _, envelope := range m.newPodsTableListQuery(false).CompositeQuery.Queries {
+	for _, envelope := range m.newPodsTableListQuery().CompositeQuery.Queries {
 		if !slices.Contains(queryNamesForOrderBy, envelope.GetQueryName()) {
 			continue
 		}

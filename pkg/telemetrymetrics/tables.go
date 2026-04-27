@@ -124,7 +124,7 @@ func CountExpressionForSamplesTable(tableName string) string {
 	return "sum(count)"
 }
 
-// ValueColumnForSamplesTable returns the bare column name holding the sample value:
+// ValueColumnForSamplesTable returns the column name holding the sample value:
 // "last" for the 5m/30m aggregated tables, "value" otherwise.
 // note all the other columns in the aggregated samples tables are nothing but aggregations.
 // and so "last" is the value column for these tables.

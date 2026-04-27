@@ -55,10 +55,9 @@ var orderByToPodsQueryNames = map[string][]string{
 }
 
 // newPodsTableListQuery builds the composite QB v5 request for the pods list.
-// includePhaseQuery controls whether query G (per-pod latest phase) is appended.
-// G is meaningful only when k8s.pod.uid is in groupBy (one row = one pod);
-// under custom groupBy, per-group phase counts come from getPerGroupPodPhaseCounts.
-func (m *module) newPodsTableListQuery(includePhaseQuery bool) *qbtypes.QueryRangeRequest {
+// Pod phase is derived separately via getPerGroupPodPhaseCounts (works for both
+// list and grouped_list modes), so no phase query is included here.
+func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
 		// Query A: CPU usage
 		{
@@ -168,35 +167,6 @@ func (m *module) newPodsTableListQuery(includePhaseQuery bool) *qbtypes.QueryRan
 				Disabled: false,
 			},
 		},
-	}
-
-	if includePhaseQuery {
-		// Query G: Pod phase (latest value per pod). Only meaningful when
-		// k8s.pod.uid is in groupBy — under custom groupBy this query is
-		// replaced by getPerGroupPodPhaseCounts which buckets pods per group.
-		// SpaceAggregationMax is a workaround: ideally we'd use a "last"
-		// space aggregation to pick the last-seen phase when multiple
-		// fingerprints exist for a single pod.uid. Max yields the correct
-		// phase in the common single-fingerprint case, and in the rare
-		// multi-fingerprint case returns the most-severe phase observed.
-		// TODO(nikhilmantri0902): switch to SpaceAggregationLast once supported by querier.
-		queries = append(queries, qbtypes.QueryEnvelope{
-			Type: qbtypes.QueryTypeBuilder,
-			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-				Name:   "G",
-				Signal: telemetrytypes.SignalMetrics,
-				Aggregations: []qbtypes.MetricAggregation{
-					{
-						MetricName:       "k8s.pod.phase",
-						TimeAggregation:  metrictypes.TimeAggregationLatest,
-						SpaceAggregation: metrictypes.SpaceAggregationMax,
-						ReduceTo:         qbtypes.ReduceToLast,
-					},
-				},
-				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-				Disabled: false,
-			},
-		})
 	}
 
 	return &qbtypes.QueryRangeRequest{

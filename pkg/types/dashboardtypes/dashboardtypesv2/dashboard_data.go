@@ -18,7 +18,7 @@ import (
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
 // per-site discriminated oneOf.
 //
-// Leaf types (common.Display, v1.Link, dashboard.Layout, variable.*) are reused directly
+// Leaf types (common.Display, v1.Link, dashboard.Layout, variable.*) are reused directly.
 type DashboardData struct {
 	Display         *common.Display            `json:"display,omitempty"`
 	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`

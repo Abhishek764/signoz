@@ -365,11 +365,7 @@ func splitKindSpec(data []byte) (string, []byte, error) {
 	return head.Kind, head.Spec, nil
 }
 
-// decodeSpec strict-decodes a spec JSON into target and runs struct-tag
-// validation (go-playground/validator). Strictness matches the previous
-// validateAndNormalizePluginSpec contract: unknown fields rejected,
-// required-field violations surfaced. The kind is included in error messages
-// so callers can identify which envelope failed. Returns target on success.
+// decodeSpec strict-decodes a spec JSON into target and runs struct-tag validation (go-playground/validator).
 func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
 	if len(specJSON) == 0 {
 		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "kind %q: spec is required", kind)

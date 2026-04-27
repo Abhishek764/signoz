@@ -29,8 +29,6 @@ func TestDashboardDataMatchesPerses(t *testing.T) {
 		{"QuerySpec", typeOf[QuerySpec](), typeOf[v1.QuerySpec]()},
 		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[v1.DatasourceSpec]()},
 		{"Variable", typeOf[Variable](), typeOf[dashboard.Variable]()},
-		// ListVariableSpec/TextVariableSpec embed variable.ListSpec/TextSpec
-		// plus a Name field. We flatten the Perses shape to compare.
 		{"ListVariableSpec", typeOf[ListVariableSpec](), typeOf[dashboard.ListVariableSpec]()},
 		{"TextVariableSpec", typeOf[TextVariableSpec](), typeOf[dashboard.TextVariableSpec]()},
 		{"Layout", typeOf[Layout](), typeOf[dashboard.Layout]()},
@@ -38,11 +36,7 @@ func TestDashboardDataMatchesPerses(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			ours := jsonFields(c.ours)
-			perses := jsonFields(c.perses)
-
-			missing := sortedDiff(perses, ours)
-			extra := sortedDiff(ours, perses)
+			missing, extra := drift(c.ours, c.perses)
 
 			assert.Empty(t, missing,
 				"DashboardData (%s) is missing json fields present on Perses %s — upstream likely added or renamed a field",
@@ -52,6 +46,82 @@ func TestDashboardDataMatchesPerses(t *testing.T) {
 				c.ours.Name(), c.perses.Name())
 		})
 	}
+}
+
+func TestDriftDetectionMechanics(t *testing.T) {
+	t.Run("upstream added a field", func(t *testing.T) {
+		type ours struct {
+			Name string `json:"name"`
+		}
+		type perses struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+		missing, extra := drift(typeOf[ours](), typeOf[perses]())
+		assert.Equal(t, []string{"description"}, missing, "missing fires: upstream has a field we don't")
+		assert.Empty(t, extra)
+	})
+
+	t.Run("upstream removed a field", func(t *testing.T) {
+		type ours struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+		type perses struct {
+			Name string `json:"name"`
+		}
+		missing, extra := drift(typeOf[ours](), typeOf[perses]())
+		assert.Empty(t, missing)
+		assert.Equal(t, []string{"description"}, extra, "extra fires: we kept a field upstream removed")
+	})
+
+	t.Run("upstream renamed a field", func(t *testing.T) {
+		type ours struct {
+			Name string `json:"name"`
+		}
+		type perses struct {
+			Name string `json:"title"`
+		}
+		missing, extra := drift(typeOf[ours](), typeOf[perses]())
+		assert.Equal(t, []string{"title"}, missing, "missing fires for the new name")
+		assert.Equal(t, []string{"name"}, extra, "extra fires for the old name — both fire on a rename")
+	})
+
+	t.Run("we added a field upstream does not have", func(t *testing.T) {
+		type ours struct {
+			Name     string `json:"name"`
+			Internal string `json:"internal"`
+		}
+		type perses struct {
+			Name string `json:"name"`
+		}
+		missing, extra := drift(typeOf[ours](), typeOf[perses]())
+		assert.Empty(t, missing)
+		assert.Equal(t, []string{"internal"}, extra, "extra fires: we added a field with no upstream counterpart")
+	})
+
+	t.Run("embedded struct flattens — drift inside the embed is caught", func(t *testing.T) {
+		type embedded struct {
+			Display string `json:"display"`
+			NewBit  string `json:"newBit"` // upstream added this inside the embed
+		}
+		type ours struct {
+			Display string `json:"display"`
+			Name    string `json:"name"`
+		}
+		type perses struct {
+			embedded `json:",inline"`
+			Name     string `json:"name"`
+		}
+		missing, extra := drift(typeOf[ours](), typeOf[perses]())
+		assert.Equal(t, []string{"newBit"}, missing, "field added inside an inlined embed surfaces at the parent level")
+		assert.Empty(t, extra)
+	})
+}
+
+func drift(ours, perses reflect.Type) (missing, extra []string) {
+	o, p := jsonFields(ours), jsonFields(perses)
+	return sortedDiff(p, o), sortedDiff(o, p)
 }
 
 // jsonFields returns the set of json tag names for a struct, flattening

@@ -22,8 +22,7 @@ type PanelPlugin struct {
 }
 
 // PrepareJSONSchema drops the reflected struct shape (type: object, properties)
-// from the envelope so that only the JSONSchemaOneOf result binds. Mirrors the
-// pattern in swaggest/jsonschema-go's built-in oneOf helper.
+// from the envelope so that only the JSONSchemaOneOf result binds.
 func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return clearOneOfParentShape(s)
 }

@@ -3260,10 +3260,18 @@ export type InframonitoringtypesPodRecordDTOMeta = {
 
 export interface InframonitoringtypesPodRecordDTO {
 	/**
+	 * @type integer
+	 */
+	failedPodCount: number;
+	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesPodRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	pendingPodCount: number;
 	/**
 	 * @type integer
 	 * @format int64
@@ -3304,6 +3312,18 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @type string
 	 */
 	podUID: string;
+	/**
+	 * @type integer
+	 */
+	runningPodCount: number;
+	/**
+	 * @type integer
+	 */
+	succeededPodCount: number;
+	/**
+	 * @type integer
+	 */
+	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesPodsDTO {

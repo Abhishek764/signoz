@@ -18,16 +18,21 @@ type Pods struct {
 }
 
 type PodRecord struct {
-	PodUID           string                 `json:"podUID" required:"true"`
-	PodCPU           float64                `json:"podCPU" required:"true"`
-	PodCPURequest    float64                `json:"podCPURequest" required:"true"`
-	PodCPULimit      float64                `json:"podCPULimit" required:"true"`
-	PodMemory        float64                `json:"podMemory" required:"true"`
-	PodMemoryRequest float64                `json:"podMemoryRequest" required:"true"`
-	PodMemoryLimit   float64                `json:"podMemoryLimit" required:"true"`
-	PodPhase         PodPhase               `json:"podPhase" required:"true"`
-	PodAge           int64                  `json:"podAge" required:"true"`
-	Meta             map[string]interface{} `json:"meta" required:"true"`
+	PodUID            string                 `json:"podUID" required:"true"`
+	PodCPU            float64                `json:"podCPU" required:"true"`
+	PodCPURequest     float64                `json:"podCPURequest" required:"true"`
+	PodCPULimit       float64                `json:"podCPULimit" required:"true"`
+	PodMemory         float64                `json:"podMemory" required:"true"`
+	PodMemoryRequest  float64                `json:"podMemoryRequest" required:"true"`
+	PodMemoryLimit    float64                `json:"podMemoryLimit" required:"true"`
+	PodPhase          PodPhase               `json:"podPhase" required:"true"`
+	PendingPodCount   int                    `json:"pendingPodCount" required:"true"`
+	RunningPodCount   int                    `json:"runningPodCount" required:"true"`
+	SucceededPodCount int                    `json:"succeededPodCount" required:"true"`
+	FailedPodCount    int                    `json:"failedPodCount" required:"true"`
+	UnknownPodCount   int                    `json:"unknownPodCount" required:"true"`
+	PodAge            int64                  `json:"podAge" required:"true"`
+	Meta              map[string]interface{} `json:"meta" required:"true"`
 }
 
 // PostablePods is the request body for the v2 pods list API.

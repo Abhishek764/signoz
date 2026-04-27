@@ -10,6 +10,7 @@ import (
 const (
 	podUIDAttrKey       = "k8s.pod.uid"
 	podStartTimeAttrKey = "k8s.pod.start_time"
+	podPhaseMetricName  = "k8s.pod.phase"
 )
 
 var podUIDGroupByKey = qbtypes.GroupByKey{
@@ -53,142 +54,125 @@ var orderByToPodsQueryNames = map[string][]string{
 	inframonitoringtypes.PodsOrderByMemoryLimit:   {"F"},
 }
 
+// newPodsTableListQuery builds the composite QB v5 request for the pods list.
+// Pod phase is derived separately via getPerGroupPodPhaseCounts (works for both
+// list and grouped_list modes), so no phase query is included here.
 func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
+	queries := []qbtypes.QueryEnvelope{
+		// Query A: CPU usage
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.pod.cpu.usage",
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query B: CPU request utilization
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "B",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.pod.cpu_request_utilization",
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query C: CPU limit utilization
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "C",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.pod.cpu_limit_utilization",
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query D: Memory working set
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "D",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.pod.memory.working_set",
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query E: Memory request utilization
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "E",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.pod.memory_request_utilization",
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				Disabled: false,
+			},
+		},
+		// Query F: Memory limit utilization
+		{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Name:   "F",
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "k8s.pod.memory_limit_utilization",
+						TimeAggregation:  metrictypes.TimeAggregationAvg,
+						SpaceAggregation: metrictypes.SpaceAggregationAvg,
+						ReduceTo:         qbtypes.ReduceToAvg,
+					},
+				},
+				GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
+				Disabled: false,
+			},
+		},
+	}
+
 	return &qbtypes.QueryRangeRequest{
 		RequestType: qbtypes.RequestTypeScalar,
 		CompositeQuery: qbtypes.CompositeQuery{
-			Queries: []qbtypes.QueryEnvelope{
-				// Query A: CPU usage
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "A",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.cpu.usage",
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationSum,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query B: CPU request utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "B",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.cpu_request_utilization",
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query C: CPU limit utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "C",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.cpu_limit_utilization",
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query D: Memory working set
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "D",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.memory.working_set",
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationSum,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query E: Memory request utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "E",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.memory_request_utilization",
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query F: Memory limit utilization
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "F",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.memory_limit_utilization",
-								TimeAggregation:  metrictypes.TimeAggregationAvg,
-								SpaceAggregation: metrictypes.SpaceAggregationAvg,
-								ReduceTo:         qbtypes.ReduceToAvg,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-				// Query G: Pod phase (latest value per pod)
-				{
-					Type: qbtypes.QueryTypeBuilder,
-					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
-						Name:   "G",
-						Signal: telemetrytypes.SignalMetrics,
-						Aggregations: []qbtypes.MetricAggregation{
-							{
-								MetricName:       "k8s.pod.phase",
-								TimeAggregation:  metrictypes.TimeAggregationLatest,
-								SpaceAggregation: metrictypes.SpaceAggregationMax, // Space aggregation here should ideally have been something
-								// like spaceaggregation last to pick up the last seen phase of the pod in case of more than one fingerprint for a pod uid for pod phase.
-								// but since the chance of that happening is very low and we don't have spaceaggregation last,
-								// we have picked max which will give us the correct phase in majority of cases and in worst case will give us the most severe phase in case of multiple fingerprints for a pod uid for pod phase.
-								// TODO(nikhilmantri0902): Add spaceaggregation last once supported and use that here.
-								ReduceTo: qbtypes.ReduceToLast,
-							},
-						},
-						GroupBy:  []qbtypes.GroupByKey{podUIDGroupByKey},
-						Disabled: false,
-					},
-				},
-			},
+			Queries: queries,
 		},
 	}
 }

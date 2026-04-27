@@ -206,10 +206,8 @@ func (m *module) getPodsTableMetadata(ctx context.Context, req *inframonitoringt
 //
 //	timeSeriesFPs:      fp ↔ (pod_uid, groupBy cols) from the time_series table.
 //	                    User filter + page-groups filter applied here.
-//	latestPhasePerPod:  GLOBAL INNER JOIN samples × timeSeriesFPs, collapsed to
+//	latestPhasePerPod:  INNER JOIN samples × timeSeriesFPs, collapsed to
 //	                    the latest phase per pod via argMax(value, unix_milli).
-//	                    One step — the JOIN projects pod_uid + groupBy cols
-//	                    down to the sample row, so no fp-level intermediate.
 //	countPodsPerPhase:  per-group uniqExactIf into 5 phase buckets.
 //
 // Groups absent from the result map have implicit zero counts (caller default).
@@ -279,11 +277,6 @@ func (m *module) getPerGroupPodPhaseCounts(
 	timeSeriesFPs.GroupBy(timeSeriesFPsGroupBy...)
 	timeSeriesFPsSQL, timeSeriesFPsArgs := timeSeriesFPs.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	// ----- latestPhasePerPod -----
-	// GLOBAL INNER JOIN samples × timeSeriesFPs, collapsed to the latest phase
-	// per pod via argMax(value, unix_milli). Replaces a prior 2-CTE chain
-	// (fp → latest-per-fp, then fp → pod) — one step because the JOIN
-	// projects pod_uid + groupBy cols down to the sample row.
 	latestPhasePerPod := sqlbuilder.NewSelectBuilder()
 	latestPhasePerPodSelectCols := []string{"tsfp.pod_uid AS pod_uid"}
 	latestPhasePerPodGroupBy := []string{"pod_uid"}

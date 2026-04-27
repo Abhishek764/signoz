@@ -236,12 +236,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 		uint64(req.Start), uint64(req.End),
 		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
 	)
-	// Aggregated samples tables hold the latest value in `last`, not `value`.
-	valueCol := "value"
-	if samplesTable == telemetrymetrics.SamplesV4Agg5mTableName ||
-		samplesTable == telemetrymetrics.SamplesV4Agg30mTableName {
-		valueCol = "last"
-	}
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(samplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()

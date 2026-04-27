@@ -2,16 +2,7 @@ package dashboardtypesv2
 
 // TestDashboardDataMatchesPerses asserts that DashboardData
 // and every nested SigNoz-owned type cover the JSON field set of their Perses
-// counterpart. It fails loud if Perses adds, renames, or removes a field
-// upstream — turning silent drift into a CI signal on the next Perses bump.
-//
-// The test does NOT check field *types* (plugin fields intentionally diverge:
-// our typed plugins vs Perses's common.Plugin). It only checks that every
-// json-tagged field in the Perses struct exists in ours under the same tag.
-//
-// Wrapper types we re-derive (variable.ListSpec is flattened into our
-// ListVariableSpec, same for TextSpec) are compared against the flattened
-// field set.
+// counterpart.
 
 import (
 	"reflect"

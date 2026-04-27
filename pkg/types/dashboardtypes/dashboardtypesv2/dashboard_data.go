@@ -34,10 +34,6 @@ type DashboardData struct {
 // Unmarshal + validate entry point
 // ══════════════════════════════════════════════
 
-// UnmarshalAndValidateJSON unmarshals the JSON into a
-// DashboardData and validates cross-field rules. Plugin kind and
-// plugin-spec shape are already enforced by the typed plugin UnmarshalJSON
-// paths, so only rules that can't be expressed in the type system run here.
 func UnmarshalAndValidateJSON(data []byte) (*DashboardData, error) {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
@@ -56,8 +52,6 @@ func UnmarshalAndValidateJSON(data []byte) (*DashboardData, error) {
 // ══════════════════════════════════════════════
 
 var (
-	// compositeSubQueryTypeToPluginKind maps CompositeQuery sub-query type
-	// strings to the equivalent top-level query plugin kind for validation.
 	compositeSubQueryTypeToPluginKind = map[qb.QueryType]QueryPluginKind{
 		qb.QueryTypeBuilder:       QueryKindBuilder,
 		qb.QueryTypeFormula:       QueryKindFormula,
@@ -89,8 +83,6 @@ func validateDashboard(d DashboardData) error {
 	return nil
 }
 
-// validateQueryAllowedForPanel checks that the query plugin kind is permitted
-// for the given panel. For composite queries it recurses into sub-queries.
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	if !slices.Contains(allowed, plugin.Kind) {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput,

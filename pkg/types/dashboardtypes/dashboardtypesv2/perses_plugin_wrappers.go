@@ -1,13 +1,5 @@
 package dashboardtypesv2
 
-// Typed plugin envelopes for the four plugin sites in DashboardData.
-// Each plugin:
-//   - Has Kind (typed enum) and Spec (any, resolved at runtime via UnmarshalJSON)
-//   - Implements JSONSchemaOneOf so the reflector emits a per-site discriminated
-//     oneOf over only the kinds valid at that site
-//   - Implements UnmarshalJSON that dispatches Spec to the concrete type based
-//     on Kind, using the factory maps in dashboard_v2.go
-
 import (
 	"bytes"
 	"encoding/json"
@@ -317,9 +309,6 @@ func (v layoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // Helpers
 // ══════════════════════════════════════════════
 
-// Each plugin's UnmarshalJSON uses its factory map to instantiate a typed
-// Spec based on the Kind field. Single source of truth for "which kinds
-// exist" — JSONSchemaOneOf iterates the same maps.
 var (
 	panelPluginSpecs = map[PanelPluginKind]func() any{
 		PanelKindTimeSeries: func() any { return new(TimeSeriesPanelSpec) },
@@ -355,9 +344,6 @@ var (
 		dashboard.KindGridLayout: func() any { return new(dashboard.GridLayoutSpec) },
 	}
 
-	// allowedQueryKinds maps each panel plugin kind to the query plugin
-	// kinds it supports. Composite sub-query types are mapped to these
-	// same kind strings via compositeSubQueryTypeToPluginKind.
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
 		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},

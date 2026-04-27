@@ -1297,6 +1297,24 @@ export interface CloudintegrationtypesUpdatableServiceDTO {
 	config: CloudintegrationtypesServiceConfigDTO;
 }
 
+export interface CommonDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
+export interface CommonJSONRefDTO {
+	/**
+	 * @type string
+	 */
+	$ref?: string;
+}
+
 export interface ConfigAuthorizationDTO {
 	/**
 	 * @type string
@@ -2758,6 +2776,54 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
+export interface DashboardGridItemDTO {
+	content?: CommonJSONRefDTO;
+	/**
+	 * @type integer
+	 */
+	height?: number;
+	/**
+	 * @type integer
+	 */
+	width?: number;
+	/**
+	 * @type integer
+	 */
+	x?: number;
+	/**
+	 * @type integer
+	 */
+	y?: number;
+}
+
+export interface DashboardGridLayoutCollapseDTO {
+	/**
+	 * @type boolean
+	 */
+	open?: boolean;
+}
+
+export interface DashboardGridLayoutDisplayDTO {
+	collapse?: DashboardGridLayoutCollapseDTO;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface DashboardGridLayoutSpecDTO {
+	display?: DashboardGridLayoutDisplayDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items?: DashboardGridItemDTO[] | null;
+	/**
+	 * @type string
+	 */
+	repeatVariable?: string;
+}
+
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -2836,6 +2902,796 @@ export interface DashboardtypesUpdatablePublicDashboardDTO {
 	 * @type boolean
 	 */
 	timeRangeEnabled?: boolean;
+}
+
+export interface Dashboardtypesv2AxesDTO {
+	/**
+	 * @type boolean
+	 */
+	isLogScale?: boolean;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	softMax?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	softMin?: number | null;
+}
+
+export interface Dashboardtypesv2BarChartPanelSpecDTO {
+	axes?: Dashboardtypesv2AxesDTO;
+	formatting?: Dashboardtypesv2PanelFormattingDTO;
+	legend?: Dashboardtypesv2LegendDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	thresholds?: Dashboardtypesv2ThresholdWithLabelDTO[] | null;
+	visualization?: Dashboardtypesv2BarChartVisualizationDTO;
+}
+
+export interface Dashboardtypesv2BarChartVisualizationDTO {
+	/**
+	 * @type boolean
+	 */
+	fillSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	stackedBarChart?: boolean;
+	timePreference?: Dashboardtypesv2TimePreferenceDTO;
+}
+
+export interface Dashboardtypesv2BasicVisualizationDTO {
+	timePreference?: Dashboardtypesv2TimePreferenceDTO;
+}
+
+export type Dashboardtypesv2BuilderQuerySpecDTO =
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+
+export enum Dashboardtypesv2ComparisonOperatorDTO {
+	'>' = '>',
+	'<' = '<',
+	'>=' = '>=',
+	'<=' = '<=',
+	'=' = '=',
+	above = 'above',
+	below = 'below',
+	above_or_equal = 'above_or_equal',
+	below_or_equal = 'below_or_equal',
+	equal = 'equal',
+	not_equal = 'not_equal',
+}
+export interface Dashboardtypesv2ComparisonThresholdDTO {
+	/**
+	 * @type string
+	 */
+	color: string;
+	format?: Dashboardtypesv2ThresholdFormatDTO;
+	operator?: Dashboardtypesv2ComparisonOperatorDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export interface Dashboardtypesv2CustomVariableSpecDTO {
+	/**
+	 * @type string
+	 */
+	customValue: string;
+}
+
+export type Dashboardtypesv2DashboardDataDTODatasources = {
+	[key: string]: Dashboardtypesv2DatasourceSpecDTO;
+};
+
+/**
+ * @nullable
+ */
+export type Dashboardtypesv2DashboardDataDTOPanels = {
+	[key: string]: Dashboardtypesv2PanelDTO;
+} | null;
+
+export interface Dashboardtypesv2DashboardDataDTO {
+	/**
+	 * @type object
+	 */
+	datasources?: Dashboardtypesv2DashboardDataDTODatasources;
+	display?: CommonDisplayDTO;
+	/**
+	 * @type string
+	 */
+	duration?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	layouts?: Dashboardtypesv2LayoutDTO[] | null;
+	/**
+	 * @type array
+	 */
+	links?: V1LinkDTO[];
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	panels?: Dashboardtypesv2DashboardDataDTOPanels;
+	/**
+	 * @type string
+	 */
+	refreshInterval?: string;
+	/**
+	 * @type array
+	 */
+	variables?: Dashboardtypesv2VariableDTO[];
+}
+
+export type Dashboardtypesv2DatasourcePluginDTO =
+	Dashboardtypesv2DatasourcePluginVariantStructDTO;
+
+export enum Dashboardtypesv2DatasourcePluginKindDTO {
+	'signoz/Datasource' = 'signoz/Datasource',
+}
+export enum Dashboardtypesv2DatasourcePluginVariantStructDTOKind {
+	'signoz/Datasource' = 'signoz/Datasource',
+}
+/**
+ * @nullable
+ */
+export type Dashboardtypesv2DatasourcePluginVariantStructDTOSpec = {
+	[key: string]: unknown;
+} | null;
+
+export interface Dashboardtypesv2DatasourcePluginVariantStructDTO {
+	/**
+	 * @enum signoz/Datasource
+	 * @type string
+	 */
+	kind: Dashboardtypesv2DatasourcePluginVariantStructDTOKind;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	spec: Dashboardtypesv2DatasourcePluginVariantStructDTOSpec;
+}
+
+export interface Dashboardtypesv2DatasourceSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	default?: boolean;
+	display?: CommonDisplayDTO;
+	plugin?: Dashboardtypesv2DatasourcePluginDTO;
+}
+
+export interface Dashboardtypesv2DynamicVariableSpecDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+}
+
+export enum Dashboardtypesv2FillModeDTO {
+	solid = 'solid',
+	gradient = 'gradient',
+	none = 'none',
+}
+export interface Dashboardtypesv2HistogramBucketsDTO {
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	bucketCount?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	bucketWidth?: number | null;
+	/**
+	 * @type boolean
+	 */
+	mergeAllActiveQueries?: boolean;
+}
+
+export interface Dashboardtypesv2HistogramPanelSpecDTO {
+	histogramBuckets?: Dashboardtypesv2HistogramBucketsDTO;
+	legend?: Dashboardtypesv2LegendDTO;
+}
+
+export type Dashboardtypesv2LayoutDTO =
+	Dashboardtypesv2LayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO;
+
+export enum Dashboardtypesv2LayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind {
+	Grid = 'Grid',
+}
+export interface Dashboardtypesv2LayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO {
+	/**
+	 * @enum Grid
+	 * @type string
+	 */
+	kind: Dashboardtypesv2LayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind;
+	spec: DashboardGridLayoutSpecDTO;
+}
+
+/**
+ * @nullable
+ */
+export type Dashboardtypesv2LegendDTOCustomColors = {
+	[key: string]: string;
+} | null;
+
+export interface Dashboardtypesv2LegendDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	customColors?: Dashboardtypesv2LegendDTOCustomColors;
+	position?: Dashboardtypesv2LegendPositionDTO;
+}
+
+export enum Dashboardtypesv2LegendPositionDTO {
+	bottom = 'bottom',
+	right = 'right',
+}
+export enum Dashboardtypesv2LineInterpolationDTO {
+	linear = 'linear',
+	spline = 'spline',
+	step_after = 'step_after',
+	step_before = 'step_before',
+}
+export enum Dashboardtypesv2LineStyleDTO {
+	solid = 'solid',
+	dashed = 'dashed',
+}
+export interface Dashboardtypesv2ListPanelSpecDTO {
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
+export interface Dashboardtypesv2ListVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	allowAllValue?: boolean;
+	/**
+	 * @type boolean
+	 */
+	allowMultiple?: boolean;
+	/**
+	 * @type string
+	 */
+	capturingRegexp?: string;
+	/**
+	 * @type string
+	 */
+	customAllValue?: string;
+	defaultValue?: VariableDefaultValueDTO;
+	display?: VariableDisplayDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	plugin?: Dashboardtypesv2VariablePluginDTO;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	sort?: string | null;
+}
+
+export interface Dashboardtypesv2NumberPanelSpecDTO {
+	formatting?: Dashboardtypesv2PanelFormattingDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	thresholds?: Dashboardtypesv2ComparisonThresholdDTO[] | null;
+	visualization?: Dashboardtypesv2BasicVisualizationDTO;
+}
+
+export interface Dashboardtypesv2PanelDTO {
+	/**
+	 * @type string
+	 */
+	kind?: string;
+	spec?: Dashboardtypesv2PanelSpecDTO;
+}
+
+export interface Dashboardtypesv2PanelFormattingDTO {
+	decimalPrecision?: Dashboardtypesv2PrecisionOptionDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export type Dashboardtypesv2PanelPluginDTO =
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TimeSeriesPanelSpecDTO
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BarChartPanelSpecDTO
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2NumberPanelSpecDTO
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2PieChartPanelSpecDTO
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TablePanelSpecDTO
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2HistogramPanelSpecDTO
+	| Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListPanelSpecDTO;
+
+export enum Dashboardtypesv2PanelPluginKindDTO {
+	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
+	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
+	'signoz/NumberPanel' = 'signoz/NumberPanel',
+	'signoz/PieChartPanel' = 'signoz/PieChartPanel',
+	'signoz/TablePanel' = 'signoz/TablePanel',
+	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
+	'signoz/ListPanel' = 'signoz/ListPanel',
+}
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BarChartPanelSpecDTOKind {
+	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BarChartPanelSpecDTO {
+	/**
+	 * @enum signoz/BarChartPanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BarChartPanelSpecDTOKind;
+	spec: Dashboardtypesv2BarChartPanelSpecDTO;
+}
+
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2HistogramPanelSpecDTOKind {
+	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2HistogramPanelSpecDTO {
+	/**
+	 * @enum signoz/HistogramPanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2HistogramPanelSpecDTOKind;
+	spec: Dashboardtypesv2HistogramPanelSpecDTO;
+}
+
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListPanelSpecDTOKind {
+	'signoz/ListPanel' = 'signoz/ListPanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListPanelSpecDTO {
+	/**
+	 * @enum signoz/ListPanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListPanelSpecDTOKind;
+	spec: Dashboardtypesv2ListPanelSpecDTO;
+}
+
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2NumberPanelSpecDTOKind {
+	'signoz/NumberPanel' = 'signoz/NumberPanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2NumberPanelSpecDTO {
+	/**
+	 * @enum signoz/NumberPanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2NumberPanelSpecDTOKind;
+	spec: Dashboardtypesv2NumberPanelSpecDTO;
+}
+
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2PieChartPanelSpecDTOKind {
+	'signoz/PieChartPanel' = 'signoz/PieChartPanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2PieChartPanelSpecDTO {
+	/**
+	 * @enum signoz/PieChartPanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2PieChartPanelSpecDTOKind;
+	spec: Dashboardtypesv2PieChartPanelSpecDTO;
+}
+
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TablePanelSpecDTOKind {
+	'signoz/TablePanel' = 'signoz/TablePanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TablePanelSpecDTO {
+	/**
+	 * @enum signoz/TablePanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TablePanelSpecDTOKind;
+	spec: Dashboardtypesv2TablePanelSpecDTO;
+}
+
+export enum Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TimeSeriesPanelSpecDTOKind {
+	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
+}
+export interface Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TimeSeriesPanelSpecDTO {
+	/**
+	 * @enum signoz/TimeSeriesPanel
+	 * @type string
+	 */
+	kind: Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TimeSeriesPanelSpecDTOKind;
+	spec: Dashboardtypesv2TimeSeriesPanelSpecDTO;
+}
+
+export interface Dashboardtypesv2PanelSpecDTO {
+	display?: V1PanelDisplayDTO;
+	/**
+	 * @type array
+	 */
+	links?: V1LinkDTO[];
+	plugin?: Dashboardtypesv2PanelPluginDTO;
+	/**
+	 * @type array
+	 */
+	queries?: Dashboardtypesv2QueryDTO[];
+}
+
+export interface Dashboardtypesv2PieChartPanelSpecDTO {
+	formatting?: Dashboardtypesv2PanelFormattingDTO;
+	legend?: Dashboardtypesv2LegendDTO;
+	visualization?: Dashboardtypesv2BasicVisualizationDTO;
+}
+
+export enum Dashboardtypesv2PrecisionOptionDTO {
+	NUMBER_0 = '0',
+	NUMBER_1 = '1',
+	NUMBER_2 = '2',
+	NUMBER_3 = '3',
+	NUMBER_4 = '4',
+	full = 'full',
+}
+export interface Dashboardtypesv2QueryDTO {
+	/**
+	 * @type string
+	 */
+	kind?: string;
+	spec?: Dashboardtypesv2QuerySpecDTO;
+}
+
+export type Dashboardtypesv2QueryPluginDTO =
+	| Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BuilderQuerySpecDTO
+	| Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO
+	| Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO
+	| Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO
+	| Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTO
+	| Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTO;
+
+export enum Dashboardtypesv2QueryPluginKindDTO {
+	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
+	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
+	'signoz/Formula' = 'signoz/Formula',
+	'signoz/PromQLQuery' = 'signoz/PromQLQuery',
+	'signoz/ClickHouseSQL' = 'signoz/ClickHouseSQL',
+	'signoz/TraceOperator' = 'signoz/TraceOperator',
+}
+export enum Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BuilderQuerySpecDTOKind {
+	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
+}
+export interface Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BuilderQuerySpecDTO {
+	/**
+	 * @enum signoz/BuilderQuery
+	 * @type string
+	 */
+	kind: Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BuilderQuerySpecDTOKind;
+	spec: Dashboardtypesv2BuilderQuerySpecDTO;
+}
+
+export enum Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind {
+	'signoz/ClickHouseSQL' = 'signoz/ClickHouseSQL',
+}
+export interface Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTO {
+	/**
+	 * @enum signoz/ClickHouseSQL
+	 * @type string
+	 */
+	kind: Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQueryDTOKind;
+	spec: Querybuildertypesv5ClickHouseQueryDTO;
+}
+
+export enum Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
+	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
+}
+export interface Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO {
+	/**
+	 * @enum signoz/CompositeQuery
+	 * @type string
+	 */
+	kind: Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind;
+	spec: Querybuildertypesv5CompositeQueryDTO;
+}
+
+export enum Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind {
+	'signoz/PromQLQuery' = 'signoz/PromQLQuery',
+}
+export interface Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO {
+	/**
+	 * @enum signoz/PromQLQuery
+	 * @type string
+	 */
+	kind: Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTOKind;
+	spec: Querybuildertypesv5PromQueryDTO;
+}
+
+export enum Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind {
+	'signoz/Formula' = 'signoz/Formula',
+}
+export interface Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO {
+	/**
+	 * @enum signoz/Formula
+	 * @type string
+	 */
+	kind: Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTOKind;
+	spec: Querybuildertypesv5QueryBuilderFormulaDTO;
+}
+
+export enum Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind {
+	'signoz/TraceOperator' = 'signoz/TraceOperator',
+}
+export interface Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTO {
+	/**
+	 * @enum signoz/TraceOperator
+	 * @type string
+	 */
+	kind: Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperatorDTOKind;
+	spec: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
+}
+
+export interface Dashboardtypesv2QuerySpecDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	plugin?: Dashboardtypesv2QueryPluginDTO;
+}
+
+export interface Dashboardtypesv2QueryVariableSpecDTO {
+	/**
+	 * @type string
+	 */
+	queryValue: string;
+}
+
+export interface Dashboardtypesv2SpanGapsDTO {
+	/**
+	 * @type string
+	 */
+	fillLessThan?: string;
+	/**
+	 * @type boolean
+	 */
+	fillOnlyBelow?: boolean;
+}
+
+/**
+ * @nullable
+ */
+export type Dashboardtypesv2TableFormattingDTOColumnUnits = {
+	[key: string]: string;
+} | null;
+
+export interface Dashboardtypesv2TableFormattingDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	columnUnits?: Dashboardtypesv2TableFormattingDTOColumnUnits;
+	decimalPrecision?: Dashboardtypesv2PrecisionOptionDTO;
+}
+
+export interface Dashboardtypesv2TablePanelSpecDTO {
+	formatting?: Dashboardtypesv2TableFormattingDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	thresholds?: Dashboardtypesv2TableThresholdDTO[] | null;
+	visualization?: Dashboardtypesv2BasicVisualizationDTO;
+}
+
+export interface Dashboardtypesv2TableThresholdDTO {
+	/**
+	 * @type string
+	 */
+	color: string;
+	/**
+	 * @type string
+	 */
+	columnName: string;
+	format?: Dashboardtypesv2ThresholdFormatDTO;
+	operator?: Dashboardtypesv2ComparisonOperatorDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export interface Dashboardtypesv2TextVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	constant?: boolean;
+	display?: VariableDisplayDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface Dashboardtypesv2TextboxVariableSpecDTO {
+	[key: string]: unknown;
+}
+
+export enum Dashboardtypesv2ThresholdFormatDTO {
+	text = 'text',
+	background = 'background',
+}
+export interface Dashboardtypesv2ThresholdWithLabelDTO {
+	/**
+	 * @type string
+	 */
+	color: string;
+	/**
+	 * @type string
+	 */
+	label: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export enum Dashboardtypesv2TimePreferenceDTO {
+	global_time = 'global_time',
+	last_5_min = 'last_5_min',
+	last_15_min = 'last_15_min',
+	last_30_min = 'last_30_min',
+	last_1_hr = 'last_1_hr',
+	last_6_hr = 'last_6_hr',
+	last_1_day = 'last_1_day',
+	last_3_days = 'last_3_days',
+	last_1_week = 'last_1_week',
+	last_1_month = 'last_1_month',
+}
+export interface Dashboardtypesv2TimeSeriesChartAppearanceDTO {
+	fillMode?: Dashboardtypesv2FillModeDTO;
+	lineInterpolation?: Dashboardtypesv2LineInterpolationDTO;
+	lineStyle?: Dashboardtypesv2LineStyleDTO;
+	/**
+	 * @type boolean
+	 */
+	showPoints?: boolean;
+	spanGaps?: Dashboardtypesv2SpanGapsDTO;
+}
+
+export interface Dashboardtypesv2TimeSeriesPanelSpecDTO {
+	axes?: Dashboardtypesv2AxesDTO;
+	chartAppearance?: Dashboardtypesv2TimeSeriesChartAppearanceDTO;
+	formatting?: Dashboardtypesv2PanelFormattingDTO;
+	legend?: Dashboardtypesv2LegendDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	thresholds?: Dashboardtypesv2ThresholdWithLabelDTO[] | null;
+	visualization?: Dashboardtypesv2TimeSeriesVisualizationDTO;
+}
+
+export interface Dashboardtypesv2TimeSeriesVisualizationDTO {
+	/**
+	 * @type boolean
+	 */
+	fillSpans?: boolean;
+	timePreference?: Dashboardtypesv2TimePreferenceDTO;
+}
+
+export type Dashboardtypesv2VariableDTO =
+	| Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListVariableSpecDTO
+	| Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextVariableSpecDTO;
+
+export enum Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListVariableSpecDTOKind {
+	ListVariable = 'ListVariable',
+}
+export interface Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListVariableSpecDTO {
+	/**
+	 * @enum ListVariable
+	 * @type string
+	 */
+	kind: Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListVariableSpecDTOKind;
+	spec: Dashboardtypesv2ListVariableSpecDTO;
+}
+
+export enum Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextVariableSpecDTOKind {
+	TextVariable = 'TextVariable',
+}
+export interface Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextVariableSpecDTO {
+	/**
+	 * @enum TextVariable
+	 * @type string
+	 */
+	kind: Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextVariableSpecDTOKind;
+	spec: Dashboardtypesv2TextVariableSpecDTO;
+}
+
+export type Dashboardtypesv2VariablePluginDTO =
+	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpecDTO
+	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpecDTO
+	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTO
+	| Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTO;
+
+export enum Dashboardtypesv2VariablePluginKindDTO {
+	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
+	'signoz/QueryVariable' = 'signoz/QueryVariable',
+	'signoz/CustomVariable' = 'signoz/CustomVariable',
+	'signoz/TextboxVariable' = 'signoz/TextboxVariable',
+}
+export enum Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTOKind {
+	'signoz/CustomVariable' = 'signoz/CustomVariable',
+}
+export interface Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTO {
+	/**
+	 * @enum signoz/CustomVariable
+	 * @type string
+	 */
+	kind: Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpecDTOKind;
+	spec: Dashboardtypesv2CustomVariableSpecDTO;
+}
+
+export enum Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpecDTOKind {
+	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
+}
+export interface Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpecDTO {
+	/**
+	 * @enum signoz/DynamicVariable
+	 * @type string
+	 */
+	kind: Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpecDTOKind;
+	spec: Dashboardtypesv2DynamicVariableSpecDTO;
+}
+
+export enum Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpecDTOKind {
+	'signoz/QueryVariable' = 'signoz/QueryVariable',
+}
+export interface Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpecDTO {
+	/**
+	 * @enum signoz/QueryVariable
+	 * @type string
+	 */
+	kind: Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpecDTOKind;
+	spec: Dashboardtypesv2QueryVariableSpecDTO;
+}
+
+export enum Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTOKind {
+	'signoz/TextboxVariable' = 'signoz/TextboxVariable',
+}
+export interface Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTO {
+	/**
+	 * @enum signoz/TextboxVariable
+	 * @type string
+	 */
+	kind: Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextboxVariableSpecDTOKind;
+	spec: Dashboardtypesv2TextboxVariableSpecDTO;
 }
 
 export interface ErrorsJSONDTO {
@@ -6069,6 +6925,59 @@ export interface TypesUserDTO {
 	updatedAt?: Date;
 }
 
+export interface V1LinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface V1PanelDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
+export interface VariableDefaultValueDTO {
+	[key: string]: unknown;
+}
+
+export interface VariableDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type boolean
+	 */
+	hidden?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
 export interface ZeustypesGettableHostDTO {
 	/**
 	 * @type array
@@ -6994,6 +7903,14 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type CreateDashboardV2201 = {
+	data: Dashboardtypesv2DashboardDataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array

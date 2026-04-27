@@ -317,6 +317,58 @@ func (v layoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // Helpers
 // ══════════════════════════════════════════════
 
+// Each plugin's UnmarshalJSON uses its factory map to instantiate a typed
+// Spec based on the Kind field. Single source of truth for "which kinds
+// exist" — JSONSchemaOneOf iterates the same maps.
+var (
+	panelPluginSpecs = map[PanelPluginKind]func() any{
+		PanelKindTimeSeries: func() any { return new(TimeSeriesPanelSpec) },
+		PanelKindBarChart:   func() any { return new(BarChartPanelSpec) },
+		PanelKindNumber:     func() any { return new(NumberPanelSpec) },
+		PanelKindPieChart:   func() any { return new(PieChartPanelSpec) },
+		PanelKindTable:      func() any { return new(TablePanelSpec) },
+		PanelKindHistogram:  func() any { return new(HistogramPanelSpec) },
+		PanelKindList:       func() any { return new(ListPanelSpec) },
+	}
+	queryPluginSpecs = map[QueryPluginKind]func() any{
+		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
+		QueryKindComposite:     func() any { return new(CompositeQuerySpec) },
+		QueryKindFormula:       func() any { return new(FormulaSpec) },
+		QueryKindPromQL:        func() any { return new(PromQLQuerySpec) },
+		QueryKindClickHouseSQL: func() any { return new(ClickHouseSQLQuerySpec) },
+		QueryKindTraceOperator: func() any { return new(TraceOperatorSpec) },
+	}
+	variablePluginSpecs = map[VariablePluginKind]func() any{
+		VariableKindDynamic: func() any { return new(DynamicVariableSpec) },
+		VariableKindQuery:   func() any { return new(QueryVariableSpec) },
+		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
+		VariableKindTextbox: func() any { return new(TextboxVariableSpec) },
+	}
+	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
+		DatasourceKindSigNoz: func() any { return new(struct{}) },
+	}
+
+	// layoutSpecs is the layout sum type factory. Perses only defines
+	// KindGridLayout today; adding a new kind upstream surfaces as an
+	// "unknown layout kind" runtime error here until we add it.
+	layoutSpecs = map[dashboard.LayoutKind]func() any{
+		dashboard.KindGridLayout: func() any { return new(dashboard.GridLayoutSpec) },
+	}
+
+	// allowedQueryKinds maps each panel plugin kind to the query plugin
+	// kinds it supports. Composite sub-query types are mapped to these
+	// same kind strings via compositeSubQueryTypeToPluginKind.
+	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
+		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindNumber:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindHistogram:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindTable:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindList:       {QueryKindBuilder},
+	}
+)
+
 // splitKindSpec parses a {"kind": "...", "spec": {...}} envelope and returns
 // kind and the raw spec bytes for typed decoding.
 func splitKindSpec(data []byte) (string, []byte, error) {

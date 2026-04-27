@@ -3,7 +3,6 @@ package dashboardtypesv2
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -50,7 +49,7 @@ func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q", kind)
 	}
-	spec, err := decodePluginSpec(specJSON, factory())
+	spec, err := decodePluginSpec(specJSON, factory(), kind)
 	if err != nil {
 		return err
 	}
@@ -101,7 +100,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown query plugin kind %q", kind)
 	}
-	spec, err := decodePluginSpec(specJSON, factory())
+	spec, err := decodePluginSpec(specJSON, factory(), kind)
 	if err != nil {
 		return err
 	}
@@ -150,7 +149,7 @@ func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q", kind)
 	}
-	spec, err := decodePluginSpec(specJSON, factory())
+	spec, err := decodePluginSpec(specJSON, factory(), kind)
 	if err != nil {
 		return err
 	}
@@ -196,7 +195,7 @@ func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q", kind)
 	}
-	spec, err := decodePluginSpec(specJSON, factory())
+	spec, err := decodePluginSpec(specJSON, factory(), kind)
 	if err != nil {
 		return err
 	}
@@ -236,14 +235,14 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 	}
 	switch kind {
 	case string(variable.KindList):
-		spec, err := decodeVariableSpec(specJSON, new(ListVariableSpec))
+		spec, err := decodeVariableSpec(specJSON, new(ListVariableSpec), kind)
 		if err != nil {
 			return err
 		}
 		v.Kind = variable.KindList
 		v.Spec = spec
 	case string(variable.KindText):
-		spec, err := decodeVariableSpec(specJSON, new(TextVariableSpec))
+		spec, err := decodeVariableSpec(specJSON, new(TextVariableSpec), kind)
 		if err != nil {
 			return err
 		}
@@ -287,7 +286,7 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown layout kind %q", kind)
 	}
-	spec, err := decodeVariableSpec(specJSON, factory())
+	spec, err := decodePluginSpec(specJSON, factory(), kind)
 	if err != nil {
 		return err
 	}
@@ -371,18 +370,20 @@ func splitKindSpec(data []byte) (string, []byte, error) {
 // decodePluginSpec strict-decodes a plugin spec JSON into target and runs
 // struct-tag validation (go-playground/validator). Strictness matches the
 // previous validateAndNormalizePluginSpec contract: unknown fields rejected,
-// required-field violations surfaced. Returns target on success.
-func decodePluginSpec(specJSON []byte, target any) (any, error) {
+// required-field violations surfaced. The category/kind pair is woven into
+// every error so callers can tell which envelope failed (e.g. `panel plugin
+// "timeSeries"`). Returns target on success.
+func decodePluginSpec(specJSON []byte, target any, kind string) (any, error) {
 	if len(specJSON) == 0 {
-		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "spec is required")
+		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "plugin kind %q: spec is required", kind)
 	}
 	dec := json.NewDecoder(bytes.NewReader(specJSON))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(target); err != nil {
-		return nil, fmt.Errorf("decode spec: %w", err)
+		return nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "plugin kind %q: invalid spec JSON", kind)
 	}
 	if err := validator.New().Struct(target); err != nil {
-		return nil, fmt.Errorf("validate spec: %w", err)
+		return nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "plugin kind %q: spec failed validation", kind)
 	}
 	return target, nil
 }
@@ -390,12 +391,12 @@ func decodePluginSpec(specJSON []byte, target any) (any, error) {
 // decodeVariableSpec is lenient: used for ListVariableSpec / TextVariableSpec
 // where Perses historically ignored unknown fields (e.g., stray `plugin` on
 // text variables in existing fixtures).
-func decodeVariableSpec(specJSON []byte, target any) (any, error) {
+func decodeVariableSpec(specJSON []byte, target any, kind string) (any, error) {
 	if len(specJSON) == 0 {
-		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "spec is required")
+		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "plugin kind %q: spec is required", kind)
 	}
 	if err := json.Unmarshal(specJSON, target); err != nil {
-		return nil, fmt.Errorf("decode spec: %w", err)
+		return nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "plugin kind %q: invalid spec JSON", kind)
 	}
 	return target, nil
 }
@@ -418,7 +419,7 @@ func clearOneOfParentShape(s *jsonschema.Schema) error {
 func applyKindEnum(schema *jsonschema.Schema, kind string) error {
 	kindProp, ok := schema.Properties["kind"]
 	if !ok || kindProp.TypeObject == nil {
-		return fmt.Errorf("variant schema missing `kind` property")
+		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")
 	}
 	kindProp.TypeObject.WithEnum(kind)
 	schema.Properties["kind"] = kindProp

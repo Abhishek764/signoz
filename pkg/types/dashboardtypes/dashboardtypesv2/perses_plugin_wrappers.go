@@ -396,10 +396,9 @@ func clearOneOfParentShape(s *jsonschema.Schema) error {
 	return nil
 }
 
-// restrictKindToLiteral narrows the `kind` property of a oneOf variant schema to a
-// single permitted string, producing `kind: { type: string, enum: [kind] }`.
-// Each variant calls this from PrepareJSONSchema because Go generics can't
-// propagate struct tag values (so we can't write enum:"..." on Kind).
+// restrictKindToLiteral ensures that the schema only allows one Kind value for a type.
+// For eg. PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)} should
+// only allow "signoz/TimeSeriesPanel" in its kind field
 func restrictKindToLiteral(schema *jsonschema.Schema, kind string) error {
 	kindProp, ok := schema.Properties["kind"]
 	if !ok || kindProp.TypeObject == nil {

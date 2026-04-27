@@ -23,6 +23,8 @@ import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
+import { verifyFiltersAndOrderBy } from './verifyFiltersAndOrderBy';
+
 // State to track when UpdateTimeInterval has been called and what the updated times should be
 let mockGlobalTimeState: {
 	minTime: number;
@@ -37,24 +39,26 @@ jest.mock('store/actions', () => {
 
 	return {
 		...originalModule,
-		UpdateTimeInterval: (
-			interval: any,
-			dateTimeRange: [number, number] = [0, 0],
-		): ((dispatch: any) => void) => (): void => {
-			// Get the original min and max times
-			const { maxTime: originalMaxTime, minTime: originalMinTime } = GetMinMax(
-				interval,
-				dateTimeRange,
-			);
+		UpdateTimeInterval:
+			(
+				interval: any,
+				dateTimeRange: [number, number] = [0, 0],
+			): ((dispatch: any) => void) =>
+			(): void => {
+				// Get the original min and max times
+				const { maxTime: originalMaxTime, minTime: originalMinTime } = GetMinMax(
+					interval,
+					dateTimeRange,
+				);
 
-			// Add 5 minutes to both times to ensure they are different
-			const fiveMinutesInNanoseconds = 5 * 60 * 1000 * 1000000;
-			const maxTime = originalMaxTime + fiveMinutesInNanoseconds;
-			const minTime = originalMinTime + fiveMinutesInNanoseconds;
+				// Add 5 minutes to both times to ensure they are different
+				const fiveMinutesInNanoseconds = 5 * 60 * 1000 * 1000000;
+				const maxTime = originalMaxTime + fiveMinutesInNanoseconds;
+				const minTime = originalMinTime + fiveMinutesInNanoseconds;
 
-			// Update the mock state
-			mockGlobalTimeState = { minTime, maxTime, selectedTime: interval };
-		},
+				// Update the mock state
+				mockGlobalTimeState = { minTime, maxTime, selectedTime: interval };
+			},
 	};
 });
 
@@ -186,7 +190,7 @@ export const verifyPayload = ({
 	const queryA = payload.compositeQuery.queries?.find(
 		(q) => q.spec?.name === 'A',
 	);
-	const queryData = (queryA?.spec as unknown) as IBuilderQuery;
+	const queryData = queryA?.spec as unknown as IBuilderQuery;
 	expect(queryData).toBeDefined();
 	// Assert that the offset in the payload matches the expected offset
 	expect(queryData.offset).toBe(expectedOffset);
@@ -198,26 +202,6 @@ export const verifyPayload = ({
 	}
 
 	return queryData;
-};
-
-export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
-	// Verify that the 'id' filter is not present in the pagination query
-	const thirdIdFilter = queryData.filters?.items?.find(
-		(item) => item?.key?.key === 'id',
-	);
-	expect(thirdIdFilter).toBeUndefined();
-
-	// Verify the sorting order includes 'id' if 'timestamp' is present
-	const OrderByTimestamp = queryData.orderBy?.find(
-		(item) => item.columnName === 'timestamp',
-	);
-	const orderById = queryData.orderBy?.find((item) => item.columnName === 'id');
-
-	if (OrderByTimestamp) {
-		expect(orderById).toBeDefined();
-		// Ensure the 'id' sorting order matches the 'timestamp' sorting order
-		expect(orderById?.order).toBe(OrderByTimestamp.order);
-	}
 };
 
 let capturedPayloads: QueryRangePayloadV5[];

@@ -1,8 +1,6 @@
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/ui';
+import { Button, DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountKeysQueryKey,
@@ -36,7 +34,7 @@ export function RevokeKeyContent({
 				Revoking this key will permanently invalidate it. Any systems using this key
 				will lose access immediately.
 			</p>
-			<DialogFooter className="delete-dialog__footer">
+			<div className="delete-dialog__footer">
 				<Button variant="solid" color="secondary" size="sm" onClick={onCancel}>
 					<X size={12} />
 					Cancel
@@ -51,7 +49,7 @@ export function RevokeKeyContent({
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>
-			</DialogFooter>
+			</div>
 		</>
 	);
 }
@@ -69,31 +67,29 @@ function RevokeKeyModal(): JSX.Element {
 	const cachedKeys = accountId
 		? queryClient.getQueryData<{
 				data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
-		  }>(getListServiceAccountKeysQueryKey({ id: accountId }))
+			}>(getListServiceAccountKeysQueryKey({ id: accountId }))
 		: null;
 	const keyName = cachedKeys?.data?.find((k) => k.id === revokeKeyId)?.name;
 
-	const {
-		mutate: revokeKey,
-		isLoading: isRevoking,
-	} = useRevokeServiceAccountKey({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Key revoked successfully', { richColors: true });
-				await setRevokeKeyId(null);
-				if (accountId) {
-					await invalidateListServiceAccountKeys(queryClient, { id: accountId });
-				}
+	const { mutate: revokeKey, isLoading: isRevoking } =
+		useRevokeServiceAccountKey({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Key revoked successfully');
+					await setRevokeKeyId(null);
+					if (accountId) {
+						await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+					}
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				showErrorModal(
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					) as APIError,
-				);
-			},
-		},
-	});
+		});
 
 	function handleConfirm(): void {
 		if (!revokeKeyId || !accountId) {

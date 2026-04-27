@@ -177,11 +177,13 @@
 	color: var(--destructive);
 	opacity: 0.6;
 	padding: 0;
-	transition: background-color 0.2s, opacity 0.2s;
+	transition:
+		background-color 0.2s,
+		opacity 0.2s;
 	box-shadow: none;
 
 	&:hover {
-		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 		opacity: 0.9;
 	}
 }
@@ -196,10 +198,14 @@
 }
 
 .invite-team-members-error-callout {
-	background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
-	border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+	background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+	border: 1px solid color-mix(in srgb, var(--danger-background) 20%, transparent);
 	border-radius: 4px;
 	animation: horizontal-shaking 300ms ease-out;
+}
+
+.invite-members-modal__error-callout {
+	display: flex;
 }
 
 @keyframes horizontal-shaking {

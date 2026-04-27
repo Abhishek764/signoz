@@ -52,7 +52,9 @@
 		color: var(--destructive) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
-		transition: background-color 0.2s, opacity 0.2s;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
 		box-shadow: none !important;
 		display: flex;
 		align-items: center;
@@ -67,7 +69,7 @@
 		&:hover {
 			background: color-mix(
 				in srgb,
-				var(--bg-cherry-500) 10%,
+				var(--danger-background) 10%,
 				transparent
 			) !important;
 			opacity: 0.9 !important;
@@ -82,7 +84,7 @@
 			opacity: 0.7 !important;
 			background: color-mix(
 				in srgb,
-				var(--bg-cherry-500) 15%,
+				var(--danger-background) 15%,
 				transparent
 			) !important;
 		}

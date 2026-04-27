@@ -1,7 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
-import { Input } from '@signozhq/input';
+import { Button, Callout, Input } from '@signozhq/ui';
 import { Form, Input as AntdInput, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import signUpApi from 'api/v1/register/post';
@@ -31,9 +29,8 @@ type FormValues = {
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
-	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
+	const [confirmPasswordError, setConfirmPasswordError] =
+		useState<boolean>(false);
 	const [formError, setFormError] = useState<APIError | null>();
 
 	const { notifications } = useNotifications();
@@ -203,13 +200,10 @@ function SignUp(): JSX.Element {
 						</div>
 					</div>
 
-					<Callout
-						type="info"
-						size="small"
-						showIcon
-						className="signup-info-callout"
-						description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
-					/>
+					<Callout type="info" size="small" showIcon className="signup-info-callout">
+						This will create an admin account. If you are not an admin, please ask
+						your admin for an invite link
+					</Callout>
 
 					{confirmPasswordError && (
 						<Callout
@@ -218,8 +212,9 @@ function SignUp(): JSX.Element {
 							showIcon
 							icon={<CircleAlert size={12} />}
 							className="signup-error-callout"
-							description="Passwords don't match. Please try again."
-						/>
+						>
+							Passwords don&apos;t match. Please try again.
+						</Callout>
 					)}
 
 					{formError && !confirmPasswordError && <AuthError error={formError} />}
@@ -232,7 +227,7 @@ function SignUp(): JSX.Element {
 							data-attr="signup"
 							disabled={!isValidForm}
 							className="signup-submit-button"
-							suffixIcon={<ArrowRight size={16} />}
+							suffix={<ArrowRight size={16} />}
 						>
 							Access My Workspace
 						</Button>

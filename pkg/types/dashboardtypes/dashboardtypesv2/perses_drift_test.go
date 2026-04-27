@@ -23,13 +23,17 @@ func TestDashboardDataMatchesPerses(t *testing.T) {
 		perses reflect.Type
 	}{
 		{"DashboardSpec", typeOf[DashboardData](), typeOf[v1.DashboardSpec]()},
+		{"Panel", typeOf[Panel](), typeOf[v1.Panel]()},
 		{"PanelSpec", typeOf[PanelSpec](), typeOf[v1.PanelSpec]()},
+		{"Query", typeOf[Query](), typeOf[v1.Query]()},
 		{"QuerySpec", typeOf[QuerySpec](), typeOf[v1.QuerySpec]()},
 		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[v1.DatasourceSpec]()},
+		{"Variable", typeOf[Variable](), typeOf[dashboard.Variable]()},
 		// ListVariableSpec/TextVariableSpec embed variable.ListSpec/TextSpec
 		// plus a Name field. We flatten the Perses shape to compare.
 		{"ListVariableSpec", typeOf[ListVariableSpec](), typeOf[dashboard.ListVariableSpec]()},
 		{"TextVariableSpec", typeOf[TextVariableSpec](), typeOf[dashboard.TextVariableSpec]()},
+		{"Layout", typeOf[Layout](), typeOf[dashboard.Layout]()},
 	}
 
 	for _, c := range cases {

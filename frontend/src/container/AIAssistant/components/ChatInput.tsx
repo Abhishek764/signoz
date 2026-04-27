@@ -11,14 +11,18 @@ import type { UploadFile } from 'antd';
 
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../types';
-import { Mic, Plus, Send, Square, X } from '@signozhq/icons';
 import {
 	Bell,
 	LayoutDashboard,
+	Mic,
+	Plus,
 	Rows3,
+	Send,
 	ShieldCheck,
-	type LucideIcon,
-} from 'lucide-react';
+	Square,
+	TriangleAlert,
+	X,
+} from '@signozhq/icons';
 
 interface ChatInputProps {
 	onSend: (text: string, attachments?: MessageAttachment[]) => void;
@@ -28,6 +32,7 @@ interface ChatInputProps {
 }
 
 const MAX_INPUT_LENGTH = 20000;
+const WARNING_THRESHOLD = 15000;
 
 const CONTEXT_OPTIONS = [
 	'Dashboards',
@@ -36,15 +41,12 @@ const CONTEXT_OPTIONS = [
 	'Saved View',
 ] as const;
 
-const CONTEXT_OPTION_ICONS: Record<
-	(typeof CONTEXT_OPTIONS)[number],
-	LucideIcon
-> = {
+const CONTEXT_OPTION_ICONS = {
 	Dashboards: LayoutDashboard,
 	Alerts: Bell,
 	Services: ShieldCheck,
 	'Saved View': Rows3,
-};
+} as const;
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -198,6 +200,8 @@ export default function ChatInput({
 	const filteredContextOptions = CONTEXT_OPTIONS.filter((item) =>
 		item.toLowerCase().includes(contextQuery),
 	);
+	const currentLength = text.length;
+	const showTextWarning = currentLength >= WARNING_THRESHOLD;
 
 	return (
 		<div className="ai-assistant-input" ref={inputRootRef}>
@@ -260,6 +264,15 @@ export default function ChatInput({
 					rows={2}
 				/>
 			</div>
+			{showTextWarning && (
+				<div className="ai-assistant-input__char-warning" role="status">
+					<TriangleAlert size={12} />
+					<span>
+						{currentLength}/{MAX_INPUT_LENGTH} characters. Limit is {MAX_INPUT_LENGTH}
+						.
+					</span>
+				</div>
+			)}
 
 			<div className="ai-assistant-input__footer">
 				<div className="ai-assistant-input__left-actions">

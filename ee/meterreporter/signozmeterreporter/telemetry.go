@@ -10,7 +10,7 @@ type reporterMetrics struct {
 	readingsEmitted      metric.Int64Counter
 	collectErrors        metric.Int64Counter
 	postErrors           metric.Int64Counter
-	latestSealedErrors   metric.Int64Counter
+	checkpointErrors     metric.Int64Counter
 	catchupDaysProcessed metric.Int64Counter
 	collectDuration      metric.Float64Histogram
 	shipDuration         metric.Float64Histogram
@@ -39,7 +39,7 @@ func newReporterMetrics(meter metric.Meter) (*reporterMetrics, error) {
 		errs = errors.Join(errs, err)
 	}
 
-	latestSealedErrors, err := meter.Int64Counter("signoz.meterreporter.latestsealed.errors", metric.WithDescription("Total number of ticks skipped because the Zeus LatestSealed call failed."))
+	checkpointErrors, err := meter.Int64Counter("signoz.meterreporter.checkpoint.errors", metric.WithDescription("Total number of ticks skipped because the Zeus GetMeterCheckpoints call failed."))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -68,7 +68,7 @@ func newReporterMetrics(meter metric.Meter) (*reporterMetrics, error) {
 		readingsEmitted:      readingsEmitted,
 		collectErrors:        collectErrors,
 		postErrors:           postErrors,
-		latestSealedErrors:   latestSealedErrors,
+		checkpointErrors:     checkpointErrors,
 		catchupDaysProcessed: catchupDaysProcessed,
 		collectDuration:      collectDuration,
 		shipDuration:         shipDuration,

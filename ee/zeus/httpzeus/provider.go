@@ -150,7 +150,7 @@ func (provider *Provider) PutMetersV2(ctx context.Context, key string, data []by
 	return err
 }
 
-func (provider *Provider) PutMeterReadings(ctx context.Context, key string, idempotencyKey string, data []byte) error {
+func (provider *Provider) PutMeterReading(ctx context.Context, key string, idempotencyKey string, data []byte) error {
 	headers := http.Header{}
 	if idempotencyKey != "" {
 		headers.Set("X-Idempotency-Key", idempotencyKey)
@@ -168,13 +168,10 @@ func (provider *Provider) PutMeterReadings(ctx context.Context, key string, idem
 	return err
 }
 
-// ! TODO: depends on Zeus shipping GET /v2/meters/latest-sealed. Until it
-// lands, this call will 404; the caller (meterreporter) treats the error as
-// "skip concern A this tick" so the today-partial path keeps flowing.
-func (provider *Provider) LatestSealed(ctx context.Context, key string) (*time.Time, error) {
+func (provider *Provider) GetMeterCheckpoints(ctx context.Context, key string) ([]zeustypes.MeterCheckpoint, error) {
 	response, err := provider.do(
 		ctx,
-		provider.config.URL.JoinPath("/v2/meters/latest-sealed"),
+		provider.config.URL.JoinPath("/v2/meters/checkpoints"),
 		http.MethodGet,
 		key,
 		nil,
@@ -183,17 +180,40 @@ func (provider *Provider) LatestSealed(ctx context.Context, key string) (*time.T
 		return nil, err
 	}
 
-	dayValue := gjson.GetBytes(response, "data.day")
-	if !dayValue.Exists() || dayValue.Type == gjson.Null {
-		return nil, nil
+	checkpointValues := gjson.GetBytes(response, "data.checkpoints")
+	if !checkpointValues.Exists() || checkpointValues.Type == gjson.Null {
+		return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoints are required")
 	}
 
-	day, err := time.Parse("2006-01-02", dayValue.String())
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, zeus.ErrCodeResponseMalformed, "parse latest sealed day %q", dayValue.String())
+	if !checkpointValues.IsArray() {
+		return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoints must be an array")
 	}
 
-	return &day, nil
+	checkpointResults := checkpointValues.Array()
+	checkpoints := make([]zeustypes.MeterCheckpoint, 0, len(checkpointResults))
+	for _, checkpointValue := range checkpointResults {
+		name := checkpointValue.Get("name").String()
+		if name == "" {
+			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint name is required")
+		}
+
+		checkpointString := checkpointValue.Get("checkpoint").String()
+		if checkpointString == "" {
+			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint is required for %q", name)
+		}
+
+		checkpoint, err := time.Parse("2006-01-02", checkpointString)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, zeus.ErrCodeResponseMalformed, "parse meter checkpoint %q for %q", checkpointString, name)
+		}
+
+		checkpoints = append(checkpoints, zeustypes.MeterCheckpoint{
+			Name:       name,
+			Checkpoint: checkpoint,
+		})
+	}
+
+	return checkpoints, nil
 }
 
 func (provider *Provider) PutProfile(ctx context.Context, key string, profile *zeustypes.PostableProfile) error {

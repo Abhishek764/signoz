@@ -12,8 +12,6 @@ var (
 
 // Dimension keys automatically attached to every Reading.
 const (
-	DimensionAggregation    = "signoz.billing.aggregation"
-	DimensionUnit           = "signoz.billing.unit"
 	DimensionOrganizationID = "signoz.billing.organization.id"
 	DimensionRetentionDays  = "signoz.billing.retention.days"
 )

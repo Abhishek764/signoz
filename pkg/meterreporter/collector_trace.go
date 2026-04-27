@@ -38,8 +38,6 @@ func CollectSpanCountMeter(ctx context.Context, deps CollectorDeps, meter Meter,
 	}
 
 	dimensions := map[string]string{
-		DimensionAggregation:    meter.Aggregation,
-		DimensionUnit:           meter.Unit,
 		DimensionOrganizationID: orgID.StringValue(),
 	}
 
@@ -54,6 +52,8 @@ func CollectSpanCountMeter(ctx context.Context, deps CollectorDeps, meter Meter,
 	return []meterreportertypes.Reading{{
 		MeterName:      MeterSpanCount.String(),
 		Value:          value,
+		Unit:           meter.Unit,
+		Aggregation:    meter.Aggregation,
 		StartUnixMilli: window.StartUnixMilli,
 		EndUnixMilli:   window.EndUnixMilli,
 		IsCompleted:    window.IsCompleted,
@@ -84,8 +84,6 @@ func CollectSpanSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, 
 	}
 
 	dimensions := map[string]string{
-		DimensionAggregation:    meter.Aggregation,
-		DimensionUnit:           meter.Unit,
 		DimensionOrganizationID: orgID.StringValue(),
 	}
 
@@ -100,6 +98,8 @@ func CollectSpanSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, 
 	return []meterreportertypes.Reading{{
 		MeterName:      MeterSpanSize.String(),
 		Value:          value,
+		Unit:           meter.Unit,
+		Aggregation:    meter.Aggregation,
 		StartUnixMilli: window.StartUnixMilli,
 		EndUnixMilli:   window.EndUnixMilli,
 		IsCompleted:    window.IsCompleted,

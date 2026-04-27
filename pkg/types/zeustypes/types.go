@@ -3,6 +3,7 @@ package zeustypes
 import (
 	"encoding/json"
 	"net/url"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/tidwall/gjson"
@@ -35,6 +36,11 @@ type Host struct {
 	Name      string `json:"name" required:"true"`
 	IsDefault bool   `json:"is_default" required:"true"`
 	URL       string `json:"url" required:"true"`
+}
+
+type MeterCheckpoint struct {
+	Name       string
+	Checkpoint time.Time
 }
 
 func NewGettableHost(data []byte) *GettableHost {

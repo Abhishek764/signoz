@@ -40,8 +40,6 @@ func CollectLogCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, 
 	}
 
 	dimensions := map[string]string{
-		DimensionAggregation:    meter.Aggregation,
-		DimensionUnit:           meter.Unit,
 		DimensionOrganizationID: orgID.StringValue(),
 	}
 
@@ -56,6 +54,8 @@ func CollectLogCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, 
 	return []meterreportertypes.Reading{{
 		MeterName:      MeterLogCount.String(),
 		Value:          value,
+		Unit:           meter.Unit,
+		Aggregation:    meter.Aggregation,
 		StartUnixMilli: window.StartUnixMilli,
 		EndUnixMilli:   window.EndUnixMilli,
 		IsCompleted:    window.IsCompleted,
@@ -86,8 +86,6 @@ func CollectLogSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, o
 	}
 
 	dimensions := map[string]string{
-		DimensionAggregation:    meter.Aggregation,
-		DimensionUnit:           meter.Unit,
 		DimensionOrganizationID: orgID.StringValue(),
 	}
 
@@ -102,6 +100,8 @@ func CollectLogSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, o
 	return []meterreportertypes.Reading{{
 		MeterName:      MeterLogSize.String(),
 		Value:          value,
+		Unit:           meter.Unit,
+		Aggregation:    meter.Aggregation,
 		StartUnixMilli: window.StartUnixMilli,
 		EndUnixMilli:   window.EndUnixMilli,
 		IsCompleted:    window.IsCompleted,

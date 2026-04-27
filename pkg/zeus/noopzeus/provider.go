@@ -2,7 +2,6 @@ package noopzeus
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -50,12 +49,12 @@ func (provider *provider) PutMetersV2(_ context.Context, _ string, _ []byte) err
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v2 is not supported")
 }
 
-func (provider *provider) PutMeterReadings(_ context.Context, _ string, _ string, _ []byte) error {
-	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meter readings is not supported")
+func (provider *provider) PutMeterReading(_ context.Context, _ string, _ string, _ []byte) error {
+	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meter reading is not supported")
 }
 
-func (provider *provider) LatestSealed(_ context.Context, _ string) (*time.Time, error) {
-	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "fetching latest sealed day is not supported")
+func (provider *provider) GetMeterCheckpoints(_ context.Context, _ string) ([]zeustypes.MeterCheckpoint, error) {
+	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "fetching meter checkpoints is not supported")
 }
 
 func (provider *provider) PutProfile(_ context.Context, _ string, _ *zeustypes.PostableProfile) error {

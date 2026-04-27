@@ -26,18 +26,19 @@ const (
 	resultFailure = "failure"
 )
 
-// tick runs one collect-and-ship cycle for the instance's active org. The
-// tick first checkpoints against Zeus via LatestSealed; if that fails the
+// tick runs one collect-and-ship cycle for the instance's active org. The tick
+// first checkpoints against Zeus via GetMeterCheckpoints; if that fails the
 // whole tick is skipped so the two concerns can't run against an inconsistent
 // view of Zeus state. The underlying http client already retries transient
-// failures 3× with a 2s constant backoff (see pkg/http/client), so no extra
+// failures 3x with a 2s constant backoff (see pkg/http/client), so no extra
 // retry loop is needed here. On success the tick runs two concerns:
 //
 //	(A) sealed-range processor — forward-fills is_completed=true days from
 //	    the Zeus-reported catchup start up to yesterday, capped at
 //	    Config.CatchupMaxDaysPerTick. On any per-day ship failure the loop
-//	    breaks; next tick's LatestSealed returns the same catchup start so
-//	    the failed day is retried cleanly with no local state to reconcile.
+//	    breaks; next tick's GetMeterCheckpoints returns the same catchup start
+//	    for the failed meter, so it is retried cleanly with no local state to
+//	    reconcile.
 //
 //	(B) today partial — re-emits the intra-day [00:00 UTC, now) window every
 //	    tick as is_completed=false; the day-scoped X-Idempotency-Key makes
@@ -77,25 +78,23 @@ func (provider *Provider) tick(ctx context.Context) error {
 		return nil
 	}
 
-	// Checkpoint against Zeus. A nil return means "no sealed rows yet for this
-	// license" → bootstrap catch-up starts from today - HistoricalBackfillDays.
-	// Any error aborts the whole tick so concern B doesn't flow without a
-	// consistent view of the sealed catchup start; the http client already
-	// retried transient failures before reaching this point.
-	latest, err := provider.zeus.LatestSealed(ctx, license.Key)
+	// Checkpoint against Zeus. Missing meter names bootstrap from
+	// today-HistoricalBackfillDays. Any error aborts the whole tick so concern B
+	// doesn't flow without a consistent view of the sealed catchup start; the
+	// http client already retried transient failures before reaching this point.
+	checkpoints, err := provider.zeus.GetMeterCheckpoints(ctx, license.Key)
 	if err != nil {
-		provider.metrics.latestSealedErrors.Add(ctx, 1)
-		provider.settings.Logger().ErrorContext(ctx, "skipping tick: latest-sealed call failed", errors.Attr(err))
+		provider.metrics.checkpointErrors.Add(ctx, 1)
+		provider.settings.Logger().ErrorContext(ctx, "skipping tick: meter checkpoints call failed", errors.Attr(err))
 		return nil
+	}
+	checkpointsByMeter := make(map[string]time.Time, len(checkpoints))
+	for _, checkpoint := range checkpoints {
+		checkpointsByMeter[checkpoint.Name] = checkpoint.Checkpoint.UTC()
 	}
 
 	// Concern A — sealed-range processor.
-	var catchupStart time.Time
-	if latest == nil {
-		catchupStart = todayStart.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
-	} else {
-		catchupStart = latest.AddDate(0, 0, 1)
-	}
+	catchupStart := provider.catchupStart(todayStart, checkpointsByMeter)
 	if !catchupStart.After(yesterday) {
 		end := catchupStart.AddDate(0, 0, provider.config.CatchupMaxDaysPerTick-1)
 		if end.After(yesterday) {
@@ -108,7 +107,9 @@ func (provider *Provider) tick(ctx context.Context) error {
 				IsCompleted:    true,
 			}
 			date := day.Format("2006-01-02")
-			err := provider.runPhase(ctx, org.ID, license.Key, window, date, phaseSealed)
+			err := provider.runPhase(ctx, org.ID, license.Key, window, date, phaseSealed, func(reading meterreportertypes.Reading) bool {
+				return shouldShipSealedReading(reading, day, checkpointsByMeter)
+			})
 			result := resultSuccess
 			if err != nil {
 				result = resultFailure
@@ -128,7 +129,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 		EndUnixMilli:   now.UnixMilli(),
 		IsCompleted:    false,
 	}
-	_ = provider.runPhase(ctx, org.ID, license.Key, todayWindow, todayStart.Format("2006-01-02"), phaseToday)
+	_ = provider.runPhase(ctx, org.ID, license.Key, todayWindow, todayStart.Format("2006-01-02"), phaseToday, nil)
 
 	return nil
 }
@@ -138,12 +139,15 @@ func (provider *Provider) tick(ctx context.Context) error {
 // IsCompleted via window. Returns err only on ship failure so the sealed-range
 // loop can break on first failure; collect-level failures are logged and
 // counted per-meter inside collectOrgReadings and never bubble up here.
-func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window meterreporter.Window, date string, phaseLabel string) error {
+func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window meterreporter.Window, date string, phaseLabel string, readingFilter func(meterreportertypes.Reading) bool) error {
 	phaseAttr := metric.WithAttributes(attribute.String(attrPhase, phaseLabel))
 
 	collectStart := time.Now()
 	readings := provider.collectOrgReadings(ctx, orgID, window, phaseLabel)
 	provider.metrics.collectDuration.Record(ctx, time.Since(collectStart).Seconds(), phaseAttr)
+	if readingFilter != nil {
+		readings = filterReadings(readings, readingFilter)
+	}
 	if len(readings) == 0 {
 		return nil
 	}
@@ -193,39 +197,61 @@ func (provider *Provider) collectOrgReadings(ctx context.Context, orgID valuer.U
 	return readings
 }
 
-// shipReadings serializes the batch as PostableMeterReadings and, in the fully
-// wired flow, POSTs it to Zeus under a date-scoped idempotency key so repeat
-// ticks within the same UTC day UPSERT instead of duplicating usage.
-//
-// ! TEMPORARY: the Zeus PutMeterReadings endpoint isn't live yet. Until it
-// ships we log the serialized payload at INFO instead, which lets staging
-// verify collection end-to-end without a server counterpart. Once the API
-// lands, drop the log block and restore:
-//
-//	if err := provider.zeus.PutMeterReadings(ctx, licenseKey, idempotencyKey, body); err != nil { ... }
+func (provider *Provider) catchupStart(todayStart time.Time, checkpointsByMeter map[string]time.Time) time.Time {
+	bootstrapStart := todayStart.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
+	catchupStart := todayStart
+
+	for _, meter := range provider.meters {
+		next := bootstrapStart
+		if checkpoint, ok := checkpointsByMeter[meter.Name.String()]; ok {
+			next = checkpoint.AddDate(0, 0, 1)
+			if next.Before(bootstrapStart) {
+				next = bootstrapStart
+			}
+		}
+		if next.Before(catchupStart) {
+			catchupStart = next
+		}
+	}
+
+	return catchupStart
+}
+
+func shouldShipSealedReading(reading meterreportertypes.Reading, day time.Time, checkpointsByMeter map[string]time.Time) bool {
+	checkpoint, ok := checkpointsByMeter[reading.MeterName]
+	return !ok || checkpoint.Before(day)
+}
+
+func filterReadings(readings []meterreportertypes.Reading, keep func(meterreportertypes.Reading) bool) []meterreportertypes.Reading {
+	filtered := make([]meterreportertypes.Reading, 0, len(readings))
+	for _, reading := range readings {
+		if keep(reading) {
+			filtered = append(filtered, reading)
+		}
+	}
+	return filtered
+}
+
+// shipReadings serializes each Reading as PostableMeterReading and POSTs it to
+// Zeus under a date-scoped idempotency key so repeat ticks within the same UTC
+// day UPSERT instead of duplicating usage.
 func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Reading) error {
 	idempotencyKey := fmt.Sprintf("meter-cron:%s", date)
 
-	// ! TODO: confirm this payload shape once the Zeus API is finalized.
-	payload := meterreportertypes.PostableMeterReadings{
-		IdempotencyKey: idempotencyKey,
-		Readings:       readings,
-	}
+	for _, reading := range readings {
+		payload := meterreportertypes.PostableMeterReading{
+			Meter: reading,
+		}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "marshal meter readings")
-	}
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "marshal meter reading %q", reading.MeterName)
+		}
 
-	provider.settings.Logger().InfoContext(ctx, "meter readings (Zeus API not yet live — dry-run log)",
-		slog.String("license_key", licenseKey),
-		slog.String("idempotency_key", idempotencyKey),
-		slog.Int("readings", len(readings)),
-		slog.String("payload", string(body)),
-	)
-	// Keep the zeus dep referenced so the factory signature and DI wiring don't
-	// bitrot while the POST is stubbed out.
-	_ = provider.zeus
+		if err := provider.zeus.PutMeterReading(ctx, licenseKey, idempotencyKey, body); err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "ship meter reading %q", reading.MeterName)
+		}
+	}
 
 	return nil
 }

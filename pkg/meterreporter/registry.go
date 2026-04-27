@@ -81,8 +81,8 @@ func DefaultMeters() ([]Meter, error) {
 }
 
 // validateMeters guards the registry: every meter must have all four fields
-// populated, and the (Name, Aggregation) pair must be unique — that pair is
-// the billing key on Zeus side, and a duplicate silently double-counts usage.
+// populated, and Name must be unique because Zeus checkpoints and upserts by
+// meter name.
 func validateMeters(meters ...*Meter) error {
 	seen := make(map[string]struct{}, len(meters))
 
@@ -103,9 +103,9 @@ func validateMeters(meters ...*Meter) error {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "meter %q has no collector function", meter.Name.String())
 		}
 
-		key := meter.Name.String() + "|" + meter.Aggregation
+		key := meter.Name.String()
 		if _, ok := seen[key]; ok {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "duplicate meter %q with aggregation %q", meter.Name.String(), meter.Aggregation)
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "duplicate meter %q", meter.Name.String())
 		}
 		seen[key] = struct{}{}
 	}

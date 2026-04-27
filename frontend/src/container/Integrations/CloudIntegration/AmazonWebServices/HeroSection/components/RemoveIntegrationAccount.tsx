@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
@@ -24,22 +24,20 @@ function RemoveIntegrationAccount({
 		setIsModalOpen(true);
 	};
 
-	const {
-		mutate: disconnectAccount,
-		isLoading: isRemoveIntegrationLoading,
-	} = useDisconnectAccount({
-		mutation: {
-			onSuccess: () => {
-				onRemoveIntegrationAccountSuccess?.();
-				setIsModalOpen(false);
+	const { mutate: disconnectAccount, isLoading: isRemoveIntegrationLoading } =
+		useDisconnectAccount({
+			mutation: {
+				onSuccess: () => {
+					onRemoveIntegrationAccountSuccess?.();
+					setIsModalOpen(false);
+				},
+				onError: () => {
+					notifications.error({
+						message: SOMETHING_WENT_WRONG,
+					});
+				},
 			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
-			},
-		},
-	});
+		});
 	const handleOk = (): void => {
 		logEvent(INTEGRATION_TELEMETRY_EVENTS.AWS_INTEGRATION_ACCOUNT_REMOVED, {
 			accountId,
@@ -61,8 +59,7 @@ function RemoveIntegrationAccount({
 			<Button
 				variant="solid"
 				color="destructive"
-				prefixIcon={<Unlink size={14} />}
-				size="sm"
+				prefix={<Unlink size={14} />}
 				onClick={handleDisconnect}
 				disabled={isRemoveIntegrationLoading}
 			>

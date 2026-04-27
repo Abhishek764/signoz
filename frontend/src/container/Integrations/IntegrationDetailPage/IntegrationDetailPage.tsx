@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
+import { Button } from '@signozhq/ui';
 import { Flex, Skeleton, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
@@ -32,25 +32,17 @@ function IntegrationDetailPage(): JSX.Element {
 		'overview',
 	);
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		refetch,
-		isRefetching,
-		isError,
-	} = useGetIntegration({
-		integrationId: integrationId || '',
-	});
+	const { data, isLoading, isFetching, refetch, isRefetching, isError } =
+		useGetIntegration({
+			integrationId: integrationId || '',
+		});
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const {
-		data: integrationStatus,
-		isLoading: isStatusLoading,
-	} = useGetIntegrationStatus({
-		integrationId: integrationId || '',
-	});
+	const { data: integrationStatus, isLoading: isStatusLoading } =
+		useGetIntegrationStatus({
+			integrationId: integrationId || '',
+		});
 
 	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
 	const integrationData = data?.data.data;
@@ -73,7 +65,7 @@ function IntegrationDetailPage(): JSX.Element {
 				<Button
 					variant="link"
 					color="secondary"
-					prefixIcon={<ArrowLeft size={14} />}
+					prefix={<ArrowLeft size={14} />}
 					className="all-integrations-btn"
 					onClick={(): void => {
 						history.push(ROUTES.INTEGRATIONS);
@@ -95,7 +87,7 @@ function IntegrationDetailPage(): JSX.Element {
 								variant="solid"
 								color="primary"
 								onClick={(): Promise<any> => refetch()}
-								prefixIcon={<RotateCw size={14} />}
+								prefix={<RotateCw size={14} />}
 							>
 								Retry
 							</Button>

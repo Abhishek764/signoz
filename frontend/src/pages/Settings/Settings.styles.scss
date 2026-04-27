@@ -4,7 +4,7 @@
 
 	.settings-page-header {
 		border-bottom: 1px solid var(--l1-border);
-		background: color-mix(in srgb, var(--background) 70%, transparent);
+		background: var(--l1-background);
 		backdrop-filter: blur(20px);
 
 		.settings-page-header-title {
@@ -75,7 +75,7 @@
 		.settings-page-content {
 			flex: 1;
 			height: calc(100vh - 48px);
-			background: var(--background);
+			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;
 
@@ -94,54 +94,6 @@
 
 			&::-webkit-scrollbar-thumb:hover {
 				background: var(--l3-background);
-			}
-		}
-	}
-}
-
-.lightMode {
-	.settings-page {
-		.settings-page-header {
-			border-bottom: 1px solid var(--l1-border);
-			background: var(--card);
-			backdrop-filter: blur(20px);
-
-			.settings-page-header-title {
-				color: var(--l1-foreground);
-
-				background: var(--card);
-				border-right: 1px solid var(--l1-border);
-			}
-		}
-
-		.settings-page-content-container {
-			.settings-page-sidenav {
-				border-right: 1px solid var(--l1-border);
-				background: var(--l1-background);
-
-				.nav-item {
-					&.active {
-						.nav-item-data .nav-item-label {
-							color: var(--l1-foreground);
-						}
-					}
-				}
-			}
-
-			.settings-page-content {
-				background: var(--l1-background);
-
-				&::-webkit-scrollbar-track {
-					background: transparent;
-				}
-
-				&::-webkit-scrollbar-thumb {
-					background: var(--l3-background);
-				}
-
-				&::-webkit-scrollbar-thumb:hover {
-					background: var(--l3-background);
-				}
 			}
 		}
 	}

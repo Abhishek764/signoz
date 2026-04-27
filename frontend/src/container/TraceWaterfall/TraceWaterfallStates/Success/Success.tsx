@@ -86,7 +86,7 @@ function SpanOverview({
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 	if (span.hasError) {
-		color = `var(--bg-cherry-500)`;
+		color = `var(--danger-background)`;
 	}
 
 	// Smart highlighting logic
@@ -232,7 +232,7 @@ export function SpanDuration({
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 	if (span.hasError) {
-		color = `var(--bg-cherry-500)`;
+		color = `var(--danger-background)`;
 	}
 
 	const [hasActionButtons, setHasActionButtons] = useState(false);
@@ -458,9 +458,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		}
 	};
 
-	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] = useState(
-		false,
-	);
+	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] =
+		useState(false);
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
 		Span | undefined
 	>(undefined);

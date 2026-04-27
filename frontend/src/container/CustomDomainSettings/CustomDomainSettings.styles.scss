@@ -78,7 +78,6 @@
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-10);
-		padding-left: 26px;
 	}
 
 	.custom-domain-card-meta-row.workspace-name-hidden {
@@ -91,7 +90,9 @@
 		gap: var(--spacing-3);
 		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: var(--paragraph-small-400-font-size);
 		font-style: normal;
@@ -272,7 +273,6 @@
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-3);
-		height: 44px;
 		padding: 6px var(--padding-3);
 		background: var(--l1-background);
 		border: 1px solid var(--l1-border);

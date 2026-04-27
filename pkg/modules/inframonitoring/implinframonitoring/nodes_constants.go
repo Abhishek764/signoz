@@ -33,7 +33,6 @@ var nodesTableMetricNamesList = []string{
 }
 
 var nodeAttrKeysForMetadata = []string{
-	"k8s.node.name",
 	"k8s.node.uid",
 	"k8s.cluster.name",
 }

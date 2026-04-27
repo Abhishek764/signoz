@@ -385,11 +385,7 @@ func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
 	return target, nil
 }
 
-// clearOneOfParentShape drops Type and Properties on a schema that also has a
-// JSONSchemaOneOf. Swaggest emits both the reflected struct shape and the
-// oneOf side by side; OAS-wise the oneOf is the binding constraint so the
-// properties/type are redundant noise. This mirrors swaggest's own built-in
-// oneOf helper's PrepareJSONSchema.
+// clearOneOfParentShape drops Type and Properties on a schema that also has a JSONSchemaOneOf.
 func clearOneOfParentShape(s *jsonschema.Schema) error {
 	s.Type = nil
 	s.Properties = nil

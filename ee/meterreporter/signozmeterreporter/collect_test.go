@@ -22,6 +22,7 @@ func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	t.Parallel()
 
 	today := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
+	floor := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
 	provider := &Provider{
 		meters: []meterreporter.Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
@@ -29,33 +30,32 @@ func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 		},
 	}
 
-	got := provider.catchupStart(today, map[string]time.Time{
+	got := provider.catchupStart(floor, today, map[string]time.Time{
 		"meter.a": today.AddDate(0, 0, -1),
 	})
-	want := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
 
-	if !got.Equal(want) {
-		t.Fatalf("catchupStart() = %s, want %s", got, want)
+	if !got.Equal(floor) {
+		t.Fatalf("catchupStart() = %s, want %s (bootstrap from floor)", got, floor)
 	}
 }
 
-func TestCatchupStartClampsOldCheckpointToBootstrapFloor(t *testing.T) {
+func TestCatchupStartClampsOldCheckpointToFloor(t *testing.T) {
 	t.Parallel()
 
 	today := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
+	floor := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
 	provider := &Provider{
 		meters: []meterreporter.Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
 		},
 	}
 
-	got := provider.catchupStart(today, map[string]time.Time{
+	got := provider.catchupStart(floor, today, map[string]time.Time{
 		"meter.a": time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 	})
-	want := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
 
-	if !got.Equal(want) {
-		t.Fatalf("catchupStart() = %s, want %s", got, want)
+	if !got.Equal(floor) {
+		t.Fatalf("catchupStart() = %s, want %s (clamped to floor)", got, floor)
 	}
 }
 
@@ -64,6 +64,7 @@ func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.
 
 	today := time.Date(2026, 4, 28, 0, 0, 0, 0, time.UTC)
 	yesterday := today.AddDate(0, 0, -1)
+	floor := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
 	provider := &Provider{
 		meters: []meterreporter.Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
@@ -71,13 +72,31 @@ func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.
 		},
 	}
 
-	got := provider.catchupStart(today, map[string]time.Time{
+	got := provider.catchupStart(floor, today, map[string]time.Time{
 		"meter.a": yesterday,
 		"meter.b": yesterday,
 	})
 
 	if !got.Equal(yesterday) {
 		t.Fatalf("catchupStart() = %s, want %s (yesterday clamp)", got, yesterday)
+	}
+}
+
+func TestCatchupStartUsesDataFloorWhenBootstrapping(t *testing.T) {
+	t.Parallel()
+
+	today := time.Date(2026, 4, 28, 0, 0, 0, 0, time.UTC)
+	dataFloor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC) // first day with samples
+	provider := &Provider{
+		meters: []meterreporter.Meter{
+			{Name: meterreportertypes.MustNewName("meter.a")},
+		},
+	}
+
+	got := provider.catchupStart(dataFloor, today, map[string]time.Time{})
+
+	if !got.Equal(dataFloor) {
+		t.Fatalf("catchupStart() = %s, want %s (floor at first data day)", got, dataFloor)
 	}
 }
 

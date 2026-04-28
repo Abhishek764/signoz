@@ -113,6 +113,29 @@ func CollectLogCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, 
 			Dimensions:     dimensions,
 		})
 	}
+
+	// Sentinel zero-reading: a real billing event ("zero usage on this day")
+	// rather than a placeholder. Emitting one Reading per (meter, day) when no
+	// samples exist (1) records the truth and (2) advances Zeus's per-meter
+	// MAX(start_date) checkpoint so the catchup loop never stalls on an empty
+	// stretch. Uses the latest slice's defaultDays as the retention dim — that
+	// is the recipe that would apply if data appeared at endMs.
+	if len(readings) == 0 && len(slices) > 0 {
+		readings = append(readings, meterreportertypes.Reading{
+			MeterName:      MeterLogCount.String(),
+			Value:          0,
+			Unit:           meter.Unit,
+			Aggregation:    meter.Aggregation,
+			StartUnixMilli: window.StartUnixMilli,
+			EndUnixMilli:   window.EndUnixMilli,
+			IsCompleted:    window.IsCompleted,
+			Dimensions: map[string]string{
+				DimensionOrganizationID: orgID.StringValue(),
+				DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
+			},
+		})
+	}
+
 	return readings, nil
 }
 
@@ -194,5 +217,25 @@ func CollectLogSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, o
 			Dimensions:     dimensions,
 		})
 	}
+
+	// Sentinel zero-reading: see the corresponding block in CollectLogCountMeter
+	// for the rationale. Each meter independently emits its own sentinel — by
+	// design, the duplication mirrors the per-meter inline-query rule.
+	if len(readings) == 0 && len(slices) > 0 {
+		readings = append(readings, meterreportertypes.Reading{
+			MeterName:      MeterLogSize.String(),
+			Value:          0,
+			Unit:           meter.Unit,
+			Aggregation:    meter.Aggregation,
+			StartUnixMilli: window.StartUnixMilli,
+			EndUnixMilli:   window.EndUnixMilli,
+			IsCompleted:    window.IsCompleted,
+			Dimensions: map[string]string{
+				DimensionOrganizationID: orgID.StringValue(),
+				DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
+			},
+		})
+	}
+
 	return readings, nil
 }

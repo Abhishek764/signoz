@@ -9,8 +9,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/huandu/go-sqlbuilder"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -97,7 +99,8 @@ func (provider *Provider) tick(ctx context.Context) error {
 	checkpointsByMeter := make(map[string]time.Time)
 
 	// Concern A — sealed-range processor.
-	catchupStart := provider.catchupStart(todayStart, checkpointsByMeter)
+	floor := provider.dataFloor(ctx, todayStart)
+	catchupStart := provider.catchupStart(floor, todayStart, checkpointsByMeter)
 	if !catchupStart.After(yesterday) {
 		end := catchupStart.AddDate(0, 0, provider.config.CatchupMaxDaysPerTick-1)
 		if end.After(yesterday) {
@@ -200,16 +203,25 @@ func (provider *Provider) collectOrgReadings(ctx context.Context, orgID valuer.U
 	return readings
 }
 
-func (provider *Provider) catchupStart(todayStart time.Time, checkpointsByMeter map[string]time.Time) time.Time {
-	bootstrapStart := todayStart.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
+// catchupStart returns the earliest UTC day the orchestrator should
+// re-process this tick. floor is the lower bound — meters with no Zeus
+// checkpoint bootstrap from there, and meters whose checkpoint predates the
+// floor are clamped up to it. Both forms ensure we never query days that
+// pre-date the meter samples we hold.
+//
+// The yesterday-clamp at the bottom guarantees yesterday is always
+// re-processed within the 24h Zeus mutable window, filling any missing
+// (workspace, retention) bucket that Zeus's per-meter MAX(start_date)
+// checkpoint could mask after a partial-failure tick.
+func (provider *Provider) catchupStart(floor time.Time, todayStart time.Time, checkpointsByMeter map[string]time.Time) time.Time {
 	catchupStart := todayStart
 
 	for _, meter := range provider.meters {
-		next := bootstrapStart
+		next := floor
 		if checkpoint, ok := checkpointsByMeter[meter.Name.String()]; ok {
 			next = checkpoint.AddDate(0, 0, 1)
-			if next.Before(bootstrapStart) {
-				next = bootstrapStart
+			if next.Before(floor) {
+				next = floor
 			}
 		}
 		if next.Before(catchupStart) {
@@ -217,20 +229,57 @@ func (provider *Provider) catchupStart(todayStart time.Time, checkpointsByMeter 
 		}
 	}
 
-	// Always re-process yesterday. With one Reading per (workspace, retention)
-	// per (meter, day), Zeus's per-meter MAX(start_date) checkpoint can mask a
-	// missing dimension permutation: if any one bucket landed on day Y the
-	// checkpoint reports Y, and naive `checkpoint+1` would skip Y forever.
-	// Re-emitting yesterday is safe — same dimensions yield the same Zeus
-	// idempotency key, so successful rows are overwritten with their own value
-	// and any previously missing bucket fills in. The 24h Zeus mutable window
-	// covers exactly this case.
 	yesterday := todayStart.AddDate(0, 0, -1)
 	if catchupStart.After(yesterday) {
 		catchupStart = yesterday
 	}
 
 	return catchupStart
+}
+
+// dataFloor returns the catchup floor for this tick: the earliest day at or
+// after today-HistoricalBackfillDays for which the meter samples table holds
+// at least one log meter row. With no data at all, falls back to the static
+// today-HistoricalBackfillDays. Truncated to UTC day so the catchup loop
+// iterates on day boundaries cleanly.
+//
+// This avoids the historical bug where a fresh license with no Zeus
+// checkpoints (yet) bootstrapped from a year ago, then re-ran the same
+// already-empty 30-day window on every tick because no readings shipped to
+// advance the checkpoint. The floor pins the bootstrap to where data actually
+// begins, so each tick advances and the catchup converges.
+//
+// On query failure we log and fall back to the static floor — preserving the
+// pre-floor behavior rather than risking under-billing on a stale floor.
+func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) time.Time {
+	bootstrapStart := todayStart.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
+
+	if provider.deps.TelemetryStore == nil {
+		return bootstrapStart
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("ifNull(min(unix_milli), 0)")
+	sb.From(telemetrymeter.DBName + "." + telemetrymeter.SamplesTableName)
+	sb.Where(sb.In("metric_name", meterreporter.MeterLogCount.String(), meterreporter.MeterLogSize.String()))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var minMs int64
+	if err := provider.deps.TelemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minMs); err != nil {
+		provider.settings.Logger().WarnContext(ctx, "failed to read data floor; using static bootstrap", errors.Attr(err))
+		return bootstrapStart
+	}
+
+	if minMs == 0 {
+		return bootstrapStart
+	}
+
+	minDay := time.UnixMilli(minMs).UTC()
+	minDay = time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
+	if minDay.Before(bootstrapStart) {
+		return bootstrapStart
+	}
+	return minDay
 }
 
 func shouldShipSealedReading(reading meterreportertypes.Reading, day time.Time, checkpointsByMeter map[string]time.Time) bool {
@@ -263,6 +312,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 		if err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "marshal meter reading %q", reading.MeterName)
 		}
+		_ = body // avoid unused-variable error while the POST call below is disabled.
 
 		// Staging-visibility log: the v2 endpoint is not live yet, so this is
 		// the easiest way to confirm the per-(workspace, retention) shape of
@@ -280,9 +330,13 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 			slog.String("idempotency_key", idempotencyKey),
 		)
 
-		if err := provider.zeus.PutMeterReading(ctx, licenseKey, idempotencyKey, body); err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "ship meter reading %q", reading.MeterName)
-		}
+		// TODO: Re-enable this call once /v2/meters is live. Disabled for the
+		// same reason GetMeterCheckpoints is commented out in tick(): both v2
+		// endpoints are off, and we don't want a hard Zeus dependency to abort
+		// the tick before every reading is logged.
+		// if err := provider.zeus.PutMeterReading(ctx, licenseKey, idempotencyKey, body); err != nil {
+		// 	return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "ship meter reading %q", reading.MeterName)
+		// }
 	}
 
 	return nil

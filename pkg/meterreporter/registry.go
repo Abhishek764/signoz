@@ -8,13 +8,11 @@ import (
 // Exported names for every meter the reporter knows about. Refer to these
 // symbols — not string literals — everywhere so a typo becomes a compile error
 // instead of silently spawning a new (and unbilled) meter row at Zeus.
+// Only log meters are wired today. Metric and span meters will be reintroduced
+// after the multi-bucket retention pattern is verified end-to-end on logs.
 var (
-	MeterLogCount             = meterreportertypes.MustNewName("signoz.meter.log.count")
-	MeterLogSize              = meterreportertypes.MustNewName("signoz.meter.log.size")
-	MeterMetricDatapointCount = meterreportertypes.MustNewName("signoz.meter.metric.datapoint.count")
-	MeterMetricDatapointSize  = meterreportertypes.MustNewName("signoz.meter.metric.datapoint.size")
-	MeterSpanCount            = meterreportertypes.MustNewName("signoz.meter.span.count")
-	MeterSpanSize             = meterreportertypes.MustNewName("signoz.meter.span.size")
+	MeterLogCount = meterreportertypes.MustNewName("signoz.meter.log.count")
+	MeterLogSize  = meterreportertypes.MustNewName("signoz.meter.log.size")
 )
 
 const AggregationSum = "sum"
@@ -32,30 +30,6 @@ func baseMeters() []*Meter {
 			Unit:        "bytes",
 			Aggregation: AggregationSum,
 			Collect:     CollectLogSizeMeter,
-		},
-		{
-			Name:        MeterMetricDatapointCount,
-			Unit:        "count",
-			Aggregation: AggregationSum,
-			Collect:     CollectMetricDatapointCountMeter,
-		},
-		{
-			Name:        MeterMetricDatapointSize,
-			Unit:        "bytes",
-			Aggregation: AggregationSum,
-			Collect:     CollectMetricDatapointSizeMeter,
-		},
-		{
-			Name:        MeterSpanCount,
-			Unit:        "count",
-			Aggregation: AggregationSum,
-			Collect:     CollectSpanCountMeter,
-		},
-		{
-			Name:        MeterSpanSize,
-			Unit:        "bytes",
-			Aggregation: AggregationSum,
-			Collect:     CollectSpanSizeMeter,
 		},
 	}
 

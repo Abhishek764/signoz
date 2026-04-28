@@ -214,6 +214,19 @@ func (provider *Provider) catchupStart(todayStart time.Time, checkpointsByMeter 
 		}
 	}
 
+	// Always re-process yesterday. With one Reading per (workspace, retention)
+	// per (meter, day), Zeus's per-meter MAX(start_date) checkpoint can mask a
+	// missing dimension permutation: if any one bucket landed on day Y the
+	// checkpoint reports Y, and naive `checkpoint+1` would skip Y forever.
+	// Re-emitting yesterday is safe — same dimensions yield the same Zeus
+	// idempotency key, so successful rows are overwritten with their own value
+	// and any previously missing bucket fills in. The 24h Zeus mutable window
+	// covers exactly this case.
+	yesterday := todayStart.AddDate(0, 0, -1)
+	if catchupStart.After(yesterday) {
+		catchupStart = yesterday
+	}
+
 	return catchupStart
 }
 
@@ -247,6 +260,22 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 		if err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "marshal meter reading %q", reading.MeterName)
 		}
+
+		// Staging-visibility log: the v2 endpoint is not live yet, so this is
+		// the easiest way to confirm the per-(workspace, retention) shape of
+		// what we would ship before flipping the endpoint on. Drop or demote
+		// to Debug once Zeus accepts the writes.
+		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
+			slog.String("meter", reading.MeterName),
+			slog.Float64("value", reading.Value),
+			slog.String("unit", reading.Unit),
+			slog.String("aggregation", reading.Aggregation),
+			slog.Int64("start_unix_milli", reading.StartUnixMilli),
+			slog.Int64("end_unix_milli", reading.EndUnixMilli),
+			slog.Bool("is_completed", reading.IsCompleted),
+			slog.Any("dimensions", reading.Dimensions),
+			slog.String("idempotency_key", idempotencyKey),
+		)
 
 		if err := provider.zeus.PutMeterReading(ctx, licenseKey, idempotencyKey, body); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, meterreporter.ErrCodeReportFailed, "ship meter reading %q", reading.MeterName)

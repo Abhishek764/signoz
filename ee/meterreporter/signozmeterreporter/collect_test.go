@@ -7,10 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 )
+
+func newTestSettings() factory.ScopedProviderSettings {
+	return factory.NewScopedProviderSettings(factorytest.NewSettings(), "github.com/SigNoz/signoz/ee/meterreporter/signozmeterreporter")
+}
 
 func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	t.Parallel()
@@ -50,6 +56,28 @@ func TestCatchupStartClampsOldCheckpointToBootstrapFloor(t *testing.T) {
 
 	if !got.Equal(want) {
 		t.Fatalf("catchupStart() = %s, want %s", got, want)
+	}
+}
+
+func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.T) {
+	t.Parallel()
+
+	today := time.Date(2026, 4, 28, 0, 0, 0, 0, time.UTC)
+	yesterday := today.AddDate(0, 0, -1)
+	provider := &Provider{
+		meters: []meterreporter.Meter{
+			{Name: meterreportertypes.MustNewName("meter.a")},
+			{Name: meterreportertypes.MustNewName("meter.b")},
+		},
+	}
+
+	got := provider.catchupStart(today, map[string]time.Time{
+		"meter.a": yesterday,
+		"meter.b": yesterday,
+	})
+
+	if !got.Equal(yesterday) {
+		t.Fatalf("catchupStart() = %s, want %s (yesterday clamp)", got, yesterday)
 	}
 }
 
@@ -100,7 +128,7 @@ func TestShipReadingsPostsOneMeterPerRequest(t *testing.T) {
 	t.Parallel()
 
 	zeus := &recordingZeus{}
-	provider := &Provider{zeus: zeus}
+	provider := &Provider{zeus: zeus, settings: newTestSettings()}
 	readings := []meterreportertypes.Reading{
 		{
 			MeterName:      "meter.a",

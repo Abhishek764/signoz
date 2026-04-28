@@ -40,7 +40,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
-	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -105,6 +104,7 @@ func NewModules(
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
+	tagModule tag.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -134,6 +134,6 @@ func NewModules(
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
-		Tag:              impltag.NewModule(impltag.NewStore(sqlstore)),
+		Tag:              tagModule,
 	}
 }

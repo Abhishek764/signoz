@@ -11,12 +11,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -30,9 +33,9 @@ type module struct {
 	licensing          licensing.Licensing
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
+func NewModule(store dashboardtypes.Store, sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
-	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser)
+	pkgDashboardModule := pkgimpldashboard.NewModule(store, sqlstore, settings, analytics, orgGetter, queryParser, tagModule)
 
 	return &module{
 		pkgDashboardModule: pkgDashboardModule,
@@ -195,6 +198,10 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, data)
+}
+
+func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypesv2.PostableDashboard) (*dashboardtypesv2.Dashboard, error) {
+	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, postable)
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {

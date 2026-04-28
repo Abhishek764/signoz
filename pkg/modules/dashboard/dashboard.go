@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -52,6 +53,11 @@ type Module interface {
 	statsreporter.StatsCollector
 
 	authz.RegisterTypeable
+
+	// ════════════════════════════════════════════════════════════════════════
+	// v2 dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypesv2.PostableDashboard) (*dashboardtypesv2.Dashboard, error)
 }
 
 type Handler interface {
@@ -74,4 +80,9 @@ type Handler interface {
 	LockUnlock(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
+
+	// ════════════════════════════════════════════════════════════════════════
+	// v2 dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateV2(http.ResponseWriter, *http.Request)
 }

@@ -18,6 +18,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../types';
+import { MessageContext } from '../../../api/ai/chat';
 import {
 	Bell,
 	LayoutDashboard,
@@ -32,7 +33,11 @@ import {
 } from '@signozhq/icons';
 
 interface ChatInputProps {
-	onSend: (text: string, attachments?: MessageAttachment[]) => void;
+	onSend: (
+		text: string,
+		attachments?: MessageAttachment[],
+		contexts?: MessageContext[],
+	) => void;
 	onCancel?: () => void;
 	disabled?: boolean;
 	isStreaming?: boolean;
@@ -55,6 +60,41 @@ interface SelectedContextItem {
 	category: ContextCategory;
 	entityId: string;
 	value: string;
+}
+
+function toMessageContext(item: SelectedContextItem): MessageContext | null {
+	switch (item.category) {
+		case 'Dashboards':
+			return {
+				source: 'mention',
+				type: 'dashboard',
+				resourceId: item.entityId,
+				resourceName: item.value,
+			};
+		case 'Alerts':
+			return {
+				source: 'mention',
+				type: 'alert',
+				resourceId: item.entityId,
+				resourceName: item.value,
+			};
+		case 'Services':
+			return {
+				source: 'mention',
+				type: 'service',
+				resourceId: item.entityId,
+				resourceName: item.value,
+			};
+		case 'Saved Views':
+			return {
+				source: 'mention',
+				type: 'saved_view',
+				resourceId: item.entityId,
+				resourceName: item.value,
+			};
+		default:
+			return null;
+	}
 }
 
 interface ContextEntityItem {
@@ -174,13 +214,16 @@ export default function ChatInput({
 			}),
 		);
 
-		const contextMentions = selectedContexts
-			.map((item) => `${item.category}: ${item.value}`)
-			.join(' ');
-		const contextPrefix = contextMentions ? `${contextMentions} ` : '';
-		const payload = capText(`${contextPrefix}${trimmed}`);
+		const contexts = selectedContexts
+			.map(toMessageContext)
+			.filter((context): context is MessageContext => context !== null);
+		const payload = capText(trimmed);
 
-		onSend(payload, attachments.length > 0 ? attachments : undefined);
+		onSend(
+			payload,
+			attachments.length > 0 ? attachments : undefined,
+			contexts.length > 0 ? contexts : undefined,
+		);
 		setText('');
 		committedTextRef.current = '';
 		setPendingFiles([]);

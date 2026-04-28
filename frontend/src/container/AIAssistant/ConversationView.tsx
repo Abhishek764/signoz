@@ -5,6 +5,7 @@ import ChatInput from './components/ChatInput';
 import VirtualizedMessages from './components/VirtualizedMessages';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
 import { MessageAttachment } from './types';
+import { MessageContext } from '../../api/ai/chat';
 
 interface ConversationViewProps {
 	conversationId: string;
@@ -30,8 +31,12 @@ export default function ConversationView({
 	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
 
 	const handleSend = useCallback(
-		(text: string, attachments?: MessageAttachment[]) => {
-			void sendMessage(text, attachments);
+		(
+			text: string,
+			attachments?: MessageAttachment[],
+			contexts?: MessageContext[],
+		) => {
+			void sendMessage(text, attachments, contexts);
 		},
 		[sendMessage],
 	);

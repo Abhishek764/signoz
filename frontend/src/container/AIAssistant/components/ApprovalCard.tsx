@@ -21,14 +21,11 @@ export default function ApprovalCard({
 }: ApprovalCardProps): JSX.Element {
 	const approveAction = useAIAssistantStore((s) => s.approveAction);
 	const rejectAction = useAIAssistantStore((s) => s.rejectAction);
-	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const isStreaming = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.isStreaming ?? false,
 	);
 
 	const [decided, setDecided] = useState<'approved' | 'rejected' | null>(null);
-	const [showExplainInput, setShowExplainInput] = useState(false);
-	const [explanation, setExplanation] = useState('');
 
 	const handleApprove = async (): Promise<void> => {
 		setDecided('approved');
@@ -38,16 +35,6 @@ export default function ApprovalCard({
 	const handleReject = async (): Promise<void> => {
 		setDecided('rejected');
 		await rejectAction(conversationId, approval.approvalId);
-	};
-
-	const handleExplainAndReject = async (): Promise<void> => {
-		const trimmed = explanation.trim();
-		if (!trimmed) {
-			return;
-		}
-		setDecided('rejected');
-		await rejectAction(conversationId, approval.approvalId);
-		await sendMessage(trimmed);
 	};
 
 	// After decision the card shows a compact confirmation row
@@ -114,50 +101,21 @@ export default function ApprovalCard({
 					size="sm"
 					onClick={handleApprove}
 					disabled={isStreaming}
+					prefix={<Check />}
 				>
-					<Check size={12} />
 					Approve
 				</Button>
 				<Button
 					variant="outlined"
-					color="secondary"
 					size="sm"
+					color="secondary"
 					onClick={handleReject}
 					disabled={isStreaming}
+					prefix={<X />}
 				>
-					<X size={12} />
 					Reject
 				</Button>
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={(): void => setShowExplainInput((v) => !v)}
-					disabled={isStreaming}
-				>
-					Explain what you&apos;d like instead
-				</Button>
 			</div>
-
-			{showExplainInput && (
-				<div className="ai-approval__explain">
-					<textarea
-						className="ai-approval__explain-input"
-						value={explanation}
-						onChange={(e): void => setExplanation(e.target.value)}
-						placeholder="Describe what should happen instead..."
-						rows={3}
-						disabled={isStreaming}
-					/>
-					<Button
-						variant="solid"
-						size="sm"
-						onClick={handleExplainAndReject}
-						disabled={isStreaming || explanation.trim().length === 0}
-					>
-						Reject and send feedback
-					</Button>
-				</div>
-			)}
 		</div>
 	);
 }

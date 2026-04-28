@@ -95,21 +95,19 @@ export default function ClarificationForm({
 				<Button
 					variant="solid"
 					color="primary"
-					size="sm"
 					onClick={handleSubmit}
 					disabled={isStreaming}
+					prefix={<Send />}
 				>
-					<Send size={12} />
 					Submit
 				</Button>
 				<Button
 					variant="outlined"
 					color="secondary"
-					size="sm"
 					onClick={handleCancel}
 					disabled={isStreaming}
+					prefix={<X />}
 				>
-					<X size={12} />
 					Cancel request
 				</Button>
 			</div>

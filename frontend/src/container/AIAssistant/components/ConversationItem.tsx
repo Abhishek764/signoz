@@ -1,6 +1,11 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Tooltip } from '@signozhq/ui';
-import { ArchiveRestore, MessageSquare, Pencil, Trash2 } from '@signozhq/icons';
+import {
+	Archive,
+	ArchiveRestore,
+	MessageSquare,
+	Pencil,
+} from '@signozhq/icons';
 
 import { Conversation } from '../types';
 
@@ -145,7 +150,7 @@ export default function ConversationItem({
 						<Button
 							variant="link"
 							size="icon"
-							color="primary"
+							color="secondary"
 							onClick={startEditing}
 							aria-label="Rename conversation"
 						>
@@ -157,7 +162,7 @@ export default function ConversationItem({
 							<Button
 								variant="link"
 								size="icon"
-								color="primary"
+								color="secondary"
 								onClick={handleRestore}
 								aria-label="Restore conversation"
 							>
@@ -169,11 +174,11 @@ export default function ConversationItem({
 							<Button
 								variant="link"
 								size="icon"
-								color="destructive"
+								color="secondary"
 								onClick={handleDelete}
 								aria-label="Archive conversation"
 							>
-								<Trash2 size={11} />
+								<Archive size={11} />
 							</Button>
 						</Tooltip>
 					)}

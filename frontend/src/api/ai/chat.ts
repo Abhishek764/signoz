@@ -189,6 +189,21 @@ export interface MessageSummaryBlock {
 	success?: boolean;
 }
 
+export interface MessageContext {
+	source: 'auto' | 'mention';
+	type:
+		| 'dashboard'
+		| 'alert'
+		| 'saved_view'
+		| 'logs_explorer'
+		| 'traces_explorer'
+		| 'metrics_explorer'
+		| 'service';
+	resourceId?: string | null;
+	resourceName?: string | null;
+	metadata?: Record<string, unknown> | null;
+}
+
 export interface MessageSummary {
 	messageId: string;
 	role: string;
@@ -321,12 +336,16 @@ async function getActiveExecutionId(threadId: string): Promise<string | null> {
 export async function sendMessage(
 	threadId: string,
 	content: string,
+	contexts?: MessageContext[],
 	signal?: AbortSignal,
 ): Promise<string> {
 	const res = await fetch(`${BASE}/threads/${threadId}/messages`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ content }),
+		body: JSON.stringify({
+			content,
+			...(contexts && contexts.length > 0 ? { contexts } : {}),
+		}),
 		signal,
 	});
 

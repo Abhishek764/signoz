@@ -11,6 +11,7 @@ import {
 	createThread,
 	getThreadDetail,
 	listThreads,
+	MessageContext,
 	MessageSummary,
 	MessageSummaryBlock,
 	rejectExecution,
@@ -457,6 +458,7 @@ export interface AIAssistantStore {
 	sendMessage: (
 		text: string,
 		attachments?: MessageAttachment[],
+		contexts?: MessageContext[],
 	) => Promise<void>;
 	approveAction: (conversationId: string, approvalId: string) => Promise<void>;
 	rejectAction: (conversationId: string, approvalId: string) => Promise<void>;
@@ -895,6 +897,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			sendMessage: async (
 				text: string,
 				attachments?: MessageAttachment[],
+				contexts?: MessageContext[],
 			): Promise<void> => {
 				let convId = get().activeConversationId;
 				if (!convId || !get().conversations[convId]) {
@@ -949,6 +952,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					const executionId = await sendMessageToThread(
 						threadId,
 						contextPrefix + text,
+						contexts,
 					);
 					const ctrl = newStreamController(convId);
 					await runStreamingLoop(executionId, {

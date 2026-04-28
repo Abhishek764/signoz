@@ -796,7 +796,7 @@ $ai-radius: 4px;
 	&-content {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 8px;
 
 		max-width: 220px;
 
@@ -1935,13 +1935,13 @@ $ai-radius: 4px;
 // ─── Approval card ────────────────────────────────────────────────────────────
 
 .ai-approval {
-	border: 1px solid var(--bg-amber-500, #f59e0b);
+	border: 1px solid var(--l1-border);
 	border-radius: $ai-radius;
-	padding: 10px 12px;
-	background: rgba(245, 158, 11, 0.05);
+	padding: 12px;
+	background: var(--l1-background);
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 16px;
 	width: 100%;
 
 	&--decided {
@@ -1962,7 +1962,7 @@ $ai-radius: 4px;
 
 .ai-approval__shield-icon {
 	flex-shrink: 0;
-	color: var(--bg-amber-500, #f59e0b);
+	color: var(--primary);
 }
 
 .ai-approval__header-label {

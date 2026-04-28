@@ -17,6 +17,7 @@ import {
 	sendMessage as sendMessageToThread,
 	streamEvents,
 	submitFeedback,
+	ThreadSummary,
 	updateThread,
 } from '../../../api/ai/chat';
 import { PageActionRegistry } from '../pageActions/PageActionRegistry';
@@ -70,6 +71,25 @@ function newStreamController(conversationId: string): AbortController {
  *
  * Safe to call even if the conversation is not currently streaming.
  */
+async function fetchAllThreadSummaries(
+	archived: 'true' | 'false',
+): Promise<ThreadSummary[]> {
+	const allThreads: ThreadSummary[] = [];
+	let cursor: string | null = null;
+	do {
+		// eslint-disable-next-line no-await-in-loop
+		const page = await listThreads({
+			archived,
+			limit: 50,
+			cursor,
+			sort: 'updated_desc',
+		});
+		allThreads.push(...page.threads);
+		cursor = page.hasMore ? page.nextCursor : null;
+	} while (cursor);
+	return allThreads;
+}
+
 function disconnectAndCommit(
 	conversationId: string,
 	set: StoreSetter,
@@ -397,7 +417,7 @@ function finalizeStreamingError(
 // Store interface
 // ---------------------------------------------------------------------------
 
-interface AIAssistantStore {
+export interface AIAssistantStore {
 	// UI state
 	isDrawerOpen: boolean;
 	isModalOpen: boolean;
@@ -431,6 +451,7 @@ interface AIAssistantStore {
 	setActiveConversation: (id: string) => void;
 	clearConversation: (id: string) => void;
 	deleteConversation: (id: string) => void;
+	restoreConversation: (id: string) => void;
 	renameConversation: (id: string, title: string) => void;
 	markBlockAnswered: (messageId: string, answer: string) => void;
 	sendMessage: (
@@ -540,7 +561,7 @@ function deriveTitle(text: string): string {
 
 export const useAIAssistantStore = create<AIAssistantStore>()(
 	persist(
-		immer((set, get) => ({
+		immer<AIAssistantStore>((set, get) => ({
 			isDrawerOpen: false,
 			isModalOpen: false,
 			activeConversationId: null,
@@ -616,23 +637,44 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					s.isLoadingThreads = true;
 				});
 				try {
-					const data = await listThreads();
+					const [activeThreads, archivedThreads] = await Promise.all([
+						fetchAllThreadSummaries('false'),
+						fetchAllThreadSummaries('true'),
+					]);
+					const allThreads = [...activeThreads, ...archivedThreads];
+
 					set((s) => {
-						for (const thread of data.threads) {
-							const existing = Object.values(s.conversations).find(
-								(c) => c.threadId === thread.threadId,
-							);
-							if (!existing) {
-								s.conversations[thread.threadId] = {
-									id: thread.threadId,
-									threadId: thread.threadId,
-									title: thread.title ?? undefined,
-									messages: [],
-									createdAt: new Date(thread.createdAt).getTime(),
-									updatedAt: new Date(thread.updatedAt).getTime(),
-								};
+						const serverThreadIds = new Set(
+							allThreads.map((thread) => thread.threadId),
+						);
+
+						for (const [id, conv] of Object.entries(s.conversations)) {
+							if (conv.threadId && !serverThreadIds.has(conv.threadId)) {
+								delete s.conversations[id];
 							}
 						}
+
+						for (const thread of allThreads) {
+							const existingEntry = Object.entries(s.conversations).find(
+								([, conv]) => conv.threadId === thread.threadId,
+							);
+							const mapped = {
+								id: thread.threadId,
+								threadId: thread.threadId,
+								title: thread.title ?? undefined,
+								messages: existingEntry?.[1].messages ?? [],
+								createdAt: new Date(thread.createdAt).getTime(),
+								updatedAt: new Date(thread.updatedAt).getTime(),
+								archived: thread.archived,
+							};
+
+							if (existingEntry && existingEntry[0] !== thread.threadId) {
+								delete s.conversations[existingEntry[0]];
+							}
+
+							s.conversations[thread.threadId] = mapped;
+						}
+
 						s.isLoadingThreads = false;
 					});
 				} catch (err) {
@@ -661,6 +703,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 								.map(toMessage),
 							createdAt: new Date(detail.createdAt).getTime(),
 							updatedAt: new Date(detail.updatedAt).getTime(),
+							archived: detail.archived,
 						};
 						if (detail.pendingApproval || detail.pendingClarification) {
 							s.streams[threadId] = {
@@ -765,6 +808,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						state.conversations[id].messages = [];
 						state.conversations[id].title = undefined;
 						state.conversations[id].threadId = undefined;
+						state.conversations[id].archived = false;
 						state.conversations[id].updatedAt = Date.now();
 					}
 				});
@@ -772,21 +816,58 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 
 			deleteConversation: (id: string): void => {
 				const conv = get().conversations[id];
+				if (!conv) {
+					return;
+				}
 				disconnectAndCommit(id, set, get);
-				set((state) => {
-					delete state.conversations[id];
-					if (state.activeConversationId === id) {
-						const remaining = Object.values(state.conversations).sort(
-							(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
-						);
-						state.activeConversationId = remaining[0]?.id ?? null;
-					}
-				});
-				if (conv?.threadId) {
+				if (conv.threadId) {
 					updateThread(conv.threadId, { archived: true }).catch((err) => {
 						console.error('[AIAssistant] archiveThread failed:', err);
 					});
+					set((state) => {
+						const c = state.conversations[id];
+						if (c) {
+							c.archived = true;
+						}
+						if (state.activeConversationId === id) {
+							const remaining = Object.values(state.conversations)
+								.filter((a) => !a.archived)
+								.sort(
+									(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
+								);
+							state.activeConversationId = remaining[0]?.id ?? null;
+						}
+					});
+				} else {
+					set((state) => {
+						delete state.conversations[id];
+						if (state.activeConversationId === id) {
+							const remaining = Object.values(state.conversations).sort(
+								(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
+							);
+							state.activeConversationId = remaining[0]?.id ?? null;
+						}
+					});
 				}
+			},
+
+			restoreConversation: (id: string): void => {
+				const conv = get().conversations[id];
+				if (!conv?.threadId) {
+					return;
+				}
+				updateThread(conv.threadId, { archived: false })
+					.then(() => {
+						set((state) => {
+							const c = state.conversations[id];
+							if (c) {
+								c.archived = false;
+							}
+						});
+					})
+					.catch((err) => {
+						console.error('[AIAssistant] restoreThread failed:', err);
+					});
 			},
 
 			renameConversation: (id: string, title: string): void => {

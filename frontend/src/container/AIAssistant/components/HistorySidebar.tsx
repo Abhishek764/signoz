@@ -1,6 +1,4 @@
 import { useEffect, useMemo } from 'react';
-import { Button } from '@signozhq/ui';
-import { Loader2, Plus } from 'lucide-react';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { Conversation } from '../types';
@@ -45,6 +43,35 @@ function groupByDate(
 		.map(([label, items]) => ({ label, items }));
 }
 
+function HistoryListSkeleton({
+	rows,
+	inline,
+}: {
+	rows: number;
+	inline?: boolean;
+}): JSX.Element {
+	return (
+		<div
+			className={
+				inline
+					? 'ai-history__skeleton ai-history__skeleton--inline'
+					: 'ai-history__skeleton'
+			}
+			aria-hidden
+		>
+			{Array.from({ length: rows }, (_, i) => (
+				<div key={i} className="ai-history__skeleton-row">
+					<div className="ai-history__skeleton-icon" />
+					<div className="ai-history__skeleton-text">
+						<div className="ai-history__skeleton-line ai-history__skeleton-line--title" />
+						<div className="ai-history__skeleton-line ai-history__skeleton-line--meta" />
+					</div>
+				</div>
+			))}
+		</div>
+	);
+}
+
 export default function HistorySidebar({
 	onSelect,
 }: HistorySidebarProps): JSX.Element {
@@ -53,38 +80,50 @@ export default function HistorySidebar({
 		(s) => s.activeConversationId,
 	);
 	const isLoadingThreads = useAIAssistantStore((s) => s.isLoadingThreads);
-	const startNewConversation = useAIAssistantStore(
-		(s) => s.startNewConversation,
-	);
 	const setActiveConversation = useAIAssistantStore(
 		(s) => s.setActiveConversation,
 	);
 	const loadThread = useAIAssistantStore((s) => s.loadThread);
 	const fetchThreads = useAIAssistantStore((s) => s.fetchThreads);
 	const deleteConversation = useAIAssistantStore((s) => s.deleteConversation);
+	const restoreConversation = useAIAssistantStore((s) => s.restoreConversation);
 	const renameConversation = useAIAssistantStore((s) => s.renameConversation);
 
-	// Fetch thread history from backend on mount
+	// Fetch threads from backend on mount
 	useEffect(() => {
-		fetchThreads();
+		void fetchThreads();
 	}, [fetchThreads]);
 
-	const sorted = useMemo(
+	const sortedActive = useMemo(
 		() =>
-			Object.values(conversations).sort(
-				(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
-			),
+			Object.values(conversations)
+				.filter((c) => !c.archived)
+				.sort(
+					(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
+				),
 		[conversations],
 	);
 
-	const groups = useMemo(() => groupByDate(sorted), [sorted]);
+	const sortedArchived = useMemo(
+		() =>
+			Object.values(conversations)
+				.filter((c) => Boolean(c.archived) && c.threadId)
+				.sort(
+					(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
+				),
+		[conversations],
+	);
+
+	const groups = useMemo(() => groupByDate(sortedActive), [sortedActive]);
+
+	const hasAnySidebarRows = groups.length > 0 || sortedArchived.length > 0;
 
 	const handleSelect = (id: string): void => {
 		const conv = conversations[id];
 		if (conv?.threadId) {
 			// Always load from backend — refreshes messages and reconnects
 			// to active execution if the thread is still busy.
-			loadThread(conv.threadId);
+			void loadThread(conv.threadId);
 		} else {
 			// Local-only conversation (no backend thread yet)
 			setActiveConversation(id);
@@ -92,36 +131,26 @@ export default function HistorySidebar({
 		onSelect?.(id);
 	};
 
-	const handleNew = (): void => {
-		const id = startNewConversation();
-		onSelect?.(id);
-	};
-
 	return (
 		<div className="ai-history">
 			<div className="ai-history__header">
-				<span className="ai-history__heading">History</span>
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={handleNew}
-					aria-label="New conversation"
-					className="ai-history__new-btn"
-				>
-					<Plus size={13} />
-					New
-				</Button>
+				<span className="ai-history__heading">Conversations</span>
 			</div>
 
-			<div className="ai-history__list">
-				{isLoadingThreads && groups.length === 0 && (
-					<div className="ai-history__loading">
-						<Loader2 size={16} className="ai-history__spinner" />
-						Loading conversations…
-					</div>
+			<div className="ai-history__list" aria-busy={isLoadingThreads}>
+				{isLoadingThreads && (
+					<span className="ai-history__sr-only" role="status">
+						Loading conversations
+					</span>
 				)}
 
-				{!isLoadingThreads && groups.length === 0 && (
+				{isLoadingThreads && hasAnySidebarRows && (
+					<HistoryListSkeleton rows={2} inline />
+				)}
+
+				{isLoadingThreads && !hasAnySidebarRows && <HistoryListSkeleton rows={7} />}
+
+				{!isLoadingThreads && !hasAnySidebarRows && (
 					<p className="ai-history__empty">No conversations yet.</p>
 				)}
 
@@ -136,10 +165,28 @@ export default function HistorySidebar({
 								onSelect={handleSelect}
 								onRename={renameConversation}
 								onDelete={deleteConversation}
+								onRestore={restoreConversation}
 							/>
 						))}
 					</div>
 				))}
+
+				{sortedArchived.length > 0 && (
+					<div className="ai-history__group ai-history__group--archived">
+						<span className="ai-history__group-label">Archived Conversations</span>
+						{sortedArchived.map((conv) => (
+							<ConversationItem
+								key={conv.id}
+								conversation={conv}
+								isActive={conv.id === activeConversationId}
+								onSelect={handleSelect}
+								onRename={renameConversation}
+								onDelete={deleteConversation}
+								onRestore={restoreConversation}
+							/>
+						))}
+					</div>
+				)}
 			</div>
 		</div>
 	);

@@ -51,7 +51,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		}
 	}, [activeConversationId, clearConversation]);
 
-	// When user picks a conversation from history, close the sidebar
+	// When user picks a conversation from the list, close the sidebar
 	const handleHistorySelect = useCallback(() => {
 		setShowHistory(false);
 	}, []);
@@ -107,12 +107,12 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				</div>
 
 				<div className="ai-assistant-panel__actions">
-					<Tooltip title={showHistory ? 'Back to chat' : 'Chat history'}>
+					<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
 						<Button
 							variant="ghost"
 							size="icon"
 							onClick={(): void => setShowHistory((v) => !v)}
-							aria-label="Toggle history"
+							aria-label="Toggle conversations"
 							className={showHistory ? 'ai-panel-btn--active' : ''}
 						>
 							<History size={14} />

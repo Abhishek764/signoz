@@ -58,7 +58,7 @@ export default function AIAssistantPage(): JSX.Element {
 		clearConversation(conversationId);
 	}, [clearConversation, conversationId]);
 
-	// When history sidebar selects a conversation, navigate to it
+	// When conversations sidebar selects a thread, navigate to it
 	const handleHistorySelect = useCallback(
 		(id: string) => {
 			history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', id));

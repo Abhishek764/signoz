@@ -134,12 +134,12 @@ export default function AIAssistantModal(): JSX.Element | null {
 					</div>
 
 					<div className="ai-modal__actions">
-						<Tooltip title={showHistory ? 'Back to chat' : 'Chat history'}>
+						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
 							<Button
 								variant="ghost"
 								size="icon"
 								onClick={(): void => setShowHistory((v) => !v)}
-								aria-label="Toggle history"
+								aria-label="Toggle conversations"
 								className={showHistory ? 'ai-panel-btn--active' : ''}
 							>
 								<History size={14} />

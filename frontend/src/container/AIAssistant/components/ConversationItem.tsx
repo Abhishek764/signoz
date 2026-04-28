@@ -1,6 +1,6 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Tooltip } from '@signozhq/ui';
-import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { ArchiveRestore, MessageSquare, Pencil, Trash2 } from '@signozhq/icons';
 
 import { Conversation } from '../types';
 
@@ -10,6 +10,7 @@ interface ConversationItemProps {
 	onSelect: (id: string) => void;
 	onRename: (id: string, title: string) => void;
 	onDelete: (id: string) => void;
+	onRestore: (id: string) => void;
 }
 
 function formatRelativeTime(ts: number): string {
@@ -41,11 +42,13 @@ export default function ConversationItem({
 	onSelect,
 	onRename,
 	onDelete,
+	onRestore,
 }: ConversationItemProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editValue, setEditValue] = useState('');
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	const isArchived = Boolean(conversation.archived);
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
@@ -90,9 +93,19 @@ export default function ConversationItem({
 		[conversation.id, onDelete],
 	);
 
+	const handleRestore = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			onRestore(conversation.id);
+		},
+		[conversation.id, onRestore],
+	);
+
 	return (
 		<div
-			className={`ai-history__item${isActive ? ' ai-history__item--active' : ''}`}
+			className={`ai-history__item${isActive ? ' ai-history__item--active' : ''}${
+				isArchived ? ' ai-history__item--archived' : ''
+			}`}
 			onClick={(): void => onSelect(conversation.id)}
 			role="button"
 			tabIndex={0}
@@ -130,26 +143,40 @@ export default function ConversationItem({
 				<div className="ai-history__item-actions">
 					<Tooltip title="Rename">
 						<Button
-							variant="ghost"
+							variant="link"
 							size="icon"
-							className="ai-history__item-btn"
+							color="primary"
 							onClick={startEditing}
 							aria-label="Rename conversation"
 						>
 							<Pencil size={11} />
 						</Button>
 					</Tooltip>
-					<Tooltip title="Delete">
-						<Button
-							variant="ghost"
-							size="icon"
-							className="ai-history__item-btn ai-history__item-btn--danger"
-							onClick={handleDelete}
-							aria-label="Delete conversation"
-						>
-							<Trash2 size={11} />
-						</Button>
-					</Tooltip>
+					{isArchived ? (
+						<Tooltip title="Restore to conversations">
+							<Button
+								variant="link"
+								size="icon"
+								color="primary"
+								onClick={handleRestore}
+								aria-label="Restore conversation"
+							>
+								<ArchiveRestore size={11} />
+							</Button>
+						</Tooltip>
+					) : (
+						<Tooltip title="Archive">
+							<Button
+								variant="link"
+								size="icon"
+								color="destructive"
+								onClick={handleDelete}
+								aria-label="Archive conversation"
+							>
+								<Trash2 size={11} />
+							</Button>
+						</Tooltip>
+					)}
 				</div>
 			)}
 		</div>

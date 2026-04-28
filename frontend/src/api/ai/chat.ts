@@ -172,6 +172,13 @@ export interface ThreadListResponse {
 	hasMore: boolean;
 }
 
+export interface ListThreadsOptions {
+	archived?: 'true' | 'false' | 'all';
+	limit?: number;
+	cursor?: string | null;
+	sort?: 'updated_desc';
+}
+
 export interface MessageSummaryBlock {
 	type: string;
 	content?: string;
@@ -212,10 +219,19 @@ export interface ThreadDetailResponse {
 }
 
 export async function listThreads(
-	cursor?: string | null,
-	limit = 20,
+	options: ListThreadsOptions = {},
 ): Promise<ThreadListResponse> {
-	const params = new URLSearchParams({ limit: String(limit) });
+	const {
+		archived = 'false',
+		limit = 20,
+		cursor = null,
+		sort = 'updated_desc',
+	} = options;
+	const params = new URLSearchParams({
+		archived,
+		limit: String(limit),
+		sort,
+	});
 	if (cursor) {
 		params.set('cursor', cursor);
 	}

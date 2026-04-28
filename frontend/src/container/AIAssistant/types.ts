@@ -73,6 +73,8 @@ export interface Conversation {
 	createdAt: number;
 	updatedAt?: number;
 	title?: string;
+	/** When true, thread is hidden from the main list and shown under Archived. */
+	archived?: boolean;
 }
 
 // ---------------------------------------------------------------------------

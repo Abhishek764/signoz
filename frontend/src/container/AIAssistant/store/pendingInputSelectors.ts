@@ -1,8 +1,6 @@
-import { useAIAssistantStore } from './useAIAssistantStore';
+import type { AIAssistantStore } from './useAIAssistantStore';
 
-export type AIAssistantStoreState = ReturnType<
-	typeof useAIAssistantStore.getState
->;
+export type AIAssistantStoreState = AIAssistantStore;
 
 /**
  * Number of conversations whose execution is waiting on the user (approval or

@@ -78,6 +78,12 @@ func NewTraitsFromOrganization(org *Organization) map[string]any {
 // reporter use this value so a change here propagates everywhere.
 const DefaultRetentionDays = 15
 
+const (
+	TTLSettingStatusPending = "pending"
+	TTLSettingStatusFailed  = "failed"
+	TTLSettingStatusSuccess = "success"
+)
+
 type TTLSetting struct {
 	bun.BaseModel `bun:"table:ttl_setting"`
 	Identifiable

@@ -1368,7 +1368,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		if apiErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending {
+		if statusItem.Status == types.TTLSettingStatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
@@ -1427,7 +1427,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
-				Status:         constants.StatusPending,
+				Status:         types.TTLSettingStatusPending,
 				ColdStorageTTL: coldStorageDuration,
 				OrgID:          orgID,
 			}
@@ -1453,7 +1453,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						NewUpdate().
 						Model(new(types.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
-						Set("status = ?", constants.StatusFailed).
+						Set("status = ?", types.TTLSettingStatusFailed).
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
@@ -1473,7 +1473,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					NewUpdate().
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
-					Set("status = ?", constants.StatusFailed).
+					Set("status = ?", types.TTLSettingStatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
@@ -1488,7 +1488,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				NewUpdate().
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", constants.StatusSuccess).
+				Set("status = ?", types.TTLSettingStatusSuccess).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
@@ -1531,7 +1531,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		if apiErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending {
+		if statusItem.Status == types.TTLSettingStatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
@@ -1565,7 +1565,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
-				Status:         constants.StatusPending,
+				Status:         types.TTLSettingStatusPending,
 				ColdStorageTTL: coldStorageDuration,
 				OrgID:          orgID,
 			}
@@ -1603,7 +1603,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 						NewUpdate().
 						Model(new(types.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
-						Set("status = ?", constants.StatusFailed).
+						Set("status = ?", types.TTLSettingStatusFailed).
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
@@ -1624,7 +1624,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 					NewUpdate().
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
-					Set("status = ?", constants.StatusFailed).
+					Set("status = ?", types.TTLSettingStatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
@@ -1639,7 +1639,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				NewUpdate().
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", constants.StatusSuccess).
+				Set("status = ?", types.TTLSettingStatusSuccess).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
@@ -1755,7 +1755,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		if apiErr != nil {
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
 		}
-		if statusItem.Status == constants.StatusPending {
+		if statusItem.Status == types.TTLSettingStatusPending {
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL is already running")
 		}
 	}
@@ -1841,7 +1841,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			TableName:      tableName,
 			TTL:            params.DefaultTTLDays,
 			Condition:      string(ttlConditionsJSON),
-			Status:         constants.StatusPending,
+			Status:         types.TTLSettingStatusPending,
 			ColdStorageTTL: coldStorageDuration,
 			OrgID:          orgID,
 		}
@@ -1857,7 +1857,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
 			if err != nil {
 				r.logger.Error("error in setting cold storage", errorsV2.Attr(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, types.TTLSettingStatusFailed)
 				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
 			}
 		}
@@ -1866,12 +1866,12 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			r.logger.Debug("Executing custom retention TTL request: ", "request", query, "step", i+1)
 			if err := r.db.Exec(ctx, query); err != nil {
 				r.logger.Error("error while setting custom retention ttl", errorsV2.Attr(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, types.TTLSettingStatusFailed)
 				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
 			}
 		}
 
-		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusSuccess)
+		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, types.TTLSettingStatusSuccess)
 	}
 
 	return &model.CustomRetentionTTLResponse{
@@ -1986,7 +1986,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			// No V2 configuration found, return defaults
 			response.DefaultTTLDays = types.DefaultRetentionDays
 			response.TTLConditions = []retentiontypes.CustomRetentionRule{}
-			response.Status = constants.StatusSuccess
+			response.Status = types.TTLSettingStatusSuccess
 			response.ColdStorageTTLDays = -1
 			return response, nil
 		}
@@ -2221,7 +2221,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		if apiErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending {
+		if statusItem.Status == types.TTLSettingStatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
@@ -2237,7 +2237,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			TransactionID:  uuid,
 			TableName:      tableName,
 			TTL:            int(params.DelDuration),
-			Status:         constants.StatusPending,
+			Status:         types.TTLSettingStatusPending,
 			ColdStorageTTL: coldStorageDuration,
 			OrgID:          orgID,
 		}
@@ -2275,7 +2275,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 					NewUpdate().
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
-					Set("status = ?", constants.StatusFailed).
+					Set("status = ?", types.TTLSettingStatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
@@ -2296,7 +2296,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 				NewUpdate().
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", constants.StatusFailed).
+				Set("status = ?", types.TTLSettingStatusFailed).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
@@ -2311,7 +2311,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			NewUpdate().
 			Model(new(types.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
-			Set("status = ?", constants.StatusSuccess).
+			Set("status = ?", types.TTLSettingStatusSuccess).
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
@@ -2379,7 +2379,7 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string,
 // getTTLQueryStatus fetches ttl_status table status from DB
 func (r *ClickHouseReader) getTTLQueryStatus(ctx context.Context, orgID string, tableNameArray []string) (string, *model.ApiError) {
 	failFlag := false
-	status := constants.StatusSuccess
+	status := types.TTLSettingStatusSuccess
 	for _, tableName := range tableNameArray {
 		statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
 		emptyStatusStruct := new(types.TTLSetting)
@@ -2389,16 +2389,16 @@ func (r *ClickHouseReader) getTTLQueryStatus(ctx context.Context, orgID string, 
 		if apiErr != nil {
 			return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
-			status = constants.StatusPending
+		if statusItem.Status == types.TTLSettingStatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
+			status = types.TTLSettingStatusPending
 			return status, nil
 		}
-		if statusItem.Status == constants.StatusFailed {
+		if statusItem.Status == types.TTLSettingStatusFailed {
 			failFlag = true
 		}
 	}
 	if failFlag {
-		status = constants.StatusFailed
+		status = types.TTLSettingStatusFailed
 	}
 
 	return status, nil

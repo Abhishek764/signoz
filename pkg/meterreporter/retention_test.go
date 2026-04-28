@@ -20,7 +20,7 @@ func makeRow(createdAt time.Time, ttl int, condition string) *types.TTLSetting {
 			UpdatedAt: createdAt,
 		},
 		TTL:       ttl,
-		Status:    "success",
+		Status:    types.TTLSettingStatusSuccess,
 		Condition: condition,
 	}
 }

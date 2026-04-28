@@ -150,7 +150,7 @@ func TestPostablePods_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "orderBy with phase key is invalid",
+			name: "orderBy with phase key is rejected",
 			req: &PostablePods{
 				Start:  1000,
 				End:    2000,

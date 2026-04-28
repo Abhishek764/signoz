@@ -17,6 +17,15 @@ type groupHostStatusCounts struct {
 	Inactive int
 }
 
+// podPhaseCounts holds per-group pod counts bucketed by latest phase in window.
+type podPhaseCounts struct {
+	Pending   int
+	Running   int
+	Succeeded int
+	Failed    int
+	Unknown   int
+}
+
 // bucketSplit carries the up-to-six entries a single spec bucket contributes
 // to an onboarding response. Any field may be nil if the bucket doesn't
 // populate that dimension.

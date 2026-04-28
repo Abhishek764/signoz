@@ -26,7 +26,7 @@ var namespaceNameGroupByKey = qbtypes.GroupByKey{
 var namespacesTableMetricNamesList = []string{
 	"k8s.pod.cpu.usage",
 	"k8s.pod.memory.working_set",
-	podPhaseMetricName,
+	"k8s.pod.phase",
 }
 
 var namespaceAttrKeysForMetadata = []string{

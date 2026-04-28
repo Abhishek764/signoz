@@ -29,7 +29,7 @@ var nodesTableMetricNamesList = []string{
 	"k8s.node.allocatable_cpu",
 	"k8s.node.memory.working_set",
 	"k8s.node.allocatable_memory",
-	nodeConditionMetricName,
+	"k8s.node.condition_ready",
 }
 
 var nodeAttrKeysForMetadata = []string{
@@ -70,7 +70,6 @@ func (m *module) newNodesTableListQuery() *qbtypes.QueryRangeRequest {
 		// Query B: CPU allocatable.
 		// TimeAggregationLatest is the closest v5 equivalent of v1's AnyLast;
 		// allocatable values change rarely so divergence in practice is negligible.
-		// TODO(nikhilmantri0902): switch to AnyLast once v5 supports it.
 		{
 			Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{

@@ -82,16 +82,19 @@ func (provider *Provider) tick(ctx context.Context) error {
 	// today-HistoricalBackfillDays. Any error aborts the whole tick so concern B
 	// doesn't flow without a consistent view of the sealed catchup start; the
 	// http client already retried transient failures before reaching this point.
-	checkpoints, err := provider.zeus.GetMeterCheckpoints(ctx, license.Key)
-	if err != nil {
-		provider.metrics.checkpointErrors.Add(ctx, 1)
-		provider.settings.Logger().ErrorContext(ctx, "skipping tick: meter checkpoints call failed", errors.Attr(err))
-		return nil
-	}
-	checkpointsByMeter := make(map[string]time.Time, len(checkpoints))
-	for _, checkpoint := range checkpoints {
-		checkpointsByMeter[checkpoint.Name] = checkpoint.Checkpoint.UTC()
-	}
+	//
+	// TODO: Re-enable this call once /v2/meters/checkpoints is live.
+	// checkpoints, err := provider.zeus.GetMeterCheckpoints(ctx, license.Key)
+	// if err != nil {
+	// 	provider.metrics.checkpointErrors.Add(ctx, 1)
+	// 	provider.settings.Logger().ErrorContext(ctx, "skipping tick: meter checkpoints call failed", errors.Attr(err))
+	// 	return nil
+	// }
+	// checkpointsByMeter := make(map[string]time.Time, len(checkpoints))
+	// for _, checkpoint := range checkpoints {
+	// 	checkpointsByMeter[checkpoint.Name] = checkpoint.Checkpoint.UTC()
+	// }
+	checkpointsByMeter := make(map[string]time.Time)
 
 	// Concern A — sealed-range processor.
 	catchupStart := provider.catchupStart(todayStart, checkpointsByMeter)

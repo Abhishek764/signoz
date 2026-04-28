@@ -9,38 +9,26 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// Window is the time range a collector produces readings for.
-// IsCompleted is true for sealed past windows and false for open windows.
+// Window is the [Start, End) range a tick reports against.
+// IsCompleted=true for sealed past days; false for the open today window.
 type Window struct {
 	StartUnixMilli int64
 	EndUnixMilli   int64
 	IsCompleted    bool
 }
 
-// CollectorDeps is the shared dependency bag handed to every collector.
 type CollectorDeps struct {
 	TelemetryStore telemetrystore.TelemetryStore
 	SQLStore       sqlstore.SQLStore
 }
 
-// CollectorFunc turns one Meter into zero or more Readings for an org/window.
 type CollectorFunc func(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error)
 
-// Meter is a single registered billing meter — a name, its billing metadata,
-// and the function that produces Readings for it.
-//
-// Meter names must be unique in the registry. Zeus checkpoints and upserts by
-// meter name, so Aggregation is metadata rather than part of the billing key.
+// Meter is one registered billing meter. Name must be unique — Zeus
+// checkpoints and upserts by it.
 type Meter struct {
-	// Name is the billing identifier emitted on every Reading.
-	Name meterreportertypes.Name
-
-	// Unit is copied onto Reading.Unit by the collector.
-	Unit string
-
-	// Aggregation is copied onto Reading.Aggregation.
+	Name        meterreportertypes.Name
+	Unit        string
 	Aggregation string
-
-	// Collect turns this Meter into zero or more Readings per tick.
-	Collect CollectorFunc
+	Collect     CollectorFunc
 }

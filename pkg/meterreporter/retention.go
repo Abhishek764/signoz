@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// RetentionDomain is the telemetry area whose retention is being evaluated.
 type RetentionDomain string
 
 const (
@@ -36,7 +35,6 @@ type retentionDomainConfig struct {
 }
 
 var (
-	// Add a new domain here with the ttl_setting table key and default days.
 	retentionDomainConfigs = map[RetentionDomain]retentionDomainConfig{
 		RetentionDomainLogs: {
 			tableName:   telemetrylogs.DBName + "." + telemetrylogs.LogsV2LocalTableName,
@@ -52,13 +50,13 @@ var (
 		},
 	}
 
-	// These values are inlined into SQL, so reject anything that could break
-	// the generated ClickHouse expression.
+	// Inlined into SQL — strict allowlist guards against injection from a
+	// malformed ttl_setting row.
 	retentionLabelKeyPattern   = regexp.MustCompile(`^[A-Za-z0-9_.\-]+$`)
 	retentionLabelValuePattern = regexp.MustCompile(`^[A-Za-z0-9_.\-:]+$`)
 )
 
-// retentionSlice is a half-open time range where one retention config applies.
+// retentionSlice is a half-open time range where one ttl_setting recipe applies.
 type retentionSlice struct {
 	StartMs     int64
 	EndMs       int64
@@ -66,8 +64,16 @@ type retentionSlice struct {
 	DefaultDays int
 }
 
-// loadActiveRetentionSlices reads ttl_setting and returns slices covering
-// [startMs, endMs) in order.
+func retentionConfigFor(domain RetentionDomain) (retentionDomainConfig, error) {
+	config, ok := retentionDomainConfigs[domain]
+	if !ok {
+		return retentionDomainConfig{}, errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "retention config unavailable for domain %q", domain)
+	}
+	return config, nil
+}
+
+// loadActiveRetentionSlices returns slices covering [startMs, endMs) in
+// chronological order, one per ttl_setting recipe active in that span.
 func loadActiveRetentionSlices(
 	ctx context.Context,
 	sqlstore sqlstore.SQLStore,
@@ -82,15 +88,13 @@ func loadActiveRetentionSlices(
 		return nil, errors.New(errors.TypeInternal, ErrCodeReportFailed, "sqlstore is nil")
 	}
 
-	config, ok := retentionDomainConfigs[domain]
-	if !ok {
-		return nil, errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "retention config unavailable for domain %q", domain)
+	config, err := retentionConfigFor(domain)
+	if err != nil {
+		return nil, err
 	}
 
-	// The domain table name is the ttl_setting key whose row carries the
-	// retention config needed for billing.
 	rows := []*types.TTLSetting{}
-	err := sqlstore.
+	err = sqlstore.
 		BunDB().
 		NewSelect().
 		Model(&rows).
@@ -112,8 +116,8 @@ func buildRetentionSlicesFromRows(domain RetentionDomain, rows []*types.TTLSetti
 		return nil, nil
 	}
 
-	// The latest row at or before startMs is the config active at the start.
-	// Rows inside the window become slice boundaries.
+	// The latest row at or before startMs is the active config at the
+	// window start; rows strictly inside become slice boundaries.
 	var activeAtStart *types.TTLSetting
 	inWindow := make([]*types.TTLSetting, 0, len(rows))
 	for _, row := range rows {
@@ -138,8 +142,7 @@ func buildRetentionSlicesFromRows(domain RetentionDomain, rows []*types.TTLSetti
 	for _, row := range inWindow {
 		rowMs := row.CreatedAt.UnixMilli()
 		if rowMs <= cursor {
-			// Same-millisecond updates replace the active config without
-			// creating an empty slice.
+			// Same-ms updates collapse: replace active config, no empty slice.
 			activeRules, activeDefault, err = configFromTTLSetting(domain, row)
 			if err != nil {
 				return nil, err
@@ -171,12 +174,12 @@ func buildRetentionSlicesFromRows(domain RetentionDomain, rows []*types.TTLSetti
 	return slices, nil
 }
 
-// configFromTTLSetting converts one ttl_setting row into custom rules and a
-// default TTL in days. Legacy rows have no condition and store TTL in seconds.
+// configFromTTLSetting unpacks one ttl_setting row.
+// V1 (Condition=="") stores TTL in seconds; V2 stores TTL in days.
 func configFromTTLSetting(domain RetentionDomain, row *types.TTLSetting) ([]retentiontypes.CustomRetentionRule, int, error) {
-	config, ok := retentionDomainConfigs[domain]
-	if !ok {
-		return nil, 0, errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "retention config unavailable for domain %q", domain)
+	config, err := retentionConfigFor(domain)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	if row == nil {
@@ -184,15 +187,15 @@ func configFromTTLSetting(domain RetentionDomain, row *types.TTLSetting) ([]rete
 	}
 
 	defaultDays := row.TTL
-	hasCustomRules := strings.TrimSpace(row.Condition) != ""
-	if !hasCustomRules && row.TTL > 0 {
+	if row.Condition == "" {
+		// V1 stores seconds — round up to whole days.
 		defaultDays = (row.TTL + secondsPerDay - 1) / secondsPerDay
 	}
 	if defaultDays <= 0 {
 		defaultDays = config.defaultDays
 	}
 
-	if !hasCustomRules {
+	if row.Condition == "" {
 		return nil, defaultDays, nil
 	}
 
@@ -204,8 +207,10 @@ func configFromTTLSetting(domain RetentionDomain, row *types.TTLSetting) ([]rete
 	return rules, defaultDays, nil
 }
 
-// buildRetentionMultiIfSQL builds the retention-days SELECT expression for
-// one slice. Rules are checked in order, and the final type is always Int32.
+// buildRetentionMultiIfSQL renders the retention-days SELECT expression for
+// one slice — first matching rule wins. The toInt32 wrapper pins the column
+// type so Scan(&int32) works regardless of arm widths (ClickHouse otherwise
+// infers UInt8/UInt16 from the largest arm).
 func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
 		return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "non-positive default retention %d", defaultDays)

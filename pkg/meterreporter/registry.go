@@ -5,9 +5,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 )
 
-// Exported names for every meter the reporter knows about. Refer to these
-// symbols — not string literals — everywhere so a typo becomes a compile error
-// instead of silently spawning a new (and unbilled) meter row at Zeus.
+// Refer to these symbols (not string literals) so typos become compile errors
+// instead of silently spawning unbilled meter rows at Zeus.
 var (
 	MeterLogCount             = meterreportertypes.MustNewName("signoz.meter.log.count")
 	MeterLogSize              = meterreportertypes.MustNewName("signoz.meter.log.size")
@@ -63,9 +62,6 @@ func baseMeters() []*Meter {
 	return meters
 }
 
-// DefaultMeters is the hardcoded meter set shipped with the reporter. The
-// enterprise provider wires this into its collector loop at construction time;
-// the noop provider ignores it.
 func DefaultMeters() ([]Meter, error) {
 	meters := baseMeters()
 	if err := validateMeters(meters...); err != nil {
@@ -80,9 +76,6 @@ func DefaultMeters() ([]Meter, error) {
 	return resolved, nil
 }
 
-// validateMeters guards the registry: every meter must have all four fields
-// populated, and Name must be unique because Zeus checkpoints and upserts by
-// meter name.
 func validateMeters(meters ...*Meter) error {
 	seen := make(map[string]struct{}, len(meters))
 
@@ -113,8 +106,7 @@ func validateMeters(meters ...*Meter) error {
 	return nil
 }
 
-// mustValidateMeters is the boot-time variant used for hardcoded registrations.
-// A panic here is a programmer error — the meter list ships with the binary.
+// Used for hardcoded registrations: a panic is a programmer error.
 func mustValidateMeters(meters ...*Meter) {
 	if err := validateMeters(meters...); err != nil {
 		panic(err)

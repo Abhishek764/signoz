@@ -11,11 +11,9 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// retentionBucketKey identifies a unique (workspace, retention) bucket inside
-// the per-meter accumulator. workspaceKeyID is the empty string for samples
-// missing a signoz.workspace.key.id label; the collector omits the dimension
-// from the emitted Reading when this happens.
 type retentionBucketKey struct {
+	// workspaceKeyID is "" when the source sample has no
+	// signoz.workspace.key.id label; the dimension is omitted in that case.
 	workspaceKeyID string
 	retentionDays  int
 }
@@ -91,21 +89,24 @@ func collectMeterSamplesByRetention(
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "query meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 		}
-		for rows.Next() {
-			var wsid string
-			var retentionDays int32
-			var value float64
-			if err := rows.Scan(&wsid, &retentionDays, &value); err != nil {
-				rows.Close()
-				return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+		if err := func() error {
+			defer rows.Close()
+			for rows.Next() {
+				var wsid string
+				var retentionDays int32
+				var value float64
+				if err := rows.Scan(&wsid, &retentionDays, &value); err != nil {
+					return errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+				}
+				accumulator[retentionBucketKey{workspaceKeyID: wsid, retentionDays: int(retentionDays)}] += value
 			}
-			accumulator[retentionBucketKey{workspaceKeyID: wsid, retentionDays: int(retentionDays)}] += value
+			if err := rows.Err(); err != nil {
+				return errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+			}
+			return nil
+		}(); err != nil {
+			return nil, err
 		}
-		if err := rows.Err(); err != nil {
-			rows.Close()
-			return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
-		}
-		rows.Close()
 	}
 
 	readings := make([]meterreportertypes.Reading, 0, len(accumulator))
@@ -129,7 +130,8 @@ func collectMeterSamplesByRetention(
 		})
 	}
 
-	// Zero usage is still a billing event and lets catchup move past empty days.
+	// Zero usage is itself a billing event; the sentinel also lets Zeus's
+	// MAX(start_date) checkpoint advance past genuinely empty days.
 	if len(readings) == 0 && len(slices) > 0 {
 		readings = append(readings, meterreportertypes.Reading{
 			MeterName:      meterName,

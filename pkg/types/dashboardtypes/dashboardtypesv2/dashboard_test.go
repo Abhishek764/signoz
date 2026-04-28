@@ -11,29 +11,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func unmarshalDashboard(data []byte) (*DashboardData, error) {
+	var d DashboardData
+	if err := json.Unmarshal(data, &d); err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
 func TestValidateBigExample(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses.json")
 	require.NoError(t, err, "reading example file")
-	_, err = UnmarshalAndValidateJSON(data)
+	_, err = unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid dashboard")
 }
 
 func TestValidateDashboardWithSections(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses_with_sections.json")
 	require.NoError(t, err, "reading example file")
-	_, err = UnmarshalAndValidateJSON(data)
+	_, err = unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid dashboard")
 }
 
 func TestInvalidateNotAJSON(t *testing.T) {
-	_, err := UnmarshalAndValidateJSON([]byte("not json"))
+	_, err := unmarshalDashboard([]byte("not json"))
 	require.Error(t, err, "expected error for invalid JSON")
 }
 
 func TestValidateEmptySpec(t *testing.T) {
 	// no variables no panels
 	data := []byte(`{}`)
-	_, err := UnmarshalAndValidateJSON(data)
+	_, err := unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid")
 }
 
@@ -65,7 +73,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 		],
 		"layouts": []
 	}`)
-	_, err := UnmarshalAndValidateJSON(data)
+	_, err := unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid")
 }
 
@@ -144,7 +152,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateJSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -165,7 +173,7 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 		},
 		"layouts": []
 	}`)
-	_, err := UnmarshalAndValidateJSON(data)
+	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected error for invalid panel plugin kind")
 	require.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
 }
@@ -241,7 +249,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateJSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error for unknown field")
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -319,7 +327,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateJSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected validation error")
 			if tt.wantContain != "" {
 				require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
@@ -527,7 +535,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateJSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -622,7 +630,7 @@ func TestValidateRequiredFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateJSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -644,7 +652,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		},
 		"layouts": []
 	}`)
-	d, err := UnmarshalAndValidateJSON(data)
+	d, err := unmarshalDashboard(data)
 	require.NoError(t, err, "unmarshal and validate failed")
 
 	// After validation+normalization, the plugin spec should be a typed struct.
@@ -691,7 +699,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 		},
 		"layouts": []
 	}`)
-	d, err := UnmarshalAndValidateJSON(data)
+	d, err := unmarshalDashboard(data)
 	require.NoError(t, err, "unmarshal and validate failed")
 
 	require.IsType(t, &NumberPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
@@ -741,7 +749,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	}`)
 
 	// Step 1: Unmarshal + validate + normalize (what the API handler does).
-	d, err := UnmarshalAndValidateJSON(input)
+	d, err := unmarshalDashboard(input)
 	require.NoError(t, err, "unmarshal and validate failed")
 
 	// Step 1.5: Verify struct fields have correct defaults (extra validation before storing).
@@ -761,7 +769,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	require.NoError(t, err, "marshal for storage failed")
 
 	// Step 3: Unmarshal from JSON (simulates reading from DB).
-	loaded, err := UnmarshalAndValidateJSON(stored)
+	loaded, err := unmarshalDashboard(stored)
 	require.NoError(t, err, "unmarshal from storage failed")
 
 	// Step 3.5: Verify struct fields have correct defaults after loading (before returning in API).
@@ -874,7 +882,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateJSON(tc.data)
+			_, err := unmarshalDashboard(tc.data)
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {

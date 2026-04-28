@@ -32,24 +32,15 @@ type DashboardData struct {
 // Unmarshal + validate entry point
 // ══════════════════════════════════════════════
 
-func UnmarshalAndValidateJSON(data []byte) (*DashboardData, error) {
+func (d *DashboardData) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
-	var d DashboardData
-	if err := dec.Decode(&d); err != nil {
-		return nil, err
+	type alias DashboardData
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return err
 	}
-	if err := validateDashboard(d); err != nil {
-		return nil, err
-	}
-	return &d, nil
-}
-
-// ══════════════════════════════════════════════
-// Cross-field validation
-// ══════════════════════════════════════════════
-
-func validateDashboard(d DashboardData) error {
+	*d = DashboardData(tmp)
 	for key, panel := range d.Panels {
 		if panel == nil {
 			return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
@@ -66,6 +57,10 @@ func validateDashboard(d DashboardData) error {
 	}
 	return nil
 }
+
+// ══════════════════════════════════════════════
+// Cross-field validation
+// ══════════════════════════════════════════════
 
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	if !slices.Contains(allowed, plugin.Kind) {

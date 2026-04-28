@@ -10346,7 +10346,7 @@ paths:
         keys. Also reports missing required metrics and whether the requested time
         range falls before the data retention boundary. Numeric metric fields (cpu,
         memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available
-        for that field; frontends should render ''—'' rather than the literal value.'
+        for that field.'
       operationId: ListHosts
       requestBody:
         content:
@@ -10419,8 +10419,7 @@ paths:
         metrics and whether the requested time range falls before the data retention
         boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
         podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
-        data is available for that field; frontends should render ''—'' rather than
-        the literal value.'
+        data is available for that field.'
       operationId: ListPods
       requestBody:
         content:

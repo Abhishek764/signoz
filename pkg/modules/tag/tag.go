@@ -19,5 +19,5 @@ type Module interface {
 	// LinkToEntity inserts (entity, tag) rows in tag_relations. Existing rows
 	// are left untouched. Uses the caller's transaction context if any so that
 	// it can be made atomic with the entity row insert.
-	LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType valuer.String, entityID valuer.UUID, tagIDs []valuer.UUID) error
+	LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, entityID valuer.UUID, tagIDs []valuer.UUID) error
 }

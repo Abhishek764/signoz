@@ -34,7 +34,7 @@ func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, postable []t
 	return append(matched, created...), nil
 }
 
-func (m *module) LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType valuer.String, entityID valuer.UUID, tagIDs []valuer.UUID) error {
+func (m *module) LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, entityID valuer.UUID, tagIDs []valuer.UUID) error {
 	if len(tagIDs) == 0 {
 		return nil
 	}

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { Activity, AlertTriangle, BarChart3, Search, Zap } from 'lucide-react';
+import {
+	Activity,
+	TriangleAlert,
+	ChartBar,
+	Search,
+	Zap,
+} from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../types';
@@ -10,7 +16,7 @@ import StreamingMessage from './StreamingMessage';
 
 const SUGGESTIONS = [
 	{
-		icon: AlertTriangle,
+		icon: TriangleAlert,
 		text: 'Show me the top errors in the last hour',
 	},
 	{
@@ -18,7 +24,7 @@ const SUGGESTIONS = [
 		text: 'What services have the highest latency?',
 	},
 	{
-		icon: BarChart3,
+		icon: ChartBar,
 		text: 'Give me an overview of system health',
 	},
 	{

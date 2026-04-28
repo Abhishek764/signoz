@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui';
-import { HelpCircle, Send, X } from 'lucide-react';
+import { CircleHelp, Send, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { ClarificationField, PendingClarification } from '../types';
@@ -74,7 +74,7 @@ export default function ClarificationForm({
 	return (
 		<div className="ai-clarification">
 			<div className="ai-clarification__header">
-				<HelpCircle size={13} className="ai-clarification__header-icon" />
+				<CircleHelp size={13} className="ai-clarification__header-icon" />
 				<span className="ai-clarification__header-label">A few details needed</span>
 			</div>
 

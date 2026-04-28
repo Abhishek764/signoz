@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
-import { Eraser, History, Maximize2, Plus, X } from 'lucide-react';
+import { History, Maximize2, Plus, X } from '@signozhq/icons';
 
 import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
@@ -28,7 +28,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
-	const clearConversation = useAIAssistantStore((s) => s.clearConversation);
 
 	const handleExpand = useCallback(() => {
 		if (!activeConversationId) {
@@ -44,12 +43,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		startNewConversation();
 		setShowHistory(false);
 	}, [startNewConversation]);
-
-	const handleClear = useCallback(() => {
-		if (activeConversationId) {
-			clearConversation(activeConversationId);
-		}
-	}, [activeConversationId, clearConversation]);
 
 	// When user picks a conversation from the list, close the sidebar
 	const handleHistorySelect = useCallback(() => {
@@ -116,19 +109,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 							aria-label="Toggle conversations"
 						>
 							<History size={14} />
-						</Button>
-					</Tooltip>
-
-					<Tooltip title="Clear chat">
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={handleClear}
-							disabled={!activeConversationId || showHistory}
-							aria-label="Clear chat"
-						>
-							<Eraser size={14} />
 						</Button>
 					</Tooltip>
 

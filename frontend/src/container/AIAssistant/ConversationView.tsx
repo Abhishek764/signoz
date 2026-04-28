@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
+import { LoaderCircle } from '@signozhq/icons';
 
 import ChatInput from './components/ChatInput';
 import VirtualizedMessages from './components/VirtualizedMessages';
@@ -57,7 +57,7 @@ export default function ConversationView({
 		return (
 			<div className="ai-conversation">
 				<div className="ai-conversation__loading">
-					<Loader2 size={20} className="ai-history__spinner" />
+					<LoaderCircle size={20} className="ai-history__spinner" />
 					Loading conversation…
 				</div>
 				<div className="ai-conversation__input-wrapper">

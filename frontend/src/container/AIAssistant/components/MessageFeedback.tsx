@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Tooltip } from '@signozhq/ui';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';

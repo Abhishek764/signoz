@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Brain, ChevronDown, ChevronRight } from 'lucide-react';
+import { Brain, ChevronDown, ChevronRight } from '@signozhq/icons';
 
 interface ThinkingStepProps {
 	content: string;

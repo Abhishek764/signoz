@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui';
-import { AlertCircle, Check, Loader2, X, Zap } from 'lucide-react';
+import { Check, LoaderCircle, TriangleAlert, X, Zap } from '@signozhq/icons';
 
 import { PageActionRegistry } from '../../pageActions/PageActionRegistry';
 import { AIActionBlock } from '../../pageActions/types';
@@ -149,7 +149,7 @@ export default function ActionBlock({
 	if (localState === 'error') {
 		return (
 			<div className="ai-block ai-action ai-action--error">
-				<AlertCircle
+				<TriangleAlert
 					size={13}
 					className="ai-action__status-icon ai-action__status-icon--err"
 				/>
@@ -163,7 +163,10 @@ export default function ActionBlock({
 	if (localState === 'loading') {
 		return (
 			<div className="ai-block ai-action ai-action--loading">
-				<Loader2 size={13} className="ai-action__spinner ai-action__status-icon" />
+				<LoaderCircle
+					size={13}
+					className="ai-action__spinner ai-action__status-icon"
+				/>
 				<span className="ai-action__status-text">{description}</span>
 			</div>
 		);

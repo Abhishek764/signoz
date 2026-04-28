@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Drawer, Tooltip } from 'antd';
+import { Tooltip } from '@signozhq/ui';
+import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
-import { Maximize2, MessageSquare, Plus, X } from 'lucide-react';
+import { Maximize2, MessageSquare, Plus, X } from '@signozhq/icons';
 
 import ConversationView from './ConversationView';
 import { useAIAssistantStore } from './store/useAIAssistantStore';

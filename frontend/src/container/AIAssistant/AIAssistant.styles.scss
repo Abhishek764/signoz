@@ -230,7 +230,7 @@ $ai-radius: 4px;
 
 .ai-conversation__input-wrapper {
 	flex-shrink: 0;
-	padding: 12px 16px 16px;
+	padding: 12px;
 	border-top: 1px solid var(--l1-border);
 }
 
@@ -1489,7 +1489,7 @@ $ai-radius: 4px;
 
 	// Full-screen page: fixed-width left column
 	.ai-assistant-page & {
-		width: 240px;
+		width: 280px;
 		flex-shrink: 0;
 		border-right: 1px solid var(--l1-border);
 	}
@@ -2174,4 +2174,5 @@ $ai-radius: 4px;
 .ai-clarification__actions {
 	display: flex;
 	gap: 6px;
+	margin-top: 16px;
 }

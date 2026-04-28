@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Wrench } from 'lucide-react';
+import {
+	ChevronDown,
+	ChevronRight,
+	LoaderCircle,
+	Wrench,
+} from '@signozhq/icons';
 
 import { StreamingToolCall } from '../types';
 
@@ -38,7 +43,7 @@ export default function ToolCallStep({
 						className="ai-tool-step__icon ai-tool-step__icon--done"
 					/>
 				) : (
-					<Loader2
+					<LoaderCircle
 						size={12}
 						className="ai-tool-step__icon ai-tool-step__icon--spin"
 					/>

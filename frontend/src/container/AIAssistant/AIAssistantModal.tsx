@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useHistory } from 'react-router-dom';
 import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
-import { Eraser, History, Maximize2, Minus, Plus, X } from 'lucide-react';
+import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
 
 import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
@@ -35,7 +35,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
-	const clearConversation = useAIAssistantStore((s) => s.clearConversation);
 
 	// ── Keyboard shortcuts ──────────────────────────────────────────────────────
 
@@ -84,12 +83,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 		startNewConversation();
 		setShowHistory(false);
 	}, [startNewConversation]);
-
-	const handleClear = useCallback(() => {
-		if (activeConversationId) {
-			clearConversation(activeConversationId);
-		}
-	}, [activeConversationId, clearConversation]);
 
 	const handleHistorySelect = useCallback(() => {
 		setShowHistory(false);
@@ -143,18 +136,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 								className={showHistory ? 'ai-panel-btn--active' : ''}
 							>
 								<History size={14} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Clear chat">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={handleClear}
-								disabled={!activeConversationId || showHistory}
-								aria-label="Clear chat"
-							>
-								<Eraser size={14} />
 							</Button>
 						</Tooltip>
 

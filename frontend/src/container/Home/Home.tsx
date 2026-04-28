@@ -40,7 +40,6 @@ import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
 import wrenchUrl from '@/assets/Icons/wrench.svg';
 import allInOneUrl from '@/assets/Images/allInOne.svg';
 import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
-import dottedDividerUrl from '@/assets/Images/dotted-divider.svg';
 import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -352,10 +351,6 @@ export default function Home(): JSX.Element {
 						}
 						isLoading={isLogsLoading || isTracesLoading}
 					/>
-
-					<div className="divider">
-						<img src={dottedDividerUrl} alt="divider" />
-					</div>
 
 					<div className="active-ingestions-container">
 						{isLogsIngestionActive && (

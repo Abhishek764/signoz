@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui';
-import { Check, Shield, X } from 'lucide-react';
+import { Check, Shield, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { PendingApproval } from '../types';

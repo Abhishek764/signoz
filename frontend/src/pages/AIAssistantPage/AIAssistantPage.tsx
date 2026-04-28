@@ -6,7 +6,7 @@ import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';
 import ConversationView from 'container/AIAssistant/ConversationView';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
-import { Eraser, Minimize2, Plus } from 'lucide-react';
+import { Minimize2, Plus } from '@signozhq/icons';
 
 import 'container/AIAssistant/AIAssistant.styles.scss';
 
@@ -25,7 +25,6 @@ export default function AIAssistantPage(): JSX.Element {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
-	const clearConversation = useAIAssistantStore((s) => s.clearConversation);
 	const openDrawer = useAIAssistantStore((s) => s.openDrawer);
 
 	// Keep a ref so the effect can read latest conversations without re-firing
@@ -54,10 +53,6 @@ export default function AIAssistantPage(): JSX.Element {
 		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
 	}, [startNewConversation, history]);
 
-	const handleClear = useCallback(() => {
-		clearConversation(conversationId);
-	}, [clearConversation, conversationId]);
-
 	// When conversations sidebar selects a thread, navigate to it
 	const handleHistorySelect = useCallback(
 		(id: string) => {
@@ -77,18 +72,6 @@ export default function AIAssistantPage(): JSX.Element {
 				</div>
 
 				<div className="ai-assistant-page__actions">
-					<Tooltip title="Clear chat">
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleClear}
-							disabled={!activeId}
-							aria-label="Clear chat"
-						>
-							<Eraser size={14} />
-						</Button>
-					</Tooltip>
-
 					<Tooltip title="New conversation">
 						<Button
 							variant="ghost"

@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { useMessageContext } from '../MessageContext';

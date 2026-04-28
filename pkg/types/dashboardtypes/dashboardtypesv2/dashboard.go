@@ -122,7 +122,7 @@ func NewDashboard(orgID valuer.UUID, createdBy string, postable PostableDashboar
 // the dashboard table. Tags are intentionally omitted — they live in
 // tag_relations and are inserted separately by the caller.
 func (d *Dashboard) ToStorableDashboard() (*dashboardtypes.StorableDashboard, error) {
-	data, err := d.Info.StoredDashboardInfo.toStorableDashboardData()
+	data, err := d.Info.toStorableDashboardData()
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ var _ factory.Config = (*Config)(nil)
 // from today - HistoricalBackfillDays. It mirrors the ClickHouse meter-table
 // TTL of 12 months — anything older has no backing data anyway, so it is not
 // exposed as a config field.
-const HistoricalBackfillDays = 365
+const HistoricalBackfillDays = 10
 
 type Config struct {
 	// Provider picks the reporter implementation. "noop" is the default and is

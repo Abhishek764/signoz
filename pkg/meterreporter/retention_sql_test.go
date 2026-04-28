@@ -7,10 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 )
 
-func TestBuildLogsRetentionMultiIfSQLNoRulesCollapsesToDefault(t *testing.T) {
+func TestBuildRetentionMultiIfSQLNoRulesCollapsesToDefault(t *testing.T) {
 	t.Parallel()
 
-	expr, err := buildLogsRetentionMultiIfSQL(nil, 15)
+	expr, err := buildRetentionMultiIfSQL(nil, 15)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -19,7 +19,7 @@ func TestBuildLogsRetentionMultiIfSQLNoRulesCollapsesToDefault(t *testing.T) {
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLSingleRule(t *testing.T) {
+func TestBuildRetentionMultiIfSQLSingleRule(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{
@@ -32,7 +32,7 @@ func TestBuildLogsRetentionMultiIfSQLSingleRule(t *testing.T) {
 		},
 	}
 
-	expr, err := buildLogsRetentionMultiIfSQL(rules, 15)
+	expr, err := buildRetentionMultiIfSQL(rules, 15)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestBuildLogsRetentionMultiIfSQLSingleRule(t *testing.T) {
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
+func TestBuildRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{
@@ -56,7 +56,7 @@ func TestBuildLogsRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
 		},
 	}
 
-	expr, err := buildLogsRetentionMultiIfSQL(rules, 15)
+	expr, err := buildRetentionMultiIfSQL(rules, 15)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestBuildLogsRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLMultipleFiltersAreAndedTogether(t *testing.T) {
+func TestBuildRetentionMultiIfSQLMultipleFiltersAreAndedTogether(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{
@@ -79,7 +79,7 @@ func TestBuildLogsRetentionMultiIfSQLMultipleFiltersAreAndedTogether(t *testing.
 		},
 	}
 
-	expr, err := buildLogsRetentionMultiIfSQL(rules, 15)
+	expr, err := buildRetentionMultiIfSQL(rules, 15)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestBuildLogsRetentionMultiIfSQLMultipleFiltersAreAndedTogether(t *testing.
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLRejectsInvalidKey(t *testing.T) {
+func TestBuildRetentionMultiIfSQLRejectsInvalidKey(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{{
@@ -102,12 +102,12 @@ func TestBuildLogsRetentionMultiIfSQLRejectsInvalidKey(t *testing.T) {
 		TTLDays: 90,
 	}}
 
-	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {
+	if _, err := buildRetentionMultiIfSQL(rules, 15); err == nil {
 		t.Fatalf("expected error for invalid key")
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLRejectsInvalidValue(t *testing.T) {
+func TestBuildRetentionMultiIfSQLRejectsInvalidValue(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{{
@@ -115,23 +115,23 @@ func TestBuildLogsRetentionMultiIfSQLRejectsInvalidValue(t *testing.T) {
 		TTLDays: 90,
 	}}
 
-	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {
+	if _, err := buildRetentionMultiIfSQL(rules, 15); err == nil {
 		t.Fatalf("expected error for invalid value")
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLRejectsNonPositiveDefault(t *testing.T) {
+func TestBuildRetentionMultiIfSQLRejectsNonPositiveDefault(t *testing.T) {
 	t.Parallel()
 
-	if _, err := buildLogsRetentionMultiIfSQL(nil, 0); err == nil {
+	if _, err := buildRetentionMultiIfSQL(nil, 0); err == nil {
 		t.Fatalf("expected error for zero default")
 	}
-	if _, err := buildLogsRetentionMultiIfSQL(nil, -1); err == nil {
+	if _, err := buildRetentionMultiIfSQL(nil, -1); err == nil {
 		t.Fatalf("expected error for negative default")
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLRejectsNonPositiveRuleTTL(t *testing.T) {
+func TestBuildRetentionMultiIfSQLRejectsNonPositiveRuleTTL(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{{
@@ -139,28 +139,28 @@ func TestBuildLogsRetentionMultiIfSQLRejectsNonPositiveRuleTTL(t *testing.T) {
 		TTLDays: 0,
 	}}
 
-	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {
+	if _, err := buildRetentionMultiIfSQL(rules, 15); err == nil {
 		t.Fatalf("expected error for zero rule ttl")
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLRejectsRuleWithNoFilters(t *testing.T) {
+func TestBuildRetentionMultiIfSQLRejectsRuleWithNoFilters(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{{Filters: nil, TTLDays: 90}}
-	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {
+	if _, err := buildRetentionMultiIfSQL(rules, 15); err == nil {
 		t.Fatalf("expected error for empty filters")
 	}
 }
 
-func TestBuildLogsRetentionMultiIfSQLRejectsFilterWithNoValues(t *testing.T) {
+func TestBuildRetentionMultiIfSQLRejectsFilterWithNoValues(t *testing.T) {
 	t.Parallel()
 
 	rules := []retentiontypes.CustomRetentionRule{{
 		Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: nil}},
 		TTLDays: 90,
 	}}
-	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {
+	if _, err := buildRetentionMultiIfSQL(rules, 15); err == nil {
 		t.Fatalf("expected error for empty values")
 	}
 }

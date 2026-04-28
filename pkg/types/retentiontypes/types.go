@@ -1,5 +1,11 @@
 package retentiontypes
 
+const (
+	DefaultLogsRetentionDays    = 15
+	DefaultMetricsRetentionDays = 30
+	DefaultTracesRetentionDays  = 15
+)
+
 // CustomRetentionRule is one custom retention rule as stored in ttl_setting.condition.
 // Rules are evaluated in declaration order; the first matching rule wins.
 type CustomRetentionRule struct {

@@ -1984,7 +1984,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 
 		if err == sql.ErrNoRows {
 			// No V2 configuration found, return defaults
-			response.DefaultTTLDays = types.DefaultRetentionDays
+			response.DefaultTTLDays = retentiontypes.DefaultLogsRetentionDays
 			response.TTLConditions = []retentiontypes.CustomRetentionRule{}
 			response.Status = types.TTLSettingStatusSuccess
 			response.ColdStorageTTLDays = -1

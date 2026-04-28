@@ -79,6 +79,51 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			name: "Scope field - name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.name::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.name::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "version",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.version::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.version",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.version::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - custom attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "custom.attr",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.attributes.`custom.attr`::String",
+			expectedError:  nil,
+		},
+		{
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",

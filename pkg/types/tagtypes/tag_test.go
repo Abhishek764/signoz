@@ -116,6 +116,12 @@ func TestMatchCasingWithExistingTags(t *testing.T) {
 			wantName:         "teams/blr",
 			wantInternalName: "teams::blr",
 		},
+		{
+			name:             "prefix of an existing tag",
+			input:            "TEAM",
+			wantName:         "team",
+			wantInternalName: "team",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

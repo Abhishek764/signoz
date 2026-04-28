@@ -151,34 +151,47 @@ func buildInternalName(cleanedName string) string {
 
 // matchCasingWithExistingTags returns the display name and internal name to use for
 // a user-supplied tag, given the existing tags in the org. If an existing tag
-// has the same internal name, its display name (casing) is reused. If an
-// existing tag is a strict segment-prefix of the input, that prefix's casing
-// is reused for those segments and the remaining input segments are kept as
-// the user supplied them. Otherwise the input name is returned as-is.
+// has the same internal name, its display name (casing) is reused. Otherwise
+// the existing tag with the longest segment-wise (case-insensitive) common
+// prefix lends its casing to the matching segments — the remaining input
+// segments keep the user-supplied casing. With no overlap, the input is
+// returned as-is.
 func matchCasingWithExistingTags(inputCleaned string, existing []*Tag) (canonicalName string, canonicalInternalName string) {
+	inputSegments := strings.Split(inputCleaned, HierarchySeparator)
 	inputInternal := buildInternalName(inputCleaned)
 
-	var bestPrefix *Tag
-	bestPrefixLen := 0
+	var bestMatch *Tag
+	bestMatchLen := 0
 	for _, tag := range existing {
 		if tag.InternalName == inputInternal {
 			return tag.Name, tag.InternalName
 		}
-		if strings.HasPrefix(inputInternal, tag.InternalName+InternalSeparator) {
-			if len(tag.InternalName) > bestPrefixLen {
-				bestPrefix = tag
-				bestPrefixLen = len(tag.InternalName)
-			}
+		existingSegments := strings.Split(tag.Name, HierarchySeparator)
+		matchLen := commonSegmentPrefix(inputSegments, existingSegments)
+		if matchLen > bestMatchLen {
+			bestMatch = tag
+			bestMatchLen = matchLen
 		}
 	}
 
-	if bestPrefix == nil {
+	if bestMatch == nil {
 		return inputCleaned, inputInternal
 	}
 
-	prefixSegments := strings.Split(bestPrefix.Name, HierarchySeparator)
-	inputSegments := strings.Split(inputCleaned, HierarchySeparator)
-	canonicalSegments := append(prefixSegments, inputSegments[len(prefixSegments):]...)
+	existingSegments := strings.Split(bestMatch.Name, HierarchySeparator)
+	canonicalSegments := append(existingSegments[:bestMatchLen:bestMatchLen], inputSegments[bestMatchLen:]...)
 	canonical := strings.Join(canonicalSegments, HierarchySeparator)
 	return canonical, buildInternalName(canonical)
+}
+
+// returns 1 + (the index till which the two arrays are equal)
+// for eg ["a", "bcd", "efg", "h"] and ["a", "bcd", "ef"] returns 2
+func commonSegmentPrefix(a, b []string) int {
+	n := min(len(a), len(b))
+	for i := range n {
+		if !strings.EqualFold(a[i], b[i]) {
+			return i
+		}
+	}
+	return n
 }

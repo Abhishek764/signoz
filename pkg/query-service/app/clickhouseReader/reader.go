@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -1879,7 +1880,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 }
 
 // New method to build multiIf expressions with support for multiple AND conditions
-func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []model.CustomRetentionRule, defaultTTLDays int, isResourceTable bool) string {
+func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []retentiontypes.CustomRetentionRule, defaultTTLDays int, isResourceTable bool) string {
 	var conditions []string
 
 	for i, rule := range ttlConditions {
@@ -1984,18 +1985,18 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		if err == sql.ErrNoRows {
 			// No V2 configuration found, return defaults
 			response.DefaultTTLDays = types.DefaultRetentionDays
-			response.TTLConditions = []model.CustomRetentionRule{}
+			response.TTLConditions = []retentiontypes.CustomRetentionRule{}
 			response.Status = constants.StatusSuccess
 			response.ColdStorageTTLDays = -1
 			return response, nil
 		}
 
 		// Parse TTL conditions from Condition
-		var ttlConditions []model.CustomRetentionRule
+		var ttlConditions []retentiontypes.CustomRetentionRule
 		if customTTL.Condition != "" {
 			if err := json.Unmarshal([]byte(customTTL.Condition), &ttlConditions); err != nil {
 				r.logger.Error("Error parsing TTL conditions", errorsV2.Attr(err))
-				ttlConditions = []model.CustomRetentionRule{}
+				ttlConditions = []retentiontypes.CustomRetentionRule{}
 			}
 		}
 
@@ -2030,7 +2031,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		}
 
 		// For V1, we don't have TTL conditions
-		response.TTLConditions = []model.CustomRetentionRule{}
+		response.TTLConditions = []retentiontypes.CustomRetentionRule{}
 	}
 
 	return response, nil
@@ -2070,7 +2071,7 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 }
 
 // Enhanced validation function with duplicate detection and efficient key validation
-func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditions []model.CustomRetentionRule) error {
+func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditions []retentiontypes.CustomRetentionRule) error {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "validateTTLConditions",

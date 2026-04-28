@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -221,9 +222,9 @@ func TestBuildLogsRetentionSlicesFromRowsParsesConditionJSON(t *testing.T) {
 		t.Fatalf("len(slices) = %d, want 1", len(slices))
 	}
 
-	wantRules := []retentionRule{
-		{Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: []string{"019a1769-45aa-721f-a19a-9a8b5ae2d615"}}}, TTLDays: 90},
-		{Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: []string{"019c06d5-bbe2-7e99-b614-ea2a080416ea", "019c34a1-9df9-72c0-b100-4f9e38d1f26d"}}}, TTLDays: 365},
+	wantRules := []retentiontypes.CustomRetentionRule{
+		{Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: []string{"019a1769-45aa-721f-a19a-9a8b5ae2d615"}}}, TTLDays: 90},
+		{Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: []string{"019c06d5-bbe2-7e99-b614-ea2a080416ea", "019c34a1-9df9-72c0-b100-4f9e38d1f26d"}}}, TTLDays: 365},
 	}
 	if !reflect.DeepEqual(slices[0].Rules, wantRules) {
 		t.Fatalf("Rules = %#v, want %#v", slices[0].Rules, wantRules)

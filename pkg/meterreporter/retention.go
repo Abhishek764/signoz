@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -36,30 +37,13 @@ var defaultRetentionDaysByDomain = map[RetentionDomain]int{
 	RetentionDomainLogs: types.DefaultRetentionDays,
 }
 
-// retentionRule mirrors the per-bucket retention rule shape stored in
-// ttl_setting.condition (written by SetCustomRetentionV2 as a JSON-encoded
-// []model.CustomRetentionRule). Each rule's filters are AND-ed together; rules
-// are evaluated in declaration order, first match wins.
-type retentionRule struct {
-	Filters []retentionFilter `json:"conditions"`
-	TTLDays int               `json:"ttlDays"`
-}
-
-// retentionFilter is one (label-key, allowed-values) pair within a
-// retentionRule. The key is matched against the meter sample's labels JSON
-// using JSONExtractString.
-type retentionFilter struct {
-	Key    string   `json:"key"`
-	Values []string `json:"values"`
-}
-
 // retentionSlice is one half-open millisecond window during which a single
 // retention recipe was active. The collector evaluates one query per slice and
 // aggregates results in Go by (workspace, retention_days).
 type retentionSlice struct {
 	StartMs     int64
 	EndMs       int64
-	Rules       []retentionRule
+	Rules       []retentiontypes.CustomRetentionRule
 	DefaultDays int
 }
 
@@ -188,7 +172,7 @@ func buildLogsRetentionSlicesFromRows(rows []*types.TTLSetting, startMs, endMs i
 // pair used to drive the retention multi-if. A nil row means "no recipe has
 // ever been written for this org/table" — fall back to the DDL default. A V1
 // row (Condition empty) yields no rules, just the row's TTL as the default.
-func configFromTTLSetting(row *types.TTLSetting) ([]retentionRule, int, error) {
+func configFromTTLSetting(row *types.TTLSetting) ([]retentiontypes.CustomRetentionRule, int, error) {
 	if row == nil {
 		days, ok := defaultRetentionDaysByDomain[RetentionDomainLogs]
 		if !ok {
@@ -210,7 +194,7 @@ func configFromTTLSetting(row *types.TTLSetting) ([]retentionRule, int, error) {
 		return nil, defaultDays, nil
 	}
 
-	var rules []retentionRule
+	var rules []retentiontypes.CustomRetentionRule
 	if err := json.Unmarshal([]byte(row.Condition), &rules); err != nil {
 		return nil, 0, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "parse ttl_setting condition for row %q", row.ID.StringValue())
 	}

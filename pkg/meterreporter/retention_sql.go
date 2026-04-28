@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 )
 
 // retentionLabelKeyPattern allowlists characters permitted in a ttl_setting
@@ -46,7 +47,7 @@ const retentionWorkspaceLabelKey = "signoz.workspace.key.id"
 //
 // The returned string is intended to be inlined as a SELECT-list expression;
 // it does not include the AS alias.
-func buildLogsRetentionMultiIfSQL(rules []retentionRule, defaultDays int) (string, error) {
+func buildLogsRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
 		return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "non-positive default retention %d", defaultDays)
 	}

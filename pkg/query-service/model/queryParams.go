@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 )
 
 type InstantQueryMetricsParams struct {
@@ -409,21 +411,11 @@ type TTLParams struct {
 }
 
 type CustomRetentionTTLParams struct {
-	Type                      string                `json:"type"`
-	DefaultTTLDays            int                   `json:"defaultTTLDays"`
-	TTLConditions             []CustomRetentionRule `json:"ttlConditions"`
-	ColdStorageVolume         string                `json:"coldStorageVolume,omitempty"`
-	ToColdStorageDurationDays int64                 `json:"coldStorageDurationDays,omitempty"`
-}
-
-type CustomRetentionRule struct {
-	Filters []FilterCondition `json:"conditions"`
-	TTLDays int               `json:"ttlDays"`
-}
-
-type FilterCondition struct {
-	Key    string   `json:"key"`
-	Values []string `json:"values"`
+	Type                      string                               `json:"type"`
+	DefaultTTLDays            int                                  `json:"defaultTTLDays"`
+	TTLConditions             []retentiontypes.CustomRetentionRule `json:"ttlConditions"`
+	ColdStorageVolume         string                               `json:"coldStorageVolume,omitempty"`
+	ToColdStorageDurationDays int64                                `json:"coldStorageDurationDays,omitempty"`
 }
 
 type GetCustomRetentionTTLResponse struct {
@@ -437,10 +429,10 @@ type GetCustomRetentionTTLResponse struct {
 	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
 
 	// V2 fields
-	DefaultTTLDays     int                   `json:"default_ttl_days,omitempty"`
-	TTLConditions      []CustomRetentionRule `json:"ttl_conditions,omitempty"`
-	ColdStorageVolume  string                `json:"cold_storage_volume,omitempty"`
-	ColdStorageTTLDays int                   `json:"cold_storage_ttl_days,omitempty"`
+	DefaultTTLDays     int                                  `json:"default_ttl_days,omitempty"`
+	TTLConditions      []retentiontypes.CustomRetentionRule `json:"ttl_conditions,omitempty"`
+	ColdStorageVolume  string                               `json:"cold_storage_volume,omitempty"`
+	ColdStorageTTLDays int                                  `json:"cold_storage_ttl_days,omitempty"`
 }
 
 type CustomRetentionTTLResponse struct {

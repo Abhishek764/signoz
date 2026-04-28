@@ -3,6 +3,8 @@ package meterreporter
 import (
 	"strings"
 	"testing"
+
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 )
 
 func TestBuildLogsRetentionMultiIfSQLNoRulesCollapsesToDefault(t *testing.T) {
@@ -20,9 +22,9 @@ func TestBuildLogsRetentionMultiIfSQLNoRulesCollapsesToDefault(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLSingleRule(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{
+	rules := []retentiontypes.CustomRetentionRule{
 		{
-			Filters: []retentionFilter{{
+			Filters: []retentiontypes.FilterCondition{{
 				Key:    "signoz.workspace.key.id",
 				Values: []string{"019a1769-45aa-721f-a19a-9a8b5ae2d615"},
 			}},
@@ -43,13 +45,13 @@ func TestBuildLogsRetentionMultiIfSQLSingleRule(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{
+	rules := []retentiontypes.CustomRetentionRule{
 		{
-			Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: []string{"a"}}},
+			Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: []string{"a"}}},
 			TTLDays: 90,
 		},
 		{
-			Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: []string{"b", "c"}}},
+			Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: []string{"b", "c"}}},
 			TTLDays: 365,
 		},
 	}
@@ -67,9 +69,9 @@ func TestBuildLogsRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLMultipleFiltersAreAndedTogether(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{
+	rules := []retentiontypes.CustomRetentionRule{
 		{
-			Filters: []retentionFilter{
+			Filters: []retentiontypes.FilterCondition{
 				{Key: "signoz.workspace.key.id", Values: []string{"a"}},
 				{Key: "service.name", Values: []string{"frontend"}},
 			},
@@ -95,8 +97,8 @@ func TestBuildLogsRetentionMultiIfSQLMultipleFiltersAreAndedTogether(t *testing.
 func TestBuildLogsRetentionMultiIfSQLRejectsInvalidKey(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{{
-		Filters: []retentionFilter{{Key: "bad'key", Values: []string{"a"}}},
+	rules := []retentiontypes.CustomRetentionRule{{
+		Filters: []retentiontypes.FilterCondition{{Key: "bad'key", Values: []string{"a"}}},
 		TTLDays: 90,
 	}}
 
@@ -108,8 +110,8 @@ func TestBuildLogsRetentionMultiIfSQLRejectsInvalidKey(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLRejectsInvalidValue(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{{
-		Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: []string{"bad'value"}}},
+	rules := []retentiontypes.CustomRetentionRule{{
+		Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: []string{"bad'value"}}},
 		TTLDays: 90,
 	}}
 
@@ -132,8 +134,8 @@ func TestBuildLogsRetentionMultiIfSQLRejectsNonPositiveDefault(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLRejectsNonPositiveRuleTTL(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{{
-		Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: []string{"a"}}},
+	rules := []retentiontypes.CustomRetentionRule{{
+		Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: []string{"a"}}},
 		TTLDays: 0,
 	}}
 
@@ -145,7 +147,7 @@ func TestBuildLogsRetentionMultiIfSQLRejectsNonPositiveRuleTTL(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLRejectsRuleWithNoFilters(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{{Filters: nil, TTLDays: 90}}
+	rules := []retentiontypes.CustomRetentionRule{{Filters: nil, TTLDays: 90}}
 	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {
 		t.Fatalf("expected error for empty filters")
 	}
@@ -154,8 +156,8 @@ func TestBuildLogsRetentionMultiIfSQLRejectsRuleWithNoFilters(t *testing.T) {
 func TestBuildLogsRetentionMultiIfSQLRejectsFilterWithNoValues(t *testing.T) {
 	t.Parallel()
 
-	rules := []retentionRule{{
-		Filters: []retentionFilter{{Key: "signoz.workspace.key.id", Values: nil}},
+	rules := []retentiontypes.CustomRetentionRule{{
+		Filters: []retentiontypes.FilterCondition{{Key: "signoz.workspace.key.id", Values: nil}},
 		TTLDays: 90,
 	}}
 	if _, err := buildLogsRetentionMultiIfSQL(rules, 15); err == nil {

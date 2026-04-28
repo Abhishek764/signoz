@@ -5472,9 +5472,13 @@ export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
 
+/**
+ * @nullable
+ */
 export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
+	null = null,
 }
 export interface SpantypesGettableSpanMapperGroupsDTO {
 	/**
@@ -5497,7 +5501,6 @@ export interface SpantypesPostableSpanMapperDTO {
 }
 
 export interface SpantypesPostableSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type boolean
@@ -5548,16 +5551,18 @@ export interface SpantypesSpanMapperDTO {
 	updatedBy?: string;
 }
 
-export interface SpantypesSpanMapperConfigDTO {
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperConfigDTO = {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
 	sources: SpantypesSpanMapperSourceDTO[] | null;
-}
+} | null;
 
 export interface SpantypesSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type string
@@ -5595,11 +5600,10 @@ export interface SpantypesSpanMapperGroupDTO {
 	updatedBy?: string;
 }
 
-export interface SpantypesSpanMapperGroupCategoryDTO {
-	[key: string]: unknown;
-}
-
-export interface SpantypesSpanMapperGroupConditionDTO {
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperGroupConditionDTO = {
 	/**
 	 * @type array
 	 * @nullable true
@@ -5610,7 +5614,7 @@ export interface SpantypesSpanMapperGroupConditionDTO {
 	 * @nullable true
 	 */
 	resource: string[] | null;
-}
+} | null;
 
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
@@ -7104,10 +7108,6 @@ export type GetMyServiceAccount200 = {
 };
 
 export type ListSpanMapperGroupsParams = {
-	/**
-	 * @description undefined
-	 */
-	category?: SpantypesSpanMapperGroupCategoryDTO;
 	/**
 	 * @type boolean
 	 * @nullable true

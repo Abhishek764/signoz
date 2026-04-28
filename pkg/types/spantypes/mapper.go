@@ -1,6 +1,8 @@
 package spantypes
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -69,9 +71,9 @@ type PostableSpanMapper struct {
 // UpdatableSpanMapper is the HTTP request body for updating a span mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableSpanMapper struct {
-	FieldContext FieldContext      `json:"field_context,omitempty"`
-	Config       *SpanMapperConfig `json:"config,omitempty"`
-	Enabled      *bool             `json:"enabled,omitempty"`
+	FieldContext *FieldContext     `json:"field_context" nullable:"true"`
+	Config       *SpanMapperConfig `json:"config" nullable:"true"`
+	Enabled      *bool             `json:"enabled" nullable:"true"`
 }
 
 type GettableSpanMapper = SpanMapper
@@ -88,6 +90,53 @@ func (SpanMapperOperation) Enum() []any {
 	return []any{SpanMapperOperationMove, SpanMapperOperationCopy}
 }
 
+func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper) *SpanMapper {
+	now := time.Now()
+	return &SpanMapper{
+		ID:           valuer.GenerateUUID(),
+		GroupID:      groupID,
+		Name:         p.Name,
+		FieldContext: p.FieldContext,
+		Config:       p.Config,
+		Enabled:      p.Enabled,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: createdBy,
+			UpdatedBy: createdBy,
+		},
+	}
+}
+
+func (m *SpanMapper) Update(u *UpdatableSpanMapper, updatedBy string) {
+	if u.FieldContext != nil {
+		m.FieldContext = *u.FieldContext
+	}
+	if u.Config != nil {
+		m.Config = *u.Config
+	}
+	if u.Enabled != nil {
+		m.Enabled = *u.Enabled
+	}
+	m.UpdatedAt = time.Now()
+	m.UpdatedBy = updatedBy
+}
+
+func NewStorableSpanMapperFromMapper(m *SpanMapper) *StorableSpanMapper {
+	return &StorableSpanMapper{
+		Identifiable:  types.Identifiable{ID: m.ID},
+		TimeAuditable: m.TimeAuditable,
+		UserAuditable: m.UserAuditable,
+		GroupID:       m.GroupID,
+		Name:          m.Name,
+		FieldContext:  m.FieldContext,
+		Config:        m.Config,
+		Enabled:       m.Enabled,
+	}
+}
+
 func NewSpanMapperFromStorable(s *StorableSpanMapper) *SpanMapper {
 	return &SpanMapper{
 		TimeAuditable: s.TimeAuditable,
@@ -99,29 +148,6 @@ func NewSpanMapperFromStorable(s *StorableSpanMapper) *SpanMapper {
 		Config:        s.Config,
 		Enabled:       s.Enabled,
 	}
-}
-
-func NewSpanMapperFromPostable(req *PostableSpanMapper) *SpanMapper {
-	return &SpanMapper{
-		Name:         req.Name,
-		FieldContext: req.FieldContext,
-		Config:       req.Config,
-		Enabled:      req.Enabled,
-	}
-}
-
-func NewSpanMapperFromUpdatable(req *UpdatableSpanMapper) *SpanMapper {
-	m := &SpanMapper{}
-	if req.FieldContext != (FieldContext{}) {
-		m.FieldContext = req.FieldContext
-	}
-	if req.Config != nil {
-		m.Config = *req.Config
-	}
-	if req.Enabled != nil {
-		m.Enabled = *req.Enabled
-	}
-	return m
 }
 
 func NewSpanMappersFromStorableSpanMappers(ss []*StorableSpanMapper) []*SpanMapper {

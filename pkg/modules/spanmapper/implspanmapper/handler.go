@@ -72,10 +72,9 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group := spantypes.NewSpanMapperGroupFromPostable(req)
+	group := spantypes.NewSpanMapperGroup(orgID, claims.Email, req)
 
-	err = h.module.CreateGroup(ctx, orgID, claims.Email, group)
-	if err != nil {
+	if err := h.module.CreateGroup(ctx, orgID, group); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -107,8 +106,14 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.UpdateGroup(ctx, orgID, id, claims.Email, spantypes.NewSpanMapperGroupFromUpdatable(req))
+	group, err := h.module.GetGroup(ctx, orgID, id)
 	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	group.Update(req, claims.Email)
+
+	if err := h.module.UpdateGroup(ctx, orgID, id, group); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -195,10 +200,9 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	mapper := spantypes.NewSpanMapperFromPostable(req)
+	mapper := spantypes.NewSpanMapper(groupID, claims.Email, req)
 
-	err = h.module.CreateMapper(ctx, orgID, groupID, claims.Email, mapper)
-	if err != nil {
+	if err := h.module.CreateMapper(ctx, orgID, groupID, mapper); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -237,8 +241,14 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spantypes.NewSpanMapperFromUpdatable(req))
+	mapper, err := h.module.GetMapper(ctx, orgID, groupID, mapperID)
 	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	mapper.Update(req, claims.Email)
+
+	if err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, mapper); err != nil {
 		render.Error(rw, err)
 		return
 	}

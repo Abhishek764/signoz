@@ -4500,6 +4500,7 @@ components:
       enum:
       - attribute
       - resource
+      nullable: true
       type: string
     SpantypesGettableSpanMapperGroups:
       properties:
@@ -4527,8 +4528,6 @@ components:
       type: object
     SpantypesPostableSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
@@ -4537,7 +4536,6 @@ components:
           type: string
       required:
       - name
-      - category
       - condition
       type: object
     SpantypesSpanMapper:
@@ -4573,6 +4571,7 @@ components:
       - enabled
       type: object
     SpantypesSpanMapperConfig:
+      nullable: true
       properties:
         sources:
           items:
@@ -4584,8 +4583,6 @@ components:
       type: object
     SpantypesSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         createdAt:
@@ -4610,13 +4607,11 @@ components:
       - id
       - orgId
       - name
-      - category
       - condition
       - enabled
       type: object
-    SpantypesSpanMapperGroupCategory:
-      type: object
     SpantypesSpanMapperGroupCondition:
+      nullable: true
       properties:
         attributes:
           items:
@@ -9423,12 +9418,6 @@ paths:
         org.
       operationId: ListSpanMapperGroups
       parameters:
-      - explode: true
-        in: query
-        name: category
-        schema:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
-        style: deepObject
       - in: query
         name: enabled
         schema:

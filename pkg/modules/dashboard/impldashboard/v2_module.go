@@ -9,6 +9,10 @@ import (
 )
 
 func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypesv2.PostableDashboard) (*dashboardtypesv2.Dashboard, error) {
+	if err := postable.Validate(); err != nil {
+		return nil, err
+	}
+
 	// Tag upserts run outside the dashboard transaction by design: a successful
 	// upsert that loses an outer dashboard insert just leaves resolved tag rows
 	// around for the next attempt — preferable to coupling the two.

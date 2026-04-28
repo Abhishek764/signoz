@@ -59,17 +59,21 @@ func (p *PostableDashboard) UnmarshalJSON(data []byte) error {
 	if err := dec.Decode(&tmp); err != nil {
 		return err
 	}
-	if tmp.Metadata.SchemaVersion != SchemaVersion {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "metadata.schemaVersion must be %q, got %q", SchemaVersion, tmp.Metadata.SchemaVersion)
+	*p = PostableDashboard(tmp)
+	return p.Validate()
+}
+
+func (p *PostableDashboard) Validate() error {
+	if p.Metadata.SchemaVersion != SchemaVersion {
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "metadata.schemaVersion must be %q, got %q", SchemaVersion, p.Metadata.SchemaVersion)
 	}
-	if tmp.Data.Display == nil || tmp.Data.Display.Name == "" {
+	if p.Data.Display == nil || p.Data.Display.Name == "" {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "data.display.name is required")
 	}
-	if len(tmp.Tags) > MaxTagsPerDashboard {
+	if len(p.Tags) > MaxTagsPerDashboard {
 		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
-	*p = PostableDashboard(tmp)
-	return nil
+	return p.Data.Validate()
 }
 
 type GettableDashboard struct {

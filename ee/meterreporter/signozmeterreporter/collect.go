@@ -213,23 +213,18 @@ func (provider *Provider) catchupStart(floor time.Time, todayStart time.Time, ch
 	return catchupStart
 }
 
-// dataFloor picks the bootstrap floor: the earliest day at or after
-// today-HistoricalBackfillDays for which signoz_meter.distributed_samples
-// holds any sample. Without this, a fresh license with no checkpoints would
-// bootstrap from a year ago and re-run the same empty 30-day window every
-// tick (no readings shipped → checkpoint never advances).
+// dataFloor returns the earliest day signoz_meter.distributed_samples holds a
+// sample, truncated to UTC midnight. With no data — or on query failure —
+// returns todayStart, which the yesterday-clamp in catchupStart turns into a
+// single sealed-day pass.
 //
 // Unfiltered by metric_name on purpose: the meter table is billing-only by
 // design, so the global min spans logs/metrics/traces. Filtering would let
 // earlier metric or trace data slip past the floor and under-bill on backfill.
-//
-// On query failure we fall back to the static floor — better to bootstrap
-// wide than skip days.
+// The CH meter-table TTL caps how old the data can ever be.
 func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) time.Time {
-	bootstrapStart := todayStart.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
-
 	if provider.deps.TelemetryStore == nil {
-		return bootstrapStart
+		return todayStart
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -239,20 +234,15 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 
 	var minMs int64
 	if err := provider.deps.TelemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minMs); err != nil {
-		provider.settings.Logger().WarnContext(ctx, "failed to read data floor; using static bootstrap", errors.Attr(err))
-		return bootstrapStart
+		provider.settings.Logger().WarnContext(ctx, "failed to read data floor; falling back to latest sealed day", errors.Attr(err))
+		return todayStart
 	}
-
 	if minMs == 0 {
-		return bootstrapStart
+		return todayStart
 	}
 
 	minDay := time.UnixMilli(minMs).UTC()
-	minDay = time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
-	if minDay.Before(bootstrapStart) {
-		return bootstrapStart
-	}
-	return minDay
+	return time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
 }
 
 func shouldShipSealedReading(reading meterreportertypes.Reading, day time.Time, checkpointsByMeter map[string]time.Time) bool {

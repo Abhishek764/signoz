@@ -22,7 +22,7 @@ func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	t.Parallel()
 
 	today := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
-	floor := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
+	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
 		meters: []meterreporter.Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
@@ -43,7 +43,7 @@ func TestCatchupStartClampsOldCheckpointToFloor(t *testing.T) {
 	t.Parallel()
 
 	today := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
-	floor := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
+	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
 		meters: []meterreporter.Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
@@ -64,7 +64,7 @@ func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.
 
 	today := time.Date(2026, 4, 28, 0, 0, 0, 0, time.UTC)
 	yesterday := today.AddDate(0, 0, -1)
-	floor := today.AddDate(0, 0, -meterreporter.HistoricalBackfillDays)
+	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
 		meters: []meterreporter.Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},

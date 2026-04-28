@@ -9,13 +9,6 @@ import (
 
 var _ factory.Config = (*Config)(nil)
 
-// HistoricalBackfillDays is the static floor used on first deploy (or for a
-// license with no sealed rows yet at Zeus): the orchestrator begins catch-up
-// from today - HistoricalBackfillDays. It mirrors the ClickHouse meter-table
-// TTL of 12 months — anything older has no backing data anyway, so it is not
-// exposed as a config field.
-const HistoricalBackfillDays = 10
-
 type Config struct {
 	// Provider picks the reporter implementation. "noop" is the default and is
 	// what community builds ship; "signoz" is the enterprise cron-based reporter.

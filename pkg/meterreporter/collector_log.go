@@ -78,7 +78,7 @@ func CollectLogCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, 
 		}
 		for rows.Next() {
 			var wsid string
-			var retentionDays uint16
+			var retentionDays int32
 			var value float64
 			if err := rows.Scan(&wsid, &retentionDays, &value); err != nil {
 				rows.Close()
@@ -182,7 +182,7 @@ func CollectLogSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, o
 		}
 		for rows.Next() {
 			var wsid string
-			var retentionDays uint16
+			var retentionDays int32
 			var value float64
 			if err := rows.Scan(&wsid, &retentionDays, &value); err != nil {
 				rows.Close()

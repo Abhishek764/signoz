@@ -12,8 +12,8 @@ func TestBuildLogsRetentionMultiIfSQLNoRulesCollapsesToDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if expr != "15" {
-		t.Fatalf("expr = %q, want %q", expr, "15")
+	if expr != "toInt32(15)" {
+		t.Fatalf("expr = %q, want %q", expr, "toInt32(15)")
 	}
 }
 
@@ -34,7 +34,7 @@ func TestBuildLogsRetentionMultiIfSQLSingleRule(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := "multiIf(JSONExtractString(labels, 'signoz.workspace.key.id') IN ('019a1769-45aa-721f-a19a-9a8b5ae2d615'), 90, 15)"
+	want := "toInt32(multiIf(JSONExtractString(labels, 'signoz.workspace.key.id') IN ('019a1769-45aa-721f-a19a-9a8b5ae2d615'), 90, 15))"
 	if expr != want {
 		t.Fatalf("expr = %q, want %q", expr, want)
 	}
@@ -58,7 +58,7 @@ func TestBuildLogsRetentionMultiIfSQLMultipleRulesPreserveOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := "multiIf(JSONExtractString(labels, 'signoz.workspace.key.id') IN ('a'), 90, JSONExtractString(labels, 'signoz.workspace.key.id') IN ('b', 'c'), 365, 15)"
+	want := "toInt32(multiIf(JSONExtractString(labels, 'signoz.workspace.key.id') IN ('a'), 90, JSONExtractString(labels, 'signoz.workspace.key.id') IN ('b', 'c'), 365, 15))"
 	if expr != want {
 		t.Fatalf("expr = %q, want %q", expr, want)
 	}

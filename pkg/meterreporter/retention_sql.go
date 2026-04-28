@@ -38,6 +38,12 @@ const retentionWorkspaceLabelKey = "signoz.workspace.key.id"
 // produces a multiIf(...) whose arms preserve declaration order so the first
 // matching rule wins (matching SetCustomRetentionV2's semantics).
 //
+// The result is wrapped in toInt32(...) so the column always comes back as
+// Int32 regardless of the literal arm widths. Without this wrapper ClickHouse
+// infers UInt8/UInt16 from the largest arm (e.g. UInt8 when every arm is
+// <=255), forcing the Go scan target to vary by recipe. Pinning to Int32
+// keeps Scan(&int32) safe for every slice.
+//
 // The returned string is intended to be inlined as a SELECT-list expression;
 // it does not include the AS alias.
 func buildLogsRetentionMultiIfSQL(rules []retentionRule, defaultDays int) (string, error) {
@@ -46,7 +52,7 @@ func buildLogsRetentionMultiIfSQL(rules []retentionRule, defaultDays int) (strin
 	}
 
 	if len(rules) == 0 {
-		return strconv.Itoa(defaultDays), nil
+		return "toInt32(" + strconv.Itoa(defaultDays) + ")", nil
 	}
 
 	arms := make([]string, 0, 2*len(rules)+1)
@@ -81,5 +87,5 @@ func buildLogsRetentionMultiIfSQL(rules []retentionRule, defaultDays int) (strin
 	}
 	arms = append(arms, strconv.Itoa(defaultDays))
 
-	return "multiIf(" + strings.Join(arms, ", ") + ")", nil
+	return "toInt32(multiIf(" + strings.Join(arms, ", ") + "))", nil
 }

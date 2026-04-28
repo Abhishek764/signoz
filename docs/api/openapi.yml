@@ -4658,26 +4658,6 @@ components:
         config:
           $ref: '#/components/schemas/SpantypesSpanMapperConfig'
         enabled:
-          type: boolean
-        field_context:
-          $ref: '#/components/schemas/SpantypesFieldContext'
-      type: object
-    SpantypesUpdatableSpanMapperGroup:
-      properties:
-        condition:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
-        enabled:
-          nullable: true
-          type: boolean
-        name:
-          nullable: true
-          type: string
-      type: object
-    SpanattributemappingtypesUpdatableMapper:
-      properties:
-        config:
-          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
-        enabled:
           nullable: true
           type: boolean
         field_context:

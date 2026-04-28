@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+	Badge,
 	Button,
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuTrigger,
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
 	Tooltip,
 } from '@signozhq/ui';
 import type { UploadFile } from 'antd';
+import { useListRules } from 'api/generated/services/rules';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
+import { useQueryService } from 'hooks/useQueryService';
+// eslint-disable-next-line
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../types';
@@ -33,20 +40,37 @@ interface ChatInputProps {
 
 const MAX_INPUT_LENGTH = 20000;
 const WARNING_THRESHOLD = 15000;
+const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
 
-const CONTEXT_OPTIONS = [
+const CONTEXT_CATEGORIES = [
 	'Dashboards',
 	'Alerts',
 	'Services',
-	'Saved View',
+	'Saved Views',
 ] as const;
 
-const CONTEXT_OPTION_ICONS = {
+type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
+
+interface SelectedContextItem {
+	category: ContextCategory;
+	entityId: string;
+	value: string;
+}
+
+interface ContextEntityItem {
+	id: string;
+	value: string;
+}
+
+const CONTEXT_CATEGORY_ICONS: Record<
+	ContextCategory,
+	(props: { size?: number }) => JSX.Element
+> = {
 	Dashboards: LayoutDashboard,
 	Alerts: Bell,
 	Services: ShieldCheck,
-	'Saved View': Rows3,
-} as const;
+	'Saved Views': Rows3,
+};
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -63,11 +87,24 @@ export default function ChatInput({
 	disabled,
 	isStreaming = false,
 }: ChatInputProps): JSX.Element {
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const [text, setText] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
-	const [selectedContexts, setSelectedContexts] = useState<string[]>([]);
+	const [selectedContexts, setSelectedContexts] = useState<
+		SelectedContextItem[]
+	>([]);
 	const [isContextPickerOpen, setIsContextPickerOpen] = useState(false);
-	const [contextQuery, setContextQuery] = useState('');
+	const [activeContextCategory, setActiveContextCategory] =
+		useState<ContextCategory>('Dashboards');
+	const [servicesTimeRange] = useState(() => {
+		const now = Date.now();
+		return {
+			startTime: now - HOME_SERVICES_INTERVAL,
+			endTime: now,
+		};
+	});
 	// Stores the already-committed final text so interim results don't overwrite it
 	const committedTextRef = useRef('');
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -84,28 +121,36 @@ export default function ChatInput({
 			const atIndex = beforeCaret.lastIndexOf('@');
 			if (atIndex < 0) {
 				setIsContextPickerOpen(false);
-				setContextQuery('');
 				return;
 			}
 			const query = beforeCaret.slice(atIndex + 1);
 			if (/\s/.test(query)) {
 				setIsContextPickerOpen(false);
-				setContextQuery('');
 				return;
 			}
-			setContextQuery(query.toLowerCase());
 			setIsContextPickerOpen(true);
 		},
 		[],
 	);
 
-	const toggleContextSelection = useCallback((contextLabel: string) => {
-		setSelectedContexts((prev) =>
-			prev.includes(contextLabel)
-				? prev.filter((item) => item !== contextLabel)
-				: [...prev, contextLabel],
-		);
-	}, []);
+	const toggleContextSelection = useCallback(
+		(category: ContextCategory, entityId: string, contextValue: string) => {
+			setSelectedContexts((prev) => {
+				const alreadySelected = prev.some(
+					(item) => item.category === category && item.entityId === entityId,
+				);
+
+				if (alreadySelected) {
+					return prev.filter(
+						(item) => !(item.category === category && item.entityId === entityId),
+					);
+				}
+
+				return [...prev, { category, entityId, value: contextValue }];
+			});
+		},
+		[],
+	);
 
 	// Focus the textarea when this component mounts (panel/modal open)
 	useEffect(() => {
@@ -129,7 +174,9 @@ export default function ChatInput({
 			}),
 		);
 
-		const contextMentions = selectedContexts.map((item) => `${item}`).join(' ');
+		const contextMentions = selectedContexts
+			.map((item) => `${item.category}: ${item.value}`)
+			.join(' ');
 		const contextPrefix = contextMentions ? `${contextMentions} ` : '';
 		const payload = capText(`${contextPrefix}${trimmed}`);
 
@@ -159,9 +206,16 @@ export default function ChatInput({
 		setPendingFiles((prev) => prev.filter((f) => f.uid !== uid));
 	}, []);
 
-	const removeContext = useCallback((contextLabel: string) => {
-		setSelectedContexts((prev) => prev.filter((item) => item !== contextLabel));
-	}, []);
+	const removeContext = useCallback(
+		(category: ContextCategory, entityId: string) => {
+			setSelectedContexts((prev) =>
+				prev.filter(
+					(item) => !(item.category === category && item.entityId === entityId),
+				),
+			);
+		},
+		[],
+	);
 
 	// ── Voice input ────────────────────────────────────────────────────────────
 
@@ -197,9 +251,87 @@ export default function ChatInput({
 		textareaRef.current?.focus();
 	}, [discard]);
 
-	const filteredContextOptions = CONTEXT_OPTIONS.filter((item) =>
-		item.toLowerCase().includes(contextQuery),
-	);
+	const {
+		data: dashboardsResponse,
+		isLoading: isDashboardsLoading,
+		isError: isDashboardsError,
+	} = useGetAllDashboard();
+
+	const {
+		data: alertsResponse,
+		isLoading: isAlertsLoading,
+		isError: isAlertsError,
+	} = useListRules({
+		query: {
+			enabled: activeContextCategory === 'Alerts',
+		},
+	});
+
+	const {
+		data: servicesResponse,
+		isLoading: isServicesLoading,
+		isFetching: isServicesFetching,
+		isError: isServicesError,
+	} = useQueryService({
+		minTime: servicesTimeRange.startTime * 1e6,
+		maxTime: servicesTimeRange.endTime * 1e6,
+		selectedTime,
+		selectedTags: [],
+		options: {
+			enabled: activeContextCategory === 'Services',
+		},
+	});
+
+	const contextEntitiesByCategory: Record<ContextCategory, ContextEntityItem[]> =
+		{
+			Dashboards:
+				dashboardsResponse?.data?.map((dashboard) => ({
+					id: dashboard.id,
+					value: dashboard.data.title ?? 'Untitled',
+				})) ?? [],
+			Alerts:
+				alertsResponse?.data
+					?.filter((alertRule) => Boolean(alertRule.alert))
+					.map((alertRule) => ({
+						id: alertRule.id,
+						value: alertRule.alert,
+					})) ?? [],
+			Services:
+				servicesResponse
+					?.filter((serviceItem) => Boolean(serviceItem.serviceName))
+					.map((serviceItem, index) => ({
+						id: serviceItem.serviceName || `service-${index}`,
+						value: serviceItem.serviceName,
+					})) ?? [],
+			'Saved Views': [],
+		};
+
+	const contextCategoryStateByCategory: Record<
+		ContextCategory,
+		{ isLoading: boolean; isError: boolean }
+	> = {
+		Dashboards: {
+			isLoading: isDashboardsLoading,
+			isError: isDashboardsError,
+		},
+		Alerts: {
+			isLoading: isAlertsLoading,
+			isError: isAlertsError,
+		},
+		Services: {
+			isLoading: isServicesLoading || isServicesFetching,
+			isError: isServicesError,
+		},
+		'Saved Views': {
+			isLoading: false,
+			isError: false,
+		},
+	};
+
+	const filteredContextOptions =
+		contextEntitiesByCategory[activeContextCategory];
+	const { isLoading: isActiveContextLoading, isError: isActiveContextError } =
+		contextCategoryStateByCategory[activeContextCategory];
 	const currentLength = text.length;
 	const showTextWarning = currentLength >= WARNING_THRESHOLD;
 
@@ -227,17 +359,31 @@ export default function ChatInput({
 			{selectedContexts.length > 0 && (
 				<div className="ai-assistant-input__context-tags">
 					{selectedContexts.map((contextItem) => (
-						<div key={contextItem} className="ai-assistant-input__context-tag">
-							<span className="ai-assistant-input__context-tag-label">
-								{contextItem}
-							</span>
+						<div
+							key={`${contextItem.category}:${contextItem.entityId}`}
+							className="ai-assistant-input__context-tag"
+						>
+							<div className="ai-assistant-input__context-tag-content">
+								<Badge
+									color="primary"
+									variant="outline"
+									className="ai-assistant-input__context-tag-category"
+								>
+									{contextItem.category}
+								</Badge>
+								<span className="ai-assistant-input__context-tag-label">
+									{contextItem.value}
+								</span>
+							</div>
 							<Button
 								variant="link"
 								size="icon"
 								color="secondary"
 								className="ai-assistant-input__context-tag-remove"
-								onClick={(): void => removeContext(contextItem)}
-								aria-label={`Remove ${contextItem} context`}
+								onClick={(): void =>
+									removeContext(contextItem.category, contextItem.entityId)
+								}
+								aria-label={`Remove ${contextItem.category}: ${contextItem.value} context`}
 								prefix={<X size={10} />}
 							></Button>
 						</div>
@@ -304,56 +450,101 @@ export default function ChatInput({
 						</Button>
 					</Upload> */}
 
-					<DropdownMenu
+					<Popover
 						open={isContextPickerOpen}
 						onOpenChange={(open): void => {
 							setIsContextPickerOpen(open);
 							if (!open) {
-								setContextQuery('');
+								setActiveContextCategory('Dashboards');
 							}
 						}}
 					>
-						<DropdownMenuTrigger asChild>
+						<PopoverTrigger asChild>
 							<Button
 								variant="solid"
 								color="secondary"
+								size="sm"
 								disabled={disabled}
 								onClick={(): void => {
-									setContextQuery('');
-									textareaRef.current?.focus();
+									setActiveContextCategory('Dashboards');
 								}}
 								prefix={<Plus size={10} />}
 							>
 								Add Context
 							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent
-							className="ai-context-picker"
+						</PopoverTrigger>
+						<PopoverContent
+							className="ai-context-popover"
 							side="top"
-							align="start"
+							align="end"
 							sideOffset={8}
 						>
-							{filteredContextOptions.length === 0 ? (
-								<div className="ai-context-picker__empty">No matching contexts</div>
-							) : (
-								filteredContextOptions.map((option) => {
-									const Icon = CONTEXT_OPTION_ICONS[option];
-									return (
-										<DropdownMenuCheckboxItem
-											key={option}
-											checked={selectedContexts.includes(option)}
-											onCheckedChange={(): void => toggleContextSelection(option)}
-											onSelect={(event): void => event.preventDefault()}
-											className="ai-context-picker__item"
-										>
-											<Icon size={14} />
-											{option}
-										</DropdownMenuCheckboxItem>
-									);
-								})
-							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
+							<div className="ai-context-popover__content">
+								<div className="ai-context-popover__categories">
+									{CONTEXT_CATEGORIES.map((category) => {
+										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
+										return (
+											<button
+												key={category}
+												type="button"
+												className={`ai-context-popover__category-item ${
+													activeContextCategory === category
+														? 'ai-context-popover__category-item--active'
+														: ''
+												}`}
+												onClick={(): void => setActiveContextCategory(category)}
+											>
+												<CategoryIcon size={13} />
+												<span>{category}</span>
+											</button>
+										);
+									})}
+								</div>
+
+								<div className="ai-context-popover__entities">
+									{isActiveContextLoading ? (
+										<div className="ai-context-popover__empty">
+											Loading {activeContextCategory.toLowerCase()}...
+										</div>
+									) : isActiveContextError ? (
+										<div className="ai-context-popover__empty">
+											Failed to load {activeContextCategory.toLowerCase()}.
+										</div>
+									) : filteredContextOptions.length === 0 ? (
+										<div className="ai-context-popover__empty">No matching entities</div>
+									) : (
+										filteredContextOptions.map((option) => {
+											const isSelected = selectedContexts.some(
+												(item) =>
+													item.category === activeContextCategory &&
+													item.entityId === option.id,
+											);
+
+											return (
+												<div
+													key={option.id}
+													className={`ai-context-popover__entity-item ${
+														isSelected ? 'ai-context-popover__entity-item--selected' : ''
+													}`}
+													onClick={(): void =>
+														toggleContextSelection(
+															activeContextCategory,
+															option.id,
+															option.value,
+														)
+													}
+												>
+													<span className="ai-context-popover__entity-item-text">
+														{option.value}
+													</span>
+												</div>
+											);
+										})
+									)}
+								</div>
+							</div>
+						</PopoverContent>
+					</Popover>
 				</div>
 
 				<div className="ai-assistant-input__right-actions">

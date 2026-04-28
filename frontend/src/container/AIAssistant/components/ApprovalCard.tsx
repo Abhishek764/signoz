@@ -120,6 +120,7 @@ export default function ApprovalCard({
 				</Button>
 				<Button
 					variant="outlined"
+					color="secondary"
 					size="sm"
 					onClick={handleReject}
 					disabled={isStreaming}

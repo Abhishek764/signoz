@@ -109,11 +109,7 @@ function HeaderRightSection({
 										: `Open AI Assistant, ${pendingUserInputCount} actions need your response`
 									: 'Open AI Assistant'
 							}
-							prefix={
-								<span className="header-ai-assistant-btn__prefix">
-									<AIAssistantIcon />
-								</span>
-							}
+							prefix={<AIAssistantIcon />}
 						/>
 					</Tooltip>
 				</div>

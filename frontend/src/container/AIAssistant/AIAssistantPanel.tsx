@@ -111,9 +111,9 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<Button
 							variant="ghost"
 							size="icon"
+							color="secondary"
 							onClick={(): void => setShowHistory((v) => !v)}
 							aria-label="Toggle conversations"
-							className={showHistory ? 'ai-panel-btn--active' : ''}
 						>
 							<History size={14} />
 						</Button>
@@ -123,6 +123,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<Button
 							variant="ghost"
 							size="icon"
+							color="secondary"
 							onClick={handleClear}
 							disabled={!activeConversationId || showHistory}
 							aria-label="Clear chat"
@@ -135,6 +136,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<Button
 							variant="ghost"
 							size="icon"
+							color="secondary"
 							onClick={handleNew}
 							aria-label="New conversation"
 						>
@@ -146,6 +148,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<Button
 							variant="ghost"
 							size="icon"
+							color="secondary"
 							onClick={handleExpand}
 							disabled={!activeConversationId}
 							aria-label="Open full screen"
@@ -158,6 +161,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<Button
 							variant="ghost"
 							size="icon"
+							color="secondary"
 							onClick={closeDrawer}
 							aria-label="Close panel"
 						>

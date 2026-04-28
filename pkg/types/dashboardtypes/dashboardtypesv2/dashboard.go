@@ -60,9 +60,6 @@ func (p *PostableDashboard) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// GettableDashboard mirrors Dashboard except PublicConfig is the trimmed
-// GettablePublicDashboard (no internal IDs, with the formatted public
-// path) since clients never need the raw row's id or audit fields.
 type GettableDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
@@ -70,8 +67,13 @@ type GettableDashboard struct {
 
 	OrgID        valuer.UUID                              `json:"orgId"`
 	Locked       bool                                     `json:"locked"`
-	Info         DashboardInfo                            `json:"info"`
+	Info         GettableDashboardInfo                    `json:"info"`
 	PublicConfig *dashboardtypes.GettablePublicDasbhboard `json:"publicConfig,omitempty"`
+}
+
+type GettableDashboardInfo struct {
+	StoredDashboardInfo
+	Tags []*tagtypes.GettableTag `json:"tags,omitempty"`
 }
 
 func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard {
@@ -81,7 +83,10 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard 
 		UserAuditable: dashboard.UserAuditable,
 		OrgID:         dashboard.OrgID,
 		Locked:        dashboard.Locked,
-		Info:          dashboard.Info,
+		Info: GettableDashboardInfo{
+			StoredDashboardInfo: dashboard.Info.StoredDashboardInfo,
+			Tags:                tagtypes.NewGettableTagsFromTags(dashboard.Info.Tags),
+		},
 	}
 	if dashboard.PublicConfig != nil {
 		gettable.PublicConfig = &dashboardtypes.GettablePublicDasbhboard{

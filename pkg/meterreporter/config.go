@@ -37,17 +37,6 @@ type Config struct {
 	// default 30/tick and a 6h Interval, a full 12-month bootstrap catch-up
 	// converges in roughly 3 days.
 	CatchupMaxDaysPerTick int `mapstructure:"catchup_max_days_per_tick"`
-
-	// Retry configures exponential backoff around the Zeus POST. Tick-level
-	// failures don't propagate — see runTick in the enterprise provider.
-	Retry RetryConfig `mapstructure:"retry"`
-}
-
-type RetryConfig struct {
-	Enabled         bool          `mapstructure:"enabled"`
-	InitialInterval time.Duration `mapstructure:"initial_interval"`
-	MaxInterval     time.Duration `mapstructure:"max_interval"`
-	MaxElapsedTime  time.Duration `mapstructure:"max_elapsed_time"`
 }
 
 func newConfig() factory.Config {
@@ -56,12 +45,6 @@ func newConfig() factory.Config {
 		Interval:              6 * time.Hour,
 		Timeout:               5 * time.Minute,
 		CatchupMaxDaysPerTick: 30,
-		Retry: RetryConfig{
-			Enabled:         true,
-			InitialInterval: 5 * time.Second,
-			MaxInterval:     30 * time.Second,
-			MaxElapsedTime:  time.Minute,
-		},
 	}
 }
 
@@ -82,8 +65,8 @@ func (c Config) Validate() error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::timeout must be less than meterreporter::interval")
 	}
 
-	if c.CatchupMaxDaysPerTick > 60 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::catchup_max_days_per_tick must be at most 60")
+	if c.CatchupMaxDaysPerTick < 1 || c.CatchupMaxDaysPerTick > 60 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::catchup_max_days_per_tick must be between 1 and 60")
 	}
 
 	return nil

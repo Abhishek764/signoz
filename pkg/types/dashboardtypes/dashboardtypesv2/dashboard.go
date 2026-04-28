@@ -12,7 +12,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const SchemaVersion = "v6"
+const (
+	SchemaVersion       = "v6"
+	MaxTagsPerDashboard = 5
+)
 
 type Dashboard struct {
 	types.Identifiable
@@ -55,6 +58,15 @@ func (p *PostableDashboard) UnmarshalJSON(data []byte) error {
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
 		return err
+	}
+	if tmp.Metadata.SchemaVersion != SchemaVersion {
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "metadata.schemaVersion must be %q, got %q", SchemaVersion, tmp.Metadata.SchemaVersion)
+	}
+	if tmp.Data.Display == nil || tmp.Data.Display.Name == "" {
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "data.display.name is required")
+	}
+	if len(tmp.Tags) > MaxTagsPerDashboard {
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
 	*p = PostableDashboard(tmp)
 	return nil
@@ -100,7 +112,6 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard 
 
 func NewDashboard(orgID valuer.UUID, createdBy string, postable PostableDashboard, resolvedTags []*tagtypes.Tag) *Dashboard {
 	now := time.Now()
-	postable.Metadata.SchemaVersion = SchemaVersion
 
 	return &Dashboard{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},

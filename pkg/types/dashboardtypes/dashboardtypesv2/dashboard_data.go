@@ -41,6 +41,14 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*d = DashboardData(tmp)
+	return d.Validate()
+}
+
+// ══════════════════════════════════════════════
+// Cross-field validation
+// ══════════════════════════════════════════════
+
+func (d *DashboardData) Validate() error {
 	for key, panel := range d.Panels {
 		if panel == nil {
 			return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
@@ -57,10 +65,6 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-
-// ══════════════════════════════════════════════
-// Cross-field validation
-// ══════════════════════════════════════════════
 
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	if !slices.Contains(allowed, plugin.Kind) {

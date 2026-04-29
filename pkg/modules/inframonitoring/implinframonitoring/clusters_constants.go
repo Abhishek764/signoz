@@ -30,7 +30,7 @@ var clustersTableMetricNamesList = []string{
 	"k8s.node.allocatable_cpu",
 	"k8s.node.memory.working_set",
 	"k8s.node.allocatable_memory",
-	"k8s.node.condition_ready",
+	"k8s.node.condition_ready", //TODO(nikhilmantri0902): should these metrics be used to count groups k8s.node.condition_ready and k8s.pod.phase
 	"k8s.pod.phase",
 }
 

@@ -99,7 +99,7 @@ def test_unknown_root_field_rejected(
     assert response.status_code == HTTPStatus.BAD_REQUEST
     body = response.json()
     assert body["status"] == "error"
-    assert body["error"]["code"] == "unknown"
+    assert body["error"]["code"] == "dashboard_invalid_input"
     assert body["error"]["message"] == 'json: unknown field "unknownfieldattheroot"'
 
 
@@ -127,7 +127,7 @@ def test_unknown_nested_field_rejected(
     assert response.status_code == HTTPStatus.BAD_REQUEST
     body = response.json()
     assert body["status"] == "error"
-    assert body["error"]["code"] == "unknown"
+    assert body["error"]["code"] == "dashboard_invalid_input"
     assert body["error"]["message"] == 'json: unknown field "unknownfieldinside"'
 
 

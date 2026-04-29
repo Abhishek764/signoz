@@ -57,7 +57,7 @@ func (p *PostableDashboard) UnmarshalJSON(data []byte) error {
 	type alias PostableDashboard
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*p = PostableDashboard(tmp)
 	return p.Validate()

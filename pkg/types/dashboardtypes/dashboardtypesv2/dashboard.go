@@ -105,11 +105,7 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard 
 		},
 	}
 	if dashboard.PublicConfig != nil {
-		gettable.PublicConfig = &dashboardtypes.GettablePublicDasbhboard{
-			TimeRangeEnabled: dashboard.PublicConfig.TimeRangeEnabled,
-			DefaultTimeRange: dashboard.PublicConfig.DefaultTimeRange,
-			PublicPath:       dashboard.PublicConfig.PublicPath(),
-		}
+		gettable.PublicConfig = dashboardtypes.NewGettablePublicDashboard(dashboard.PublicConfig)
 	}
 	return gettable
 }

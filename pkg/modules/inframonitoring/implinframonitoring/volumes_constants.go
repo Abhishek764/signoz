@@ -55,7 +55,15 @@ var orderByToVolumesQueryNames = map[string][]string{
 // Five builder queries (A..E) cover the v1 volume metrics; formula F1 = B - A
 // derives usage = capacity - available (mirrors v1's F1 in PvcsTableListQuery).
 // ReduceToLast preserves v1's ReduceToOperatorLast semantics.
-// TODO(nikhilmantri0902, srikanthccv): should we add filter k8s.persistentvolumeclaim.name != "" to all builder queries like in v1 to exclude records without a PVC name? why?
+//
+// Every builder query carries a base filter `k8s.persistentvolumeclaim.name != ''`.
+// Reason: the kubeletstats receiver emits `k8s.volume.*` metrics for every volume
+// mount on a pod (emptyDir, configMap, secret, projected, hostPath, ...), but
+// only PVC-backed volumes carry the `k8s.persistentvolumeclaim.name` resource
+// attribute (see opentelemetry-collector-contrib/receiver/kubeletstatsreceiver/
+// internal/kubelet/volume.go:setResourcesFromVolume). Without this filter,
+// non-PVC volumes pollute the result and collapse into a single empty-string
+// group under the default groupBy. v1's PvcsTableListQuery applied the same filter.
 func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
 		// Query A: k8s.volume.available
@@ -71,6 +79,9 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToLast,
 					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "k8s.persistentvolumeclaim.name != ''",
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
@@ -89,6 +100,9 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToLast,
 					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "k8s.persistentvolumeclaim.name != ''",
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
@@ -118,6 +132,9 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 						ReduceTo:         qbtypes.ReduceToLast,
 					},
 				},
+				Filter: &qbtypes.Filter{
+					Expression: "k8s.persistentvolumeclaim.name != ''",
+				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
 			},
@@ -136,6 +153,9 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 						ReduceTo:         qbtypes.ReduceToLast,
 					},
 				},
+				Filter: &qbtypes.Filter{
+					Expression: "k8s.persistentvolumeclaim.name != ''",
+				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
 			},
@@ -153,6 +173,9 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						ReduceTo:         qbtypes.ReduceToLast,
 					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "k8s.persistentvolumeclaim.name != ''",
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,

@@ -20,7 +20,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/huandu/go-sqlbuilder"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var _ factory.ServiceWithHealthy = (*Provider)(nil)
@@ -29,11 +31,29 @@ const (
 	phaseSealed = "sealed"
 	phaseToday  = "today"
 
-	attrPhase  = "phase"
-	attrResult = "result"
+	attrPhase                 = "phase"
+	attrResult                = "result"
+	attrMeterReporterProvider = "meterreporter.provider"
+	attrOrgID                 = "meterreporter.org_id"
+	attrOrgCount              = "meterreporter.org_count"
+	attrMeter                 = "meterreporter.meter"
+	attrDate                  = "meterreporter.date"
+	attrReadings              = "meterreporter.readings"
+	attrReadingsCollected     = "meterreporter.readings_collected"
+	attrReadingsDropped       = "meterreporter.readings_dropped"
+	attrWindowStartUnixMilli  = "meterreporter.window_start_unix_milli"
+	attrWindowEndUnixMilli    = "meterreporter.window_end_unix_milli"
+	attrWindowCompleted       = "meterreporter.window_completed"
+	attrCatchupStart          = "meterreporter.catchup_start"
+	attrCatchupEnd            = "meterreporter.catchup_end"
+	attrDurationMs            = "meterreporter.duration_ms"
+	attrDryRun                = "meterreporter.dry_run"
+	attrIdempotencyKey        = "meterreporter.idempotency_key"
 
 	resultSuccess = "success"
 	resultFailure = "failure"
+
+	providerName = "signoz"
 )
 
 // Provider is the enterprise meter reporter. It ticks on a fixed interval,
@@ -120,6 +140,13 @@ func newProvider(
 func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
+	provider.settings.Logger().InfoContext(ctx, "meter reporter started",
+		slog.Duration("interval", provider.config.Interval),
+		slog.Duration("timeout", provider.config.Timeout),
+		slog.Int("catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
+		slog.Int("meters", len(provider.meters)),
+	)
+
 	provider.goroutinesWg.Add(1)
 	go func() {
 		defer provider.goroutinesWg.Done()
@@ -146,8 +173,9 @@ func (provider *Provider) Start(ctx context.Context) error {
 // Stop signals the tick loop and waits for any in-flight tick to finish.
 // Drain time is bounded by Config.Timeout because every tick runs under that
 // deadline, so shutdown can't stall on a hung ClickHouse or Zeus call.
-func (provider *Provider) Stop(_ context.Context) error {
+func (provider *Provider) Stop(ctx context.Context) error {
 	<-provider.healthyC
+	provider.settings.Logger().InfoContext(ctx, "meter reporter stopping")
 	select {
 	case <-provider.stopC:
 		// already closed
@@ -155,6 +183,7 @@ func (provider *Provider) Stop(_ context.Context) error {
 		close(provider.stopC)
 	}
 	provider.goroutinesWg.Wait()
+	provider.settings.Logger().InfoContext(ctx, "meter reporter stopped")
 	return nil
 }
 
@@ -166,14 +195,44 @@ func (provider *Provider) Healthy() <-chan struct{} {
 // from tick are logged and counted only — they never propagate, because the
 // reporter must keep firing on subsequent intervals even if one batch fails.
 func (provider *Provider) runTick(parentCtx context.Context) {
-	provider.metrics.ticks.Add(parentCtx, 1)
+	tickStart := time.Now()
+	ctx, span := provider.settings.Tracer().Start(parentCtx, "meterreporter.Tick", trace.WithAttributes(
+		attribute.String(attrMeterReporterProvider, providerName),
+		attribute.Int("meterreporter.meters", len(provider.meters)),
+		attribute.Int("meterreporter.catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
+	))
+	defer span.End()
 
-	ctx, cancel := context.WithTimeout(parentCtx, provider.config.Timeout)
+	provider.metrics.ticks.Add(ctx, 1)
+
+	ctx, cancel := context.WithTimeout(ctx, provider.config.Timeout)
 	defer cancel()
 
+	provider.settings.Logger().DebugContext(ctx, "meter reporter tick started",
+		slog.Duration("timeout", provider.config.Timeout),
+		slog.Int("meters", len(provider.meters)),
+	)
+
 	if err := provider.tick(ctx); err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "meter reporter tick failed", errors.Attr(err), slog.Duration("timeout", provider.config.Timeout))
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		span.SetAttributes(
+			attribute.String(attrResult, resultFailure),
+			attribute.Int64(attrDurationMs, time.Since(tickStart).Milliseconds()),
+		)
+		provider.settings.Logger().ErrorContext(ctx, "meter reporter tick failed",
+			errors.Attr(err),
+			slog.Duration("timeout", provider.config.Timeout),
+			slog.Duration("duration", time.Since(tickStart)),
+		)
+		return
 	}
+
+	span.SetAttributes(
+		attribute.String(attrResult, resultSuccess),
+		attribute.Int64(attrDurationMs, time.Since(tickStart).Milliseconds()),
+	)
+	provider.settings.Logger().DebugContext(ctx, "meter reporter tick completed", slog.Duration("duration", time.Since(tickStart)))
 }
 
 // tick runs one collect-and-ship cycle for the instance's single active org.
@@ -198,15 +257,21 @@ func (provider *Provider) tick(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "failed to list organizations")
 	}
+	trace.SpanFromContext(ctx).SetAttributes(attribute.Int(attrOrgCount, len(orgs)))
 	if len(orgs) == 0 {
+		provider.settings.Logger().InfoContext(ctx, "skipping meter reporter tick; no organizations found")
 		return nil
 	}
+	org := orgs[0]
 	if len(orgs) > 1 {
 		// signoz_meter samples carry no org marker, so we can't disambiguate;
 		// fall back to the first org and warn so the misconfig is visible.
-		provider.settings.Logger().WarnContext(ctx, "multiple orgs on a single instance; reporting only the first", slog.Int("org_count", len(orgs)))
+		provider.settings.Logger().WarnContext(ctx, "multiple orgs on a single instance; reporting only the first",
+			slog.Int("org_count", len(orgs)),
+			slog.String("selected_org_id", org.ID.StringValue()),
+		)
 	}
-	org := orgs[0]
+	trace.SpanFromContext(ctx).SetAttributes(attribute.String(attrOrgID, org.ID.StringValue()))
 
 	license, err := provider.licensing.GetActive(ctx, org.ID)
 	if err != nil {
@@ -240,6 +305,17 @@ func (provider *Provider) tick(ctx context.Context) error {
 	if end.After(yesterday) {
 		end = yesterday
 	}
+	trace.SpanFromContext(ctx).SetAttributes(
+		attribute.String(attrCatchupStart, catchupStart.Format("2006-01-02")),
+		attribute.String(attrCatchupEnd, end.Format("2006-01-02")),
+	)
+	provider.settings.Logger().DebugContext(ctx, "meter reporter catchup window selected",
+		slog.String("org_id", org.ID.StringValue()),
+		slog.Time("data_floor", floor),
+		slog.Time("catchup_start", catchupStart),
+		slog.Time("catchup_end", end),
+		slog.Int("catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
+	)
 	for day := catchupStart; !day.After(end); day = day.AddDate(0, 0, 1) {
 		window := Window{
 			StartUnixMilli: day.UnixMilli(),
@@ -253,6 +329,10 @@ func (provider *Provider) tick(ctx context.Context) error {
 		}
 		provider.metrics.catchupDaysProcessed.Add(ctx, 1, metric.WithAttributes(attribute.String(attrResult, result)))
 		if err != nil {
+			provider.settings.Logger().WarnContext(ctx, "stopping sealed catchup after failed day",
+				errors.Attr(err),
+				slog.String("date", day.Format("2006-01-02")),
+			)
 			break
 		}
 	}
@@ -280,46 +360,143 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 	}
 	phaseAttr := metric.WithAttributes(attribute.String(attrPhase, phaseLabel))
 	date := time.UnixMilli(window.StartUnixMilli).UTC().Format("2006-01-02")
+	phaseStart := time.Now()
+	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.RunPhase", trace.WithAttributes(
+		attribute.String(attrPhase, phaseLabel),
+		attribute.String(attrOrgID, orgID.StringValue()),
+		attribute.String(attrDate, date),
+		attribute.Int64(attrWindowStartUnixMilli, window.StartUnixMilli),
+		attribute.Int64(attrWindowEndUnixMilli, window.EndUnixMilli),
+		attribute.Bool(attrWindowCompleted, window.IsCompleted),
+	))
+	defer span.End()
+
+	provider.settings.Logger().DebugContext(ctx, "meter reporter phase started",
+		slog.String("org_id", orgID.StringValue()),
+		slog.String("phase", phaseLabel),
+		slog.String("date", date),
+		slog.Int64("start_unix_milli", window.StartUnixMilli),
+		slog.Int64("end_unix_milli", window.EndUnixMilli),
+		slog.Int("meters", len(provider.meters)),
+	)
 
 	collectStart := time.Now()
 	readings := make([]meterreportertypes.Reading, 0, len(provider.meters))
 	for _, meter := range provider.meters {
-		collectedReadings, err := meter.Collect(ctx, provider.deps, meter, orgID, window)
+		collectStart := time.Now()
+		collectCtx, collectSpan := provider.settings.Tracer().Start(ctx, "meterreporter.CollectMeter", trace.WithAttributes(
+			attribute.String(attrPhase, phaseLabel),
+			attribute.String(attrOrgID, orgID.StringValue()),
+			attribute.String(attrMeter, meter.Name.String()),
+			attribute.String(attrDate, date),
+			attribute.Int64(attrWindowStartUnixMilli, window.StartUnixMilli),
+			attribute.Int64(attrWindowEndUnixMilli, window.EndUnixMilli),
+			attribute.Bool(attrWindowCompleted, window.IsCompleted),
+		))
+		collectedReadings, err := meter.Collect(collectCtx, provider.deps, meter, orgID, window)
 		if err != nil {
+			collectSpan.RecordError(err)
+			collectSpan.SetStatus(codes.Error, err.Error())
+			collectSpan.SetAttributes(
+				attribute.String(attrResult, resultFailure),
+				attribute.Int64(attrDurationMs, time.Since(collectStart).Milliseconds()),
+			)
+			collectSpan.End()
 			provider.metrics.collectErrors.Add(ctx, 1, phaseAttr)
 			provider.settings.Logger().WarnContext(ctx, "meter collection failed",
 				errors.Attr(err),
 				slog.String("meter", meter.Name.String()),
 				slog.String("org_id", orgID.StringValue()),
 				slog.String("phase", phaseLabel),
+				slog.String("date", date),
+				slog.Duration("duration", time.Since(collectStart)),
 			)
 			continue
 		}
+		collectSpan.SetAttributes(
+			attribute.String(attrResult, resultSuccess),
+			attribute.Int(attrReadings, len(collectedReadings)),
+			attribute.Int64(attrDurationMs, time.Since(collectStart).Milliseconds()),
+		)
+		collectSpan.End()
+		provider.settings.Logger().DebugContext(ctx, "meter collection completed",
+			slog.String("meter", meter.Name.String()),
+			slog.String("org_id", orgID.StringValue()),
+			slog.String("phase", phaseLabel),
+			slog.String("date", date),
+			slog.Int("readings", len(collectedReadings)),
+			slog.Duration("duration", time.Since(collectStart)),
+		)
 		readings = append(readings, collectedReadings...)
 	}
-	provider.metrics.collectDuration.Record(ctx, time.Since(collectStart).Seconds(), phaseAttr)
+	collectDuration := time.Since(collectStart)
+	provider.metrics.collectDuration.Record(ctx, collectDuration.Seconds(), phaseAttr)
+	span.SetAttributes(attribute.Int(attrReadingsCollected, len(readings)))
 
 	if window.IsCompleted {
+		beforeDrop := len(readings)
 		readings = dropCheckpointed(readings, time.UnixMilli(window.StartUnixMilli).UTC(), checkpointsByMeter)
+		dropped := beforeDrop - len(readings)
+		span.SetAttributes(attribute.Int(attrReadingsDropped, dropped))
+		if dropped > 0 {
+			provider.settings.Logger().DebugContext(ctx, "dropped checkpointed meter readings",
+				slog.String("org_id", orgID.StringValue()),
+				slog.String("phase", phaseLabel),
+				slog.String("date", date),
+				slog.Int("dropped", dropped),
+				slog.Int("remaining", len(readings)),
+			)
+		}
 	}
 	if len(readings) == 0 {
+		span.SetAttributes(
+			attribute.String(attrResult, resultSuccess),
+			attribute.Int(attrReadings, 0),
+			attribute.Int64(attrDurationMs, time.Since(phaseStart).Milliseconds()),
+		)
+		provider.settings.Logger().DebugContext(ctx, "meter reporter phase produced no readings",
+			slog.String("org_id", orgID.StringValue()),
+			slog.String("phase", phaseLabel),
+			slog.String("date", date),
+			slog.Duration("collect_duration", collectDuration),
+			slog.Duration("duration", time.Since(phaseStart)),
+		)
 		return nil
 	}
 
 	shipStart := time.Now()
 	err := provider.shipReadings(ctx, licenseKey, date, readings)
-	provider.metrics.shipDuration.Record(ctx, time.Since(shipStart).Seconds(), phaseAttr)
+	shipDuration := time.Since(shipStart)
+	provider.metrics.shipDuration.Record(ctx, shipDuration.Seconds(), phaseAttr)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		span.SetAttributes(attribute.String(attrResult, resultFailure))
 		provider.metrics.postErrors.Add(ctx, 1, phaseAttr)
 		provider.settings.Logger().ErrorContext(ctx, "failed to ship meter readings",
 			errors.Attr(err),
 			slog.String("phase", phaseLabel),
 			slog.String("date", date),
 			slog.Int("readings", len(readings)),
+			slog.Duration("ship_duration", shipDuration),
 		)
 		return err
 	}
 	provider.metrics.readingsEmitted.Add(ctx, int64(len(readings)), phaseAttr)
+	span.SetAttributes(
+		attribute.String(attrResult, resultSuccess),
+		attribute.Int(attrReadings, len(readings)),
+		attribute.Int64(attrDurationMs, time.Since(phaseStart).Milliseconds()),
+	)
+	provider.settings.Logger().InfoContext(ctx, "meter reporter phase shipped",
+		slog.String("org_id", orgID.StringValue()),
+		slog.String("phase", phaseLabel),
+		slog.String("date", date),
+		slog.Int("readings", len(readings)),
+		slog.Duration("collect_duration", collectDuration),
+		slog.Duration("ship_duration", shipDuration),
+		slog.Duration("duration", time.Since(phaseStart)),
+	)
 	return nil
 }
 
@@ -380,7 +557,11 @@ func (provider *Provider) catchupStart(floor time.Time, todayStart time.Time, ch
 // earlier metric or trace data slip past the floor and under-bill on backfill.
 // The CH meter-table TTL caps how old the data can ever be.
 func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) time.Time {
+	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.DataFloor")
+	defer span.End()
+
 	if provider.deps.TelemetryStore == nil {
+		span.SetAttributes(attribute.String(attrResult, resultSuccess))
 		return todayStart
 	}
 
@@ -391,15 +572,28 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 
 	var minMs int64
 	if err := provider.deps.TelemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minMs); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		span.SetAttributes(attribute.String(attrResult, resultFailure))
 		provider.settings.Logger().WarnContext(ctx, "failed to read data floor; falling back to latest sealed day", errors.Attr(err))
 		return todayStart
 	}
 	if minMs == 0 {
+		span.SetAttributes(
+			attribute.String(attrResult, resultSuccess),
+			attribute.Int64("meterreporter.data_floor_unix_milli", 0),
+		)
 		return todayStart
 	}
 
 	minDay := time.UnixMilli(minMs).UTC()
-	return time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
+	floor := time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
+	span.SetAttributes(
+		attribute.String(attrResult, resultSuccess),
+		attribute.Int64("meterreporter.data_floor_unix_milli", floor.UnixMilli()),
+	)
+	provider.settings.Logger().DebugContext(ctx, "meter reporter data floor loaded", slog.Time("data_floor", floor))
+	return floor
 }
 
 // shipReadings POSTs the day's batch to Zeus. The date-scoped idempotency key
@@ -408,11 +602,25 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 // supported, so a single error here means none of the readings were stored.
 func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Reading) error {
 	idempotencyKey := fmt.Sprintf("meter-cron:%s", date)
+	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.ShipReadings", trace.WithAttributes(
+		attribute.String(attrDate, date),
+		attribute.Int(attrReadings, len(readings)),
+		attribute.String(attrIdempotencyKey, idempotencyKey),
+		attribute.Bool(attrDryRun, true),
+	))
+	defer span.End()
+
+	provider.settings.Logger().InfoContext(ctx, "meter readings prepared for shipment",
+		slog.String("date", date),
+		slog.Int("readings", len(readings)),
+		slog.String("idempotency_key", idempotencyKey),
+		slog.Bool("dry_run", true),
+	)
 
 	// Staging visibility while /v2/meters is offline. Drop or demote
 	// to Debug once Zeus accepts the writes.
 	for _, reading := range readings {
-		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
+		provider.settings.Logger().DebugContext(ctx, "meter reading prepared for shipment",
 			slog.String("meter", reading.MeterName),
 			slog.Float64("value", reading.Value),
 			slog.String("unit", reading.Unit),
@@ -434,5 +642,6 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "ship meter readings for %s", date)
 	// }
 	_ = licenseKey
+	span.SetAttributes(attribute.String(attrResult, resultSuccess))
 	return nil
 }

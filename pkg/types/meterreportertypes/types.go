@@ -34,9 +34,11 @@ type Reading struct {
 	Dimensions map[string]string `json:"dimensions"`
 }
 
-// PostableMeterReading is the request body for Zeus.PutMeterReading. The
+// PostableMeterReadings is the request body for Zeus.PutMeterReadings. One
+// request carries every meter reading for a single UTC day. Zeus accepts or
+// rejects the batch as a whole — partial acceptance is not supported. The
 // idempotency key is carried on the X-Idempotency-Key header, not in the body.
-type PostableMeterReading struct {
-	// Meter is the single meter value being shipped.
-	Meter Reading `json:"meter"`
+type PostableMeterReadings struct {
+	// Meters is the set of meter values being shipped for one day.
+	Meters []Reading `json:"meters"`
 }

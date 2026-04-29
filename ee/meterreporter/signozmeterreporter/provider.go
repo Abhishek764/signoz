@@ -2,7 +2,6 @@ package signozmeterreporter
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -218,8 +217,9 @@ func (provider *Provider) tick(ctx context.Context) error {
 		return nil
 	}
 
-	// TODO: re-enable once /v2/meters/checkpoints is live. Until then we
-	// run with an empty checkpoint map; bootstrap floors are taken from data.
+	// TODO: re-enable once /v2/meters/checkpoints is live in staging. Until
+	// then we run with an empty checkpoint map; bootstrap floors are taken
+	// from data and dropCheckpointed becomes a no-op for the sealed window.
 	// checkpoints, err := provider.zeus.GetMeterCheckpoints(ctx, license.Key)
 	// if err != nil {
 	// 	provider.metrics.checkpointErrors.Add(ctx, 1)
@@ -268,10 +268,11 @@ func (provider *Provider) tick(ctx context.Context) error {
 	return nil
 }
 
-// runPhase collects every meter for one window and ships the result. Returns
-// err only on ship failure — the sealed loop breaks on first failure. Per-meter
-// collect failures are logged and counted but never bubble. For sealed windows,
-// readings whose day is at-or-before the per-meter checkpoint are dropped.
+// runPhase collects every meter for one window and ships the resulting batch.
+// Returns err only on ship failure — the sealed loop breaks on first failure.
+// Per-meter collect failures are logged and counted but never bubble. For
+// sealed windows, readings whose day is at-or-before the per-meter checkpoint
+// are dropped to save bandwidth.
 func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window Window, checkpointsByMeter map[string]time.Time) error {
 	phaseLabel := phaseToday
 	if window.IsCompleted {
@@ -401,24 +402,16 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 	return time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-// shipReadings POSTs each Reading to Zeus. The date-scoped idempotency key
-// makes repeat ticks within the same UTC day upsert instead of duplicating.
+// shipReadings POSTs the day's batch to Zeus. The date-scoped idempotency key
+// makes repeat ticks within the same UTC day UPSERT instead of duplicating.
+// Zeus accepts or rejects the batch as a whole — partial acceptance is not
+// supported, so a single error here means none of the readings were stored.
 func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Reading) error {
 	idempotencyKey := fmt.Sprintf("meter-cron:%s", date)
 
+	// Staging visibility while /v2/meters is offline. Drop or demote
+	// to Debug once Zeus accepts the writes.
 	for _, reading := range readings {
-		payload := meterreportertypes.PostableMeterReading{
-			Meter: reading,
-		}
-
-		body, err := json.Marshal(payload)
-		if err != nil {
-			return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter reading %q", reading.MeterName)
-		}
-		_ = body // unused while the POST below is disabled.
-
-		// Staging visibility while /v2/meters is offline. Drop or demote
-		// to Debug once Zeus accepts the writes.
 		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
 			slog.String("meter", reading.MeterName),
 			slog.Float64("value", reading.Value),
@@ -430,12 +423,16 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 			slog.Any("dimensions", reading.Dimensions),
 			slog.String("idempotency_key", idempotencyKey),
 		)
-
-		// TODO: re-enable once /v2/meters is live.
-		// if err := provider.zeus.PutMeterReading(ctx, licenseKey, idempotencyKey, body); err != nil {
-		// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "ship meter reading %q", reading.MeterName)
-		// }
 	}
 
+	// TODO: re-enable once /v2/meters is live in staging.
+	// body, err := json.Marshal(meterreportertypes.PostableMeterReadings{Meters: readings})
+	// if err != nil {
+	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
+	// }
+	// if err := provider.zeus.PutMeterReadings(ctx, licenseKey, idempotencyKey, body); err != nil {
+	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "ship meter readings for %s", date)
+	// }
+	_ = licenseKey
 	return nil
 }

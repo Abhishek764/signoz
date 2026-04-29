@@ -41,6 +41,13 @@ func (m *module) LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType
 	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, entityType, entityID, tagIDs))
 }
 
+func (m *module) SyncLinksForEntity(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, entityID valuer.UUID, tagIDs []valuer.UUID) error {
+	if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, entityType, entityID, tagIDs)); err != nil {
+		return err
+	}
+	return m.store.DeleteRelationsExcept(ctx, entityID, tagIDs)
+}
+
 func (m *module) ListForEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
 	return m.store.ListByEntity(ctx, entityID)
 }

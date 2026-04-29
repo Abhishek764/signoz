@@ -48,6 +48,23 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authZ.EditAccess(provider.dashboardHandler.UpdateV2), handler.OpenAPIDef{
+		ID:                  "UpdateDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Update dashboard (v2)",
+		Description:         "This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.",
+		Request:             new(dashboardtypesv2.UpdateableDashboard),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypesv2.GettableDashboard),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},

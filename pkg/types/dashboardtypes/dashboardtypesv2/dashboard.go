@@ -51,6 +51,10 @@ type PostableDashboard struct {
 	Tags []tagtypes.PostableTag `json:"tags,omitempty"`
 }
 
+// UpdateableDashboard is the request shape for PUT /api/v2/dashboards/{id}.
+// Identical to PostableDashboard today; aliased so the surface reads cleanly.
+type UpdateableDashboard = PostableDashboard
+
 func (p *PostableDashboard) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
@@ -162,6 +166,25 @@ func NewDashboardFromStorable(storable *dashboardtypes.StorableDashboard, public
 		},
 		PublicConfig: publicConfig,
 	}, nil
+}
+
+func (d *Dashboard) CanUpdate() error {
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	return nil
+}
+
+func (d *Dashboard) Update(updateable UpdateableDashboard, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+	if err := d.CanUpdate(); err != nil {
+		return err
+	}
+	d.Info.Metadata = updateable.Metadata
+	d.Info.Data = updateable.Data
+	d.Info.Tags = resolvedTags
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
 }
 
 // ToStorableDashboard packages a Dashboard into the bun row that goes into

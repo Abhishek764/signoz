@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type store struct {
@@ -77,5 +78,18 @@ func (s *store) CreateRelations(ctx context.Context, relations []*tagtypes.TagRe
 		Model(&relations).
 		On("CONFLICT (entity_id, tag_id) DO NOTHING").
 		Exec(ctx)
+	return err
+}
+
+func (s *store) DeleteRelationsExcept(ctx context.Context, entityID valuer.UUID, keepTagIDs []valuer.UUID) error {
+	q := s.sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model((*tagtypes.TagRelation)(nil)).
+		Where("entity_id = ?", entityID)
+	if len(keepTagIDs) > 0 {
+		q = q.Where("tag_id NOT IN (?)", bun.In(keepTagIDs))
+	}
+	_, err := q.Exec(ctx)
 	return err
 }

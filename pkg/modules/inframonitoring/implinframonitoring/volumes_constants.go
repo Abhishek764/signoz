@@ -55,6 +55,7 @@ var orderByToVolumesQueryNames = map[string][]string{
 // Five builder queries (A..E) cover the v1 volume metrics; formula F1 = B - A
 // derives usage = capacity - available (mirrors v1's F1 in PvcsTableListQuery).
 // ReduceToLast preserves v1's ReduceToOperatorLast semantics.
+// TODO(nikhilmantri0902, srikanthccv): should we add filter k8s.persistentvolumeclaim.name != "" to all builder queries like in v1 to exclude records without a PVC name? why?
 func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
 		// Query A: k8s.volume.available

@@ -105,6 +105,7 @@ func NewModules(
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
+	fl flagger.Flagger,
 	tagModule tag.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))

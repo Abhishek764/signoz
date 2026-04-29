@@ -3711,6 +3711,34 @@ export interface InframonitoringtypesPostablePodsDTO {
 	start: number;
 }
 
+export interface InframonitoringtypesPostableVolumesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
 export interface InframonitoringtypesRequiredMetricsCheckDTO {
 	/**
 	 * @type array
@@ -3723,6 +3751,74 @@ export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
 }
+/**
+ * @nullable
+ */
+export type InframonitoringtypesVolumeRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesVolumeRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesVolumeRecordDTOMeta;
+	/**
+	 * @type string
+	 */
+	persistentVolumeClaimName: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeAvailable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeCapacity: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodes: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesFree: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesUsed: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeUsage: number;
+}
+
+export interface InframonitoringtypesVolumesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesVolumeRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -8012,6 +8108,14 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListVolumes200 = {
+	data: InframonitoringtypesVolumesDTO;
 	/**
 	 * @type string
 	 */

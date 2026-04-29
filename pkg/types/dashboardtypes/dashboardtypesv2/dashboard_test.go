@@ -720,6 +720,30 @@ func TestNumberPanelDefaults(t *testing.T) {
 		"expected stored/response JSON to contain operator:>, got: %s", outputStr)
 }
 
+// TestPersesFixtureStorageRoundTrip exercises the typed → map[string]any →
+// typed cycle that the create/get path performs against the kitchen-sink
+// fixture. Catches plugin specs whose UnmarshalJSON expects a different shape
+// than the default MarshalJSON emits.
+func TestPersesFixtureStorageRoundTrip(t *testing.T) {
+	raw, err := os.ReadFile("testdata/perses.json")
+	require.NoError(t, err)
+
+	var data DashboardData
+	require.NoError(t, json.Unmarshal(raw, &data), "initial unmarshal")
+
+	marshaled, err := json.Marshal(data)
+	require.NoError(t, err, "marshal typed → JSON")
+
+	var asMap map[string]any
+	require.NoError(t, json.Unmarshal(marshaled, &asMap), "JSON → map (storage shape)")
+
+	remarshaled, err := json.Marshal(asMap)
+	require.NoError(t, err, "map → JSON (read-back shape)")
+
+	var roundtripped DashboardData
+	require.NoError(t, json.Unmarshal(remarshaled, &roundtripped), "JSON → typed (the failure mode)")
+}
+
 // TestStorageRoundTrip simulates the future DB store/load cycle:
 // marshal the normalized dashboard to JSON (what would be written to DB),
 // then unmarshal it back (what would be read from DB), and verify defaults survive.

@@ -1,4 +1,4 @@
-package meterreporter
+package signozmeterreporter
 
 import (
 	"context"
@@ -51,28 +51,28 @@ func collectMeterSamplesByRetention(
 	domain RetentionDomain,
 ) ([]meterreportertypes.Reading, error) {
 	if deps.TelemetryStore == nil {
-		return nil, errors.New(errors.TypeInternal, ErrCodeReportFailed, "telemetry store is nil")
+		return nil, errors.New(errors.TypeInternal, errCodeReportFailed, "telemetry store is nil")
 	}
 	if deps.SQLStore == nil {
-		return nil, errors.New(errors.TypeInternal, ErrCodeReportFailed, "sql store is nil")
+		return nil, errors.New(errors.TypeInternal, errCodeReportFailed, "sql store is nil")
 	}
 
 	meterName := meter.Name.String()
 	slices, err := loadActiveRetentionSlices(ctx, deps.SQLStore, orgID, domain, window.StartUnixMilli, window.EndUnixMilli)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "load retention slices for meter %q", meterName)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "load retention slices for meter %q", meterName)
 	}
 
 	accumulator := make(map[retentionBucketKey]float64)
 	for _, slice := range slices {
 		retentionExpr, err := buildRetentionMultiIfSQL(slice.Rules, slice.DefaultDays)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "build retention expression for meter %q", meterName)
+			return nil, errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "build retention expression for meter %q", meterName)
 		}
 
 		sb := sqlbuilder.NewSelectBuilder()
 		sb.Select(
-			"JSONExtractString(labels, '"+DimensionWorkspaceKeyID+"') AS wsid",
+			"JSONExtractString(labels, '"+dimensionWorkspaceKeyID+"') AS wsid",
 			retentionExpr+" AS retention_days",
 			"ifNull(sum(value), 0) AS value",
 		)
@@ -87,7 +87,7 @@ func collectMeterSamplesByRetention(
 
 		rows, err := deps.TelemetryStore.ClickhouseDB().Query(ctx, query, args...)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "query meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+			return nil, errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "query meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 		}
 		if err := func() error {
 			defer rows.Close()
@@ -96,12 +96,12 @@ func collectMeterSamplesByRetention(
 				var retentionDays int32
 				var value float64
 				if err := rows.Scan(&wsid, &retentionDays, &value); err != nil {
-					return errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+					return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 				}
 				accumulator[retentionBucketKey{workspaceKeyID: wsid, retentionDays: int(retentionDays)}] += value
 			}
 			if err := rows.Err(); err != nil {
-				return errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+				return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 			}
 			return nil
 		}(); err != nil {
@@ -112,11 +112,11 @@ func collectMeterSamplesByRetention(
 	readings := make([]meterreportertypes.Reading, 0, len(accumulator))
 	for bucket, value := range accumulator {
 		dimensions := map[string]string{
-			DimensionOrganizationID: orgID.StringValue(),
-			DimensionRetentionDays:  strconv.Itoa(bucket.retentionDays),
+			dimensionOrganizationID: orgID.StringValue(),
+			dimensionRetentionDays:  strconv.Itoa(bucket.retentionDays),
 		}
 		if bucket.workspaceKeyID != "" {
-			dimensions[DimensionWorkspaceKeyID] = bucket.workspaceKeyID
+			dimensions[dimensionWorkspaceKeyID] = bucket.workspaceKeyID
 		}
 		readings = append(readings, meterreportertypes.Reading{
 			MeterName:      meterName,
@@ -142,8 +142,8 @@ func collectMeterSamplesByRetention(
 			EndUnixMilli:   window.EndUnixMilli,
 			IsCompleted:    window.IsCompleted,
 			Dimensions: map[string]string{
-				DimensionOrganizationID: orgID.StringValue(),
-				DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
+				dimensionOrganizationID: orgID.StringValue(),
+				dimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
 			},
 		})
 	}

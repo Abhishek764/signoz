@@ -1,7 +1,8 @@
-package meterreporter
+package signozmeterreporter
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 )
 
@@ -81,24 +82,24 @@ func validateMeters(meters ...*Meter) error {
 
 	for _, meter := range meters {
 		if meter == nil {
-			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "nil meter in registry")
+			return errors.New(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "nil meter in registry")
 		}
 		if meter.Name.IsZero() {
-			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meter with empty name in registry")
+			return errors.New(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "meter with empty name in registry")
 		}
 		if meter.Unit == "" {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "meter %q has no unit", meter.Name.String())
+			return errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "meter %q has no unit", meter.Name.String())
 		}
 		if meter.Aggregation == "" {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "meter %q has no aggregation", meter.Name.String())
+			return errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "meter %q has no aggregation", meter.Name.String())
 		}
 		if meter.Collect == nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "meter %q has no collector function", meter.Name.String())
+			return errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "meter %q has no collector function", meter.Name.String())
 		}
 
 		key := meter.Name.String()
 		if _, ok := seen[key]; ok {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidInput, "duplicate meter %q", meter.Name.String())
+			return errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "duplicate meter %q", meter.Name.String())
 		}
 		seen[key] = struct{}{}
 	}

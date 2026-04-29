@@ -1,4 +1,4 @@
-package meterreporter
+package signozmeterreporter
 
 import (
 	"context"
@@ -67,7 +67,7 @@ type retentionSlice struct {
 func retentionConfigFor(domain RetentionDomain) (retentionDomainConfig, error) {
 	config, ok := retentionDomainConfigs[domain]
 	if !ok {
-		return retentionDomainConfig{}, errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "retention config unavailable for domain %q", domain)
+		return retentionDomainConfig{}, errors.Newf(errors.TypeInternal, errCodeReportFailed, "retention config unavailable for domain %q", domain)
 	}
 	return config, nil
 }
@@ -85,7 +85,7 @@ func loadActiveRetentionSlices(
 		return nil, nil
 	}
 	if sqlstore == nil {
-		return nil, errors.New(errors.TypeInternal, ErrCodeReportFailed, "sqlstore is nil")
+		return nil, errors.New(errors.TypeInternal, errCodeReportFailed, "sqlstore is nil")
 	}
 
 	config, err := retentionConfigFor(domain)
@@ -105,7 +105,7 @@ func loadActiveRetentionSlices(
 		OrderExpr("created_at ASC").
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "load ttl_setting rows for org %q", orgID.StringValue())
+		return nil, errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "load ttl_setting rows for org %q", orgID.StringValue())
 	}
 
 	return buildRetentionSlicesFromRows(domain, rows, startMs, endMs)
@@ -201,7 +201,7 @@ func configFromTTLSetting(domain RetentionDomain, row *types.TTLSetting) ([]rete
 
 	var rules []retentiontypes.CustomRetentionRule
 	if err := json.Unmarshal([]byte(row.Condition), &rules); err != nil {
-		return nil, 0, errors.Wrapf(err, errors.TypeInternal, ErrCodeReportFailed, "parse ttl_setting condition for row %q", row.ID.StringValue())
+		return nil, 0, errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "parse ttl_setting condition for row %q", row.ID.StringValue())
 	}
 
 	return rules, defaultDays, nil
@@ -213,7 +213,7 @@ func configFromTTLSetting(domain RetentionDomain, row *types.TTLSetting) ([]rete
 // infers UInt8/UInt16 from the largest arm).
 func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
-		return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "non-positive default retention %d", defaultDays)
+		return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "non-positive default retention %d", defaultDays)
 	}
 
 	if len(rules) == 0 {
@@ -223,25 +223,25 @@ func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaul
 	arms := make([]string, 0, 2*len(rules)+1)
 	for ruleIndex, rule := range rules {
 		if rule.TTLDays <= 0 {
-			return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
+			return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
 		}
 		if len(rule.Filters) == 0 {
-			return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "rule %d has no filters", ruleIndex)
+			return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d has no filters", ruleIndex)
 		}
 
 		filterExprs := make([]string, 0, len(rule.Filters))
 		for filterIndex, filter := range rule.Filters {
 			if !retentionLabelKeyPattern.MatchString(filter.Key) {
-				return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+				return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
 			}
 			if len(filter.Values) == 0 {
-				return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
+				return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
 			}
 
 			quoted := make([]string, len(filter.Values))
 			for valueIndex, value := range filter.Values {
 				if !retentionLabelValuePattern.MatchString(value) {
-					return "", errors.Newf(errors.TypeInternal, ErrCodeReportFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
+					return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
 				}
 				quoted[valueIndex] = "'" + value + "'"
 			}

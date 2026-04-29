@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 )
@@ -24,7 +23,7 @@ func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	today := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
 	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
-		meters: []meterreporter.Meter{
+		meters: []Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
 			{Name: meterreportertypes.MustNewName("meter.b")},
 		},
@@ -45,7 +44,7 @@ func TestCatchupStartClampsOldCheckpointToFloor(t *testing.T) {
 	today := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
 	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
-		meters: []meterreporter.Meter{
+		meters: []Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
 		},
 	}
@@ -66,7 +65,7 @@ func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.
 	yesterday := today.AddDate(0, 0, -1)
 	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
-		meters: []meterreporter.Meter{
+		meters: []Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
 			{Name: meterreportertypes.MustNewName("meter.b")},
 		},
@@ -88,7 +87,7 @@ func TestCatchupStartUsesDataFloorWhenBootstrapping(t *testing.T) {
 	today := time.Date(2026, 4, 28, 0, 0, 0, 0, time.UTC)
 	dataFloor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC) // first day with samples
 	provider := &Provider{
-		meters: []meterreporter.Meter{
+		meters: []Meter{
 			{Name: meterreportertypes.MustNewName("meter.a")},
 		},
 	}

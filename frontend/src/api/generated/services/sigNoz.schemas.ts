@@ -7955,6 +7955,14 @@ export type ListPods200 = {
 	status: string;
 };
 
+export type ListVolumes200 = {
+	data: InframonitoringtypesVolumesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type Livez200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -8108,14 +8116,6 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListVolumes200 = {
-	data: InframonitoringtypesVolumesDTO;
 	/**
 	 * @type string
 	 */

@@ -105,7 +105,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/pvcs", handler.New(
+	if err := router.Handle("/api/v2/infra_monitoring/pvcs", handler.New(
 		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListVolumes),
 		handler.OpenAPIDef{
 			ID:                  "ListVolumes",

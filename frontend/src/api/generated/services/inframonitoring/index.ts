@@ -459,7 +459,7 @@ export const listVolumes = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListVolumes200>({
-		url: `/api/v2/pvcs`,
+		url: `/api/v2/infra_monitoring/pvcs`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: inframonitoringtypesPostableVolumesDTO,

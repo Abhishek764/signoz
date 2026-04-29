@@ -86,6 +86,14 @@ func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON delegates to the inner Spec so the on-wire shape matches what
+// UnmarshalJSON expects (a flat builder-query payload with `signal` at the top
+// level). Without this, Go's default would wrap it as {"Spec": {...}} and the
+// signal-dispatch on read would fail.
+func (b BuilderQuerySpec) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.Spec)
+}
+
 // PrepareJSONSchema drops the reflected struct shape so only the
 // JSONSchemaOneOf result binds.
 func (BuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {

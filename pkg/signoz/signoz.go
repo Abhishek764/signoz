@@ -426,6 +426,7 @@ func New(
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
 	)
 
 	global, err := factory.NewProviderFromNamedMap(

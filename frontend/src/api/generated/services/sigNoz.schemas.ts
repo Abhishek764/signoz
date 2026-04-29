@@ -7041,7 +7041,7 @@ export interface RuletypesScheduleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startTime?: Date;
+	startTime: Date;
 	/**
 	 * @type string
 	 */

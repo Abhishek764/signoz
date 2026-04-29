@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -26,8 +26,9 @@ import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
+import { showErrorNotification } from 'utils/error';
+import { DeepPartial } from 'utils/types';
 
-import { showErrorNotification } from '../../utils/error';
 import {
 	formatDateTime,
 	getAlertOptionsFromIds,
@@ -35,7 +36,6 @@ import {
 	getEndTime,
 	recurrenceInfo,
 } from './PlannedDowntimeutils';
-
 import './PlannedDowntime.styles.scss';
 
 const { Panel } = Collapse;
@@ -225,7 +225,7 @@ export function CollapseListContent({
 export function CustomCollapseList(
 	props: DowntimeSchedulesTableData & {
 		setInitialValues: React.Dispatch<
-			React.SetStateAction<Partial<RuletypesPlannedMaintenanceDTO>>
+			React.SetStateAction<DeepPartial<RuletypesPlannedMaintenanceDTO>>
 		>;
 		setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 		handleDeleteDowntime: (id: string, name: string) => void;
@@ -331,7 +331,7 @@ export function PlannedDowntimeList({
 	>;
 	alertOptions: DefaultOptionType[];
 	setInitialValues: React.Dispatch<
-		React.SetStateAction<Partial<RuletypesPlannedMaintenanceDTO>>
+		React.SetStateAction<DeepPartial<RuletypesPlannedMaintenanceDTO>>
 	>;
 	setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	handleDeleteDowntime: (id: string, name: string) => void;

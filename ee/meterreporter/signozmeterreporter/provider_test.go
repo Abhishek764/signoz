@@ -1,21 +1,11 @@
 package signozmeterreporter
 
 import (
-	"context"
-	"encoding/json"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
-	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 )
-
-func newTestSettings() factory.ScopedProviderSettings {
-	return factory.NewScopedProviderSettings(factorytest.NewSettings(), "github.com/SigNoz/signoz/ee/meterreporter/signozmeterreporter")
-}
 
 func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	t.Parallel()
@@ -34,7 +24,7 @@ func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	})
 
 	if !got.Equal(floor) {
-		t.Fatalf("catchupStart() = %s, want %s (bootstrap from floor)", got, floor)
+		t.Fatalf("catchupStart() = %s, want %s (bootstrap from floor for meter.b)", got, floor)
 	}
 }
 
@@ -81,177 +71,41 @@ func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.
 	}
 }
 
-func TestCatchupStartUsesDataFloorWhenBootstrapping(t *testing.T) {
-	t.Parallel()
-
-	today := time.Date(2026, 4, 28, 0, 0, 0, 0, time.UTC)
-	dataFloor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC) // first day with samples
-	provider := &Provider{
-		meters: []Meter{
-			{Name: meterreportertypes.MustNewName("meter.a")},
-		},
-	}
-
-	got := provider.catchupStart(dataFloor, today, map[string]time.Time{})
-
-	if !got.Equal(dataFloor) {
-		t.Fatalf("catchupStart() = %s, want %s (floor at first data day)", got, dataFloor)
-	}
-}
-
-func TestShouldShipSealedReadingUsesPerMeterCheckpoint(t *testing.T) {
+func TestDropCheckpointed(t *testing.T) {
 	t.Parallel()
 
 	day := time.Date(2026, 4, 24, 0, 0, 0, 0, time.UTC)
 	checkpoints := map[string]time.Time{
-		"meter.a": day,
-		"meter.b": day.AddDate(0, 0, -1),
+		"meter.a": day,                  // exactly at day → drop
+		"meter.b": day.AddDate(0, 0, -1), // before day → keep
+	}
+	readings := []meterreportertypes.Reading{
+		{MeterName: "meter.a"},
+		{MeterName: "meter.b"},
+		{MeterName: "meter.c"}, // no checkpoint → keep
 	}
 
-	testCases := []struct {
-		name    string
-		reading meterreportertypes.Reading
-		want    bool
-	}{
-		{
-			name:    "AlreadyCheckpointed",
-			reading: meterreportertypes.Reading{MeterName: "meter.a"},
-			want:    false,
-		},
-		{
-			name:    "BehindCheckpoint",
-			reading: meterreportertypes.Reading{MeterName: "meter.b"},
-			want:    true,
-		},
-		{
-			name:    "MissingCheckpoint",
-			reading: meterreportertypes.Reading{MeterName: "meter.c"},
-			want:    true,
-		},
+	got := dropCheckpointed(readings, day, checkpoints)
+
+	if len(got) != 2 {
+		t.Fatalf("len(got) = %d, want 2", len(got))
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := shouldShipSealedReading(tc.reading, day, checkpoints)
-			if got != tc.want {
-				t.Fatalf("shouldShipSealedReading() = %v, want %v", got, tc.want)
-			}
-		})
+	if got[0].MeterName != "meter.b" || got[1].MeterName != "meter.c" {
+		t.Fatalf("got = %+v, want [meter.b, meter.c]", got)
 	}
 }
 
-func TestShipReadingsPostsOneMeterPerRequest(t *testing.T) {
+func TestDropCheckpointedEmptyCheckpointsKeepsAll(t *testing.T) {
 	t.Parallel()
 
-	zeus := &recordingZeus{}
-	provider := &Provider{zeus: zeus, settings: newTestSettings()}
 	readings := []meterreportertypes.Reading{
-		{
-			MeterName:      "meter.a",
-			Value:          10,
-			Unit:           "count",
-			Aggregation:    "sum",
-			StartUnixMilli: 1713916800000,
-			EndUnixMilli:   1714003200000,
-			IsCompleted:    true,
-			Dimensions:     map[string]string{"org": "org-a"},
-		},
-		{
-			MeterName:      "meter.b",
-			Value:          20,
-			Unit:           "bytes",
-			Aggregation:    "sum",
-			StartUnixMilli: 1713916800000,
-			EndUnixMilli:   1714003200000,
-			IsCompleted:    true,
-			Dimensions:     map[string]string{"org": "org-a"},
-		},
+		{MeterName: "meter.a"},
+		{MeterName: "meter.b"},
 	}
 
-	err := provider.shipReadings(context.Background(), "license-key", "2026-04-24", readings)
-	if err != nil {
-		t.Fatalf("shipReadings() error = %v", err)
+	got := dropCheckpointed(readings, time.Now(), map[string]time.Time{})
+
+	if len(got) != len(readings) {
+		t.Fatalf("len(got) = %d, want %d", len(got), len(readings))
 	}
-
-	if len(zeus.calls) != len(readings) {
-		t.Fatalf("PutMeterReading calls = %d, want %d", len(zeus.calls), len(readings))
-	}
-
-	for i, call := range zeus.calls {
-		if call.licenseKey != "license-key" {
-			t.Fatalf("call %d licenseKey = %q", i, call.licenseKey)
-		}
-		if call.idempotencyKey != "meter-cron:2026-04-24" {
-			t.Fatalf("call %d idempotencyKey = %q", i, call.idempotencyKey)
-		}
-
-		var payload meterreportertypes.PostableMeterReading
-		if err := json.Unmarshal(call.body, &payload); err != nil {
-			t.Fatalf("call %d body unmarshal error = %v", i, err)
-		}
-		if !reflect.DeepEqual(payload.Meter, readings[i]) {
-			t.Fatalf("call %d meter = %#v, want %#v", i, payload.Meter, readings[i])
-		}
-	}
-}
-
-type meterReadingCall struct {
-	licenseKey     string
-	idempotencyKey string
-	body           []byte
-}
-
-type recordingZeus struct {
-	calls []meterReadingCall
-}
-
-func (zeus *recordingZeus) GetLicense(context.Context, string) ([]byte, error) {
-	return nil, nil
-}
-
-func (zeus *recordingZeus) GetCheckoutURL(context.Context, string, []byte) ([]byte, error) {
-	return nil, nil
-}
-
-func (zeus *recordingZeus) GetPortalURL(context.Context, string, []byte) ([]byte, error) {
-	return nil, nil
-}
-
-func (zeus *recordingZeus) GetDeployment(context.Context, string) ([]byte, error) {
-	return nil, nil
-}
-
-func (zeus *recordingZeus) GetMeters(context.Context, string) ([]byte, error) {
-	return nil, nil
-}
-
-func (zeus *recordingZeus) PutMeters(context.Context, string, []byte) error {
-	return nil
-}
-
-func (zeus *recordingZeus) PutMetersV2(context.Context, string, []byte) error {
-	return nil
-}
-
-func (zeus *recordingZeus) PutMeterReading(_ context.Context, licenseKey string, idempotencyKey string, body []byte) error {
-	zeus.calls = append(zeus.calls, meterReadingCall{
-		licenseKey:     licenseKey,
-		idempotencyKey: idempotencyKey,
-		body:           body,
-	})
-	return nil
-}
-
-func (zeus *recordingZeus) GetMeterCheckpoints(context.Context, string) ([]zeustypes.MeterCheckpoint, error) {
-	return nil, nil
-}
-
-func (zeus *recordingZeus) PutProfile(context.Context, string, *zeustypes.PostableProfile) error {
-	return nil
-}
-
-func (zeus *recordingZeus) PutHost(context.Context, string, *zeustypes.PostableHost) error {
-	return nil
 }

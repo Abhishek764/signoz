@@ -232,32 +232,28 @@ func (provider *Provider) tick(ctx context.Context) error {
 	// }
 	checkpointsByMeter := make(map[string]time.Time)
 
-	// Concern A — sealed-range processor.
+	// Concern A — sealed-range processor. catchupStart() already clamps to
+	// yesterday, so we can step straight into the loop.
 	floor := provider.dataFloor(ctx, todayStart)
 	catchupStart := provider.catchupStart(floor, todayStart, checkpointsByMeter)
-	if !catchupStart.After(yesterday) {
-		end := catchupStart.AddDate(0, 0, provider.config.CatchupMaxDaysPerTick-1)
-		if end.After(yesterday) {
-			end = yesterday
+	end := catchupStart.AddDate(0, 0, provider.config.CatchupMaxDaysPerTick-1)
+	if end.After(yesterday) {
+		end = yesterday
+	}
+	for day := catchupStart; !day.After(end); day = day.AddDate(0, 0, 1) {
+		window := Window{
+			StartUnixMilli: day.UnixMilli(),
+			EndUnixMilli:   day.AddDate(0, 0, 1).UnixMilli(),
+			IsCompleted:    true,
 		}
-		for day := catchupStart; !day.After(end); day = day.AddDate(0, 0, 1) {
-			window := Window{
-				StartUnixMilli: day.UnixMilli(),
-				EndUnixMilli:   day.AddDate(0, 0, 1).UnixMilli(),
-				IsCompleted:    true,
-			}
-			date := day.Format("2006-01-02")
-			err := provider.runPhase(ctx, org.ID, license.Key, window, date, phaseSealed, func(reading meterreportertypes.Reading) bool {
-				return shouldShipSealedReading(reading, day, checkpointsByMeter)
-			})
-			result := resultSuccess
-			if err != nil {
-				result = resultFailure
-			}
-			provider.metrics.catchupDaysProcessed.Add(ctx, 1, metric.WithAttributes(attribute.String(attrResult, result)))
-			if err != nil {
-				break
-			}
+		err := provider.runPhase(ctx, org.ID, license.Key, window, checkpointsByMeter)
+		result := resultSuccess
+		if err != nil {
+			result = resultFailure
+		}
+		provider.metrics.catchupDaysProcessed.Add(ctx, 1, metric.WithAttributes(attribute.String(attrResult, result)))
+		if err != nil {
+			break
 		}
 	}
 
@@ -267,23 +263,43 @@ func (provider *Provider) tick(ctx context.Context) error {
 		EndUnixMilli:   now.UnixMilli(),
 		IsCompleted:    false,
 	}
-	_ = provider.runPhase(ctx, org.ID, license.Key, todayWindow, todayStart.Format("2006-01-02"), phaseToday, nil)
+	_ = provider.runPhase(ctx, org.ID, license.Key, todayWindow, checkpointsByMeter)
 
 	return nil
 }
 
-// runPhase collects and ships one (window, date) pair. Returns err only on
-// ship failure — the sealed loop relies on this to break on first failure.
-// Collect failures are logged per-meter inside collectOrgReadings and never
-// bubble here. phaseLabel tags metrics/logs only.
-func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window Window, date string, phaseLabel string, readingFilter func(meterreportertypes.Reading) bool) error {
+// runPhase collects every meter for one window and ships the result. Returns
+// err only on ship failure — the sealed loop breaks on first failure. Per-meter
+// collect failures are logged and counted but never bubble. For sealed windows,
+// readings whose day is at-or-before the per-meter checkpoint are dropped.
+func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window Window, checkpointsByMeter map[string]time.Time) error {
+	phaseLabel := phaseToday
+	if window.IsCompleted {
+		phaseLabel = phaseSealed
+	}
 	phaseAttr := metric.WithAttributes(attribute.String(attrPhase, phaseLabel))
+	date := time.UnixMilli(window.StartUnixMilli).UTC().Format("2006-01-02")
 
 	collectStart := time.Now()
-	readings := provider.collectOrgReadings(ctx, orgID, window, phaseLabel)
+	readings := make([]meterreportertypes.Reading, 0, len(provider.meters))
+	for _, meter := range provider.meters {
+		collectedReadings, err := meter.Collect(ctx, provider.deps, meter, orgID, window)
+		if err != nil {
+			provider.metrics.collectErrors.Add(ctx, 1, phaseAttr)
+			provider.settings.Logger().WarnContext(ctx, "meter collection failed",
+				errors.Attr(err),
+				slog.String("meter", meter.Name.String()),
+				slog.String("org_id", orgID.StringValue()),
+				slog.String("phase", phaseLabel),
+			)
+			continue
+		}
+		readings = append(readings, collectedReadings...)
+	}
 	provider.metrics.collectDuration.Record(ctx, time.Since(collectStart).Seconds(), phaseAttr)
-	if readingFilter != nil {
-		readings = filterReadings(readings, readingFilter)
+
+	if window.IsCompleted {
+		readings = dropCheckpointed(readings, time.UnixMilli(window.StartUnixMilli).UTC(), checkpointsByMeter)
 	}
 	if len(readings) == 0 {
 		return nil
@@ -306,30 +322,21 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 	return nil
 }
 
-// collectOrgReadings runs every registered meter's Collector and returns
-// the combined Readings. One bad meter doesn't block the batch — per-meter
-// failures are logged, counted, and skipped.
-func (provider *Provider) collectOrgReadings(ctx context.Context, orgID valuer.UUID, window Window, phaseLabel string) []meterreportertypes.Reading {
-	readings := make([]meterreportertypes.Reading, 0, len(provider.meters))
-	phaseAttr := metric.WithAttributes(attribute.String(attrPhase, phaseLabel))
-
-	for _, meter := range provider.meters {
-		collectedReadings, err := meter.Collect(ctx, provider.deps, meter, orgID, window)
-		if err != nil {
-			provider.metrics.collectErrors.Add(ctx, 1, phaseAttr)
-			provider.settings.Logger().WarnContext(ctx, "meter collection failed",
-				errors.Attr(err),
-				slog.String("meter", meter.Name.String()),
-				slog.String("org_id", orgID.StringValue()),
-				slog.String("phase", phaseLabel),
-			)
-			continue
-		}
-
-		readings = append(readings, collectedReadings...)
+// dropCheckpointed removes readings already shipped per the per-meter
+// checkpoint. A reading survives if its meter has no checkpoint, or the
+// checkpoint is strictly before windowDay.
+func dropCheckpointed(readings []meterreportertypes.Reading, windowDay time.Time, checkpointsByMeter map[string]time.Time) []meterreportertypes.Reading {
+	if len(checkpointsByMeter) == 0 {
+		return readings
 	}
-
-	return readings
+	kept := readings[:0]
+	for _, reading := range readings {
+		checkpoint, ok := checkpointsByMeter[reading.MeterName]
+		if !ok || checkpoint.Before(windowDay) {
+			kept = append(kept, reading)
+		}
+	}
+	return kept
 }
 
 // catchupStart picks the earliest UTC day this tick should re-process.
@@ -392,21 +399,6 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 
 	minDay := time.UnixMilli(minMs).UTC()
 	return time.Date(minDay.Year(), minDay.Month(), minDay.Day(), 0, 0, 0, 0, time.UTC)
-}
-
-func shouldShipSealedReading(reading meterreportertypes.Reading, day time.Time, checkpointsByMeter map[string]time.Time) bool {
-	checkpoint, ok := checkpointsByMeter[reading.MeterName]
-	return !ok || checkpoint.Before(day)
-}
-
-func filterReadings(readings []meterreportertypes.Reading, keep func(meterreportertypes.Reading) bool) []meterreportertypes.Reading {
-	filtered := make([]meterreportertypes.Reading, 0, len(readings))
-	for _, reading := range readings {
-		if keep(reading) {
-			filtered = append(filtered, reading)
-		}
-	}
-	return filtered
 }
 
 // shipReadings POSTs each Reading to Zeus. The date-scoped idempotency key

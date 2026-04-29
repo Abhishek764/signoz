@@ -63,10 +63,8 @@ const useBaseAggregateOptions = ({
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
 	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
-	const {
-		getUpdatedQuery,
-		isLoading: isResolveQueryLoading,
-	} = useUpdatedQuery();
+	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
+		useUpdatedQuery();
 	const { dashboardData } = useDashboardStore();
 
 	useEffect(() => {
@@ -230,7 +228,13 @@ const useBaseAggregateOptions = ({
 									return (
 										<ContextMenu.Item
 											key={key}
-											icon={isLoading ? <LoadingOutlined spin /> : icon}
+											icon={
+												isLoading ? (
+													<LoadingOutlined spin />
+												) : (
+													<span style={{ color: aggregateData?.seriesColor }}>{icon}</span>
+												)
+											}
 											onClick={(): void => onClick()}
 											disabled={isLoading}
 										>

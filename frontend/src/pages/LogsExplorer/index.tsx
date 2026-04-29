@@ -98,7 +98,7 @@ function LogsExplorer(): JSX.Element {
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
@@ -127,9 +127,8 @@ function LogsExplorer(): JSX.Element {
 		setShowFilters((prev) => !prev);
 	};
 
-	const {
-		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+	const { redirectWithQuery: redirectWithOptionsData } =
+		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
 	// Get and parse stored columns from localStorage
 	const logListOptionsFromLocalStorage = useMemo(() => {

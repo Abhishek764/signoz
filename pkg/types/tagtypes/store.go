@@ -9,6 +9,8 @@ import (
 type Store interface {
 	List(ctx context.Context, orgID valuer.UUID) ([]*Tag, error)
 
+	ListByEntity(ctx context.Context, entityID valuer.UUID) ([]*Tag, error)
+
 	// Create upserts the given tags and returns them with authoritative IDs.
 	// On conflict on (org_id, internal_name) — which happens only when a
 	// concurrent insert raced ours — the returned entry carries the existing

@@ -2,9 +2,11 @@ package impldashboard
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -61,6 +63,65 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	}
 
 	return storableDashboard, nil
+}
+
+func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, *dashboardtypes.StorablePublicDashboard, error) {
+	type joinedRow struct {
+		bun.BaseModel `bun:"table:dashboard,alias:d"`
+
+		ID        valuer.UUID                          `bun:"id"`
+		OrgID     valuer.UUID                          `bun:"org_id"`
+		Data      dashboardtypes.StorableDashboardData `bun:"data"`
+		Locked    bool                                 `bun:"locked"`
+		CreatedAt time.Time                            `bun:"created_at"`
+		CreatedBy string                               `bun:"created_by"`
+		UpdatedAt time.Time                            `bun:"updated_at"`
+		UpdatedBy string                               `bun:"updated_by"`
+
+		PublicID               *valuer.UUID `bun:"public_id"`
+		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
+		PublicUpdatedAt        *time.Time   `bun:"public_updated_at"`
+		PublicTimeRangeEnabled *bool        `bun:"public_time_range_enabled"`
+		PublicDefaultTimeRange *string      `bun:"public_default_time_range"`
+	}
+
+	row := new(joinedRow)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(row).
+		ColumnExpr("d.id, d.org_id, d.data, d.locked, d.created_at, d.created_by, d.updated_at, d.updated_by").
+		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
+		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = d.id").
+		Where("d.id = ?", id).
+		Where("d.org_id = ?", orgID).
+		Where("d.deleted_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
+	}
+
+	storable := &dashboardtypes.StorableDashboard{
+		Identifiable:  types.Identifiable{ID: row.ID},
+		TimeAuditable: types.TimeAuditable{CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt},
+		UserAuditable: types.UserAuditable{CreatedBy: row.CreatedBy, UpdatedBy: row.UpdatedBy},
+		OrgID:         row.OrgID,
+		Data:          row.Data,
+		Locked:        row.Locked,
+	}
+
+	if row.PublicID == nil {
+		return storable, nil, nil
+	}
+	public := &dashboardtypes.StorablePublicDashboard{
+		Identifiable:     types.Identifiable{ID: *row.PublicID},
+		TimeAuditable:    types.TimeAuditable{CreatedAt: *row.PublicCreatedAt, UpdatedAt: *row.PublicUpdatedAt},
+		TimeRangeEnabled: *row.PublicTimeRangeEnabled,
+		DefaultTimeRange: *row.PublicDefaultTimeRange,
+		DashboardID:      row.ID.StringValue(),
+	}
+	return storable, public, nil
 }
 
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {

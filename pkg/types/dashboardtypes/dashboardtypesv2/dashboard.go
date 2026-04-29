@@ -129,6 +129,41 @@ func NewDashboard(orgID valuer.UUID, createdBy string, postable PostableDashboar
 	}
 }
 
+// rejects rows that don't carry a v2-shape blob — those are pre-migration v1 dashboards that the v2 API can't render.
+func NewDashboardFromStorable(storable *dashboardtypes.StorableDashboard, public *dashboardtypes.StorablePublicDashboard, tags []*tagtypes.Tag) (*Dashboard, error) {
+	metadata, _ := storable.Data["metadata"].(map[string]any)
+	if metadata == nil || metadata["schemaVersion"] != SchemaVersion {
+		return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodeDashboardInvalidData, "dashboard %s is not in %s schema", storable.ID, SchemaVersion)
+	}
+
+	raw, err := json.Marshal(storable.Data)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal stored v2 dashboard data")
+	}
+	var stored StoredDashboardInfo
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal stored v2 dashboard data")
+	}
+
+	var publicConfig *dashboardtypes.PublicDashboard
+	if public != nil {
+		publicConfig = dashboardtypes.NewPublicDashboardFromStorablePublicDashboard(public)
+	}
+
+	return &Dashboard{
+		Identifiable:  storable.Identifiable,
+		TimeAuditable: storable.TimeAuditable,
+		UserAuditable: storable.UserAuditable,
+		OrgID:         storable.OrgID,
+		Locked:        storable.Locked,
+		Info: DashboardInfo{
+			StoredDashboardInfo: stored,
+			Tags:                tags,
+		},
+		PublicConfig: publicConfig,
+	}, nil
+}
+
 // ToStorableDashboard packages a Dashboard into the bun row that goes into
 // the dashboard table. Tags are intentionally omitted — they live in
 // tag_relations and are inserted separately by the caller.

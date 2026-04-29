@@ -20,4 +20,6 @@ type Module interface {
 	// are left untouched. Uses the caller's transaction context if any so that
 	// it can be made atomic with the entity row insert.
 	LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, entityID valuer.UUID, tagIDs []valuer.UUID) error
+
+	ListForEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error)
 }

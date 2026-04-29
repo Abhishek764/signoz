@@ -40,3 +40,7 @@ func (m *module) LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType
 	}
 	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, entityType, entityID, tagIDs))
 }
+
+func (m *module) ListForEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
+	return m.store.ListByEntity(ctx, entityID)
+}

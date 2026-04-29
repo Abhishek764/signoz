@@ -30,6 +30,21 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID) ([]*tagtypes.Tag, e
 	return tags, nil
 }
 
+func (s *store) ListByEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
+	tags := make([]*tagtypes.Tag, 0)
+	err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&tags).
+		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
+		Where("tr.entity_id = ?", entityID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
 func (s *store) Create(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.Tag, error) {
 	if len(tags) == 0 {
 		return tags, nil

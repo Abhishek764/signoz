@@ -46,3 +46,17 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
 }
+
+func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypesv2.Dashboard, error) {
+	storable, public, err := module.store.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := module.tagModule.ListForEntity(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypesv2.NewDashboardFromStorable(storable, public, tags)
+}

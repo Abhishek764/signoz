@@ -58,6 +58,8 @@ type Module interface {
 	// v2 dashboard methods
 	// ════════════════════════════════════════════════════════════════════════
 	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypesv2.PostableDashboard) (*dashboardtypesv2.Dashboard, error)
+
+	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypesv2.Dashboard, error)
 }
 
 type Handler interface {
@@ -85,4 +87,6 @@ type Handler interface {
 	// v2 dashboard methods
 	// ════════════════════════════════════════════════════════════════════════
 	CreateV2(http.ResponseWriter, *http.Request)
+
+	GetV2(http.ResponseWriter, *http.Request)
 }

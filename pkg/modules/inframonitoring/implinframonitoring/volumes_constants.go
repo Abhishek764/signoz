@@ -54,15 +54,12 @@ var orderByToVolumesQueryNames = map[string][]string{
 // newVolumesTableListQuery builds the composite QB v5 request for the volumes list.
 // Five builder queries (A..E) cover the v1 volume metrics; formula F1 = B - A
 // derives usage = capacity - available (mirrors v1's F1 in PvcsTableListQuery).
-// ReduceToLast preserves v1's ReduceToOperatorLast semantics.
-//
-// Every builder query carries a base filter `k8s.persistentvolumeclaim.name != ''`.
+// Every builder query carries a base filter `k8s.persistentvolumeclaim.name != ”`.
 // Reason: the kubeletstats receiver emits `k8s.volume.*` metrics for every volume
 // mount on a pod (emptyDir, configMap, secret, projected, hostPath, ...), but
 // only PVC-backed volumes carry the `k8s.persistentvolumeclaim.name` resource
-// attribute (see opentelemetry-collector-contrib/receiver/kubeletstatsreceiver/
-// internal/kubelet/volume.go:setResourcesFromVolume). Without this filter,
-// non-PVC volumes pollute the result and collapse into a single empty-string
+// attribute (see https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/82f2e8798b42a13f07d733d073147b6eb279e0e1/receiver/kubeletstatsreceiver/internal/kubelet/volume.go#L25).
+// Without this filter, non-PVC volumes pollute the result and collapse into a single empty-string
 // group under the default groupBy. v1's PvcsTableListQuery applied the same filter.
 func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{

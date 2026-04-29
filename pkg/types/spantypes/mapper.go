@@ -71,7 +71,7 @@ type PostableSpanMapper struct {
 // UpdatableSpanMapper is the HTTP request body for updating a span mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableSpanMapper struct {
-	FieldContext *FieldContext     `json:"field_context" nullable:"true"`
+	FieldContext FieldContext      `json:"field_context" nullable:"false"` // since it's an enum so it cannot be nullable
 	Config       *SpanMapperConfig `json:"config" nullable:"true"`
 	Enabled      *bool             `json:"enabled" nullable:"true"`
 }
@@ -111,9 +111,8 @@ func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper)
 }
 
 func (m *SpanMapper) Update(u *UpdatableSpanMapper, updatedBy string) {
-	if u.FieldContext != nil {
-		m.FieldContext = *u.FieldContext
-	}
+	m.FieldContext = u.FieldContext
+
 	if u.Config != nil {
 		m.Config = *u.Config
 	}

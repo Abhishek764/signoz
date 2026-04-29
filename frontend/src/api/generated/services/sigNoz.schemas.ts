@@ -5472,13 +5472,9 @@ export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
 
-/**
- * @nullable
- */
 export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
-	null = null,
 }
 export interface SpantypesGettableSpanMapperGroupsDTO {
 	/**

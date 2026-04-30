@@ -37,16 +37,16 @@ var deploymentAttrKeysForMetadata = []string{
 	"k8s.cluster.name",
 }
 
-// orderByToDeploymentsQueryNames maps the orderBy column to the query names
-// used for ranking deployment groups. Last entry of each slice is the ranking
-// column (mirrors v1 queryNamesForDeployments dependency ordering).
+// orderByToDeploymentsQueryNames maps the orderBy column to the query name
+// used for ranking deployment groups. v2 B/C/E/F are direct metrics, no
+// formula deps — so unlike v1 we don't carry A/D.
 var orderByToDeploymentsQueryNames = map[string][]string{
 	inframonitoringtypes.DeploymentsOrderByCPU:           {"A"},
-	inframonitoringtypes.DeploymentsOrderByCPURequest:    {"A", "B"},
-	inframonitoringtypes.DeploymentsOrderByCPULimit:      {"A", "C"},
+	inframonitoringtypes.DeploymentsOrderByCPURequest:    {"B"},
+	inframonitoringtypes.DeploymentsOrderByCPULimit:      {"C"},
 	inframonitoringtypes.DeploymentsOrderByMemory:        {"D"},
-	inframonitoringtypes.DeploymentsOrderByMemoryRequest: {"D", "E"},
-	inframonitoringtypes.DeploymentsOrderByMemoryLimit:   {"D", "F"},
+	inframonitoringtypes.DeploymentsOrderByMemoryRequest: {"E"},
+	inframonitoringtypes.DeploymentsOrderByMemoryLimit:   {"F"},
 	inframonitoringtypes.DeploymentsOrderByDesiredPods:   {"H"},
 	inframonitoringtypes.DeploymentsOrderByAvailablePods: {"I"},
 }
@@ -56,7 +56,7 @@ var orderByToDeploymentsQueryNames = map[string][]string{
 // latest deployment-level desired/available counts. Restarts (v1 query G) is intentionally
 // omitted to match the v2 pods pattern.
 //
-// Every builder query carries a base filter `k8s.deployment.name != ''`.
+// Every builder query carries a base filter `k8s.deployment.name != ”`.
 // Reason: pod-level metrics (A..F) are emitted for every pod regardless of whether the
 // pod belongs to a Deployment; only Deployment-owned pods carry the
 // `k8s.deployment.name` resource attribute. Without this filter, standalone pods and

@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import cx from 'classnames';
-import { LoaderCircle } from '@signozhq/icons';
 
 import ChatInput from './components/ChatInput';
+import ConversationSkeleton from './components/ConversationSkeleton';
 import VirtualizedMessages from './components/VirtualizedMessages';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
 import { MessageAttachment } from './types';
@@ -70,10 +70,7 @@ export default function ConversationView({
 	if (isLoadingThread && messages.length === 0) {
 		return (
 			<div className={styles.conversation}>
-				<div className={styles.loading}>
-					<LoaderCircle size={20} className={styles.spinner} />
-					Loading conversation…
-				</div>
+				<ConversationSkeleton />
 				<div className={inputWrapperClass}>
 					<ChatInput onSend={handleSend} disabled />
 				</div>

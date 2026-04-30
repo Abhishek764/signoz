@@ -1136,14 +1136,18 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 		})),
 		{
 			name: 'ai-assistant-store',
-			version: 2,
+			version: 3,
 			partialize: (state) => ({
 				isDrawerOpen: state.isDrawerOpen,
 				answeredBlocks: state.answeredBlocks,
+				// Persist the active conversation so a page reload returns the
+				// user to the same thread instead of dumping them into a new one.
+				activeConversationId: state.activeConversationId,
 			}),
 			migrate: () => ({
 				isDrawerOpen: false,
 				answeredBlocks: {},
+				activeConversationId: null,
 			}),
 			onRehydrateStorage:
 				() =>
@@ -1151,10 +1155,28 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					if (!state) {
 						return;
 					}
-					if (
-						(state.isDrawerOpen || state.isModalOpen) &&
-						!state.activeConversationId
-					) {
+
+					// Restored an active conversation id: prime an empty entry so
+					// the UI has something to render immediately, then fire
+					// loadThread to fetch the messages from the server. If the id
+					// is a stale local-only one (no thread on the server), the
+					// call fails silently inside loadThread and the empty entry
+					// behaves like a fresh conversation.
+					if (state.activeConversationId) {
+						const id = state.activeConversationId;
+						if (!state.conversations[id]) {
+							state.conversations[id] = {
+								id,
+								messages: [],
+								createdAt: Date.now(),
+								updatedAt: Date.now(),
+							};
+						}
+						void state.loadThread(id);
+						return;
+					}
+
+					if (state.isDrawerOpen || state.isModalOpen) {
 						state.startNewConversation();
 					}
 				},

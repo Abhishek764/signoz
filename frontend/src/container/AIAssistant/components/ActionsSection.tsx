@@ -217,10 +217,14 @@ export default function ActionsSection({
 
 			<div className={styles.list}>
 				{actions.map((action, i) => {
-					// Stable per-action key — actionMetadataId is preferred when present,
-					// otherwise fall back to kind + label + index.
-					const key =
-						action.actionMetadataId ?? `${action.kind}:${action.label}:${i}`;
+					// Stable per-action key. `actionMetadataId` alone isn't unique —
+					// the server can attach the same id to multiple kinds (e.g. an
+					// `undo` and `revert` chip for the same operation), so we always
+					// include the kind. Falls back to label + index when the id is
+					// missing (e.g. follow_up / open_docs).
+					const key = action.actionMetadataId
+						? `${action.kind}:${action.actionMetadataId}`
+						: `${action.kind}:${action.label}:${i}`;
 					const result = results[key];
 					const isLoading = result?.state === 'loading';
 					const isSuccess = result?.state === 'success';

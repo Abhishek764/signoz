@@ -10,7 +10,7 @@ import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 

@@ -14,7 +14,7 @@ import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
 import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
-import get from 'lodash/get';
+import get from 'lodash-es/get';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {

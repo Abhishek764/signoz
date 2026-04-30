@@ -1,3 +1,26 @@
+/**
+ * UI types for the AI Assistant.
+ *
+ * Wherever the OpenAPI-generated DTOs in
+ * `src/api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas.ts`
+ * already capture the right shape, this module re-exports them.
+ *
+ * A type is defined locally only when the UI needs a different shape than
+ * the API — typically because:
+ *   • the DTO is too loose to render against (e.g. `blocks` is `unknown[]`)
+ *   • the UI uses numeric millisecond timestamps instead of ISO strings
+ *   • the UI mints a synthetic `id` before the server has assigned a `threadId`
+ *   • client-only state (attachments, streaming aggregations) has no API form
+ */
+import type {
+	ApprovalEventDTO,
+	ClarificationEventDTO,
+	FeedbackRatingDTO,
+	MessageActionDTO,
+	MessageActionKindDTO,
+} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+
+/** Client-only file attachment — no API equivalent (uploads happen via data URLs). */
 export interface MessageAttachment {
 	name: string;
 	type: string;
@@ -5,29 +28,18 @@ export interface MessageAttachment {
 	dataUrl: string;
 }
 
+/** Narrowed from DTO `MessageSummaryDTO.role: string`. The UI only cares about user/assistant. */
 export type MessageRole = 'user' | 'assistant';
 
-export type ActionKind =
-	| 'follow_up'
-	| 'open_resource'
-	| 'navigate'
-	| 'apply_filter'
-	| 'open_docs'
-	| 'undo'
-	| 'revert';
+/** String-literal view of `MessageActionKindDTO` for ergonomic comparisons in switch statements. */
+export type ActionKind = `${MessageActionKindDTO}`;
 
-export interface AssistantAction {
-	id: string;
-	label: string;
-	kind: ActionKind;
-	payload: Record<string, unknown>;
-	expiresAt: string | null;
-}
-
-export type FeedbackRating = 'positive' | 'negative';
+/** String-literal view of `FeedbackRatingDTO` so call-sites can pass `'positive'`/`'negative'` directly. */
+export type FeedbackRating = `${FeedbackRatingDTO}`;
 
 // ---------------------------------------------------------------------------
-// Message blocks — ordered content blocks for assistant replies
+// Message blocks — the DTO models blocks as `unknown[]`. The UI needs a
+// typed discriminated union to render each block kind.
 // ---------------------------------------------------------------------------
 
 export interface TextBlock {
@@ -51,6 +63,13 @@ export interface ToolCallBlock {
 
 export type MessageBlock = TextBlock | ThinkingBlock | ToolCallBlock;
 
+/**
+ * UI shape for an assistant or user message. Differs from `MessageSummaryDTO`:
+ *   • `id` instead of `messageId`
+ *   • `createdAt` is a millisecond epoch instead of ISO string
+ *   • `blocks` is the typed discriminated union above
+ *   • streaming-only fields are excluded (those live in `ConversationStreamState`)
+ */
 export interface Message {
 	id: string;
 	role: MessageRole;
@@ -59,12 +78,18 @@ export interface Message {
 	/** Ordered content blocks for structured rendering of assistant replies. */
 	blocks?: MessageBlock[];
 	/** Suggested follow-up actions returned by the assistant (final message only). */
-	actions?: AssistantAction[];
+	actions?: MessageActionDTO[];
 	/** Persisted feedback rating — set after user votes and the API confirms. */
 	feedbackRating?: FeedbackRating | null;
 	createdAt: number;
 }
 
+/**
+ * UI shape for a conversation. Differs from `ThreadDetailResponseDTO`:
+ *   • UI-minted `id` (assigned before the server returns a `threadId`)
+ *   • `createdAt`/`updatedAt` are ms epochs
+ *   • `messages` is the typed `Message[]` above
+ */
 export interface Conversation {
 	id: string;
 	/** Opaque thread ID assigned by the backend after first message. */
@@ -78,7 +103,9 @@ export interface Conversation {
 }
 
 // ---------------------------------------------------------------------------
-// Streaming-only types — live during an active SSE stream, never persisted
+// Streaming-only types — live during an active SSE stream, never persisted.
+// No DTO equivalents: these aggregate multiple SSE event DTOs into UI-friendly
+// records (e.g. one StreamingToolCall combines a `tool_call` + `tool_result`).
 // ---------------------------------------------------------------------------
 
 /** A single tool invocation tracked during streaming. */
@@ -101,43 +128,21 @@ export type StreamingEventItem =
 	| { kind: 'thinking'; content: string }
 	| { kind: 'tool'; toolCall: StreamingToolCall };
 
-/** Data from an SSE `approval` event — user must approve or reject before the stream continues. */
-export interface PendingApproval {
-	approvalId: string;
-	executionId: string;
-	actionType: string;
-	resourceType: string;
-	summary: string;
-	diff: { before: unknown; after: unknown } | null;
-}
-
-/** A single field in a clarification form. */
-export interface ClarificationField {
-	id: string;
-	/** 'text' | 'number' | 'select' | 'checkbox' | 'radio' */
-	type: string;
-	label: string;
-	required?: boolean;
-	options?: string[] | null;
-	default?: string | string[] | null;
-}
-
-/** Data from an SSE `clarification` event — user must submit answers before the stream continues. */
-export interface PendingClarification {
-	clarificationId: string;
-	executionId: string;
-	message: string;
-	discoveredContext: Record<string, unknown> | null;
-	fields: ClarificationField[];
-}
-
-/** Per-conversation streaming state. Present in the store's `streams` map only while active. */
+/**
+ * Per-conversation streaming state. Present in the store's `streams` map only
+ * while active. `pendingApproval`/`pendingClarification` are the SSE event
+ * DTOs straight from the wire; the persisted summary DTOs (returned by
+ * `GET /threads/{id}`) are structurally compatible and are assigned in
+ * verbatim during cold-start.
+ */
 export interface ConversationStreamState {
 	isStreaming: boolean;
 	streamingContent: string;
 	streamingStatus: string;
 	streamingEvents: StreamingEventItem[];
 	streamingMessageId: string | null;
-	pendingApproval: PendingApproval | null;
-	pendingClarification: PendingClarification | null;
+	/** Actions sent on the final SSE `message` event (`done: true`). */
+	streamingActions: MessageActionDTO[] | null;
+	pendingApproval: ApprovalEventDTO | null;
+	pendingClarification: ClarificationEventDTO | null;
 }

@@ -4,6 +4,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
+import type {
+	MessageActionDTO,
+	MessageSummaryDTOBlocksAnyOfItem,
+} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+
 import {
 	approveExecution,
 	cancelExecution,
@@ -13,7 +18,6 @@ import {
 	listThreads,
 	MessageContext,
 	MessageSummary,
-	MessageSummaryBlock,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
 	streamEvents,
@@ -28,6 +32,7 @@ import {
 	Message,
 	MessageAttachment,
 	MessageBlock,
+	MessageRole,
 } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -86,7 +91,7 @@ async function fetchAllThreadSummaries(
 			sort: 'updated_desc',
 		});
 		allThreads.push(...page.threads);
-		cursor = page.hasMore ? page.nextCursor : null;
+		cursor = page.hasMore ? (page.nextCursor ?? null) : null;
 	} while (cursor);
 	return allThreads;
 }
@@ -180,6 +185,7 @@ function resetStreamingState(
 		streamingStatus: '',
 		streamingEvents: [],
 		streamingMessageId: null,
+		streamingActions: null,
 		pendingApproval: null,
 		pendingClarification: null,
 	};
@@ -225,6 +231,13 @@ async function runStreamingLoop(
 				});
 			}
 			if (event.done) {
+				set((s) => {
+					const st = s.streams[conversationId];
+					if (st && event.actions && event.actions.length > 0) {
+						// MessageActionEventDTO is structurally identical to MessageActionDTO.
+						st.streamingActions = event.actions as MessageActionDTO[];
+					}
+				});
 				break;
 			}
 		} else if (event.type === 'thinking') {
@@ -367,7 +380,12 @@ function finalizeStreamingMessage(
 	if (!stream) {
 		return;
 	}
-	const { streamingMessageId, streamingContent, streamingEvents } = stream;
+	const {
+		streamingMessageId,
+		streamingContent,
+		streamingEvents,
+		streamingActions,
+	} = stream;
 
 	set((s) => {
 		const conv = s.conversations[conversationId];
@@ -378,6 +396,7 @@ function finalizeStreamingMessage(
 				role: 'assistant',
 				content: streamingContent,
 				blocks: blocks.length > 0 ? blocks : undefined,
+				actions: streamingActions ?? undefined,
 				createdAt: Date.now(),
 			});
 			conv.updatedAt = Date.now();
@@ -478,8 +497,13 @@ export interface AIAssistantStore {
 // Server → client converters
 // ---------------------------------------------------------------------------
 
+/**
+ * The DTO models a persisted block as `{ [key: string]: unknown }`. This
+ * helper narrows each entry to the typed `MessageBlock` discriminated union
+ * the UI renders against.
+ */
 function toBlocks(
-	raw: MessageSummaryBlock[] | null | undefined,
+	raw: MessageSummaryDTOBlocksAnyOfItem[] | null | undefined,
 ): MessageBlock[] | undefined {
 	if (!raw || raw.length === 0) {
 		return undefined;
@@ -487,19 +511,25 @@ function toBlocks(
 	return raw
 		.map((b): MessageBlock | null => {
 			if (b.type === 'text') {
-				return { type: 'text', content: b.content ?? '' };
+				return {
+					type: 'text',
+					content: typeof b.content === 'string' ? b.content : '',
+				};
 			}
 			if (b.type === 'thinking') {
-				return { type: 'thinking', content: b.content ?? '' };
+				return {
+					type: 'thinking',
+					content: typeof b.content === 'string' ? b.content : '',
+				};
 			}
-			if (b.type === 'tool_call' && b.toolName) {
+			if (b.type === 'tool_call' && typeof b.toolName === 'string') {
 				return {
 					type: 'tool_call',
-					toolCallId: b.toolCallId ?? '',
+					toolCallId: typeof b.toolCallId === 'string' ? b.toolCallId : '',
 					toolName: b.toolName,
 					toolInput: b.toolInput,
 					result: b.result,
-					success: b.success,
+					success: typeof b.success === 'boolean' ? b.success : undefined,
 				};
 			}
 			return null;
@@ -510,9 +540,10 @@ function toBlocks(
 function toMessage(m: MessageSummary): Message {
 	return {
 		id: m.messageId,
-		role: m.role as 'user' | 'assistant',
+		role: m.role as MessageRole,
 		content: m.content ?? '',
 		blocks: toBlocks(m.blocks),
+		actions: m.actions ?? undefined,
 		feedbackRating: m.feedbackRating ?? undefined,
 		createdAt: new Date(m.createdAt).getTime(),
 	};
@@ -700,7 +731,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							id: threadId,
 							threadId: detail.threadId,
 							title: detail.title ?? undefined,
-							messages: detail.messages
+							messages: (detail.messages ?? [])
 								.filter((m) => m.content != null && m.content.trim() !== '')
 								.map(toMessage),
 							createdAt: new Date(detail.createdAt).getTime(),
@@ -716,27 +747,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 									: 'awaiting_clarification',
 								streamingEvents: [],
 								streamingMessageId: null,
-								pendingApproval: detail.pendingApproval
-									? {
-											approvalId: detail.pendingApproval.approvalId,
-											executionId: detail.pendingApproval.executionId,
-											actionType: detail.pendingApproval.actionType,
-											resourceType: detail.pendingApproval.resourceType,
-											summary: detail.pendingApproval.summary,
-											// Thread detail summary does not currently include a diff payload.
-											diff: null,
-										}
-									: null,
-								pendingClarification: detail.pendingClarification
-									? {
-											clarificationId: detail.pendingClarification.clarificationId,
-											executionId: detail.pendingClarification.executionId,
-											message: detail.pendingClarification.message,
-											discoveredContext:
-												detail.pendingClarification.discoveredContext ?? null,
-											fields: detail.pendingClarification.fields ?? [],
-										}
-									: null,
+								streamingActions: null,
+								// ApprovalSummaryDTO / ClarificationSummaryDTO are structurally
+								// compatible with the SSE event DTOs used by ConversationStreamState.
+								pendingApproval: detail.pendingApproval ?? null,
+								pendingClarification: detail.pendingClarification ?? null,
 							};
 						}
 						s.isLoadingThread = false;

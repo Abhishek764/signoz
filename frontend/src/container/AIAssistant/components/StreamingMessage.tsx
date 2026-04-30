@@ -3,12 +3,13 @@ import cx from 'classnames';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import type {
+	ApprovalEventDTO,
+	ClarificationEventDTO,
+} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+
 import { useVariant } from '../VariantContext';
-import {
-	PendingApproval,
-	PendingClarification,
-	StreamingEventItem,
-} from '../types';
+import { StreamingEventItem } from '../types';
 import ApprovalCard from './ApprovalCard';
 import { RichCodeBlock } from './blocks';
 import ClarificationForm from './ClarificationForm';
@@ -46,8 +47,8 @@ interface StreamingMessageProps {
 	/** Ordered timeline of text and tool-call events in arrival order. */
 	events: StreamingEventItem[];
 	status?: string;
-	pendingApproval?: PendingApproval | null;
-	pendingClarification?: PendingClarification | null;
+	pendingApproval?: ApprovalEventDTO | null;
+	pendingClarification?: ClarificationEventDTO | null;
 }
 
 export default function StreamingMessage({

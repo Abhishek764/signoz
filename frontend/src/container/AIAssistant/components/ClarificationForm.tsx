@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui';
+import type {
+	ClarificationEventDTO,
+	ClarificationFieldEventDTO,
+} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { CircleHelp, Send, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
-import { ClarificationField, PendingClarification } from '../types';
 
 import styles from './ClarificationForm.module.scss';
 
 interface ClarificationFormProps {
 	conversationId: string;
-	clarification: PendingClarification;
+	clarification: ClarificationEventDTO;
 }
 
 /**
@@ -28,8 +31,9 @@ export default function ClarificationForm({
 		(s) => s.streams[conversationId]?.isStreaming ?? false,
 	);
 
+	const fields = clarification.fields ?? [];
 	const initialAnswers = Object.fromEntries(
-		clarification.fields.map((f) => [f.id, f.default ?? '']),
+		fields.map((f) => [f.id, f.default ?? '']),
 	);
 	const [answers, setAnswers] =
 		useState<Record<string, unknown>>(initialAnswers);
@@ -82,7 +86,7 @@ export default function ClarificationForm({
 			<p className={styles.message}>{clarification.message}</p>
 
 			<div className={styles.fields}>
-				{clarification.fields.map((field) => (
+				{fields.map((field) => (
 					<FieldInput
 						key={field.id}
 						field={field}
@@ -121,7 +125,7 @@ export default function ClarificationForm({
 // ---------------------------------------------------------------------------
 
 interface FieldInputProps {
-	field: ClarificationField;
+	field: ClarificationFieldEventDTO;
 	value: unknown;
 	onChange: (value: unknown) => void;
 }

@@ -9,9 +9,44 @@
  * For subsequent messages in the same thread, repeat steps 2–3.
  * Approval/clarification events pause the stream; use approveExecution/clarifyExecution
  * to resume, which each return a new executionId to open a fresh SSE stream.
+ *
+ * Types in this file re-use the OpenAPI-generated DTOs in
+ * `src/api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas.ts`.
+ * Local types are defined only when the UI needs a different shape — for
+ * example, the SSE event union adds a literal `type` discriminator that the
+ * generated event DTOs leave loose.
  */
 
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import type {
+	ActionResultResponseDTO,
+	ApprovalEventDTO,
+	ApproveResponseDTO,
+	CancelResponseDTO,
+	ClarificationEventDTO,
+	ClarifyResponseDTO,
+	ConversationEventDTO,
+	CreateMessageResponseDTO,
+	CreateThreadResponseDTO,
+	DoneEventDTO,
+	ErrorEventDTO,
+	ExecutionStateDTO,
+	FeedbackRatingDTO,
+	ListThreadsApiV1AssistantThreadsGetArchived,
+	ListThreadsApiV1AssistantThreadsGetParams,
+	MessageContextDTO,
+	MessageContextDTOSource,
+	MessageContextDTOType,
+	MessageEventDTO,
+	MessageSummaryDTO,
+	StatusEventDTO,
+	ThinkingEventDTO,
+	ThreadDetailResponseDTO,
+	ThreadListResponseDTO,
+	ThreadSummaryDTO,
+	ToolCallEventDTO,
+	ToolResultEventDTO,
+} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 // Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env (see vite.config `define`).
@@ -25,213 +60,61 @@ function authHeaders(): Record<string, string> {
 
 // ---------------------------------------------------------------------------
 // SSE event types
+//
+// The generated event DTOs each declare `type?: string` (loose). The UI needs
+// a discriminated union, so we intersect each variant with a string-literal
+// `type` to enable narrowing via `event.type === 'status'`.
 // ---------------------------------------------------------------------------
 
 export type SSEEvent =
-	| {
-			type: 'status';
-			executionId: string;
-			state: ExecutionState;
-			eventId: number;
-	  }
-	| {
-			type: 'message';
-			executionId: string;
-			messageId: string;
-			delta: string;
-			done: boolean;
-			actions: unknown[] | null;
-			eventId: number;
-	  }
-	| {
-			type: 'thinking';
-			executionId: string;
-			content: string;
-			eventId: number;
-	  }
-	| {
-			type: 'tool_call';
-			executionId: string;
-			messageId: string | null;
-			toolCallId: string | null;
-			toolName: string;
-			toolInput: Record<string, unknown>;
-			eventId: number;
-	  }
-	| {
-			type: 'tool_result';
-			executionId: string;
-			messageId: string | null;
-			toolCallId: string | null;
-			success: boolean;
-			toolName: string;
-			result: Record<string, unknown>;
-			eventId: number;
-	  }
-	| {
-			type: 'approval';
-			executionId: string;
-			approvalId: string;
-			actionType: string;
-			resourceType: string;
-			summary: string;
-			diff: { before: unknown; after: unknown } | null;
-			eventId: number;
-	  }
-	| {
-			type: 'clarification';
-			executionId: string;
-			clarificationId: string;
-			message: string;
-			discoveredContext: Record<string, unknown> | null;
-			fields: ClarificationFieldRaw[];
-			eventId: number;
-	  }
-	| {
-			type: 'error';
-			executionId: string;
-			error: { type: string; code: string; message: string; details: unknown };
-			retryAction: 'auto' | 'manual' | 'none';
-			eventId: number;
-	  }
-	| { type: 'conversation'; threadId: string; title: string; eventId: number }
-	| {
-			type: 'done';
-			executionId: string;
-			tokenInput: number;
-			tokenOutput: number;
-			latencyMs: number;
-			toolCallCount?: number;
-			retryCount?: number;
-			eventId: number;
-	  };
+	| (StatusEventDTO & { type: 'status' })
+	| (MessageEventDTO & { type: 'message' })
+	| (ThinkingEventDTO & { type: 'thinking' })
+	| (ToolCallEventDTO & { type: 'tool_call' })
+	| (ToolResultEventDTO & { type: 'tool_result' })
+	| (ApprovalEventDTO & { type: 'approval' })
+	| (ClarificationEventDTO & { type: 'clarification' })
+	| (ErrorEventDTO & { type: 'error' })
+	| (ConversationEventDTO & { type: 'conversation' })
+	| (DoneEventDTO & { type: 'done' });
 
-export interface ClarificationFieldRaw {
-	id: string;
-	type: string;
-	label: string;
-	required?: boolean;
-	options?: string[] | null;
-	default?: string | string[] | null;
-}
-
-export type ExecutionState =
-	| 'queued'
-	| 'running'
-	| 'awaiting_approval'
-	| 'awaiting_clarification'
-	| 'resumed'
-	| 'completed'
-	| 'failed'
-	| 'canceled';
-
-export interface ApprovalSummary {
-	approvalId: string;
-	executionId: string;
-	sourceMessageId: string;
-	state: string;
-	actionType: string;
-	resourceType: string;
-	summary: string;
-	createdAt: string;
-}
-
-export interface ClarificationSummary {
-	clarificationId: string;
-	executionId: string;
-	sourceMessageId: string;
-	state: string;
-	message: string;
-	discoveredContext: Record<string, unknown> | null;
-	fields: ClarificationFieldRaw[];
-	createdAt: string;
-}
+/** String-literal view of `ExecutionStateDTO` for ergonomic comparisons. */
+export type ExecutionState = `${ExecutionStateDTO}`;
 
 // ---------------------------------------------------------------------------
-// Step 1 — Create thread
-// POST /api/v1/assistant/threads → { threadId }
+// Re-exported DTOs — the wire shape, used directly without remapping.
 // ---------------------------------------------------------------------------
+
+export type ThreadSummary = ThreadSummaryDTO;
+export type ThreadListResponse = ThreadListResponseDTO;
+export type ThreadDetailResponse = ThreadDetailResponseDTO;
+export type MessageSummary = MessageSummaryDTO;
+export type CancelResponse = CancelResponseDTO;
+
+/**
+ * Construction-friendly view of `MessageContextDTO`: enum fields are widened
+ * to their string-literal unions so call-sites can pass `'mention'` instead
+ * of `MessageContextDTOSource.mention`.
+ */
+export type MessageContext = Omit<MessageContextDTO, 'source' | 'type'> & {
+	source: `${MessageContextDTOSource}`;
+	type: `${MessageContextDTOType}`;
+};
+
+/** Construction-friendly view of `ListThreadsApiV1AssistantThreadsGetParams`. */
+export type ListThreadsOptions = Omit<
+	ListThreadsApiV1AssistantThreadsGetParams,
+	'archived'
+> & {
+	archived?: `${ListThreadsApiV1AssistantThreadsGetArchived}`;
+};
+
+/** String-literal view of `FeedbackRatingDTO` so call-sites can pass `'positive'`/`'negative'`. */
+export type FeedbackRating = `${FeedbackRatingDTO}`;
 
 // ---------------------------------------------------------------------------
 // Thread listing & detail
 // ---------------------------------------------------------------------------
-
-export interface ThreadSummary {
-	threadId: string;
-	title: string | null;
-	state: string | null;
-	activeExecutionId: string | null;
-	archived: boolean;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface ThreadListResponse {
-	threads: ThreadSummary[];
-	nextCursor: string | null;
-	hasMore: boolean;
-}
-
-export interface ListThreadsOptions {
-	archived?: 'true' | 'false' | 'all';
-	limit?: number;
-	cursor?: string | null;
-	sort?: 'updated_desc';
-}
-
-export interface MessageSummaryBlock {
-	type: string;
-	content?: string;
-	toolCallId?: string;
-	toolName?: string;
-	toolInput?: unknown;
-	result?: unknown;
-	success?: boolean;
-}
-
-export interface MessageContext {
-	source: 'auto' | 'mention';
-	type:
-		| 'dashboard'
-		| 'alert'
-		| 'saved_view'
-		| 'logs_explorer'
-		| 'traces_explorer'
-		| 'metrics_explorer'
-		| 'service';
-	resourceId?: string | null;
-	resourceName?: string | null;
-	metadata?: Record<string, unknown> | null;
-}
-
-export interface MessageSummary {
-	messageId: string;
-	role: string;
-	contentType: string;
-	content: string | null;
-	complete: boolean;
-	toolCalls: Record<string, unknown>[] | null;
-	blocks: MessageSummaryBlock[] | null;
-	actions: unknown[] | null;
-	feedbackRating: 'positive' | 'negative' | null;
-	feedbackComment: string | null;
-	executionId: string | null;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface ThreadDetailResponse {
-	threadId: string;
-	title: string | null;
-	state: string | null;
-	activeExecutionId: string | null;
-	archived: boolean;
-	createdAt: string;
-	updatedAt: string;
-	messages: MessageSummary[];
-	pendingApproval: ApprovalSummary | null;
-	pendingClarification: ClarificationSummary | null;
-}
 
 export async function listThreads(
 	options: ListThreadsOptions = {},
@@ -296,7 +179,8 @@ export async function getThreadDetail(
 }
 
 // ---------------------------------------------------------------------------
-// Thread creation
+// Step 1 — Create thread
+// POST /api/v1/assistant/threads → { threadId }
 // ---------------------------------------------------------------------------
 
 export async function createThread(signal?: AbortSignal): Promise<string> {
@@ -312,7 +196,7 @@ export async function createThread(signal?: AbortSignal): Promise<string> {
 			`Failed to create thread: ${res.status} ${res.statusText} — ${body}`,
 		);
 	}
-	const data: { threadId: string } = await res.json();
+	const data: CreateThreadResponseDTO = await res.json();
 	return data.threadId;
 }
 
@@ -329,7 +213,7 @@ async function getActiveExecutionId(threadId: string): Promise<string | null> {
 	if (!res.ok) {
 		return null;
 	}
-	const data: { activeExecutionId?: string | null } = await res.json();
+	const data: ThreadDetailResponseDTO = await res.json();
 	return data.activeExecutionId ?? null;
 }
 
@@ -363,7 +247,7 @@ export async function sendMessage(
 			`Failed to send message: ${res.status} ${res.statusText} — ${body}`,
 		);
 	}
-	const data: { executionId: string } = await res.json();
+	const data: CreateMessageResponseDTO = await res.json();
 	return data.executionId;
 }
 
@@ -454,7 +338,7 @@ export async function approveExecution(
 			`Failed to approve: ${res.status} ${res.statusText} — ${body}`,
 		);
 	}
-	const data: { executionId: string } = await res.json();
+	const data: ApproveResponseDTO = await res.json();
 	return data.executionId;
 }
 
@@ -495,15 +379,8 @@ export async function clarifyExecution(
 			`Failed to clarify: ${res.status} ${res.statusText} — ${body}`,
 		);
 	}
-	const data: { executionId: string } = await res.json();
+	const data: ClarifyResponseDTO = await res.json();
 	return data.executionId;
-}
-
-/** Cancel the active execution on a thread. */
-export interface CancelResponse {
-	executionId: string;
-	previousState: string;
-	state: string;
 }
 
 export async function cancelExecution(
@@ -526,10 +403,51 @@ export async function cancelExecution(
 }
 
 // ---------------------------------------------------------------------------
-// Feedback
+// Rollback actions — undo / revert / restore
+// All three POST `{ actionMetadataId }` and return `ActionResultResponseDTO`.
 // ---------------------------------------------------------------------------
 
-export type FeedbackRating = 'positive' | 'negative';
+async function postRollback(
+	endpoint: 'undo' | 'revert' | 'restore',
+	actionMetadataId: string,
+	signal?: AbortSignal,
+): Promise<ActionResultResponseDTO> {
+	const res = await fetch(`${BASE}/${endpoint}`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...authHeaders() },
+		body: JSON.stringify({ actionMetadataId }),
+		signal,
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		throw new Error(
+			`Failed to ${endpoint}: ${res.status} ${res.statusText} — ${body}`,
+		);
+	}
+	return res.json();
+}
+
+export const undoExecution = (
+	actionMetadataId: string,
+	signal?: AbortSignal,
+): Promise<ActionResultResponseDTO> =>
+	postRollback('undo', actionMetadataId, signal);
+
+export const revertExecution = (
+	actionMetadataId: string,
+	signal?: AbortSignal,
+): Promise<ActionResultResponseDTO> =>
+	postRollback('revert', actionMetadataId, signal);
+
+export const restoreExecution = (
+	actionMetadataId: string,
+	signal?: AbortSignal,
+): Promise<ActionResultResponseDTO> =>
+	postRollback('restore', actionMetadataId, signal);
+
+// ---------------------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------------------
 
 export async function submitFeedback(
 	messageId: string,

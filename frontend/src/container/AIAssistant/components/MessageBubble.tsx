@@ -8,6 +8,7 @@ import './blocks';
 
 import { useVariant } from '../VariantContext';
 import { Message, MessageBlock } from '../types';
+import ActionsSection from './ActionsSection';
 import { RichCodeBlock } from './blocks';
 import { MessageContext } from './MessageContext';
 import MessageFeedback from './MessageFeedback';
@@ -137,6 +138,10 @@ export default function MessageBubble({
 								{message.content}
 							</ReactMarkdown>
 						</MessageContext.Provider>
+					)}
+
+					{!isUser && message.actions && message.actions.length > 0 && (
+						<ActionsSection actions={message.actions} />
 					)}
 				</div>
 

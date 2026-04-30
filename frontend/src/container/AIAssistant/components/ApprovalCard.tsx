@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui';
+import type { ApprovalEventDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { Check, Shield, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
-import { PendingApproval } from '../types';
 
 import styles from './ApprovalCard.module.scss';
 
 interface ApprovalCardProps {
 	conversationId: string;
-	approval: PendingApproval;
+	approval: ApprovalEventDTO;
 }
 
 /**

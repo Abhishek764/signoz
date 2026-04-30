@@ -41,10 +41,9 @@ func (module *module) CreateOrUpdate(ctx context.Context, orgID valuer.UUID, use
 		for _, u := range rules {
 			existing, err := module.findExisting(ctx, orgID, u)
 			if err != nil {
-				return err
-			}
-
-			if existing == nil {
+				if !errors.Ast(err, errors.TypeNotFound) {
+					return err
+				}
 				if err := module.store.Create(ctx, llmpricingruletypes.NewLLMPricingRuleFromUpdatable(u, orgID, userEmail, now)); err != nil {
 					return err
 				}
@@ -76,20 +75,16 @@ func (module *module) Delete(ctx context.Context, orgID, id valuer.UUID) error {
 	return nil
 }
 
+// findExisting returns the row matching the updatable's ID or SourceID.
+// Returns a TypeNotFound error when neither matches; the caller treats that
+// as "insert new".
 func (module *module) findExisting(ctx context.Context, orgID valuer.UUID, u llmpricingruletypes.UpdatableLLMPricingRule) (*llmpricingruletypes.LLMPricingRule, error) {
 	switch {
 	case u.ID != nil:
 		return module.store.Get(ctx, orgID, *u.ID)
 	case u.SourceID != nil:
-		s, err := module.store.GetBySourceID(ctx, orgID, *u.SourceID)
-		if err != nil {
-			if errors.Ast(err, errors.TypeNotFound) {
-				return nil, nil
-			}
-			return nil, err
-		}
-		return s, nil
+		return module.store.GetBySourceID(ctx, orgID, *u.SourceID)
 	default:
-		return nil, nil
+		return nil, errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "rule has neither id nor sourceId")
 	}
 }

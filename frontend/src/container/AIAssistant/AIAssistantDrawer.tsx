@@ -7,8 +7,7 @@ import { Maximize2, MessageSquare, Plus, X } from '@signozhq/icons';
 
 import ConversationView from './ConversationView';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
-
-import './AIAssistant.styles.scss';
+import { VariantContext } from './VariantContext';
 
 export default function AIAssistantDrawer(): JSX.Element {
 	const history = useHistory();
@@ -42,21 +41,19 @@ export default function AIAssistantDrawer(): JSX.Element {
 			onClose={closeDrawer}
 			placement="right"
 			width={420}
-			className="ai-assistant-drawer"
 			// Suppress default close button — we render our own header
 			closeIcon={null}
 			title={
-				<div className="ai-assistant-drawer__header">
-					<div className="ai-assistant-drawer__title">
+				<div>
+					<div>
 						<MessageSquare size={16} />
 						<span>AI Assistant</span>
 					</div>
 
-					<div className="ai-assistant-drawer__actions">
+					<div>
 						<Tooltip title="New conversation">
 							<button
 								type="button"
-								className="ai-assistant-drawer__action-btn"
 								onClick={handleNewConversation}
 								aria-label="New conversation"
 							>
@@ -67,7 +64,6 @@ export default function AIAssistantDrawer(): JSX.Element {
 						<Tooltip title="Open full screen">
 							<button
 								type="button"
-								className="ai-assistant-drawer__action-btn"
 								onClick={handleExpand}
 								disabled={!activeConversationId}
 								aria-label="Open full screen"
@@ -77,12 +73,7 @@ export default function AIAssistantDrawer(): JSX.Element {
 						</Tooltip>
 
 						<Tooltip title="Close">
-							<button
-								type="button"
-								className="ai-assistant-drawer__action-btn"
-								onClick={closeDrawer}
-								aria-label="Close drawer"
-							>
+							<button type="button" onClick={closeDrawer} aria-label="Close drawer">
 								<X size={16} />
 							</button>
 						</Tooltip>
@@ -90,9 +81,11 @@ export default function AIAssistantDrawer(): JSX.Element {
 				</div>
 			}
 		>
-			{activeConversationId ? (
-				<ConversationView conversationId={activeConversationId} />
-			) : null}
+			<VariantContext.Provider value="panel">
+				{activeConversationId ? (
+					<ConversationView conversationId={activeConversationId} />
+				) : null}
+			</VariantContext.Provider>
 		</Drawer>
 	);
 }

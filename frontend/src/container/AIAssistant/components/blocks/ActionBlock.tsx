@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui';
 import { Check, LoaderCircle, TriangleAlert, X, Zap } from '@signozhq/icons';
 
@@ -6,6 +7,9 @@ import { PageActionRegistry } from '../../pageActions/PageActionRegistry';
 import { AIActionBlock } from '../../pageActions/types';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { useMessageContext } from '../MessageContext';
+
+import blockStyles from './Block.module.scss';
+import styles from './ActionBlock.module.scss';
 
 type BlockState = 'pending' | 'loading' | 'applied' | 'dismissed' | 'error';
 
@@ -122,38 +126,27 @@ export default function ActionBlock({
 
 	if (localState === 'applied') {
 		return (
-			<div className="ai-block ai-action ai-action--applied">
-				<Check
-					size={13}
-					className="ai-action__status-icon ai-action__status-icon--ok"
-				/>
-				<span className="ai-action__status-text">
-					{resultSummary || 'Applied.'}
-				</span>
+			<div className={cx(blockStyles.block, styles.applied)}>
+				<Check size={13} className={cx(styles.statusIcon, styles.ok)} />
+				<span className={styles.statusText}>{resultSummary || 'Applied.'}</span>
 			</div>
 		);
 	}
 
 	if (localState === 'dismissed') {
 		return (
-			<div className="ai-block ai-action ai-action--dismissed">
-				<X
-					size={13}
-					className="ai-action__status-icon ai-action__status-icon--no"
-				/>
-				<span className="ai-action__status-text">Dismissed.</span>
+			<div className={cx(blockStyles.block, styles.dismissed)}>
+				<X size={13} className={cx(styles.statusIcon, styles.no)} />
+				<span className={styles.statusText}>Dismissed.</span>
 			</div>
 		);
 	}
 
 	if (localState === 'error') {
 		return (
-			<div className="ai-block ai-action ai-action--error">
-				<TriangleAlert
-					size={13}
-					className="ai-action__status-icon ai-action__status-icon--err"
-				/>
-				<span className="ai-action__status-text">{errorMessage}</span>
+			<div className={cx(blockStyles.block, styles.error)}>
+				<TriangleAlert size={13} className={cx(styles.statusIcon, styles.err)} />
+				<span className={styles.statusText}>{errorMessage}</span>
 			</div>
 		);
 	}
@@ -162,12 +155,9 @@ export default function ActionBlock({
 
 	if (localState === 'loading') {
 		return (
-			<div className="ai-block ai-action ai-action--loading">
-				<LoaderCircle
-					size={13}
-					className="ai-action__spinner ai-action__status-icon"
-				/>
-				<span className="ai-action__status-text">{description}</span>
+			<div className={cx(blockStyles.block, styles.loading)}>
+				<LoaderCircle size={13} className={cx(styles.spinner, styles.statusIcon)} />
+				<span className={styles.statusText}>{description}</span>
 			</div>
 		);
 	}
@@ -177,20 +167,20 @@ export default function ActionBlock({
 	const paramEntries = Object.entries(parameters ?? {});
 
 	return (
-		<div className="ai-block ai-action">
-			<div className="ai-action__header">
-				<Zap size={13} className="ai-action__zap-icon" />
-				<span className="ai-action__header-label">Suggested Action</span>
+		<div className={blockStyles.block}>
+			<div className={styles.header}>
+				<Zap size={13} className={styles.zapIcon} />
+				<span className={styles.headerLabel}>Suggested Action</span>
 			</div>
 
-			<p className="ai-action__description">{description}</p>
+			<p className={styles.description}>{description}</p>
 
 			{paramEntries.length > 0 && (
-				<ul className="ai-action__params">
+				<ul className={styles.params}>
 					{paramEntries.map(([key, val]) => (
-						<li key={key} className="ai-action__param">
-							<span className="ai-action__param-key">{key}</span>
-							<span className="ai-action__param-val">
+						<li key={key} className={styles.param}>
+							<span className={styles.paramKey}>{key}</span>
+							<span className={styles.paramVal}>
 								{typeof val === 'object' ? JSON.stringify(val) : String(val)}
 							</span>
 						</li>
@@ -198,7 +188,7 @@ export default function ActionBlock({
 				</ul>
 			)}
 
-			<div className="ai-action__actions">
+			<div className={styles.actions}>
 				<Button variant="solid" size="sm" onClick={execute}>
 					<Check size={12} />
 					Apply

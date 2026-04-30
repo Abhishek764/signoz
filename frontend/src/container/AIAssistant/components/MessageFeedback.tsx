@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import cx from 'classnames';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Tooltip } from '@signozhq/ui';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -7,6 +8,8 @@ import { useTimezone } from 'providers/Timezone';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { FeedbackRating, Message } from '../types';
+
+import styles from './MessageFeedback.module.scss';
 
 interface MessageFeedbackProps {
 	message: Message;
@@ -96,18 +99,12 @@ export default function MessageFeedback({
 		[vote, message.id, submitMessageFeedback],
 	);
 
-	const feedbackClass = `ai-message-feedback${
-		isLastAssistant ? ' ai-message-feedback--visible' : ''
-	}`;
-
 	return (
-		<div className={feedbackClass}>
-			<div className="ai-message-feedback__actions">
+		<div className={cx(styles.feedback, { [styles.visible]: isLastAssistant })}>
+			<div className={styles.actions}>
 				<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 					<Button
-						className={`ai-message-feedback__btn${
-							copied ? ' ai-message-feedback__btn--active' : ''
-						}`}
+						className={cx(styles.btn, { [styles.active]: copied })}
 						size="icon"
 						variant="ghost"
 						onClick={handleCopy}
@@ -118,9 +115,7 @@ export default function MessageFeedback({
 
 				<Tooltip title="Good response">
 					<Button
-						className={`ai-message-feedback__btn${
-							vote === 'positive' ? ' ai-message-feedback__btn--voted-up' : ''
-						}`}
+						className={cx(styles.btn, { [styles.votedUp]: vote === 'positive' })}
 						size="icon"
 						variant="ghost"
 						onClick={(): void => handleVote('positive')}
@@ -131,9 +126,7 @@ export default function MessageFeedback({
 
 				<Tooltip title="Bad response">
 					<Button
-						className={`ai-message-feedback__btn${
-							vote === 'negative' ? ' ai-message-feedback__btn--voted-down' : ''
-						}`}
+						className={cx(styles.btn, { [styles.votedDown]: vote === 'negative' })}
 						size="icon"
 						variant="ghost"
 						onClick={(): void => handleVote('negative')}
@@ -145,7 +138,7 @@ export default function MessageFeedback({
 				{onRegenerate && (
 					<Tooltip title="Regenerate">
 						<Button
-							className="ai-message-feedback__btn"
+							className={styles.btn}
 							size="icon"
 							variant="ghost"
 							onClick={onRegenerate}
@@ -156,7 +149,7 @@ export default function MessageFeedback({
 				)}
 			</div>
 
-			<span className="ai-message-feedback__time">
+			<span className={styles.time}>
 				{relativeTime} · {absoluteTime}
 			</span>
 		</div>

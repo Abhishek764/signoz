@@ -1,0 +1,8 @@
+.canvasWrap {
+	position: relative;
+	height: 200px;
+
+	&.pie {
+		height: 180px;
+	}
+}

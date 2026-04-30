@@ -1,10 +1,12 @@
 import React from 'react';
+import cx from 'classnames';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 // Side-effect: registers all built-in block types into the BlockRegistry
 import './blocks';
 
+import { useVariant } from '../VariantContext';
 import { Message, MessageBlock } from '../types';
 import { RichCodeBlock } from './blocks';
 import { MessageContext } from './MessageContext';
@@ -12,11 +14,7 @@ import MessageFeedback from './MessageFeedback';
 import ThinkingStep from './ThinkingStep';
 import ToolCallStep from './ToolCallStep';
 
-interface MessageBubbleProps {
-	message: Message;
-	onRegenerate?: () => void;
-	isLastAssistant?: boolean;
-}
+import styles from './MessageBubble.module.scss';
 
 /**
  * react-markdown renders fenced code blocks as <pre><code>...</code></pre>.
@@ -63,7 +61,7 @@ function renderBlock(block: MessageBlock, index: number): JSX.Element {
 			return (
 				<ReactMarkdown
 					key={index}
-					className="ai-message__markdown"
+					className={styles.markdown}
 					remarkPlugins={MD_PLUGINS}
 					components={MD_COMPONENTS}
 				>
@@ -73,23 +71,37 @@ function renderBlock(block: MessageBlock, index: number): JSX.Element {
 	}
 }
 
+interface MessageBubbleProps {
+	message: Message;
+	onRegenerate?: () => void;
+	isLastAssistant?: boolean;
+}
+
 export default function MessageBubble({
 	message,
 	onRegenerate,
 	isLastAssistant = false,
 }: MessageBubbleProps): JSX.Element {
+	const variant = useVariant();
+	const isCompact = variant === 'panel';
 	const isUser = message.role === 'user';
 	const hasBlocks = !isUser && message.blocks && message.blocks.length > 0;
 
+	const messageClass = cx(
+		styles.message,
+		isUser ? styles.user : styles.assistant,
+		{
+			[styles.compact]: isCompact,
+		},
+	);
+	const bodyClass = cx(styles.body, { [styles.compact]: isCompact });
+
 	return (
-		<div
-			className={`ai-message ai-message--${isUser ? 'user' : 'assistant'}`}
-			data-testid={`ai-message-${message.id}`}
-		>
-			<div className="ai-message__body">
-				<div className="ai-message__bubble">
+		<div className={messageClass} data-testid={`ai-message-${message.id}`}>
+			<div className={bodyClass}>
+				<div className={styles.bubble}>
 					{message.attachments && message.attachments.length > 0 && (
-						<div className="ai-message__attachments">
+						<div className={styles.attachments}>
 							{message.attachments.map((att) => {
 								const isImage = att.type.startsWith('image/');
 								return isImage ? (
@@ -97,10 +109,10 @@ export default function MessageBubble({
 										key={att.name}
 										src={att.dataUrl}
 										alt={att.name}
-										className="ai-message__attachment-image"
+										className={styles.attachmentImage}
 									/>
 								) : (
-									<div key={att.name} className="ai-message__attachment-file">
+									<div key={att.name} className={styles.attachmentFile}>
 										{att.name}
 									</div>
 								);
@@ -109,7 +121,7 @@ export default function MessageBubble({
 					)}
 
 					{isUser ? (
-						<p className="ai-message__text">{message.content}</p>
+						<p className={styles.text}>{message.content}</p>
 					) : hasBlocks ? (
 						<MessageContext.Provider value={{ messageId: message.id }}>
 							{/* eslint-disable-next-line react/no-array-index-key */}
@@ -118,7 +130,7 @@ export default function MessageBubble({
 					) : (
 						<MessageContext.Provider value={{ messageId: message.id }}>
 							<ReactMarkdown
-								className="ai-message__markdown"
+								className={styles.markdown}
 								remarkPlugins={MD_PLUGINS}
 								components={MD_COMPONENTS}
 							>

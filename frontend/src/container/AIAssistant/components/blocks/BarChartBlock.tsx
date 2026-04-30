@@ -1,5 +1,7 @@
 import { Bar } from 'react-chartjs-2';
 
+import blockStyles from './Block.module.scss';
+import chartStyles from './Chart.module.scss';
 import { CHART_PALETTE, getChartTheme } from './chartSetup';
 
 export interface BarDataset {
@@ -71,10 +73,10 @@ export default function BarChartBlock({
 	const barHeight = Math.max(160, labels.length * 28 + 48);
 
 	return (
-		<div className="ai-block ai-chart">
-			{title && <p className="ai-block__title">{title}</p>}
+		<div className={blockStyles.block}>
+			{title && <p className={blockStyles.title}>{title}</p>}
 			<div
-				className="ai-chart__canvas-wrap"
+				className={chartStyles.canvasWrap}
 				style={{ height: direction === 'horizontal' ? barHeight : 200 }}
 			>
 				<Bar

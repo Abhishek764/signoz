@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Brain, ChevronDown, ChevronRight } from '@signozhq/icons';
 
+import styles from './ThinkingStep.module.scss';
+
 interface ThinkingStepProps {
 	content: string;
 }
@@ -12,25 +14,25 @@ export default function ThinkingStep({
 	const [expanded, setExpanded] = useState(false);
 
 	return (
-		<div className="ai-thinking-step">
+		<div className={styles.step}>
 			<button
 				type="button"
-				className="ai-thinking-step__header"
+				className={styles.header}
 				onClick={(): void => setExpanded((v) => !v)}
 				aria-expanded={expanded}
 			>
-				<Brain size={12} className="ai-thinking-step__icon" />
-				<span className="ai-thinking-step__label">Thinking</span>
+				<Brain size={12} className={styles.icon} />
+				<span className={styles.label}>Thinking</span>
 				{expanded ? (
-					<ChevronDown size={11} className="ai-thinking-step__chevron" />
+					<ChevronDown size={11} className={styles.chevron} />
 				) : (
-					<ChevronRight size={11} className="ai-thinking-step__chevron" />
+					<ChevronRight size={11} className={styles.chevron} />
 				)}
 			</button>
 
 			{expanded && (
-				<div className="ai-thinking-step__body">
-					<p className="ai-thinking-step__content">{content}</p>
+				<div className={styles.body}>
+					<p className={styles.content}>{content}</p>
 				</div>
 			)}
 		</div>

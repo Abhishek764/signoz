@@ -1,5 +1,8 @@
+import cx from 'classnames';
 import { Doughnut } from 'react-chartjs-2';
 
+import blockStyles from './Block.module.scss';
+import chartStyles from './Chart.module.scss';
 import { CHART_PALETTE, getChartTheme } from './chartSetup';
 
 export interface SliceData {
@@ -37,9 +40,9 @@ export default function PieChartBlock({
 	};
 
 	return (
-		<div className="ai-block ai-chart">
-			{title && <p className="ai-block__title">{title}</p>}
-			<div className="ai-chart__canvas-wrap ai-chart__canvas-wrap--pie">
+		<div className={blockStyles.block}>
+			{title && <p className={blockStyles.title}>{title}</p>}
+			<div className={cx(chartStyles.canvasWrap, chartStyles.pie)}>
 				<Doughnut
 					data={chartData}
 					options={{

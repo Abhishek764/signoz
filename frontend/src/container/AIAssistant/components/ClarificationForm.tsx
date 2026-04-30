@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui';
 import { CircleHelp, Send, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { ClarificationField, PendingClarification } from '../types';
+
+import styles from './ClarificationForm.module.scss';
 
 interface ClarificationFormProps {
 	conversationId: string;
@@ -53,34 +56,32 @@ export default function ClarificationForm({
 
 	if (submitted) {
 		return (
-			<div className="ai-clarification ai-clarification--submitted">
-				<Send size={13} className="ai-clarification__icon" />
-				<span className="ai-clarification__status-text">
-					Answers submitted — resuming…
-				</span>
+			<div className={cx(styles.clarification, styles.submitted)}>
+				<Send size={13} className={styles.icon} />
+				<span className={styles.statusText}>Answers submitted — resuming…</span>
 			</div>
 		);
 	}
 
 	if (cancelled) {
 		return (
-			<div className="ai-clarification ai-clarification--submitted">
-				<X size={13} className="ai-clarification__icon" />
-				<span className="ai-clarification__status-text">Request cancelled.</span>
+			<div className={cx(styles.clarification, styles.submitted)}>
+				<X size={13} className={styles.icon} />
+				<span className={styles.statusText}>Request cancelled.</span>
 			</div>
 		);
 	}
 
 	return (
-		<div className="ai-clarification">
-			<div className="ai-clarification__header">
-				<CircleHelp size={13} className="ai-clarification__header-icon" />
-				<span className="ai-clarification__header-label">A few details needed</span>
+		<div className={styles.clarification}>
+			<div className={styles.header}>
+				<CircleHelp size={13} className={styles.headerIcon} />
+				<span className={styles.headerLabel}>A few details needed</span>
 			</div>
 
-			<p className="ai-clarification__message">{clarification.message}</p>
+			<p className={styles.message}>{clarification.message}</p>
 
-			<div className="ai-clarification__fields">
+			<div className={styles.fields}>
 				{clarification.fields.map((field) => (
 					<FieldInput
 						key={field.id}
@@ -91,7 +92,7 @@ export default function ClarificationForm({
 				))}
 			</div>
 
-			<div className="ai-clarification__actions">
+			<div className={styles.actions}>
 				<Button
 					variant="solid"
 					color="primary"
@@ -130,14 +131,14 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 
 	if (type === 'select' && options) {
 		return (
-			<div className="ai-clarification__field">
-				<label className="ai-clarification__label" htmlFor={id}>
+			<div className={styles.field}>
+				<label className={styles.label} htmlFor={id}>
 					{label}
-					{required && <span className="ai-clarification__required">*</span>}
+					{required && <span className={styles.required}>*</span>}
 				</label>
 				<select
 					id={id}
-					className="ai-clarification__select"
+					className={styles.select}
 					value={String(value ?? '')}
 					onChange={(e): void => onChange(e.target.value)}
 				>
@@ -154,21 +155,21 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 
 	if (type === 'radio' && options) {
 		return (
-			<div className="ai-clarification__field">
-				<span className="ai-clarification__label">
+			<div className={styles.field}>
+				<span className={styles.label}>
 					{label}
-					{required && <span className="ai-clarification__required">*</span>}
+					{required && <span className={styles.required}>*</span>}
 				</span>
-				<div className="ai-clarification__radio-group">
+				<div className={styles.radioGroup}>
 					{options.map((opt) => (
-						<label key={opt} className="ai-clarification__radio-label">
+						<label key={opt} className={styles.radioLabel}>
 							<input
 								type="radio"
 								name={id}
 								value={opt}
 								checked={value === opt}
 								onChange={(): void => onChange(opt)}
-								className="ai-clarification__radio"
+								className={styles.radio}
 							/>
 							{opt}
 						</label>
@@ -188,19 +189,19 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 			);
 		};
 		return (
-			<div className="ai-clarification__field">
-				<span className="ai-clarification__label">
+			<div className={styles.field}>
+				<span className={styles.label}>
 					{label}
-					{required && <span className="ai-clarification__required">*</span>}
+					{required && <span className={styles.required}>*</span>}
 				</span>
-				<div className="ai-clarification__checkbox-group">
+				<div className={styles.checkboxGroup}>
 					{options.map((opt) => (
-						<label key={opt} className="ai-clarification__checkbox-label">
+						<label key={opt} className={styles.checkboxLabel}>
 							<input
 								type="checkbox"
 								checked={selected.includes(opt)}
 								onChange={(): void => toggle(opt)}
-								className="ai-clarification__checkbox"
+								className={styles.checkbox}
 							/>
 							{opt}
 						</label>
@@ -212,15 +213,15 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 
 	// text / number (default)
 	return (
-		<div className="ai-clarification__field">
-			<label className="ai-clarification__label" htmlFor={id}>
+		<div className={styles.field}>
+			<label className={styles.label} htmlFor={id}>
 				{label}
-				{required && <span className="ai-clarification__required">*</span>}
+				{required && <span className={styles.required}>*</span>}
 			</label>
 			<input
 				id={id}
 				type={type === 'number' ? 'number' : 'text'}
-				className="ai-clarification__input"
+				className={styles.input}
 				value={String(value ?? '')}
 				onChange={(e): void =>
 					onChange(type === 'number' ? Number(e.target.value) : e.target.value)

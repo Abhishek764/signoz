@@ -1,0 +1,55 @@
+.feedback {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 2px 0;
+	// Driven by MessageBubble's --feedback-opacity (0 normally, 1 on hover/visible).
+	opacity: var(--feedback-opacity, 0);
+	transition: opacity 0.15s ease;
+
+	&.visible {
+		--feedback-opacity: 1;
+		opacity: 1;
+	}
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.btn {
+	width: 24px !important;
+	height: 24px !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	color: var(--l3-foreground, #6b7280) !important;
+
+	&:hover {
+		color: var(--l1-foreground) !important;
+	}
+
+	&.active {
+		color: var(--bg-forest-500, #22c55e) !important;
+	}
+
+	&.votedUp {
+		color: var(--primary, var(--bg-robin-500)) !important;
+	}
+
+	&.votedDown {
+		color: var(--bg-cherry-500, #ef4444) !important;
+	}
+}
+
+.time {
+	font-size: 10px;
+	color: var(--l3-foreground, #6b7280);
+	white-space: nowrap;
+	padding-left: 2px;
+	border-left: 1px solid var(--l2-border);
+}

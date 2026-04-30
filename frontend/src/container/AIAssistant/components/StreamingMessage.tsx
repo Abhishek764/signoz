@@ -1,7 +1,9 @@
 import React from 'react';
+import cx from 'classnames';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { useVariant } from '../VariantContext';
 import {
 	PendingApproval,
 	PendingClarification,
@@ -12,6 +14,9 @@ import { RichCodeBlock } from './blocks';
 import ClarificationForm from './ClarificationForm';
 import ThinkingStep from './ThinkingStep';
 import ToolCallStep from './ToolCallStep';
+
+import messageStyles from './MessageBubble.module.scss';
+import styles from './StreamingMessage.module.scss';
 
 function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 	const childArr = React.Children.toArray(children);
@@ -52,19 +57,25 @@ export default function StreamingMessage({
 	pendingApproval = null,
 	pendingClarification = null,
 }: StreamingMessageProps): JSX.Element {
+	const variant = useVariant();
+	const isCompact = variant === 'panel';
 	const statusLabel = STATUS_LABEL[status] ?? '';
 	const isEmpty =
 		events.length === 0 && !pendingApproval && !pendingClarification;
 
+	const messageClass = cx(messageStyles.message, messageStyles.assistant, {
+		[messageStyles.compact]: isCompact,
+	});
+
 	return (
-		<div className="ai-message ai-message--assistant ai-message--streaming">
-			<div className="ai-message__bubble">
+		<div className={messageClass}>
+			<div className={messageStyles.bubble}>
 				{/* Status pill or typing indicator — only before any events arrive */}
 				{isEmpty && statusLabel && (
-					<span className="ai-streaming-status">{statusLabel}</span>
+					<span className={styles.streamingStatus}>{statusLabel}</span>
 				)}
 				{isEmpty && !statusLabel && (
-					<span className="ai-message__typing-indicator">
+					<span className={messageStyles.typingIndicator}>
 						<span />
 						<span />
 						<span />
@@ -83,7 +94,7 @@ export default function StreamingMessage({
 					return (
 						<ReactMarkdown
 							key={i}
-							className="ai-message__markdown"
+							className={messageStyles.markdown}
 							remarkPlugins={MD_PLUGINS}
 							components={MD_COMPONENTS}
 						>

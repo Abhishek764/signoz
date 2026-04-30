@@ -14,6 +14,8 @@ import AIAssistantIcon from './AIAssistantIcon';
 import MessageBubble from './MessageBubble';
 import StreamingMessage from './StreamingMessage';
 
+import styles from './VirtualizedMessages.module.scss';
+
 const SUGGESTIONS = [
 	{
 		icon: TriangleAlert,
@@ -98,20 +100,20 @@ export default function VirtualizedMessages({
 
 	if (messages.length === 0 && !showStreamingSlot) {
 		return (
-			<div className="ai-messages__empty">
-				<div className="ai-empty__icon">
+			<div className={styles.empty}>
+				<div className={styles.emptyIcon}>
 					<AIAssistantIcon size={40} />
 				</div>
-				<h3 className="ai-empty__title">SigNoz AI Assistant</h3>
-				<p className="ai-empty__subtitle">
+				<h3 className={styles.emptyTitle}>SigNoz AI Assistant</h3>
+				<p className={styles.emptySubtitle}>
 					Ask questions about your traces, logs, metrics, and infrastructure.
 				</p>
-				<div className="ai-empty__suggestions">
+				<div className={styles.emptySuggestions}>
 					{SUGGESTIONS.map((s) => (
 						<button
 							key={s.text}
 							type="button"
-							className="ai-empty__chip"
+							className={styles.emptyChip}
 							onClick={(): void => {
 								sendMessage(s.text);
 							}}
@@ -130,7 +132,7 @@ export default function VirtualizedMessages({
 	return (
 		<Virtuoso
 			ref={virtuosoRef}
-			className="ai-messages"
+			className={styles.messages}
 			totalCount={totalCount}
 			followOutput={followOutput}
 			initialTopMostItemIndex={Math.max(0, totalCount - 1)}

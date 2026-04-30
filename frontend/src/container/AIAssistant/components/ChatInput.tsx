@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import cx from 'classnames';
 import {
 	Badge,
 	Button,
@@ -31,6 +32,8 @@ import {
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
+
+import styles from './ChatInput.module.scss';
 
 interface ChatInputProps {
 	onSend: (
@@ -379,16 +382,16 @@ export default function ChatInput({
 	const showTextWarning = currentLength >= WARNING_THRESHOLD;
 
 	return (
-		<div className="ai-assistant-input" ref={inputRootRef}>
+		<div className={styles.input} ref={inputRootRef}>
 			{pendingFiles.length > 0 && (
-				<div className="ai-assistant-input__attachments">
+				<div className={styles.attachments}>
 					{pendingFiles.map((f) => (
-						<div key={f.uid} className="ai-assistant-input__attachment-chip">
-							<span className="ai-assistant-input__attachment-name">{f.name}</span>
+						<div key={f.uid} className={styles.attachmentChip}>
+							<span className={styles.attachmentName}>{f.name}</span>
 							<Button
 								variant="ghost"
 								size="icon"
-								className="ai-assistant-input__attachment-remove"
+								className={styles.attachmentRemove}
 								onClick={(): void => removeFile(f.uid)}
 								aria-label={`Remove ${f.name}`}
 							>
@@ -400,29 +403,27 @@ export default function ChatInput({
 			)}
 
 			{selectedContexts.length > 0 && (
-				<div className="ai-assistant-input__context-tags">
+				<div className={styles.contextTags}>
 					{selectedContexts.map((contextItem) => (
 						<div
 							key={`${contextItem.category}:${contextItem.entityId}`}
-							className="ai-assistant-input__context-tag"
+							className={styles.contextTag}
 						>
-							<div className="ai-assistant-input__context-tag-content">
+							<div className={styles.contextTagContent}>
 								<Badge
 									color="primary"
 									variant="outline"
-									className="ai-assistant-input__context-tag-category"
+									className={styles.contextTagCategory}
 								>
 									{contextItem.category}
 								</Badge>
-								<span className="ai-assistant-input__context-tag-label">
-									{contextItem.value}
-								</span>
+								<span className={styles.contextTagLabel}>{contextItem.value}</span>
 							</div>
 							<Button
 								variant="link"
 								size="icon"
 								color="secondary"
-								className="ai-assistant-input__context-tag-remove"
+								className={styles.contextTagRemove}
 								onClick={(): void =>
 									removeContext(contextItem.category, contextItem.entityId)
 								}
@@ -434,10 +435,10 @@ export default function ChatInput({
 				</div>
 			)}
 
-			<div className="ai-assistant-input__composer">
+			<div className={styles.composer}>
 				<textarea
 					ref={textareaRef}
-					className="ai-assistant-input__textarea"
+					className={styles.textarea}
 					placeholder="Ask anything… (Shift+Enter for new line)"
 					value={text}
 					onChange={(e): void => {
@@ -454,7 +455,7 @@ export default function ChatInput({
 				/>
 			</div>
 			{showTextWarning && (
-				<div className="ai-assistant-input__char-warning" role="status">
+				<div className={styles.charWarning} role="status">
 					<TriangleAlert size={12} />
 					<span>
 						{currentLength}/{MAX_INPUT_LENGTH} characters. Limit is {MAX_INPUT_LENGTH}
@@ -463,36 +464,8 @@ export default function ChatInput({
 				</div>
 			)}
 
-			<div className="ai-assistant-input__footer">
-				<div className="ai-assistant-input__left-actions">
-					{/* <Upload
-						multiple
-						accept="image/*,.pdf,.txt,.log,.csv,.json"
-						showUploadList={false}
-						beforeUpload={(file): boolean => {
-							setPendingFiles((prev) => [
-								...prev,
-								{
-									uid: file.uid,
-									name: file.name,
-									type: file.type,
-									originFileObj: file,
-								},
-							]);
-							return false;
-						}}
-					>
-						<Button
-							variant="ghost"
-							size="icon"
-							disabled={disabled}
-							aria-label="Attach file"
-							className="ai-assistant-input__attach-btn"
-						>
-							<Paperclip size={14} />
-						</Button>
-					</Upload> */}
-
+			<div className={styles.footer}>
+				<div className={styles.leftActions}>
 					<Popover
 						open={isContextPickerOpen}
 						onOpenChange={(open): void => {
@@ -517,24 +490,22 @@ export default function ChatInput({
 							</Button>
 						</PopoverTrigger>
 						<PopoverContent
-							className="ai-context-popover"
+							className={styles.contextPopover}
 							side="top"
 							align="end"
 							sideOffset={8}
 						>
-							<div className="ai-context-popover__content">
-								<div className="ai-context-popover__categories">
+							<div className={styles.contextPopoverContent}>
+								<div className={styles.contextPopoverCategories}>
 									{CONTEXT_CATEGORIES.map((category) => {
 										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
 										return (
 											<button
 												key={category}
 												type="button"
-												className={`ai-context-popover__category-item ${
-													activeContextCategory === category
-														? 'ai-context-popover__category-item--active'
-														: ''
-												}`}
+												className={cx(styles.contextPopoverCategoryItem, {
+													[styles.active]: activeContextCategory === category,
+												})}
 												onClick={(): void => setActiveContextCategory(category)}
 											>
 												<CategoryIcon size={13} />
@@ -544,17 +515,17 @@ export default function ChatInput({
 									})}
 								</div>
 
-								<div className="ai-context-popover__entities">
+								<div className={styles.contextPopoverEntities}>
 									{isActiveContextLoading ? (
-										<div className="ai-context-popover__empty">
+										<div className={styles.contextPopoverEmpty}>
 											Loading {activeContextCategory.toLowerCase()}...
 										</div>
 									) : isActiveContextError ? (
-										<div className="ai-context-popover__empty">
+										<div className={styles.contextPopoverEmpty}>
 											Failed to load {activeContextCategory.toLowerCase()}.
 										</div>
 									) : filteredContextOptions.length === 0 ? (
-										<div className="ai-context-popover__empty">No matching entities</div>
+										<div className={styles.contextPopoverEmpty}>No matching entities</div>
 									) : (
 										filteredContextOptions.map((option) => {
 											const isSelected = selectedContexts.some(
@@ -566,9 +537,9 @@ export default function ChatInput({
 											return (
 												<div
 													key={option.id}
-													className={`ai-context-popover__entity-item ${
-														isSelected ? 'ai-context-popover__entity-item--selected' : ''
-													}`}
+													className={cx(styles.contextPopoverEntityItem, {
+														[styles.selected]: isSelected,
+													})}
 													onClick={(): void =>
 														toggleContextSelection(
 															activeContextCategory,
@@ -577,7 +548,7 @@ export default function ChatInput({
 														)
 													}
 												>
-													<span className="ai-context-popover__entity-item-text">
+													<span className={styles.contextPopoverEntityItemText}>
 														{option.value}
 													</span>
 												</div>
@@ -590,18 +561,18 @@ export default function ChatInput({
 					</Popover>
 				</div>
 
-				<div className="ai-assistant-input__right-actions">
+				<div className={styles.rightActions}>
 					{isListening ? (
-						<div className="ai-mic-recording">
+						<div className={styles.micRecording}>
 							<button
 								type="button"
-								className="ai-mic-recording__discard"
+								className={styles.micDiscard}
 								onClick={handleDiscard}
 								aria-label="Discard recording"
 							>
 								<X size={12} />
 							</button>
-							<span className="ai-mic-recording__waves" aria-hidden="true">
+							<span className={styles.micWaves} aria-hidden="true">
 								<span />
 								<span />
 								<span />
@@ -613,7 +584,7 @@ export default function ChatInput({
 							</span>
 							<button
 								type="button"
-								className="ai-mic-recording__stop"
+								className={styles.micStop}
 								onClick={handleStopAndSend}
 								aria-label="Stop and send"
 							>
@@ -634,7 +605,7 @@ export default function ChatInput({
 								onClick={start}
 								disabled={disabled || !isSupported}
 								aria-label="Start voice input"
-								className="ai-mic-btn"
+								className={styles.micBtn}
 							>
 								<Mic size={14} />
 							</Button>

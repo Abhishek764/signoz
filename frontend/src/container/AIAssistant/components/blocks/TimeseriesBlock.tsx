@@ -1,3 +1,6 @@
+import blockStyles from './Block.module.scss';
+import styles from './TimeseriesBlock.module.scss';
+
 export interface TimeseriesData {
 	title?: string;
 	unit?: string;
@@ -16,16 +19,16 @@ export default function TimeseriesBlock({
 	const cols = columns ?? ['Time', 'Value'];
 
 	return (
-		<div className="ai-block ai-timeseries">
+		<div className={blockStyles.block}>
 			{(title || unit) && (
-				<p className="ai-block__title">
+				<p className={blockStyles.title}>
 					{title}
-					{unit ? <span className="ai-block__unit"> ({unit})</span> : null}
+					{unit ? <span className={blockStyles.unit}> ({unit})</span> : null}
 				</p>
 			)}
 
-			<div className="ai-timeseries__scroll">
-				<table className="ai-timeseries__table">
+			<div className={styles.scroll}>
+				<table className={styles.table}>
 					<thead>
 						<tr>
 							{cols.map((col) => (
@@ -48,7 +51,9 @@ export default function TimeseriesBlock({
 				</table>
 			</div>
 
-			{rows.length === 0 && <p className="ai-block__empty">No data available.</p>}
+			{rows.length === 0 && (
+				<p className={blockStyles.empty}>No data available.</p>
+			)}
 		</div>
 	);
 }

@@ -9,8 +9,9 @@ import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
 import ConversationView from './ConversationView';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
+import { VariantContext } from './VariantContext';
 
-import './AIAssistant.styles.scss';
+import styles from './AIAssistantModal.module.scss';
 
 /**
  * Global floating modal for the AI Assistant.
@@ -110,94 +111,96 @@ export default function AIAssistantModal(): JSX.Element | null {
 	}
 
 	return createPortal(
-		<div
-			className="ai-modal-backdrop"
-			role="dialog"
-			aria-modal="true"
-			aria-label="AI Assistant"
-			onClick={handleBackdropClick}
-		>
-			<div className="ai-modal">
-				{/* Header */}
-				<div className="ai-modal__header">
-					<div className="ai-modal__title">
-						<AIAssistantIcon size={16} />
-						<span>AI Assistant</span>
-						<kbd className="ai-modal__shortcut">⌘J</kbd>
+		<VariantContext.Provider value="modal">
+			<div
+				className={styles.backdrop}
+				role="dialog"
+				aria-modal="true"
+				aria-label="AI Assistant"
+				onClick={handleBackdropClick}
+			>
+				<div className={styles.modal}>
+					{/* Header */}
+					<div className={styles.header}>
+						<div className={styles.title}>
+							<AIAssistantIcon size={16} />
+							<span>AI Assistant</span>
+							<kbd className={styles.shortcut}>⌘J</kbd>
+						</div>
+
+						<div className={styles.actions}>
+							<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={(): void => setShowHistory((v) => !v)}
+									aria-label="Toggle conversations"
+									className={showHistory ? styles.toggleBtnActive : ''}
+								>
+									<History size={14} />
+								</Button>
+							</Tooltip>
+
+							<Tooltip title="New conversation">
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={handleNew}
+									aria-label="New conversation"
+								>
+									<Plus size={14} />
+								</Button>
+							</Tooltip>
+
+							<Tooltip title="Open full screen">
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={handleExpand}
+									disabled={!activeConversationId}
+									aria-label="Open full screen"
+								>
+									<Maximize2 size={14} />
+								</Button>
+							</Tooltip>
+
+							<Tooltip title="Minimize to side panel">
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={handleMinimize}
+									aria-label="Minimize to side panel"
+								>
+									<Minus size={14} />
+								</Button>
+							</Tooltip>
+
+							<Tooltip title="Close">
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={closeModal}
+									aria-label="Close"
+								>
+									<X size={14} />
+								</Button>
+							</Tooltip>
+						</div>
 					</div>
 
-					<div className="ai-modal__actions">
-						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={(): void => setShowHistory((v) => !v)}
-								aria-label="Toggle conversations"
-								className={showHistory ? 'ai-panel-btn--active' : ''}
-							>
-								<History size={14} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="New conversation">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={handleNew}
-								aria-label="New conversation"
-							>
-								<Plus size={14} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Open full screen">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={handleExpand}
-								disabled={!activeConversationId}
-								aria-label="Open full screen"
-							>
-								<Maximize2 size={14} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Minimize to side panel">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={handleMinimize}
-								aria-label="Minimize to side panel"
-							>
-								<Minus size={14} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Close">
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={closeModal}
-								aria-label="Close"
-							>
-								<X size={14} />
-							</Button>
-						</Tooltip>
+					{/* Body */}
+					<div className={styles.body}>
+						{showHistory ? (
+							<HistorySidebar onSelect={handleHistorySelect} />
+						) : (
+							activeConversationId && (
+								<ConversationView conversationId={activeConversationId} />
+							)
+						)}
 					</div>
-				</div>
-
-				{/* Body */}
-				<div className="ai-modal__body">
-					{showHistory ? (
-						<HistorySidebar onSelect={handleHistorySelect} />
-					) : (
-						activeConversationId && (
-							<ConversationView conversationId={activeConversationId} />
-						)
-					)}
 				</div>
 			</div>
-		</div>,
+		</VariantContext.Provider>,
 		document.body,
 	);
 }

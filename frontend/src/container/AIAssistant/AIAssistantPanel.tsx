@@ -8,8 +8,9 @@ import AIAssistantIcon from './components/AIAssistantIcon';
 import HistorySidebar from './components/HistorySidebar';
 import ConversationView from './ConversationView';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
+import { VariantContext } from './VariantContext';
 
-import './AIAssistant.styles.scss';
+import styles from './AIAssistantPanel.module.scss';
 
 export default function AIAssistantPanel(): JSX.Element | null {
 	const history = useHistory();
@@ -87,77 +88,76 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	}
 
 	return (
-		<div className="ai-assistant-panel" style={{ width: panelWidth }}>
-			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-			<div
-				className="ai-assistant-panel__resize-handle"
-				onMouseDown={handleResizeMouseDown}
-			/>
-			<div className="ai-assistant-panel__header">
-				<div className="ai-assistant-panel__title">
-					<AIAssistantIcon size={18} />
-					<span>AI Assistant</span>
+		<VariantContext.Provider value="panel">
+			<div className={styles.panel} style={{ width: panelWidth }}>
+				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+				<div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown} />
+				<div className={styles.header}>
+					<div className={styles.title}>
+						<AIAssistantIcon size={18} />
+						<span>AI Assistant</span>
+					</div>
+
+					<div className={styles.actions}>
+						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={(): void => setShowHistory((v) => !v)}
+								aria-label="Toggle conversations"
+							>
+								<History size={14} />
+							</Button>
+						</Tooltip>
+
+						<Tooltip title="New conversation">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={handleNew}
+								aria-label="New conversation"
+							>
+								<Plus size={14} />
+							</Button>
+						</Tooltip>
+
+						<Tooltip title="Open full screen">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={handleExpand}
+								disabled={!activeConversationId}
+								aria-label="Open full screen"
+							>
+								<Maximize2 size={14} />
+							</Button>
+						</Tooltip>
+
+						<Tooltip title="Close">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={closeDrawer}
+								aria-label="Close panel"
+							>
+								<X size={14} />
+							</Button>
+						</Tooltip>
+					</div>
 				</div>
 
-				<div className="ai-assistant-panel__actions">
-					<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={(): void => setShowHistory((v) => !v)}
-							aria-label="Toggle conversations"
-						>
-							<History size={14} />
-						</Button>
-					</Tooltip>
-
-					<Tooltip title="New conversation">
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={handleNew}
-							aria-label="New conversation"
-						>
-							<Plus size={14} />
-						</Button>
-					</Tooltip>
-
-					<Tooltip title="Open full screen">
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={handleExpand}
-							disabled={!activeConversationId}
-							aria-label="Open full screen"
-						>
-							<Maximize2 size={14} />
-						</Button>
-					</Tooltip>
-
-					<Tooltip title="Close">
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={closeDrawer}
-							aria-label="Close panel"
-						>
-							<X size={14} />
-						</Button>
-					</Tooltip>
-				</div>
+				{showHistory ? (
+					<HistorySidebar onSelect={handleHistorySelect} />
+				) : (
+					activeConversationId && (
+						<ConversationView conversationId={activeConversationId} />
+					)
+				)}
 			</div>
-
-			{showHistory ? (
-				<HistorySidebar onSelect={handleHistorySelect} />
-			) : (
-				activeConversationId && (
-					<ConversationView conversationId={activeConversationId} />
-				)
-			)}
-		</div>
+		</VariantContext.Provider>
 	);
 }

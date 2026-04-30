@@ -1,8 +1,12 @@
 import { useEffect, useMemo } from 'react';
+import cx from 'classnames';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { Conversation } from '../types';
+import { useVariant } from '../VariantContext';
 import ConversationItem from './ConversationItem';
+
+import styles from './HistorySidebar.module.scss';
 
 interface HistorySidebarProps {
 	/** Called when a conversation is selected — lets the parent navigate if needed */
@@ -51,20 +55,13 @@ function HistoryListSkeleton({
 	inline?: boolean;
 }): JSX.Element {
 	return (
-		<div
-			className={
-				inline
-					? 'ai-history__skeleton ai-history__skeleton--inline'
-					: 'ai-history__skeleton'
-			}
-			aria-hidden
-		>
+		<div className={cx(styles.skeleton, { [styles.inline]: inline })} aria-hidden>
 			{Array.from({ length: rows }, (_, i) => (
-				<div key={i} className="ai-history__skeleton-row">
-					<div className="ai-history__skeleton-icon" />
-					<div className="ai-history__skeleton-text">
-						<div className="ai-history__skeleton-line ai-history__skeleton-line--title" />
-						<div className="ai-history__skeleton-line ai-history__skeleton-line--meta" />
+				<div key={i} className={styles.skeletonRow}>
+					<div className={styles.skeletonIcon} />
+					<div className={styles.skeletonText}>
+						<div className={cx(styles.skeletonLine, styles.title)} />
+						<div className={cx(styles.skeletonLine, styles.meta)} />
 					</div>
 				</div>
 			))}
@@ -75,6 +72,7 @@ function HistoryListSkeleton({
 export default function HistorySidebar({
 	onSelect,
 }: HistorySidebarProps): JSX.Element {
+	const variant = useVariant();
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
@@ -131,15 +129,18 @@ export default function HistorySidebar({
 		onSelect?.(id);
 	};
 
+	const variantClass =
+		variant === 'page' ? styles.variantPage : styles.variantPanel;
+
 	return (
-		<div className="ai-history">
-			<div className="ai-history__header">
-				<span className="ai-history__heading">Conversations</span>
+		<div className={cx(styles.history, variantClass)}>
+			<div className={styles.header}>
+				<span className={styles.heading}>Conversations</span>
 			</div>
 
-			<div className="ai-history__list" aria-busy={isLoadingThreads}>
+			<div className={styles.list} aria-busy={isLoadingThreads}>
 				{isLoadingThreads && (
-					<span className="ai-history__sr-only" role="status">
+					<span className={styles.srOnly} role="status">
 						Loading conversations
 					</span>
 				)}
@@ -151,12 +152,12 @@ export default function HistorySidebar({
 				{isLoadingThreads && !hasAnySidebarRows && <HistoryListSkeleton rows={7} />}
 
 				{!isLoadingThreads && !hasAnySidebarRows && (
-					<p className="ai-history__empty">No conversations yet.</p>
+					<p className={styles.empty}>No conversations yet.</p>
 				)}
 
 				{groups.map(({ label, items }) => (
-					<div key={label} className="ai-history__group">
-						<span className="ai-history__group-label">{label}</span>
+					<div key={label} className={styles.group}>
+						<span className={styles.groupLabel}>{label}</span>
 						{items.map((conv) => (
 							<ConversationItem
 								key={conv.id}
@@ -172,8 +173,8 @@ export default function HistorySidebar({
 				))}
 
 				{sortedArchived.length > 0 && (
-					<div className="ai-history__group ai-history__group--archived">
-						<span className="ai-history__group-label">Archived Conversations</span>
+					<div className={cx(styles.group, styles.archived)}>
+						<span className={styles.groupLabel}>Archived Conversations</span>
 						{sortedArchived.map((conv) => (
 							<ConversationItem
 								key={conv.id}

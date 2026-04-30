@@ -1,4 +1,5 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import cx from 'classnames';
 import { Button, Tooltip } from '@signozhq/ui';
 import {
 	Archive,
@@ -8,6 +9,8 @@ import {
 } from '@signozhq/icons';
 
 import { Conversation } from '../types';
+
+import styles from './ConversationItem.module.scss';
 
 interface ConversationItemProps {
 	conversation: Conversation;
@@ -106,11 +109,14 @@ export default function ConversationItem({
 		[conversation.id, onRestore],
 	);
 
+	const itemClass = cx(styles.item, {
+		[styles.active]: isActive,
+		[styles.archived]: isArchived,
+	});
+
 	return (
 		<div
-			className={`ai-history__item${isActive ? ' ai-history__item--active' : ''}${
-				isArchived ? ' ai-history__item--archived' : ''
-			}`}
+			className={itemClass}
 			onClick={(): void => onSelect(conversation.id)}
 			role="button"
 			tabIndex={0}
@@ -120,13 +126,13 @@ export default function ConversationItem({
 				}
 			}}
 		>
-			<MessageSquare size={12} className="ai-history__item-icon" />
+			<MessageSquare size={12} className={styles.icon} />
 
-			<div className="ai-history__item-body">
+			<div className={styles.body}>
 				{isEditing ? (
 					<input
 						ref={inputRef}
-						className="ai-history__item-input"
+						className={styles.input}
 						value={editValue}
 						onChange={(e): void => setEditValue(e.target.value)}
 						onKeyDown={handleKeyDown}
@@ -136,21 +142,22 @@ export default function ConversationItem({
 					/>
 				) : (
 					<>
-						<span className="ai-history__item-title" title={displayTitle}>
+						<span className={styles.title} title={displayTitle}>
 							{displayTitle}
 						</span>
-						<span className="ai-history__item-time">{formatRelativeTime(ts)}</span>
+						<span className={styles.time}>{formatRelativeTime(ts)}</span>
 					</>
 				)}
 			</div>
 
 			{!isEditing && (
-				<div className="ai-history__item-actions">
+				<div className={styles.actions}>
 					<Tooltip title="Rename">
 						<Button
 							variant="link"
 							size="icon"
 							color="secondary"
+							className={styles.btn}
 							onClick={startEditing}
 							aria-label="Rename conversation"
 						>
@@ -163,6 +170,7 @@ export default function ConversationItem({
 								variant="link"
 								size="icon"
 								color="secondary"
+								className={styles.btn}
 								onClick={handleRestore}
 								aria-label="Restore conversation"
 							>
@@ -175,6 +183,7 @@ export default function ConversationItem({
 								variant="link"
 								size="icon"
 								color="secondary"
+								className={cx(styles.btn, styles.danger)}
 								onClick={handleDelete}
 								aria-label="Archive conversation"
 							>

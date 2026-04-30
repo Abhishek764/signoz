@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui';
 import { Checkbox, Radio } from 'antd';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { useMessageContext } from '../MessageContext';
+
+import blockStyles from './Block.module.scss';
+import styles from './InteractiveQuestion.module.scss';
 
 interface Option {
 	value: string;
@@ -53,27 +57,27 @@ export default function InteractiveQuestion({
 
 	if (isAnswered) {
 		return (
-			<div className="ai-block ai-question ai-question--answered">
-				<span className="ai-question__check">✓</span>
-				<span className="ai-question__answer-text">{answeredText}</span>
+			<div className={cx(blockStyles.block, styles.answered)}>
+				<span className={styles.check}>✓</span>
+				<span className={styles.answerText}>{answeredText}</span>
 			</div>
 		);
 	}
 
 	return (
-		<div className="ai-block ai-question">
-			{question && <p className="ai-block__title">{question}</p>}
+		<div className={blockStyles.block}>
+			{question && <p className={blockStyles.title}>{question}</p>}
 
 			{type === 'radio' ? (
 				<Radio.Group
-					className="ai-question__options"
+					className={styles.options}
 					onChange={(e): void => {
 						setSelected([e.target.value]);
 						handleSubmit([e.target.value]);
 					}}
 				>
 					{normalized.map((opt) => (
-						<Radio key={opt.value} value={opt.value} className="ai-question__option">
+						<Radio key={opt.value} value={opt.value} className={styles.option}>
 							{opt.label}
 						</Radio>
 					))}
@@ -81,15 +85,11 @@ export default function InteractiveQuestion({
 			) : (
 				<>
 					<Checkbox.Group
-						className="ai-question__options ai-question__options--checkbox"
+						className={cx(styles.options, styles.checkbox)}
 						onChange={(vals): void => setSelected(vals as string[])}
 					>
 						{normalized.map((opt) => (
-							<Checkbox
-								key={opt.value}
-								value={opt.value}
-								className="ai-question__option"
-							>
+							<Checkbox key={opt.value} value={opt.value} className={styles.option}>
 								{opt.label}
 							</Checkbox>
 						))}
@@ -97,7 +97,7 @@ export default function InteractiveQuestion({
 					<Button
 						variant="solid"
 						size="sm"
-						className="ai-question__submit"
+						className={styles.submit}
 						disabled={selected.length === 0}
 						onClick={(): void => handleSubmit(selected)}
 					>

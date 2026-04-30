@@ -6,9 +6,10 @@ import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';
 import ConversationView from 'container/AIAssistant/ConversationView';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { Minimize2, Plus } from '@signozhq/icons';
 
-import 'container/AIAssistant/AIAssistant.styles.scss';
+import styles from './AIAssistantPage.module.scss';
 
 interface RouteParams {
 	conversationId: string;
@@ -64,45 +65,47 @@ export default function AIAssistantPage(): JSX.Element {
 	const activeId = conversations[conversationId] ? conversationId : null;
 
 	return (
-		<div className="ai-assistant-page">
-			<div className="ai-assistant-page__header">
-				<div className="ai-assistant-page__title">
-					<AIAssistantIcon size={22} />
-					<span>AI Assistant</span>
+		<VariantContext.Provider value="page">
+			<div className={styles.page}>
+				<div className={styles.header}>
+					<div className={styles.title}>
+						<AIAssistantIcon size={22} />
+						<span>AI Assistant</span>
+					</div>
+
+					<div className={styles.actions}>
+						<Tooltip title="New conversation">
+							<Button
+								variant="ghost"
+								size="sm"
+								prefix={<Plus size={14} />}
+								onClick={handleNewConversation}
+							>
+								New
+							</Button>
+						</Tooltip>
+
+						<Tooltip title="Minimize to panel">
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={handleMinimize}
+								aria-label="Minimize to panel"
+							>
+								<Minimize2 size={14} />
+							</Button>
+						</Tooltip>
+					</div>
 				</div>
 
-				<div className="ai-assistant-page__actions">
-					<Tooltip title="New conversation">
-						<Button
-							variant="ghost"
-							size="sm"
-							prefix={<Plus size={14} />}
-							onClick={handleNewConversation}
-						>
-							New
-						</Button>
-					</Tooltip>
+				<div className={styles.body}>
+					<HistorySidebar onSelect={handleHistorySelect} />
 
-					<Tooltip title="Minimize to panel">
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleMinimize}
-							aria-label="Minimize to panel"
-						>
-							<Minimize2 size={14} />
-						</Button>
-					</Tooltip>
+					<div className={styles.chat}>
+						{activeId && <ConversationView conversationId={activeId} />}
+					</div>
 				</div>
 			</div>
-
-			<div className="ai-assistant-page__body">
-				<HistorySidebar onSelect={handleHistorySelect} />
-
-				<div className="ai-assistant-page__chat">
-					{activeId && <ConversationView conversationId={activeId} />}
-				</div>
-			</div>
-		</div>
+		</VariantContext.Provider>
 	);
 }

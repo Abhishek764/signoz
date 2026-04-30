@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import cx from 'classnames';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -7,6 +8,8 @@ import {
 } from '@signozhq/icons';
 
 import { StreamingToolCall } from '../types';
+
+import styles from './ToolCallStep.module.scss';
 
 interface ToolCallStepProps {
 	toolCall: StreamingToolCall;
@@ -26,47 +29,37 @@ export default function ToolCallStep({
 		.replace(/\b\w/g, (c) => c.toUpperCase());
 
 	return (
-		<div
-			className={`ai-tool-step ${
-				done ? 'ai-tool-step--done' : 'ai-tool-step--running'
-			}`}
-		>
+		<div className={cx(styles.step, { [styles.running]: !done })}>
 			<button
 				type="button"
-				className="ai-tool-step__header"
+				className={styles.header}
 				onClick={(): void => setExpanded((v) => !v)}
 				aria-expanded={expanded}
 			>
 				{done ? (
-					<Wrench
-						size={12}
-						className="ai-tool-step__icon ai-tool-step__icon--done"
-					/>
+					<Wrench size={12} className={cx(styles.icon, styles.done)} />
 				) : (
-					<LoaderCircle
-						size={12}
-						className="ai-tool-step__icon ai-tool-step__icon--spin"
-					/>
+					<LoaderCircle size={12} className={cx(styles.icon, styles.spin)} />
 				)}
-				<span className="ai-tool-step__label">{label}</span>
-				<span className="ai-tool-step__tool-name">{toolName}</span>
+				<span className={styles.label}>{label}</span>
+				<span className={styles.toolName}>{toolName}</span>
 				{expanded ? (
-					<ChevronDown size={11} className="ai-tool-step__chevron" />
+					<ChevronDown size={11} className={styles.chevron} />
 				) : (
-					<ChevronRight size={11} className="ai-tool-step__chevron" />
+					<ChevronRight size={11} className={styles.chevron} />
 				)}
 			</button>
 
 			{expanded && (
-				<div className="ai-tool-step__body">
-					<div className="ai-tool-step__section">
-						<span className="ai-tool-step__section-label">Input</span>
-						<pre className="ai-tool-step__json">{JSON.stringify(input, null, 2)}</pre>
+				<div className={styles.body}>
+					<div className={styles.section}>
+						<span className={styles.sectionLabel}>Input</span>
+						<pre className={styles.json}>{JSON.stringify(input, null, 2)}</pre>
 					</div>
 					{done && result !== undefined && (
-						<div className="ai-tool-step__section">
-							<span className="ai-tool-step__section-label">Output</span>
-							<pre className="ai-tool-step__json">
+						<div className={styles.section}>
+							<span className={styles.sectionLabel}>Output</span>
+							<pre className={styles.json}>
 								{typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
 							</pre>
 						</div>

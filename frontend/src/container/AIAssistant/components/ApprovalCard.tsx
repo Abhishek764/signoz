@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui';
 import { Check, Shield, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { PendingApproval } from '../types';
+
+import styles from './ApprovalCard.module.scss';
 
 interface ApprovalCardProps {
 	conversationId: string;
@@ -40,54 +43,48 @@ export default function ApprovalCard({
 	// After decision the card shows a compact confirmation row
 	if (decided === 'approved') {
 		return (
-			<div className="ai-approval ai-approval--decided">
-				<Check
-					size={13}
-					className="ai-approval__status-icon ai-approval__status-icon--ok"
-				/>
-				<span className="ai-approval__status-text">Approved — resuming…</span>
+			<div className={cx(styles.card, styles.decided)}>
+				<Check size={13} className={cx(styles.statusIcon, styles.ok)} />
+				<span className={styles.statusText}>Approved — resuming…</span>
 			</div>
 		);
 	}
 
 	if (decided === 'rejected') {
 		return (
-			<div className="ai-approval ai-approval--decided">
-				<X
-					size={13}
-					className="ai-approval__status-icon ai-approval__status-icon--no"
-				/>
-				<span className="ai-approval__status-text">Rejected.</span>
+			<div className={cx(styles.card, styles.decided)}>
+				<X size={13} className={cx(styles.statusIcon, styles.no)} />
+				<span className={styles.statusText}>Rejected.</span>
 			</div>
 		);
 	}
 
 	return (
-		<div className="ai-approval">
-			<div className="ai-approval__header">
-				<Shield size={13} className="ai-approval__shield-icon" />
-				<span className="ai-approval__header-label">Action requires approval</span>
-				<span className="ai-approval__resource-badge">
+		<div className={styles.card}>
+			<div className={styles.header}>
+				<Shield size={13} className={styles.shieldIcon} />
+				<span className={styles.headerLabel}>Action requires approval</span>
+				<span className={styles.resourceBadge}>
 					{approval.actionType} · {approval.resourceType}
 				</span>
 			</div>
 
-			<p className="ai-approval__summary">{approval.summary}</p>
+			<p className={styles.summary}>{approval.summary}</p>
 
 			{approval.diff && (
-				<div className="ai-approval__diff">
+				<div className={styles.diff}>
 					{approval.diff.before !== undefined && (
-						<div className="ai-approval__diff-block ai-approval__diff-block--before">
-							<span className="ai-approval__diff-label">Before</span>
-							<pre className="ai-approval__diff-json">
+						<div className={cx(styles.diffBlock, styles.before)}>
+							<span className={styles.diffLabel}>Before</span>
+							<pre className={styles.diffJson}>
 								{JSON.stringify(approval.diff.before, null, 2)}
 							</pre>
 						</div>
 					)}
 					{approval.diff.after !== undefined && (
-						<div className="ai-approval__diff-block ai-approval__diff-block--after">
-							<span className="ai-approval__diff-label">After</span>
-							<pre className="ai-approval__diff-json">
+						<div className={cx(styles.diffBlock, styles.after)}>
+							<span className={styles.diffLabel}>After</span>
+							<pre className={styles.diffJson}>
 								{JSON.stringify(approval.diff.after, null, 2)}
 							</pre>
 						</div>
@@ -95,7 +92,7 @@ export default function ApprovalCard({
 				</div>
 			)}
 
-			<div className="ai-approval__actions">
+			<div className={styles.actions}>
 				<Button
 					variant="solid"
 					size="sm"

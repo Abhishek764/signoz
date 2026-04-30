@@ -1,5 +1,7 @@
 import { Line } from 'react-chartjs-2';
 
+import blockStyles from './Block.module.scss';
+import chartStyles from './Chart.module.scss';
 import {
 	CHART_PALETTE,
 	CHART_PALETTE_ALPHA,
@@ -51,9 +53,9 @@ export default function LineChartBlock({
 	};
 
 	return (
-		<div className="ai-block ai-chart">
-			{title && <p className="ai-block__title">{title}</p>}
-			<div className="ai-chart__canvas-wrap">
+		<div className={blockStyles.block}>
+			{title && <p className={blockStyles.title}>{title}</p>}
+			<div className={chartStyles.canvasWrap}>
 				<Line
 					data={chartData}
 					options={{

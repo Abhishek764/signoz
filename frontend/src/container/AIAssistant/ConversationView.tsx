@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import cx from 'classnames';
 import { LoaderCircle } from '@signozhq/icons';
 
 import ChatInput from './components/ChatInput';
@@ -6,6 +7,9 @@ import VirtualizedMessages from './components/VirtualizedMessages';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
 import { MessageAttachment } from './types';
 import { MessageContext } from '../../api/ai/chat';
+import { useVariant } from './VariantContext';
+
+import styles from './ConversationView.module.scss';
 
 interface ConversationViewProps {
 	conversationId: string;
@@ -14,6 +18,9 @@ interface ConversationViewProps {
 export default function ConversationView({
 	conversationId,
 }: ConversationViewProps): JSX.Element {
+	const variant = useVariant();
+	const isCompact = variant === 'panel';
+
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],
 	);
@@ -53,14 +60,21 @@ export default function ConversationView({
 		Boolean(pendingApprovalHere) ||
 		Boolean(pendingClarificationHere);
 
+	const inputWrapperClass = cx(styles.inputWrapper, {
+		[styles.compact]: isCompact,
+	});
+	const disclaimerClass = cx(styles.disclaimer, {
+		[styles.compact]: isCompact,
+	});
+
 	if (isLoadingThread && messages.length === 0) {
 		return (
-			<div className="ai-conversation">
-				<div className="ai-conversation__loading">
-					<LoaderCircle size={20} className="ai-history__spinner" />
+			<div className={styles.conversation}>
+				<div className={styles.loading}>
+					<LoaderCircle size={20} className={styles.spinner} />
 					Loading conversation…
 				</div>
-				<div className="ai-conversation__input-wrapper">
+				<div className={inputWrapperClass}>
 					<ChatInput onSend={handleSend} disabled />
 				</div>
 			</div>
@@ -68,18 +82,18 @@ export default function ConversationView({
 	}
 
 	return (
-		<div className="ai-conversation">
+		<div className={styles.conversation}>
 			<VirtualizedMessages
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
 			/>
 			{showDisclaimer && (
-				<div className="ai-conversation__disclaimer" role="note" aria-live="polite">
+				<div className={disclaimerClass} role="note" aria-live="polite">
 					SigNoz AI can make mistakes. Please double-check responses.
 				</div>
 			)}
-			<div className="ai-conversation__input-wrapper">
+			<div className={inputWrapperClass}>
 				<ChatInput
 					onSend={handleSend}
 					onCancel={handleCancel}

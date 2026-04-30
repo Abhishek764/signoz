@@ -8,7 +8,7 @@ import {
 	useAIAssistantStore,
 } from './store/useAIAssistantStore';
 
-import './AIAssistant.styles.scss';
+import styles from './AIAssistantTrigger.module.scss';
 
 /**
  * Floating action button anchored to the bottom-right of the content area.
@@ -32,7 +32,7 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 		<Tooltip title="AI Assistant">
 			<button
 				type="button"
-				className="ai-trigger"
+				className={styles.trigger}
 				onClick={openAIAssistant}
 				aria-label="Open AI Assistant"
 			>

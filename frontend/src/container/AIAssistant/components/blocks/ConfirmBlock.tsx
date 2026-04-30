@@ -1,8 +1,12 @@
+import cx from 'classnames';
 import { Button } from '@signozhq/ui';
 import { Check, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { useMessageContext } from '../MessageContext';
+
+import blockStyles from './Block.module.scss';
+import styles from './ConfirmBlock.module.scss';
 
 export interface ConfirmData {
 	message?: string;
@@ -49,14 +53,14 @@ export default function ConfirmBlock({
 	if (isAnswered) {
 		const wasAccepted = answeredChoice === 'accepted';
 		const icon = wasAccepted ? (
-			<Check size={13} className="ai-confirm__icon ai-confirm__icon--ok" />
+			<Check size={13} className={cx(styles.icon, styles.ok)} />
 		) : (
-			<X size={13} className="ai-confirm__icon ai-confirm__icon--no" />
+			<X size={13} className={cx(styles.icon, styles.no)} />
 		);
 		return (
-			<div className="ai-block ai-confirm ai-confirm--answered">
+			<div className={cx(blockStyles.block, styles.answered)}>
 				{icon}
-				<span className="ai-confirm__answer-text">
+				<span className={styles.answerText}>
 					{wasAccepted ? acceptText : rejectText}
 				</span>
 			</div>
@@ -64,9 +68,9 @@ export default function ConfirmBlock({
 	}
 
 	return (
-		<div className="ai-block ai-confirm">
-			{message && <p className="ai-confirm__message">{message}</p>}
-			<div className="ai-confirm__actions">
+		<div className={blockStyles.block}>
+			{message && <p className={styles.message}>{message}</p>}
+			<div className={styles.actions}>
 				<Button variant="solid" size="sm" onClick={(): void => handle('accepted')}>
 					<Check size={12} />
 					{acceptLabel}

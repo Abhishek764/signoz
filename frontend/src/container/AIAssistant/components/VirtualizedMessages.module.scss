@@ -54,6 +54,7 @@ $radius: 4px;
 .emptyChip {
 	display: flex;
 	align-items: center;
+	justify-content: flex-start !important;
 	gap: 8px;
 	padding: 10px 14px;
 	border: 1px solid var(--l2-border);

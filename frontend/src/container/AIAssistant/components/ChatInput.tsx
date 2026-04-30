@@ -500,17 +500,18 @@ export default function ChatInput({
 									{CONTEXT_CATEGORIES.map((category) => {
 										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
 										return (
-											<button
+											<Button
 												key={category}
-												type="button"
+												variant="ghost"
+												color="secondary"
 												className={cx(styles.contextPopoverCategoryItem, {
 													[styles.active]: activeContextCategory === category,
 												})}
 												onClick={(): void => setActiveContextCategory(category)}
+												prefix={<CategoryIcon size={13} />}
 											>
-												<CategoryIcon size={13} />
-												<span>{category}</span>
-											</button>
+												{category}
+											</Button>
 										);
 									})}
 								</div>
@@ -564,14 +565,16 @@ export default function ChatInput({
 				<div className={styles.rightActions}>
 					{isListening ? (
 						<div className={styles.micRecording}>
-							<button
-								type="button"
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
 								className={styles.micDiscard}
 								onClick={handleDiscard}
 								aria-label="Discard recording"
 							>
 								<X size={12} />
-							</button>
+							</Button>
 							<span className={styles.micWaves} aria-hidden="true">
 								<span />
 								<span />
@@ -582,14 +585,16 @@ export default function ChatInput({
 								<span />
 								<span />
 							</span>
-							<button
-								type="button"
+							<Button
+								variant="solid"
+								size="icon"
+								color="destructive"
 								className={styles.micStop}
 								onClick={handleStopAndSend}
 								aria-label="Stop and send"
 							>
 								<Square size={9} fill="currentColor" strokeWidth={0} />
-							</button>
+							</Button>
 						</div>
 					) : (
 						<Tooltip

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, KeyboardEvent } from 'react';
 import cx from 'classnames';
 import {
 	ChevronDown,
@@ -28,12 +28,22 @@ export default function ToolCallStep({
 		.replace(/_/g, ' ')
 		.replace(/\b\w/g, (c) => c.toUpperCase());
 
+	const toggle = (): void => setExpanded((v) => !v);
+	const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			toggle();
+		}
+	};
+
 	return (
 		<div className={cx(styles.step, { [styles.running]: !done })}>
-			<button
-				type="button"
+			<div
 				className={styles.header}
-				onClick={(): void => setExpanded((v) => !v)}
+				onClick={toggle}
+				onKeyDown={handleKeyDown}
+				role="button"
+				tabIndex={0}
 				aria-expanded={expanded}
 			>
 				{done ? (
@@ -42,16 +52,19 @@ export default function ToolCallStep({
 					<LoaderCircle size={12} className={cx(styles.icon, styles.spin)} />
 				)}
 				<span className={styles.label}>{label}</span>
-				<span className={styles.toolName}>{toolName}</span>
 				{expanded ? (
 					<ChevronDown size={11} className={styles.chevron} />
 				) : (
 					<ChevronRight size={11} className={styles.chevron} />
 				)}
-			</button>
+			</div>
 
 			{expanded && (
 				<div className={styles.body}>
+					<div className={styles.section}>
+						<span className={styles.sectionLabel}>Tool</span>
+						<span className={styles.toolName}>{toolName}</span>
+					</div>
 					<div className={styles.section}>
 						<span className={styles.sectionLabel}>Input</span>
 						<pre className={styles.json}>{JSON.stringify(input, null, 2)}</pre>

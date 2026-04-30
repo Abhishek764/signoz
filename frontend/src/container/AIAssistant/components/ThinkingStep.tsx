@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '@signozhq/ui';
 import { Brain, ChevronDown, ChevronRight } from '@signozhq/icons';
 
 import styles from './ThinkingStep.module.scss';
@@ -15,8 +16,9 @@ export default function ThinkingStep({
 
 	return (
 		<div className={styles.step}>
-			<button
-				type="button"
+			<Button
+				variant="ghost"
+				color="secondary"
 				className={styles.header}
 				onClick={(): void => setExpanded((v) => !v)}
 				aria-expanded={expanded}
@@ -28,7 +30,7 @@ export default function ThinkingStep({
 				) : (
 					<ChevronRight size={11} className={styles.chevron} />
 				)}
-			</button>
+			</Button>
 
 			{expanded && (
 				<div className={styles.body}>

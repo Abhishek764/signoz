@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { Button } from '@signozhq/ui';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import {
 	Activity,
@@ -110,17 +111,18 @@ export default function VirtualizedMessages({
 				</p>
 				<div className={styles.emptySuggestions}>
 					{SUGGESTIONS.map((s) => (
-						<button
+						<Button
 							key={s.text}
-							type="button"
+							variant="outlined"
+							color="secondary"
 							className={styles.emptyChip}
 							onClick={(): void => {
 								sendMessage(s.text);
 							}}
+							prefix={<s.icon size={14} />}
 						>
-							<s.icon size={14} />
 							{s.text}
-						</button>
+						</Button>
 					))}
 				</div>
 			</div>

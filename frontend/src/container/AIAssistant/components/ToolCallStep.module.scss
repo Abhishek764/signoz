@@ -1,31 +1,56 @@
 $radius: 4px;
 
+// Tool calls are auxiliary "what the agent did" rows. Keep them visually
+// secondary so the prose in the bubble stays the focal point: no border, no
+// box background, faded text, slim padding, and a thin left rail to group
+// them visually as a sequence.
 .step {
-	border: 1px solid var(--l2-border);
-	border-radius: $radius;
-	overflow: hidden;
-	font-size: 12px;
 	width: 100%;
+	font-size: 11px;
+	border-left: 2px solid var(--l2-border);
+	padding-left: 8px;
 
 	&.running {
 		opacity: 0.85;
 	}
+
+	// Consecutive tool-call rows belong to one activity group — pull them
+	// closer together and let the bubble's gap (10px) do the work between
+	// the group and surrounding markdown / blocks.
+	& + & {
+		margin-top: -6px;
+	}
 }
 
 .header {
+	// Plain interactive div (role="button") — owns all of its own styling
+	// since it no longer wraps a design-system Button.
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	width: 100%;
-	padding: 6px 10px;
-	background: var(--l1-background);
+	padding: 2px 0;
+	margin: 0;
+	background: transparent;
 	border: none;
+	border-radius: 0;
+	box-shadow: none;
 	cursor: pointer;
 	text-align: left;
-	color: var(--l1-foreground);
+	font: inherit;
+	color: var(--l3-foreground, #6b7280);
+	user-select: none;
+	transition: color 0.12s ease;
 
 	&:hover {
-		background: var(--l2-background);
+		color: var(--l1-foreground);
+		background: transparent;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--primary, var(--bg-robin-500));
+		outline-offset: 2px;
+		border-radius: 2px;
 	}
 }
 
@@ -54,13 +79,6 @@ $radius: 4px;
 
 .label {
 	font-weight: 500;
-	color: var(--l1-foreground);
-}
-
-.toolName {
-	font-family: var(--font-mono, monospace);
-	font-size: 11px;
-	color: var(--l3-foreground, #6b7280);
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -73,12 +91,11 @@ $radius: 4px;
 }
 
 .body {
-	padding: 6px 8px 8px;
+	margin-top: 4px;
+	padding: 6px 0 4px;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
-	border-top: 1px solid var(--l2-border);
-	background: var(--l1-background);
 }
 
 .section {
@@ -88,18 +105,28 @@ $radius: 4px;
 }
 
 .sectionLabel {
-	font-size: 10px;
+	font-size: 9px;
 	font-weight: 600;
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: 0.06em;
 	color: var(--l3-foreground, #6b7280);
+}
+
+.toolName {
+	font-family: var(--font-mono, monospace);
+	font-size: 10px;
+	color: var(--l2-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .json {
 	font-family: var(--font-mono, monospace);
 	font-size: 11px;
 	color: var(--l2-foreground);
-	background: var(--l2-background);
+	background: var(--l1-background);
+	border: 1px solid var(--l2-border);
 	border-radius: $radius;
 	padding: 5px 7px;
 	margin: 0;

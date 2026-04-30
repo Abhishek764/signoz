@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import cx from 'classnames';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import type { MessageActionDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { MessageActionKindDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { restoreExecution, revertExecution, undoExecution } from 'api/ai/chat';
@@ -222,7 +222,7 @@ export default function ActionsSection({
 		<div className={styles.section}>
 			<div className={styles.heading}>
 				<Sparkles size={11} className={styles.headingIcon} />
-				<span>Suggested actions</span>
+				<span className={styles.headingText}>Suggested actions</span>
 			</div>
 
 			<div className={styles.list}>
@@ -256,17 +256,23 @@ export default function ActionsSection({
 					}
 
 					const chip = (
-						<button
-							type="button"
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="sm"
 							className={cx(styles.chip, { [styles.error]: isError })}
 							onClick={(): void => handleClick(key, action)}
 							disabled={isDisabled}
 							aria-label={action.label}
+							prefix={icon}
+							suffix={
+								stateLabel ? (
+									<span className={styles.chipState}>{stateLabel}</span>
+								) : undefined
+							}
 						>
-							{icon}
 							<span className={styles.chipLabel}>{action.label}</span>
-							{stateLabel && <span className={styles.chipState}>{stateLabel}</span>}
-						</button>
+						</Button>
 					);
 
 					return tooltip ? (

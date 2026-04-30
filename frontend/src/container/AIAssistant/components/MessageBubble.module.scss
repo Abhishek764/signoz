@@ -45,7 +45,11 @@ $radius: 4px;
 	border-radius: $radius;
 	padding: 10px 14px;
 	font-size: 13px;
-	line-height: 1.6;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 153.846% */
+	letter-spacing: -0.065px;
+
 	max-width: 100%;
 
 	.user & {
@@ -55,10 +59,14 @@ $radius: 4px;
 	}
 
 	.assistant & {
+		// Flex column so text blocks, tool steps and cards space evenly.
+		// 14px reads as a clear "section break" between the prose and the
+		// auxiliary tool-call rows; consecutive tool calls reclaim some of
+		// that gap via a negative margin in `ToolCallStep.module.scss`.
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 10px;
+		gap: 14px;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
 		border-bottom-left-radius: $radius;

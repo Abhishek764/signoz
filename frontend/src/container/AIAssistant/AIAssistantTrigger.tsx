@@ -1,5 +1,5 @@
 import { matchPath, useLocation } from 'react-router-dom';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { Bot } from '@signozhq/icons';
 
@@ -30,14 +30,15 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 
 	return (
 		<Tooltip title="AI Assistant">
-			<button
-				type="button"
+			<Button
+				variant="solid"
+				color="primary"
 				className={styles.trigger}
 				onClick={openAIAssistant}
 				aria-label="Open AI Assistant"
 			>
 				<Bot size={20} />
-			</button>
+			</Button>
 		</Tooltip>
 	);
 }

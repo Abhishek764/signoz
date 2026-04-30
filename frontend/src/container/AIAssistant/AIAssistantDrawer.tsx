@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Tooltip } from '@signozhq/ui';
+import { Button, Tooltip } from '@signozhq/ui';
 import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
 import { Maximize2, MessageSquare, Plus, X } from '@signozhq/icons';
@@ -52,30 +52,40 @@ export default function AIAssistantDrawer(): JSX.Element {
 
 					<div>
 						<Tooltip title="New conversation">
-							<button
-								type="button"
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
 								onClick={handleNewConversation}
 								aria-label="New conversation"
 							>
 								<Plus size={16} />
-							</button>
+							</Button>
 						</Tooltip>
 
 						<Tooltip title="Open full screen">
-							<button
-								type="button"
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
 								onClick={handleExpand}
 								disabled={!activeConversationId}
 								aria-label="Open full screen"
 							>
 								<Maximize2 size={16} />
-							</button>
+							</Button>
 						</Tooltip>
 
 						<Tooltip title="Close">
-							<button type="button" onClick={closeDrawer} aria-label="Close drawer">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={closeDrawer}
+								aria-label="Close drawer"
+							>
 								<X size={16} />
-							</button>
+							</Button>
 						</Tooltip>
 					</div>
 				</div>

@@ -7,7 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const persistentVolumeClaimNameAttrKey = "k8s.persistentvolumeclaim.name"
+const (
+	persistentVolumeClaimNameAttrKey = "k8s.persistentvolumeclaim.name"
+	volumesBaseFilterExpr            = "k8s.persistentvolumeclaim.name != ''"
+)
 
 var pvcNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -78,7 +81,7 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.persistentvolumeclaim.name != ''",
+					Expression: volumesBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
@@ -99,7 +102,7 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.persistentvolumeclaim.name != ''",
+					Expression: volumesBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
@@ -130,7 +133,7 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.persistentvolumeclaim.name != ''",
+					Expression: volumesBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
@@ -151,7 +154,7 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.persistentvolumeclaim.name != ''",
+					Expression: volumesBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,
@@ -172,7 +175,7 @@ func (m *module) newVolumesTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.persistentvolumeclaim.name != ''",
+					Expression: volumesBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey},
 				Disabled: false,

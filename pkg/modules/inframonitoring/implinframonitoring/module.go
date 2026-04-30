@@ -542,6 +542,12 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
+	// Bake the volume base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(volumesBaseFilterExpr, req.Filter.Expression)
+
 	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, volumesTableMetricNamesList)
 	if err != nil {
 		return nil, err

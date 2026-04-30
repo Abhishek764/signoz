@@ -530,11 +530,13 @@ def test_export_traces_with_composite_query_trace_operator(
 ) -> None:
     """
     Setup:
-    Insert multiple traces with parent-child relationships.
+    Insert a parent span and two child spans, all with an http.method attribute.
 
     Tests:
-    1. Export traces using trace operator in composite query (POST)
-    2. Verify trace operator query works correctly
+    1. Basic trace operator (A => B) returning parent spans, ordered by timestamp.
+    2. Same operator with selectFields=[service.name] and order by http.method, which is
+       NOT in selectFields — verifies the inner/outer subquery fix for the CH 25.12.5
+       NOT_FOUND_COLUMN_IN_BLOCK regression (ORDER BY col AS `col` in a CTE shape).
     """
     parent_trace_id = TraceIdGenerator.trace_id()
     parent_span_id = TraceIdGenerator.span_id()
@@ -555,12 +557,8 @@ def test_export_traces_with_composite_query_trace_operator(
                 kind=TracesKind.SPAN_KIND_SERVER,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
-                resources={
-                    "service.name": "parent-service",
-                },
-                attributes={
-                    "operation.type": "parent",
-                },
+                resources={"service.name": "parent-service"},
+                attributes={"operation.type": "parent", "http.method": "GET"},
             ),
             Traces(
                 timestamp=now - timedelta(seconds=9),
@@ -572,12 +570,8 @@ def test_export_traces_with_composite_query_trace_operator(
                 kind=TracesKind.SPAN_KIND_INTERNAL,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
-                resources={
-                    "service.name": "parent-service",
-                },
-                attributes={
-                    "operation.type": "child",
-                },
+                resources={"service.name": "parent-service"},
+                attributes={"operation.type": "child", "http.method": "POST"},
             ),
             Traces(
                 timestamp=now - timedelta(seconds=7),
@@ -589,31 +583,23 @@ def test_export_traces_with_composite_query_trace_operator(
                 kind=TracesKind.SPAN_KIND_INTERNAL,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
-                resources={
-                    "service.name": "parent-service",
-                },
-                attributes={
-                    "operation.type": "child",
-                },
+                resources={"service.name": "parent-service"},
+                attributes={"operation.type": "child", "http.method": "POST"},
             ),
         ]
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # Calculate timestamps in nanoseconds
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    # A: spans with operation.type = 'parent'
+    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     query_a = BuilderQuery(
         signal="traces",
         name="A",
         limit=1000,
         filter_expression="operation.type = 'parent'",
     )
-
-    # B: spans with operation.type = 'child'
     query_b = BuilderQuery(
         signal="traces",
         name="B",
@@ -621,47 +607,50 @@ def test_export_traces_with_composite_query_trace_operator(
         filter_expression="operation.type = 'child'",
     )
 
-    # Trace operator: find traces where A has a direct descendant B
-    query_c = TraceOperatorQuery(
-        name="C",
-        expression="A => B",
-        return_spans_from="A",
-        limit=1000,
-        order=[OrderBy(TelemetryFieldKey("timestamp", "string", "span"), "desc")],
+    def export(operator: TraceOperatorQuery) -> list[dict]:
+        body = QueryRangeRequest(
+            start=start_ns,
+            end=end_ns,
+            queries=[query_a, query_b, operator],
+        ).to_dict()
+        resp = requests.post(
+            url,
+            json=body,
+            timeout=10,
+            headers={"authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        assert resp.headers["Content-Type"] == "application/x-ndjson"
+        return [json.loads(line) for line in resp.text.strip().split("\n") if line]
+
+    # Test 1: basic trace operator ordered by timestamp
+    spans = export(
+        TraceOperatorQuery(
+            name="C",
+            expression="A => B",
+            return_spans_from="A",
+            limit=1000,
+            order=[OrderBy(TelemetryFieldKey("timestamp", "string", "span"), "desc")],
+        )
     )
+    assert len(spans) == 1
+    assert all(s.get("trace_id") == parent_trace_id for s in spans)
+    assert any(s.get("name") == "parent-operation" for s in spans)
 
-    body = QueryRangeRequest(
-        start=start_ns,
-        end=end_ns,
-        queries=[query_a, query_b, query_c],
-    ).to_dict()
-
-    url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
-    response = requests.post(
-        url,
-        json=body,
-        timeout=10,
-        headers={
-            "authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        },
+    # Test 2: order-by field (http.method) absent from selectFields
+    spans = export(
+        TraceOperatorQuery(
+            name="C",
+            expression="A => B",
+            return_spans_from="A",
+            limit=1000,
+            select_fields=[TelemetryFieldKey("service.name", "string", "resource")],
+            order=[OrderBy(TelemetryFieldKey("http.method", "string", "tag"), "desc")],
+        )
     )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.headers["Content-Type"] == "application/x-ndjson"
-
-    # Parse JSONL content
-    jsonl_lines = response.text.strip().split("\n")
-    assert len(jsonl_lines) == 1, f"Expected at least 1 line, got {len(jsonl_lines)}"
-
-    # Verify all returned spans belong to the matched trace
-    json_objects = [json.loads(line) for line in jsonl_lines]
-    trace_ids = [obj.get("trace_id") for obj in json_objects]
-    assert all(tid == parent_trace_id for tid in trace_ids)
-
-    # Verify the parent span (returnSpansFrom = "A") is present
-    span_names = [obj.get("name") for obj in json_objects]
-    assert "parent-operation" in span_names
+    assert len(spans) >= 1
+    assert all(s.get("trace_id") == parent_trace_id for s in spans)
+    assert any(s.get("name") == "parent-operation" for s in spans)
 
 
 def test_export_traces_with_select_fields(

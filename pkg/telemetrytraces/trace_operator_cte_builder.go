@@ -413,28 +413,6 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 }
 
 func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
-	sb := sqlbuilder.NewSelectBuilder()
-
-	// Select core fields
-	sb.Select(
-		"timestamp",
-		"trace_id",
-		"span_id",
-		"name",
-		"duration_nano",
-		"parent_span_id",
-	)
-
-	selectedFields := map[string]bool{
-		"timestamp":      true,
-		"trace_id":       true,
-		"span_id":        true,
-		"name":           true,
-		"duration_nano":  true,
-		"parent_span_id": true,
-	}
-
-	// Get keys for selectFields
 	keySelectors := b.getKeySelectors()
 	for _, field := range b.operator.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
@@ -444,13 +422,30 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 			FieldDataType: field.FieldDataType,
 		})
 	}
-
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
 
-	// Add selectFields using ColumnExpressionFor since we now have all base table columns
+	coreFields := []string{"trace_id", "span_id", "name", "duration_nano", "parent_span_id"}
+	selectedFields := map[string]bool{
+		"timestamp":      true,
+		"trace_id":       true,
+		"span_id":        true,
+		"name":           true,
+		"duration_nano":  true,
+		"parent_span_id": true,
+	}
+
+	// Inner SELECT reads from the CTE and renames timestamp→ts.
+	// This breaks the `ORDER BY col AS `col`` pattern that triggers a
+	// CH 25.12.5 distributed-analyzer regression (NOT_FOUND_COLUMN_IN_BLOCK /
+	// timestamp renamed to timestamp_0). See ClickHouse/ClickHouse#103508.
+	innerSB := sqlbuilder.NewSelectBuilder()
+	innerSB.Select("timestamp AS ts")
+	innerSB.SelectMore(coreFields...)
+
+	var additionalSelectedFields []string
 	for _, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
@@ -461,41 +456,60 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 				slog.String("field", field.Name), errors.Attr(err))
 			continue
 		}
-		sb.SelectMore(colExpr)
+		innerSB.SelectMore(colExpr)
 		selectedFields[field.Name] = true
+		additionalSelectedFields = append(additionalSelectedFields, field.Name)
 	}
 
-	sb.From(selectFromCTE)
-
-	// Add order by support using ColumnExpressionFor
-	orderApplied := false
+	// Also expose any explicit ORDER BY fields that aren't already selected,
+	// so the outer query can reference them by alias name.
 	for _, orderBy := range b.operator.Order {
+		if selectedFields[orderBy.Key.Name] {
+			continue
+		}
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
-		orderApplied = true
+		innerSB.SelectMore(colExpr)
+		selectedFields[orderBy.Key.Name] = true
 	}
 
-	if !orderApplied {
-		sb.OrderBy("timestamp DESC")
+	innerSB.From(selectFromCTE)
+	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	// Outer SELECT reads from the inner subquery and re-exposes timestamp via
+	// the ts alias. ORDER BY uses the alias name directly — no AS-alias in the
+	// ORDER BY position — which is the pattern that avoids the CH regression.
+	outerSB := sqlbuilder.NewSelectBuilder()
+	outerSB.Select("ts AS timestamp")
+	outerSB.SelectMore(coreFields...)
+	for _, name := range additionalSelectedFields {
+		outerSB.SelectMore(fmt.Sprintf("`%s`", name))
+	}
+	outerSB.From(fmt.Sprintf("(%s) AS t", innerSQL))
+
+	if len(b.operator.Order) > 0 {
+		for _, orderBy := range b.operator.Order {
+			outerSB.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		}
+	} else {
+		outerSB.OrderBy("timestamp DESC")
 	}
 
 	if b.operator.Limit > 0 {
-		sb.Limit(b.operator.Limit)
+		outerSB.Limit(b.operator.Limit)
 	} else {
-		sb.Limit(100)
+		outerSB.Limit(100)
 	}
-
 	if b.operator.Offset > 0 {
-		sb.Offset(b.operator.Offset)
+		outerSB.Offset(b.operator.Offset)
 	}
 
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	outerSQL, outerArgs := outerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
-		Query: sql,
-		Args:  args,
+		Query: outerSQL,
+		Args:  append(innerArgs, outerArgs...),
 	}, nil
 }
 

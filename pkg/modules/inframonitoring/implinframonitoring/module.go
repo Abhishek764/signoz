@@ -708,6 +708,12 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
+	// Bake the workload base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(statefulSetsBaseFilterExpr, req.Filter.Expression)
+
 	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, statefulSetsTableMetricNamesList)
 	if err != nil {
 		return nil, err

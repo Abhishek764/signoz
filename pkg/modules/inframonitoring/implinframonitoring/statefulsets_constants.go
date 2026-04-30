@@ -7,7 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const statefulSetNameAttrKey = "k8s.statefulset.name"
+const (
+	statefulSetNameAttrKey     = "k8s.statefulset.name"
+	statefulSetsBaseFilterExpr = "k8s.statefulset.name != ''"
+)
 
 var statefulSetNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -81,7 +84,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -102,7 +105,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -123,7 +126,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -144,7 +147,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -165,7 +168,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -186,7 +189,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -209,7 +212,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,
@@ -230,7 +233,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.statefulset.name != ''",
+					Expression: statefulSetsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey},
 				Disabled: false,

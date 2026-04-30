@@ -145,19 +145,18 @@ export default function HistorySidebar({
 					</span>
 				)}
 
-				{isLoadingThreads && hasAnySidebarRows && (
-					<HistoryListSkeleton rows={2} inline />
-				)}
-
 				{isLoadingThreads && !hasAnySidebarRows && <HistoryListSkeleton rows={7} />}
 
 				{!isLoadingThreads && !hasAnySidebarRows && (
 					<p className={styles.empty}>No conversations yet.</p>
 				)}
 
-				{groups.map(({ label, items }) => (
+				{groups.map(({ label, items }, idx) => (
 					<div key={label} className={styles.group}>
 						<span className={styles.groupLabel}>{label}</span>
+						{/* Refresh indicator goes at the top of the first section so
+						    it reads as in-flight fetching of the most recent items. */}
+						{idx === 0 && isLoadingThreads && <HistoryListSkeleton rows={2} inline />}
 						{items.map((conv) => (
 							<ConversationItem
 								key={conv.id}
@@ -175,6 +174,11 @@ export default function HistorySidebar({
 				{sortedArchived.length > 0 && (
 					<div className={cx(styles.group, styles.archived)}>
 						<span className={styles.groupLabel}>Archived Conversations</span>
+						{/* When no active groups exist, archived is the first section
+						    and owns the refresh indicator. */}
+						{groups.length === 0 && isLoadingThreads && (
+							<HistoryListSkeleton rows={2} inline />
+						)}
 						{sortedArchived.map((conv) => (
 							<ConversationItem
 								key={conv.id}

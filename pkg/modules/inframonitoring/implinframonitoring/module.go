@@ -619,6 +619,12 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
+	// Bake the deployments base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(deploymentsBaseFilterExpr, req.Filter.Expression)
+
 	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, deploymentsTableMetricNamesList)
 	if err != nil {
 		return nil, err

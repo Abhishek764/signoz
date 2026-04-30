@@ -15,9 +15,19 @@
  * Local types are defined only when the UI needs a different shape — for
  * example, the SSE event union adds a literal `type` discriminator that the
  * generated event DTOs leave loose.
+ *
+ * REST calls go through `AIAssistantInstance` (an axios instance configured
+ * with the same interceptor stack as the rest of the app) — that gives them
+ * automatic 401-then-rotate behaviour for free. Only the SSE call is still
+ * a raw `fetch` because axios doesn't expose `ReadableStream`; that one
+ * path gets its own small auth wrapper.
  */
 
+import axios from 'axios';
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import { Logout } from 'api/utils';
+import rotateSession from 'api/v2/sessions/rotate/post';
+import afterLogin from 'AppRoutes/utils';
 import type {
 	ActionResultResponseDTO,
 	ApprovalEventDTO,
@@ -49,13 +59,70 @@ import type {
 } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env (see vite.config `define`).
-const AI_BACKEND = process.env.VITE_AI_BACKEND_URL || 'http://localhost:8001';
-const BASE = `${AI_BACKEND}/api/v1/assistant`;
+import { AI_BASE_URL, AIAssistantInstance } from './instance';
 
-function authHeaders(): Record<string, string> {
-	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
-	return token ? { Authorization: `Bearer ${token}` } : {};
+// ---------------------------------------------------------------------------
+// SSE-only auth wrapper.
+//
+// REST calls go through `AIAssistantInstance` (axios) and get refresh-token
+// behaviour from the shared `interceptorRejected`. The SSE call has to use
+// raw `fetch` (axios can't stream a `ReadableStream`), so it can't ride that
+// interceptor — this small wrapper handles 401 at SSE open time by hitting
+// the same rotate endpoint and replaying the request once.
+//
+// In typical use a REST call (e.g. sendMessage / loadThread) precedes every
+// stream open, so axios will already have refreshed the token and `fetch`
+// just reads the fresh one from localStorage. The wrapper exists for the
+// edge case where SSE is the first call to encounter a 401.
+// ---------------------------------------------------------------------------
+
+let pendingRotate: Promise<string | null> | null = null;
+
+async function rotateAccessToken(): Promise<string | null> {
+	if (pendingRotate) {
+		return pendingRotate;
+	}
+	const refreshToken = getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '';
+	if (!refreshToken) {
+		return null;
+	}
+	pendingRotate = (async (): Promise<string | null> => {
+		try {
+			const response = await rotateSession({ refreshToken });
+			afterLogin(response.data.accessToken, response.data.refreshToken, true);
+			return response.data.accessToken;
+		} catch {
+			Logout();
+			return null;
+		} finally {
+			pendingRotate = null;
+		}
+	})();
+	return pendingRotate;
+}
+
+async function fetchSSEWithAuth(
+	url: string,
+	signal?: AbortSignal,
+): Promise<Response> {
+	const send = async (token: string | null): Promise<Response> =>
+		fetch(url, {
+			headers: token ? { Authorization: `Bearer ${token}` } : {},
+			signal,
+		});
+
+	const initialToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
+	const res = await send(initialToken);
+
+	if (res.status !== 401) {
+		return res;
+	}
+
+	const refreshed = await rotateAccessToken();
+	if (!refreshed) {
+		return res;
+	}
+	return send(refreshed);
 }
 
 // ---------------------------------------------------------------------------
@@ -125,57 +192,38 @@ export async function listThreads(
 		cursor = null,
 		sort = 'updated_desc',
 	} = options;
-	const params = new URLSearchParams({
-		archived,
-		limit: String(limit),
-		sort,
-	});
-	if (cursor) {
-		params.set('cursor', cursor);
-	}
-	const res = await fetch(`${BASE}/threads?${params.toString()}`, {
-		headers: { ...authHeaders() },
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to list threads: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	return res.json();
+	const response = await AIAssistantInstance.get<ThreadListResponse>(
+		'/threads',
+		{
+			params: {
+				archived,
+				limit,
+				sort,
+				...(cursor ? { cursor } : {}),
+			},
+		},
+	);
+	return response.data;
 }
 
 export async function updateThread(
 	threadId: string,
 	update: { title?: string | null; archived?: boolean | null },
 ): Promise<ThreadSummary> {
-	const res = await fetch(`${BASE}/threads/${threadId}`, {
-		method: 'PATCH',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify(update),
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to update thread: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	return res.json();
+	const response = await AIAssistantInstance.patch<ThreadSummary>(
+		`/threads/${threadId}`,
+		update,
+	);
+	return response.data;
 }
 
 export async function getThreadDetail(
 	threadId: string,
 ): Promise<ThreadDetailResponse> {
-	const res = await fetch(`${BASE}/threads/${threadId}`, {
-		headers: { ...authHeaders() },
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to get thread: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	return res.json();
+	const response = await AIAssistantInstance.get<ThreadDetailResponse>(
+		`/threads/${threadId}`,
+	);
+	return response.data;
 }
 
 // ---------------------------------------------------------------------------
@@ -184,20 +232,12 @@ export async function getThreadDetail(
 // ---------------------------------------------------------------------------
 
 export async function createThread(signal?: AbortSignal): Promise<string> {
-	const res = await fetch(`${BASE}/threads`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({}),
-		signal,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to create thread: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	const data: CreateThreadResponseDTO = await res.json();
-	return data.threadId;
+	const response = await AIAssistantInstance.post<CreateThreadResponseDTO>(
+		'/threads',
+		{},
+		{ signal },
+	);
+	return response.data.threadId;
 }
 
 // ---------------------------------------------------------------------------
@@ -207,14 +247,14 @@ export async function createThread(signal?: AbortSignal): Promise<string> {
 
 /** Fetches the thread's active executionId for reconnect on thread_busy (409). */
 async function getActiveExecutionId(threadId: string): Promise<string | null> {
-	const res = await fetch(`${BASE}/threads/${threadId}`, {
-		headers: { ...authHeaders() },
-	});
-	if (!res.ok) {
+	try {
+		const response = await AIAssistantInstance.get<ThreadDetailResponseDTO>(
+			`/threads/${threadId}`,
+		);
+		return response.data.activeExecutionId ?? null;
+	} catch {
 		return null;
 	}
-	const data: ThreadDetailResponseDTO = await res.json();
-	return data.activeExecutionId ?? null;
 }
 
 export async function sendMessage(
@@ -223,32 +263,27 @@ export async function sendMessage(
 	contexts?: MessageContext[],
 	signal?: AbortSignal,
 ): Promise<string> {
-	const res = await fetch(`${BASE}/threads/${threadId}/messages`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({
-			content,
-			...(contexts && contexts.length > 0 ? { contexts } : {}),
-		}),
-		signal,
-	});
-
-	if (res.status === 409) {
-		// Thread has an active execution — reconnect to it instead of failing.
-		const executionId = await getActiveExecutionId(threadId);
-		if (executionId) {
-			return executionId;
-		}
-	}
-
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to send message: ${res.status} ${res.statusText} — ${body}`,
+	try {
+		const response = await AIAssistantInstance.post<CreateMessageResponseDTO>(
+			`/threads/${threadId}/messages`,
+			{
+				content,
+				...(contexts && contexts.length > 0 ? { contexts } : {}),
+			},
+			{ signal },
 		);
+		return response.data.executionId;
+	} catch (err) {
+		// Thread already has an active execution — reconnect to it instead of
+		// failing the user's send.
+		if (axios.isAxiosError(err) && err.response?.status === 409) {
+			const executionId = await getActiveExecutionId(threadId);
+			if (executionId) {
+				return executionId;
+			}
+		}
+		throw err;
 	}
-	const data: CreateMessageResponseDTO = await res.json();
-	return data.executionId;
 }
 
 // ---------------------------------------------------------------------------
@@ -307,10 +342,10 @@ export async function* streamEvents(
 	executionId: string,
 	signal?: AbortSignal,
 ): AsyncGenerator<SSEEvent> {
-	const res = await fetch(`${BASE}/executions/${executionId}/events`, {
-		headers: { ...authHeaders() },
+	const res = await fetchSSEWithAuth(
+		`${AI_BASE_URL}/executions/${executionId}/events`,
 		signal,
-	});
+	);
 	if (!res.ok || !res.body) {
 		throw new Error(`SSE stream failed: ${res.status} ${res.statusText}`);
 	}
@@ -326,20 +361,12 @@ export async function approveExecution(
 	approvalId: string,
 	signal?: AbortSignal,
 ): Promise<string> {
-	const res = await fetch(`${BASE}/approve`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ approvalId }),
-		signal,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to approve: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	const data: ApproveResponseDTO = await res.json();
-	return data.executionId;
+	const response = await AIAssistantInstance.post<ApproveResponseDTO>(
+		'/approve',
+		{ approvalId },
+		{ signal },
+	);
+	return response.data.executionId;
 }
 
 /** Reject a pending action. */
@@ -347,18 +374,7 @@ export async function rejectExecution(
 	approvalId: string,
 	signal?: AbortSignal,
 ): Promise<void> {
-	const res = await fetch(`${BASE}/reject`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ approvalId }),
-		signal,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to reject: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
+	await AIAssistantInstance.post('/reject', { approvalId }, { signal });
 }
 
 /** Submit clarification answers. Returns a new executionId — open a fresh SSE stream for it. */
@@ -367,39 +383,24 @@ export async function clarifyExecution(
 	answers: Record<string, unknown>,
 	signal?: AbortSignal,
 ): Promise<string> {
-	const res = await fetch(`${BASE}/clarify`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ clarificationId, answers }),
-		signal,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to clarify: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	const data: ClarifyResponseDTO = await res.json();
-	return data.executionId;
+	const response = await AIAssistantInstance.post<ClarifyResponseDTO>(
+		'/clarify',
+		{ clarificationId, answers },
+		{ signal },
+	);
+	return response.data.executionId;
 }
 
 export async function cancelExecution(
 	threadId: string,
 	signal?: AbortSignal,
 ): Promise<CancelResponse> {
-	const res = await fetch(`${BASE}/cancel`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ threadId }),
-		signal,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to cancel: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	return res.json();
+	const response = await AIAssistantInstance.post<CancelResponse>(
+		'/cancel',
+		{ threadId },
+		{ signal },
+	);
+	return response.data;
 }
 
 // ---------------------------------------------------------------------------
@@ -412,19 +413,12 @@ async function postRollback(
 	actionMetadataId: string,
 	signal?: AbortSignal,
 ): Promise<ActionResultResponseDTO> {
-	const res = await fetch(`${BASE}/${endpoint}`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ actionMetadataId }),
-		signal,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to ${endpoint}: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
-	return res.json();
+	const response = await AIAssistantInstance.post<ActionResultResponseDTO>(
+		`/${endpoint}`,
+		{ actionMetadataId },
+		{ signal },
+	);
+	return response.data;
 }
 
 export const undoExecution = (
@@ -454,15 +448,8 @@ export async function submitFeedback(
 	rating: FeedbackRating,
 	comment?: string,
 ): Promise<void> {
-	const res = await fetch(`${BASE}/messages/${messageId}/feedback`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...authHeaders() },
-		body: JSON.stringify({ rating, comment: comment ?? null }),
+	await AIAssistantInstance.post(`/messages/${messageId}/feedback`, {
+		rating,
+		comment: comment ?? null,
 	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(
-			`Failed to submit feedback: ${res.status} ${res.statusText} — ${body}`,
-		);
-	}
 }

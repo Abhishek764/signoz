@@ -85,7 +85,7 @@ function DashboardWidgetInternal({
 			setDashboardData(updatedDashboardData);
 			setDashboardVariablesStore({
 				dashboardId,
-				variables: updatedDashboardData.data.variables,
+				variables: updatedDashboardData.data.variables ?? {},
 			});
 		},
 	});

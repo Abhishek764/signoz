@@ -3247,6 +3247,102 @@ export interface InframonitoringtypesClustersDTO {
 /**
  * @nullable
  */
+export type InframonitoringtypesDaemonSetRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesDaemonSetRecordDTO {
+	/**
+	 * @type integer
+	 */
+	availableNodes: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	daemonSetName: string;
+	/**
+	 * @type integer
+	 */
+	desiredNodes: number;
+	/**
+	 * @type integer
+	 */
+	failedPodCount: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	pendingPodCount: number;
+	/**
+	 * @type integer
+	 */
+	runningPodCount: number;
+	/**
+	 * @type integer
+	 */
+	succeededPodCount: number;
+	/**
+	 * @type integer
+	 */
+	unknownPodCount: number;
+}
+
+export interface InframonitoringtypesDaemonSetsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesDaemonSetRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
 export type InframonitoringtypesDeploymentRecordDTOMeta = {
 	[key: string]: unknown;
 } | null;
@@ -3772,6 +3868,34 @@ export interface InframonitoringtypesPodsDTO {
 }
 
 export interface InframonitoringtypesPostableClustersDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableDaemonSetsDTO {
 	/**
 	 * @type integer
 	 * @format int64
@@ -8297,6 +8421,14 @@ export type Healthz503 = {
 
 export type ListClusters200 = {
 	data: InframonitoringtypesClustersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListDaemonSets200 = {
+	data: InframonitoringtypesDaemonSetsDTO;
 	/**
 	 * @type string
 	 */

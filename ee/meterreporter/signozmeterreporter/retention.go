@@ -225,34 +225,83 @@ func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaul
 		if rule.TTLDays <= 0 {
 			return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
 		}
-		if len(rule.Filters) == 0 {
-			return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d has no filters", ruleIndex)
+		conditionExpr, err := buildRetentionRuleConditionSQL(ruleIndex, rule)
+		if err != nil {
+			return "", err
 		}
 
-		filterExprs := make([]string, 0, len(rule.Filters))
-		for filterIndex, filter := range rule.Filters {
-			if !retentionLabelKeyPattern.MatchString(filter.Key) {
-				return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
-			}
-			if len(filter.Values) == 0 {
-				return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
-			}
-
-			quoted := make([]string, len(filter.Values))
-			for valueIndex, value := range filter.Values {
-				if !retentionLabelValuePattern.MatchString(value) {
-					return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
-				}
-				quoted[valueIndex] = "'" + value + "'"
-			}
-
-			filterExprs = append(filterExprs, fmt.Sprintf("JSONExtractString(labels, '%s') IN (%s)", filter.Key, strings.Join(quoted, ", ")))
-		}
-
-		arms = append(arms, strings.Join(filterExprs, " AND "))
+		arms = append(arms, conditionExpr)
 		arms = append(arms, strconv.Itoa(rule.TTLDays))
 	}
 	arms = append(arms, strconv.Itoa(defaultDays))
 
 	return "toInt32(multiIf(" + strings.Join(arms, ", ") + "))", nil
+}
+
+func buildRetentionRuleIndexSQL(rules []retentiontypes.CustomRetentionRule) (string, error) {
+	if len(rules) == 0 {
+		return "toInt32(-1)", nil
+	}
+
+	arms := make([]string, 0, 2*len(rules)+1)
+	for ruleIndex, rule := range rules {
+		conditionExpr, err := buildRetentionRuleConditionSQL(ruleIndex, rule)
+		if err != nil {
+			return "", err
+		}
+
+		arms = append(arms, conditionExpr)
+		arms = append(arms, strconv.Itoa(ruleIndex))
+	}
+	arms = append(arms, "-1")
+
+	return "toInt32(multiIf(" + strings.Join(arms, ", ") + "))", nil
+}
+
+func buildRetentionRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRule) (string, error) {
+	if len(rule.Filters) == 0 {
+		return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d has no filters", ruleIndex)
+	}
+
+	filterExprs := make([]string, 0, len(rule.Filters))
+	for filterIndex, filter := range rule.Filters {
+		if !retentionLabelKeyPattern.MatchString(filter.Key) {
+			return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+		}
+		if len(filter.Values) == 0 {
+			return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
+		}
+
+		quoted := make([]string, len(filter.Values))
+		for valueIndex, value := range filter.Values {
+			if !retentionLabelValuePattern.MatchString(value) {
+				return "", errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
+			}
+			quoted[valueIndex] = "'" + value + "'"
+		}
+
+		filterExprs = append(filterExprs, fmt.Sprintf("JSONExtractString(labels, '%s') IN (%s)", filter.Key, strings.Join(quoted, ", ")))
+	}
+
+	return strings.Join(filterExprs, " AND "), nil
+}
+
+func retentionRuleDimensionKeys(rules []retentiontypes.CustomRetentionRule) ([]string, error) {
+	keys := make([]string, 0)
+	seen := make(map[string]struct{})
+
+	for ruleIndex, rule := range rules {
+		for filterIndex, filter := range rule.Filters {
+			if !retentionLabelKeyPattern.MatchString(filter.Key) {
+				return nil, errors.Newf(errors.TypeInternal, errCodeReportFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+			}
+			if _, ok := seen[filter.Key]; ok {
+				continue
+			}
+			seen[filter.Key] = struct{}{}
+			keys = append(keys, filter.Key)
+		}
+	}
+
+	return keys, nil
 }

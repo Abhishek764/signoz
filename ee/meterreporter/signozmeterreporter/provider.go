@@ -620,7 +620,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 	// Staging visibility while /v2/meters is offline. Drop or demote
 	// to Debug once Zeus accepts the writes.
 	for _, reading := range readings {
-		provider.settings.Logger().DebugContext(ctx, "meter reading prepared for shipment",
+		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
 			slog.String("meter", reading.MeterName),
 			slog.Float64("value", reading.Value),
 			slog.String("unit", reading.Unit),

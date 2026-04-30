@@ -7,8 +7,13 @@ $radius: 4px;
 	overflow: auto;
 	@include scrollbar;
 
+	// 64px bottom padding leaves breathing room between the last bubble and
+	// the scroll viewport's edge so the bubble doesn't sit flush against the
+	// disclaimer / input bar. The scroll-to-bottom effect uses the scroller
+	// ref to scroll past this padding (Virtuoso's `align: 'end'` would only
+	// reach the last item's bottom and leave the padding hidden below).
 	& > div {
-		padding: 16px 0;
+		padding: 16px 0 64px;
 	}
 }
 

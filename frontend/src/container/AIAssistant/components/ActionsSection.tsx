@@ -66,15 +66,6 @@ function ActionIcon({
 	}
 }
 
-/** Pull a display string out of action.input.intent (used for follow_up). */
-function intentText(input: MessageActionDTO['input']): string | null {
-	if (!input || typeof input !== 'object') {
-		return null;
-	}
-	const intent = (input as { intent?: unknown }).intent;
-	return typeof intent === 'string' ? intent : null;
-}
-
 /**
  * Resolves an `open_resource` action to an in-app route.
  * Resource taxonomy mirrors `MessageContextDTOType`: dashboard, alert,
@@ -190,9 +181,8 @@ export default function ActionsSection({
 				break;
 			}
 			case MessageActionKindDTO.follow_up: {
-				const text = intentText(action.input) ?? action.label;
-				if (text) {
-					void sendMessage(text);
+				if (action.label) {
+					void sendMessage(action.label);
 				}
 				break;
 			}
@@ -235,14 +225,20 @@ export default function ActionsSection({
 					const isLoading = result?.state === 'loading';
 					const isSuccess = result?.state === 'success';
 					const isError = result?.state === 'error';
-					const isServerDone = Boolean(action.state);
-					const isDisabled = isLoading || isSuccess || isServerDone;
+					// `action.state` is a free-form string from the server (e.g. "active",
+					// "applied"). Without a documented terminal vocabulary we don't auto-
+					// disable on it — only the local in-flight click result does. The state
+					// is still surfaced visually via the suffix pill below.
+					const isDisabled = isLoading || isSuccess;
 
 					const tooltip = isError ? result.error : (action.tooltip ?? undefined);
 
+					// Only show the suffix pill after a successful rollback ("Undone",
+					// "Reverted", "Restored"). The raw server-side `action.state` (e.g.
+					// "active") is informational and not surfaced to the user.
 					const stateLabel = isSuccess
 						? rollbackSuccessLabel(action.kind)
-						: action.state;
+						: undefined;
 
 					let icon: JSX.Element;
 					if (isLoading) {

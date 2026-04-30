@@ -42,6 +42,16 @@ const STATUS_LABEL: Record<string, string> = {
 	resumed: 'Resumed…',
 };
 
+function TypingDots(): JSX.Element {
+	return (
+		<span className={messageStyles.typingIndicator}>
+			<span />
+			<span />
+			<span />
+		</span>
+	);
+}
+
 interface StreamingMessageProps {
 	conversationId: string;
 	/** Ordered timeline of text and tool-call events in arrival order. */
@@ -63,6 +73,7 @@ export default function StreamingMessage({
 	const statusLabel = STATUS_LABEL[status] ?? '';
 	const isEmpty =
 		events.length === 0 && !pendingApproval && !pendingClarification;
+	const isWaitingOnUser = Boolean(pendingApproval || pendingClarification);
 
 	const messageClass = cx(messageStyles.message, messageStyles.assistant, {
 		[messageStyles.compact]: isCompact,
@@ -71,17 +82,11 @@ export default function StreamingMessage({
 	return (
 		<div className={messageClass}>
 			<div className={messageStyles.bubble}>
-				{/* Status pill or typing indicator — only before any events arrive */}
+				{/* Pre-output indicator — only before any events arrive. */}
 				{isEmpty && statusLabel && (
 					<span className={styles.streamingStatus}>{statusLabel}</span>
 				)}
-				{isEmpty && !statusLabel && (
-					<span className={messageStyles.typingIndicator}>
-						<span />
-						<span />
-						<span />
-					</span>
-				)}
+				{isEmpty && !statusLabel && <TypingDots />}
 
 				{/* eslint-disable react/no-array-index-key */}
 				{/* Events rendered in arrival order: text, thinking, and tool calls interleaved */}
@@ -104,6 +109,12 @@ export default function StreamingMessage({
 					);
 				})}
 				{/* eslint-enable react/no-array-index-key */}
+
+				{/* While events are still streaming, append the typing dots so the
+				    user has a clear "more is coming" signal. Hidden when the agent
+				    is waiting on the user's input (an approval or clarification
+				    card already conveys that state). */}
+				{!isEmpty && !isWaitingOnUser && <TypingDots />}
 
 				{/* Approval / clarification cards appended after any streamed text */}
 				{pendingApproval && (

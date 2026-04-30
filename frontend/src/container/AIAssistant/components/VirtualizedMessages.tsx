@@ -60,6 +60,13 @@ export default function VirtualizedMessages({
 	const streamingEvents = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.streamingEvents ?? EMPTY_EVENTS,
 	);
+	// Text deltas append into the last `streamingEvents` entry rather than
+	// pushing a new one, so `streamingEvents.length` doesn't grow as the
+	// assistant streams text. Tracking the content length gives us a per-chunk
+	// scroll trigger.
+	const streamingContentLength = useAIAssistantStore(
+		(s) => s.streams[conversationId]?.streamingContent.length ?? 0,
+	);
 	const pendingApproval = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.pendingApproval ?? null,
 	);
@@ -68,6 +75,7 @@ export default function VirtualizedMessages({
 	);
 
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
+	const scrollerRef = useRef<HTMLElement | Window | null>(null);
 
 	const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
 	const handleRegenerate = useCallback((): void => {
@@ -76,23 +84,38 @@ export default function VirtualizedMessages({
 		}
 	}, [lastUserMessage, isStreaming, sendMessage]);
 
-	// Scroll to bottom on new messages, streaming progress, or interactive cards
+	// Scroll all the way to the actual bottom — including the 64px of bottom
+	// padding on the scroller — so the last bubble has visible breathing room
+	// above the disclaimer / input bar. Virtuoso's `scrollToIndex(LAST,
+	// align: 'end')` would only reach the last item's bottom and leave the
+	// padding hidden below the fold. Use `auto` while streaming so the bottom
+	// stays glued as text deltas arrive; `smooth` lags when triggered every
+	// few ms.
 	useEffect(() => {
-		virtuosoRef.current?.scrollToIndex({
-			index: 'LAST',
-			behavior: 'smooth',
+		const scroller = scrollerRef.current;
+		if (!(scroller instanceof HTMLElement)) {
+			return;
+		}
+		scroller.scrollTo({
+			top: scroller.scrollHeight,
+			behavior: isStreaming ? 'auto' : 'smooth',
 		});
 	}, [
 		messages.length,
 		streamingEvents.length,
+		streamingContentLength,
 		isStreaming,
 		pendingApproval,
 		pendingClarification,
 	]);
 
 	const followOutput = useCallback(
-		(atBottom: boolean): false | 'smooth' =>
-			atBottom || isStreaming ? 'smooth' : false,
+		(atBottom: boolean): false | 'auto' | 'smooth' => {
+			if (isStreaming) {
+				return 'auto';
+			}
+			return atBottom ? 'smooth' : false;
+		},
 		[isStreaming],
 	);
 
@@ -134,6 +157,9 @@ export default function VirtualizedMessages({
 	return (
 		<Virtuoso
 			ref={virtuosoRef}
+			scrollerRef={(ref): void => {
+				scrollerRef.current = ref;
+			}}
 			className={styles.messages}
 			totalCount={totalCount}
 			followOutput={followOutput}

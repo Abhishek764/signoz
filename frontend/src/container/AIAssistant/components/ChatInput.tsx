@@ -44,6 +44,89 @@ interface ChatInputProps {
 	onCancel?: () => void;
 	disabled?: boolean;
 	isStreaming?: boolean;
+	/**
+	 * URL-derived `source: 'auto'` contexts representing the page the user is
+	 * currently looking at. Rendered as chips alongside the user's `@`-mention
+	 * picks and merged into the outgoing `contexts` array.
+	 */
+	autoContexts?: MessageContext[];
+	/**
+	 * Called when the user dismisses an auto-context chip. The parent owns
+	 * the dismissed set and is responsible for filtering the next render's
+	 * `autoContexts` to exclude the key.
+	 */
+	onDismissAutoContext?: (key: string) => void;
+}
+
+/** Stable identity for an auto-context entry — used as React key + dismissal id. */
+export function autoContextKey(ctx: MessageContext): string {
+	const page = (ctx.metadata as { page?: string } | null | undefined)?.page;
+	return `auto:${ctx.type}:${ctx.resourceId ?? ''}:${page ?? ''}`;
+}
+
+/**
+ * Friendly label for an auto-derived context chip. We don't fetch resource
+ * names from the URL alone, so we lean on the page identity that already
+ * lives in `metadata.page`, falling back to the resource type.
+ */
+function autoContextLabel(ctx: MessageContext): string {
+	const page = (ctx.metadata as { page?: string } | null | undefined)?.page;
+	switch (page) {
+		case 'dashboard_detail':
+			return 'Current dashboard';
+		case 'panel_edit':
+			return 'Editing panel';
+		case 'panel_fullscreen':
+			return 'Panel (fullscreen)';
+		case 'dashboard_list':
+			return 'Dashboards';
+		case 'alert_edit':
+			return 'Editing alert';
+		case 'alert_new':
+			return 'New alert';
+		case 'alerts_triggered':
+			return 'Triggered alerts';
+		case 'alert_list':
+			return 'Alerts';
+		case 'service_detail':
+			return 'Current service';
+		case 'services_list':
+			return 'Services';
+		case 'logs_explorer':
+			return 'Logs explorer';
+		case 'log_detail':
+			return 'Log details';
+		case 'traces_explorer':
+			return 'Traces explorer';
+		case 'trace_detail':
+			return 'Trace details';
+		case 'metrics_explorer':
+			return 'Metrics explorer';
+		default:
+			return ctx.type;
+	}
+}
+
+/** Capitalised category badge text — e.g. "Dashboard", "Logs explorer". */
+function autoContextCategory(ctx: MessageContext): string {
+	switch (ctx.type) {
+		case 'dashboard':
+			return 'Dashboard';
+		case 'alert':
+			return 'Alert';
+		case 'service':
+			return 'Service';
+		case 'logs_explorer':
+			return 'Logs';
+		case 'traces_explorer':
+			return 'Traces';
+		case 'metrics_explorer':
+			return 'Metrics';
+		case 'saved_view':
+			return 'Saved view';
+		default:
+			return ctx.type;
+	}
 }
 
 const MAX_INPUT_LENGTH = 20000;
@@ -129,6 +212,8 @@ export default function ChatInput({
 	onCancel,
 	disabled,
 	isStreaming = false,
+	autoContexts,
+	onDismissAutoContext,
 }: ChatInputProps): JSX.Element {
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -141,6 +226,15 @@ export default function ChatInput({
 	const [isContextPickerOpen, setIsContextPickerOpen] = useState(false);
 	const [activeContextCategory, setActiveContextCategory] =
 		useState<ContextCategory>('Dashboards');
+	// When the picker was opened by typing `@` in the textarea, this holds the
+	// span of `@<query>` (start / end indices into `text`). Used both for live
+	// filtering of the entity list and for splicing the trigger out of the
+	// text once the user picks an item. `null` when the picker is opened via
+	// the "Add Context" button (no trigger to strip, no query to filter).
+	const [mentionRange, setMentionRange] = useState<{
+		start: number;
+		end: number;
+	} | null>(null);
 	const [servicesTimeRange] = useState(() => {
 		const now = Date.now();
 		return {
@@ -164,35 +258,49 @@ export default function ChatInput({
 			const atIndex = beforeCaret.lastIndexOf('@');
 			if (atIndex < 0) {
 				setIsContextPickerOpen(false);
+				setMentionRange(null);
 				return;
 			}
 			const query = beforeCaret.slice(atIndex + 1);
 			if (/\s/.test(query)) {
 				setIsContextPickerOpen(false);
+				setMentionRange(null);
 				return;
 			}
 			setIsContextPickerOpen(true);
+			setMentionRange({ start: atIndex, end: caret });
 		},
 		[],
 	);
 
 	const toggleContextSelection = useCallback(
 		(category: ContextCategory, entityId: string, contextValue: string) => {
-			setSelectedContexts((prev) => {
-				const alreadySelected = prev.some(
-					(item) => item.category === category && item.entityId === entityId,
-				);
+			const wasSelected = selectedContexts.some(
+				(item) => item.category === category && item.entityId === entityId,
+			);
 
-				if (alreadySelected) {
+			setSelectedContexts((prev) => {
+				if (wasSelected) {
 					return prev.filter(
 						(item) => !(item.category === category && item.entityId === entityId),
 					);
 				}
-
 				return [...prev, { category, entityId, value: contextValue }];
 			});
+
+			// When the user picks an item via the `@` trigger, splice the
+			// `@<query>` span out of the textarea so their prose stays clean.
+			// Skip on remove (no trigger to strip) and when the picker was
+			// opened from the "Add Context" button (no mention range tracked).
+			if (!wasSelected && mentionRange) {
+				const next =
+					text.slice(0, mentionRange.start) + text.slice(mentionRange.end);
+				setText(next);
+				committedTextRef.current = next;
+				setMentionRange(null);
+			}
 		},
-		[],
+		[mentionRange, selectedContexts, text],
 	);
 
 	// Focus the textarea when this component mounts (panel/modal open)
@@ -217,9 +325,12 @@ export default function ChatInput({
 			}),
 		);
 
-		const contexts = selectedContexts
+		const userContexts = selectedContexts
 			.map(toMessageContext)
 			.filter((context): context is MessageContext => context !== null);
+		// Auto contexts come first so the agent reads "current page" before
+		// any explicit @-mentions when both are present.
+		const contexts = [...(autoContexts ?? []), ...userContexts];
 		const payload = capText(trimmed);
 
 		onSend(
@@ -232,7 +343,7 @@ export default function ChatInput({
 		setPendingFiles([]);
 		setSelectedContexts([]);
 		textareaRef.current?.focus();
-	}, [text, pendingFiles, onSend, selectedContexts, capText]);
+	}, [text, pendingFiles, onSend, selectedContexts, autoContexts, capText]);
 
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -303,13 +414,21 @@ export default function ChatInput({
 		isError: isDashboardsError,
 	} = useGetAllDashboard();
 
+	// Enable list fetches both for the picker (when the corresponding category
+	// is open) AND for auto-context chips that need to resolve a name from a
+	// resource id. Dashboards is unconditional since the underlying hook
+	// has no `enabled` flag.
+	const needsAlertResolve = (autoContexts ?? []).some(
+		(c) => c.type === 'alert' && Boolean(c.resourceId),
+	);
+
 	const {
 		data: alertsResponse,
 		isLoading: isAlertsLoading,
 		isError: isAlertsError,
 	} = useListRules({
 		query: {
-			enabled: activeContextCategory === 'Alerts',
+			enabled: activeContextCategory === 'Alerts' || needsAlertResolve,
 		},
 	});
 
@@ -327,6 +446,43 @@ export default function ChatInput({
 			enabled: activeContextCategory === 'Services',
 		},
 	});
+
+	/**
+	 * Resolves an auto-context to a human label: dashboard title, alert name,
+	 * service name (the service `resourceId` IS the name), or a generic page
+	 * label as fallback while the lookup data is still loading.
+	 */
+	const resolveAutoContextName = useCallback(
+		(ctx: MessageContext): string => {
+			if (ctx.type === 'service' && ctx.resourceId) {
+				return ctx.resourceId;
+			}
+			if (ctx.type === 'dashboard' && ctx.resourceId) {
+				const dash = dashboardsResponse?.data?.find((d) => d.id === ctx.resourceId);
+				if (dash?.data.title) {
+					return dash.data.title;
+				}
+			}
+			if (ctx.type === 'alert' && ctx.resourceId) {
+				const rule = alertsResponse?.data?.find((r) => r.id === ctx.resourceId);
+				if (rule?.alert) {
+					return rule.alert;
+				}
+			}
+			const page = (
+				ctx.metadata as { page?: string; traceId?: string } | null | undefined
+			)?.page;
+			if (page === 'trace_detail') {
+				const traceId = (ctx.metadata as { traceId?: string } | null | undefined)
+					?.traceId;
+				if (traceId) {
+					return `${traceId.slice(0, 8)}…`;
+				}
+			}
+			return autoContextLabel(ctx);
+		},
+		[dashboardsResponse, alertsResponse],
+	);
 
 	const contextEntitiesByCategory: Record<ContextCategory, ContextEntityItem[]> =
 		{
@@ -374,8 +530,17 @@ export default function ChatInput({
 		},
 	};
 
-	const filteredContextOptions =
-		contextEntitiesByCategory[activeContextCategory];
+	// Type-ahead filter against the `@<query>` typed in the textarea. When the
+	// picker was opened from the "Add Context" button there's no query, so we
+	// show every entity for the active category.
+	const mentionQuery = mentionRange
+		? text.slice(mentionRange.start + 1, mentionRange.end).toLowerCase()
+		: '';
+	const filteredContextOptions = mentionQuery
+		? contextEntitiesByCategory[activeContextCategory].filter((entity) =>
+				entity.value.toLowerCase().includes(mentionQuery),
+			)
+		: contextEntitiesByCategory[activeContextCategory];
 	const { isLoading: isActiveContextLoading, isError: isActiveContextError } =
 		contextCategoryStateByCategory[activeContextCategory];
 	const currentLength = text.length;
@@ -402,8 +567,39 @@ export default function ChatInput({
 				</div>
 			)}
 
-			{selectedContexts.length > 0 && (
+			{(selectedContexts.length > 0 ||
+				(autoContexts && autoContexts.length > 0)) && (
 				<div className={styles.contextTags}>
+					{autoContexts?.map((ctx) => {
+						const key = autoContextKey(ctx);
+						const label = resolveAutoContextName(ctx);
+						const category = autoContextCategory(ctx);
+						return (
+							<div key={key} className={cx(styles.contextTag, styles.auto)}>
+								<div className={styles.contextTagContent}>
+									<Badge
+										color="secondary"
+										variant="outline"
+										className={styles.contextTagCategory}
+									>
+										{category}
+									</Badge>
+									<span className={styles.contextTagLabel}>{label}</span>
+								</div>
+								{onDismissAutoContext && (
+									<Button
+										variant="link"
+										size="icon"
+										color="secondary"
+										className={styles.contextTagRemove}
+										onClick={(): void => onDismissAutoContext(key)}
+										aria-label={`Remove ${category}: ${label} context`}
+										prefix={<X size={10} />}
+									></Button>
+								)}
+							</div>
+						);
+					})}
 					{selectedContexts.map((contextItem) => (
 						<div
 							key={`${contextItem.category}:${contextItem.entityId}`}

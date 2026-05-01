@@ -287,14 +287,11 @@ async function runStreamingLoop(
 			set((s) => {
 				const st = s.streams[conversationId];
 				if (st) {
-					st.pendingApproval = {
-						approvalId: event.approvalId,
-						executionId: event.executionId,
-						actionType: event.actionType,
-						resourceType: event.resourceType,
-						summary: event.summary,
-						diff: event.diff ?? null,
-					};
+					// The SSE event is already an `ApprovalEventDTO`, the same
+					// shape the slot is typed against — pass through verbatim
+					// rather than re-projecting (which previously dropped any
+					// fields the projection didn't enumerate explicitly).
+					st.pendingApproval = event;
 					st.streamingStatus = 'awaiting_approval';
 					st.isStreaming = false;
 				}
@@ -304,20 +301,11 @@ async function runStreamingLoop(
 			set((s) => {
 				const st = s.streams[conversationId];
 				if (st) {
-					st.pendingClarification = {
-						clarificationId: event.clarificationId,
-						executionId: event.executionId,
-						message: event.message,
-						discoveredContext: event.discoveredContext ?? null,
-						fields: (event.fields ?? []).map((f) => ({
-							id: f.id,
-							type: f.type,
-							label: f.label,
-							required: f.required ?? false,
-							options: f.options ?? null,
-							default: f.default ?? null,
-						})),
-					};
+					// Same rationale as the approval branch — `event` is a
+					// `ClarificationEventDTO` whose `fields` already carry
+					// `allowCustom` (which the previous manual projection
+					// silently stripped).
+					st.pendingClarification = event;
 					st.streamingStatus = 'awaiting_clarification';
 					st.isStreaming = false;
 				}

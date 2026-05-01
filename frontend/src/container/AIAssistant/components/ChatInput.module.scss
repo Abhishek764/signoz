@@ -46,6 +46,19 @@ $radius: 4px;
 		min-height: 0 !important;
 		width: auto !important;
 	}
+
+	// `auto` chips are derived from the URL (current page) — visually
+	// distinguished by a dashed border + slightly muted text so the user
+	// can tell them apart from explicit @-mentions. Tighter padding /
+	// font-size keeps them visually subordinate to user `@`-picks.
+	&.auto {
+		border-style: dashed;
+		color: var(--l2-foreground);
+		background: transparent;
+		font-size: 10px;
+		padding: 2px 4px 2px 6px;
+		gap: 3px;
+	}
 }
 
 .contextTagContent {

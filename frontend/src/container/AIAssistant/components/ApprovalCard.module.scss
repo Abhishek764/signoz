@@ -1,3 +1,5 @@
+@use '../_scrollbar' as *;
+
 $radius: 4px;
 
 .card {
@@ -55,9 +57,131 @@ $radius: 4px;
 	line-height: 1.5;
 }
 
+.diffSection {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.diffHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.diffHeaderLabel {
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--l2-foreground);
+}
+
 .diff {
 	display: flex;
 	gap: 8px;
+
+	// Fixed-height dialog (70vh) — let the diff fill the body and the
+	// JSON panes scroll internally rather than pushing the dialog taller.
+	&.expanded {
+		flex: 1;
+		min-height: 0;
+
+		.diffBlock {
+			min-height: 0;
+		}
+
+		.diffJson {
+			flex: 1;
+			max-height: none;
+			overflow: auto;
+			font-size: 12px;
+		}
+	}
+
+	// Unified view: a single column instead of two side-by-side blocks.
+	// The block-level flex switches to column so the diff pane fills.
+	&.unified {
+		flex-direction: column;
+	}
+}
+
+.diffHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+// Container for line-by-line diff output. Mirrors `.diffJson` for scroll
+// + monospace styling but renders an inner stack of `.diffLine` rows
+// instead of a single `<pre>` so individual lines can be colored.
+.diffPane {
+	font-family: var(--font-mono, monospace);
+	font-size: 12px;
+	background: var(--l2-background);
+	border-radius: $radius;
+	margin: 0;
+	overflow: auto;
+	color: var(--l2-foreground);
+	flex: 1;
+	min-height: 0;
+	@include scrollbar(0.4rem);
+
+	&.wrapped .diffLineText {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+}
+
+.diffLine {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	padding: 0 8px;
+	min-height: 18px;
+	line-height: 1.5;
+}
+
+.diffLineAdd {
+	background: rgba(34, 197, 94, 0.12);
+	color: var(--l1-foreground);
+
+	.diffGutter {
+		color: var(--bg-forest-500, #22c55e);
+	}
+}
+
+.diffLineRemove {
+	background: rgba(239, 68, 68, 0.12);
+	color: var(--l1-foreground);
+
+	.diffGutter {
+		color: var(--bg-cherry-500, #ef4444);
+	}
+}
+
+// Empty filler row in split view to keep before/after columns aligned
+// when one side has an added/removed line. Visible as a faint band so
+// the eye still tracks the row.
+.diffLinePlaceholder {
+	background: rgba(120, 120, 120, 0.06);
+	min-height: 18px;
+}
+
+.diffGutter {
+	flex-shrink: 0;
+	width: 12px;
+	text-align: center;
+	font-weight: 600;
+	user-select: none;
+	color: var(--l3-foreground, var(--l2-foreground));
+}
+
+.diffLineText {
+	white-space: pre;
+	flex: 1;
+	min-width: 0;
 }
 
 .diffBlock {
@@ -75,6 +199,14 @@ $radius: 4px;
 	}
 }
 
+.diffBlockHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 18px;
+}
+
 .diffLabel {
 	font-size: 10px;
 	font-weight: 600;
@@ -89,10 +221,45 @@ $radius: 4px;
 	border-radius: $radius;
 	padding: 5px 7px;
 	margin: 0;
-	overflow-x: auto;
+	overflow: auto;
 	white-space: pre;
 	max-height: 140px;
 	color: var(--l2-foreground);
+	@include scrollbar(0.4rem);
+
+	// Wrap long lines instead of horizontal scrolling. Used in the
+	// expanded modal when the user toggles the "Wrap text" button.
+	&.wrapped {
+		white-space: pre-wrap;
+		word-break: break-word;
+		overflow-x: hidden;
+	}
+}
+
+.diffModalBody {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	flex: 1;
+	min-height: 0;
+	padding: 16px;
+	overflow: hidden;
+}
+
+.diffToolbarRow {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
+.diffModalSummary {
+	font-size: 13px;
+	color: var(--l2-foreground);
+	margin: 0;
+	line-height: 1.5;
+	flex-shrink: 0;
 }
 
 .actions {

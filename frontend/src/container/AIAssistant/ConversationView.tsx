@@ -1,9 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import cx from 'classnames';
 
-import ChatInput from './components/ChatInput';
+import ChatInput, { autoContextKey } from './components/ChatInput';
 import ConversationSkeleton from './components/ConversationSkeleton';
 import VirtualizedMessages from './components/VirtualizedMessages';
+import { getAutoContexts } from './getAutoContexts';
 import { useAIAssistantStore } from './store/useAIAssistantStore';
 import { MessageAttachment } from './types';
 import { MessageContext } from '../../api/ai/chat';
@@ -20,6 +22,7 @@ export default function ConversationView({
 }: ConversationViewProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
+	const location = useLocation();
 
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],
@@ -36,6 +39,42 @@ export default function ConversationView({
 	);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
+
+	// Auto-derived contexts come from the route the user is currently looking
+	// at (dashboard detail, service metrics, an explorer, …). Skip when the
+	// user is on the standalone AI Assistant page — there's no "underlying"
+	// page context to attach. ChatInput renders these as chips and merges
+	// them with the user's `@`-mention picks before invoking onSend.
+	const allAutoContexts = useMemo(
+		() =>
+			variant === 'page'
+				? []
+				: getAutoContexts(location.pathname, location.search),
+		[variant, location.pathname, location.search],
+	);
+
+	// User-dismissed auto-context entries. Reset whenever the URL changes —
+	// dismissals are scoped to "this page", not the whole conversation.
+	const [dismissedAutoKeys, setDismissedAutoKeys] = useState<Set<string>>(
+		() => new Set(),
+	);
+	useEffect(() => {
+		setDismissedAutoKeys(new Set());
+	}, [location.pathname, location.search]);
+
+	const autoContexts = useMemo(
+		() =>
+			allAutoContexts.filter((ctx) => !dismissedAutoKeys.has(autoContextKey(ctx))),
+		[allAutoContexts, dismissedAutoKeys],
+	);
+
+	const handleDismissAutoContext = useCallback((key: string): void => {
+		setDismissedAutoKeys((prev) => {
+			const next = new Set(prev);
+			next.add(key);
+			return next;
+		});
+	}, []);
 
 	const handleSend = useCallback(
 		(
@@ -72,7 +111,12 @@ export default function ConversationView({
 			<div className={styles.conversation}>
 				<ConversationSkeleton />
 				<div className={inputWrapperClass}>
-					<ChatInput onSend={handleSend} disabled />
+					<ChatInput
+						onSend={handleSend}
+						disabled
+						autoContexts={autoContexts}
+						onDismissAutoContext={handleDismissAutoContext}
+					/>
 				</div>
 			</div>
 		);
@@ -96,6 +140,8 @@ export default function ConversationView({
 					onCancel={handleCancel}
 					disabled={inputDisabled}
 					isStreaming={isStreamingHere}
+					autoContexts={autoContexts}
+					onDismissAutoContext={handleDismissAutoContext}
 				/>
 			</div>
 		</div>

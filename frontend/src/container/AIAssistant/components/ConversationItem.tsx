@@ -1,6 +1,6 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
-import { Button, Tooltip } from '@signozhq/ui';
+import { Button, Input, Tooltip } from '@signozhq/ui';
 import {
 	Archive,
 	ArchiveRestore,
@@ -130,7 +130,7 @@ export default function ConversationItem({
 
 			<div className={styles.body}>
 				{isEditing ? (
-					<input
+					<Input
 						ref={inputRef}
 						className={styles.input}
 						value={editValue}

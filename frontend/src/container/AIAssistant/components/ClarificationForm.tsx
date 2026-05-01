@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import cx from 'classnames';
-import { Button } from '@signozhq/ui';
+import {
+	Button,
+	Checkbox,
+	Input,
+	RadioGroup,
+	RadioGroupItem,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+} from '@signozhq/ui';
 import type {
 	ClarificationEventDTO,
 	ClarificationFieldEventDTO,
@@ -10,6 +20,11 @@ import { CircleHelp, Send, X } from '@signozhq/icons';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 
 import styles from './ClarificationForm.module.scss';
+
+/** Sentinel emitted by the select dropdown when the user picks the custom slot. */
+const CUSTOM_OPTION_SENTINEL = '__signoz_ai_custom__';
+/** User-facing label for the synthetic "type your own answer" option. */
+const CUSTOM_OPTION_LABEL = 'Other (type your own)';
 
 interface ClarificationFormProps {
 	conversationId: string;
@@ -131,67 +146,176 @@ interface FieldInputProps {
 }
 
 function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
-	const { id, type, label, required, options } = field;
+	const { id, type, label, required, options, allowCustom } = field;
 
-	if (type === 'select' && options) {
+	// Local UI state for the synthetic "custom" option on select / radio /
+	// checkbox fields with `allowCustom`. The free-text input only renders
+	// when this is true; the typed value is what's actually sent up via
+	// `onChange` (never the sentinel / "Other" label).
+	const [isCustom, setIsCustom] = useState(false);
+	const [customValue, setCustomValue] = useState('');
+
+	// Render the select if the field has options OR if the server marked it
+	// `allowCustom` (in which case the dropdown still appears with just the
+	// "Other (type your own)" entry — a plain `options: null` would
+	// otherwise fall through to the bare text-input renderer).
+	if (type === 'select' && (options || allowCustom)) {
+		const handleSelectChange = (next: string | string[]): void => {
+			// `multiple` is off → callback receives a single string. The wider
+			// `string | string[]` typing comes from the shared Select root.
+			const picked = Array.isArray(next) ? (next[0] ?? '') : next;
+			if (picked === CUSTOM_OPTION_SENTINEL) {
+				setIsCustom(true);
+				onChange(customValue);
+			} else {
+				setIsCustom(false);
+				onChange(picked);
+			}
+		};
+
 		return (
 			<div className={styles.field}>
 				<label className={styles.label} htmlFor={id}>
 					{label}
 					{required && <span className={styles.required}>*</span>}
 				</label>
-				<select
-					id={id}
-					className={styles.select}
-					value={String(value ?? '')}
-					onChange={(e): void => onChange(e.target.value)}
+				<Select
+					value={isCustom ? CUSTOM_OPTION_SENTINEL : String(value ?? '')}
+					onChange={handleSelectChange}
 				>
-					<option value="">Select…</option>
-					{options.map((opt) => (
-						<option key={opt} value={opt}>
-							{opt}
-						</option>
-					))}
-				</select>
+					<SelectTrigger id={id} placeholder="Select…" />
+					{/* Pin the dropdown width to the trigger via Radix's
+					    `--radix-select-trigger-width`; otherwise the popover
+					    sizes to its widest item and looks misaligned. */}
+					<SelectContent className={styles.selectContent}>
+						{options?.map((opt) => (
+							<SelectItem key={opt} value={opt}>
+								{opt}
+							</SelectItem>
+						))}
+						{allowCustom && (
+							<SelectItem value={CUSTOM_OPTION_SENTINEL}>
+								{CUSTOM_OPTION_LABEL}
+							</SelectItem>
+						)}
+					</SelectContent>
+				</Select>
+				{isCustom && (
+					<Input
+						type="text"
+						className={styles.input}
+						placeholder="Enter a custom value"
+						value={customValue}
+						onChange={(e): void => {
+							setCustomValue(e.target.value);
+							onChange(e.target.value);
+						}}
+					/>
+				)}
 			</div>
 		);
 	}
 
-	if (type === 'radio' && options) {
+	// Same fallback logic as the select branch — render the radio group
+	// when there are options OR when the field is `allowCustom` only.
+	if (type === 'radio' && (options || allowCustom)) {
+		const handleRadioChange = (next: string): void => {
+			if (next === CUSTOM_OPTION_SENTINEL) {
+				setIsCustom(true);
+				onChange(customValue);
+			} else {
+				setIsCustom(false);
+				onChange(next);
+			}
+		};
+
+		const radioValue = isCustom
+			? CUSTOM_OPTION_SENTINEL
+			: typeof value === 'string'
+				? value
+				: '';
+
 		return (
 			<div className={styles.field}>
 				<span className={styles.label}>
 					{label}
 					{required && <span className={styles.required}>*</span>}
 				</span>
-				<div className={styles.radioGroup}>
-					{options.map((opt) => (
-						<label key={opt} className={styles.radioLabel}>
-							<input
-								type="radio"
-								name={id}
-								value={opt}
-								checked={value === opt}
-								onChange={(): void => onChange(opt)}
-								className={styles.radio}
-							/>
+				<RadioGroup
+					name={id}
+					value={radioValue}
+					onChange={handleRadioChange}
+					className={styles.radioGroup}
+				>
+					{options?.map((opt) => (
+						<RadioGroupItem
+							key={opt}
+							value={opt}
+							containerClassName={styles.radioLabel}
+						>
 							{opt}
-						</label>
+						</RadioGroupItem>
 					))}
-				</div>
+					{allowCustom && (
+						<RadioGroupItem
+							value={CUSTOM_OPTION_SENTINEL}
+							containerClassName={styles.radioLabel}
+						>
+							{CUSTOM_OPTION_LABEL}
+						</RadioGroupItem>
+					)}
+				</RadioGroup>
+				{isCustom && (
+					<Input
+						type="text"
+						className={styles.input}
+						placeholder="Enter a custom value"
+						value={customValue}
+						onChange={(e): void => {
+							setCustomValue(e.target.value);
+							onChange(e.target.value);
+						}}
+					/>
+				)}
 			</div>
 		);
 	}
 
-	if (type === 'checkbox' && options) {
+	// Same fallback logic as the select branch — render the checkbox group
+	// when there are options OR when the field is `allowCustom` only.
+	if (type === 'checkbox' && (options || allowCustom)) {
 		const selected = Array.isArray(value) ? (value as string[]) : [];
-		const toggle = (opt: string): void => {
+		// Anything in the value array that isn't one of the predefined options
+		// is treated as a custom entry — we keep at most one custom entry,
+		// driven by the local `customValue` + `isCustom` state below.
+		const regularSelected = selected.filter((v) => options?.includes(v));
+
+		const toggleRegular = (opt: string): void => {
+			const nextRegular = regularSelected.includes(opt)
+				? regularSelected.filter((v) => v !== opt)
+				: [...regularSelected, opt];
 			onChange(
-				selected.includes(opt)
-					? selected.filter((v) => v !== opt)
-					: [...selected, opt],
+				isCustom && customValue ? [...nextRegular, customValue] : nextRegular,
 			);
 		};
+
+		const toggleCustom = (): void => {
+			if (isCustom) {
+				setIsCustom(false);
+				onChange(regularSelected);
+			} else {
+				setIsCustom(true);
+				onChange(customValue ? [...regularSelected, customValue] : regularSelected);
+			}
+		};
+
+		const updateCustomValue = (next: string): void => {
+			setCustomValue(next);
+			if (isCustom) {
+				onChange(next ? [...regularSelected, next] : regularSelected);
+			}
+		};
+
 		return (
 			<div className={styles.field}>
 				<span className={styles.label}>
@@ -199,18 +323,35 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 					{required && <span className={styles.required}>*</span>}
 				</span>
 				<div className={styles.checkboxGroup}>
-					{options.map((opt) => (
-						<label key={opt} className={styles.checkboxLabel}>
-							<input
-								type="checkbox"
-								checked={selected.includes(opt)}
-								onChange={(): void => toggle(opt)}
-								className={styles.checkbox}
-							/>
+					{options?.map((opt) => (
+						<Checkbox
+							key={opt}
+							className={styles.checkboxLabel}
+							value={regularSelected.includes(opt)}
+							onChange={(): void => toggleRegular(opt)}
+						>
 							{opt}
-						</label>
+						</Checkbox>
 					))}
+					{allowCustom && (
+						<Checkbox
+							className={styles.checkboxLabel}
+							value={isCustom}
+							onChange={toggleCustom}
+						>
+							{CUSTOM_OPTION_LABEL}
+						</Checkbox>
+					)}
 				</div>
+				{isCustom && (
+					<Input
+						type="text"
+						className={styles.input}
+						placeholder="Enter a custom value"
+						value={customValue}
+						onChange={(e): void => updateCustomValue(e.target.value)}
+					/>
+				)}
 			</div>
 		);
 	}
@@ -222,7 +363,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 				{label}
 				{required && <span className={styles.required}>*</span>}
 			</label>
-			<input
+			<Input
 				id={id}
 				type={type === 'number' ? 'number' : 'text'}
 				className={styles.input}

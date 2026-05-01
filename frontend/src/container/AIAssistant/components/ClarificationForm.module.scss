@@ -97,6 +97,14 @@ $radius: 4px;
 	cursor: pointer;
 }
 
+// Constrain the Radix-based SelectContent popover so it never grows wider
+// than the trigger button. `--radix-select-trigger-width` is set by Radix
+// at the popper layer when `position: 'popper'` (the default).
+.selectContent {
+	width: var(--radix-select-trigger-width);
+	min-width: var(--radix-select-trigger-width);
+}
+
 .radioGroup,
 .checkboxGroup {
 	display: flex;

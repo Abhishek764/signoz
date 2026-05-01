@@ -36,6 +36,10 @@ $radius: 4px;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	color: var(--l2-foreground);
+	// Collapse the line-box to the glyph height so the loading dots
+	// (centered against the line-box) line up with the cap-height of the
+	// uppercase text instead of sitting visually low.
+	line-height: 1;
 }
 
 .list {

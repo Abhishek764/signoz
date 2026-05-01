@@ -43,9 +43,9 @@ type SpeechRecognitionConstructor = new () => ISpeechRecognition;
 const SpeechRecognitionAPI: SpeechRecognitionConstructor | null =
 	typeof window !== 'undefined'
 		? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-		  (window as any).SpeechRecognition ??
-		  (window as any).webkitSpeechRecognition ??
-		  null
+			((window as any).SpeechRecognition ??
+			(window as any).webkitSpeechRecognition ??
+			null)
 		: null;
 
 export type SpeechRecognitionError =
@@ -129,6 +129,16 @@ export function useSpeechRecognition({
 		};
 
 		recognition.onresult = (event): void => {
+			// Browser fires a final `onresult` after `recognition.stop()` —
+			// when the caller invoked `discard()` (e.g. stop-and-send) the
+			// React state has already been cleared / the message has
+			// already been dispatched, so a late transcript would
+			// repopulate the textarea. Drop these events while discarding.
+			if (isDiscardingRef.current) {
+				pendingInterim = '';
+				return;
+			}
+
 			let interim = '';
 			let finalText = '';
 

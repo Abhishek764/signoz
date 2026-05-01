@@ -806,16 +806,13 @@ export default function ChatInput({
 				<div className={styles.rightActions}>
 					{isListening ? (
 						<div className={styles.micRecording}>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.micDiscard}
+							<div
+								className={cx(styles.micDiscard, styles.secondary)}
 								onClick={handleDiscard}
 								aria-label="Discard recording"
 							>
 								<X size={12} />
-							</Button>
+							</div>
 							<span className={styles.micWaves} aria-hidden="true">
 								<span />
 								<span />
@@ -826,16 +823,13 @@ export default function ChatInput({
 								<span />
 								<span />
 							</span>
-							<Button
-								variant="solid"
-								size="icon"
-								color="destructive"
-								className={styles.micStop}
+							<div
+								className={cx(styles.micStop, styles.destructive)}
 								onClick={handleStopAndSend}
 								aria-label="Stop and send"
 							>
 								<Square size={9} fill="currentColor" strokeWidth={0} />
-							</Button>
+							</div>
 						</div>
 					) : (
 						<Tooltip

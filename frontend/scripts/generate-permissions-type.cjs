@@ -180,7 +180,7 @@ async function main() {
 			PERMISSIONS_TYPE_FILE,
 		);
 		log('Linting generated file...');
-		execSync(`cd frontend && yarn oxlint ${relativePath}`, {
+		execSync(`cd frontend && pnpm oxlint ${relativePath}`, {
 			cwd: rootDir,
 			stdio: 'inherit',
 		});

@@ -22,6 +22,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      ENABLE_PNPM: true
   test:
     if: |
       github.event_name == 'merge_group' ||
@@ -32,6 +33,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      ENABLE_PNPM: true
   fmt:
     if: |
       github.event_name == 'merge_group' ||
@@ -42,6 +44,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      ENABLE_PNPM: true
   lint:
     if: |
       github.event_name == 'merge_group' ||
@@ -52,6 +55,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      ENABLE_PNPM: true
   languages:
     if: |
       github.event_name == 'merge_group' ||
@@ -76,10 +80,14 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: deps-install
         working-directory: ./frontend
         run: |
-          yarn install
+          pnpm install
       - name: uv-install
         uses: astral-sh/setup-uv@v5
       - name: uv-deps
@@ -92,7 +100,7 @@ jobs:
       - name: generate
         working-directory: ./frontend
         run: |
-          yarn generate:permissions-type
+          pnpm generate:permissions-type
       - name: teardown-test
         if: always()
         run: |
@@ -100,7 +108,7 @@ jobs:
       - name: validate
         run: |
           if ! git diff --exit-code frontend/src/hooks/useAuthZ/permissions.type.ts; then
-            echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: npm run generate:permissions-type (from the frontend directory)"
+            echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: pnpm generate:permissions-type (from the frontend directory)"
             exit 1
           fi
   openapi:
@@ -116,9 +124,13 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: install-frontend
-        run: cd frontend && yarn install
+        run: cd frontend && pnpm install
       - name: generate-api-clients
         run: |
-          cd frontend && yarn generate:api
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)
+          cd frontend && pnpm generate:api
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run pnpm generate:api in frontend/ locally and commit."; exit 1)

@@ -406,6 +406,63 @@ export default function ChatInput({
 		textareaRef.current?.focus();
 	}, [discard]);
 
+	// ── Push-to-talk (Cmd/Ctrl + Shift + Space) ────────────────────────────────
+	// Hold the combo to record; release Space to submit. We track which key
+	// triggered PTT in a ref so a late-released modifier (Cmd/Shift) doesn't
+	// accidentally stop the session. Auto-repeat is suppressed via a
+	// "session active" ref so a held key only calls `start()` once.
+	const pttActiveRef = useRef(false);
+	useEffect(() => {
+		if (!isSupported) {
+			return undefined;
+		}
+
+		const handleKeyDown = (e: KeyboardEvent): void => {
+			const isComboKey =
+				(e.metaKey || e.ctrlKey) &&
+				e.shiftKey &&
+				(e.code === 'Space' || e.key === ' ');
+			if (!isComboKey || disabled || isStreaming) {
+				return;
+			}
+			e.preventDefault();
+			if (pttActiveRef.current) {
+				return; // ignore auto-repeat
+			}
+			pttActiveRef.current = true;
+			start();
+		};
+
+		const handleKeyUp = (e: KeyboardEvent): void => {
+			if (!pttActiveRef.current) {
+				return;
+			}
+			// End on the *first* released key in the combo. macOS browsers
+			// frequently swallow keyup of regular keys (incl. Space) while
+			// Cmd is held, so we can't rely on Space-up alone — releasing
+			// Cmd/Ctrl/Shift must also stop the session.
+			const isComboKey =
+				e.code === 'Space' ||
+				e.key === ' ' ||
+				e.key === 'Meta' ||
+				e.key === 'Control' ||
+				e.key === 'Shift';
+			if (!isComboKey) {
+				return;
+			}
+			pttActiveRef.current = false;
+			e.preventDefault();
+			void handleStopAndSend();
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('keyup', handleKeyUp);
+		return (): void => {
+			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('keyup', handleKeyUp);
+		};
+	}, [isSupported, disabled, isStreaming, start, handleStopAndSend]);
+
 	// Each list hook fetches only when its picker tab is actively shown,
 	// AND treats already-cached data as never stale (`staleTime: Infinity`)
 	// so an open with a populated cache doesn't trigger a background

@@ -83,6 +83,23 @@ $radius: 4px;
 	flex-shrink: 0;
 	opacity: var(--actions-opacity, 0);
 	transition: opacity 0.12s;
+	// Float over the right edge of the item so the title can keep using
+	// the full width while the buttons are hidden — no layout shift +
+	// no premature truncation. The `background` matches the hover/active
+	// state so the buttons visually mask any title text underneath.
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	transform: translateY(-50%);
+	background: var(--l2-background);
+	padding: 1px 2px;
+	border-radius: $radius;
+	pointer-events: var(--actions-pointer, none);
+}
+
+.item:hover,
+.item.active {
+	--actions-pointer: auto;
 }
 
 .btn {

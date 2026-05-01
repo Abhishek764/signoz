@@ -47,25 +47,18 @@ function groupByDate(
 		.map(([label, items]) => ({ label, items }));
 }
 
-function HistoryListSkeleton({
-	rows,
-	inline,
-}: {
-	rows: number;
-	inline?: boolean;
-}): JSX.Element {
+/**
+ * Three-dot loading indicator. Sits inside the sidebar header so the
+ * conversation list is never bumped down by a skeleton row when threads
+ * load — visible signal of in-flight work without any layout shift.
+ */
+function HeaderLoadingDots(): JSX.Element {
 	return (
-		<div className={cx(styles.skeleton, { [styles.inline]: inline })} aria-hidden>
-			{Array.from({ length: rows }, (_, i) => (
-				<div key={i} className={styles.skeletonRow}>
-					<div className={styles.skeletonIcon} />
-					<div className={styles.skeletonText}>
-						<div className={cx(styles.skeletonLine, styles.title)} />
-						<div className={cx(styles.skeletonLine, styles.meta)} />
-					</div>
-				</div>
-			))}
-		</div>
+		<span className={styles.loadingDots} role="status" aria-label="Loading">
+			<span className={styles.loadingDot} />
+			<span className={styles.loadingDot} />
+			<span className={styles.loadingDot} />
+		</span>
 	);
 }
 
@@ -136,6 +129,7 @@ export default function HistorySidebar({
 		<div className={cx(styles.history, variantClass)}>
 			<div className={styles.header}>
 				<span className={styles.heading}>Conversations</span>
+				{isLoadingThreads && <HeaderLoadingDots />}
 			</div>
 
 			<div className={styles.list} aria-busy={isLoadingThreads}>
@@ -145,18 +139,13 @@ export default function HistorySidebar({
 					</span>
 				)}
 
-				{isLoadingThreads && !hasAnySidebarRows && <HistoryListSkeleton rows={7} />}
-
 				{!isLoadingThreads && !hasAnySidebarRows && (
 					<p className={styles.empty}>No conversations yet.</p>
 				)}
 
-				{groups.map(({ label, items }, idx) => (
+				{groups.map(({ label, items }) => (
 					<div key={label} className={styles.group}>
 						<span className={styles.groupLabel}>{label}</span>
-						{/* Refresh indicator goes at the top of the first section so
-						    it reads as in-flight fetching of the most recent items. */}
-						{idx === 0 && isLoadingThreads && <HistoryListSkeleton rows={2} inline />}
 						{items.map((conv) => (
 							<ConversationItem
 								key={conv.id}
@@ -174,11 +163,6 @@ export default function HistorySidebar({
 				{sortedArchived.length > 0 && (
 					<div className={cx(styles.group, styles.archived)}>
 						<span className={styles.groupLabel}>Archived Conversations</span>
-						{/* When no active groups exist, archived is the first section
-						    and owns the refresh indicator. */}
-						{groups.length === 0 && isLoadingThreads && (
-							<HistoryListSkeleton rows={2} inline />
-						)}
 						{sortedArchived.map((conv) => (
 							<ConversationItem
 								key={conv.id}

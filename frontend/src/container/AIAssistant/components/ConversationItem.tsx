@@ -156,39 +156,34 @@ export default function ConversationItem({
 						<Button
 							variant="link"
 							size="icon"
-							color="secondary"
+							color="primary"
 							className={styles.btn}
 							onClick={startEditing}
 							aria-label="Rename conversation"
-						>
-							<Pencil size={11} />
-						</Button>
+							prefix={<Pencil size={11} />}
+						/>
 					</Tooltip>
 					{isArchived ? (
 						<Tooltip title="Restore to conversations">
 							<Button
 								variant="link"
 								size="icon"
-								color="secondary"
-								className={styles.btn}
+								color="primary"
 								onClick={handleRestore}
 								aria-label="Restore conversation"
-							>
-								<ArchiveRestore size={11} />
-							</Button>
+								prefix={<ArchiveRestore size={11} />}
+							/>
 						</Tooltip>
 					) : (
 						<Tooltip title="Archive">
 							<Button
 								variant="link"
 								size="icon"
-								color="secondary"
-								className={cx(styles.btn, styles.danger)}
+								color="destructive"
 								onClick={handleDelete}
 								aria-label="Archive conversation"
-							>
-								<Archive size={11} />
-							</Button>
+								prefix={<Archive size={11} />}
+							/>
 						</Tooltip>
 					)}
 				</div>

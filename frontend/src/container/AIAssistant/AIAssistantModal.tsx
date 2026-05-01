@@ -41,7 +41,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
-			// Cmd+J (Mac) / Ctrl+J (Win/Linux) — toggle modal
+			// Cmd+J (Mac) / Ctrl+J (Win/Linux) — toggle modal. Opening
+			// always starts a brand-new conversation; resuming earlier
+			// threads is done via the in-modal history sidebar.
 			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
 				// Don't intercept Cmd+J inside input/textarea — those are for the user
 				const tag = (e.target as HTMLElement).tagName;
@@ -53,6 +55,8 @@ export default function AIAssistantModal(): JSX.Element | null {
 				if (isOpen) {
 					closeModal();
 				} else {
+					startNewConversation();
+					setShowHistory(false);
 					openModal();
 				}
 				return;
@@ -66,7 +70,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 		window.addEventListener('keydown', handleKeyDown);
 		return (): void => window.removeEventListener('keydown', handleKeyDown);
-	}, [isOpen, openModal, closeModal]);
+	}, [isOpen, openModal, closeModal, startNewConversation]);
 
 	// ── Handlers ────────────────────────────────────────────────────────────────
 

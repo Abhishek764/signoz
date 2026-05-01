@@ -77,6 +77,7 @@ import {
 	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	primaryMenuItems,
+	aiAssistantMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -1156,6 +1157,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
+							{renderNavItems([aiAssistantMenuItem], false)}
+
 							<div className="nav-dropdown-item">
 								<Dropdown
 									menu={{

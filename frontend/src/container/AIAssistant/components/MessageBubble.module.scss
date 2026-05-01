@@ -79,6 +79,26 @@ $radius: 4px;
 	word-break: break-word;
 }
 
+// User-bubble row: pencil button sits to the LEFT of the bubble within
+// the right-aligned message line, so it visually "ends" at the bubble's
+// right edge while keeping the bubble in its original position.
+.bubbleRow {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	max-width: 100%;
+}
+
+.editBtn {
+	flex-shrink: 0;
+	height: auto !important;
+	min-height: 0 !important;
+	padding: 4px !important;
+	color: var(--l3-foreground, var(--l2-foreground)) !important;
+	opacity: var(--feedback-opacity, 0);
+	transition: opacity 0.12s;
+}
+
 .markdown {
 	width: 100%;
 	word-break: break-word;

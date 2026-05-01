@@ -1,5 +1,7 @@
 import React from 'react';
 import cx from 'classnames';
+import { Button, Tooltip } from '@signozhq/ui';
+import { Pencil } from '@signozhq/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -75,18 +77,27 @@ function renderBlock(block: MessageBlock, index: number): JSX.Element {
 interface MessageBubbleProps {
 	message: Message;
 	onRegenerate?: () => void;
+	/**
+	 * When provided, a Pencil icon appears on user messages. Clicking it
+	 * pushes the message content into the chat input textarea so the user
+	 * can tweak it and send it as a fresh message (the original stays in
+	 * history). The actual submit happens via the input bar's Send button.
+	 */
+	onEdit?: (text: string) => void;
 	isLastAssistant?: boolean;
 }
 
 export default function MessageBubble({
 	message,
 	onRegenerate,
+	onEdit,
 	isLastAssistant = false,
 }: MessageBubbleProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
 	const isUser = message.role === 'user';
 	const hasBlocks = !isUser && message.blocks && message.blocks.length > 0;
+	const canEdit = isUser && Boolean(onEdit);
 
 	const messageClass = cx(
 		styles.message,
@@ -100,48 +111,64 @@ export default function MessageBubble({
 	return (
 		<div className={messageClass} data-testid={`ai-message-${message.id}`}>
 			<div className={bodyClass}>
-				<div className={styles.bubble}>
-					{message.attachments && message.attachments.length > 0 && (
-						<div className={styles.attachments}>
-							{message.attachments.map((att) => {
-								const isImage = att.type.startsWith('image/');
-								return isImage ? (
-									<img
-										key={att.name}
-										src={att.dataUrl}
-										alt={att.name}
-										className={styles.attachmentImage}
-									/>
-								) : (
-									<div key={att.name} className={styles.attachmentFile}>
-										{att.name}
-									</div>
-								);
-							})}
-						</div>
-					)}
+				<div className={styles.bubbleRow}>
+					<div className={styles.bubble}>
+						{message.attachments && message.attachments.length > 0 && (
+							<div className={styles.attachments}>
+								{message.attachments.map((att) => {
+									const isImage = att.type.startsWith('image/');
+									return isImage ? (
+										<img
+											key={att.name}
+											src={att.dataUrl}
+											alt={att.name}
+											className={styles.attachmentImage}
+										/>
+									) : (
+										<div key={att.name} className={styles.attachmentFile}>
+											{att.name}
+										</div>
+									);
+								})}
+							</div>
+						)}
 
-					{isUser ? (
-						<p className={styles.text}>{message.content}</p>
-					) : hasBlocks ? (
-						<MessageContext.Provider value={{ messageId: message.id }}>
-							{/* eslint-disable-next-line react/no-array-index-key */}
-							{message.blocks!.map((block, i) => renderBlock(block, i))}
-						</MessageContext.Provider>
-					) : (
-						<MessageContext.Provider value={{ messageId: message.id }}>
-							<ReactMarkdown
-								className={styles.markdown}
-								remarkPlugins={MD_PLUGINS}
-								components={MD_COMPONENTS}
-							>
-								{message.content}
-							</ReactMarkdown>
-						</MessageContext.Provider>
-					)}
+						{isUser ? (
+							<p className={styles.text}>{message.content}</p>
+						) : hasBlocks ? (
+							<MessageContext.Provider value={{ messageId: message.id }}>
+								{/* eslint-disable-next-line react/no-array-index-key */}
+								{message.blocks!.map((block, i) => renderBlock(block, i))}
+							</MessageContext.Provider>
+						) : (
+							<MessageContext.Provider value={{ messageId: message.id }}>
+								<ReactMarkdown
+									className={styles.markdown}
+									remarkPlugins={MD_PLUGINS}
+									components={MD_COMPONENTS}
+								>
+									{message.content}
+								</ReactMarkdown>
+							</MessageContext.Provider>
+						)}
 
-					{!isUser && message.actions && message.actions.length > 0 && (
-						<ActionsSection actions={message.actions} />
+						{!isUser && message.actions && message.actions.length > 0 && (
+							<ActionsSection actions={message.actions} />
+						)}
+					</div>
+
+					{isUser && canEdit && (
+						<Tooltip title="Edit and resend">
+							<Button
+								variant="link"
+								size="icon"
+								color="secondary"
+								className={styles.editBtn}
+								onClick={(): void => onEdit?.(message.content)}
+								aria-label="Edit and resend message"
+								prefix={<Pencil size={10} />}
+							/>
+						</Tooltip>
 					)}
 				</div>
 

@@ -65,6 +65,15 @@ interface ChatInputProps {
 	 * `autoContexts` to exclude the key.
 	 */
 	onDismissAutoContext?: (key: string) => void;
+	/**
+	 * One-shot draft to push into the textarea — used by the "Edit and
+	 * resend" action on user message bubbles. The wrapper object's
+	 * identity (not just the text) is what triggers the consume effect,
+	 * so editing the same message twice still re-fills the input.
+	 */
+	pendingDraft?: { text: string } | null;
+	/** Called once the pending draft has been moved into the textarea. */
+	onDraftConsumed?: () => void;
 }
 
 /** Stable identity for an auto-context entry — used as React key + dismissal id. */
@@ -210,6 +219,8 @@ export default function ChatInput({
 	isStreaming = false,
 	autoContexts,
 	onDismissAutoContext,
+	pendingDraft,
+	onDraftConsumed,
 }: ChatInputProps): JSX.Element {
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -224,6 +235,27 @@ export default function ChatInput({
 		useState<ContextCategory>('Dashboards');
 	const [pickerSearchQuery, setPickerSearchQuery] = useState('');
 	const queryClient = useQueryClient();
+
+	// Consume one-shot drafts pushed by parent (e.g. "Edit and resend"
+	// from a user message bubble). Each new wrapper-object identity from
+	// the parent triggers exactly one fill of the textarea, then we
+	// notify the parent so it can null its slot for the next push.
+	useEffect(() => {
+		if (!pendingDraft) {
+			return;
+		}
+		const draftText = capText(pendingDraft.text);
+		setText(draftText);
+		committedTextRef.current = draftText;
+		textareaRef.current?.focus();
+		// Defer the parent reset to the end of the microtask queue so the
+		// state update above has been committed before the parent nulls
+		// the slot (avoids a race on rapid re-edits).
+		queueMicrotask(() => onDraftConsumed?.());
+		// `capText`/refs are stable; deliberately excluded so we only
+		// re-run when the parent pushes a new draft identity.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pendingDraft]);
 	// When the picker was opened by typing `@` in the textarea, this holds the
 	// span of `@<query>` (start / end indices into `text`). Used both for live
 	// filtering of the entity list and for splicing the trigger out of the

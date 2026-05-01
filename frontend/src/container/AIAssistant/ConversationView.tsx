@@ -91,6 +91,20 @@ export default function ConversationView({
 		cancelStream(conversationId);
 	}, [cancelStream, conversationId]);
 
+	// One-shot push of text into the chat input, used by the per-bubble
+	// "Edit and resend" action. The wrapper object gives every push a
+	// fresh identity so consecutive edits of the same text still trigger
+	// ChatInput's consume effect.
+	const [pendingDraft, setPendingDraft] = useState<{ text: string } | null>(
+		null,
+	);
+	const handleEditMessage = useCallback((text: string): void => {
+		setPendingDraft({ text });
+	}, []);
+	const handleDraftConsumed = useCallback((): void => {
+		setPendingDraft(null);
+	}, []);
+
 	const messages = conversation?.messages ?? [];
 	const showDisclaimer = messages.length > 0;
 	const inputDisabled =
@@ -128,6 +142,7 @@ export default function ConversationView({
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
+				onEditMessage={handleEditMessage}
 			/>
 			{showDisclaimer && (
 				<div className={disclaimerClass} role="note" aria-live="polite">
@@ -142,6 +157,8 @@ export default function ConversationView({
 					isStreaming={isStreamingHere}
 					autoContexts={autoContexts}
 					onDismissAutoContext={handleDismissAutoContext}
+					pendingDraft={pendingDraft}
+					onDraftConsumed={handleDraftConsumed}
 				/>
 			</div>
 		</div>

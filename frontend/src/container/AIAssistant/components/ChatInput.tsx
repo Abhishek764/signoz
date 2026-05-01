@@ -1,17 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import cx from 'classnames';
 import {
 	Badge,
 	Button,
+	Input,
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 	Tooltip,
 } from '@signozhq/ui';
 import type { UploadFile } from 'antd';
-import { useListRules } from 'api/generated/services/rules';
+import {
+	getListRulesQueryKey,
+	useListRules,
+} from 'api/generated/services/rules';
+import type { ListRules200 } from 'api/generated/services/sigNoz.schemas';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useQueryService } from 'hooks/useQueryService';
+import type { SuccessResponseV2 } from 'types/api';
+import type { Dashboard } from 'types/api/dashboard/getAll';
 // eslint-disable-next-line
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -25,7 +34,7 @@ import {
 	LayoutDashboard,
 	Mic,
 	Plus,
-	Rows3,
+	Search,
 	Send,
 	ShieldCheck,
 	Square,
@@ -133,12 +142,7 @@ const MAX_INPUT_LENGTH = 20000;
 const WARNING_THRESHOLD = 15000;
 const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
 
-const CONTEXT_CATEGORIES = [
-	'Dashboards',
-	'Alerts',
-	'Services',
-	'Saved Views',
-] as const;
+const CONTEXT_CATEGORIES = ['Dashboards', 'Alerts', 'Services'] as const;
 
 type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
 
@@ -171,13 +175,6 @@ function toMessageContext(item: SelectedContextItem): MessageContext | null {
 				resourceId: item.entityId,
 				resourceName: item.value,
 			};
-		case 'Saved Views':
-			return {
-				source: 'mention',
-				type: 'saved_view',
-				resourceId: item.entityId,
-				resourceName: item.value,
-			};
 		default:
 			return null;
 	}
@@ -195,7 +192,6 @@ const CONTEXT_CATEGORY_ICONS: Record<
 	Dashboards: LayoutDashboard,
 	Alerts: Bell,
 	Services: ShieldCheck,
-	'Saved Views': Rows3,
 };
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -226,6 +222,8 @@ export default function ChatInput({
 	const [isContextPickerOpen, setIsContextPickerOpen] = useState(false);
 	const [activeContextCategory, setActiveContextCategory] =
 		useState<ContextCategory>('Dashboards');
+	const [pickerSearchQuery, setPickerSearchQuery] = useState('');
+	const queryClient = useQueryClient();
 	// When the picker was opened by typing `@` in the textarea, this holds the
 	// span of `@<query>` (start / end indices into `text`). Used both for live
 	// filtering of the entity list and for splicing the trigger out of the
@@ -408,19 +406,23 @@ export default function ChatInput({
 		textareaRef.current?.focus();
 	}, [discard]);
 
+	// Each list hook fetches only when its picker tab is actively shown,
+	// AND treats already-cached data as never stale (`staleTime: Infinity`)
+	// so an open with a populated cache doesn't trigger a background
+	// refetch. Net effect: assistant-driven fetches happen exactly once
+	// per resource list per session, on the first cache miss. Gating on
+	// `isContextPickerOpen` (not just `activeContextCategory`) is important
+	// — the latter defaults to 'Dashboards' on every mount, so without the
+	// picker-open check the dashboards list refetches on every new
+	// conversation.
 	const {
 		data: dashboardsResponse,
 		isLoading: isDashboardsLoading,
 		isError: isDashboardsError,
-	} = useGetAllDashboard();
-
-	// Enable list fetches both for the picker (when the corresponding category
-	// is open) AND for auto-context chips that need to resolve a name from a
-	// resource id. Dashboards is unconditional since the underlying hook
-	// has no `enabled` flag.
-	const needsAlertResolve = (autoContexts ?? []).some(
-		(c) => c.type === 'alert' && Boolean(c.resourceId),
-	);
+	} = useGetAllDashboard({
+		enabled: isContextPickerOpen && activeContextCategory === 'Dashboards',
+		staleTime: Infinity,
+	});
 
 	const {
 		data: alertsResponse,
@@ -428,7 +430,8 @@ export default function ChatInput({
 		isError: isAlertsError,
 	} = useListRules({
 		query: {
-			enabled: activeContextCategory === 'Alerts' || needsAlertResolve,
+			enabled: isContextPickerOpen && activeContextCategory === 'Alerts',
+			staleTime: Infinity,
 		},
 	});
 
@@ -443,7 +446,8 @@ export default function ChatInput({
 		selectedTime,
 		selectedTags: [],
 		options: {
-			enabled: activeContextCategory === 'Services',
+			enabled: isContextPickerOpen && activeContextCategory === 'Services',
+			staleTime: Infinity,
 		},
 	});
 
@@ -451,6 +455,12 @@ export default function ChatInput({
 	 * Resolves an auto-context to a human label: dashboard title, alert name,
 	 * service name (the service `resourceId` IS the name), or a generic page
 	 * label as fallback while the lookup data is still loading.
+	 *
+	 * Reads passively from the React Query cache via `getQueryData` —
+	 * never triggers a fetch. If the cache is empty (e.g. assistant opened
+	 * on a page that hasn't loaded the resource list yet), the chip falls
+	 * back to a generic label and resolves once the cache fills via the
+	 * picker or another page.
 	 */
 	const resolveAutoContextName = useCallback(
 		(ctx: MessageContext): string => {
@@ -458,13 +468,19 @@ export default function ChatInput({
 				return ctx.resourceId;
 			}
 			if (ctx.type === 'dashboard' && ctx.resourceId) {
-				const dash = dashboardsResponse?.data?.find((d) => d.id === ctx.resourceId);
+				const cached = queryClient.getQueryData<SuccessResponseV2<Dashboard[]>>(
+					REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
+				);
+				const dash = cached?.data?.find((d) => d.id === ctx.resourceId);
 				if (dash?.data.title) {
 					return dash.data.title;
 				}
 			}
 			if (ctx.type === 'alert' && ctx.resourceId) {
-				const rule = alertsResponse?.data?.find((r) => r.id === ctx.resourceId);
+				const cached = queryClient.getQueryData<ListRules200>(
+					getListRulesQueryKey(),
+				);
+				const rule = cached?.data?.find((r) => r.id === ctx.resourceId);
 				if (rule?.alert) {
 					return rule.alert;
 				}
@@ -481,7 +497,7 @@ export default function ChatInput({
 			}
 			return autoContextLabel(ctx);
 		},
-		[dashboardsResponse, alertsResponse],
+		[queryClient],
 	);
 
 	const contextEntitiesByCategory: Record<ContextCategory, ContextEntityItem[]> =
@@ -505,7 +521,6 @@ export default function ChatInput({
 						id: serviceItem.serviceName || `service-${index}`,
 						value: serviceItem.serviceName,
 					})) ?? [],
-			'Saved Views': [],
 		};
 
 	const contextCategoryStateByCategory: Record<
@@ -524,21 +539,18 @@ export default function ChatInput({
 			isLoading: isServicesLoading || isServicesFetching,
 			isError: isServicesError,
 		},
-		'Saved Views': {
-			isLoading: false,
-			isError: false,
-		},
 	};
 
-	// Type-ahead filter against the `@<query>` typed in the textarea. When the
-	// picker was opened from the "Add Context" button there's no query, so we
-	// show every entity for the active category.
+	// Type-ahead filter against the `@<query>` typed in the textarea. When
+	// the picker was opened from the "Add Context" button there's no
+	// mention query, so fall back to the in-popover search input.
 	const mentionQuery = mentionRange
 		? text.slice(mentionRange.start + 1, mentionRange.end).toLowerCase()
 		: '';
-	const filteredContextOptions = mentionQuery
+	const activeQuery = mentionQuery || pickerSearchQuery.trim().toLowerCase();
+	const filteredContextOptions = activeQuery
 		? contextEntitiesByCategory[activeContextCategory].filter((entity) =>
-				entity.value.toLowerCase().includes(mentionQuery),
+				entity.value.toLowerCase().includes(activeQuery),
 			)
 		: contextEntitiesByCategory[activeContextCategory];
 	const { isLoading: isActiveContextLoading, isError: isActiveContextError } =
@@ -668,6 +680,7 @@ export default function ChatInput({
 							setIsContextPickerOpen(open);
 							if (!open) {
 								setActiveContextCategory('Dashboards');
+								setPickerSearchQuery('');
 							}
 						}}
 					>
@@ -679,6 +692,7 @@ export default function ChatInput({
 								disabled={disabled}
 								onClick={(): void => {
 									setActiveContextCategory('Dashboards');
+									setPickerSearchQuery('');
 								}}
 								prefix={<Plus size={10} />}
 							>
@@ -695,63 +709,94 @@ export default function ChatInput({
 								<div className={styles.contextPopoverCategories}>
 									{CONTEXT_CATEGORIES.map((category) => {
 										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
+										const isActive = activeContextCategory === category;
 										return (
-											<Button
+											<div
 												key={category}
-												variant="ghost"
-												color="secondary"
+												role="tab"
+												tabIndex={0}
+												aria-selected={isActive}
 												className={cx(styles.contextPopoverCategoryItem, {
-													[styles.active]: activeContextCategory === category,
+													[styles.active]: isActive,
 												})}
-												onClick={(): void => setActiveContextCategory(category)}
-												prefix={<CategoryIcon size={13} />}
+												onClick={(): void => {
+													setActiveContextCategory(category);
+													setPickerSearchQuery('');
+												}}
+												onKeyDown={(e): void => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault();
+														setActiveContextCategory(category);
+														setPickerSearchQuery('');
+													}
+												}}
 											>
-												{category}
-											</Button>
+												<CategoryIcon size={13} />
+												<span>{category}</span>
+											</div>
 										);
 									})}
 								</div>
 
-								<div className={styles.contextPopoverEntities}>
-									{isActiveContextLoading ? (
-										<div className={styles.contextPopoverEmpty}>
-											Loading {activeContextCategory.toLowerCase()}...
-										</div>
-									) : isActiveContextError ? (
-										<div className={styles.contextPopoverEmpty}>
-											Failed to load {activeContextCategory.toLowerCase()}.
-										</div>
-									) : filteredContextOptions.length === 0 ? (
-										<div className={styles.contextPopoverEmpty}>No matching entities</div>
-									) : (
-										filteredContextOptions.map((option) => {
-											const isSelected = selectedContexts.some(
-												(item) =>
-													item.category === activeContextCategory &&
-													item.entityId === option.id,
-											);
+								<div className={styles.contextPopoverRight}>
+									<div className={styles.contextPopoverSearch}>
+										<Input
+											type="text"
+											placeholder={`Search ${activeContextCategory.toLowerCase()}…`}
+											className={styles.contextPopoverSearchInput}
+											value={pickerSearchQuery}
+											onChange={(e): void => setPickerSearchQuery(e.target.value)}
+											prefix={<Search size={12} />}
+											// Skip the picker's roving keyboard focus — typing here
+											// shouldn't move category selection.
+											onKeyDown={(e): void => {
+												e.stopPropagation();
+											}}
+										/>
+									</div>
+									<div className={styles.contextPopoverEntities}>
+										{isActiveContextLoading ? (
+											<div className={styles.contextPopoverEmpty}>
+												Loading {activeContextCategory.toLowerCase()}...
+											</div>
+										) : isActiveContextError ? (
+											<div className={styles.contextPopoverEmpty}>
+												Failed to load {activeContextCategory.toLowerCase()}.
+											</div>
+										) : filteredContextOptions.length === 0 ? (
+											<div className={styles.contextPopoverEmpty}>
+												No matching entities
+											</div>
+										) : (
+											filteredContextOptions.map((option) => {
+												const isSelected = selectedContexts.some(
+													(item) =>
+														item.category === activeContextCategory &&
+														item.entityId === option.id,
+												);
 
-											return (
-												<div
-													key={option.id}
-													className={cx(styles.contextPopoverEntityItem, {
-														[styles.selected]: isSelected,
-													})}
-													onClick={(): void =>
-														toggleContextSelection(
-															activeContextCategory,
-															option.id,
-															option.value,
-														)
-													}
-												>
-													<span className={styles.contextPopoverEntityItemText}>
-														{option.value}
-													</span>
-												</div>
-											);
-										})
-									)}
+												return (
+													<div
+														key={option.id}
+														className={cx(styles.contextPopoverEntityItem, {
+															[styles.selected]: isSelected,
+														})}
+														onClick={(): void =>
+															toggleContextSelection(
+																activeContextCategory,
+																option.id,
+																option.value,
+															)
+														}
+													>
+														<span className={styles.contextPopoverEntityItemText}>
+															{option.value}
+														</span>
+													</div>
+												);
+											})
+										)}
+									</div>
 								</div>
 							</div>
 						</PopoverContent>

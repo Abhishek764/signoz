@@ -214,6 +214,10 @@ $radius: 4px;
 	background: var(--l1-background);
 	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
 	padding: 8px;
+	// Clip horizontal overflow so long entity titles can't poke past the
+	// popover's right edge. Vertical overflow is handled inside
+	// `.contextPopoverEntities`.
+	overflow-x: hidden;
 
 	--popover-padding: 0;
 }
@@ -222,6 +226,7 @@ $radius: 4px;
 	display: grid;
 	grid-template-columns: 180px 1fr;
 	min-height: 250px;
+	min-width: 0;
 }
 
 .contextPopoverCategories {
@@ -238,11 +243,8 @@ $radius: 4px;
 	gap: 8px;
 	height: 32px;
 	padding: 0 8px;
-	min-width: 160px;
 	border: 1px solid rgba(255, 255, 255, 0.04);
 	border-radius: $radius;
-	background: var(--l1-background);
-	color: var(--l2-foreground);
 	font-size: 12px;
 	font-weight: 550;
 	text-align: left;
@@ -265,13 +267,38 @@ $radius: 4px;
 	}
 }
 
+.contextPopoverRight {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	// Match the previous fixed entity-list height so the inner search +
+	// scrolling list have a definite container to size against.
+	height: 320px;
+}
+
+.contextPopoverSearch {
+	padding: 8px;
+	flex-shrink: 0;
+	position: relative;
+	width: 90%;
+}
+
+.contextPopoverSearchInput {
+	width: 100%;
+	box-sizing: border-box;
+}
+
 .contextPopoverEntities {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
-	height: 320px;
+	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
+	overflow-x: hidden;
 	padding: 8px;
+	min-width: 0;
 	@include scrollbar(0.2rem);
 }
 
@@ -282,13 +309,16 @@ $radius: 4px;
 	padding: 8px;
 	border: 1px solid rgba(255, 255, 255, 0.04);
 	border-radius: $radius;
-	background: var(--l1-background);
 	color: var(--l1-foreground);
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 1.35;
 	text-align: left;
 	cursor: pointer;
+	// Required for the inner span's `text-overflow: ellipsis` to engage —
+	// flex items default to `min-width: auto` (intrinsic width) and would
+	// otherwise grow past their parent's width to fit long titles.
+	min-width: 0;
 
 	transition:
 		background 0.15s ease,

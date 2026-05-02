@@ -129,7 +129,10 @@ export default function AIAssistantModal(): JSX.Element | null {
 						<div className={styles.title}>
 							<AIAssistantIcon size={16} />
 							<span>AI Assistant</span>
-							<kbd className={styles.shortcut}>⌘J</kbd>
+							<kbd className={styles.shortcut}>
+								<span>⌘</span>
+								<span>J</span>
+							</kbd>
 						</div>
 
 						<div className={styles.actions}>

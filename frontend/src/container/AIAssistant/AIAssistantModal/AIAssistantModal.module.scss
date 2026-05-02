@@ -75,6 +75,10 @@ $radius: 4px;
 	padding: 1px 5px;
 	letter-spacing: 0;
 	line-height: 1.6;
+
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .actions {

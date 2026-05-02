@@ -243,7 +243,13 @@ async function runStreamingLoop(
 		} else if (event.type === 'thinking') {
 			set((s) => {
 				const st = s.streams[conversationId];
-				if (st) {
+				if (!st) {
+					return;
+				}
+				const last = st.streamingEvents[st.streamingEvents.length - 1];
+				if (last?.kind === 'thinking') {
+					last.content += event.content;
+				} else {
 					st.streamingEvents.push({
 						kind: 'thinking',
 						content: event.content,

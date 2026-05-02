@@ -9,6 +9,7 @@ $radius: 4px;
 	font-size: 11px;
 	border-left: 2px solid var(--l2-border);
 	padding-left: 8px;
+	box-sizing: border-box;
 
 	&.running {
 		opacity: 0.85;

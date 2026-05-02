@@ -7,11 +7,11 @@ import {
 	interceptorsResponse,
 } from 'api';
 
-// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env. Read via
-// `import.meta.env` (typed in vite-env.d.ts); `process.env.X` only works for
-// keys explicitly mapped in vite.config.ts's `define`, which this one isn't.
-const AI_BACKEND =
-	import.meta.env.VITE_AI_BACKEND_URL || 'http://localhost:8001';
+// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env. Vite's
+// `define` block maps that env var to `process.env.AI_BACKEND_URL` at build
+// time (matching how the rest of this codebase reads VITE_* envs), which
+// also keeps the call site valid CommonJS so Jest doesn't choke on it.
+const AI_BACKEND = process.env.AI_BACKEND_URL || 'http://localhost:8001';
 
 /** Path-only base for the AI Assistant API. */
 export const AI_API_PATH = '/api/v1/assistant';

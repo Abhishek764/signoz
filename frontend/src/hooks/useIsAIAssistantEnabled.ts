@@ -6,11 +6,8 @@ import { useAppContext } from 'providers/App/App';
  * header entry point, layout chrome, and logs explorer page actions.
  */
 export function useIsAIAssistantEnabled(): boolean {
-	const {
-		featureFlags,
-		isFetchingFeatureFlags,
-		featureFlagsFetchError,
-	} = useAppContext();
+	const { featureFlags, isFetchingFeatureFlags, featureFlagsFetchError } =
+		useAppContext();
 
 	if (isFetchingFeatureFlags && !featureFlagsFetchError) {
 		return false;

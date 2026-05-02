@@ -130,6 +130,8 @@ function HeaderRightSection({
 					<Button
 						variant="ghost"
 						size="icon"
+						className="share-feedback-btn"
+						aria-label="Feedback"
 						prefix={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
 					/>
@@ -151,6 +153,7 @@ function HeaderRightSection({
 					<Button
 						variant="ghost"
 						size="icon"
+						aria-label="Announcements"
 						prefix={<Inbox size={14} />}
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
@@ -176,6 +179,7 @@ function HeaderRightSection({
 					<Button
 						variant="ghost"
 						size="icon"
+						aria-label="Share"
 						prefix={<Globe size={14} />}
 						onClick={handleOpenShareURLModal}
 					/>

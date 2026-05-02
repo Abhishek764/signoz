@@ -5,6 +5,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { noop } from 'lodash-es';
+import { vi } from 'vitest';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -99,7 +100,7 @@ export const mockQueryBuilderContextValue = {
 			],
 		},
 	},
-	setSupersetQuery: jest.fn(),
+	setSupersetQuery: vi.fn(),
 	supersetQuery: {
 		...initialQueriesMap.logs,
 		builder: {

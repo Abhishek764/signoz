@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { logqlQueries } from 'lib/__fixtures__/logql';
 import { reverseParser } from 'lib/logql/reverseParser';
 

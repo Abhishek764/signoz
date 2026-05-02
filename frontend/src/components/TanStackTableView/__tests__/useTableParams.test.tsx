@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	NuqsTestingAdapter,
 	OnUrlUpdateFunction,
@@ -31,11 +32,11 @@ function createNuqsWrapper(
 
 describe('useTableParams (local mode — enableQueryParams not set)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('returns default page=1 and limit=50', () => {
@@ -89,11 +90,11 @@ describe('useTableParams (local mode — enableQueryParams not set)', () => {
 
 describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('uses nuqs state when enableQueryParams=true', () => {
@@ -102,7 +103,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 		expect(result.current.page).toBe(1);
 		act(() => {
 			result.current.setPage(5);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(5);
 	});
@@ -115,7 +116,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 		expect(result.current.page).toBe(2);
 		act(() => {
 			result.current.setPage(4);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(4);
 	});
@@ -153,13 +154,13 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('updates URL when setPage is called', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
 		act(() => {
 			result.current.setPage(5);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		const lastPage = onUrlUpdate.mock.calls
@@ -170,13 +171,13 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('updates URL when setOrderBy is called', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
 		act(() => {
 			result.current.setOrderBy({ columnName: 'value', order: 'asc' });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		const lastOrderBy = onUrlUpdate.mock.calls
@@ -205,7 +206,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('manages expanded state for row expansion', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
@@ -217,7 +218,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('toggles sort order correctly: null → asc → desc → null', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 

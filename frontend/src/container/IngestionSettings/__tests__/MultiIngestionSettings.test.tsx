@@ -1,3 +1,6 @@
+import type { MockedFunction } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { rest, server } from 'mocks-server/server';
@@ -25,10 +28,10 @@ interface TestGatewayIngestionKeysResponse {
 	data: GatewaytypesGettableIngestionKeysDTO;
 }
 
-// Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
-const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
-jest.mock('react-router-dom', () => {
-	const actual = jest.requireActual('react-router-dom');
+const mockPush = vi.fn() as MockedFunction<(path: string) => void>;
+vi.mock('react-router-dom', async () => {
+	const actual =
+		await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 	return {
 		...actual,
 		useHistory: (): { push: typeof mockPush } => ({ push: mockPush }),
@@ -46,7 +49,7 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders MultiIngestionSettings page without crashing', () => {
@@ -123,9 +126,12 @@ describe('MultiIngestionSettings Page', () => {
 		await user.click(metricsAlertBtn);
 
 		// Wait for navigation to occur
-		await waitFor(() => {
-			expect(mockPush).toHaveBeenCalledTimes(1);
-		});
+		await waitFor(
+			() => {
+				expect(mockPush).toHaveBeenCalledTimes(1);
+			},
+			{ timeout: 15_000 },
+		);
 
 		// Assert: navigation occurred with correct query parameters
 		const navigationCall = mockPush.mock.calls[0][0] as string;
@@ -249,93 +255,95 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('switches to search API when search text is entered', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		vi.useRealTimers();
+		try {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		const getResponse: TestGatewayIngestionKeysResponse = {
-			status: 'success',
-			data: {
-				keys: [
-					{
-						name: 'Key Regular',
-						expires_at: new Date(TEST_EXPIRES_AT),
-						value: 'secret1',
-						workspace_id: TEST_WORKSPACE_ID,
-						id: 'k1',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
-						tags: [],
-						limits: [],
-					},
-				],
-				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
-			},
-		};
+			const getResponse: TestGatewayIngestionKeysResponse = {
+				status: 'success',
+				data: {
+					keys: [
+						{
+							name: 'Key Regular',
+							expires_at: new Date(TEST_EXPIRES_AT),
+							value: 'secret1',
+							workspace_id: TEST_WORKSPACE_ID,
+							id: 'k1',
+							created_at: new Date(TEST_CREATED_UPDATED),
+							updated_at: new Date(TEST_CREATED_UPDATED),
+							tags: [],
+							limits: [],
+						},
+					],
+					_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+				},
+			};
 
-		const searchResponse: TestGatewayIngestionKeysResponse = {
-			status: 'success',
-			data: {
-				keys: [
-					{
-						name: 'Key Search Result',
-						expires_at: new Date(TEST_EXPIRES_AT),
-						value: 'secret2',
-						workspace_id: TEST_WORKSPACE_ID,
-						id: 'k2',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
-						tags: [],
-						limits: [],
-					},
-				],
-				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
-			},
-		};
+			const searchResponse: TestGatewayIngestionKeysResponse = {
+				status: 'success',
+				data: {
+					keys: [
+						{
+							name: 'Key Search Result',
+							expires_at: new Date(TEST_EXPIRES_AT),
+							value: 'secret2',
+							workspace_id: TEST_WORKSPACE_ID,
+							id: 'k2',
+							created_at: new Date(TEST_CREATED_UPDATED),
+							updated_at: new Date(TEST_CREATED_UPDATED),
+							tags: [],
+							limits: [],
+						},
+					],
+					_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+				},
+			};
 
-		const getHandler = jest.fn();
-		const searchHandler = jest.fn();
+			const getHandler = vi.fn();
+			const searchHandler = vi.fn();
 
-		server.use(
-			rest.get('*/api/v2/gateway/ingestion_keys', (req, res, ctx) => {
-				if (req.url.pathname.endsWith('/search')) {
-					return undefined;
-				}
-				getHandler();
-				return res(ctx.status(200), ctx.json(getResponse));
-			}),
-			rest.get('*/api/v2/gateway/ingestion_keys/search', (_req, res, ctx) => {
-				searchHandler();
-				return res(ctx.status(200), ctx.json(searchResponse));
-			}),
-		);
+			server.use(
+				rest.get('*/api/v2/gateway/ingestion_keys/search', (_req, res, ctx) => {
+					searchHandler();
+					return res(ctx.status(200), ctx.json(searchResponse));
+				}),
+				rest.get('*/api/v2/gateway/ingestion_keys', (_req, res, ctx) => {
+					getHandler();
+					return res(ctx.status(200), ctx.json(getResponse));
+				}),
+			);
 
-		render(<MultiIngestionSettings />, undefined, {
-			initialRoute: INGESTION_SETTINGS_ROUTE,
-		});
+			render(<MultiIngestionSettings />, undefined, {
+				initialRoute: INGESTION_SETTINGS_ROUTE,
+			});
 
-		await screen.findByText('Key Regular');
-		expect(getHandler).toHaveBeenCalled();
-		expect(searchHandler).not.toHaveBeenCalled();
+			await screen.findByText('Key Regular');
+			expect(getHandler).toHaveBeenCalled();
+			expect(searchHandler).not.toHaveBeenCalled();
 
-		// Reset getHandler count to verify it's not called again during search
-		getHandler.mockClear();
+			// Reset getHandler count to verify it's not called again during search
+			getHandler.mockClear();
 
-		// Type in search box
-		const searchInput = screen.getByPlaceholderText(
-			'Search for ingestion key...',
-		);
-		await user.type(searchInput, 'test');
+			// Type in search box
+			const searchInput = screen.getByPlaceholderText(
+				'Search for ingestion key...',
+			);
+			await user.type(searchInput, 'test');
 
-		await screen.findByText('Key Search Result');
-		expect(searchHandler).toHaveBeenCalled();
-		expect(getHandler).not.toHaveBeenCalled();
+			await screen.findByText('Key Search Result');
+			expect(searchHandler).toHaveBeenCalled();
+			expect(getHandler).not.toHaveBeenCalled();
 
-		// Clear search
-		searchHandler.mockClear();
-		getHandler.mockClear();
-		await user.clear(searchInput);
+			// Clear search
+			searchHandler.mockClear();
+			getHandler.mockClear();
+			await user.clear(searchInput);
 
-		await screen.findByText('Key Regular');
-		// Search API should be disabled when not searching
-		expect(searchHandler).not.toHaveBeenCalled();
+			await screen.findByText('Key Regular');
+			// Search API should be disabled when not searching
+			expect(searchHandler).not.toHaveBeenCalled();
+		} finally {
+			vi.setSystemTime(new Date('2023-10-20'));
+		}
 	});
 });

@@ -1,46 +1,58 @@
 import { renderHook } from '@testing-library/react';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import { useLegendActions } from 'lib/uPlotV2/hooks/useLegendActions';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+	type Mock,
+	type MockedFunction,
+	type MockInstance,
+} from 'vitest';
 
-jest.mock('lib/uPlotV2/context/PlotContext');
+vi.mock('lib/uPlotV2/context/PlotContext');
 
-const mockUsePlotContext = usePlotContext as jest.MockedFunction<
+const mockUsePlotContext = usePlotContext as MockedFunction<
 	typeof usePlotContext
 >;
 
 describe('useLegendActions', () => {
-	let onToggleSeriesVisibility: jest.Mock;
-	let onToggleSeriesOnOff: jest.Mock;
-	let onFocusSeriesPlot: jest.Mock;
-	let setPlotContextInitialState: jest.Mock;
-	let syncSeriesVisibilityToLocalStorage: jest.Mock;
-	let setFocusedSeriesIndexMock: jest.Mock;
-	let cancelAnimationFrameSpy: jest.SpyInstance<void, [handle: number]>;
+	let onToggleSeriesVisibility: Mock;
+	let onToggleSeriesOnOff: Mock;
+	let onFocusSeriesPlot: Mock;
+	let setPlotContextInitialState: Mock;
+	let syncSeriesVisibilityToLocalStorage: Mock;
+	let setFocusedSeriesIndexMock: Mock;
+	let cancelAnimationFrameSpy: MockInstance<(handle: number) => void>;
 
 	beforeAll(() => {
-		jest
+		vi
 			.spyOn(global, 'requestAnimationFrame')
 			.mockImplementation((cb: FrameRequestCallback): number => {
 				cb(0);
 				return 1;
 			});
 
-		cancelAnimationFrameSpy = jest
+		cancelAnimationFrameSpy = vi
 			.spyOn(global, 'cancelAnimationFrame')
 			.mockImplementation(() => {});
 	});
 
 	afterAll(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	beforeEach(() => {
-		onToggleSeriesVisibility = jest.fn();
-		onToggleSeriesOnOff = jest.fn();
-		onFocusSeriesPlot = jest.fn();
-		setPlotContextInitialState = jest.fn();
-		syncSeriesVisibilityToLocalStorage = jest.fn();
-		setFocusedSeriesIndexMock = jest.fn();
+		onToggleSeriesVisibility = vi.fn();
+		onToggleSeriesOnOff = vi.fn();
+		onFocusSeriesPlot = vi.fn();
+		setPlotContextInitialState = vi.fn();
+		syncSeriesVisibilityToLocalStorage = vi.fn();
+		setFocusedSeriesIndexMock = vi.fn();
 
 		mockUsePlotContext.mockReturnValue({
 			onToggleSeriesVisibility,
@@ -64,7 +76,7 @@ describe('useLegendActions', () => {
 				dataset: {
 					...(isMarker ? { isLegendMarker: 'true' } : {}),
 				},
-				closest: jest.fn(() =>
+				closest: vi.fn(() =>
 					legendItemId !== undefined
 						? { dataset: { legendItemId: String(legendItemId) } }
 						: null,

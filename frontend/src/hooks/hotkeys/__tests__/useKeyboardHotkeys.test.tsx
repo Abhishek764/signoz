@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
 	KeyboardHotkeysProvider,
 	useKeyboardHotkeys,
 } from '../useKeyboardHotkeys';
 
-jest.mock('../../../providers/cmdKProvider', () => ({
+vi.mock('../../../providers/cmdKProvider', () => ({
 	useCmdK: (): { open: boolean } => ({
 		open: false,
 	}),
@@ -44,7 +45,7 @@ function TestComponentWithDeRegister({
 
 describe('KeyboardHotkeysProvider', () => {
 	it('registers and triggers shortcuts correctly', async () => {
-		const handleShortcut = jest.fn();
+		const handleShortcut = vi.fn();
 		const user = userEvent.setup();
 
 		render(
@@ -60,7 +61,7 @@ describe('KeyboardHotkeysProvider', () => {
 	});
 
 	it('does not trigger deregistered shortcuts', async () => {
-		const handleShortcut = jest.fn();
+		const handleShortcut = vi.fn();
 		const user = userEvent.setup();
 
 		render(

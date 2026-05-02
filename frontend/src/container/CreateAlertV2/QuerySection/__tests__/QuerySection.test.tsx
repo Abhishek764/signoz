@@ -4,35 +4,38 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryParams } from 'constants/query';
 import {
 	initialClickHouseData,
 	initialQueryPromQLData,
 } from 'constants/queryBuilder';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
-import store from 'store';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
 
-import { CreateAlertProvider } from '../../context';
-import QuerySection from '../QuerySection';
-
-jest.mock('uuid', () => ({
+vi.mock('uuid', () => ({
 	v4: (): string => 'test-uuid-12345',
+}));
+
+vi.mock('container/FormAlertRules', () => ({
+	AlertDetectionTypes: {
+		THRESHOLD_ALERT: 'threshold_rule',
+		ANOMALY_DETECTION_ALERT: 'anomaly_rule',
+	},
 }));
 
 const MOCK_UUID = 'test-uuid-12345';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
 	return {
@@ -40,86 +43,124 @@ jest.mock('uplot', () => {
 		default: uplotMock,
 	};
 });
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: (): any => ({
-		globalTime: {
-			selectedTime: {
-				startTime: 1713734400000,
-				endTime: 1713738000000,
+vi.mock('antd', () => {
+	const MockControl = ({ children, ...props }: any): JSX.Element => (
+		<button {...props}>{children}</button>
+	);
+	const MockForm = Object.assign(MockControl, {
+		Item: ({ children }: any): JSX.Element => <>{children}</>,
+	});
+	const MockSelect = Object.assign(MockControl, {
+		Option: ({ children }: any): JSX.Element => <>{children}</>,
+	});
+	const MockInput = Object.assign(MockControl, {
+		TextArea: MockControl,
+	});
+	const MockTypography = Object.assign(MockControl, {
+		Text: ({ children }: any): JSX.Element => <>{children}</>,
+	});
+
+	return {
+		Button: MockControl,
+		Card: MockControl,
+		Col: MockControl,
+		Form: MockForm,
+		Input: MockInput,
+		Select: MockSelect,
+		Spin: MockControl,
+		Switch: MockControl,
+		Tag: MockControl,
+		Tooltip: MockControl,
+		Typography: MockTypography,
+	};
+});
+vi.mock('react-redux', async () => {
+	const actual =
+		await vi.importActual<typeof import('react-redux')>('react-redux');
+
+	return {
+		...actual,
+		useSelector: (): any => ({
+			globalTime: {
+				selectedTime: {
+					startTime: 1713734400000,
+					endTime: 1713738000000,
+				},
+				maxTime: 1713738000000,
+				minTime: 1713734400000,
 			},
-			maxTime: 1713738000000,
-			minTime: 1713734400000,
-		},
-	}),
+		}),
+	};
+});
+vi.mock('container/FormAlertRules/QuerySection', () => ({
+	default: function MockQuerySectionComponent({
+		queryCategory,
+		alertType,
+		panelType,
+		setQueryCategory,
+	}: any): JSX.Element {
+		return (
+			<div data-testid="query-section-component">
+				<div data-testid="query-category">{queryCategory}</div>
+				<div data-testid="alert-type">{alertType}</div>
+				<div data-testid="panel-type">{panelType}</div>
+				<button
+					type="button"
+					data-testid="change-to-promql"
+					onClick={(): void => setQueryCategory('promql')}
+				>
+					Change to PromQL
+				</button>
+				<button
+					type="button"
+					data-testid="change-to-query-builder"
+					onClick={(): void => setQueryCategory('builder')}
+				>
+					Change to Query Builder
+				</button>
+			</div>
+		);
+	},
 }));
-jest.mock(
-	'container/FormAlertRules/QuerySection',
-	() =>
-		function MockQuerySectionComponent({
-			queryCategory,
-			alertType,
-			panelType,
-			setQueryCategory,
-		}: any): JSX.Element {
-			return (
-				<div data-testid="query-section-component">
-					<div data-testid="query-category">{queryCategory}</div>
-					<div data-testid="alert-type">{alertType}</div>
-					<div data-testid="panel-type">{panelType}</div>
-					<button
-						type="button"
-						data-testid="change-to-promql"
-						onClick={(): void => setQueryCategory(EQueryType.PROM)}
-					>
-						Change to PromQL
-					</button>
-					<button
-						type="button"
-						data-testid="change-to-query-builder"
-						onClick={(): void => setQueryCategory(EQueryType.QUERY_BUILDER)}
-					>
-						Change to Query Builder
-					</button>
-				</div>
-			);
-		},
-);
-jest.mock(
-	'../ChartPreview',
-	() =>
-		function MockChartPreview(): JSX.Element {
-			return <div data-testid="chart-preview">Chart Preview</div>;
-		},
-);
-jest.mock(
-	'../../Stepper',
-	() =>
-		function MockStepper({ stepNumber, label }: any): JSX.Element {
-			return (
-				<div data-testid="stepper">
-					<div data-testid="step-number">{stepNumber}</div>
-					<div data-testid="step-label">{label}</div>
-				</div>
-			);
-		},
-);
+vi.mock('../ChartPreview', () => ({
+	default: function MockChartPreview(): JSX.Element {
+		return <div data-testid="chart-preview">Chart Preview</div>;
+	},
+}));
+vi.mock('../../Stepper', () => ({
+	default: function MockStepper({ stepNumber, label }: any): JSX.Element {
+		return (
+			<div data-testid="stepper">
+				<div data-testid="step-number">{stepNumber}</div>
+				<div data-testid="step-label">{label}</div>
+			</div>
+		);
+	},
+}));
+
+const mockRedirectWithQueryBuilderData = vi.fn();
+const mockHandleRunQuery = vi.fn();
 
 const mockUseQueryBuilder = {
 	currentQuery: {
-		queryType: 'query_builder',
+		queryType: EQueryType.QUERY_BUILDER,
 		unit: 'requests/sec',
+		id: MOCK_UUID,
+		promql: [],
+		clickhouse_sql: [],
 		builder: {
 			queryData: [
 				{
 					dataSource: 'metrics',
 				},
 			],
+			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 	},
-	handleRunQuery: jest.fn(),
-	redirectWithQueryBuilderData: jest.fn(),
-};
+	handleRunQuery: mockHandleRunQuery,
+	redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
+} as unknown as QueryBuilderContextType;
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
@@ -127,7 +168,11 @@ const queryClient = new QueryClient({
 		},
 	},
 });
-const renderQuerySection = (): ReturnType<typeof render> =>
+const renderQuerySection = async (): Promise<void> => {
+	const { default: QuerySection } = await import('../QuerySection');
+	const { CreateAlertProvider } = await import('../../context');
+	const { default: store } = await import('store');
+
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
@@ -139,25 +184,24 @@ const renderQuerySection = (): ReturnType<typeof render> =>
 			</QueryClientProvider>
 		</Provider>,
 	);
+};
 
 const METRICS_TEXT = 'Metrics';
-const QUERY_BUILDER_TEXT = 'query_builder';
+const QUERY_BUILDER_TEXT = EQueryType.QUERY_BUILDER;
 const LOGS_TEXT = 'Logs';
 const TRACES_TEXT = 'Traces';
 const ACTIVE_TAB_CLASS = 'active-tab';
 
 describe('QuerySection', () => {
-	const { useQueryBuilder } = jest.requireMock(
-		'hooks/queryBuilder/useQueryBuilder',
-	);
-
-	beforeEach(() => {
-		jest.clearAllMocks();
-		useQueryBuilder.mockReturnValue(mockUseQueryBuilder);
+	beforeEach(async () => {
+		vi.clearAllMocks();
+		const { useQueryBuilder } =
+			await import('hooks/queryBuilder/useQueryBuilder');
+		vi.mocked(useQueryBuilder).mockReturnValue(mockUseQueryBuilder);
 	});
 
-	it('renders the component with all required elements', () => {
-		renderQuerySection();
+	it('renders the component with all required elements', async () => {
+		await renderQuerySection();
 
 		// Check if Stepper is rendered
 		expect(screen.getByTestId('stepper')).toBeInTheDocument();
@@ -175,13 +219,13 @@ describe('QuerySection', () => {
 			QUERY_BUILDER_TEXT,
 		);
 		expect(screen.getByTestId('alert-type')).toHaveTextContent(
-			AlertTypes.METRICS_BASED_ALERT,
+			'METRIC_BASED_ALERT',
 		);
 		expect(screen.getByTestId('panel-type')).toHaveTextContent('graph');
 	});
 
-	it('renders all three alert type tabs', () => {
-		renderQuerySection();
+	it('renders all three alert type tabs', async () => {
+		await renderQuerySection();
 
 		// Check if all tabs are rendered
 		expect(screen.getByText(METRICS_TEXT)).toBeInTheDocument();
@@ -194,8 +238,8 @@ describe('QuerySection', () => {
 		expect(screen.getByTestId('traces-view')).toBeInTheDocument();
 	});
 
-	it('shows Metrics tab as active by default', () => {
-		renderQuerySection();
+	it('shows Metrics tab as active by default', async () => {
+		await renderQuerySection();
 
 		const metricsTab = screen.getByText(METRICS_TEXT).closest('button');
 		expect(metricsTab).toHaveClass(ACTIVE_TAB_CLASS);
@@ -203,18 +247,18 @@ describe('QuerySection', () => {
 
 	it('handles alert type change when clicking on different tabs', async () => {
 		const user = userEvent.setup();
-		renderQuerySection();
+		await renderQuerySection();
 
 		// Click on Logs tab
 		const logsTab = screen.getByText(LOGS_TEXT);
 		await user.click(logsTab);
 
 		// Verify that redirectWithQueryBuilderData was called with correct data
-		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(
 			expect.any(Object),
 			{
 				[QueryParams.alertType]: AlertTypes.LOGS_BASED_ALERT,
-				[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+				[QueryParams.ruleType]: 'threshold_rule',
 			},
 			undefined,
 			true,
@@ -225,11 +269,11 @@ describe('QuerySection', () => {
 		await user.click(tracesTab);
 
 		// Verify that redirectWithQueryBuilderData was called with correct data
-		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(
 			expect.any(Object),
 			{
 				[QueryParams.alertType]: AlertTypes.TRACES_BASED_ALERT,
-				[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+				[QueryParams.ruleType]: 'threshold_rule',
 			},
 			undefined,
 			true,
@@ -238,7 +282,7 @@ describe('QuerySection', () => {
 
 	it('updates active tab when alert type changes', async () => {
 		const user = userEvent.setup();
-		renderQuerySection();
+		await renderQuerySection();
 
 		// Initially Metrics should be active
 		const metricsTab = screen.getByText(METRICS_TEXT).closest('button');
@@ -254,21 +298,21 @@ describe('QuerySection', () => {
 		expect(metricsTab).not.toHaveClass(ACTIVE_TAB_CLASS);
 	});
 
-	it('passes correct props to QuerySectionComponent', () => {
-		renderQuerySection();
+	it('passes correct props to QuerySectionComponent', async () => {
+		await renderQuerySection();
 
 		// Check if the component receives the correct props
 		expect(screen.getByTestId('query-category')).toHaveTextContent(
 			QUERY_BUILDER_TEXT,
 		);
 		expect(screen.getByTestId('alert-type')).toHaveTextContent(
-			AlertTypes.METRICS_BASED_ALERT,
+			'METRIC_BASED_ALERT',
 		);
 		expect(screen.getByTestId('panel-type')).toHaveTextContent('graph');
 	});
 
-	it('renders with correct container structure', () => {
-		renderQuerySection();
+	it('renders with correct container structure', async () => {
+		await renderQuerySection();
 
 		const container = screen.getByText(METRICS_TEXT).closest('.query-section');
 		expect(container).toBeInTheDocument();
@@ -286,7 +330,7 @@ describe('QuerySection', () => {
 
 	it('handles multiple rapid tab clicks correctly', async () => {
 		const user = userEvent.setup();
-		renderQuerySection();
+		await renderQuerySection();
 
 		const logsTab = screen.getByText('Logs');
 		const tracesTab = screen.getByText('Traces');
@@ -297,14 +341,12 @@ describe('QuerySection', () => {
 		await user.click(logsTab);
 
 		// Should have called redirectWithQueryBuilderData 3 times
-		expect(
-			mockUseQueryBuilder.redirectWithQueryBuilderData,
-		).toHaveBeenCalledTimes(3);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(3);
 	});
 
 	it('maintains tab state correctly after interactions', async () => {
 		const user = userEvent.setup();
-		renderQuerySection();
+		await renderQuerySection();
 
 		// Click on Logs tab
 		const logsTab = screen.getByText('Logs');
@@ -326,12 +368,12 @@ describe('QuerySection', () => {
 
 	it('updates the query data when the alert type changes', async () => {
 		const user = userEvent.setup();
-		renderQuerySection();
+		await renderQuerySection();
 
 		const metricsTab = screen.getByText(METRICS_TEXT);
 		await user.click(metricsTab);
 
-		const result = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const result = mockRedirectWithQueryBuilderData.mock.calls[0];
 
 		expect(result[0]).toStrictEqual({
 			id: MOCK_UUID,
@@ -353,32 +395,27 @@ describe('QuerySection', () => {
 
 		expect(result[1]).toStrictEqual({
 			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
-			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
+			[QueryParams.ruleType]: 'threshold_rule',
 		});
 	});
 
 	it('updates the query data when the query type changes from query_builder to promql', async () => {
 		const user = userEvent.setup();
-		renderQuerySection();
+		await renderQuerySection();
 
 		const changeToPromQLButton = screen.getByTestId('change-to-promql');
 		await user.click(changeToPromQLButton);
 
-		expect(
-			mockUseQueryBuilder.redirectWithQueryBuilderData,
-		).toHaveBeenCalledTimes(1);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(1);
 
-		const [queryArg] =
-			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] = mockRedirectWithQueryBuilderData.mock.calls[0];
 
 		expect(queryArg).toStrictEqual({
 			...mockUseQueryBuilder.currentQuery,
 			queryType: EQueryType.PROM,
 		});
 
-		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
-			queryArg,
-		);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(queryArg);
 	});
 
 	it('updates the query data when switching from promql to query_builder for logs', async () => {
@@ -393,13 +430,20 @@ describe('QuerySection', () => {
 						dataSource: DataSource.LOGS,
 					},
 				],
+				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 		};
 
-		useQueryBuilder.mockReturnValue({
+		const { useQueryBuilder } =
+			await import('hooks/queryBuilder/useQueryBuilder');
+		const { default: store } = await import('store');
+		vi.mocked(useQueryBuilder).mockReturnValue({
 			...mockUseQueryBuilder,
 			currentQuery: mockCurrentQueryWithPromQL,
-		});
+		} as unknown as QueryBuilderContextType);
+		const { default: QuerySection } = await import('../QuerySection');
+		const { CreateAlertProvider } = await import('../../context');
 
 		render(
 			<Provider store={store}>
@@ -418,21 +462,16 @@ describe('QuerySection', () => {
 		);
 		await user.click(changeToQueryBuilderButton);
 
-		expect(
-			mockUseQueryBuilder.redirectWithQueryBuilderData,
-		).toHaveBeenCalledTimes(1);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(1);
 
-		const [queryArg] =
-			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] = mockRedirectWithQueryBuilderData.mock.calls[0];
 
 		expect(queryArg).toStrictEqual({
 			...mockCurrentQueryWithPromQL,
 			queryType: EQueryType.QUERY_BUILDER,
 		});
 
-		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
-			queryArg,
-		);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(queryArg);
 	});
 
 	it('updates the query data when switching from clickhouse_sql to query_builder for traces', async () => {
@@ -447,13 +486,20 @@ describe('QuerySection', () => {
 						dataSource: DataSource.TRACES,
 					},
 				],
+				queryFormulas: [],
+				queryTraceOperator: [],
 			},
 		};
 
-		useQueryBuilder.mockReturnValue({
+		const { useQueryBuilder } =
+			await import('hooks/queryBuilder/useQueryBuilder');
+		const { default: store } = await import('store');
+		vi.mocked(useQueryBuilder).mockReturnValue({
 			...mockUseQueryBuilder,
 			currentQuery: mockCurrentQueryWithClickhouseSQL,
-		});
+		} as unknown as QueryBuilderContextType);
+		const { default: QuerySection } = await import('../QuerySection');
+		const { CreateAlertProvider } = await import('../../context');
 
 		render(
 			<Provider store={store}>
@@ -472,20 +518,15 @@ describe('QuerySection', () => {
 		);
 		await user.click(changeToQueryBuilderButton);
 
-		expect(
-			mockUseQueryBuilder.redirectWithQueryBuilderData,
-		).toHaveBeenCalledTimes(1);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(1);
 
-		const [queryArg] =
-			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] = mockRedirectWithQueryBuilderData.mock.calls[0];
 
 		expect(queryArg).toStrictEqual({
 			...mockCurrentQueryWithClickhouseSQL,
 			queryType: EQueryType.QUERY_BUILDER,
 		});
 
-		expect(mockUseQueryBuilder.redirectWithQueryBuilderData).toHaveBeenCalledWith(
-			queryArg,
-		);
+		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledWith(queryArg);
 	});
 });

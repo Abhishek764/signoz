@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
 	createCustomTimeRange,
 	CUSTOM_TIME_SEPARATOR,
@@ -81,12 +83,12 @@ describe('globalTime/utils', () => {
 
 	describe('parseSelectedTime', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should parse custom time range and return min/max values', () => {

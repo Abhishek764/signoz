@@ -1,36 +1,37 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axios, { AxiosHeaders, AxiosResponse } from 'axios';
 
 import { interceptorRejected } from './index';
 
-jest.mock('api/browser/localstorage/get', () => ({
+vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn(() => 'mock-token'),
+	default: vi.fn(() => 'mock-token'),
 }));
 
-jest.mock('api/v2/sessions/rotate/post', () => ({
+vi.mock('api/v2/sessions/rotate/post', () => ({
 	__esModule: true,
-	default: jest.fn(() =>
+	default: vi.fn(() =>
 		Promise.resolve({
 			data: { accessToken: 'new-token', refreshToken: 'new-refresh' },
 		}),
 	),
 }));
 
-jest.mock('AppRoutes/utils', () => ({
+vi.mock('AppRoutes/utils', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('axios', () => {
-	const actualAxios = jest.requireActual('axios');
-	const mockAxios = jest.fn().mockResolvedValue({ data: 'success' });
+vi.mock('axios', async () => {
+	const actualAxios = await vi.importActual<typeof import('axios')>('axios');
+	const mockAxios = vi.fn().mockResolvedValue({ data: 'success' });
 
 	return {
 		...actualAxios,
 		default: Object.assign(mockAxios, {
 			...actualAxios.default,
-			isAxiosError: jest.fn().mockReturnValue(true),
-			create: actualAxios.create,
+			isAxiosError: vi.fn().mockReturnValue(true),
+			create: actualAxios.default.create,
 		}),
 		__esModule: true,
 	};
@@ -38,9 +39,19 @@ jest.mock('axios', () => {
 
 describe('interceptorRejected', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(axios as unknown as jest.Mock).mockResolvedValue({ data: 'success' });
-		(axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
+		vi.clearAllMocks();
+		(
+			axios as unknown as {
+				mockResolvedValue: (value: AxiosResponse<{ data: string }>) => void;
+			}
+		).mockResolvedValue({ data: 'success' } as unknown as AxiosResponse<{
+			data: string;
+		}>);
+		(
+			axios.isAxiosError as unknown as {
+				mockReturnValue: (value: boolean) => void;
+			}
+		).mockReturnValue(true);
 	});
 
 	it('should preserve array payload structure when retrying a 401 request', async () => {
@@ -75,7 +86,7 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = axios as unknown as jest.Mock;
+		const mockAxiosFn = axios as unknown as ReturnType<typeof vi.fn>;
 		expect(mockAxiosFn.mock.calls).toHaveLength(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(Array.isArray(JSON.parse(retryCallConfig.data))).toBe(true);
@@ -111,7 +122,7 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = axios as unknown as jest.Mock;
+		const mockAxiosFn = axios as unknown as ReturnType<typeof vi.fn>;
 		expect(mockAxiosFn.mock.calls).toHaveLength(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(JSON.parse(retryCallConfig.data)).toStrictEqual(objectPayload);
@@ -144,7 +155,7 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = axios as unknown as jest.Mock;
+		const mockAxiosFn = axios as unknown as ReturnType<typeof vi.fn>;
 		expect(mockAxiosFn.mock.calls).toHaveLength(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(retryCallConfig.data).toBeUndefined();

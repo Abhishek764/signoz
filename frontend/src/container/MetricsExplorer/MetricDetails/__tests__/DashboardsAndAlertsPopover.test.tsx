@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import { userEvent } from 'tests/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import DashboardsAndAlertsPopover from '../DashboardsAndAlertsPopover';
 import {
@@ -14,14 +15,14 @@ import {
 	MOCK_METRIC_NAME,
 } from './testUtlls';
 
-const mockWindowOpen = jest.fn();
+const mockWindowOpen = vi.fn();
 Object.defineProperty(window, 'open', { value: mockWindowOpen });
 
-const useGetMetricAlertsMock = jest.spyOn(
+const useGetMetricAlertsMock = vi.spyOn(
 	metricsExplorerHooks,
 	'useGetMetricAlerts',
 );
-const useGetMetricDashboardsMock = jest.spyOn(
+const useGetMetricDashboardsMock = vi.spyOn(
 	metricsExplorerHooks,
 	'useGetMetricDashboards',
 );

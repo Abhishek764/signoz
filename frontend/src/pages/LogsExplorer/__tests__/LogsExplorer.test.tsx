@@ -1,6 +1,5 @@
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-// https://virtuoso.dev/mocking-in-tests/
 import { VirtuosoMockContext } from 'react-virtuoso';
+import { describe, expect, it, vi } from 'vitest';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -11,58 +10,55 @@ import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.LOGS_EXPLORER}`,
 	}),
 }));
 
 // mocking the graph components in this test as this should be handled separately
-jest.mock(
-	'container/TimeSeriesView/TimeSeriesView',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function TimeSeriesView() {
-			return <div>Time Series Chart</div>;
-		},
-);
+vi.mock('container/TimeSeriesView/TimeSeriesView', () => ({
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	default: function TimeSeriesView() {
+		return <div>Time Series Chart</div>;
+	},
+}));
 
 const frequencyChartContent = 'Frequency chart content';
-jest.mock(
-	'container/LogsExplorerChart',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function LogsExplorerChart() {
-			return <div>{frequencyChartContent}</div>;
-		},
-);
+vi.mock('container/LogsExplorerChart', () => ({
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	default: function LogsExplorerChart() {
+		return <div>{frequencyChartContent}</div>;
+	},
+}));
 
-jest.mock('constants/panelTypes', () => ({
+vi.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
 }));
 
-jest.mock('d3-interpolate', () => ({
-	interpolate: jest.fn(),
+vi.mock('d3-interpolate', () => ({
+	interpolate: vi.fn(),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
 // Mock usePreferenceSync
-jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+vi.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	usePreferenceSync: (): any => ({
 		preferences: {
 			columns: [],
@@ -75,8 +71,8 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		},
 		loading: false,
 		error: null,
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
+		updateColumns: vi.fn(),
+		updateFormatting: vi.fn(),
 	}),
 }));
 
@@ -87,20 +83,15 @@ const logsQueryServerRequest = (): void =>
 		),
 	);
 
+const logsExplorerListRoute =
+	'/logs-explorer/?panelType=list&selectedExplorerView=list';
+
 describe('Logs Explorer Tests', () => {
 	it('Logs Explorer default view test without data', async () => {
 		const { getByRole, queryByText, getByTestId, queryByTestId, container } =
-			render(
-				<MemoryRouter
-					initialEntries={[
-						'/logs-explorer/?panelType=list&selectedExplorerView=list',
-					]}
-				>
-					<PreferenceContextProvider>
-						<LogsExplorer />
-					</PreferenceContextProvider>
-				</MemoryRouter>,
-			);
+			render(<LogsExplorer />, undefined, {
+				initialRoute: logsExplorerListRoute,
+			});
 
 		// by default is hidden, toggle the chart and check it's visibility
 		const histogramToggle = getByRole('switch');
@@ -135,19 +126,13 @@ describe('Logs Explorer Tests', () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryByText, queryByTestId } = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
+			<VirtuosoMockContext.Provider
+				value={{ viewportHeight: 300, itemHeight: 100 }}
 			>
-				<PreferenceContextProvider>
-					<VirtuosoMockContext.Provider
-						value={{ viewportHeight: 300, itemHeight: 100 }}
-					>
-						<LogsExplorer />
-					</VirtuosoMockContext.Provider>
-				</PreferenceContextProvider>
-			</MemoryRouter>,
+				<LogsExplorer />
+			</VirtuosoMockContext.Provider>,
+			undefined,
+			{ initialRoute: logsExplorerListRoute },
 		);
 
 		// check for loading state to be not present
@@ -170,66 +155,60 @@ describe('Logs Explorer Tests', () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryAllByText } = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<QueryBuilderContext.Provider
-					value={{
-						isDefaultQuery: (): boolean => false,
-						currentQuery: {
-							...initialQueriesMap.metrics,
-							builder: {
-								...initialQueriesMap.metrics.builder,
-								queryData: [
-									initialQueryBuilderFormValues,
-									initialQueryBuilderFormValues,
-								],
-								queryTraceOperator: [],
-							},
+			<QueryBuilderContext.Provider
+				value={{
+					isDefaultQuery: (): boolean => false,
+					currentQuery: {
+						...initialQueriesMap.metrics,
+						builder: {
+							...initialQueriesMap.metrics.builder,
+							queryData: [
+								initialQueryBuilderFormValues,
+								initialQueryBuilderFormValues,
+							],
+							queryTraceOperator: [],
 						},
-						setSupersetQuery: jest.fn(),
-						supersetQuery: initialQueriesMap.metrics,
-						stagedQuery: initialQueriesMap.metrics,
-						initialDataSource: null,
-						panelType: PANEL_TYPES.TIME_SERIES,
-						isEnabledQuery: false,
-						lastUsedQuery: 0,
-						handleSetTraceOperatorData: noop,
-						removeAllQueryBuilderEntities: noop,
-						removeTraceOperator: noop,
-						addTraceOperator: noop,
-						setLastUsedQuery: noop,
-						handleSetQueryData: noop,
-						handleSetFormulaData: noop,
-						handleSetQueryItemData: noop,
-						handleSetConfig: noop,
-						removeQueryBuilderEntityByIndex: noop,
-						removeQueryTypeItemByIndex: noop,
-						addNewBuilderQuery: noop,
-						cloneQuery: noop,
-						addNewFormula: noop,
-						addNewQueryItem: noop,
-						redirectWithQueryBuilderData: noop,
-						handleRunQuery: noop,
-						resetQuery: noop,
-						updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
-						updateQueriesData: (): Query => initialQueriesMap.metrics,
-						initQueryBuilderData: noop,
-						handleOnUnitsChange: noop,
-						isStagedQueryUpdated: (): boolean => false,
-					}}
+					},
+					setSupersetQuery: vi.fn(),
+					supersetQuery: initialQueriesMap.metrics,
+					stagedQuery: initialQueriesMap.metrics,
+					initialDataSource: null,
+					panelType: PANEL_TYPES.TIME_SERIES,
+					isEnabledQuery: false,
+					lastUsedQuery: 0,
+					handleSetTraceOperatorData: noop,
+					removeAllQueryBuilderEntities: noop,
+					removeTraceOperator: noop,
+					addTraceOperator: noop,
+					setLastUsedQuery: noop,
+					handleSetQueryData: noop,
+					handleSetFormulaData: noop,
+					handleSetQueryItemData: noop,
+					handleSetConfig: noop,
+					removeQueryBuilderEntityByIndex: noop,
+					removeQueryTypeItemByIndex: noop,
+					addNewBuilderQuery: noop,
+					cloneQuery: noop,
+					addNewFormula: noop,
+					addNewQueryItem: noop,
+					redirectWithQueryBuilderData: noop,
+					handleRunQuery: noop,
+					resetQuery: noop,
+					updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
+					updateQueriesData: (): Query => initialQueriesMap.metrics,
+					initQueryBuilderData: noop,
+					handleOnUnitsChange: noop,
+					isStagedQueryUpdated: (): boolean => false,
+				}}
+			>
+				<VirtuosoMockContext.Provider
+					value={{ viewportHeight: 300, itemHeight: 100 }}
 				>
-					<PreferenceContextProvider>
-						<VirtuosoMockContext.Provider
-							value={{ viewportHeight: 300, itemHeight: 100 }}
-						>
-							<LogsExplorer />
-						</VirtuosoMockContext.Provider>
-					</PreferenceContextProvider>
-				</QueryBuilderContext.Provider>
-			</MemoryRouter>,
+					<LogsExplorer />
+				</VirtuosoMockContext.Provider>
+			</QueryBuilderContext.Provider>,
+			undefined,
+			{ initialRoute: logsExplorerListRoute },
 		);
 
 		const queries = queryAllByText(
@@ -239,17 +218,9 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	it('frequency chart visibility and switch toggle', async () => {
-		const { getByRole, queryByText } = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<PreferenceContextProvider>
-					<LogsExplorer />
-				</PreferenceContextProvider>
-			</MemoryRouter>,
-		);
+		const { getByRole, queryByText } = render(<LogsExplorer />, undefined, {
+			initialRoute: logsExplorerListRoute,
+		});
 
 		// check the presence of Frequency Chart
 		expect(queryByText('Frequency chart')).toBeInTheDocument();

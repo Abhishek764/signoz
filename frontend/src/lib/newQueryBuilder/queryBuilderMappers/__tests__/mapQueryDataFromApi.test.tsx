@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { mapQueryDataFromApi } from '../mapQueryDataFromApi';
 import {
 	compositeQueriesWithFunctions,
@@ -9,7 +11,7 @@ import {
 	stepIntervalUnchanged,
 } from './mapQueryDataFromApiInputs';
 
-jest.mock('uuid', () => ({
+vi.mock('uuid', () => ({
 	v4: (): string => 'test-id',
 }));
 

@@ -3,12 +3,13 @@
 import { Router } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useUrlQueryData from '../useUrlQueryData';
 
 // Mock the useSafeNavigate hook
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: () => ({
 		safeNavigate: mockSafeNavigate,
 	}),
@@ -16,7 +17,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 
 describe('useUrlQueryData', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const renderHookWithRouter = (
@@ -72,7 +73,7 @@ describe('useUrlQueryData', () => {
 
 		it('should handle invalid JSON and return default data', () => {
 			const defaultData = { default: 'value' };
-			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			const { result } = renderHookWithRouter('testKey', defaultData, [
 				'/test?testKey=invalid-json',
@@ -91,7 +92,7 @@ describe('useUrlQueryData', () => {
 
 		it('should handle malformed JSON and return default data', () => {
 			const defaultData = { default: 'value' };
-			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			const { result } = renderHookWithRouter(
 				'testKey',

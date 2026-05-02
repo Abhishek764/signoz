@@ -1,9 +1,14 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramChartOptions';
 import uPlot from 'uplot';
 
-// Mock dependencies
-jest.mock('lib/uPlotLib/plugins/tooltipPlugin', () => jest.fn(() => ({})));
-jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => jest.fn(() => ({})));
+vi.mock('lib/uPlotLib/plugins/tooltipPlugin', () => ({
+	default: vi.fn(() => ({})),
+}));
+vi.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
+	default: vi.fn(() => ({})),
+}));
 
 const mockApiResponse = {
 	data: {
@@ -32,7 +37,7 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 	let originalRequestAnimationFrame: typeof global.requestAnimationFrame;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		originalRequestAnimationFrame = global.requestAnimationFrame;
 	});
 
@@ -41,7 +46,7 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 	});
 
 	it('should set up scroll position tracking in histogram chart ready hook', () => {
-		const mockSetScrollPosition = jest.fn();
+		const mockSetScrollPosition = vi.fn();
 		const options = getUplotHistogramChartOptions({
 			id: TEST_HISTOGRAM_ID,
 			dimensions: mockDimensions,
@@ -52,7 +57,6 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 			setLegendScrollPosition: mockSetScrollPosition,
 		});
 
-		// Create mock chart with legend element
 		const mockChart = {
 			root: document.createElement('div'),
 		} as unknown as uPlot;
@@ -61,14 +65,12 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 		legend.className = 'u-legend';
 		mockChart.root.appendChild(legend);
 
-		const addEventListenerSpy = jest.spyOn(legend, 'addEventListener');
+		const addEventListenerSpy = vi.spyOn(legend, 'addEventListener');
 
-		// Execute ready hook
 		if (options.hooks?.ready) {
 			options.hooks.ready.forEach((hook) => hook?.(mockChart));
 		}
 
-		// Verify that scroll event listener was added and cleanup function was stored
 		expect(addEventListenerSpy).toHaveBeenCalledWith(
 			'scroll',
 			expect.any(Function),
@@ -81,7 +83,7 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 
 	it('should restore histogram chart scroll position when provided', () => {
 		const mockScrollPosition = 50;
-		const mockSetScrollPosition = jest.fn();
+		const mockSetScrollPosition = vi.fn();
 		const options = getUplotHistogramChartOptions({
 			id: TEST_HISTOGRAM_ID,
 			dimensions: mockDimensions,
@@ -92,7 +94,6 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 			setLegendScrollPosition: mockSetScrollPosition,
 		});
 
-		// Create mock chart with legend element
 		const mockChart = {
 			root: document.createElement('div'),
 		} as unknown as uPlot;
@@ -102,16 +103,13 @@ describe('Histogram Chart Options Legend Scroll Position', () => {
 		legend.scrollTop = 0;
 		mockChart.root.appendChild(legend);
 
-		// Mock requestAnimationFrame
-		const mockRequestAnimationFrame = jest.fn((callback) => callback());
+		const mockRequestAnimationFrame = vi.fn((callback) => callback());
 		global.requestAnimationFrame = mockRequestAnimationFrame;
 
-		// Execute ready hook
 		if (options.hooks?.ready) {
 			options.hooks.ready.forEach((hook) => hook?.(mockChart));
 		}
 
-		// Verify that requestAnimationFrame was called and scroll position was restored
 		expect(mockRequestAnimationFrame).toHaveBeenCalledWith(expect.any(Function));
 		expect(legend.scrollTop).toBe(mockScrollPosition);
 	});

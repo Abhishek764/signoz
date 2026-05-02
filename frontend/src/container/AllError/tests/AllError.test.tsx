@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 // eslint-disable-next-line no-restricted-imports
 import { Provider, useSelector } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -20,18 +21,18 @@ import {
 	TAG_FROM_QUERY,
 } from './constants';
 
-jest.mock('hooks/useResourceAttribute', () =>
-	jest.fn(() => ({
+vi.mock('hooks/useResourceAttribute', () => ({
+	default: vi.fn(() => ({
 		queries: [],
 	})),
-);
-
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn(),
 }));
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
+	useSelector: vi.fn(),
+}));
+
+vi.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -77,11 +78,11 @@ const BASE_URL = ENVIRONMENT.baseURL;
 const listErrorsURL = `${BASE_URL}/api/v1/listErrors`;
 const countErrorsURL = `${BASE_URL}/api/v1/countErrors`;
 
-const postListErrorsSpy = jest.fn();
+const postListErrorsSpy = vi.fn();
 
 describe('Exceptions - All Errors', () => {
 	beforeEach(() => {
-		(useSelector as jest.Mock).mockReturnValue({
+		vi.mocked(useSelector).mockReturnValue({
 			maxTime: 1000,
 			minTime: 0,
 			loading: false,

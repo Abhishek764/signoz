@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import LicenseRowDismissibleCallout from '../LicenseRowDismissibleCallout';
 
@@ -19,12 +20,12 @@ const queryDescription = (): HTMLElement | null =>
 			el?.classList?.contains('license-key-callout__description') ?? false,
 	);
 
-jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: jest.fn(),
+vi.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: vi.fn(),
 }));
 
 const mockLicense = (isCloudUser: boolean): void => {
-	(useGetTenantLicense as jest.Mock).mockReturnValue({
+	vi.mocked(useGetTenantLicense).mockReturnValue({
 		isCloudUser,
 		isEnterpriseSelfHostedUser: !isCloudUser,
 		isCommunityUser: false,
@@ -61,7 +62,7 @@ const renderCallout = (
 describe('LicenseRowDismissibleCallout', () => {
 	beforeEach(() => {
 		localStorage.clear();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('callout content per access level', () => {

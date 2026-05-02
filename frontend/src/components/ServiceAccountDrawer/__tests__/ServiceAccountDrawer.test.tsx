@@ -2,12 +2,13 @@ import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual('@signozhq/ui')),
 	DrawerWrapper: ({
 		children,
 		footer,
@@ -23,7 +24,7 @@ jest.mock('@signozhq/ui', () => ({
 				{footer}
 			</div>
 		) : null,
-	toast: { success: jest.fn(), error: jest.fn() },
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
@@ -54,14 +55,14 @@ function renderDrawer(
 ): ReturnType<typeof render> {
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
-			<ServiceAccountDrawer onSuccess={jest.fn()} />
+			<ServiceAccountDrawer onSuccess={vi.fn()} />
 		</NuqsTestingAdapter>,
 	);
 }
 
 describe('ServiceAccountDrawer', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
@@ -112,8 +113,8 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('editing name enables Save; clicking Save sends correct payload and calls onSuccess', async () => {
-		const onSuccess = jest.fn();
-		const updateSpy = jest.fn();
+		const onSuccess = vi.fn();
+		const updateSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -148,8 +149,8 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('changing roles enables Save; clicking Save sends role add request without delete', async () => {
-		const roleSpy = jest.fn();
-		const deleteSpy = jest.fn();
+		const roleSpy = vi.fn();
+		const deleteSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -185,7 +186,7 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('"Delete Service Account" opens confirm dialog; confirming sends delete request', async () => {
-		const deleteSpy = jest.fn();
+		const deleteSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -284,7 +285,7 @@ describe('ServiceAccountDrawer', () => {
 
 describe('ServiceAccountDrawer – save-error UX', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),

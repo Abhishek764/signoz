@@ -1,5 +1,6 @@
-import { UseQueryResult } from 'react-query';
 import { renderHook } from '@testing-library/react';
+import { UseQueryResult } from 'react-query';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
@@ -88,18 +89,16 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 
 describe('useGetMetrics', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
-			.mockReturnValue([
-				{
-					isLoading: false,
-					isError: false,
-					data: {
-						data: MOCK_METRIC_METADATA,
-						status: 'success',
-					},
-				} as UseQueryResult<GetMetricMetadata200, Error>,
-			]);
+		vi.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics').mockReturnValue([
+			{
+				isLoading: false,
+				isError: false,
+				data: {
+					data: MOCK_METRIC_METADATA,
+					status: 'success',
+				},
+			} as UseQueryResult<GetMetricMetadata200, Error>,
+		]);
 	});
 
 	it('should return the correct metrics data', () => {
@@ -112,15 +111,13 @@ describe('useGetMetrics', () => {
 	});
 
 	it('should return array of undefined values of correct length when metrics data is not yet loaded', () => {
-		jest
-			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
-			.mockReturnValue([
-				{
-					isLoading: true,
-					isError: false,
-					data: undefined,
-				} as UseQueryResult<GetMetricMetadata200, Error>,
-			]);
+		vi.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics').mockReturnValue([
+			{
+				isLoading: true,
+				isError: false,
+				data: undefined,
+			} as UseQueryResult<GetMetricMetadata200, Error>,
+		]);
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
 		expect(result.current.metrics[0]).toBeUndefined();

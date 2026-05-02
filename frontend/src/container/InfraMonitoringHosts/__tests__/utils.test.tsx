@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { HostData, TimeSeries } from 'api/infraMonitoring/getHostLists';
+import { describe, expect, it } from 'vitest';
 
 import { hostRenderRowData } from '../table.config';
 import { getHostsQuickFiltersConfig, HostnameCell } from '../utils';

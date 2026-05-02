@@ -3,17 +3,42 @@ import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplor
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import TopErrors from '../Explorer/Domains/DomainDetails/TopErrors';
 import { getTopErrorsQueryPayload } from '../utils';
 
+vi.mock('react-router-dom-v5-compat', async () => {
+	const actual = await vi.importActual<
+		typeof import('react-router-dom-v5-compat')
+	>('react-router-dom-v5-compat');
+	return {
+		...actual,
+		useNavigate: (): ReturnType<typeof vi.fn> => vi.fn(),
+		useLocation: (): {
+			pathname: string;
+			search: string;
+			hash: string;
+			state: null;
+			key: string;
+		} => ({
+			pathname: '/',
+			search: '',
+			hash: '',
+			state: null,
+			key: 'default',
+		}),
+	};
+});
+
 // Mock the EndPointsDropDown component to avoid issues
-jest.mock(
+vi.mock(
 	'../Explorer/Domains/DomainDetails/components/EndPointsDropDown',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(
+		default: vi.fn().mockImplementation(
 			({ setSelectedEndPointName }): JSX.Element => (
 				<div data-testid="endpoints-dropdown-mock">
 					<select
@@ -30,8 +55,8 @@ jest.mock(
 	}),
 );
 
-jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
-	useNavigateToExplorer: jest.fn(),
+vi.mock('components/CeleryTask/useNavigateToExplorer', () => ({
+	useNavigateToExplorer: vi.fn(),
 }));
 
 describe('TopErrors', () => {
@@ -66,10 +91,10 @@ describe('TopErrors', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Mock useNavigateToExplorer
-		(useNavigateToExplorer as jest.Mock).mockReturnValue(jest.fn());
+		(useNavigateToExplorer as Mock).mockReturnValue(vi.fn());
 
 		// Mock V5 API endpoint for top errors
 		server.use(
@@ -179,8 +204,8 @@ describe('TopErrors', () => {
 	});
 
 	it('handles row click correctly', async () => {
-		const navigateMock = jest.fn();
-		(useNavigateToExplorer as jest.Mock).mockReturnValue(navigateMock);
+		const navigateMock = vi.fn();
+		(useNavigateToExplorer as Mock).mockReturnValue(navigateMock);
 
 		const { container } = render(<TopErrors {...mockProps} />);
 

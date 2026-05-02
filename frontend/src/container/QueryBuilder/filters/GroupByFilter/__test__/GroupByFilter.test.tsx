@@ -1,5 +1,15 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -14,8 +24,8 @@ const attributeKeysURL = `${BASE_URL}/api/v3/autocomplete/attribute_keys`;
 
 function setup(
 	overrides?: Partial<React.ComponentProps<typeof GroupByFilter>>,
-): { onChange: jest.Mock } {
-	const onChange = jest.fn();
+): { onChange: Mock } {
+	const onChange = vi.fn();
 	const query = {
 		dataSource: DataSource.METRICS,
 		aggregateAttribute: { key: 'service.name' },
@@ -45,7 +55,7 @@ describe('GroupByFilter', () => {
 		server.resetHandlers();
 		dataSourceCalls.length = 0;
 		callCount = 0;
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 	afterAll(() => {
 		server.close();

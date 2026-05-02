@@ -1,19 +1,20 @@
 import { screen } from '@testing-library/react';
+import type { MockedFunction } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'tests/test-utils';
 
 import ValueGraph from '../index';
 import { getBackgroundColorAndThresholdCheck } from '../utils';
 
-// Mock the utils module
-jest.mock('../utils', () => ({
-	getBackgroundColorAndThresholdCheck: jest.fn(() => ({
+vi.mock('../utils', () => ({
+	getBackgroundColorAndThresholdCheck: vi.fn(() => ({
 		threshold: {} as any,
 		isConflictingThresholds: false,
 	})),
 }));
 
 const mockGetBackgroundColorAndThresholdCheck =
-	getBackgroundColorAndThresholdCheck as jest.MockedFunction<
+	getBackgroundColorAndThresholdCheck as MockedFunction<
 		typeof getBackgroundColorAndThresholdCheck
 	>;
 
@@ -23,7 +24,7 @@ const TEST_ID_VALUE_GRAPH_SUFFIX_UNIT = 'value-graph-suffix-unit';
 
 describe('ValueGraph', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the numeric value correctly', () => {

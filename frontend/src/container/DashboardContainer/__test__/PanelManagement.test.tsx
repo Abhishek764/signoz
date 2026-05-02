@@ -1,4 +1,13 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
+import {
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+	beforeAll,
+	afterAll,
+} from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
 import {
@@ -10,8 +19,13 @@ import {
 import { useAddDynamicVariableToPanels } from '../../../hooks/dashboard/useAddDynamicVariableToPanels';
 import { WidgetSelector } from '../DashboardSettings/DashboardVariableSettings/VariableItem/WidgetSelector';
 
-// Mock scrollIntoView since it's not available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
+beforeAll(() => {
+	window.HTMLElement.prototype.scrollIntoView = vi.fn();
+});
+
+afterAll(() => {
+	window.HTMLElement.prototype.scrollIntoView = undefined as any;
+});
 
 // Constants to avoid duplication
 const CPU_USAGE_TEXT = 'CPU Usage';
@@ -56,56 +70,62 @@ const mockDashboard = {
 	},
 };
 // Mock dependencies
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+vi.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
 		dashboardData: mockDashboard,
 	}),
 }));
 
-jest.mock('constants/queryBuilder', () => ({
-	PANEL_GROUP_TYPES: {
-		ROW: 'row', // Match the actual constant value
-	},
-	PANEL_TYPES: {
-		TIME_SERIES: 'graph',
-		VALUE: 'value',
-		TABLE: 'table',
-		LIST: 'list',
-		TRACE: 'trace',
-		BAR: 'bar',
-		PIE: 'pie',
-		HISTOGRAM: 'histogram',
-		EMPTY_WIDGET: 'EMPTY_WIDGET',
-	},
-	initialQueriesMap: {
-		metrics: {
-			builder: {
-				queryData: [{}],
+vi.mock('constants/queryBuilder', async () => {
+	const actual = await vi.importActual<typeof import('constants/queryBuilder')>(
+		'constants/queryBuilder',
+	);
+	return {
+		...actual,
+		PANEL_GROUP_TYPES: {
+			ROW: 'row',
+		} as typeof actual.PANEL_GROUP_TYPES,
+		PANEL_TYPES: {
+			TIME_SERIES: 'graph',
+			VALUE: 'value',
+			TABLE: 'table',
+			LIST: 'list',
+			TRACE: 'trace',
+			BAR: 'bar',
+			PIE: 'pie',
+			HISTOGRAM: 'histogram',
+			EMPTY_WIDGET: 'EMPTY_WIDGET',
+		} as typeof actual.PANEL_TYPES,
+		initialQueriesMap: {
+			metrics: {
+				builder: {
+					queryData: [{}],
+				},
+			},
+			logs: {
+				builder: {
+					queryData: [{}],
+				},
+			},
+			traces: {
+				builder: {
+					queryData: [{}],
+				},
 			},
 		},
-		logs: {
-			builder: {
-				queryData: [{}],
-			},
-		},
-		traces: {
-			builder: {
-				queryData: [{}],
-			},
-		},
-	},
-}));
+	};
+});
 
-jest.mock('container/GridPanelSwitch/utils', () => ({
+vi.mock('container/GridPanelSwitch/utils', () => ({
 	generateGridTitle: (title: string): string => title || 'Untitled Panel',
 }));
 
 describe('Panel Management Tests', () => {
 	describe('WidgetSelector Component', () => {
-		const mockSetSelectedWidgets = jest.fn();
+		const mockSetSelectedWidgets = vi.fn();
 
 		beforeEach(() => {
-			jest.clearAllMocks();
+			vi.clearAllMocks();
 		});
 
 		it('should display panel titles using generateGridTitle', async () => {
@@ -152,7 +172,7 @@ describe('Panel Management Tests', () => {
 			};
 
 			// Temporarily mock the dashboard
-			jest.doMock('providers/Dashboard/store/useDashboardStore', () => ({
+			vi.doMock('providers/Dashboard/store/useDashboardStore', () => ({
 				useDashboardStore: (): any => ({
 					dashboardData: modifiedDashboard,
 				}),

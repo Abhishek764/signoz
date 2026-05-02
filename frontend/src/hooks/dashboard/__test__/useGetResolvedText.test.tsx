@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderHook } from '@testing-library/react';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { describe, expect, it, vi } from 'vitest';
 
 import useGetResolvedText from '../useGetResolvedText';
 
@@ -8,8 +9,8 @@ import useGetResolvedText from '../useGetResolvedText';
 let mockDashboardVariables: IDashboardVariables = {};
 
 // Mock the useDashboardVariables hook
-jest.mock('hooks/dashboard/useDashboardVariables', () => ({
-	useDashboardVariables: jest.fn(() => ({
+vi.mock('hooks/dashboard/useDashboardVariables', () => ({
+	useDashboardVariables: vi.fn(() => ({
 		dashboardVariables: mockDashboardVariables,
 	})),
 }));

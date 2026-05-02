@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { EvaluationWindowState } from 'container/CreateAlertV2/context/types';
 
@@ -10,7 +11,7 @@ import { createMockEvaluationWindowState } from './testUtils';
 
 const mockEvaluationWindow: EvaluationWindowState =
 	createMockEvaluationWindowState();
-const mockSetEvaluationWindow = jest.fn();
+const mockSetEvaluationWindow = vi.fn();
 
 const EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS =
 	'.evaluation-window-content-list-item';
@@ -19,7 +20,7 @@ const ENTER_VALUE_PLACEHOLDER = 'Enter value';
 const EVALUATION_WINDOW_TEXT = 'EVALUATION WINDOW';
 const LAST_5_MINUTES_TEXT = 'Last 5 minutes';
 
-jest.mock('../EvaluationWindowPopover/EvaluationWindowDetails', () => ({
+vi.mock('../EvaluationWindowPopover/EvaluationWindowDetails', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid={EVALUATION_WINDOW_DETAILS_TEST_ID}>

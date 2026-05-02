@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import type { MockedFunction } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
 import {
 	getDashboardById,
@@ -35,39 +37,64 @@ function DashboardBootstrapWrapper({
 }
 
 interface MockSafeNavigateReturn {
-	safeNavigate: jest.MockedFunction<(url: string) => void>;
+	safeNavigate: MockedFunction<(url: string) => void>;
 }
 
 const DASHBOARD_TEST_ID = 'dashboard-title';
 const DASHBOARD_TITLE_TEXT = 'thor';
 const DASHBOARD_PATH = '/dashboard/4';
+const DASHBOARD_API_URL = new URL(
+	'/api/v1/dashboards/4',
+	process.env.FRONTEND_API_ENDPOINT || 'http://localhost',
+).toString();
 
-const mockSafeNavigate = jest.fn();
+const mockSafeNavigate = vi.fn();
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
+	useLocation: vi.fn(),
 }));
 
-jest.mock(
-	'container/TopNav/DateTimeSelectionV2/index.tsx',
-	() =>
-		function MockDateTimeSelection(): JSX.Element {
-			return <div>MockDateTimeSelection</div>;
-		},
-);
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
+	default: function MockDateTimeSelection(): JSX.Element {
+		return <div>MockDateTimeSelection</div>;
+	},
+}));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): MockSafeNavigateReturn => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
+
+vi.mock('hooks/dashboard/useDashboardBootstrap', () => ({
+	useDashboardBootstrap: vi.fn(),
+}));
+
+function setDashboardData(dashboardData: Dashboard): void {
+	useDashboardStore.setState({
+		dashboardData,
+		layouts: [],
+		panelMap: {},
+		setPanelMap: vi.fn(),
+		setLayouts: vi.fn(),
+		setDashboardData: vi.fn(),
+		columnWidths: {},
+	});
+}
 
 describe('Dashboard landing page actions header tests', () => {
 	beforeEach(() => {
 		mockSafeNavigate.mockClear();
 		sessionStorage.clear();
 		resetDashboard();
+		server.use(
+			rest.get(DASHBOARD_API_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(getDashboardById)),
+			),
+		);
 	});
 
 	it('unlock dashboard should be disabled for integrations created dashboards', async () => {
@@ -75,7 +102,8 @@ describe('Dashboard landing page actions header tests', () => {
 			pathname: `${process.env.FRONTEND_API_ENDPOINT}${DASHBOARD_PATH}`,
 			search: '',
 		};
-		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+		vi.mocked(useLocation).mockReturnValue(mockLocation as any);
+		setDashboardData(getDashboardById.data as unknown as Dashboard);
 		const { getByTestId } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
 				<DashboardBootstrapWrapper dashboardId="4">
@@ -111,12 +139,8 @@ describe('Dashboard landing page actions header tests', () => {
 			pathname: `${process.env.FRONTEND_API_ENDPOINT}${DASHBOARD_PATH}`,
 			search: '',
 		};
-		(useLocation as jest.Mock).mockReturnValue(mockLocation);
-		server.use(
-			rest.get('http://localhost/api/v1/dashboards/4', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json(getNonIntegrationDashboardById)),
-			),
-		);
+		vi.mocked(useLocation).mockReturnValue(mockLocation as any);
+		setDashboardData(getNonIntegrationDashboardById.data as unknown as Dashboard);
 		const { getByTestId } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
 				<DashboardBootstrapWrapper dashboardId="4">
@@ -154,7 +178,8 @@ describe('Dashboard landing page actions header tests', () => {
 			search: '',
 		};
 
-		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+		vi.mocked(useLocation).mockReturnValue(mockLocation as any);
+		setDashboardData(getDashboardById.data as unknown as Dashboard);
 
 		const { getByText } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
@@ -193,17 +218,9 @@ describe('Dashboard landing page actions header tests', () => {
 			search: '',
 		};
 
-		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+		vi.mocked(useLocation).mockReturnValue(mockLocation as any);
 
-		useDashboardStore.setState({
-			dashboardData: getDashboardById.data as unknown as Dashboard,
-			layouts: [],
-			panelMap: {},
-			setPanelMap: jest.fn(),
-			setLayouts: jest.fn(),
-			setDashboardData: jest.fn(),
-			columnWidths: {},
-		});
+		setDashboardData(getDashboardById.data as unknown as Dashboard);
 
 		const { getByText } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>

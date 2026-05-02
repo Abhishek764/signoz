@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Highlights from '../Highlights';
 import { formatTimestampToReadableDate } from '../utils';
 import { getMockMetricHighlightsData, MOCK_METRIC_NAME } from './testUtlls';
 
-const useGetMetricHighlightsMock = jest.spyOn(
+const useGetMetricHighlightsMock = vi.spyOn(
 	metricsExplorerHooks,
 	'useGetMetricHighlights',
 );

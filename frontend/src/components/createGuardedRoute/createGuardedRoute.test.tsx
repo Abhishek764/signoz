@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import type { RouteComponentProps } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import {
 	AuthtypesGettableTransactionDTO,
 	AuthtypesTransactionDTO,
@@ -10,6 +11,12 @@ import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';
 
 import { createGuardedRoute } from './createGuardedRoute';
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
 
 const BASE_URL = ENVIRONMENT.baseURL || '';
 const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;

@@ -6,6 +6,14 @@ import {
 } from 'mocks-server/__mockdata__/licenses';
 import { act, render, screen, getAppContextMock } from 'tests/test-utils';
 import APIError from 'types/api/error';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('constants/env', () => ({
+	ENVIRONMENT: {
+		baseURL: 'http://localhost',
+		wsURL: '',
+	},
+}));
 import {
 	LicensePlatform,
 	LicenseResModel,
@@ -17,15 +25,13 @@ import BillingContainer from './BillingContainer';
 
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
-describe('BillingContainer', () => {
-	jest.setTimeout(30000);
-
+describe('BillingContainer', { timeout: 30000 }, () => {
 	it('Component should render', async () => {
 		render(<BillingContainer />);
 
@@ -59,12 +65,12 @@ describe('BillingContainer', () => {
 
 	describe('Trial scenarios', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2023-10-20'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2023-10-20'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('OnTrail', async () => {
@@ -77,7 +83,7 @@ describe('BillingContainer', () => {
 			);
 
 			// If the component schedules any setTimeout on mount, flush them:
-			jest.runOnlyPendingTimers();
+			vi.runOnlyPendingTimers();
 
 			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();

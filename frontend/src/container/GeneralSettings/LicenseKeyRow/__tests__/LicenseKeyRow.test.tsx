@@ -1,18 +1,20 @@
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import type { Mock } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import LicenseKeyRow from '../LicenseKeyRow';
 
-const mockCopyToClipboard = jest.fn();
+const mockCopyToClipboard = vi.fn();
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	__esModule: true,
-	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopyToClipboard],
+	useCopyToClipboard: (): [unknown, Mock] => [null, mockCopyToClipboard],
 }));
 
-const mockToastSuccess = jest.fn();
+const mockToastSuccess = vi.fn();
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -20,7 +22,7 @@ jest.mock('@signozhq/ui', () => ({
 
 describe('LicenseKeyRow', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders nothing when activeLicense key is absent', () => {

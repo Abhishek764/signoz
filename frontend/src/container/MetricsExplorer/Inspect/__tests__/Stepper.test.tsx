@@ -1,14 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Stepper from '../Stepper';
 import { InspectionStep } from '../types';
 
 describe('Stepper', () => {
-	const mockResetInspection = jest.fn();
+	const mockResetInspection = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders welcome message', () => {

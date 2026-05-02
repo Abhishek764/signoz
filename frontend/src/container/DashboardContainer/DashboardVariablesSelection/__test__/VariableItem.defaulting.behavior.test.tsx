@@ -1,12 +1,11 @@
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
-
-import '@testing-library/jest-dom/extend-expect';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import VariableItem from '../VariableItem';
 
-const mockOnValueUpdate = jest.fn();
+const mockOnValueUpdate = vi.fn();
 
 const TEST_VARIABLE_ID = 'test_variable';
 const VARIABLE_SELECT_TESTID = 'variable-select';
@@ -28,7 +27,7 @@ const renderVariableItem = (
 
 describe('VariableItem Default Value Selection Behavior', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('Single Select Variables', () => {

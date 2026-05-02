@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { Dimensions } from 'hooks/useDimensions';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 

@@ -1,10 +1,39 @@
 import { render, screen } from '@testing-library/react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import Editor from './index';
 
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn(),
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: vi.fn(),
+}));
+
+vi.mock('@monaco-editor/react', () => ({
+	default: ({ height }: { height?: string }): JSX.Element => (
+		<section
+			style={{
+				display: 'flex',
+				position: 'relative',
+				textAlign: 'initial',
+				width: '100%',
+				height,
+			}}
+		>
+			<div
+				style={{
+					display: 'flex',
+					height: '100%',
+					width: '100%',
+					justifyContent: 'center',
+					alignItems: 'center',
+				}}
+			>
+				Loading...
+			</div>
+			<div style={{ width: '100%', display: 'none' }} />
+		</section>
+	),
 }));
 
 describe('Editor', () => {
@@ -34,7 +63,7 @@ describe('Editor', () => {
 	});
 
 	it('renders with dark mode theme', () => {
-		(useIsDarkMode as jest.Mock).mockImplementation(() => true);
+		(useIsDarkMode as Mock).mockImplementation(() => true);
 
 		const { container } = render(<Editor value="dark mode text" />);
 
@@ -42,7 +71,7 @@ describe('Editor', () => {
 	});
 
 	it('renders with light mode theme', () => {
-		(useIsDarkMode as jest.Mock).mockImplementation(() => false);
+		(useIsDarkMode as Mock).mockImplementation(() => false);
 
 		const { container } = render(<Editor value="light mode text" />);
 

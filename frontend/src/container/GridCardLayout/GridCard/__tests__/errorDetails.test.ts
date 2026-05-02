@@ -1,4 +1,5 @@
 import APIError from 'types/api/error';
+import { describe, expect, it } from 'vitest';
 
 import { errorDetails } from '../utils';
 

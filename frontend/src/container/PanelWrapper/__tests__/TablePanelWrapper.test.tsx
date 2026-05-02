@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { render } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';

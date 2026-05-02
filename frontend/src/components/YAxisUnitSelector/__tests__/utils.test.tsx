@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { YAxisCategoryNames } from '../constants';
 import { UniversalYAxisUnit, YAxisCategory } from '../types';
 import {

@@ -3,17 +3,15 @@ import { getLocalStorageDashboardVariables } from 'hooks/dashboard/useDashboardF
 import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-jest.mock('hooks/dashboard/useDashboardFromLocalStorage');
-jest.mock('hooks/dashboard/useVariablesFromUrl');
+vi.mock('hooks/dashboard/useDashboardFromLocalStorage');
+vi.mock('hooks/dashboard/useVariablesFromUrl');
 
-const mockGetLocalStorageDashboardVariables =
-	getLocalStorageDashboardVariables as jest.MockedFunction<
-		typeof getLocalStorageDashboardVariables
-	>;
-const mockUseVariablesFromUrl = useVariablesFromUrl as jest.MockedFunction<
-	typeof useVariablesFromUrl
->;
+const mockGetLocalStorageDashboardVariables = vi.mocked(
+	getLocalStorageDashboardVariables,
+);
+const mockUseVariablesFromUrl = vi.mocked(useVariablesFromUrl);
 
 const makeVariable = (
 	overrides: Partial<IDashboardVariable> = {},
@@ -50,8 +48,8 @@ const setupHook = (
 	mockGetLocalStorageDashboardVariables.mockReturnValue(currentDashboard as any);
 	mockUseVariablesFromUrl.mockReturnValue({
 		getUrlVariables: () => urlVariables,
-		setUrlVariables: jest.fn(),
-		updateUrlVariable: jest.fn(),
+		setUrlVariables: vi.fn(),
+		updateUrlVariable: vi.fn(),
 	});
 
 	const { result } = renderHook(() => useTransformDashboardVariables('dash-1'));
@@ -59,7 +57,9 @@ const setupHook = (
 };
 
 describe('useTransformDashboardVariables', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
 
 	describe('order assignment', () => {
 		it('assigns order starting from 0 to variables that have none', () => {

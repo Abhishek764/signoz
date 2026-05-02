@@ -1,11 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { TimezoneContextType } from 'providers/Timezone';
 import { Span } from 'types/api/trace/getTraceV2';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SpanHoverCard from '../SpanHoverCard';
 
 // Mock timezone provider so SpanHoverCard can use useTimezone without a real context
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	__esModule: true,
 	useTimezone: (): TimezoneContextType => ({
 		timezone: {
@@ -20,18 +21,18 @@ jest.mock('providers/Timezone', () => ({
 			offset: 'UTC',
 			searchIndex: 'UTC',
 		},
-		updateTimezone: jest.fn(),
-		formatTimezoneAdjustedTimestamp: jest.fn(() => 'mock-date'),
+		updateTimezone: vi.fn(),
+		formatTimezoneAdjustedTimestamp: vi.fn(() => 'mock-date'),
 		isAdaptationEnabled: true,
-		setIsAdaptationEnabled: jest.fn(),
+		setIsAdaptationEnabled: vi.fn(),
 	}),
 }));
 
 // Mock dayjs for testing, including timezone helpers used in timezoneUtils
-jest.mock('dayjs', () => {
+vi.mock('dayjs', () => {
 	const mockDayjsInstance: any = {};
 
-	mockDayjsInstance.format = jest.fn((formatString: string) =>
+	mockDayjsInstance.format = vi.fn((formatString: string) =>
 		// Match the DD_MMM_YYYY_HH_MM_SS format: 'DD MMM YYYY, HH:mm:ss'
 		formatString === 'DD MMM YYYY, HH:mm:ss'
 			? '15 Mar 2024, 14:23:45'
@@ -39,18 +40,21 @@ jest.mock('dayjs', () => {
 	);
 
 	// Support chaining: dayjs().tz(timezone).format(...) and dayjs().tz(timezone).utcOffset()
-	mockDayjsInstance.tz = jest.fn(() => mockDayjsInstance);
-	mockDayjsInstance.utcOffset = jest.fn(() => 0);
+	mockDayjsInstance.tz = vi.fn(() => mockDayjsInstance);
+	mockDayjsInstance.utcOffset = vi.fn(() => 0);
 
-	const mockDayjs = jest.fn(() => mockDayjsInstance);
+	const mockDayjs = vi.fn(() => mockDayjsInstance);
 
 	Object.assign(mockDayjs, {
-		extend: jest.fn(),
+		extend: vi.fn(),
 		// Support dayjs.tz.guess()
-		tz: { guess: jest.fn(() => 'UTC') },
+		tz: { guess: vi.fn(() => 'UTC') },
 	});
 
-	return mockDayjs;
+	return {
+		__esModule: true,
+		default: mockDayjs,
+	};
 });
 
 const HOVER_ELEMENT_ID = 'hover-element';
@@ -99,11 +103,11 @@ const mockTraceMetadata = {
 
 describe('SpanHoverCard', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('renders child element correctly', () => {
@@ -134,7 +138,7 @@ describe('SpanHoverCard', () => {
 
 		// Advance time by 0.5 seconds
 		act(() => {
-			jest.advanceTimersByTime(200);
+			vi.advanceTimersByTime(200);
 		});
 
 		// Now popover should appear
@@ -153,13 +157,13 @@ describe('SpanHoverCard', () => {
 		// Quick hover and unhover (less than the 0.2s delay)
 		fireEvent.mouseEnter(hoverElement);
 		act(() => {
-			jest.advanceTimersByTime(100); // Only 0.1 seconds
+			vi.advanceTimersByTime(100); // Only 0.1 seconds
 		});
 		fireEvent.mouseLeave(hoverElement);
 
 		// Advance past the full delay
 		act(() => {
-			jest.advanceTimersByTime(400);
+			vi.advanceTimersByTime(400);
 		});
 
 		// Popover should not appear
@@ -178,7 +182,7 @@ describe('SpanHoverCard', () => {
 		// Hover and wait for popover
 		fireEvent.mouseEnter(hoverElement);
 		act(() => {
-			jest.advanceTimersByTime(500);
+			vi.advanceTimersByTime(500);
 		});
 
 		// Check that popover shows span operation name in title
@@ -208,7 +212,7 @@ describe('SpanHoverCard', () => {
 		// Hover and wait for popover
 		fireEvent.mouseEnter(hoverElement);
 		act(() => {
-			jest.advanceTimersByTime(500);
+			vi.advanceTimersByTime(500);
 		});
 
 		// Verify the DD MMM YYYY, HH:mm:ss format is displayed
@@ -232,7 +236,7 @@ describe('SpanHoverCard', () => {
 		// Hover and wait for popover
 		fireEvent.mouseEnter(hoverElement);
 		act(() => {
-			jest.advanceTimersByTime(500);
+			vi.advanceTimersByTime(500);
 		});
 
 		// Check relative time display
@@ -256,7 +260,7 @@ describe('SpanHoverCard', () => {
 		// Hover and wait for popover
 		fireEvent.mouseEnter(hoverElement);
 		act(() => {
-			jest.advanceTimersByTime(500);
+			vi.advanceTimersByTime(500);
 		});
 
 		expect(screen.getByText('Events:')).toBeInTheDocument();
@@ -284,7 +288,7 @@ describe('SpanHoverCard', () => {
 
 		// Should appear after delay
 		act(() => {
-			jest.advanceTimersByTime(500);
+			vi.advanceTimersByTime(500);
 		});
 		expect(screen.getByText('Duration:')).toBeInTheDocument();
 	});

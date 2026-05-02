@@ -1,3 +1,5 @@
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -13,10 +15,10 @@ const DIMMED_SPAN_CLASS = 'dimmed-span';
 const SELECTED_NON_MATCHING_SPAN_CLASS = 'selected-non-matching-span';
 
 // Mock the hooks
-jest.mock('hooks/useUrlQuery');
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	Badge: jest.fn(),
+vi.mock('hooks/useUrlQuery');
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
+	Badge: vi.fn(),
 }));
 
 const mockSpan: Span = {
@@ -50,24 +52,24 @@ const mockTraceMetadata = {
 	hasMissingSpans: false,
 };
 
-const mockSafeNavigate = jest.fn();
+const mockSafeNavigate = vi.fn();
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
 describe('SpanDuration', () => {
-	const mockSetSelectedSpan = jest.fn();
-	const mockUrlQuerySet = jest.fn();
-	const mockUrlQueryGet = jest.fn();
+	const mockSetSelectedSpan = vi.fn();
+	const mockUrlQuerySet = vi.fn();
+	const mockUrlQueryGet = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Mock URL query hook
-		(useUrlQuery as jest.Mock).mockReturnValue({
+		(useUrlQuery as Mock).mockReturnValue({
 			set: mockUrlQuerySet,
 			get: mockUrlQueryGet,
 			toString: () => 'spanId=test-span-id',
@@ -75,7 +77,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('calls handleSpanClick when clicked', () => {
-		const mockHandleSpanClick = jest.fn();
+		const mockHandleSpanClick = vi.fn();
 
 		render(
 			<SpanDuration

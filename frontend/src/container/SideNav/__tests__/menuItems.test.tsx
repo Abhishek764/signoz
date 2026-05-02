@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { getUserSettingsDropdownMenuItems } from 'container/SideNav/menuItems';
 
 const BASE_PARAMS = {

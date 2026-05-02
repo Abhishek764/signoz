@@ -1,8 +1,9 @@
 import { render, screen, userEvent } from 'tests/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 
 import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 
-jest.mock('utils/basePath', () => ({
+vi.mock('utils/basePath', () => ({
 	getBasePath: (): string => '/',
 	withBasePath: (path: string): string => path,
 	getAbsoluteUrl: (path: string): string => `https://test.signoz.io${path}`,
@@ -42,9 +43,9 @@ describe('CancelSubscriptionBanner', () => {
 
 	it('sends mailto to cloud-support with correct subject on Contact Support', async () => {
 		const realCreateElement = document.createElement.bind(document);
-		const mockClick = jest.fn();
+		const mockClick = vi.fn();
 		const mockAnchor = { href: '', click: mockClick };
-		jest.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+		vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
 			if (tag === 'a') {
 				return mockAnchor as unknown as HTMLAnchorElement;
 			}
@@ -63,6 +64,6 @@ describe('CancelSubscriptionBanner', () => {
 		expect(mockAnchor.href).toContain('Cancel%20My%20SigNoz%20Subscription');
 		expect(mockClick).toHaveBeenCalledTimes(1);
 
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 });

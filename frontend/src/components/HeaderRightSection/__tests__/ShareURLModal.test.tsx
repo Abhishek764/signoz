@@ -1,6 +1,6 @@
 // Mock dependencies before imports
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { render, screen } from '@testing-library/react';
@@ -12,35 +12,39 @@ import GetMinMax from 'lib/getMinMax';
 
 import ShareURLModal from '../ShareURLModal';
 
-jest.mock('api/common/logEvent', () => ({
+const hoistedReduxMocks = vi.hoisted(() => ({
+	useSelectorMock: vi.fn(),
+}));
+
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
-	matchPath: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
+	useLocation: vi.fn(),
+	matchPath: vi.fn(),
 }));
 
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn(),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual<typeof import('react-redux')>('react-redux')),
+	useSelector: hoistedReduxMocks.useSelectorMock,
 }));
 
-jest.mock('lib/getMinMax', () => ({
+vi.mock('lib/getMinMax', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('react-use', () => ({
-	...jest.requireActual('react-use'),
-	useCopyToClipboard: jest.fn(),
+vi.mock('react-use', async () => ({
+	...(await vi.importActual('react-use')),
+	useCopyToClipboard: vi.fn(),
 }));
 
 // Mock window.location
@@ -53,29 +57,29 @@ Object.defineProperty(window, 'location', {
 	writable: true,
 });
 
-const mockLogEvent = logEvent as jest.Mock;
-const mockUseLocation = useLocation as jest.Mock;
-const mockUseUrlQuery = useUrlQuery as jest.Mock;
-const mockUseSelector = useSelector as jest.Mock;
-const mockGetMinMax = GetMinMax as jest.Mock;
-const mockUseCopyToClipboard = useCopyToClipboard as jest.Mock;
-const mockMatchPath = matchPath as jest.Mock;
+const mockLogEvent = logEvent as Mock;
+const mockUseLocation = useLocation as Mock;
+const mockUseUrlQuery = useUrlQuery as Mock;
+const mockUseSelector = hoistedReduxMocks.useSelectorMock as Mock;
+const mockGetMinMax = GetMinMax as Mock;
+const mockUseCopyToClipboard = useCopyToClipboard as Mock;
+const mockMatchPath = matchPath as Mock;
 
 const mockUrlQuery = {
-	get: jest.fn(),
-	set: jest.fn(),
-	delete: jest.fn(),
-	toString: jest.fn(() => 'param=value'),
+	get: vi.fn(),
+	set: vi.fn(),
+	delete: vi.fn(),
+	toString: vi.fn(() => 'param=value'),
 };
 
-const mockHandleCopyToClipboard = jest.fn();
+const mockHandleCopyToClipboard = vi.fn();
 
 const TEST_PATH = '/test-path';
 const ENABLE_ABSOLUTE_TIME_TEXT = 'Enable absolute time';
 
 describe('ShareURLModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		mockUseLocation.mockReturnValue({
 			pathname: TEST_PATH,

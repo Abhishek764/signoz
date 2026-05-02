@@ -1,3 +1,6 @@
+import { getLegend } from 'lib/dashboard/getQueryResults';
+import getLabelName from 'lib/getLabelName';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Widgets } from 'types/api/dashboard/getAll';
 import {
 	MetricRangePayloadProps,
@@ -8,36 +11,34 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { PanelMode } from '../../types';
 import { prepareChartData, prepareUPlotConfig } from '../utils';
 
-jest.mock(
+vi.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
 	() => ({
-		getStoredSeriesVisibility: jest.fn(),
+		getStoredSeriesVisibility: vi.fn(),
 	}),
 );
 
-jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
+vi.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
 	__esModule: true,
-	default: jest.fn().mockReturnValue({ name: 'onClickPlugin' }),
+	default: vi.fn().mockReturnValue({ name: 'onClickPlugin' }),
 }));
 
-jest.mock('lib/dashboard/getQueryResults', () => ({
-	getLegend: jest.fn(
+vi.mock('lib/dashboard/getQueryResults', () => ({
+	getLegend: vi.fn(
 		(_queryData: unknown, _query: unknown, labelName: string) =>
 			`legend-${labelName}`,
 	),
 }));
 
-jest.mock('lib/getLabelName', () => ({
+vi.mock('lib/getLabelName', () => ({
 	__esModule: true,
-	default: jest.fn(
+	default: vi.fn(
 		(_metric: unknown, _queryName: string, _legend: string) => 'baseLabel',
 	),
 }));
 
-const getLegendMock = jest.requireMock('lib/dashboard/getQueryResults')
-	.getLegend as jest.Mock;
-const getLabelNameMock = jest.requireMock('lib/getLabelName')
-	.default as jest.Mock;
+const getLegendMock = vi.mocked(getLegend);
+const getLabelNameMock = vi.mocked(getLabelName);
 
 const createApiResponse = (
 	result: MetricRangePayloadProps['data']['result'] = [],
@@ -68,7 +69,7 @@ const defaultTimezone = {
 
 describe('TimeSeriesPanel utils', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		getLabelNameMock.mockReturnValue('baseLabel');
 		getLegendMock.mockImplementation(
 			(_queryData: unknown, _query: unknown, labelName: string) =>
@@ -141,8 +142,8 @@ describe('TimeSeriesPanel utils', () => {
 			widget: createWidget(),
 			isDarkMode: true,
 			currentQuery: {} as Query,
-			onClick: jest.fn(),
-			onDragSelect: jest.fn(),
+			onClick: vi.fn(),
+			onDragSelect: vi.fn(),
 			apiResponse: createApiResponse(),
 			timezone: defaultTimezone,
 			panelMode: PanelMode.DASHBOARD_VIEW,

@@ -1,34 +1,54 @@
-import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import CreateAlertPage from 'pages/CreateAlert';
 import { act, fireEvent, render } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { Mock } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { ALERT_TYPE_URL_MAP } from './constants';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string; search: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERTS_NEW}`,
-		search: 'ruleType=anomaly_rule',
-	}),
-}));
-
-window.ResizeObserver =
-	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+vi.mock('uplot', () => {
+	const paths = {
+		spline: vi.fn(),
+		bars: vi.fn(),
+	};
+	const UplotConstructor: any = vi.fn(() => ({
+		paths,
 	}));
+	UplotConstructor.paths = paths;
+	return { default: UplotConstructor };
+});
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('container/FormAlertRules/ChartPreview', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
+
+vi.mock('container/MetricsExplorer/Explorer/utils', async () => {
+	const actual = await vi.importActual<
+		typeof import('container/MetricsExplorer/Explorer/utils')
+	>('container/MetricsExplorer/Explorer/utils');
+	return {
+		...actual,
+		useGetMetrics: (): {
+			metrics: never[];
+			isLoading: boolean;
+			isError: boolean;
+		} => ({
+			metrics: [],
+			isLoading: false,
+			isError: false,
+		}),
+	};
+});
+
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
-jest
+vi
 	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
 	.mockReturnValue({
 		matchType: '3',
@@ -37,21 +57,21 @@ jest
 		targetUnit: 'rpm',
 	});
 
-describe('Anomaly Alert Documentation Redirection', () => {
-	let mockWindowOpen: jest.Mock;
+let mockWindowOpen: Mock;
 
+describe('Anomaly Alert Documentation Redirection', () => {
 	beforeAll(() => {
-		mockWindowOpen = jest.fn();
+		mockWindowOpen = vi.fn();
 		window.open = mockWindowOpen;
 	});
 
 	it('should handle anomaly alert documentation redirection correctly', () => {
 		const { getByRole } = render(
-			<MemoryRouter initialEntries={['/alerts/new']}>
-				<Route path={ROUTES.ALERTS_NEW}>
-					<CreateAlertPage />
-				</Route>
-			</MemoryRouter>,
+			<CreateAlertPage />,
+			{},
+			{
+				initialRoute: `${ROUTES.ALERTS_NEW}?ruleType=anomaly_rule`,
+			},
 		);
 
 		const alertType = AlertTypes.ANOMALY_BASED_ALERT;
@@ -68,5 +88,5 @@ describe('Anomaly Alert Documentation Redirection', () => {
 			ALERT_TYPE_URL_MAP[alertType].creation,
 			'_blank',
 		);
-	});
+	}, 15_000);
 });

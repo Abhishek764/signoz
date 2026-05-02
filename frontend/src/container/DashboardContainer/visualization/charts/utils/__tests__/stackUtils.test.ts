@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { AlignedData } from 'uplot';
 
 import { getInitialStackedBands, stack } from '../stackUtils';

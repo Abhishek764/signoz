@@ -1,5 +1,4 @@
-// Ungate feature flag for all tests in this file
-jest.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
+vi.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
 
 import {
 	customRoleResponse,
@@ -8,14 +7,15 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import RoleDetailsPage from '../RoleDetailsPage';
 
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const MANAGED_ROLE_ID = '019c24aa-2248-756f-9833-984f1ab63819';
 
-const rolesApiBase = 'http://localhost/api/v1/roles';
-const authzResourcesUrl = 'http://localhost/api/v1/authz/resources';
+const rolesApiBase = '*/api/v1/roles';
+const authzResourcesUrl = '*/api/v1/authz/resources';
 
 const authzResourcesResponse = {
 	status: 'success',
@@ -52,7 +52,7 @@ function setupDefaultHandlers(roleId = CUSTOM_ROLE_ID): void {
 }
 
 afterEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 	server.resetHandlers();
 });
 
@@ -116,7 +116,7 @@ describe.skip('RoleDetailsPage', () => {
 	});
 
 	it('edit flow: modal opens pre-filled and calls PATCH on save and verify', async () => {
-		const patchSpy = jest.fn();
+		const patchSpy = vi.fn();
 		let description = customRoleResponse.data.description;
 		server.use(
 			rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) =>
@@ -192,7 +192,7 @@ describe.skip('RoleDetailsPage', () => {
 	});
 
 	it('delete flow: modal shows role name, DELETE called on confirm', async () => {
-		const deleteSpy = jest.fn();
+		const deleteSpy = vi.fn();
 
 		setupDefaultHandlers();
 		server.use(
@@ -273,7 +273,7 @@ describe.skip('RoleDetailsPage', () => {
 		});
 
 		it('set scope to All → patchObjects additions: ["*"], deletions: null', async () => {
-			const patchSpy = jest.fn();
+			const patchSpy = vi.fn();
 
 			setupDefaultHandlers();
 			server.use(
@@ -316,7 +316,7 @@ describe.skip('RoleDetailsPage', () => {
 		});
 
 		it('set scope to Only selected with IDs → patchObjects additions contain those IDs', async () => {
-			const patchSpy = jest.fn();
+			const patchSpy = vi.fn();
 
 			setupDefaultHandlers();
 			server.use(
@@ -364,7 +364,7 @@ describe.skip('RoleDetailsPage', () => {
 		});
 
 		it('existing All scope changed to Only selected (empty) → patchObjects deletions: ["*"], additions: null', async () => {
-			const patchSpy = jest.fn();
+			const patchSpy = vi.fn();
 
 			setupDefaultHandlers();
 			server.use(

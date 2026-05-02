@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
@@ -6,29 +7,29 @@ import { LicenseEvent } from 'types/api/licensesV3/getActive';
 
 import EntityMetrics from '../EntityMetrics';
 
-jest.mock('lib/uPlotLib/getUplotChartOptions', () => ({
-	getUPlotChartOptions: jest.fn().mockReturnValue({}),
+vi.mock('lib/uPlotLib/getUplotChartOptions', () => ({
+	getUPlotChartOptions: vi.fn().mockReturnValue({}),
 }));
 
-jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
-	getUPlotChartData: jest.fn().mockReturnValue([]),
+vi.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
+	getUPlotChartData: vi.fn().mockReturnValue([]),
 }));
 
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
 }));
 
-jest.mock('components/Uplot', () => ({
+vi.mock('components/Uplot', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="uplot-chart">Uplot Chart</div>,
 }));
 
-jest.mock('container/InfraMonitoringK8s/commonUtils', () => ({
+vi.mock('container/InfraMonitoringK8s/commonUtils', () => ({
 	__esModule: true,
-	getMetricsTableData: jest.fn().mockReturnValue([
+	getMetricsTableData: vi.fn().mockReturnValue([
 		{
 			rows: [
 				{ data: { timestamp: '2024-01-15T10:00:00Z', value: '42.5' } },
@@ -40,40 +41,40 @@ jest.mock('container/InfraMonitoringK8s/commonUtils', () => ({
 			],
 		},
 	]),
-	MetricsTable: jest
+	MetricsTable: vi
 		.fn()
 		.mockImplementation(
 			(): JSX.Element => <div data-testid="metrics-table">Metrics Table</div>,
 		),
 }));
 
-const mockUseQueries = jest.fn();
-const mockUseQuery = jest.fn();
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+const mockUseQueries = vi.fn();
+const mockUseQuery = vi.fn();
+vi.mock('react-query', async () => ({
+	...(await vi.importActual<typeof import('react-query')>('react-query')),
 	useQueries: (queryConfigs: any[]): any[] => mockUseQueries(queryConfigs),
 	useQuery: (config: any): any => mockUseQuery(config),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('hooks/useDimensions', () => ({
+vi.mock('hooks/useDimensions', () => ({
 	useResizeObserver: (): { width: number; height: number } => ({
 		width: 800,
 		height: 600,
 	}),
 }));
 
-jest.mock('hooks/useMultiIntersectionObserver', () => ({
+vi.mock('hooks/useMultiIntersectionObserver', () => ({
 	useMultiIntersectionObserver: (count: number): any => ({
 		visibilities: new Array(count).fill(true),
-		setElement: jest.fn(),
+		setElement: vi.fn(),
 	}),
 }));
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -120,7 +121,7 @@ const mockEntityWidgetInfo = [
 	},
 ];
 
-const mockGetEntityQueryPayload = jest.fn().mockReturnValue([
+const mockGetEntityQueryPayload = vi.fn().mockReturnValue([
 	{
 		query: 'cpu_usage',
 		start: 1705315200,
@@ -138,7 +139,7 @@ const mockTimeRange = {
 	endTime: 1705318800,
 };
 
-const mockHandleTimeChange = jest.fn();
+const mockHandleTimeChange = vi.fn();
 
 const mockQueries = [
 	{
@@ -301,7 +302,7 @@ const renderEntityMetrics = (overrides = {}): any => {
 
 describe('EntityMetrics', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseQueries.mockReturnValue(mockQueries);
 		mockUseQuery.mockReturnValue({
 			data: {
@@ -315,7 +316,7 @@ describe('EntityMetrics', () => {
 			},
 			isLoading: false,
 			isError: false,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 		});
 	});
 

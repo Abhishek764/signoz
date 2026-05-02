@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { getUPlotChartData } from '../../../lib/uPlotLib/utils/getUplotChartData';
 import {
 	BarNonStackedChartData,

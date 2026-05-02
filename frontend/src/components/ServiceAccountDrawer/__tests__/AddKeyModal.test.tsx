@@ -1,6 +1,7 @@
 import { toast } from '@signozhq/ui';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	render,
 	screen,
@@ -11,22 +12,28 @@ import {
 
 import AddKeyModal from '../AddKeyModal';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	toast: { success: jest.fn(), error: jest.fn() },
+const { mockCopyToClipboard, mockCopyState } = vi.hoisted(() => {
+	const copyFn = vi.fn();
+	const copyState = { value: undefined, error: undefined };
+	return {
+		mockCopyToClipboard: copyFn,
+		mockCopyState: copyState,
+	};
+});
+
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockCopyToClipboard = jest.fn();
-const mockCopyState = { value: undefined, error: undefined };
-
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	useCopyToClipboard: (): [typeof mockCopyState, typeof mockCopyToClipboard] => [
 		mockCopyState,
 		mockCopyToClipboard,
 	],
 }));
 
-const mockToast = jest.mocked(toast);
+const mockToast = vi.mocked(toast);
 
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys';
 
@@ -53,7 +60,7 @@ function renderModal(): ReturnType<typeof render> {
 
 describe('AddKeyModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockCopyToClipboard.mockClear();
 		server.use(
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) =>

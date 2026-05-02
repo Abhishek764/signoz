@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
@@ -8,11 +10,11 @@ import EvaluationCadencePreview, {
 } from '../EvaluationCadence/EvaluationCadencePreview';
 import { createMockAlertContextState } from './testUtils';
 
-jest
+vi
 	.spyOn(alertState, 'useCreateAlertState')
 	.mockReturnValue(createMockAlertContextState());
 
-const mockSetIsOpen = jest.fn();
+const mockSetIsOpen = vi.fn();
 
 describe('EvaluationCadencePreview', () => {
 	it('should render list of dates when schedule is generated', () => {
@@ -21,7 +23,7 @@ describe('EvaluationCadencePreview', () => {
 	});
 
 	it('should render empty state when no schedule is generated', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,

@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 import { useGlobalTimeStore } from '../globalTimeStore';
@@ -124,12 +125,12 @@ describe('globalTimeStore', () => {
 
 	describe('getMinMaxTime', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should return min/max time for custom time range', () => {
@@ -174,7 +175,7 @@ describe('globalTimeStore', () => {
 
 			// Advance time by 1 second
 			act(() => {
-				jest.advanceTimersByTime(1000);
+				vi.advanceTimersByTime(1000);
 			});
 
 			const second = result.current.getMinMaxTime();

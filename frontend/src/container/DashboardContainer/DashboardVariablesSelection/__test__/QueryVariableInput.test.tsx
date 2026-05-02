@@ -1,16 +1,18 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { act, render, waitFor } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { variableFetchStore } from 'providers/Dashboard/store/variableFetchStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import QueryVariableInput from '../QueryVariableInput';
 
-jest.mock('api/dashboard/variables/dashboardVariablesQuery');
+vi.mock('api/dashboard/variables/dashboardVariablesQuery');
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn().mockReturnValue({ minTime: 1000, maxTime: 2000 }),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
+	useSelector: vi.fn().mockReturnValue({ minTime: 1000, maxTime: 2000 }),
 }));
 
 function createTestQueryClient(): QueryClient {
@@ -66,11 +68,13 @@ function resetFetchStore(): void {
 	}));
 }
 
+const mockedDashboardVariablesQuery = dashboardVariablesQuery as Mock;
+
 describe('QueryVariableInput - getOptions logic', () => {
-	const mockOnValueUpdate = jest.fn();
+	const mockOnValueUpdate = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		resetFetchStore();
 	});
 
@@ -79,7 +83,7 @@ describe('QueryVariableInput - getOptions logic', () => {
 	});
 
 	it('applies default value (first option) when selectedValue is empty on first load', async () => {
-		(dashboardVariablesQuery as jest.Mock).mockResolvedValue({
+		mockedDashboardVariablesQuery.mockResolvedValue({
 			statusCode: 200,
 			payload: { variableValues: ['production', 'staging', 'dev'] },
 		});
@@ -109,7 +113,7 @@ describe('QueryVariableInput - getOptions logic', () => {
 	});
 
 	it('keeps existing selectedValue when it is present in new options', async () => {
-		(dashboardVariablesQuery as jest.Mock).mockResolvedValue({
+		mockedDashboardVariablesQuery.mockResolvedValue({
 			statusCode: 200,
 			payload: { variableValues: ['production', 'staging'] },
 		});
@@ -139,7 +143,7 @@ describe('QueryVariableInput - getOptions logic', () => {
 	});
 
 	it('selects all new options when allSelected=true and value is missing from new options', async () => {
-		(dashboardVariablesQuery as jest.Mock).mockResolvedValue({
+		mockedDashboardVariablesQuery.mockResolvedValue({
 			statusCode: 200,
 			payload: { variableValues: ['production', 'staging'] },
 		});
@@ -174,11 +178,11 @@ describe('QueryVariableInput - getOptions logic', () => {
 	});
 
 	it('does not call onValueUpdate a second time when options have not changed', async () => {
-		const mockQueryFn = jest.fn().mockResolvedValue({
+		const mockQueryFn = vi.fn().mockResolvedValue({
 			statusCode: 200,
 			payload: { variableValues: ['production', 'staging'] },
 		});
-		(dashboardVariablesQuery as jest.Mock).mockImplementation(mockQueryFn);
+		mockedDashboardVariablesQuery.mockImplementation(mockQueryFn);
 
 		const variable = createVariable({ selectedValue: 'production' });
 		setVariableLoading('env');
@@ -219,7 +223,7 @@ describe('QueryVariableInput - getOptions logic', () => {
 	});
 
 	it('does not call onValueUpdate when API returns a non-array response', async () => {
-		(dashboardVariablesQuery as jest.Mock).mockResolvedValue({
+		mockedDashboardVariablesQuery.mockResolvedValue({
 			statusCode: 200,
 			payload: { variableValues: null },
 		});
@@ -246,7 +250,7 @@ describe('QueryVariableInput - getOptions logic', () => {
 	});
 
 	it('does not fire the query when variableData.name is empty', () => {
-		(dashboardVariablesQuery as jest.Mock).mockResolvedValue({
+		mockedDashboardVariablesQuery.mockResolvedValue({
 			statusCode: 200,
 			payload: { variableValues: ['production'] },
 		});

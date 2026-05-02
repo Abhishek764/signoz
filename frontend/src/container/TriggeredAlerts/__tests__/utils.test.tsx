@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import type { Value } from '../Filter';
 import { FilterAlerts } from '../utils';
 import { createAlert } from './mockUtils';

@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { QueryData } from 'types/api/widgets/getQuery';

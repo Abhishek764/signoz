@@ -1,5 +1,14 @@
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 
 import { isolatedPointFilter } from '../../utils/seriesPointsFilter';
 import type { SeriesProps } from '../types';
@@ -17,11 +26,75 @@ const createBaseProps = (
 	...overrides,
 });
 
-interface MockPath extends uPlot.Series.Paths {
-	name?: string;
+interface PathStrokeStats {
+	bezierCurveTo: number;
+	lineTo: number;
+	moveTo: number;
 }
 
+const pathStrokeStats: PathStrokeStats = {
+	lineTo: 0,
+	moveTo: 0,
+	bezierCurveTo: 0,
+};
+
+/** Enough shape for uPlot path builders that call `orient(self, seriesIdx, ...)`. */
+const minimalUPlotForPaths = {
+	mode: 1,
+	series: [
+		{ scale: 'x', pxRound: (v: number): number => v },
+		{
+			scale: 'y',
+			pxRound: (v: number): number => v,
+			spanGaps: true,
+		},
+	],
+	_data: [
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+	],
+	scales: {
+		x: { ori: 0, dir: 1 },
+		y: { ori: 1, dir: 1 },
+	},
+	bbox: { left: 0, top: 0, width: 100, height: 100 },
+	valToPosH: (val: number, ..._rest: unknown[]): number => val,
+	valToPosV: (val: number, ..._rest: unknown[]): number => val,
+} as unknown as uPlot;
+
 describe('UPlotSeriesBuilder', () => {
+	beforeAll(() => {
+		class Path2DStub {
+			constructor(_stroke?: unknown) {}
+
+			moveTo(): void {
+				pathStrokeStats.moveTo++;
+			}
+
+			lineTo(): void {
+				pathStrokeStats.lineTo++;
+			}
+
+			bezierCurveTo(): void {
+				pathStrokeStats.bezierCurveTo++;
+			}
+
+			closePath(): void {}
+		}
+
+		vi.stubGlobal('Path2D', Path2DStub);
+	});
+
+	afterAll(() => {
+		vi.unstubAllGlobals();
+	});
+
+	beforeEach(() => {
+		pathStrokeStats.lineTo = 0;
+		pathStrokeStats.moveTo = 0;
+		pathStrokeStats.bezierCurveTo = 0;
+	});
+
 	it('maps basic props into uPlot series config', () => {
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({
@@ -123,7 +196,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('passes through a custom pathBuilder when provided', () => {
-		const customPaths = jest.fn() as unknown as uPlot.Series.PathBuilder;
+		const customPaths = vi.fn() as unknown as uPlot.Series.PathBuilder;
 
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({
@@ -179,7 +252,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('uses pointsBuilder when provided instead of default visibility logic', () => {
-		const pointsBuilder: uPlot.Series.Points.Show = jest.fn(
+		const pointsBuilder: uPlot.Series.Points.Show = vi.fn(
 			() => true,
 		) as uPlot.Series.Points.Show;
 
@@ -240,11 +313,20 @@ describe('UPlotSeriesBuilder', () => {
 
 		const config = builder.getConfig();
 
-		const result = config.paths?.({} as uPlot, 1, 0, 10);
-		expect((result as MockPath).name).toBe('linear');
+		const result = config.paths?.(minimalUPlotForPaths, 1, 0, 10);
+
+		expect(result?.stroke).toBeDefined();
+		expect(pathStrokeStats.bezierCurveTo).toBe(0);
+		expect(pathStrokeStats.lineTo).toBeGreaterThan(0);
 	});
 
 	it('uses StepBefore and StepAfter interpolation for line paths', () => {
+		const linearBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				lineInterpolation: LineInterpolation.Linear,
+			}),
+		);
 		const stepBeforeBuilder = new UPlotSeriesBuilder(
 			createBaseProps({
 				drawStyle: DrawStyle.Line,
@@ -258,12 +340,28 @@ describe('UPlotSeriesBuilder', () => {
 			}),
 		);
 
+		linearBuilder.getConfig().paths?.(minimalUPlotForPaths, 1, 0, 5);
+		const linearLineTos = pathStrokeStats.lineTo;
+
+		pathStrokeStats.lineTo = 0;
+		pathStrokeStats.moveTo = 0;
+		pathStrokeStats.bezierCurveTo = 0;
+
 		const stepBeforeConfig = stepBeforeBuilder.getConfig();
+		stepBeforeConfig.paths?.(minimalUPlotForPaths, 1, 0, 5);
+		expect(pathStrokeStats.bezierCurveTo).toBe(0);
+		expect(pathStrokeStats.lineTo).toBeGreaterThan(0);
+		expect(pathStrokeStats.lineTo).not.toBe(linearLineTos);
+
+		pathStrokeStats.lineTo = 0;
+		pathStrokeStats.moveTo = 0;
+		pathStrokeStats.bezierCurveTo = 0;
+
 		const stepAfterConfig = stepAfterBuilder.getConfig();
-		const stepBeforePath = stepBeforeConfig.paths?.({} as uPlot, 1, 0, 5);
-		const stepAfterPath = stepAfterConfig.paths?.({} as uPlot, 1, 0, 5);
-		expect((stepBeforePath as MockPath).name).toBe('stepped-(-1)');
-		expect((stepAfterPath as MockPath).name).toBe('stepped-(1)');
+		stepAfterConfig.paths?.(minimalUPlotForPaths, 1, 0, 5);
+		expect(pathStrokeStats.bezierCurveTo).toBe(0);
+		expect(pathStrokeStats.lineTo).toBeGreaterThan(0);
+		expect(pathStrokeStats.lineTo).not.toBe(linearLineTos);
 	});
 
 	it('defaults to spline interpolation when lineInterpolation is Spline or undefined', () => {
@@ -280,11 +378,15 @@ describe('UPlotSeriesBuilder', () => {
 		const splineConfig = splineBuilder.getConfig();
 		const defaultConfig = defaultBuilder.getConfig();
 
-		const splinePath = splineConfig.paths?.({} as uPlot, 1, 0, 10);
-		const defaultPath = defaultConfig.paths?.({} as uPlot, 1, 0, 10);
+		splineConfig.paths?.(minimalUPlotForPaths, 1, 0, 10);
+		expect(pathStrokeStats.bezierCurveTo).toBeGreaterThan(0);
 
-		expect((splinePath as MockPath).name).toBe('spline');
-		expect((defaultPath as MockPath).name).toBe('spline');
+		pathStrokeStats.lineTo = 0;
+		pathStrokeStats.moveTo = 0;
+		pathStrokeStats.bezierCurveTo = 0;
+
+		defaultConfig.paths?.(minimalUPlotForPaths, 1, 0, 10);
+		expect(pathStrokeStats.bezierCurveTo).toBeGreaterThan(0);
 	});
 
 	it('uses generateColor when label has no colorMapping and no lineColor', () => {
@@ -301,7 +403,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('passes through pointsFilter when provided', () => {
-		const pointsFilter: uPlot.Series.Points.Filter = jest.fn(
+		const pointsFilter: uPlot.Series.Points.Filter = vi.fn(
 			(_self, _seriesIdx, _show) => null,
 		);
 
@@ -333,7 +435,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('does not assign isolatedPointFilter when a custom pointsFilter is provided alongside numeric spanGaps', () => {
-		const customFilter: uPlot.Series.Points.Filter = jest.fn(() => null);
+		const customFilter: uPlot.Series.Points.Filter = vi.fn(() => null);
 
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({

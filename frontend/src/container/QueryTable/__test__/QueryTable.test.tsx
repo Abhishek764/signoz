@@ -1,18 +1,18 @@
 import WidgetHeader from 'container/GridCardLayout/WidgetHeader';
 import { fireEvent, render } from 'tests/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 
 import { QueryTable } from '../QueryTable';
 import { QueryTableProps, WidgetHeaderProps } from './mocks';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: ``,
 	}),
 }));
 
-// Mock useDashabord hook
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+vi.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
 		dashboardData: {
 			data: {
@@ -22,9 +22,9 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
@@ -44,7 +44,7 @@ describe('QueryTable -', () => {
 	});
 });
 
-const setSearchTerm = jest.fn();
+const setSearchTerm = vi.fn();
 describe('WidgetHeader -', () => {
 	it('global search option should be working', () => {
 		const { getByText, getByTestId } = render(
@@ -53,15 +53,11 @@ describe('WidgetHeader -', () => {
 		expect(getByText('Table - Panel')).toBeInTheDocument();
 		const searchWidget = getByTestId('widget-header-search');
 		expect(searchWidget).toBeInTheDocument();
-		// click and open the search input
 		fireEvent.click(searchWidget);
-		// check if input is opened
 		const searchInput = getByTestId('widget-header-search-input');
 		expect(searchInput).toBeInTheDocument();
 
-		// enter search term
 		fireEvent.change(searchInput, { target: { value: 'frontend' } });
-		// check if search term is set
 		expect(setSearchTerm).toHaveBeenCalledWith('frontend');
 		expect(searchInput).toHaveValue('frontend');
 	});

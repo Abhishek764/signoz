@@ -1,3 +1,5 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -5,36 +7,36 @@ import logsLoaderConfig from '../configs/logsLoaderConfig';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
 
 // Mock the config loaders
-jest.mock('../configs/logsLoaderConfig', () => ({
+vi.mock('../configs/logsLoaderConfig', () => ({
 	__esModule: true,
 	default: {
 		priority: ['local', 'url', 'default'],
-		local: jest.fn(() => ({
+		local: vi.fn(() => ({
 			columns: [{ name: 'local-column' }],
 			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
 		})),
-		url: jest.fn(() => ({
+		url: vi.fn(() => ({
 			columns: [{ name: 'url-column' }],
 			formatting: { maxLines: 3, format: 'table', fontSize: 'small', version: 1 },
 		})),
-		default: jest.fn(() => ({
+		default: vi.fn(() => ({
 			columns: [{ name: 'default-column' }],
 			formatting: { maxLines: 2, format: 'table', fontSize: 'small', version: 1 },
 		})),
 	},
 }));
 
-jest.mock('../configs/tracesLoaderConfig', () => ({
+vi.mock('../configs/tracesLoaderConfig', () => ({
 	__esModule: true,
 	default: {
 		priority: ['local', 'url', 'default'],
-		local: jest.fn(() => ({
+		local: vi.fn(() => ({
 			columns: [{ name: 'local-trace-column' }],
 		})),
-		url: jest.fn(() => ({
+		url: vi.fn(() => ({
 			columns: [{ name: 'url-trace-column' }],
 		})),
-		default: jest.fn(() => ({
+		default: vi.fn(() => ({
 			columns: [{ name: 'default-trace-column' }],
 		})),
 	},
@@ -42,11 +44,11 @@ jest.mock('../configs/tracesLoaderConfig', () => ({
 
 describe('usePreferenceLoader', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should load logs preferences based on priority order', async () => {
-		const setReSync = jest.fn();
+		const setReSync = vi.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
 				dataSource: DataSource.LOGS,
@@ -70,7 +72,7 @@ describe('usePreferenceLoader', () => {
 	});
 
 	it('should load traces preferences', async () => {
-		const setReSync = jest.fn();
+		const setReSync = vi.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
 				dataSource: DataSource.TRACES,
@@ -92,7 +94,7 @@ describe('usePreferenceLoader', () => {
 	});
 
 	it('should call setReSync when reSync is true', async () => {
-		const setReSync = jest.fn();
+		const setReSync = vi.fn();
 
 		// Test that the hook calls setReSync(false) when reSync is true
 		// We'll unmount quickly to avoid the infinite loop
@@ -117,7 +119,7 @@ describe('usePreferenceLoader', () => {
 
 	it('should handle errors during loading', async () => {
 		// Make first call succeed (initial state), second call throw in reSync effect
-		const localSpy: jest.SpyInstance = jest.spyOn(logsLoaderConfig, 'local');
+		const localSpy = vi.spyOn(logsLoaderConfig, 'local') as MockInstance;
 		localSpy.mockImplementationOnce(() => ({
 			columns: [{ name: 'local-column' }],
 			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
@@ -126,7 +128,7 @@ describe('usePreferenceLoader', () => {
 			throw new Error('Loading failed');
 		});
 
-		const setReSync = jest.fn();
+		const setReSync = vi.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
 				dataSource: DataSource.LOGS,

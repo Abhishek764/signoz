@@ -2,16 +2,40 @@ import { toast } from '@signozhq/ui';
 import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import KeysTab from '../KeysTab';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual('@signozhq/ui')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockToast = jest.mocked(toast);
+const mockToast = vi.mocked(toast);
+
+const TZ_ORIG = process.env.TZ;
+
+beforeAll(() => {
+	process.env.TZ = 'UTC';
+});
+
+afterAll(() => {
+	if (TZ_ORIG === undefined) {
+		delete process.env.TZ;
+	} else {
+		process.env.TZ = TZ_ORIG;
+	}
+});
 
 const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/:fid';
 
@@ -53,7 +77,7 @@ function renderKeysTab(
 
 describe('KeysTab', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.delete(SA_KEY_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
@@ -72,7 +96,7 @@ describe('KeysTab', () => {
 
 	it('renders empty state when no keys and clicking add sets add-key param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 		render(
 			<NuqsTestingAdapter
 				searchParams={{ account: 'sa-1' }}
@@ -105,7 +129,7 @@ describe('KeysTab', () => {
 
 	it('clicking a row sets the edit-key URL param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 
 		render(
 			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
@@ -129,7 +153,7 @@ describe('KeysTab', () => {
 
 	it('clicking revoke icon sets revoke-key URL param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 
 		render(
 			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>

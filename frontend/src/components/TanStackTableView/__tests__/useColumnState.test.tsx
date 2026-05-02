@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { TableColumnDef } from '../types';
 import { useColumnState } from '../useColumnState';

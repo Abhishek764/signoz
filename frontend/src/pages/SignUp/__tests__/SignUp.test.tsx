@@ -1,5 +1,6 @@
 import afterLogin from 'AppRoutes/utils';
 import { rest, server } from 'mocks-server/server';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SignupResponse } from 'types/api/v1/register/post';
 import { Token } from 'types/api/v2/sessions/email_password/post';
@@ -7,22 +8,22 @@ import { Token } from 'types/api/v2/sessions/email_password/post';
 import SignUp from '../SignUp';
 
 // Mock dependencies - must be before imports
-jest.mock('AppRoutes/utils', () => ({
+vi.mock('AppRoutes/utils', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const mockAfterLogin = jest.mocked(afterLogin);
+const mockAfterLogin = vi.mocked(afterLogin);
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: {
 			search: '',
 		},
@@ -48,7 +49,7 @@ const mockTokenResponse: Token = {
 
 describe('SignUp Component - Regular Signup', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockAfterLogin.mockClear();
 		window.history.pushState({}, '', '/signup');
 	});

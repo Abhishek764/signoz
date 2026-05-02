@@ -1,27 +1,28 @@
 import { render } from '@testing-library/react';
 import { Table } from 'antd';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import DraggableTableRow from '..';
 
 beforeAll(() => {
 	Object.defineProperty(window, 'matchMedia', {
 		writable: true,
-		value: jest.fn().mockImplementation((query) => ({
+		value: vi.fn().mockImplementation((query) => ({
 			matches: false,
 			media: query,
 			onchange: null,
-			addListener: jest.fn(),
-			removeListener: jest.fn(),
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
 		})),
 	});
 });
 
-jest.mock('react-dnd', () => ({
-	useDrop: jest.fn().mockImplementation(() => [jest.fn(), jest.fn(), jest.fn()]),
-	useDrag: jest.fn().mockImplementation(() => [jest.fn(), jest.fn(), jest.fn()]),
+vi.mock('react-dnd', () => ({
+	useDrop: vi.fn().mockImplementation(() => [vi.fn(), vi.fn(), vi.fn()]),
+	useDrag: vi.fn().mockImplementation(() => [vi.fn(), vi.fn(), vi.fn()]),
 }));
 
 describe('DraggableTableRow Snapshot test', () => {

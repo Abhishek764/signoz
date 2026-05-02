@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
@@ -22,13 +23,13 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import PrivateRoute from '../Private';
 
 // Mock localStorage APIs
-const mockLocalStorage: Record<string, string> = {};
-jest.mock('api/browser/localstorage/get', () => ({
+const mockLocalStorage = vi.hoisted((): Record<string, string> => ({}));
+vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
 	default: (key: string): string | null => mockLocalStorage[key] || null,
 }));
 
-jest.mock('api/browser/localstorage/set', () => ({
+vi.mock('api/browser/localstorage/set', () => ({
 	__esModule: true,
 	default: (key: string, value: string): void => {
 		mockLocalStorage[key] = value;
@@ -36,27 +37,29 @@ jest.mock('api/browser/localstorage/set', () => ({
 }));
 
 // Mock useGetTenantLicense hook
-let mockIsCloudUser = true;
-jest.mock('hooks/useGetTenantLicense', () => ({
+const mockTenantLicense = vi.hoisted(() => ({ isCloudUser: true }));
+vi.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: (): {
 		isCloudUser: boolean;
 		isEnterpriseSelfHostedUser: boolean;
 		isCommunityUser: boolean;
 		isCommunityEnterpriseUser: boolean;
 	} => ({
-		isCloudUser: mockIsCloudUser,
-		isEnterpriseSelfHostedUser: !mockIsCloudUser,
+		isCloudUser: mockTenantLicense.isCloudUser,
+		isEnterpriseSelfHostedUser: !mockTenantLicense.isCloudUser,
 		isCommunityUser: false,
 		isCommunityEnterpriseUser: false,
 	}),
 }));
 
 // Mock react-query for users fetch
-let mockUsersData: { email: string }[] = [];
-jest.mock('api/generated/services/users', () => ({
-	...jest.requireActual('api/generated/services/users'),
-	useListUsers: jest.fn(() => ({
-		data: { data: mockUsersData },
+const mockUsers = vi.hoisted((): { data: { email: string }[] } => ({
+	data: [],
+}));
+vi.mock('api/generated/services/users', async () => ({
+	...(await vi.importActual('api/generated/services/users')),
+	useListUsers: vi.fn(() => ({
+		data: { data: mockUsers.data },
 		isFetching: false,
 	})),
 }));
@@ -176,13 +179,13 @@ function createMockAppContext(
 		orgPreferencesFetchError: null,
 		changelog: null,
 		showChangelogModal: false,
-		activeLicenseRefetch: jest.fn(),
-		updateUser: jest.fn(),
-		updateOrgPreferences: jest.fn(),
-		updateUserPreferenceInContext: jest.fn(),
-		updateOrg: jest.fn(),
-		updateChangelog: jest.fn(),
-		toggleChangelogModal: jest.fn(),
+		activeLicenseRefetch: vi.fn(),
+		updateUser: vi.fn(),
+		updateOrgPreferences: vi.fn(),
+		updateUserPreferenceInContext: vi.fn(),
+		updateOrg: vi.fn(),
+		updateChangelog: vi.fn(),
+		toggleChangelogModal: vi.fn(),
 		versionData: { version: '1.0.0', ee: 'Y', setupCompleted: true },
 		hasEditPermission: true,
 		...overrides,
@@ -202,7 +205,7 @@ function renderPrivateRoute(options: RenderPrivateRouteOptions = {}): void {
 		isCloudUser = true,
 	} = options;
 
-	mockIsCloudUser = isCloudUser;
+	mockTenantLicense.isCloudUser = isCloudUser;
 
 	const contextValue = createMockAppContext(appContext);
 
@@ -245,11 +248,11 @@ function assertRendersChildren(): void {
 
 describe('PrivateRoute', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		queryClient.clear();
 		Object.keys(mockLocalStorage).forEach((key) => delete mockLocalStorage[key]);
-		mockIsCloudUser = true;
-		mockUsersData = [];
+		mockTenantLicense.isCloudUser = true;
+		mockUsers.data = [];
 	});
 
 	describe('Old Routes Handling', () => {
@@ -1014,7 +1017,7 @@ describe('PrivateRoute', () => {
 	describe('Onboarding Flow (Cloud Users)', () => {
 		it('should redirect to onboarding when first user has not completed onboarding', async () => {
 			// Set up exactly one user (not admin@signoz.cloud) to trigger first user check
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.HOME,
@@ -1053,7 +1056,7 @@ describe('PrivateRoute', () => {
 		it('should not redirect to onboarding when onboarding is already complete', async () => {
 			// Set up first user condition - this ensures the ONLY reason we don't redirect
 			// is because isOnboardingComplete is true
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.HOME,
@@ -1124,7 +1127,7 @@ describe('PrivateRoute', () => {
 		it('should not redirect to onboarding when workspace is blocked and accessing billing', async () => {
 			// This tests the scenario where admin tries to access billing to fix payment
 			// while workspace is blocked and onboarding is not complete
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.BILLING,
@@ -1149,7 +1152,7 @@ describe('PrivateRoute', () => {
 		});
 
 		it('should not redirect to onboarding when workspace is blocked and accessing settings', async () => {
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.SETTINGS,
@@ -1173,7 +1176,7 @@ describe('PrivateRoute', () => {
 		});
 
 		it('should not redirect to onboarding when workspace is suspended (DEFAULTED)', async () => {
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.HOME,
@@ -1200,7 +1203,7 @@ describe('PrivateRoute', () => {
 		});
 
 		it('should not redirect to onboarding when workspace is access restricted (TERMINATED)', async () => {
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.HOME,
@@ -1227,7 +1230,7 @@ describe('PrivateRoute', () => {
 		});
 
 		it('should not redirect to onboarding when workspace is access restricted (EXPIRED)', async () => {
-			mockUsersData = [{ email: 'test@example.com' }];
+			mockUsers.data = [{ email: 'test@example.com' }];
 
 			renderPrivateRoute({
 				initialRoute: ROUTES.HOME,

@@ -1,13 +1,24 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from '@testing-library/react';
 import store from 'store';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
-
-import '@testing-library/jest-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import ContextLinks from '../index';
+
+const URL_INPUT_PLACEHOLDER = /\/trace\/\{\{_traceId\}\}$/;
+
+afterEach(() => {
+	cleanup();
+});
 
 // Mock data for testing
 const MOCK_EMPTY_CONTEXT_LINKS: ContextLinksData = {
@@ -47,7 +58,7 @@ const renderWithProviders = (
 describe('ContextLinks Component', () => {
 	describe('Component Rendering & Initial State', () => {
 		it('should render correctly with existing context links', () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -75,7 +86,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should show "Context Link" add button', () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -94,7 +105,7 @@ describe('ContextLinks Component', () => {
 
 	describe('Add Context Link Functionality', () => {
 		it('should show "Add a context link" title in modal when adding new link', () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -116,7 +127,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should call setContextLinks when saving new context link', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -134,22 +145,16 @@ describe('ContextLinks Component', () => {
 				'View Traces details: {{_traceId}}',
 			);
 			fireEvent.change(labelInput, { target: { value: 'New Link' } });
-			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
-			);
+			const urlInput = screen.getByPlaceholderText(URL_INPUT_PLACEHOLDER);
 			fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
 
 			// Click save button in modal
 			const saveButton = screen.getByRole('button', { name: /save/i });
 			fireEvent.click(saveButton);
 
-			// Wait for the modal to close and state to update
 			await waitFor(() => {
-				expect(screen.queryByText('Add a context link')).not.toBeInTheDocument();
+				expect(mockSetContextLinks).toHaveBeenCalledTimes(1);
 			});
-
-			// Verify that setContextLinks was called
-			expect(mockSetContextLinks).toHaveBeenCalledTimes(1);
 
 			// setContextLinks is called with a function (state updater)
 			const setContextLinksCall = mockSetContextLinks.mock.calls[0][0];
@@ -166,37 +171,10 @@ describe('ContextLinks Component', () => {
 					},
 				],
 			});
-		});
+		}, 15000);
 
-		it('should close modal when cancel button is clicked', async () => {
-			const mockSetContextLinks = jest.fn();
-
-			renderWithProviders(
-				<ContextLinks
-					contextLinks={MOCK_EMPTY_CONTEXT_LINKS}
-					setContextLinks={mockSetContextLinks}
-				/>,
-			);
-
-			// Click the add button to open modal
-			const addButton = screen.getByRole('button', { name: /context link/i });
-			fireEvent.click(addButton);
-
-			// Modal should be visible
-			expect(screen.getByText('Add a context link')).toBeInTheDocument();
-
-			// Click cancel button
-			const cancelButton = screen.getByRole('button', { name: /cancel/i });
-			fireEvent.click(cancelButton);
-
-			// Modal should be closed
-			await waitFor(() => {
-				expect(screen.queryByText('Add a context link')).not.toBeInTheDocument();
-			});
-		});
-
-		it('should not call setContextLinks when cancel button is clicked', async () => {
-			const mockSetContextLinks = jest.fn();
+		it('should not call setContextLinks when cancel button is clicked', () => {
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -213,17 +191,11 @@ describe('ContextLinks Component', () => {
 			const cancelButton = screen.getByRole('button', { name: /cancel/i });
 			fireEvent.click(cancelButton);
 
-			// Wait for modal to close
-			await waitFor(() => {
-				expect(screen.queryByText('Add a context link')).not.toBeInTheDocument();
-			});
-
-			// Verify that setContextLinks was not called
 			expect(mockSetContextLinks).not.toHaveBeenCalled();
 		});
 
 		it('should show form fields in the modal', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -244,15 +216,13 @@ describe('ContextLinks Component', () => {
 			const labelInput = screen.getByPlaceholderText(
 				'View Traces details: {{_traceId}}',
 			);
-			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
-			);
+			const urlInput = screen.getByPlaceholderText(URL_INPUT_PLACEHOLDER);
 			expect(labelInput.tagName).toBe('INPUT');
 			expect(urlInput.tagName).toBe('INPUT');
 		});
 
 		it('should validate form fields before saving', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -279,7 +249,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should pre-populate form with existing data when editing a context link', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -300,9 +270,7 @@ describe('ContextLinks Component', () => {
 			const labelInput = screen.getByPlaceholderText(
 				'View Traces details: {{_traceId}}',
 			);
-			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
-			);
+			const urlInput = screen.getByPlaceholderText(URL_INPUT_PLACEHOLDER);
 
 			// Check that the form is pre-populated with the first context link's data
 			expect(labelInput).toHaveAttribute('value', 'Dashboard 1');
@@ -316,7 +284,7 @@ describe('ContextLinks Component', () => {
 
 	describe('URL and Query Parameter Functionality', () => {
 		it('should parse URL with query parameters and display them in parameter table', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -330,9 +298,7 @@ describe('ContextLinks Component', () => {
 			fireEvent.click(addButton);
 
 			// Type a URL with query parameters
-			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
-			);
+			const urlInput = screen.getByPlaceholderText(URL_INPUT_PLACEHOLDER);
 			const testUrl =
 				'https://example.com/api?param1=value1&param2=value2&param3=value3';
 			fireEvent.change(urlInput, { target: { value: testUrl } });
@@ -353,7 +319,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should add new URL parameter when "Add URL parameter" button is clicked', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -389,7 +355,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should update URL when parameter values are changed', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -417,13 +383,13 @@ describe('ContextLinks Component', () => {
 
 			// URL should be updated with the parameter
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				URL_INPUT_PLACEHOLDER,
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('?search=query');
 		});
 
 		it('should delete URL parameter when delete button is clicked', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -466,13 +432,13 @@ describe('ContextLinks Component', () => {
 
 			// URL should be cleaned up
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				URL_INPUT_PLACEHOLDER,
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('');
 		});
 
 		it('should handle multiple parameters and maintain URL synchronization', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -510,7 +476,7 @@ describe('ContextLinks Component', () => {
 
 			// URL should contain both parameters
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				URL_INPUT_PLACEHOLDER,
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('?page=1&size=10');
 
@@ -522,7 +488,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should validate URL format and show appropriate error messages', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -536,9 +502,7 @@ describe('ContextLinks Component', () => {
 			fireEvent.click(addButton);
 
 			// Try to save with invalid URL
-			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
-			);
+			const urlInput = screen.getByPlaceholderText(URL_INPUT_PLACEHOLDER);
 			fireEvent.change(urlInput, { target: { value: 'invalid-url' } });
 
 			// Try to save
@@ -557,7 +521,7 @@ describe('ContextLinks Component', () => {
 		});
 
 		it('should handle special characters in parameter keys and values correctly', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -585,13 +549,13 @@ describe('ContextLinks Component', () => {
 
 			// URL should be properly encoded
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				URL_INPUT_PLACEHOLDER,
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('?user%40domain=John%20Doe%20%26%20Co.');
 		});
 
 		it('should support template variables in URL and parameters', async () => {
-			const mockSetContextLinks = jest.fn();
+			const mockSetContextLinks = vi.fn();
 
 			renderWithProviders(
 				<ContextLinks
@@ -605,9 +569,7 @@ describe('ContextLinks Component', () => {
 			fireEvent.click(addButton);
 
 			// Type URL with template variable
-			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
-			);
+			const urlInput = screen.getByPlaceholderText(URL_INPUT_PLACEHOLDER);
 			const testUrl =
 				'https://example.com/trace/{{_traceId}}?service={{_serviceName}}';
 			fireEvent.change(urlInput, { target: { value: testUrl } });

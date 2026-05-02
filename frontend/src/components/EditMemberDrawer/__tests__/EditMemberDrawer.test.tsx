@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import type { ChangeEventHandler, ReactNode } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -20,67 +22,109 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 
-jest.mock('api/generated/services/users', () => ({
-	useDeleteUser: jest.fn(),
-	useGetUser: jest.fn(),
-	useUpdateUser: jest.fn(),
-	useUpdateMyUserV2: jest.fn(),
-	useSetRoleByUserID: jest.fn(),
-	useGetResetPasswordToken: jest.fn(),
-	useCreateResetPasswordToken: jest.fn(),
+vi.mock('api/generated/services/users', () => ({
+	useDeleteUser: vi.fn(),
+	useGetUser: vi.fn(),
+	useUpdateUser: vi.fn(),
+	useUpdateMyUserV2: vi.fn(),
+	useSetRoleByUserID: vi.fn(),
+	useGetResetPasswordToken: vi.fn(),
+	useCreateResetPasswordToken: vi.fn(),
 }));
 
-jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
-	convertToApiError: jest.fn(),
+vi.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
+	convertToApiError: vi.fn(),
 }));
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	DrawerWrapper: ({
-		children,
-		footer,
-		open,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null =>
-		open ? (
-			<div>
-				{children}
-				{footer}
-			</div>
-		) : null,
-	DialogWrapper: ({
-		children,
-		footer,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-				{footer}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
-	},
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): Mock => vi.fn(),
 }));
 
-const mockCopyToClipboard = jest.fn();
-const mockCopyState = { value: undefined, error: undefined };
+vi.mock('@signozhq/ui', async () => {
+	const React = await vi.importActual<typeof import('react')>('react');
 
-jest.mock('react-use', () => ({
+	return {
+		Badge: ({ children }: { children?: ReactNode }): JSX.Element =>
+			React.createElement('span', null, children),
+		Button: ({
+			children,
+			disabled,
+			onClick,
+			prefix,
+		}: {
+			children?: ReactNode;
+			disabled?: boolean;
+			onClick?: () => void;
+			prefix?: ReactNode;
+		}): JSX.Element =>
+			React.createElement('button', { disabled, onClick }, prefix, children),
+		DrawerWrapper: ({
+			children,
+			footer,
+			open,
+		}: {
+			children?: ReactNode;
+			footer?: ReactNode;
+			open: boolean;
+		}): JSX.Element | null =>
+			open ? React.createElement('div', null, children, footer) : null,
+		DialogWrapper: ({
+			children,
+			footer,
+			open,
+			title,
+		}: {
+			children?: ReactNode;
+			footer?: ReactNode;
+			open: boolean;
+			title?: string;
+		}): JSX.Element | null =>
+			open
+				? React.createElement(
+						'div',
+						{ role: 'dialog', 'aria-label': title },
+						children,
+						footer,
+					)
+				: null,
+		DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element =>
+			React.createElement('div', null, children),
+		Input: ({
+			disabled,
+			id,
+			onChange,
+			placeholder,
+			value,
+		}: {
+			disabled?: boolean;
+			id?: string;
+			onChange?: ChangeEventHandler<HTMLInputElement>;
+			placeholder?: string;
+			value?: string;
+		}): JSX.Element =>
+			React.createElement('input', {
+				disabled,
+				id,
+				onChange,
+				placeholder,
+				value,
+			}),
+		toast: {
+			success: vi.fn(),
+			error: vi.fn(),
+		},
+	};
+});
+
+const { mockCopyToClipboard, mockCopyState, showErrorModal } = vi.hoisted(
+	() => ({
+		mockCopyToClipboard: vi.fn(),
+		mockCopyState: { value: undefined, error: undefined },
+		showErrorModal: vi.fn(),
+	}),
+);
+
+vi.mock('react-use', () => ({
 	useCopyToClipboard: (): [typeof mockCopyState, typeof mockCopyToClipboard] => [
 		mockCopyState,
 		mockCopyToClipboard,
@@ -89,14 +133,15 @@ jest.mock('react-use', () => ({
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
-const mockDeleteMutate = jest.fn();
-const mockCreateTokenMutateAsync = jest.fn();
+const mockDeleteMutate = vi.fn();
+const mockCreateTokenMutateAsync = vi.fn();
 
-const showErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
+vi.mock('providers/ErrorModalProvider', async () => ({
 	__esModule: true,
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
+	...(await vi.importActual<typeof import('providers/ErrorModalProvider')>(
+		'providers/ErrorModalProvider',
+	)),
+	useErrorModal: vi.fn(() => ({
 		showErrorModal,
 		isErrorModalVisible: false,
 	})),
@@ -155,8 +200,8 @@ function renderDrawer(
 		<EditMemberDrawer
 			member={activeMember}
 			open
-			onClose={jest.fn()}
-			onComplete={jest.fn()}
+			onClose={vi.fn()}
+			onComplete={vi.fn()}
 			{...props}
 		/>,
 	);
@@ -164,7 +209,7 @@ function renderDrawer(
 
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockCopyState.value = undefined;
 		mockCopyState.error = undefined;
 		showErrorModal.mockClear();
@@ -173,29 +218,29 @@ describe('EditMemberDrawer', () => {
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
 			),
 		);
-		(useGetUser as jest.Mock).mockReturnValue({
+		(useGetUser as Mock).mockReturnValue({
 			data: mockFetchedUser,
 			isLoading: false,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 		});
-		(useUpdateUser as jest.Mock).mockReturnValue({
-			mutateAsync: jest.fn().mockResolvedValue({}),
+		(useUpdateUser as Mock).mockReturnValue({
+			mutateAsync: vi.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
-		(useUpdateMyUserV2 as jest.Mock).mockReturnValue({
-			mutateAsync: jest.fn().mockResolvedValue({}),
+		(useUpdateMyUserV2 as Mock).mockReturnValue({
+			mutateAsync: vi.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
-			mutateAsync: jest.fn().mockResolvedValue({}),
+		(useSetRoleByUserID as Mock).mockReturnValue({
+			mutateAsync: vi.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
-		(useDeleteUser as jest.Mock).mockReturnValue({
+		(useDeleteUser as Mock).mockReturnValue({
 			mutate: mockDeleteMutate,
 			isLoading: false,
 		});
 		// Token query: valid token for invited members
-		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+		(useGetResetPasswordToken as Mock).mockReturnValue({
 			data: {
 				data: {
 					token: 'invite-tok-valid',
@@ -215,7 +260,7 @@ describe('EditMemberDrawer', () => {
 				expiresAt: new Date(Date.now() + 86400000).toISOString(),
 			},
 		});
-		(useCreateResetPasswordToken as jest.Mock).mockReturnValue({
+		(useCreateResetPasswordToken as Mock).mockReturnValue({
 			mutateAsync: mockCreateTokenMutateAsync,
 			isLoading: false,
 		});
@@ -237,11 +282,11 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('enables Save after editing name and calls updateUser on confirm', async () => {
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockMutateAsync = jest.fn().mockResolvedValue({});
+		const mockMutateAsync = vi.fn().mockResolvedValue({});
 
-		(useUpdateUser as jest.Mock).mockReturnValue({
+		(useUpdateUser as Mock).mockReturnValue({
 			mutateAsync: mockMutateAsync,
 			isLoading: false,
 		});
@@ -267,7 +312,7 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('does not close the drawer after a successful save', async () => {
-		const onClose = jest.fn();
+		const onClose = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		renderDrawer({ onClose });
@@ -289,11 +334,11 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('selecting a different role calls setRole with the new role name', async () => {
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockSet = jest.fn().mockResolvedValue({});
+		const mockSet = vi.fn().mockResolvedValue({});
 
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+		(useSetRoleByUserID as Mock).mockReturnValue({
 			mutateAsync: mockSet,
 			isLoading: false,
 		});
@@ -318,11 +363,11 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('does not call removeRole when the role is changed', async () => {
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockSet = jest.fn().mockResolvedValue({});
+		const mockSet = vi.fn().mockResolvedValue({});
 
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+		(useSetRoleByUserID as Mock).mockReturnValue({
 			mutateAsync: mockSet,
 			isLoading: false,
 		});
@@ -347,10 +392,10 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('shows delete confirm dialog and calls deleteUser for active members', async () => {
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+		(useDeleteUser as Mock).mockImplementation((options) => ({
 			mutate: mockDeleteMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
@@ -393,7 +438,7 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('shows "Regenerate Invite Link" when token is expired', () => {
-		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+		(useGetResetPasswordToken as Mock).mockReturnValue({
 			data: {
 				data: {
 					token: 'old-tok',
@@ -413,7 +458,7 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('shows "Generate Invite Link" when no token exists', () => {
-		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+		(useGetResetPasswordToken as Mock).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: true,
@@ -427,10 +472,10 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('calls deleteUser after confirming revoke invite for invited members', async () => {
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+		(useDeleteUser as Mock).mockImplementation((options) => ({
 			mutate: mockDeleteMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
@@ -457,11 +502,11 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('calls updateUser when saving name change for an invited member', async () => {
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockMutateAsync = jest.fn().mockResolvedValue({});
+		const mockMutateAsync = vi.fn().mockResolvedValue({});
 
-		(useGetUser as jest.Mock).mockReturnValue({
+		(useGetUser as Mock).mockReturnValue({
 			data: {
 				data: {
 					...mockFetchedUser.data,
@@ -477,9 +522,9 @@ describe('EditMemberDrawer', () => {
 				},
 			},
 			isLoading: false,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 		});
-		(useUpdateUser as jest.Mock).mockReturnValue({
+		(useUpdateUser as Mock).mockReturnValue({
 			mutateAsync: mockMutateAsync,
 			isLoading: false,
 		});
@@ -504,7 +549,7 @@ describe('EditMemberDrawer', () => {
 	});
 
 	describe('error handling', () => {
-		const mockConvertToApiError = jest.mocked(convertToApiError);
+		const mockConvertToApiError = vi.mocked(convertToApiError);
 
 		beforeEach(() => {
 			mockConvertToApiError.mockReturnValue({
@@ -515,8 +560,8 @@ describe('EditMemberDrawer', () => {
 		it('shows SaveErrorItem when updateUser fails for name change', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			(useUpdateUser as jest.Mock).mockReturnValue({
-				mutateAsync: jest.fn().mockRejectedValue(new Error('server error')),
+			(useUpdateUser as Mock).mockReturnValue({
+				mutateAsync: vi.fn().mockRejectedValue(new Error('server error')),
 				isLoading: false,
 			});
 
@@ -540,7 +585,7 @@ describe('EditMemberDrawer', () => {
 		it('shows API error message when deleteUser fails for active member', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+			(useDeleteUser as Mock).mockImplementation((options) => ({
 				mutate: mockDeleteMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
@@ -571,7 +616,7 @@ describe('EditMemberDrawer', () => {
 		it('shows API error message when deleteUser fails for invited member', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+			(useDeleteUser as Mock).mockImplementation((options) => ({
 				mutate: mockDeleteMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
@@ -634,10 +679,10 @@ describe('EditMemberDrawer', () => {
 
 	describe('root user', () => {
 		beforeEach(() => {
-			(useGetUser as jest.Mock).mockReturnValue({
+			(useGetUser as Mock).mockReturnValue({
 				data: rootMockFetchedUser,
 				isLoading: false,
-				refetch: jest.fn(),
+				refetch: vi.fn(),
 			});
 		});
 
@@ -717,7 +762,7 @@ describe('EditMemberDrawer', () => {
 
 		it('copies the link to clipboard and shows "Copied!" on the button', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
+			const mockToast = vi.mocked(toast);
 
 			renderDrawer();
 

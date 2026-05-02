@@ -1,3 +1,5 @@
+import type { MockedFunction } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { rest, server } from 'mocks-server/server';
 import {
 	fireEvent,
@@ -9,19 +11,19 @@ import {
 
 import InviteTeamMembers from '../InviteTeamMembers';
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const mockNotificationSuccess = jest.fn() as jest.MockedFunction<
+const mockNotificationSuccess = vi.fn() as MockedFunction<
 	(args: { message: string }) => void
 >;
-const mockNotificationError = jest.fn() as jest.MockedFunction<
+const mockNotificationError = vi.fn() as MockedFunction<
 	(args: { message: string }) => void
 >;
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): any => ({
 		notifications: {
 			success: mockNotificationSuccess,
@@ -49,8 +51,8 @@ interface RenderProps {
 	teamMembers?: TeamMember[] | null;
 }
 
-const mockOnNext = jest.fn() as jest.MockedFunction<() => void>;
-const mockSetTeamMembers = jest.fn() as jest.MockedFunction<
+const mockOnNext = vi.fn() as MockedFunction<() => void>;
+const mockSetTeamMembers = vi.fn() as MockedFunction<
 	(members: TeamMember[]) => void
 >;
 
@@ -81,7 +83,7 @@ async function selectRole(
 
 describe('InviteTeamMembers', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		server.use(
 			rest.post(INVITE_USERS_ENDPOINT, (_, res, ctx) =>
@@ -91,7 +93,7 @@ describe('InviteTeamMembers', () => {
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 		server.resetHandlers();
 	});
 
@@ -190,9 +192,9 @@ describe('InviteTeamMembers', () => {
 
 	describe('Inline email validation', () => {
 		it('shows an inline error after typing an invalid email and clears it when a valid email is entered', async () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const user = userEvent.setup({
-				advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+				advanceTimers: (ms) => vi.advanceTimersByTime(ms),
 			});
 			renderComponent();
 
@@ -201,14 +203,14 @@ describe('InviteTeamMembers', () => {
 			);
 
 			await user.type(firstInput, 'not-an-email');
-			jest.advanceTimersByTime(600);
+			vi.advanceTimersByTime(600);
 			await waitFor(() => {
 				expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
 			});
 
 			await user.clear(firstInput);
 			await user.type(firstInput, 'good@example.com');
-			jest.advanceTimersByTime(600);
+			vi.advanceTimersByTime(600);
 			await waitFor(() => {
 				expect(
 					screen.queryByText(/invalid email address/i),
@@ -217,9 +219,9 @@ describe('InviteTeamMembers', () => {
 		});
 
 		it('does not show an inline error when the field is cleared back to empty', async () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const user = userEvent.setup({
-				advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+				advanceTimers: (ms) => vi.advanceTimersByTime(ms),
 			});
 			renderComponent();
 
@@ -228,7 +230,7 @@ describe('InviteTeamMembers', () => {
 			);
 			await user.type(firstInput, 'a');
 			await user.clear(firstInput);
-			jest.advanceTimersByTime(600);
+			vi.advanceTimersByTime(600);
 
 			await waitFor(() => {
 				expect(

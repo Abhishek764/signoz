@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {
@@ -503,7 +505,7 @@ describe('Footer utils', () => {
 				},
 				ruleType: 'threshold_rule',
 				schemaVersion: 'v2alpha1',
-				source: 'http://localhost/',
+				source: window.location.toString(),
 				version: 'v5',
 			});
 		});

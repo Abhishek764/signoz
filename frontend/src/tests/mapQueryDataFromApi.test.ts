@@ -9,9 +9,11 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { describe, expect, it, vi } from 'vitest';
+
 import { mapQueryDataFromApi } from '../lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 
-jest.mock('uuid', () => ({
+vi.mock('uuid', () => ({
 	v4: (): string => 'b5f4b7db-799c-47d2-bf32-090340995e20',
 }));
 

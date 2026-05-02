@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import * as dashboardVariablesStore from '../dashboardVariables/dashboardVariablesStore';
 import { IDependencyData } from '../dashboardVariables/dashboardVariablesStoreTypes';
 import {
@@ -10,7 +12,7 @@ import {
 	variableFetchStore,
 } from '../variableFetchStore';
 
-const getVariableDependencyContextSpy = jest.spyOn(
+const getVariableDependencyContextSpy = vi.spyOn(
 	dashboardVariablesStore,
 	'getVariableDependencyContext',
 );
@@ -53,7 +55,7 @@ function buildDependencyData(
 describe('variableFetchStore', () => {
 	beforeEach(() => {
 		resetStore();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	// ==================== initializeVariableFetchStore ====================

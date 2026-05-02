@@ -5,12 +5,12 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AttributeActions from '../Attributes/AttributeActions';
 
-// Mock only Popover from antd to simplify hover/open behavior while keeping other components real
-jest.mock('antd', () => {
-	const actual = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const actual = (await vi.importActual('antd')) as typeof import('antd');
 	const MockPopover = ({
 		content,
 		children,
@@ -30,9 +30,8 @@ jest.mock('antd', () => {
 	return { ...actual, Popover: MockPopover };
 });
 
-// Mock getAggregateKeys API used inside useTraceActions to resolve autocomplete keys
-jest.mock('api/queryBuilder/getAttributeKeys', () => ({
-	getAggregateKeys: jest.fn().mockResolvedValue({
+vi.mock('api/queryBuilder/getAttributeKeys', () => ({
+	getAggregateKeys: vi.fn().mockResolvedValue({
 		payload: {
 			attributeKeys: [
 				{
@@ -50,7 +49,7 @@ const record = { field: 'http.method', value: 'GET' };
 
 describe('AttributeActions (unit)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders core action buttons (pin, filter in/out, more)', async () => {
@@ -65,14 +64,13 @@ describe('AttributeActions (unit)', () => {
 		expect(
 			screen.getByRole('button', { name: 'Filter out value' }),
 		).toBeInTheDocument();
-		// more actions (ellipsis) button
 		expect(
 			document.querySelector('.lucide-ellipsis')?.closest('button'),
 		).toBeInTheDocument();
 	});
 
 	it('applies "Filter for" and calls redirectWithQueryBuilderData with correct query', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 		const currentQuery = {
 			builder: {
 				queryData: [
@@ -120,7 +118,7 @@ describe('AttributeActions (unit)', () => {
 	});
 
 	it('applies "Filter out" and calls redirectWithQueryBuilderData with correct query', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 		const currentQuery = {
 			builder: {
 				queryData: [
@@ -168,7 +166,7 @@ describe('AttributeActions (unit)', () => {
 	});
 
 	it('opens more actions on hover and calls Group By handler; closes after click', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 		const currentQuery = {
 			builder: {
 				queryData: [
@@ -191,10 +189,8 @@ describe('AttributeActions (unit)', () => {
 			?.closest('button') as HTMLElement;
 		expect(ellipsisBtn).toBeInTheDocument();
 
-		// hover to trigger Popover open via mock
 		fireEvent.mouseEnter(ellipsisBtn.parentElement as Element);
 
-		// content appears
 		await waitFor(() =>
 			expect(screen.getByText('Group By Attribute')).toBeInTheDocument(),
 		);
@@ -218,7 +214,6 @@ describe('AttributeActions (unit)', () => {
 			);
 		});
 
-		// After clicking group by, popover should close
 		await waitFor(() =>
 			expect(screen.queryByTestId('mock-popover-content')).not.toBeInTheDocument(),
 		);

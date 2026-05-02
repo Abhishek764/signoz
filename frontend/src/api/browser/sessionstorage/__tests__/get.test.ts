@@ -1,3 +1,5 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 /**
  * sessionstorage/get — lazy migration tests.
  * Mirrors the localStorage get tests; same logic, different storage.
@@ -5,17 +7,13 @@
 
 type GetModule = typeof import('../get');
 
-function loadGetModule(href: string): GetModule {
+async function loadGetModule(href: string): Promise<GetModule> {
 	const base = document.createElement('base');
 	base.setAttribute('href', href);
 	document.head.append(base);
 
-	let mod!: GetModule;
-	jest.isolateModules(() => {
-		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-		mod = require('../get');
-	});
-	return mod;
+	vi.resetModules();
+	return import('../get');
 }
 
 afterEach(() => {
@@ -26,19 +24,19 @@ afterEach(() => {
 });
 
 describe('get — root path "/"', () => {
-	it('reads the bare key', () => {
-		const { default: get } = loadGetModule('/');
+	it('reads the bare key', async () => {
+		const { default: get } = await loadGetModule('/');
 		sessionStorage.setItem('retry-lazy-refreshed', 'true');
 		expect(get('retry-lazy-refreshed')).toBe('true');
 	});
 
-	it('returns null when key is absent', () => {
-		const { default: get } = loadGetModule('/');
+	it('returns null when key is absent', async () => {
+		const { default: get } = await loadGetModule('/');
 		expect(get('MISSING')).toBeNull();
 	});
 
-	it('does NOT promote bare keys at root', () => {
-		const { default: get } = loadGetModule('/');
+	it('does NOT promote bare keys at root', async () => {
+		const { default: get } = await loadGetModule('/');
 		sessionStorage.setItem('retry-lazy-refreshed', 'true');
 		get('retry-lazy-refreshed');
 		expect(sessionStorage.getItem('retry-lazy-refreshed')).toBe('true');
@@ -46,19 +44,19 @@ describe('get — root path "/"', () => {
 });
 
 describe('get — prefixed path "/signoz/"', () => {
-	it('reads an already-scoped key directly', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('reads an already-scoped key directly', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		sessionStorage.setItem('/signoz/retry-lazy-refreshed', 'true');
 		expect(get('retry-lazy-refreshed')).toBe('true');
 	});
 
-	it('returns null when neither scoped nor bare key exists', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('returns null when neither scoped nor bare key exists', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		expect(get('MISSING')).toBeNull();
 	});
 
-	it('lazy-migrates bare key to scoped key on first read', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('lazy-migrates bare key to scoped key on first read', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		sessionStorage.setItem('retry-lazy-refreshed', 'true');
 
 		const result = get('retry-lazy-refreshed');
@@ -68,8 +66,8 @@ describe('get — prefixed path "/signoz/"', () => {
 		expect(sessionStorage.getItem('retry-lazy-refreshed')).toBeNull();
 	});
 
-	it('scoped key takes precedence over bare key', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('scoped key takes precedence over bare key', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		sessionStorage.setItem('retry-lazy-refreshed', 'bare');
 		sessionStorage.setItem('/signoz/retry-lazy-refreshed', 'scoped');
 

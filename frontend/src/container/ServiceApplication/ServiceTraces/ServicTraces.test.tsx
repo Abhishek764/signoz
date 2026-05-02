@@ -1,8 +1,21 @@
+import { serviceSuccessResponse } from 'mocks-server/__mockdata__/services';
+import { rest, server } from 'mocks-server/server';
 import { act, fireEvent, render, screen } from 'tests/test-utils';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import ServiceTraces from '.';
 
 describe('ServicesTraces', () => {
+	beforeEach(() => {
+		server.use(
+			rest.post('*/api/v2/services', (req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ status: 'success', data: serviceSuccessResponse }),
+				),
+			),
+		);
+	});
 	it('Should render the component', async () => {
 		await act(() => {
 			render(<ServiceTraces />);

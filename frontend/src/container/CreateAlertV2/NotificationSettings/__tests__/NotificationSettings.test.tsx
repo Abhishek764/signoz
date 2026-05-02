@@ -1,10 +1,35 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 
 import NotificationSettings from '../NotificationSettings';
 
-jest.mock(
+vi.mock('container/CreateAlertV2/context', () => ({
+	useCreateAlertState: vi.fn(),
+}));
+
+vi.mock('antd', () => ({
+	Input: (props: any): JSX.Element => <input {...props} />,
+	Select: ({ 'data-testid': dataTestId }: any): JSX.Element => (
+		<div data-testid={dataTestId} />
+	),
+	Switch: ({ checked, onChange }: any): JSX.Element => (
+		<button
+			type="button"
+			role="switch"
+			aria-checked={checked}
+			onClick={(): void => onChange?.()}
+		/>
+	),
+	Tag: ({ children }: any): JSX.Element => <span>{children}</span>,
+	Tooltip: ({ children }: any): JSX.Element => <>{children}</>,
+	Typography: {
+		Text: ({ children }: any): JSX.Element => <span>{children}</span>,
+	},
+}));
+
+vi.mock(
 	'container/CreateAlertV2/NotificationSettings/MultipleNotifications',
 	() => ({
 		__esModule: true,
@@ -13,7 +38,7 @@ jest.mock(
 		),
 	}),
 );
-jest.mock(
+vi.mock(
 	'container/CreateAlertV2/NotificationSettings/NotificationMessage',
 	() => ({
 		__esModule: true,
@@ -23,14 +48,14 @@ jest.mock(
 	}),
 );
 
-jest.mock('container/CreateAlertV2/utils', () => ({
-	...jest.requireActual('container/CreateAlertV2/utils'),
+vi.mock('container/CreateAlertV2/utils', async () => ({
+	...(await vi.importActual('container/CreateAlertV2/utils')),
 }));
 
 const initialNotificationSettings =
 	createMockAlertContextState().notificationSettings;
-const mockSetNotificationSettings = jest.fn();
-jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+const mockSetNotificationSettings = vi.fn();
+vi.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		setNotificationSettings: mockSetNotificationSettings,
 	}),
@@ -80,7 +105,7 @@ describe('NotificationSettings', () => {
 		});
 
 		it('updates state when the repeat notifications input is changed', () => {
-			jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+			vi.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 				createMockAlertContextState({
 					setNotificationSettings: mockSetNotificationSettings,
 					notificationSettings: {

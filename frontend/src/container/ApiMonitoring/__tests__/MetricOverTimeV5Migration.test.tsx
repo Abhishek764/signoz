@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
@@ -23,12 +24,10 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			const queryData = widget.query.builder.queryData[0];
 
-			// CRITICAL: Must use V5 format (filter.expression), not V3 format (filters.items)
 			expect(queryData.filter).toBeDefined();
 			expect(queryData?.filter?.expression).toBeDefined();
 			expect(typeof queryData?.filter?.expression).toBe('string');
 
-			// OLD V3 format should NOT exist
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
@@ -41,12 +40,10 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			const queryData = widget.query.builder.queryData[0];
 
-			// Verify EXACT new filter format with OR operator
 			expect(queryData?.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Endpoint name is used in legend, not filter
 			expect(queryData.legend).toContain('/api/users');
 		});
 
@@ -85,12 +82,10 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			const queryData = widget.query.builder.queryData[0];
 
-			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Verify custom filters are merged into the expression
 			expect(queryData?.filter?.expression).toContain('service.name');
 			expect(queryData?.filter?.expression).toContain('user-service');
 			expect(queryData?.filter?.expression).toContain('deployment.environment');
@@ -108,12 +103,10 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			const queryData = widget.query.builder.queryData[0];
 
-			// CRITICAL: Must use V5 format (filter.expression), not V3 format (filters.items)
 			expect(queryData.filter).toBeDefined();
 			expect(queryData?.filter?.expression).toBeDefined();
 			expect(typeof queryData?.filter?.expression).toBe('string');
 
-			// OLD V3 format should NOT exist
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
@@ -126,13 +119,11 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			const queryData = widget.query.builder.queryData[0];
 
-			// Verify EXACT new filter format with OR operator
 			expect(queryData.filter).toBeDefined();
 			expect(queryData?.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Endpoint name is used in legend, not filter
 			expect(queryData.legend).toContain('/api/users');
 		});
 
@@ -161,7 +152,6 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			const queryData = widget.query.builder.queryData[0];
 
-			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
 				`http_host = '${mockDomainName}' service.name = 'user-service'`,
 			);

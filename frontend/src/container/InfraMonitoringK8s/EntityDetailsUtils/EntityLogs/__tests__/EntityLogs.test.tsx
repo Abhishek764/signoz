@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
@@ -44,17 +45,15 @@ const verifyEntityLogsPayload = ({
 	return queryData;
 };
 
-jest.mock(
-	'components/OverlayScrollbar/OverlayScrollbar',
-	() =>
-		function MockOverlayScrollbar({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element {
-			return <div>{children}</div>;
-		},
-);
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	default: function MockOverlayScrollbar({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return <div>{children}</div>;
+	},
+}));
 
 describe('EntityLogs', () => {
 	let capturedQueryRangePayloads: QueryRangePayload[] = [];

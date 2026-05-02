@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import Tags from 'container/PipelinePage/PipelineListsView/TableComponents/Tags';
 import { render } from 'tests/test-utils';
 

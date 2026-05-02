@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getInvolvedQueriesInTraceOperator } from '../utils/utils';

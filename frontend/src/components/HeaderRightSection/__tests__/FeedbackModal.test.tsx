@@ -1,4 +1,6 @@
 // Mock dependencies before imports
+import { describe, expect, beforeEach, it, vi } from 'vitest';
+import type { Mock, Mocked, MockedFunction } from 'vitest';
 import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui';
 import { render, screen } from '@testing-library/react';
@@ -9,39 +11,38 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import FeedbackModal from '../FeedbackModal';
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(() => Promise.resolve()),
+	default: vi.fn(() => Promise.resolve()),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
+	useLocation: vi.fn(),
 }));
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', () => ({
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
-jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: jest.fn(),
+vi.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: vi.fn(),
 }));
 
-jest.mock('container/Integrations/utils', () => ({
-	handleContactSupport: jest.fn(),
+vi.mock('container/Integrations/utils', () => ({
+	handleContactSupport: vi.fn(),
 }));
 
-const mockLogEvent = logEvent as jest.MockedFunction<typeof logEvent>;
-const mockUseLocation = useLocation as jest.Mock;
-const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
-const mockHandleContactSupport = handleContactSupport as jest.Mock;
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockLogEvent = logEvent as MockedFunction<typeof logEvent>;
+const mockUseLocation = useLocation as Mock;
+const mockUseGetTenantLicense = useGetTenantLicense as Mock;
+const mockHandleContactSupport = handleContactSupport as Mock;
+const mockToast = toast as Mocked<typeof toast>;
 
-const mockOnClose = jest.fn();
+const mockOnClose = vi.fn();
 
 const mockLocation = {
 	pathname: '/test-path',
@@ -49,7 +50,7 @@ const mockLocation = {
 
 describe('FeedbackModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseLocation.mockReturnValue(mockLocation);
 		mockUseGetTenantLicense.mockReturnValue({
 			isCloudUser: false,

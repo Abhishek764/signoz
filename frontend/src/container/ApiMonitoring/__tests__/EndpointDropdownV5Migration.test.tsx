@@ -10,6 +10,7 @@
  * - Aggregation: count() expression
  * - GroupBy: http_url with type 'attribute'
  */
+import { describe, expect, it } from 'vitest';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -34,30 +35,24 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 				emptyFilters,
 			);
 
-			// Third payload is the endpoint dropdown query (index 2)
 			const dropdownQuery = payload[2];
 			const queryA = dropdownQuery.query.builder.queryData[0];
 
-			// CRITICAL V5 MIGRATION: filter.expression (not filters.items)
 			expect(queryA.filter).toBeDefined();
 			expect(queryA.filter?.expression).toBeDefined();
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters');
 
-			// Base filter 1: Domain http_host = '${domainName}'
 			expect(queryA.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Base filter 2: Kind
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
 
-			// Base filter 3: Existence check
 			expect(queryA.filter?.expression).toContain(
 				`${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
 			);
 
-			// V5 Aggregation format: aggregations array (not aggregateAttribute)
 			expect(queryA.aggregations).toBeDefined();
 			expect(Array.isArray(queryA.aggregations)).toBe(true);
 			expect(queryA.aggregations?.[0]).toStrictEqual({
@@ -65,7 +60,6 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			});
 			expect(queryA).not.toHaveProperty('aggregateAttribute');
 
-			// GroupBy: http_url
 			expect(queryA.groupBy).toHaveLength(1);
 			expect(queryA.groupBy).toContainEqual({
 				key: SPAN_ATTRIBUTES.HTTP_URL,
@@ -114,7 +108,6 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			const expression =
 				dropdownQuery.query.builder.queryData[0].filter?.expression;
 
-			// Exact filter expression with custom filters merged
 			expect(expression).toBe(
 				`${SPAN_ATTRIBUTES.SERVER_NAME} = 'api.example.com' AND kind_string = 'Client' AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS service.name = 'user-service' AND deployment.environment = 'production'`,
 			);

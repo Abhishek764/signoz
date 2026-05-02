@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -16,7 +17,7 @@ describe('PipelinePage container test', () => {
 					<I18nextProvider i18n={i18n}>
 						<TableExpandIcon
 							expanded
-							onExpand={jest.fn()}
+							onExpand={vi.fn()}
 							record={pipelineMockData[0]}
 						/>
 					</I18nextProvider>

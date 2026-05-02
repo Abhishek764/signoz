@@ -1,7 +1,26 @@
+import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MockedFunction } from 'vitest';
+
 import { MemberStatus } from 'container/MembersSettings/utils';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import MembersTable, { MemberRow } from '../MembersTable';
+
+vi.mock('@signozhq/ui', async () => {
+	const React = await vi.importActual<typeof import('react')>('react');
+
+	return {
+		Badge: ({ children }: { children?: ReactNode }): JSX.Element =>
+			React.createElement('span', null, children),
+	};
+});
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
 
 const mockActiveMembers: MemberRow[] = [
 	{
@@ -34,13 +53,13 @@ const defaultProps = {
 	currentPage: 1,
 	pageSize: 20,
 	searchQuery: '',
-	onPageChange: jest.fn(),
-	onRowClick: jest.fn(),
+	onPageChange: vi.fn(),
+	onRowClick: vi.fn(),
 };
 
 describe('MembersTable', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders member rows with name, email, and ACTIVE status', () => {
@@ -65,9 +84,7 @@ describe('MembersTable', () => {
 	});
 
 	it('calls onRowClick with the member data when a row is clicked', async () => {
-		const onRowClick = jest.fn() as jest.MockedFunction<
-			(member: MemberRow) => void
-		>;
+		const onRowClick = vi.fn() as MockedFunction<(member: MemberRow) => void>;
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
@@ -87,7 +104,7 @@ describe('MembersTable', () => {
 	});
 
 	it('renders DELETED badge and calls onRowClick when a deleted member row is clicked', async () => {
-		const onRowClick = jest.fn();
+		const onRowClick = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const deletedMember: MemberRow = {
 			id: 'user-del',

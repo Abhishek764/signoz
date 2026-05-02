@@ -1,3 +1,6 @@
+import type { ChangeEventHandler, ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { StatusCodes } from 'http-status-codes';
@@ -12,38 +15,114 @@ const makeApiError = (message: string, code = StatusCodes.CONFLICT): APIError =>
 		error: { code: 'already_exists', message, url: '', errors: [] },
 	});
 
-jest.mock('api/v1/invite/create');
-jest.mock('api/v1/invite/bulk/create');
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
-	},
+type MockButtonProps = {
+	children?: ReactNode;
+	disabled?: boolean;
+	onClick?: () => void;
+	type?: 'button' | 'submit' | 'reset';
+	'aria-label'?: string;
+};
+
+type MockInputProps = {
+	autoComplete?: string;
+	className?: string;
+	name?: string;
+	onChange?: ChangeEventHandler<HTMLInputElement>;
+	placeholder?: string;
+	type?: string;
+	value?: string;
+};
+
+type MockDialogProps = {
+	children?: ReactNode;
+	className?: string;
+	open?: boolean;
+};
+
+const showErrorModal = vi.hoisted(() => vi.fn());
+
+vi.mock('api/v1/invite/create');
+vi.mock('api/v1/invite/bulk/create');
+vi.mock('@signozhq/ui', async () => {
+	const React = await vi.importActual<typeof import('react')>('react');
+
+	return {
+		Button: ({
+			children,
+			disabled,
+			onClick,
+			type = 'button',
+			'aria-label': ariaLabel,
+		}: MockButtonProps): JSX.Element =>
+			React.createElement(
+				'button',
+				{ 'aria-label': ariaLabel, disabled, onClick, type },
+				children,
+			),
+		Callout: ({ title }: { title?: ReactNode }): JSX.Element =>
+			React.createElement('div', null, title),
+		DialogFooter: ({ children, className }: MockDialogProps): JSX.Element =>
+			React.createElement('div', { className }, children),
+		DialogWrapper: ({
+			children,
+			className,
+			open,
+		}: MockDialogProps): JSX.Element | null =>
+			open ? React.createElement('div', { className }, children) : null,
+		Input: ({
+			autoComplete,
+			className,
+			name,
+			onChange,
+			placeholder,
+			type,
+			value,
+		}: MockInputProps): JSX.Element =>
+			React.createElement('input', {
+				autoComplete,
+				className,
+				name,
+				onChange,
+				placeholder,
+				type,
+				value,
+			}),
+		toast: {
+			success: vi.fn(),
+			error: vi.fn(),
+		},
+	};
+});
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
 }));
 
-const showErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
+vi.mock('providers/ErrorModalProvider', async () => ({
 	__esModule: true,
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
+	...(await vi.importActual<typeof import('providers/ErrorModalProvider')>(
+		'providers/ErrorModalProvider',
+	)),
+	useErrorModal: vi.fn(() => ({
 		showErrorModal,
 		isErrorModalVisible: false,
 	})),
 }));
 
-const mockSendInvite = jest.mocked(sendInvite);
-const mockInviteUsers = jest.mocked(inviteUsers);
+const mockSendInvite = vi.mocked(sendInvite);
+const mockInviteUsers = vi.mocked(inviteUsers);
 
 const defaultProps = {
 	open: true,
-	onClose: jest.fn(),
-	onComplete: jest.fn(),
+	onClose: vi.fn(),
+	onComplete: vi.fn(),
 };
 
 describe('InviteMembersModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		showErrorModal.mockClear();
 		mockSendInvite.mockResolvedValue({
 			httpStatusCode: 200,
@@ -138,7 +217,7 @@ describe('InviteMembersModal', () => {
 
 	it('uses sendInvite (single) when only one row is filled', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 
 		render(<InviteMembersModal {...defaultProps} onComplete={onComplete} />);
 
@@ -243,7 +322,7 @@ describe('InviteMembersModal', () => {
 
 	it('uses inviteUsers (bulk) when multiple rows are filled', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onComplete = jest.fn();
+		const onComplete = vi.fn();
 
 		render(<InviteMembersModal {...defaultProps} onComplete={onComplete} />);
 

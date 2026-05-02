@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';
@@ -16,6 +17,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { ROLES } from 'types/roles';
+import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 
 import { MenuItemKeys } from '../contants';
 import WidgetHeader from '../index';
@@ -83,23 +85,29 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 		</MemoryRouter>,
 	);
 
-jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
-	__esModule: true,
-	default: jest.fn(() => jest.fn()),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: vi.fn(),
+	}),
 }));
 
-jest.mock('hooks/dashboard/useGetResolvedText', () => {
-	const TEST_WIDGET_TITLE_RESOLVED = 'Test Widget Title';
+vi.mock('hooks/queryBuilder/useCreateAlerts', () => ({
+	__esModule: true,
+	default: vi.fn(() => vi.fn()),
+}));
+
+vi.mock('hooks/dashboard/useGetResolvedText', () => {
+	const MOCK_RESOLVED = 'Test Widget Title';
 	return {
 		__esModule: true,
-		default: jest.fn(() => ({
-			truncatedText: TEST_WIDGET_TITLE_RESOLVED,
-			fullText: TEST_WIDGET_TITLE_RESOLVED,
+		default: vi.fn(() => ({
+			truncatedText: MOCK_RESOLVED,
+			fullText: MOCK_RESOLVED,
 		})),
 	};
 });
 
-jest.mock('lucide-react', () => ({
+vi.mock('lucide-react', () => ({
 	CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
 	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
 	X: (): JSX.Element => <svg data-testid="lucide-x" />,
@@ -107,8 +115,8 @@ jest.mock('lucide-react', () => ({
 		<svg data-testid="lucide-square-arrow-out-up-right" />
 	),
 }));
-jest.mock('antd', () => ({
-	...jest.requireActual('antd'),
+vi.mock('antd', async () => ({
+	...(await vi.importActual<typeof import('antd')>('antd')),
 	Spin: (): JSX.Element => <div data-testid="antd-spin" />,
 }));
 
@@ -163,8 +171,8 @@ const mockQueryResponse = {
 >;
 
 describe('WidgetHeader', () => {
-	const mockOnView = jest.fn();
-	const mockSetSearchTerm = jest.fn();
+	const mockOnView = vi.fn();
+	const mockSetSearchTerm = vi.fn();
 	const tableProcessedDataRef: MutableRefObject<RowData[]> = {
 		current: [
 			{
@@ -177,7 +185,7 @@ describe('WidgetHeader', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders widget header with title', () => {
@@ -490,11 +498,8 @@ describe('WidgetHeader', () => {
 		});
 
 		it('Create Alerts menu item is enabled and clickable', async () => {
-			const mockCreateAlertsHandler = jest.fn();
-			const useCreateAlerts = jest.requireMock(
-				'hooks/queryBuilder/useCreateAlerts',
-			).default;
-			useCreateAlerts.mockReturnValue(mockCreateAlertsHandler);
+			const mockCreateAlertsHandler = vi.fn();
+			vi.mocked(useCreateAlerts).mockReturnValue(mockCreateAlertsHandler);
 
 			render(
 				<WidgetHeader

@@ -1,4 +1,142 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PipelinePage > should render PipelineExpandView section 1`] = `
+<DocumentFragment>
+  <div
+    class="ant-table-wrapper sc-cWSHoV jaNjNF css-dev-only-do-not-override-2i2tap"
+  >
+    <div
+      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+    >
+      <div
+        class="ant-spin-container"
+      >
+        <div
+          class="ant-table ant-table-small"
+        >
+          <div
+            class="ant-table-container"
+          >
+            <div
+              class="ant-table-content"
+            >
+              <table
+                style="table-layout: auto;"
+              >
+                <colgroup>
+                  <col
+                    style="width: 150px;"
+                  />
+                </colgroup>
+                <tbody
+                  class="ant-table-tbody"
+                >
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="grokusecommon"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-circle sc-kOPcWz fNdCqI css-dev-only-do-not-override-2i2tap"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          1
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="sc-dtInlm cxqsXz"
+                      >
+                        grok use common asd
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="renameauth"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-circle sc-kOPcWz fNdCqI css-dev-only-do-not-override-2i2tap"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          2
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="sc-dtInlm cxqsXz"
+                      >
+                        rename auth
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="jsonparser"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-circle sc-kOPcWz fNdCqI css-dev-only-do-not-override-2i2tap"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          3
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="sc-dtInlm cxqsXz"
+                      >
+                        json parser
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div
+            class="ant-table-footer"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
 
 exports[`PipelinePage should render PipelineExpandView section 1`] = `
 <DocumentFragment>

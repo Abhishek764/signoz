@@ -4,10 +4,53 @@ import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import CreateAlertPage from 'pages/CreateAlert';
 import { act, fireEvent, render } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { Mock } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
 
-jest
+vi.mock('uplot', () => {
+	const paths = {
+		spline: vi.fn(),
+		bars: vi.fn(),
+	};
+	const UplotConstructor: any = vi.fn(() => ({
+		paths,
+	}));
+	UplotConstructor.paths = paths;
+	return { default: UplotConstructor };
+});
+
+vi.mock('container/FormAlertRules/ChartPreview', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
+
+vi.mock('container/MetricsExplorer/Explorer/utils', async () => {
+	const actual = await vi.importActual<
+		typeof import('container/MetricsExplorer/Explorer/utils')
+	>('container/MetricsExplorer/Explorer/utils');
+	return {
+		...actual,
+		useGetMetrics: (): {
+			metrics: never[];
+			isLoading: boolean;
+			isError: boolean;
+		} => ({
+			metrics: [],
+			isLoading: false,
+			isError: false,
+		}),
+	};
+});
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
+
+vi
 	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
 	.mockReturnValue({
 		matchType: '3',
@@ -16,14 +59,14 @@ jest
 		targetUnit: 'rpm',
 	});
 
-let mockWindowOpen: jest.Mock;
+let mockWindowOpen: Mock;
 
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
 function findLinkForAlertType(
@@ -50,16 +93,9 @@ describe('Alert rule documentation redirection', () => {
 	let renderResult: ReturnType<typeof render>;
 
 	beforeAll(() => {
-		mockWindowOpen = jest.fn();
+		mockWindowOpen = vi.fn();
 		window.open = mockWindowOpen;
 	});
-
-	jest.mock('react-router-dom', () => ({
-		...jest.requireActual('react-router-dom'),
-		useLocation: (): { pathname: string } => ({
-			pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERT_TYPE_SELECTION}`,
-		}),
-	}));
 
 	beforeEach(() => {
 		act(() => {
@@ -139,6 +175,6 @@ describe('Create alert page redirection', () => {
 					ALERT_TYPE_URL_MAP[alertType].creation,
 					'_blank',
 				);
-			});
+			}, 15_000);
 		});
 });

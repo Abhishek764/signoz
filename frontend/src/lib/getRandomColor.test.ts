@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { themeColors } from 'constants/theme';
 import { Span } from 'types/api/trace/getTraceItem';
 

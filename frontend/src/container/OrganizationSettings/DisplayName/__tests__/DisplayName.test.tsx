@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toast } from '@signozhq/ui';
 import { rest, server } from 'mocks-server/server';
 import {
@@ -10,11 +11,11 @@ import {
 
 import DisplayName from '../index';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
@@ -24,7 +25,7 @@ const defaultProps = { index: 0, id: 'does-not-matter-id' };
 
 describe('DisplayName', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {

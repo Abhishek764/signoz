@@ -1,6 +1,14 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import OverflowInputToolTip from './OverflowInputToolTip';
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
 
 const TOOLTIP_INNER_SELECTOR = '.ant-tooltip-inner';
 // Utility to mock overflow behaviour on inputs / elements.
@@ -41,7 +49,7 @@ function queryTooltipInner(): HTMLElement | null {
 
 describe('OverflowInputToolTip', () => {
 	beforeEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {

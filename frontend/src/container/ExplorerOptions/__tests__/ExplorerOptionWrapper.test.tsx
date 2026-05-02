@@ -1,3 +1,5 @@
+import type { MockedFunction } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useHistory } from 'react-router-dom';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
@@ -14,28 +16,30 @@ import ExplorerOptionWrapper from '../ExplorerOptionWrapper';
 import { getExplorerToolBarVisibility } from '../utils';
 
 // Mock dependencies
-jest.mock('hooks/dashboard/useUpdateDashboard');
+vi.mock('hooks/dashboard/useUpdateDashboard');
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
+	useHistory: vi.fn(),
 }));
 
-jest.mock('../utils', () => ({
-	getExplorerToolBarVisibility: jest.fn(),
-	generateRGBAFromHex: jest.fn(() => 'rgba(0, 0, 0, 0.08)'),
-	getRandomColor: jest.fn(() => '#000000'),
-	saveNewViewHandler: jest.fn(),
-	setExplorerToolBarVisibility: jest.fn(),
+vi.mock('../utils', () => ({
+	getExplorerToolBarVisibility: vi.fn(),
+	generateRGBAFromHex: vi.fn(() => 'rgba(0, 0, 0, 0.08)'),
+	getRandomColor: vi.fn(() => '#000000'),
+	saveNewViewHandler: vi.fn(),
+	setExplorerToolBarVisibility: vi.fn(),
 	DATASOURCE_VS_ROUTES: {},
 }));
 
-const mockGetExplorerToolBarVisibility = jest.mocked(
+const mockGetExplorerToolBarVisibility = vi.mocked(
 	getExplorerToolBarVisibility,
 );
 
-const mockUseUpdateDashboard = jest.mocked(useUpdateDashboard);
-const mockUseHistory = jest.mocked(useHistory);
+const mockUseUpdateDashboard = vi.mocked(useUpdateDashboard);
+const mockUseHistory = vi.mocked(useHistory);
 
 // Mock data
 const TEST_QUERY_ID = 'test-query-id';
@@ -78,7 +82,7 @@ const renderExplorerOptionWrapper = (
 		disabled: false,
 		query: mockQuery,
 		isLoading: false,
-		onExport: jest.fn() as jest.MockedFunction<
+		onExport: vi.fn() as MockedFunction<
 			(
 				dashboard: Dashboard | null,
 				isNewDashboard?: boolean,
@@ -108,24 +112,24 @@ const renderExplorerOptionWrapper = (
 
 describe('ExplorerOptionWrapper', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockGetExplorerToolBarVisibility.mockReturnValue(true);
 		// Mock useUpdateDashboard to return a mutation object
 		mockUseUpdateDashboard.mockReturnValue({
-			mutate: jest.fn(),
-			mutateAsync: jest.fn(),
+			mutate: vi.fn(),
+			mutateAsync: vi.fn(),
 			isLoading: false,
 			isError: false,
 			isSuccess: false,
 			data: undefined,
 			error: null,
-			reset: jest.fn(),
+			reset: vi.fn(),
 		} as unknown as ReturnType<typeof useUpdateDashboard>);
 	});
 
 	it('should navigate to alert creation page when "Create an Alert" is clicked in logs-explorer', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockPush = jest.fn();
+		const mockPush = vi.fn();
 		mockUseHistory.mockReturnValue({
 			push: mockPush,
 		} as unknown as ReturnType<typeof useHistory>);
@@ -148,7 +152,7 @@ describe('ExplorerOptionWrapper', () => {
 	describe('onExport functionality', () => {
 		it('should call onExport when New Dashboard button is clicked in export modal', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const testOnExport = jest.fn() as jest.MockedFunction<
+			const testOnExport = vi.fn() as MockedFunction<
 				(
 					dashboard: Dashboard | null,
 					isNewDashboard?: boolean,
@@ -193,7 +197,7 @@ describe('ExplorerOptionWrapper', () => {
 
 		it('should call onExport when selecting existing dashboard and clicking Export button', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const testOnExport = jest.fn() as jest.MockedFunction<
+			const testOnExport = vi.fn() as MockedFunction<
 				(
 					dashboard: Dashboard | null,
 					isNewDashboard?: boolean,
@@ -271,10 +275,10 @@ describe('ExplorerOptionWrapper', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			// Mock the safeNavigate function
-			const mockSafeNavigate = jest.fn();
+			const mockSafeNavigate = vi.fn();
 
 			// Get the mock mutate function to track calls
-			const mockMutate = mockUseUpdateDashboard().mutate as jest.MockedFunction<
+			const mockMutate = mockUseUpdateDashboard().mutate as MockedFunction<
 				(...args: unknown[]) => void
 			>;
 
@@ -373,7 +377,7 @@ describe('ExplorerOptionWrapper', () => {
 		});
 
 		it('should not show export buttons when component is disabled', () => {
-			const testOnExport = jest.fn() as jest.MockedFunction<
+			const testOnExport = vi.fn() as MockedFunction<
 				(
 					dashboard: Dashboard | null,
 					isNewDashboard?: boolean,

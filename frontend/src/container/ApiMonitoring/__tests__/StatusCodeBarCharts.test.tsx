@@ -1,16 +1,20 @@
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import {
 	getCustomFiltersForBarChart,
 	getFormattedEndPointStatusCodeChartData,
 	getStatusCodeBarChartWidgetData,
 } from 'container/ApiMonitoring/utils';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { SuccessResponse } from 'types/api';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import ErrorState from '../Explorer/Domains/DomainDetails/components/ErrorState';
 import StatusCodeBarCharts from '../Explorer/Domains/DomainDetails/components/StatusCodeBarCharts';
 
-// Create a partial mock of the UseQueryResult interface for testing
 interface MockQueryResult {
 	isLoading: boolean;
 	isRefetching: boolean;
@@ -20,30 +24,29 @@ interface MockQueryResult {
 	refetch: () => void;
 }
 
-// Mocks
-jest.mock(
+vi.mock(
 	'container/DashboardContainer/visualization/charts/BarChart/BarChart',
 	() => ({
 		__esModule: true,
-		default: jest
+		default: vi
 			.fn()
 			.mockImplementation(() => <div data-testid="bar-chart-mock" />),
 	}),
 );
 
-jest.mock('components/CeleryTask/useGetGraphCustomSeries', () => ({
-	useGetGraphCustomSeries: (): { getCustomSeries: jest.Mock } => ({
-		getCustomSeries: jest.fn(),
+vi.mock('components/CeleryTask/useGetGraphCustomSeries', () => ({
+	useGetGraphCustomSeries: (): { getCustomSeries: Mock } => ({
+		getCustomSeries: vi.fn(),
 	}),
 }));
 
-jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
-	useNavigateToExplorer: (): { navigateToExplorer: jest.Mock } => ({
-		navigateToExplorer: jest.fn(),
+vi.mock('components/CeleryTask/useNavigateToExplorer', () => ({
+	useNavigateToExplorer: (): { navigateToExplorer: Mock } => ({
+		navigateToExplorer: vi.fn(),
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
+vi.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
 	useGraphClickToShowButton: (): {
 		componentClick: boolean;
 		htmlRef: HTMLElement | null;
@@ -53,29 +56,29 @@ jest.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useNavigateToExplorerPages', () => ({
+vi.mock('container/GridCardLayout/useNavigateToExplorerPages', () => ({
 	__esModule: true,
-	default: (): { navigateToExplorerPages: jest.Mock } => ({
-		navigateToExplorerPages: jest.fn(),
+	default: (): { navigateToExplorerPages: Mock } => ({
+		navigateToExplorerPages: vi.fn(),
 	}),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('hooks/useDimensions', () => ({
+vi.mock('hooks/useDimensions', () => ({
 	useResizeObserver: (): { width: number; height: number } => ({
 		width: 800,
 		height: 400,
 	}),
 }));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): { notifications: [] } => ({ notifications: [] }),
 }));
 
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	useTimezone: (): {
 		timezone: {
 			name: string;
@@ -93,29 +96,27 @@ jest.mock('providers/Timezone', () => ({
 	}),
 }));
 
-jest.mock('lib/uPlotLib/getUplotChartOptions', () => ({
-	getUPlotChartOptions: jest.fn().mockReturnValue({}),
+vi.mock('lib/uPlotLib/getUplotChartOptions', () => ({
+	getUPlotChartOptions: vi.fn().mockReturnValue({}),
 }));
 
-jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
-	getUPlotChartData: jest.fn().mockReturnValue([]),
+vi.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
+	getUPlotChartData: vi.fn().mockReturnValue([]),
 }));
 
-// Mock utility functions
-jest.mock('container/ApiMonitoring/utils', () => ({
-	getFormattedEndPointStatusCodeChartData: jest.fn(),
-	getStatusCodeBarChartWidgetData: jest.fn(),
-	getCustomFiltersForBarChart: jest.fn(),
+vi.mock('container/ApiMonitoring/utils', () => ({
+	getFormattedEndPointStatusCodeChartData: vi.fn(),
+	getStatusCodeBarChartWidgetData: vi.fn(),
+	getCustomFiltersForBarChart: vi.fn(),
 	statusCodeWidgetInfo: [
 		{ title: 'Status Code Count', yAxisUnit: 'count' },
 		{ title: 'Status Code Latency', yAxisUnit: 'ms' },
 	],
 }));
 
-// Mock the ErrorState component
-jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
+vi.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 	__esModule: true,
-	default: jest.fn().mockImplementation(({ refetch }) => (
+	default: vi.fn().mockImplementation(({ refetch }) => (
 		<div data-testid="error-state-mock">
 			<button type="button" data-testid="refetch-button" onClick={refetch}>
 				Retry
@@ -124,18 +125,17 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 	)),
 }));
 
-// Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...originalModule,
-		Card: jest.fn().mockImplementation(({ children, className }) => (
+		Card: vi.fn().mockImplementation(({ children, className }) => (
 			<div data-testid="card-mock" className={className}>
 				{children}
 			</div>
 		)),
 		Typography: {
-			Text: jest
+			Text: vi
 				.fn()
 				.mockImplementation(({ children }) => (
 					<div data-testid="typography-text">{children}</div>
@@ -143,13 +143,13 @@ jest.mock('antd', () => {
 		},
 		Button: {
 			...originalModule.Button,
-			Group: jest.fn().mockImplementation(({ children, className }) => (
+			Group: vi.fn().mockImplementation(({ children, className }) => (
 				<div data-testid="button-group" className={className}>
 					{children}
 				</div>
 			)),
 		},
-		Skeleton: jest
+		Skeleton: vi
 			.fn()
 			.mockImplementation(() => (
 				<div data-testid="skeleton-mock">Loading skeleton...</div>
@@ -158,17 +158,15 @@ jest.mock('antd', () => {
 });
 
 describe('StatusCodeBarCharts', () => {
-	// Default props for tests
 	const mockFilters: IBuilderQuery['filters'] = { items: [], op: 'AND' };
 	const mockTimeRange = {
 		startTime: 1609459200000,
 		endTime: 1609545600000,
 	};
 	const mockDomainName = 'test-domain';
-	const onDragSelectMock = jest.fn();
-	const refetchFn = jest.fn();
+	const onDragSelectMock = vi.fn();
+	const refetchFn = vi.fn();
 
-	// Mock formatted data
 	const mockFormattedData = {
 		data: {
 			result: [
@@ -183,16 +181,16 @@ describe('StatusCodeBarCharts', () => {
 					queryName: 'B',
 				},
 			],
+			newResult: [] as any[],
 			resultType: 'matrix',
 		},
 	};
 
-	// Mock filter values
 	const mockStatusCodeFilters = [
 		{
 			id: 'test-id-1',
 			key: {
-				dataType: 'string',
+				dataType: DataTypes.String,
 				id: 'response_status_code--string--tag--false',
 				key: 'response_status_code',
 				type: 'tag',
@@ -203,7 +201,7 @@ describe('StatusCodeBarCharts', () => {
 		{
 			id: 'test-id-2',
 			key: {
-				dataType: 'string',
+				dataType: DataTypes.String,
 				id: 'response_status_code--string--tag--false',
 				key: 'response_status_code',
 				type: 'tag',
@@ -214,24 +212,31 @@ describe('StatusCodeBarCharts', () => {
 	];
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(getFormattedEndPointStatusCodeChartData as jest.Mock).mockReturnValue(
-			mockFormattedData,
-		);
-		(getStatusCodeBarChartWidgetData as jest.Mock).mockReturnValue({
+		vi.clearAllMocks();
+		vi
+			.mocked(getFormattedEndPointStatusCodeChartData)
+			.mockReturnValue(mockFormattedData as any);
+		vi.mocked(getStatusCodeBarChartWidgetData).mockReturnValue({
 			id: 'test-widget',
 			title: 'Status Code',
 			description: 'Shows status code distribution',
-			query: { builder: { queryData: [] } },
-			panelTypes: 'bar',
-		});
-		(getCustomFiltersForBarChart as jest.Mock).mockReturnValue(
-			mockStatusCodeFilters,
-		);
+			query: {
+				id: '',
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				clickhouse_sql: [],
+				builder: {
+					queryData: [],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+			},
+			panelTypes: PANEL_TYPES.BAR,
+		} as any);
+		vi.mocked(getCustomFiltersForBarChart).mockReturnValue(mockStatusCodeFilters);
 	});
 
 	it('renders loading state correctly', () => {
-		// Arrange
 		const mockStatusCodeQuery: MockQueryResult = {
 			isLoading: true,
 			isRefetching: false,
@@ -248,7 +253,6 @@ describe('StatusCodeBarCharts', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<StatusCodeBarCharts
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
@@ -260,12 +264,10 @@ describe('StatusCodeBarCharts', () => {
 			/>,
 		);
 
-		// Assert
 		expect(screen.getByTestId('skeleton-mock')).toBeInTheDocument();
 	});
 
 	it('renders error state correctly', () => {
-		// Arrange
 		const mockStatusCodeQuery: MockQueryResult = {
 			isLoading: false,
 			isRefetching: false,
@@ -283,7 +285,6 @@ describe('StatusCodeBarCharts', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<StatusCodeBarCharts
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
@@ -295,7 +296,6 @@ describe('StatusCodeBarCharts', () => {
 			/>,
 		);
 
-		// Assert
 		expect(screen.getByTestId('error-state-mock')).toBeInTheDocument();
 		expect(ErrorState).toHaveBeenCalledWith(
 			{ refetch: expect.any(Function) },
@@ -304,7 +304,6 @@ describe('StatusCodeBarCharts', () => {
 	});
 
 	it('renders chart data correctly when loaded', () => {
-		// Arrange
 		const mockData = {
 			payload: mockFormattedData,
 		} as SuccessResponse<any>;
@@ -325,7 +324,6 @@ describe('StatusCodeBarCharts', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<StatusCodeBarCharts
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
@@ -337,7 +335,6 @@ describe('StatusCodeBarCharts', () => {
 			/>,
 		);
 
-		// Assert
 		expect(getFormattedEndPointStatusCodeChartData).toHaveBeenCalledWith(
 			mockData.payload,
 			'sum',
@@ -348,7 +345,6 @@ describe('StatusCodeBarCharts', () => {
 	});
 
 	it('switches between number of calls and latency views', () => {
-		// Arrange
 		const mockData = {
 			payload: mockFormattedData,
 		} as SuccessResponse<any>;
@@ -369,7 +365,6 @@ describe('StatusCodeBarCharts', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<StatusCodeBarCharts
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
@@ -381,13 +376,10 @@ describe('StatusCodeBarCharts', () => {
 			/>,
 		);
 
-		// Initially should be showing number of calls (index 0)
 		const latencyButton = screen.getByText('Latency');
 
-		// Click to switch to latency view
 		fireEvent.click(latencyButton);
 
-		// Should now format with the latency data
 		expect(getFormattedEndPointStatusCodeChartData).toHaveBeenCalledWith(
 			mockData.payload,
 			'average',
@@ -395,7 +387,6 @@ describe('StatusCodeBarCharts', () => {
 	});
 
 	it('uses getCustomFiltersForBarChart when needed', () => {
-		// Arrange
 		const mockData = {
 			payload: mockFormattedData,
 		} as SuccessResponse<any>;
@@ -416,7 +407,6 @@ describe('StatusCodeBarCharts', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<StatusCodeBarCharts
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
@@ -428,12 +418,8 @@ describe('StatusCodeBarCharts', () => {
 			/>,
 		);
 
-		// Assert
-		// Initially getCustomFiltersForBarChart won't be called until a graph click event
 		expect(getCustomFiltersForBarChart).not.toHaveBeenCalled();
 
-		// We can't easily test the graph click handler directly,
-		// but we've confirmed the function is mocked and ready to be tested
 		expect(getStatusCodeBarChartWidgetData).toHaveBeenCalledWith(
 			mockDomainName,
 			expect.objectContaining({
@@ -444,7 +430,6 @@ describe('StatusCodeBarCharts', () => {
 	});
 
 	it('handles widget generation with current filters', () => {
-		// Arrange
 		const mockCustomFilters = {
 			items: [
 				{
@@ -477,7 +462,6 @@ describe('StatusCodeBarCharts', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<StatusCodeBarCharts
 				endPointStatusCodeBarChartsDataQuery={mockStatusCodeQuery as any}
@@ -489,7 +473,6 @@ describe('StatusCodeBarCharts', () => {
 			/>,
 		);
 
-		// Assert widget creation was called with the correct parameters
 		expect(getStatusCodeBarChartWidgetData).toHaveBeenCalledWith(
 			mockDomainName,
 			expect.objectContaining({

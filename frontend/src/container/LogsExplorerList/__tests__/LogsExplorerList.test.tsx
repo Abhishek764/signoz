@@ -9,6 +9,8 @@ import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { render, screen } from 'tests/test-utils';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 
@@ -23,14 +25,16 @@ const logsQueryServerRequest = ({
 		),
 	);
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.LOGS_EXPLORER}`,
 	}),
 }));
 
-jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+vi.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	usePreferenceSync: (): any => ({
 		preferences: {
 			columns: [],
@@ -43,43 +47,37 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		},
 		loading: false,
 		error: null,
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
+		updateColumns: vi.fn(),
+		updateFormatting: vi.fn(),
 	}),
 }));
 
-jest.mock(
-	'container/TimeSeriesView/TimeSeriesView',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function TimeSeriesView() {
-			return <div>Time Series Chart</div>;
-		},
-);
+vi.mock('container/TimeSeriesView/TimeSeriesView', () => ({
+	default: function TimeSeriesView(): JSX.Element {
+		return <div>Time Series Chart</div>;
+	},
+}));
 
-jest.mock(
-	'container/LogsExplorerChart',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function LogsExplorerHistogramChart() {
-			return <div>Histogram Chart</div>;
-		},
-);
+vi.mock('container/LogsExplorerChart', () => ({
+	default: function LogsExplorerHistogramChart(): JSX.Element {
+		return <div>Histogram Chart</div>;
+	},
+}));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
+vi.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
-	useGetExplorerQueryRange: jest.fn(),
+	useGetExplorerQueryRange: vi.fn(),
 }));
 
 describe('LogsExplorerList - empty states', () => {
 	beforeEach(() => {
-		(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+		(useGetExplorerQueryRange as Mock).mockReturnValue({
 			data: { payload: logsQueryRangeEmptyResponse },
 		});
 		logsQueryServerRequest({});

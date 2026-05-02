@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -10,9 +11,9 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import VariableItem from '../../../container/DashboardContainer/DashboardVariablesSelection/VariableItem';
 
 // Mock the dashboard variables query
-jest.mock('api/dashboard/variables/dashboardVariablesQuery', () => ({
+vi.mock('api/dashboard/variables/dashboardVariablesQuery', () => ({
 	__esModule: true,
-	default: jest.fn(() =>
+	default: vi.fn(() =>
 		Promise.resolve({
 			payload: {
 				variableValues: ['option1', 'option2', 'option3', 'option4'],
@@ -22,7 +23,7 @@ jest.mock('api/dashboard/variables/dashboardVariablesQuery', () => ({
 }));
 
 // Mock scrollIntoView which isn't available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 // Constants
 const TEST_VARIABLE_NAME = 'test_variable';
@@ -76,12 +77,12 @@ function TestWrapper({ children }: { children: React.ReactNode }): JSX.Element {
 
 describe('VariableItem Integration Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
-	let mockOnValueUpdate: jest.Mock;
+	let mockOnValueUpdate: Mock;
 
 	beforeEach(() => {
 		user = userEvent.setup();
-		mockOnValueUpdate = jest.fn();
-		jest.clearAllMocks();
+		mockOnValueUpdate = vi.fn();
+		vi.clearAllMocks();
 	});
 
 	// ===== 1. INTEGRATION WITH CUSTOMSELECT =====
@@ -408,8 +409,7 @@ describe('VariableItem Integration Tests', () => {
 
 			// Dropdown should close and search text should be cleared
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 				expect(searchInput).toHaveValue('');
 			});
 		});
@@ -577,8 +577,7 @@ describe('VariableItem Integration Tests', () => {
 			await user.keyboard('{Escape}');
 
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 	});

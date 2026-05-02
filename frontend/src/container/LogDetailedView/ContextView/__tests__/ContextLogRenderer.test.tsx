@@ -21,6 +21,7 @@ import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ContextLogRenderer from '../ContextLogRenderer';
 import {
@@ -31,9 +32,9 @@ import {
 } from './mockData';
 
 // Mock the useContextLogData hook
-const mockHandleRunQuery = jest.fn();
+const mockHandleRunQuery = vi.fn();
 
-jest.mock('container/OptionsMenu', () => ({
+vi.mock('container/OptionsMenu', () => ({
 	useOptionsMenu: (): any => ({
 		options: {
 			fontSize: 'medium',
@@ -42,23 +43,22 @@ jest.mock('container/OptionsMenu', () => ({
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock(
-	'components/OverlayScrollbar/OverlayScrollbar',
-	() =>
-		function MockOverlayScrollbar({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element {
-			return <div>{children}</div>;
-		},
-);
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	__esModule: true,
+	default: function MockOverlayScrollbar({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return <div>{children}</div>;
+	},
+}));
 
 // Common wrapper component for tests
 const renderContextLogRenderer = (): RenderResult => {

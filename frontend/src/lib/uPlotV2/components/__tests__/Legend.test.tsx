@@ -6,6 +6,16 @@ import {
 	screen,
 	within,
 } from '@testing-library/react';
+import type { Mock, MockInstance, MockedFunction } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
@@ -14,10 +24,10 @@ import { useLegendActions } from '../../hooks/useLegendActions';
 import Legend from '../Legend/Legend';
 import { LegendPosition } from '../types';
 
-const mockWriteText = jest.fn().mockResolvedValue(undefined);
-let clipboardSpy: jest.SpyInstance | undefined;
+const mockWriteText = vi.fn().mockResolvedValue(undefined);
+let clipboardSpy: MockInstance | undefined;
 
-jest.mock('react-virtuoso', () => ({
+vi.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({
 		data,
 		itemContent,
@@ -37,13 +47,13 @@ jest.mock('react-virtuoso', () => ({
 	),
 }));
 
-jest.mock('lib/uPlotV2/hooks/useLegendsSync');
-jest.mock('lib/uPlotV2/hooks/useLegendActions');
+vi.mock('lib/uPlotV2/hooks/useLegendsSync');
+vi.mock('lib/uPlotV2/hooks/useLegendActions');
 
-const mockUseLegendsSync = useLegendsSync as jest.MockedFunction<
+const mockUseLegendsSync = useLegendsSync as MockedFunction<
 	typeof useLegendsSync
 >;
-const mockUseLegendActions = useLegendActions as jest.MockedFunction<
+const mockUseLegendActions = useLegendActions as MockedFunction<
 	typeof useLegendActions
 >;
 
@@ -78,26 +88,26 @@ describe('Legend', () => {
 		},
 	};
 
-	let onLegendClick: jest.Mock;
-	let onLegendMouseMove: jest.Mock;
-	let onLegendMouseLeave: jest.Mock;
-	let onFocusSeries: jest.Mock;
+	let onLegendClick: Mock;
+	let onLegendMouseMove: Mock;
+	let onLegendMouseLeave: Mock;
+	let onFocusSeries: Mock;
 
 	beforeEach(() => {
-		onLegendClick = jest.fn();
-		onLegendMouseMove = jest.fn();
-		onLegendMouseLeave = jest.fn();
-		onFocusSeries = jest.fn();
+		onLegendClick = vi.fn();
+		onLegendMouseMove = vi.fn();
+		onLegendMouseLeave = vi.fn();
+		onFocusSeries = vi.fn();
 		mockWriteText.mockClear();
 
-		clipboardSpy = jest
+		clipboardSpy = vi
 			.spyOn(navigator.clipboard, 'writeText')
 			.mockImplementation(mockWriteText);
 
 		mockUseLegendsSync.mockReturnValue({
 			legendItemsMap: baseLegendItemsMap,
 			focusedSeriesIndex: 1,
-			setFocusedSeriesIndex: jest.fn(),
+			setFocusedSeriesIndex: vi.fn(),
 		});
 
 		mockUseLegendActions.mockReturnValue({
@@ -110,7 +120,7 @@ describe('Legend', () => {
 
 	afterEach(() => {
 		clipboardSpy?.mockRestore();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const renderLegend = (position?: LegendPosition): RenderResult =>

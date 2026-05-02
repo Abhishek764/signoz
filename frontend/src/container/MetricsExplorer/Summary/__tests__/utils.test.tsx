@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
+import { describe, expect, it, vi } from 'vitest';
 
 import { TreemapViewType } from '../types';
 import { formatDataForMetricsTable, getMetricsTableColumns } from '../utils';
@@ -9,7 +10,7 @@ import { formatDataForMetricsTable, getMetricsTableColumns } from '../utils';
 const mockQueryExpression: Filter = {
 	expression: '',
 };
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 
 describe('metricsTableColumns', () => {
 	it('should have correct column definitions', () => {

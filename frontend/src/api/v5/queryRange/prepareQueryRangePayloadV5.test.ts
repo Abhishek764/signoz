@@ -1,5 +1,7 @@
+import { describe, expect, it, vi } from 'vitest';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
@@ -20,9 +22,9 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayloadV5 } from './prepareQueryRangePayloadV5';
 
-jest.mock('lib/getStartEndRangeTime', () => ({
+vi.mock('lib/getStartEndRangeTime', () => ({
 	__esModule: true,
-	default: jest.fn(() => ({ start: '100', end: '200' })),
+	default: vi.fn(() => ({ start: '100', end: '200' })),
 }));
 
 describe('prepareQueryRangePayloadV5', () => {
@@ -515,9 +517,7 @@ describe('prepareQueryRangePayloadV5', () => {
 	});
 
 	it('maps groupBy, order, having, aggregations and filter for logs builder query', () => {
-		const getStartEndRangeTime = jest.requireMock('lib/getStartEndRangeTime')
-			.default as jest.Mock;
-		getStartEndRangeTime.mockReturnValueOnce({
+		vi.mocked(getStartEndRangeTime).mockReturnValueOnce({
 			start: '1754623641',
 			end: '1754645241',
 		});

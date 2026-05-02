@@ -8,6 +8,7 @@ import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import i18n from 'ReactI18';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -18,28 +19,30 @@ const MOCK_SEARCH_PARAMS =
 
 // Mocks
 
-jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 	__esModule: true,
 	default: ({ children }: { children: React.ReactNode }): JSX.Element => (
 		<div>{children}</div>
 	),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string; search: string } => ({
 		pathname: '',
 		search: MOCK_SEARCH_PARAMS,
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: jest.fn(),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div>MockDateTimeSelection</div>,
 }));
@@ -56,21 +59,19 @@ const assertTimeRangeConsistency = (
 	expect(payload.end).toBe(initialTimeRange.end);
 };
 
-jest.setTimeout(20000);
-
 Object.defineProperty(globalThis, 'matchMedia', {
 	writable: true,
-	value: jest.fn().mockImplementation((query) => ({
+	value: vi.fn().mockImplementation((query) => ({
 		matches: true,
 		media: query,
 		addListener: (listener: (params: { matches: boolean }) => void): void => {
 			listener({ matches: true });
 		},
-		removeListener: jest.fn(),
+		removeListener: vi.fn(),
 	})),
 });
 
-describe('LogsPanelComponent', () => {
+describe('LogsPanelComponent', { timeout: 20000 }, () => {
 	let capturedQueryRangePayloads: QueryRangePayload[] = [];
 
 	beforeEach(() => {

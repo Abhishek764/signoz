@@ -1,15 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import LabelsInput from '../LabelsInput';
 import { LabelsInputProps } from '../types';
 
 // Mock the CloseOutlined icon
-jest.mock('@ant-design/icons', () => ({
+vi.mock('@ant-design/icons', () => ({
 	CloseOutlined: (): JSX.Element => <span data-testid="close-icon">×</span>,
 }));
 
-const mockOnLabelsChange = jest.fn();
-const mockValidateLabelsKey = jest.fn().mockReturnValue(null);
+const mockOnLabelsChange = vi.fn();
+const mockValidateLabelsKey = vi.fn().mockReturnValue(null);
 
 const defaultProps: LabelsInputProps = {
 	labels: {},
@@ -33,7 +34,7 @@ const renderLabelsInput = (
 
 describe('LabelsInput', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockValidateLabelsKey.mockReturnValue(null); // Reset validation to always pass
 	});
 
@@ -258,7 +259,7 @@ describe('LabelsInput', () => {
 		});
 
 		it('does not close input immediately when key has value', () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			renderLabelsInput();
 
 			fireEvent.click(screen.getByText(ADD_LABELS_TEXT));
@@ -267,14 +268,14 @@ describe('LabelsInput', () => {
 			fireEvent.change(input, { target: { value: 'severity' } });
 			fireEvent.blur(input);
 
-			jest.advanceTimersByTime(200);
+			vi.advanceTimersByTime(200);
 
 			expect(
 				screen.getByPlaceholderText(ENTER_KEY_PLACEHOLDER),
 			).toBeInTheDocument();
 			expect(screen.queryByText(ADD_LABELS_TEXT)).not.toBeInTheDocument();
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 	});
 

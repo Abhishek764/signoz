@@ -1,6 +1,7 @@
-import { MemoryRouter, Route } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import { AppProvider } from 'providers/App/App';
@@ -10,24 +11,25 @@ import { Span } from 'types/api/trace/getTraceV2';
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
 
 // Mock external dependencies
-const mockRedirectWithQueryBuilderData = jest.fn();
+const mockRedirectWithQueryBuilderData = vi.fn();
 const mockNotifications = {
-	success: jest.fn(),
-	error: jest.fn(),
+	success: vi.fn(),
+	error: vi.fn(),
 };
-const mockSetCopy = jest.fn();
+const mockSetCopy = vi.fn();
 const mockQueryClient = {
-	fetchQuery: jest.fn(),
+	fetchQuery: vi.fn(),
 };
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
+	Object.assign(uplotMock, { paths });
 	return {
 		paths,
 		default: uplotMock,
@@ -35,7 +37,7 @@ jest.mock('uplot', () => {
 });
 
 // Mock the hooks
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => ({
 		currentQuery: {
 			builder: {
@@ -54,23 +56,23 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): any => ({ notifications: mockNotifications }),
 }));
 
-jest.mock('react-use', () => ({
-	...jest.requireActual('react-use'),
+vi.mock('react-use', async () => ({
+	...(await vi.importActual<any>('react-use')),
 	useCopyToClipboard: (): any => [{ value: '' }, mockSetCopy],
 }));
 
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual<any>('react-query')),
 	useQueryClient: (): any => mockQueryClient,
 }));
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	toast: jest.fn(),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<any>('@signozhq/ui')),
+	toast: vi.fn(),
 }));
 
 // Mock the API response for getAggregateKeys
@@ -94,7 +96,7 @@ const mockAggregateKeysResponse = {
 };
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 	mockQueryClient.fetchQuery.mockResolvedValue(mockAggregateKeysResponse);
 });
 
@@ -140,7 +142,7 @@ const renderSpanDetailsDrawer = (span: Span = createMockSpan()): any => {
 					<Route>
 						<SpanDetailsDrawer
 							isSpanDetailsDocked={false}
-							setIsSpanDetailsDocked={jest.fn()}
+							setIsSpanDetailsDocked={vi.fn()}
 							selectedSpan={span}
 							traceStartTime={span.timestamp}
 							traceEndTime={span.timestamp + span.durationNano}

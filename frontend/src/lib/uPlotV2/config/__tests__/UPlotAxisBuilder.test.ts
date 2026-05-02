@@ -2,12 +2,13 @@ import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import type uPlot from 'uplot';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AxisProps } from '../types';
 import { UPlotAxisBuilder } from '../UPlotAxisBuilder';
 
-jest.mock('components/Graph/yAxisConfig', () => ({
-	getToolTipValue: jest.fn(),
+vi.mock('components/Graph/yAxisConfig', () => ({
+	getToolTipValue: vi.fn(),
 }));
 
 const createAxisProps = (overrides: Partial<AxisProps> = {}): AxisProps => ({
@@ -20,7 +21,7 @@ const createAxisProps = (overrides: Partial<AxisProps> = {}): AxisProps => ({
 
 describe('UPlotAxisBuilder', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('builds basic axis config with defaults', () => {
@@ -175,10 +176,12 @@ describe('UPlotAxisBuilder', () => {
 		const config = yBuilder.getConfig();
 		expect(typeof config.values).toBe('function');
 
-		(getToolTipValue as jest.Mock).mockImplementation(
-			(value: string, unit?: string, precision?: unknown) =>
-				`formatted:${value}:${unit}:${precision}`,
-		);
+		vi
+			.mocked(getToolTipValue)
+			.mockImplementation(
+				(value: string | number, unit?: string, precision?: unknown) =>
+					`formatted:${value}:${unit}:${precision}`,
+			);
 
 		// Simulate uPlot calling the values formatter
 		const valuesFn = config.values as unknown as (
@@ -220,7 +223,7 @@ describe('UPlotAxisBuilder', () => {
 	});
 
 	it('uses explicit size function when provided', () => {
-		const sizeFn: uPlot.Axis.Size = jest.fn(() => 100) as uPlot.Axis.Size;
+		const sizeFn: uPlot.Axis.Size = vi.fn(() => 100) as uPlot.Axis.Size;
 
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
@@ -258,7 +261,7 @@ describe('UPlotAxisBuilder', () => {
 	});
 
 	it('uses explicit values formatter when provided', () => {
-		const customValues: uPlot.Axis.Values = jest.fn(() => ['a', 'b', 'c']);
+		const customValues: uPlot.Axis.Values = vi.fn(() => ['a', 'b', 'c']);
 
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
@@ -322,7 +325,7 @@ describe('UPlotAxisBuilder', () => {
 		};
 		const mockSelf = {
 			axes: [mockAxis],
-			ctx: { measureText: jest.fn(() => ({ width: 60 })), font: '' },
+			ctx: { measureText: vi.fn(() => ({ width: 60 })), font: '' },
 		} as unknown as uPlot;
 
 		const result = (
@@ -350,7 +353,7 @@ describe('UPlotAxisBuilder', () => {
 			ticks: { size: 12 },
 			font: ['12px sans-serif'],
 		};
-		const measureText = jest.fn(() => ({ width: 48 }));
+		const measureText = vi.fn(() => ({ width: 48 }));
 		const mockSelf = {
 			axes: [mockAxis],
 			ctx: {

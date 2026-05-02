@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { ILog } from 'types/api/logs/log';
 
 import { getLogIndicatorType, getLogIndicatorTypeForTable } from './utils';

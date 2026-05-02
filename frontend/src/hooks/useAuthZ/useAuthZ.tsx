@@ -20,6 +20,26 @@ import {
 
 let ctx: Promise<AuthZCheckResponse> | null;
 let pendingPermissions: BrandedPermission[] = [];
+let flightTimer: ReturnType<typeof setTimeout> | null = null;
+let flightReject: ((reason?: unknown) => void) | null = null;
+
+/** Clears in-flight authz batching (used from Vitest setup between tests). */
+export function resetAuthZSingleFlightState(): void {
+	if (flightTimer) {
+		clearTimeout(flightTimer);
+		flightTimer = null;
+		if (flightReject) {
+			flightReject(
+				Object.assign(new Error('AuthZ single-flight reset'), {
+					code: 'AUTHZ_RESET',
+				}),
+			);
+		}
+		flightReject = null;
+		ctx = null;
+	}
+	pendingPermissions = [];
+}
 
 function dispatchPermission(
 	permission: BrandedPermission,
@@ -27,18 +47,32 @@ function dispatchPermission(
 	pendingPermissions.push(permission);
 
 	if (!ctx) {
-		let resolve: (v: AuthZCheckResponse) => void, reject: (reason?: any) => void;
+		let resolve: (v: AuthZCheckResponse) => void;
+		let reject: (reason?: unknown) => void;
 		ctx = new Promise<AuthZCheckResponse>((r, re) => {
 			resolve = r;
 			reject = re;
+			flightReject = re;
 		});
 
-		setTimeout(() => {
+		flightTimer = setTimeout(() => {
+			flightTimer = null;
 			const copiedPermissions = pendingPermissions.slice();
 			pendingPermissions = [];
-			ctx = null;
+			const settle = resolve;
+			const bail = reject;
+			flightReject = null;
 
-			fetchManyPermissions(copiedPermissions).then(resolve).catch(reject);
+			fetchManyPermissions(copiedPermissions)
+				.then((result) => {
+					settle(result);
+				})
+				.catch((err) => {
+					bail(err);
+				})
+				.finally(() => {
+					ctx = null;
+				});
 		}, SINGLE_FLIGHT_WAIT_TIME_MS);
 	}
 

@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
+import { describe, expect, it } from 'vitest';
 
 import LogStateIndicator from './LogStateIndicator';
 

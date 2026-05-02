@@ -1,19 +1,16 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isModifierKeyPressed } from '../app';
 
 type NavigationModule = typeof import('../navigation');
 
-function loadNavigationModule(href?: string): NavigationModule {
+async function loadNavigationModule(href?: string): Promise<NavigationModule> {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
 		document.head.append(base);
 	}
-	let mod!: NavigationModule;
-	jest.isolateModules(() => {
-		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-		mod = require('../navigation');
-	});
-	return mod;
+	vi.resetModules();
+	return await import('../navigation');
 }
 
 const createMouseEvent = (overrides: Partial<MouseEvent> = {}): MouseEvent =>
@@ -72,9 +69,9 @@ describe('navigation utilities', () => {
 	describe('openInNewTab', () => {
 		describe('at basePath="/"', () => {
 			let m: NavigationModule;
-			beforeEach(() => {
-				jest.spyOn(window, 'open').mockImplementation();
-				m = loadNavigationModule('/');
+			beforeEach(async () => {
+				vi.spyOn(window, 'open').mockImplementation(() => null);
+				m = await loadNavigationModule('/');
 			});
 
 			it('passes internal path through unchanged', () => {
@@ -101,9 +98,9 @@ describe('navigation utilities', () => {
 
 		describe('at basePath="/signoz/"', () => {
 			let m: NavigationModule;
-			beforeEach(() => {
-				jest.spyOn(window, 'open').mockImplementation();
-				m = loadNavigationModule('/signoz/');
+			beforeEach(async () => {
+				vi.spyOn(window, 'open').mockImplementation(() => null);
+				m = await loadNavigationModule('/signoz/');
 			});
 
 			it('prepends base path to internal paths', () => {

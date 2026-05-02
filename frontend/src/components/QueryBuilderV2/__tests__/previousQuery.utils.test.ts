@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import '@testing-library/jest-dom';
@@ -43,7 +45,7 @@ describe('previousQuery.utils', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('getQueryKey normalizes non-meter signal to empty string', () => {
@@ -150,11 +152,9 @@ describe('previousQuery.utils', () => {
 	});
 
 	it('write errors (e.g., quota) are caught and do not throw', () => {
-		const spy = jest
-			.spyOn(window.sessionStorage.__proto__, 'setItem')
-			.mockImplementation(() => {
-				throw new Error('quota exceeded');
-			});
+		const spy = vi.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
+			throw new Error('quota exceeded');
+		});
 
 		const key = getQueryKey({
 			queryName: 'A',

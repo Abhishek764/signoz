@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';
@@ -7,14 +9,14 @@ import { SuccessResponse } from 'types/api';
 import EndPointMetrics from './EndPointMetrics';
 
 // Mock the API call
-jest.mock('lib/dashboard/getQueryResults', () => ({
-	GetMetricQueryRange: jest.fn(),
+vi.mock('lib/dashboard/getQueryResults', () => ({
+	GetMetricQueryRange: vi.fn(),
 }));
 
 // Mock ErrorState component
-jest.mock('./ErrorState', () => ({
+vi.mock('./ErrorState', () => ({
 	__esModule: true,
-	default: jest.fn(({ refetch }) => (
+	default: vi.fn(({ refetch }) => (
 		<div data-testid="error-state">
 			<button type="button" onClick={refetch} data-testid="retry-button">
 				Retry
@@ -60,7 +62,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				},
 			},
 		});
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
@@ -93,8 +95,8 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			isFetching: false,
 			isPlaceholderData: false,
 			isPreviousData: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
+			refetch: vi.fn(),
+			remove: vi.fn(),
 			...overrides,
 		}) as UseQueryResult<SuccessResponse<any>, unknown>;
 
@@ -109,7 +111,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 	describe('1. V5 Query Payload with Filters', () => {
 		it('sends correct V5 payload structure with domain and endpoint filters', async () => {
-			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
+			(GetMetricQueryRange as Mock).mockResolvedValue(mockSuccessResponse);
 
 			const domainName = 'api.example.com';
 			const startTime = 1758259531000;
@@ -235,7 +237,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 		});
 
 		it('includes custom domainListFilters in all query expressions', async () => {
-			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
+			(GetMetricQueryRange as Mock).mockResolvedValue(mockSuccessResponse);
 
 			const customFilters = {
 				items: [
@@ -371,7 +373,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 		});
 
 		it('retries API call when retry button is clicked', async () => {
-			const refetch = jest.fn().mockResolvedValue(mockSuccessResponse);
+			const refetch = vi.fn().mockResolvedValue(mockSuccessResponse);
 
 			// Start with error state
 			const mockQuery = createMockQueryResult(null, {

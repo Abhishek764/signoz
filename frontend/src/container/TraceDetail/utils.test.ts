@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { getTreeLevelsCount } from './utils';

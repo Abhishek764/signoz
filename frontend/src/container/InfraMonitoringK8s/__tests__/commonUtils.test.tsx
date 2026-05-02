@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { EntityProgressBar, EventContents } from '../commonUtils';
 
-jest.mock('../commonUtils.module.scss', () => ({
+vi.mock('../commonUtils.module.scss', () => ({
 	__esModule: true,
 	default: {
 		entityProgressBar: 'entity-progress-bar-module',
@@ -11,7 +12,7 @@ jest.mock('../commonUtils.module.scss', () => ({
 	},
 }));
 
-jest.mock('components/ResizeTable', () => ({
+vi.mock('components/ResizeTable', () => ({
 	ResizeTable: ({ className, dataSource }: any): JSX.Element => (
 		<div data-testid="resize-table" className={className}>
 			{JSON.stringify(dataSource)}
@@ -19,7 +20,7 @@ jest.mock('components/ResizeTable', () => ({
 	),
 }));
 
-jest.mock('container/LogDetailedView/FieldRenderer', () => ({
+vi.mock('container/LogDetailedView/FieldRenderer', () => ({
 	__esModule: true,
 	default: ({ field }: { field: string }): JSX.Element => <span>{field}</span>,
 }));

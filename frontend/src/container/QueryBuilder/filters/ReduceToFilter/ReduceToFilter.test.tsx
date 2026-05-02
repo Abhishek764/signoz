@@ -1,3 +1,4 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -5,7 +6,7 @@ import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { ReduceToFilter } from './ReduceToFilter';
 
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 
 function baseQuery(overrides: Partial<IBuilderQuery> = {}): IBuilderQuery {
 	return {
@@ -22,7 +23,7 @@ function baseQuery(overrides: Partial<IBuilderQuery> = {}): IBuilderQuery {
 
 describe('ReduceToFilter', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('initializes with default avg when no reduceTo is set', () => {

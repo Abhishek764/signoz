@@ -8,9 +8,10 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
-jest.mock('container/PanelWrapper/constants', () => ({
+vi.mock('container/PanelWrapper/constants', () => ({
 	PanelTypeVsPanelWrapper: {
 		[PANEL_TYPES.TIME_SERIES]: ({
 			onDragSelect,
@@ -140,18 +141,18 @@ const mockQueryResponse: any = {
 	isError: false,
 	error: null,
 	isFetching: false,
-	refetch: jest.fn(),
+	refetch: vi.fn(),
 };
 
 describe('PanelWrapper with DragSelect', () => {
 	const tableProcessedDataRef = { current: [] } as MutableRefObject<RowData[]>;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('simulates drag select on uPlot canvas', async () => {
-		const mockOnDragSelect = jest.fn();
+		const mockOnDragSelect = vi.fn();
 
 		render(
 			<PanelWrapper

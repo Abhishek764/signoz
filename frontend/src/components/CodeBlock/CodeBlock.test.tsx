@@ -1,15 +1,39 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CodeBlock from './CodeBlock';
 
-const mockCopyToClipboard = jest.fn();
+const { mockCopyToClipboard } = vi.hoisted(() => ({
+	mockCopyToClipboard: vi.fn(),
+}));
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, (text: string) => void] => [
 		undefined,
 		mockCopyToClipboard,
 	],
 }));
+
+vi.mock('@signozhq/icons', () => ({
+	Check: (): null => null,
+	Copy: (): null => null,
+}));
+
+vi.mock('@signozhq/ui', async () => {
+	const React = await vi.importActual<typeof import('react')>('react');
+
+	return {
+		Button: ({
+			prefix,
+			...props
+		}: {
+			prefix?: ReactNode;
+			[key: string]: unknown;
+		}): ReturnType<typeof React.createElement> =>
+			React.createElement('button', props, prefix),
+	};
+});
 
 describe('CodeBlock', () => {
 	beforeEach(() => {
@@ -33,7 +57,7 @@ describe('CodeBlock', () => {
 	});
 
 	it('copies code and triggers callback', async () => {
-		const onCopy = jest.fn();
+		const onCopy = vi.fn();
 		render(<CodeBlock code="SELECT * FROM logs;" onCopy={onCopy} />);
 
 		fireEvent.click(screen.getByRole('button', { name: /copy code/i }));

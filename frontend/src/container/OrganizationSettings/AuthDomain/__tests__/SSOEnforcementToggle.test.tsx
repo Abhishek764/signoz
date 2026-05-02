@@ -1,8 +1,9 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
 	Switch: ({
 		value,
 		onChange,
@@ -32,7 +33,7 @@ import {
 
 describe('SSOEnforcementToggle', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
@@ -65,7 +66,7 @@ describe('SSOEnforcementToggle', () => {
 
 	it('calls update API when toggle is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockUpdateAPI = jest.fn();
+		const mockUpdateAPI = vi.fn();
 
 		server.use(
 			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
@@ -144,7 +145,6 @@ describe('SSOEnforcementToggle', () => {
 		const switchElement = screen.getByRole('switch');
 		await user.click(switchElement);
 
-		// Wait a bit to ensure no API call was made
 		await new Promise((resolve) => setTimeout(resolve, 100));
 		expect(apiCalled).toBe(false);
 	});

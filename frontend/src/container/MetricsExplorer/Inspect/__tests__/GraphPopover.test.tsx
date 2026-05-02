@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import GraphPopover from '../GraphPopover';
 import { InspectMetricsSeries } from '../types';
@@ -21,7 +22,7 @@ describe('GraphPopover', () => {
 	const mockSpaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]> =
 		new Map();
 
-	const mockOpenInExpandedView = jest.fn();
+	const mockOpenInExpandedView = vi.fn();
 	const mockStep = InspectionStep.TIME_AGGREGATION;
 
 	it('renders with correct values', () => {

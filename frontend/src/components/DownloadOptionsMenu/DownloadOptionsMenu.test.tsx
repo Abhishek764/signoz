@@ -1,3 +1,6 @@
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -13,25 +16,28 @@ import '@testing-library/jest-dom';
 import { DownloadFormats, DownloadRowCounts } from './constants';
 import DownloadOptionsMenu from './DownloadOptionsMenu';
 
-const mockDownloadExportData = jest.fn().mockResolvedValue(undefined);
-jest.mock('api/v1/download/downloadExportData', () => ({
+const { mockDownloadExportData, mockUseQueryBuilder } = vi.hoisted(() => ({
+	mockDownloadExportData: vi.fn().mockResolvedValue(undefined),
+	mockUseQueryBuilder: vi.fn(),
+}));
+
+vi.mock('api/v1/download/downloadExportData', () => ({
 	downloadExportData: (...args: any[]): any => mockDownloadExportData(...args),
 	default: (...args: any[]): any => mockDownloadExportData(...args),
 }));
 
-jest.mock('antd', () => {
-	const actual = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const actual = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...actual,
 		message: {
-			success: jest.fn(),
-			error: jest.fn(),
+			success: vi.fn(),
+			error: vi.fn(),
 		},
 	};
 });
 
-const mockUseQueryBuilder = jest.fn();
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => mockUseQueryBuilder(),
 }));
 
@@ -95,8 +101,8 @@ describe.each([
 
 	beforeEach(() => {
 		mockDownloadExportData.mockReset().mockResolvedValue(undefined);
-		(message.success as jest.Mock).mockReset();
-		(message.error as jest.Mock).mockReset();
+		(message.success as Mock).mockReset();
+		(message.error as Mock).mockReset();
 		mockUseQueryBuilder.mockReturnValue({
 			stagedQuery: createMockStagedQuery(dataSource),
 		});
@@ -307,7 +313,11 @@ describe.each([
 		fireEvent.click(screen.getByText('Export'));
 
 		expect(screen.getByTestId(testId)).toBeDisabled();
-		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByRole('dialog').closest('.ant-popover')).toHaveStyle({
+				pointerEvents: 'none',
+			});
+		});
 
 		resolveDownload!();
 
@@ -323,7 +333,7 @@ describe('DownloadOptionsMenu for traces with queryTraceOperator', () => {
 
 	beforeEach(() => {
 		mockDownloadExportData.mockReset().mockResolvedValue(undefined);
-		(message.success as jest.Mock).mockReset();
+		(message.success as Mock).mockReset();
 	});
 
 	it('applies limit and clears groupBy on queryTraceOperator entries', async () => {

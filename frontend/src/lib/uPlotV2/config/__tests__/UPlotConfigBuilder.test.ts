@@ -1,4 +1,7 @@
+import { getStoredSeriesVisibility } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
+import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot from 'uplot';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	DEFAULT_HOVER_PROXIMITY_VALUE,
@@ -8,31 +11,26 @@ import type { SeriesProps } from '../types';
 import { DrawStyle, SelectionPreferencesSource } from '../types';
 import { UPlotConfigBuilder } from '../UPlotConfigBuilder';
 
-// Mock only the real boundary that hits localStorage
-jest.mock(
+vi.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
 	() => ({
-		getStoredSeriesVisibility: jest.fn(),
+		getStoredSeriesVisibility: vi.fn(),
 	}),
 );
 
-jest.mock('lib/uPlotV2/utils', () => ({
-	calculateWidthBasedOnStepInterval: jest.fn(),
+vi.mock('lib/uPlotV2/utils', () => ({
+	calculateWidthBasedOnStepInterval: vi.fn(),
 }));
 
-const calculateWidthBasedOnStepIntervalMock = jest.requireMock(
-	'lib/uPlotV2/utils',
-).calculateWidthBasedOnStepInterval as jest.Mock;
+const calculateWidthBasedOnStepIntervalMock = vi.mocked(
+	calculateWidthBasedOnStepInterval,
+);
 
-const getStoredSeriesVisibilityMock = jest.requireMock(
-	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
-) as {
-	getStoredSeriesVisibility: jest.Mock;
-};
+const getStoredSeriesVisibilityMock = vi.mocked(getStoredSeriesVisibility);
 
 describe('UPlotConfigBuilder', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const createSeriesProps = (
@@ -70,7 +68,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('does not call onDragSelect for click without drag (width === 0)', () => {
-		const onDragSelect = jest.fn();
+		const onDragSelect = vi.fn();
 		const builder = new UPlotConfigBuilder({ id: 'widget-123', onDragSelect });
 
 		const config = builder.getConfig();
@@ -79,7 +77,7 @@ describe('UPlotConfigBuilder', () => {
 
 		const uplotInstance = {
 			select: { left: 10, width: 0 },
-			posToVal: jest.fn(),
+			posToVal: vi.fn(),
 		} as unknown as uPlot;
 
 		// Simulate uPlot calling the hook
@@ -91,14 +89,14 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('calls onDragSelect with start and end times in milliseconds for a drag selection', () => {
-		const onDragSelect = jest.fn();
+		const onDragSelect = vi.fn();
 		const builder = new UPlotConfigBuilder({ id: 'widget-123', onDragSelect });
 
 		const config = builder.getConfig();
 		const setSelectHooks = config.hooks?.setSelect ?? [];
 		expect(setSelectHooks).toHaveLength(1);
 
-		const posToVal = jest
+		const posToVal = vi
 			.fn()
 			// left position
 			.mockReturnValueOnce(100)
@@ -121,7 +119,7 @@ describe('UPlotConfigBuilder', () => {
 
 	it('adds and removes hooks via addHook, and exposes them through getConfig', () => {
 		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
-		const drawHook = jest.fn();
+		const drawHook = vi.fn();
 
 		const remove = builder.addHook('draw', drawHook as uPlot.Hooks.Defs['draw']);
 
@@ -199,7 +197,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('restores visibility state from localStorage when selectionPreferencesSource is LOCAL_STORAGE', () => {
-		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+		getStoredSeriesVisibilityMock.mockReturnValue([
 			{ label: 'Requests', show: true },
 			{ label: 'Errors', show: false },
 		]);
@@ -226,7 +224,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('hides new series by default when there is a mixed preference and a visible label matches current series', () => {
-		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+		getStoredSeriesVisibilityMock.mockReturnValue([
 			{ label: 'Requests', show: true },
 			{ label: 'Errors', show: false },
 		]);
@@ -264,7 +262,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('shows all series when there is a mixed preference but no visible stored labels match current series', () => {
-		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+		getStoredSeriesVisibilityMock.mockReturnValue([
 			{ label: 'StoredVisible', show: true },
 			{ label: 'StoredHidden', show: false },
 		]);
@@ -297,7 +295,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('treats duplicate labels as visible when any stored entry for that label is visible', () => {
-		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([
+		getStoredSeriesVisibilityMock.mockReturnValue([
 			{ label: 'CPU', show: true },
 			{ label: 'CPU', show: false },
 		]);
@@ -339,9 +337,7 @@ describe('UPlotConfigBuilder', () => {
 		builder.getLegendItems();
 		builder.getConfig();
 
-		expect(
-			getStoredSeriesVisibilityMock.getStoredSeriesVisibility,
-		).not.toHaveBeenCalled();
+		expect(getStoredSeriesVisibilityMock).not.toHaveBeenCalled();
 	});
 
 	it('adds thresholds only once per scale key', () => {

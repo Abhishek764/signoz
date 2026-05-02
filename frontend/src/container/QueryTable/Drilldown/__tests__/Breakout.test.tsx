@@ -1,4 +1,5 @@
 import React from 'react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -23,38 +24,40 @@ import {
 } from './mockTableData';
 
 // Mock the necessary hooks and dependencies
-const mockSafeNavigate = jest.fn();
-const mockRedirectWithQueryBuilderData = jest.fn();
+const mockSafeNavigate = vi.fn();
+const mockRedirectWithQueryBuilderData = vi.fn();
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => ({
 		redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useResolveQuery', () => ({
+vi.mock('container/GridCardLayout/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): any => ({
-		getUpdatedQuery: jest.fn().mockResolvedValue({}),
+		getUpdatedQuery: vi.fn().mockResolvedValue({}),
 		isLoading: false,
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/`,
 	}),
 }));
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual<typeof import('react-redux')>('react-redux')),
 	useSelector: (): any => ({
 		globalTime: {
 			selectedTime: {
@@ -67,7 +70,7 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-jest.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
+vi.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
 	__esModule: true,
 	default: (): any => ({
 		dashbaordVariablesConfig: {
@@ -144,7 +147,7 @@ const renderWithProviders = (
 
 describe('TableDrilldown Breakout Functionality', () => {
 	beforeEach((): void => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Mock the substitute_vars API that's causing network errors
 		server.use(

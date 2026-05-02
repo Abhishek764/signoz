@@ -1,5 +1,6 @@
 import type uPlot from 'uplot';
 import { Axis } from 'uplot';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
 	buildYAxisSizeCalculator,
@@ -12,7 +13,7 @@ describe('axis utils', () => {
 		it('returns 0 when values are undefined or empty', () => {
 			const mockSelf = {
 				ctx: {
-					measureText: jest.fn(),
+					measureText: vi.fn(),
 					font: '',
 				},
 			} as unknown as uPlot;
@@ -27,7 +28,7 @@ describe('axis utils', () => {
 		it('returns 0 when longest value is empty string or axis has no usable font', () => {
 			const mockSelf = {
 				ctx: {
-					measureText: jest.fn(),
+					measureText: vi.fn(),
 					font: '',
 				},
 			} as unknown as uPlot;
@@ -42,7 +43,7 @@ describe('axis utils', () => {
 		});
 
 		it('measures longest value using canvas context and axis font', () => {
-			const measureText = jest.fn(() => ({ width: 100 }));
+			const measureText = vi.fn(() => ({ width: 100 }));
 			const mockSelf = {
 				ctx: {
 					font: '',
@@ -81,7 +82,7 @@ describe('axis utils', () => {
 		});
 
 		it('invokes size function when _size is not set', () => {
-			const sizeFn = jest.fn(() => 24);
+			const sizeFn = vi.fn(() => 24);
 			const axis: Axis = { size: sizeFn };
 			const instance = {} as unknown as uPlot;
 
@@ -132,7 +133,7 @@ describe('axis utils', () => {
 				font: ['12px sans-serif'],
 			};
 
-			const measureText = jest.fn(() => ({ width: 60 }));
+			const measureText = vi.fn(() => ({ width: 60 }));
 			const self = {
 				axes: [axis],
 				ctx: {
@@ -160,7 +161,7 @@ describe('axis utils', () => {
 				font: ['12px sans-serif'] as unknown as string,
 			};
 
-			const measureText = jest.fn(() => ({ width: 50 }));
+			const measureText = vi.fn(() => ({ width: 50 }));
 			const self = {
 				axes: [axis],
 				ctx: {
@@ -190,7 +191,7 @@ describe('axis utils', () => {
 				font: ['12px sans-serif'] as unknown as string,
 			};
 
-			const measureText = jest.fn(() => ({ width: 40 }));
+			const measureText = vi.fn(() => ({ width: 40 }));
 			const self = {
 				axes: [axis],
 				ctx: {

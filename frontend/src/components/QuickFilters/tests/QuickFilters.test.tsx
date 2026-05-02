@@ -1,3 +1,15 @@
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
+import type { Mock, MockedFunction } from 'vitest';
+
 import { ENVIRONMENT } from 'constants/env';
 import {
 	ApiMonitoringParams,
@@ -19,18 +31,18 @@ import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
 import { QuickFiltersConfig } from './constants';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock('container/ApiMonitoring/queryParams');
+vi.mock('container/ApiMonitoring/queryParams');
 
-const handleFilterVisibilityChange = jest.fn();
-const redirectWithQueryBuilderData = jest.fn();
-const putHandler = jest.fn();
-const mockSetApiMonitoringParams = jest.fn() as jest.MockedFunction<
+const handleFilterVisibilityChange = vi.fn();
+const redirectWithQueryBuilderData = vi.fn();
+const putHandler = vi.fn();
+const mockSetApiMonitoringParams = vi.fn() as MockedFunction<
 	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void
 >;
-const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
+const mockUseApiMonitoringParams = vi.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
@@ -121,7 +133,7 @@ beforeAll(() => {
 
 afterEach(() => {
 	server.resetHandlers();
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 });
 
 afterAll(() => {
@@ -129,7 +141,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-	(useQueryBuilder as jest.Mock).mockReturnValue({
+	(useQueryBuilder as Mock).mockReturnValue({
 		currentQuery: {
 			builder: {
 				queryData: [
@@ -158,10 +170,10 @@ describe('Quick Filters', () => {
 	});
 
 	it('should display and allow selection from query dropdown when multiple queries exist', async () => {
-		const setLastUsedQuery = jest.fn();
+		const setLastUsedQuery = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useQueryBuilder as jest.Mock).mockReturnValue({
+		(useQueryBuilder as Mock).mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -213,7 +225,7 @@ describe('Quick Filters', () => {
 	});
 
 	it('should not display query dropdown in ListView', () => {
-		(useQueryBuilder as jest.Mock).mockReturnValue({
+		(useQueryBuilder as Mock).mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -466,9 +478,9 @@ describe('Quick Filters with custom filters', () => {
 
 	it('should render duration slider for duration_nono filter', async () => {
 		// Use fake timers only in this test (for debounce), and wire them to userEvent
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		const user = userEvent.setup({
-			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+			advanceTimers: (ms) => vi.advanceTimersByTime(ms),
 			pointerEventsCheck: 0,
 		});
 
@@ -492,7 +504,7 @@ describe('Quick Filters with custom filters', () => {
 		await user.type(minDuration, '10000');
 		await user.clear(maxDuration);
 		await user.type(maxDuration, '20000');
-		jest.advanceTimersByTime(2000);
+		vi.advanceTimersByTime(2000);
 
 		await waitFor(() => {
 			expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
@@ -521,7 +533,7 @@ describe('Quick Filters with custom filters', () => {
 			);
 		});
 
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 });
 

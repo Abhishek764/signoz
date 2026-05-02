@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	fireEvent,
@@ -12,10 +14,16 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 
 // Mocks: only what is required for this component to render and for us to assert handler calls
-const mockHandleChangeQueryData = jest.fn();
-const mockHandleSetQueryData = jest.fn();
+const mockHandleChangeQueryData = vi.fn();
+const mockHandleSetQueryData = vi.fn();
 
-jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
+
+vi.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 	useQueryOperations: (): {
 		handleChangeQueryData: typeof mockHandleChangeQueryData;
 	} => ({
@@ -23,7 +31,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 	}),
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		handleSetQueryData: typeof mockHandleSetQueryData;
 	} => ({
@@ -31,7 +39,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
+vi.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 	GroupByFilter: ({ onChange }: any): JSX.Element => (
 		<button
 			data-testid="groupby"
@@ -42,7 +50,7 @@ jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 	),
 }));
 
-jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
+vi.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
 	OrderByFilter: ({ onChange }: any): JSX.Element => (
 		<button
 			data-testid="orderby"
@@ -53,7 +61,7 @@ jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
 	),
 }));
 
-jest.mock('../QueryV2/QueryAddOns/HavingFilter/HavingFilter', () => ({
+vi.mock('../QueryV2/QueryAddOns/HavingFilter/HavingFilter', () => ({
 	__esModule: true,
 	default: ({ onChange, onClose }: any): JSX.Element => (
 		<div>
@@ -87,7 +95,7 @@ function baseQuery(overrides: Partial<any> = {}): any {
 
 describe('QueryAddOns', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('VALUE panel: no sections auto-open when query has no active add-ons', () => {

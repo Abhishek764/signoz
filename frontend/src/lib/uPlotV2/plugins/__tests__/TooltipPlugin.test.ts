@@ -1,6 +1,8 @@
 import React from 'react';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { MockedFunction } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
@@ -14,8 +16,8 @@ import {
 
 // Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
 // We only care that pinning logic runs without throwing, not which series is focused.
-jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
-	getFocusedSeriesAtPosition: jest.fn(() => null),
+vi.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
+	getFocusedSeriesAtPosition: vi.fn(() => null),
 }));
 
 // ---------------------------------------------------------------------------
@@ -27,11 +29,11 @@ type HookHandler = (...args: unknown[]) => void;
 class TestConfigBuilder extends UPlotConfigBuilder {
 	public registeredHooks: { type: string; handler: HookHandler }[] = [];
 
-	public removeCallbacks: jest.Mock[] = [];
+	public removeCallbacks: ReturnType<typeof vi.fn>[] = [];
 
 	// Override addHook so we can:
 	// - capture handlers by hook name for tests
-	// - return removable jest mocks to assert cleanup
+	// - return removable vi mocks to assert cleanup
 	public addHook<T extends keyof uPlot.Hooks.Defs>(
 		type: T,
 		hook: uPlot.Hooks.Defs[T],
@@ -40,7 +42,7 @@ class TestConfigBuilder extends UPlotConfigBuilder {
 			type: String(type),
 			handler: hook as HookHandler,
 		});
-		const remove = jest.fn();
+		const remove = vi.fn();
 		this.removeCallbacks.push(remove);
 		return remove;
 	}
@@ -62,10 +64,10 @@ function getHandler(config: ConfigMock, hookName: string): HookHandler {
 
 function createFakePlot(): {
 	over: HTMLDivElement;
-	setCursor: jest.Mock<void, [uPlot.Cursor]>;
+	setCursor: MockedFunction<(cursor: uPlot.Cursor) => void>;
 	cursor: { event: Record<string, unknown>; left: number; top: number };
-	posToVal: jest.Mock<number, [value: number]>;
-	posToIdx: jest.Mock<number, []>;
+	posToVal: MockedFunction<(value: number) => number>;
+	posToIdx: MockedFunction<() => number>;
 	data: [number[], number[]];
 } {
 	const over = document.createElement('div');
@@ -73,13 +75,13 @@ function createFakePlot(): {
 	// Provide the minimal uPlot surface used by TooltipPlugin's pin logic.
 	return {
 		over,
-		setCursor: jest.fn(),
+		setCursor: vi.fn(),
 		// left / top are set to valid values so keyboard-pin tests do not
 		// hit the "cursor off-screen" guard inside handleKeyDown.
 		cursor: { event: {}, left: 50, top: 50 },
 		// In real uPlot these map overlay coordinates to data-space values.
-		posToVal: jest.fn((value: number) => value),
-		posToIdx: jest.fn(() => 0),
+		posToVal: vi.fn((value: number) => value),
+		posToIdx: vi.fn(() => 0),
 		data: [[0], [0]],
 	};
 }
@@ -90,15 +92,15 @@ function createFakePlot(): {
 
 describe('TooltipPlugin', () => {
 	beforeEach(() => {
-		jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
 			(callback as FrameRequestCallback)(0);
 			return 0;
 		});
-		jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+		vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	/**
@@ -178,7 +180,7 @@ describe('TooltipPlugin', () => {
 	describe('tooltip rendering', () => {
 		it('renders contents into a portal on document.body when hover is active', () => {
 			const config = createConfigMock();
-			const renderTooltip = jest.fn(() =>
+			const renderTooltip = vi.fn(() =>
 				React.createElement('div', null, 'tooltip-body'),
 			);
 
@@ -195,13 +197,18 @@ describe('TooltipPlugin', () => {
 		it('moves tooltip portal root to fullscreen element and back on exit', async () => {
 			const config = createConfigMock();
 			let mockedFullscreenElement: Element | null = null;
+
+			// happy-dom reads fullscreenElement from HTMLDocument.prototype,
+			// not Document.prototype — use the real prototype object for the mock.
+			const fullscreenDescriptorHolder = Object.getPrototypeOf(document);
 			const originalFullscreenElementDescriptor = Object.getOwnPropertyDescriptor(
-				Document.prototype,
+				fullscreenDescriptorHolder,
 				'fullscreenElement',
 			);
-			Object.defineProperty(Document.prototype, 'fullscreenElement', {
+
+			Object.defineProperty(fullscreenDescriptorHolder, 'fullscreenElement', {
 				configurable: true,
-				get: () => mockedFullscreenElement,
+				get: (): Element | null => mockedFullscreenElement,
 			});
 
 			renderAndActivateHover(config);
@@ -212,32 +219,40 @@ describe('TooltipPlugin', () => {
 			const fullscreenRoot = document.createElement('div');
 			document.body.append(fullscreenRoot);
 
-			act(() => {
+			await act(async () => {
 				mockedFullscreenElement = fullscreenRoot;
 				document.dispatchEvent(new Event('fullscreenchange'));
 			});
 
-			await waitFor(() => {
-				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
-				expect(updatedContainer.parentElement).toBe(fullscreenRoot);
-			});
+			await waitFor(
+				() => {
+					const updatedContainer = screen.getByTestId('tooltip-plugin-container');
+					expect(updatedContainer.parentElement).toBe(fullscreenRoot);
+				},
+				{ timeout: 3000 },
+			);
 
-			act(() => {
+			await act(async () => {
 				mockedFullscreenElement = null;
 				document.dispatchEvent(new Event('fullscreenchange'));
 			});
 
-			await waitFor(() => {
-				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
-				expect(updatedContainer.parentElement).toBe(document.body);
-			});
+			await waitFor(
+				() => {
+					const updatedContainer = screen.getByTestId('tooltip-plugin-container');
+					expect(updatedContainer.parentElement).toBe(document.body);
+				},
+				{ timeout: 3000 },
+			);
 
 			if (originalFullscreenElementDescriptor) {
 				Object.defineProperty(
-					Document.prototype,
+					fullscreenDescriptorHolder,
 					'fullscreenElement',
 					originalFullscreenElementDescriptor,
 				);
+			} else {
+				Reflect.deleteProperty(fullscreenDescriptorHolder, 'fullscreenElement');
 			}
 			fullscreenRoot.remove();
 		});
@@ -272,7 +287,7 @@ describe('TooltipPlugin', () => {
 
 		it('renders pinnedTooltipElement after pinning and hides hover content', async () => {
 			const config = createConfigMock();
-			const pinnedTooltipElement = jest.fn(() =>
+			const pinnedTooltipElement = vi.fn(() =>
 				React.createElement('div', null, 'pinned-tooltip'),
 			);
 
@@ -359,7 +374,7 @@ describe('TooltipPlugin', () => {
 		});
 
 		it('drops a pinned tooltip when the underlying data changes', () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const config = createConfigMock();
 
 			render(
@@ -376,7 +391,7 @@ describe('TooltipPlugin', () => {
 			act(() => {
 				getHandler(config, 'init')(fakePlot);
 				getHandler(config, 'setSeries')(fakePlot, 1, { focus: true });
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Pin via keyboard.
@@ -387,7 +402,7 @@ describe('TooltipPlugin', () => {
 						bubbles: true,
 					}),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(
@@ -397,7 +412,7 @@ describe('TooltipPlugin', () => {
 			// Simulate data update – should dismiss the pinned tooltip.
 			act(() => {
 				getHandler(config, 'setData')(fakePlot);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			const container = screen.getByTestId('tooltip-plugin-container');
@@ -405,11 +420,11 @@ describe('TooltipPlugin', () => {
 			expect(container.getAttribute('aria-hidden')).toBe('true');
 			expect(container.dataset.pinned === 'true').toBe(false);
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('unpins the tooltip on outside mousedown', async () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const config = createConfigMock();
 
 			render(
@@ -426,7 +441,7 @@ describe('TooltipPlugin', () => {
 			act(() => {
 				getHandler(config, 'init')(fakePlot);
 				getHandler(config, 'setSeries')(fakePlot, 1, { focus: true });
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Pin via keyboard.
@@ -437,7 +452,7 @@ describe('TooltipPlugin', () => {
 						bubbles: true,
 					}),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(
@@ -447,7 +462,7 @@ describe('TooltipPlugin', () => {
 			// Click outside the tooltip container.
 			act(() => {
 				document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			await waitFor(() => {
@@ -458,11 +473,11 @@ describe('TooltipPlugin', () => {
 				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('unpins the tooltip when Escape is pressed while pinned', async () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const config = createConfigMock();
 
 			render(
@@ -479,7 +494,7 @@ describe('TooltipPlugin', () => {
 			act(() => {
 				getHandler(config, 'init')(fakePlot);
 				getHandler(config, 'setSeries')(fakePlot, 1, { focus: true });
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Pin via keyboard.
@@ -490,7 +505,7 @@ describe('TooltipPlugin', () => {
 						bubbles: true,
 					}),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(
@@ -502,7 +517,7 @@ describe('TooltipPlugin', () => {
 				document.body.dispatchEvent(
 					new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			await waitFor(() => {
@@ -512,15 +527,15 @@ describe('TooltipPlugin', () => {
 				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('unpins the tooltip when the pin key is pressed a second time (toggle off)', async () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const config = createConfigMock();
 
 			renderAndActivateHover(config, undefined, { canPinTooltip: true });
-			jest.runAllTimers();
+			vi.runAllTimers();
 
 			// First press — pin.
 			act(() => {
@@ -530,7 +545,7 @@ describe('TooltipPlugin', () => {
 						bubbles: true,
 					}),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			await waitFor(() => {
@@ -547,7 +562,7 @@ describe('TooltipPlugin', () => {
 						bubbles: true,
 					}),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			await waitFor(() => {
@@ -555,7 +570,7 @@ describe('TooltipPlugin', () => {
 				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('does not unpin on Escape when tooltip is not pinned', () => {
@@ -576,11 +591,11 @@ describe('TooltipPlugin', () => {
 		});
 
 		it('does not unpin on arbitrary keys that are not Escape or the pin key', async () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 			const config = createConfigMock();
 
 			renderAndActivateHover(config, undefined, { canPinTooltip: true });
-			jest.runAllTimers();
+			vi.runAllTimers();
 
 			// Pin.
 			act(() => {
@@ -590,7 +605,7 @@ describe('TooltipPlugin', () => {
 						bubbles: true,
 					}),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			await waitFor(() => {
@@ -604,7 +619,7 @@ describe('TooltipPlugin', () => {
 				document.body.dispatchEvent(
 					new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
 				);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			await waitFor(() => {
@@ -613,7 +628,7 @@ describe('TooltipPlugin', () => {
 				).toBe(true);
 			});
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 	});
 
@@ -731,7 +746,7 @@ describe('TooltipPlugin', () => {
 
 		it('does not register a keydown listener when canPinTooltip is false', () => {
 			const config = createConfigMock();
-			const addSpy = jest.spyOn(document, 'addEventListener');
+			const addSpy = vi.spyOn(document, 'addEventListener');
 
 			render(
 				React.createElement(TooltipPlugin, {
@@ -750,8 +765,8 @@ describe('TooltipPlugin', () => {
 
 		it('removes the keydown pin listener on unmount', () => {
 			const config = createConfigMock();
-			const addSpy = jest.spyOn(document, 'addEventListener');
-			const removeSpy = jest.spyOn(document, 'removeEventListener');
+			const addSpy = vi.spyOn(document, 'addEventListener');
+			const removeSpy = vi.spyOn(document, 'removeEventListener');
 
 			const { unmount } = render(
 				React.createElement(TooltipPlugin, {
@@ -782,7 +797,7 @@ describe('TooltipPlugin', () => {
 	describe('cursor sync', () => {
 		it('enables uPlot cursor sync on x-axis only when mode is Tooltip', () => {
 			const config = createConfigMock();
-			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			const setCursorSpy = vi.spyOn(config, 'setCursor');
 			config.addScale({ scaleKey: 'x', time: true });
 
 			render(
@@ -801,7 +816,7 @@ describe('TooltipPlugin', () => {
 
 		it('enables uPlot cursor sync on both axes when mode is Crosshair', () => {
 			const config = createConfigMock();
-			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			const setCursorSpy = vi.spyOn(config, 'setCursor');
 			config.addScale({ scaleKey: 'x', time: true });
 
 			render(
@@ -820,7 +835,7 @@ describe('TooltipPlugin', () => {
 
 		it('does not enable cursor sync when mode is None', () => {
 			const config = createConfigMock();
-			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			const setCursorSpy = vi.spyOn(config, 'setCursor');
 			config.addScale({ scaleKey: 'x', time: true });
 
 			render(
@@ -836,7 +851,7 @@ describe('TooltipPlugin', () => {
 
 		it('does not enable cursor sync when scale is not time-based', () => {
 			const config = createConfigMock();
-			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			const setCursorSpy = vi.spyOn(config, 'setCursor');
 			config.addScale({ scaleKey: 'x', time: false });
 
 			render(
@@ -856,8 +871,8 @@ describe('TooltipPlugin', () => {
 	describe('cleanup on unmount', () => {
 		it('removes window event listeners and all uPlot hooks', () => {
 			const config = createConfigMock();
-			const addSpy = jest.spyOn(window, 'addEventListener');
-			const removeSpy = jest.spyOn(window, 'removeEventListener');
+			const addSpy = vi.spyOn(window, 'addEventListener');
+			const removeSpy = vi.spyOn(window, 'removeEventListener');
 
 			const { unmount } = render(
 				React.createElement(TooltipPlugin, {

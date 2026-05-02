@@ -11,17 +11,13 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { InfraMonitoringEvents } from 'constants/events';
-import {
-	NuqsTestingAdapter,
-	OnUrlUpdateFunction,
-	UrlUpdateEvent,
-} from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { openInNewTab } from 'utils/navigation';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InfraMonitoringEntity } from '../../constants';
 import { K8sBaseList, K8sBaseListProps } from '../K8sBaseList';
@@ -30,21 +26,23 @@ import {
 	useInfraMonitoringTableColumnsStore,
 } from '../useInfraMonitoringTableColumnsStore';
 
-jest.mock('utils/navigation', () => ({
-	...jest.requireActual('utils/navigation'),
-	openInNewTab: jest.fn(),
+vi.mock('utils/navigation', async () => ({
+	...(await vi.importActual<typeof import('utils/navigation')>(
+		'utils/navigation',
+	)),
+	openInNewTab: vi.fn(),
 }));
 
-const openInNewTabMock = openInNewTab as jest.Mock;
+const openInNewTabMock = vi.mocked(openInNewTab);
 
 // Mock Date.now to prevent flaky tests due to time-dependent values
 const MOCK_NOW = 1700000000000; // Fixed timestamp
-jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
+vi.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
 
 // Mock DrawerWrapper to avoid CSS issues with jsdom
 // SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
 	DrawerWrapper: ({
 		open,
 		children,
@@ -105,11 +103,9 @@ describe('K8sBaseList', () => {
 	describe('with items in the list', () => {
 		const itemId = Math.random().toString(36).slice(7);
 		const itemId2 = Math.random().toString(36).slice(7);
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string; title: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string; title: string }>['fetchListData']>
-		>();
+		const onUrlUpdateMock = vi.fn<OnUrlUpdateFunction>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string; title: string }>['fetchListData']>();
 
 		beforeEach(() => {
 			onUrlUpdateMock.mockClear();
@@ -192,10 +188,8 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should click to open the row details and update selectedItem in URL', async () => {
-			const user = userEvent.setup();
-
 			const firstRowEl = await screen.findByText(`PodId:${itemId}`);
-			await user.click(firstRowEl);
+			fireEvent.click(firstRowEl);
 
 			await waitFor(() => {
 				const selectedItem = onUrlUpdateMock.mock.calls
@@ -207,14 +201,12 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should update orderBy in URL when clicking sortable column header', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
 			const idHeader = screen.getByRole('columnheader', { name: /id/i });
-			await user.click(idHeader);
+			fireEvent.click(idHeader);
 
 			await waitFor(() => {
 				const lastOrderBy = onUrlUpdateMock.mock.calls
@@ -230,8 +222,6 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should toggle sort order in URL on subsequent header clicks', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
@@ -239,9 +229,9 @@ describe('K8sBaseList', () => {
 			const idHeader = screen.getByRole('columnheader', { name: /id/i });
 
 			// First click - ascending
-			await user.click(idHeader);
+			fireEvent.click(idHeader);
 			// Second click - descending
-			await user.click(idHeader);
+			fireEvent.click(idHeader);
 
 			await waitFor(() => {
 				const lastOrderBy = onUrlUpdateMock.mock.calls
@@ -257,14 +247,12 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should update currentPage in URL when clicking pagination', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
 			const page2Button = screen.getByRole('listitem', { name: '2' });
-			await user.click(page2Button);
+			fireEvent.click(page2Button);
 
 			await waitFor(() => {
 				const lastPage = onUrlUpdateMock.mock.calls
@@ -312,11 +300,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with URL params (orderBy, groupBy, pagination)', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const onUrlUpdateMock = vi.fn<OnUrlUpdateFunction>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
 		];
@@ -382,14 +368,12 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should expand row and fetch without groupBy when clicking grouped row', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText('namespace-default')).toBeInTheDocument();
 			});
 
 			const row = screen.getByText('namespace-default');
-			await user.click(row);
+			fireEvent.click(row);
 
 			await waitFor(() => {
 				expect(fetchListDataMock).toHaveBeenCalledTimes(4);
@@ -404,10 +388,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with empty data', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -459,10 +441,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with error response', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -510,10 +490,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with no metrics data (sentAnyHostMetricsData=false)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -572,10 +550,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with incorrect K8s agent metrics (isSendingK8SAgentMetrics=true)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -623,10 +599,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with end time before retention (endTimeBeforeRetention=true)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -678,21 +652,12 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column visibility based on defaultVisibility', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>,
-			Parameters<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>
+		const fetchListDataMock = vi.fn<
+			K8sBaseListProps<{
+				id: string;
+				name: string;
+				desc: string;
+			}>['fetchListData']
 		>();
 
 		const tableColumnsDefinitions: IEntityColumn[] = [
@@ -845,21 +810,12 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column behavior with groupBy (expanded/collapsed)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					group: string;
-				}>['fetchListData']
-			>,
-			Parameters<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					group: string;
-				}>['fetchListData']
-			>
+		const fetchListDataMock = vi.fn<
+			K8sBaseListProps<{
+				id: string;
+				name: string;
+				group: string;
+			}>['fetchListData']
 		>();
 
 		const tableColumnsDefinitions: IEntityColumn[] = [
@@ -1017,10 +973,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column visibility in expanded row (nested table)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
-		>();
+		const fetchListDataMock =
+			vi.fn<K8sBaseListProps<{ id: string }>['fetchListData']>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
 		];
@@ -1041,7 +995,7 @@ describe('K8sBaseList', () => {
 		// Initialize the component once without groupBy to set up the store state
 		// This mimics what happens when running with other tests that render first
 		beforeAll(() => {
-			const initMock = jest.fn().mockResolvedValue({
+			const initMock = vi.fn().mockResolvedValue({
 				data: [{ id: 'init' }],
 				total: 1,
 				error: null,
@@ -1090,14 +1044,12 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should hide "hidden-on-collapse" columns in nested expanded table', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText('namespace-default')).toBeInTheDocument();
 			});
 
 			const row = screen.getByText('namespace-default');
-			await user.click(row);
+			fireEvent.click(row);
 
 			// Wait for both expanded-table-container and expanded-table to appear
 			// The expanded-table only appears after loading completes
@@ -1116,21 +1068,12 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column add/remove via store', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>,
-			Parameters<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>
+		const fetchListDataMock = vi.fn<
+			K8sBaseListProps<{
+				id: string;
+				name: string;
+				desc: string;
+			}>['fetchListData']
 		>();
 
 		const tableColumnsDefinitions: IEntityColumn[] = [
@@ -1184,8 +1127,6 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should hide column when clicking remove in K8sFiltersSidePanel', async () => {
-			const user = userEvent.setup();
-
 			renderComponent<{
 				id: string;
 				name: string;
@@ -1216,7 +1157,7 @@ describe('K8sBaseList', () => {
 
 			const filterButton = screen.getByTestId('k8s-list-filters-button');
 			expect(filterButton).toBeDefined();
-			await user.click(filterButton!);
+			fireEvent.click(filterButton);
 
 			await waitFor(() => {
 				expect(
@@ -1225,7 +1166,7 @@ describe('K8sBaseList', () => {
 			});
 
 			const nameColumnButton = screen.getByTestId(`remove-column-name`);
-			await user.click(nameColumnButton);
+			fireEvent.click(nameColumnButton);
 
 			// Name column should now be hidden from the table
 			await waitFor(() => {
@@ -1236,8 +1177,6 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should show column when clicking add in K8sFiltersSidePanel', async () => {
-			const user = userEvent.setup();
-
 			renderComponent<{
 				id: string;
 				name: string;
@@ -1268,7 +1207,7 @@ describe('K8sBaseList', () => {
 			).not.toBeInTheDocument();
 
 			const filterButton = screen.getByTestId('k8s-list-filters-button');
-			await user.click(filterButton!);
+			fireEvent.click(filterButton);
 
 			await waitFor(() => {
 				expect(
@@ -1277,7 +1216,7 @@ describe('K8sBaseList', () => {
 			});
 
 			const descriptionColumnButton = screen.getByTestId('add-column-description');
-			await user.click(descriptionColumnButton);
+			fireEvent.click(descriptionColumnButton);
 
 			// Description column should now be visible in the table
 			await waitFor(() => {

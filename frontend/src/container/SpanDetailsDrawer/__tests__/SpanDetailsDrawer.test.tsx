@@ -1,3 +1,5 @@
+import type { Mock, MockedFunction } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
 import { QueryParams } from 'constants/query';
@@ -32,26 +34,27 @@ import {
 } from './mockData';
 
 // Get typed mocks
-const mockGetSpanPercentiles = jest.mocked(getSpanPercentiles);
-const mockGetUserPreference = jest.mocked(getUserPreference);
-const mockSafeNavigate = jest.fn();
+const mockGetSpanPercentiles = vi.mocked(getSpanPercentiles);
+const mockGetUserPreference = vi.mocked(getUserPreference);
+const mockSafeNavigate = vi.fn();
 
-// Mock external dependencies
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string; search: string } => ({
 		pathname: `${ROUTES.TRACE_DETAIL}`,
 		search: 'trace_id=test-trace-id',
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: MockedFunction<() => void> } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-const mockUpdateAllQueriesOperators = jest.fn().mockReturnValue({
+const mockUpdateAllQueriesOperators = vi.fn().mockReturnValue({
 	builder: {
 		queryData: [
 			{
@@ -72,9 +75,9 @@ const mockUpdateAllQueriesOperators = jest.fn().mockReturnValue({
 	queryType: 'builder',
 });
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
-		updateAllQueriesOperators: jest.MockedFunction<() => any>;
+		updateAllQueriesOperators: MockedFunction<() => any>;
 		currentQuery: any;
 	} => ({
 		updateAllQueriesOperators: mockUpdateAllQueriesOperators,
@@ -92,40 +95,40 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-const mockWindowOpen = jest.fn();
+const mockWindowOpen = vi.fn();
 Object.defineProperty(window, 'open', {
 	writable: true,
 	value: mockWindowOpen,
 });
 
 // Mock uplot to avoid rendering issues
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
+	Object.assign(uplotMock, { paths });
 	return {
 		paths,
 		default: uplotMock,
 	};
 });
 
-jest.mock('lib/dashboard/getQueryResults', () => ({
-	GetMetricQueryRange: jest.fn(),
+vi.mock('lib/dashboard/getQueryResults', () => ({
+	GetMetricQueryRange: vi.fn(),
 }));
 
-jest.mock('lib/uPlotLib/utils/generateColor', () => ({
-	generateColor: jest.fn().mockReturnValue('#1f77b4'),
+vi.mock('lib/uPlotLib/utils/generateColor', () => ({
+	generateColor: vi.fn().mockReturnValue('#1f77b4'),
 }));
 
-jest.mock(
+vi.mock(
 	'container/SpanDetailsDrawer/Events/components/AttributeWithExpandablePopover',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function AttributeWithExpandablePopover({
+	() => ({
+		default: function AttributeWithExpandablePopover({
 			attributeKey,
 			attributeValue,
 			onExpand,
@@ -133,7 +136,7 @@ jest.mock(
 			attributeKey: string;
 			attributeValue: string;
 			onExpand: (title: string, content: string) => void;
-		}) {
+		}): JSX.Element {
 			return (
 				<div className="attribute-container" key={attributeKey}>
 					<div className="attribute-key">{attributeKey}</div>
@@ -152,42 +155,38 @@ jest.mock(
 				</div>
 			);
 		},
+	}),
 );
 
-// Mock getSpanPercentiles API
-jest.mock('api/trace/getSpanPercentiles', () => ({
+vi.mock('api/trace/getSpanPercentiles', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-// Mock getUserPreference API
-jest.mock('api/v1/user/preferences/name/get', () => ({
+vi.mock('api/v1/user/preferences/name/get', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock(
-	'components/OverlayScrollbar/OverlayScrollbar',
-	() =>
-		function OverlayScrollbar({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element {
-			return <div data-testid="overlay-scrollbar">{children}</div>;
-		},
-);
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	default: function OverlayScrollbar({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return <div data-testid="overlay-scrollbar">{children}</div>;
+	},
+}));
 
-// Mock Virtuoso to avoid complex virtualization
-jest.mock('react-virtuoso', () => ({
-	Virtuoso: jest.fn(
+vi.mock('react-virtuoso', () => ({
+	Virtuoso: vi.fn(
 		({
 			data,
 			itemContent,
 		}: {
 			data: any[];
 			itemContent: (index: number, item: any) => React.ReactNode;
-		}) => (
+		}): JSX.Element => (
 			<div data-testid="virtuoso">
 				{data?.map((item: any, index: number) => (
 					<div key={item.id || index} data-testid={`log-item-${item.id}`}>
@@ -200,37 +199,33 @@ jest.mock('react-virtuoso', () => ({
 }));
 
 // Mock RawLogView component
-jest.mock(
-	'components/Logs/RawLogView',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function MockRawLogView({
-			data,
-			onLogClick,
-			isHighlighted,
-			helpTooltip,
-		}: {
-			data: any;
-			onLogClick: (data: any, event: React.MouseEvent) => void;
-			isHighlighted: boolean;
-			helpTooltip: string;
-		}) {
-			return (
-				<div
-					data-testid={`raw-log-${data.id}`}
-					className={isHighlighted ? 'log-highlighted' : 'log-context'}
-					title={helpTooltip}
-					onClick={(e): void => onLogClick?.(data, e)}
-				>
-					<div>{data.body}</div>
-					<div>{data.timestamp}</div>
-				</div>
-			);
-		},
-);
+vi.mock('components/Logs/RawLogView', () => ({
+	default: function MockRawLogView({
+		data,
+		onLogClick,
+		isHighlighted,
+		helpTooltip,
+	}: {
+		data: any;
+		onLogClick: (data: any, event: React.MouseEvent) => void;
+		isHighlighted: boolean;
+		helpTooltip: string;
+	}): JSX.Element {
+		return (
+			<div
+				data-testid={`raw-log-${data.id}`}
+				className={isHighlighted ? 'log-highlighted' : 'log-context'}
+				title={helpTooltip}
+				onClick={(e): void => onLogClick?.(data, e)}
+			>
+				<div>{data.body}</div>
+				<div>{data.timestamp}</div>
+			</div>
+		);
+	},
+}));
 
-// Mock PreferenceContextProvider
-jest.mock('providers/preferences/context/PreferenceContextProvider', () => ({
+vi.mock('providers/preferences/context/PreferenceContextProvider', () => ({
 	PreferenceContextProvider: ({
 		children,
 	}: {
@@ -264,10 +259,10 @@ const mockQueryBuilderContextValue = {
 	},
 	updateAllQueriesOperators: mockUpdateAllQueriesOperators,
 	panelType: 'list',
-	redirectWithQuery: jest.fn(),
-	handleRunQuery: jest.fn(),
-	handleStageQuery: jest.fn(),
-	resetQuery: jest.fn(),
+	redirectWithQuery: vi.fn(),
+	handleRunQuery: vi.fn(),
+	handleStageQuery: vi.fn(),
+	resetQuery: vi.fn(),
 };
 
 const renderSpanDetailsDrawer = (props = {}): void => {
@@ -275,7 +270,7 @@ const renderSpanDetailsDrawer = (props = {}): void => {
 		<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
 			<SpanDetailsDrawer
 				isSpanDetailsDocked={false}
-				setIsSpanDetailsDocked={jest.fn()}
+				setIsSpanDetailsDocked={vi.fn()}
 				selectedSpan={mockSpan}
 				traceStartTime={1640995200000} // 2022-01-01 00:00:00 in milliseconds
 				traceEndTime={1640995260000} // 2022-01-01 00:01:00 in milliseconds
@@ -330,13 +325,13 @@ const mockSpanPercentileErrorResponse = {
 	data: null,
 } as unknown as SuccessResponseV2<GetSpanPercentilesResponseDataProps>;
 
-describe('SpanDetailsDrawer', () => {
+describe('SpanDetailsDrawer', { timeout: 20000 }, () => {
 	let apiCallHistory: any = {};
 	const CI_SENSITIVE_LOGS_TEST_TIMEOUT = 15000;
 
 	beforeEach(() => {
-		jest.useRealTimers();
-		jest.clearAllMocks();
+		vi.useRealTimers();
+		vi.clearAllMocks();
 		apiCallHistory = {
 			span_logs: null,
 			before_logs: null,
@@ -350,7 +345,7 @@ describe('SpanDetailsDrawer', () => {
 		mockGetUserPreference.mockClear();
 
 		// Setup API call tracking
-		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {
+		(GetMetricQueryRange as Mock).mockImplementation((query) => {
 			// Determine response based on v5 filter expressions
 			const filterExpression = (query as any)?.query?.builder?.queryData?.[0]
 				?.filter?.expression;
@@ -1126,13 +1121,13 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 	const SEARCH_PLACEHOLDER = 'Search for attribute...';
 
 	beforeEach(() => {
-		jest.useRealTimers();
-		jest.clearAllMocks();
+		vi.useRealTimers();
+		vi.clearAllMocks();
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
 		mockUpdateAllQueriesOperators.mockClear();
 
-		(GetMetricQueryRange as jest.Mock).mockImplementation(() =>
+		(GetMetricQueryRange as Mock).mockImplementation(() =>
 			Promise.resolve(mockEmptyLogsResponse),
 		);
 	});
@@ -1224,112 +1219,116 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 	});
 });
 
-describe('SpanDetailsDrawer - Status Message Truncation User Flows', () => {
-	beforeEach(() => {
-		jest.useRealTimers();
-		jest.clearAllMocks();
-		mockSafeNavigate.mockClear();
-		mockWindowOpen.mockClear();
-		mockUpdateAllQueriesOperators.mockClear();
+describe(
+	'SpanDetailsDrawer - Status Message Truncation User Flows',
+	{ timeout: 20000 },
+	() => {
+		beforeEach(() => {
+			vi.useRealTimers();
+			vi.clearAllMocks();
+			mockSafeNavigate.mockClear();
+			mockWindowOpen.mockClear();
+			mockUpdateAllQueriesOperators.mockClear();
 
-		(GetMetricQueryRange as jest.Mock).mockImplementation(() =>
-			Promise.resolve(mockEmptyLogsResponse),
-		);
-	});
-
-	afterEach(() => {
-		server.resetHandlers();
-	});
-
-	it('should display expandable popover with Expand button for long status message', () => {
-		render(
-			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
-				<SpanDetailsDrawer
-					isSpanDetailsDocked={false}
-					setIsSpanDetailsDocked={jest.fn()}
-					selectedSpan={mockSpanWithLongStatusMessage}
-					traceStartTime={1640995200000}
-					traceEndTime={1640995260000}
-				/>
-			</QueryBuilderContext.Provider>,
-		);
-
-		// User sees status message label
-		expect(screen.getByText('status message')).toBeInTheDocument();
-
-		// User sees the status message value (appears in both original element and popover preview)
-		const statusMessageElements = screen.getAllByText(
-			mockSpanWithLongStatusMessage.statusMessage,
-		);
-		expect(statusMessageElements.length).toBeGreaterThan(0);
-
-		// User sees Expand button in popover (popover is mocked to render immediately)
-		const expandButton = screen.getByRole('button', { name: /expand/i });
-		expect(expandButton).toBeInTheDocument();
-	});
-
-	it('should open modal with full status message when user clicks Expand button', async () => {
-		render(
-			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
-				<SpanDetailsDrawer
-					isSpanDetailsDocked={false}
-					setIsSpanDetailsDocked={jest.fn()}
-					selectedSpan={mockSpanWithLongStatusMessage}
-					traceStartTime={1640995200000}
-					traceEndTime={1640995260000}
-				/>
-			</QueryBuilderContext.Provider>,
-		);
-
-		// User clicks the Expand button (popover is mocked to render immediately)
-		const expandButton = screen.getByRole('button', { name: /expand/i });
-		await fireEvent.click(expandButton);
-
-		// User sees modal with the full status message content
-		await waitFor(() => {
-			// Modal should be visible with the title
-			const modalTitle = document.querySelector('.ant-modal-title');
-			expect(modalTitle).toBeInTheDocument();
-			expect(modalTitle?.textContent).toBe('status message');
-			// Modal content should contain the full message in a pre tag
-			const preElement = document.querySelector(
-				'.attribute-with-expandable-popover__full-view',
-			);
-			expect(preElement).toBeInTheDocument();
-			expect(preElement?.textContent).toBe(
-				mockSpanWithLongStatusMessage.statusMessage,
+			(GetMetricQueryRange as Mock).mockImplementation(() =>
+				Promise.resolve(mockEmptyLogsResponse),
 			);
 		});
-	});
 
-	it('should display short status message as simple text without popover', () => {
-		render(
-			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
-				<SpanDetailsDrawer
-					isSpanDetailsDocked={false}
-					setIsSpanDetailsDocked={jest.fn()}
-					selectedSpan={mockSpanWithShortStatusMessage}
-					traceStartTime={1640995200000}
-					traceEndTime={1640995260000}
-				/>
-			</QueryBuilderContext.Provider>,
-		);
+		afterEach(() => {
+			server.resetHandlers();
+		});
 
-		// User sees status message label and value
-		expect(screen.getByText('status message')).toBeInTheDocument();
-		expect(
-			screen.getByText(mockSpanWithShortStatusMessage.statusMessage),
-		).toBeInTheDocument();
+		it('should display expandable popover with Expand button for long status message', () => {
+			render(
+				<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+					<SpanDetailsDrawer
+						isSpanDetailsDocked={false}
+						setIsSpanDetailsDocked={vi.fn()}
+						selectedSpan={mockSpanWithLongStatusMessage}
+						traceStartTime={1640995200000}
+						traceEndTime={1640995260000}
+					/>
+				</QueryBuilderContext.Provider>,
+			);
 
-		// User hovers over the status message value
-		const statusMessageValue = screen.getByText(
-			mockSpanWithShortStatusMessage.statusMessage,
-		);
-		fireEvent.mouseEnter(statusMessageValue);
+			// User sees status message label
+			expect(screen.getByText('status message')).toBeInTheDocument();
 
-		// No Expand button should appear (no expandable popover for short messages)
-		expect(
-			screen.queryByRole('button', { name: /expand/i }),
-		).not.toBeInTheDocument();
-	});
-});
+			// User sees the status message value (appears in both original element and popover preview)
+			const statusMessageElements = screen.getAllByText(
+				mockSpanWithLongStatusMessage.statusMessage,
+			);
+			expect(statusMessageElements.length).toBeGreaterThan(0);
+
+			// User sees Expand button in popover (popover is mocked to render immediately)
+			const expandButton = screen.getByRole('button', { name: /expand/i });
+			expect(expandButton).toBeInTheDocument();
+		});
+
+		it('should open modal with full status message when user clicks Expand button', async () => {
+			render(
+				<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+					<SpanDetailsDrawer
+						isSpanDetailsDocked={false}
+						setIsSpanDetailsDocked={vi.fn()}
+						selectedSpan={mockSpanWithLongStatusMessage}
+						traceStartTime={1640995200000}
+						traceEndTime={1640995260000}
+					/>
+				</QueryBuilderContext.Provider>,
+			);
+
+			// User clicks the Expand button (popover is mocked to render immediately)
+			const expandButton = screen.getByRole('button', { name: /expand/i });
+			await fireEvent.click(expandButton);
+
+			// User sees modal with the full status message content
+			await waitFor(() => {
+				// Modal should be visible with the title
+				const modalTitle = document.querySelector('.ant-modal-title');
+				expect(modalTitle).toBeInTheDocument();
+				expect(modalTitle?.textContent).toBe('status message');
+				// Modal content should contain the full message in a pre tag
+				const preElement = document.querySelector(
+					'.attribute-with-expandable-popover__full-view',
+				);
+				expect(preElement).toBeInTheDocument();
+				expect(preElement?.textContent).toBe(
+					mockSpanWithLongStatusMessage.statusMessage,
+				);
+			});
+		});
+
+		it('should display short status message as simple text without popover', () => {
+			render(
+				<QueryBuilderContext.Provider value={mockQueryBuilderContextValue as any}>
+					<SpanDetailsDrawer
+						isSpanDetailsDocked={false}
+						setIsSpanDetailsDocked={vi.fn()}
+						selectedSpan={mockSpanWithShortStatusMessage}
+						traceStartTime={1640995200000}
+						traceEndTime={1640995260000}
+					/>
+				</QueryBuilderContext.Provider>,
+			);
+
+			// User sees status message label and value
+			expect(screen.getByText('status message')).toBeInTheDocument();
+			expect(
+				screen.getByText(mockSpanWithShortStatusMessage.statusMessage),
+			).toBeInTheDocument();
+
+			// User hovers over the status message value
+			const statusMessageValue = screen.getByText(
+				mockSpanWithShortStatusMessage.statusMessage,
+			);
+			fireEvent.mouseEnter(statusMessageValue);
+
+			// No Expand button should appear (no expandable popover for short messages)
+			expect(
+				screen.queryByRole('button', { name: /expand/i }),
+			).not.toBeInTheDocument();
+		});
+	},
+);

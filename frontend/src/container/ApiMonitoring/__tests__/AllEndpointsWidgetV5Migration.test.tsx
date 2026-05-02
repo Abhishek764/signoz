@@ -9,6 +9,7 @@
  * - Four queries: A (count), B (p99 latency), C (max timestamp), D (error count - disabled)
  * - GroupBy: http_url with type 'attribute'
  */
+import { describe, expect, it } from 'vitest';
 import { getAllEndpointsWidgetData } from 'container/ApiMonitoring/utils';
 import {
 	BaseAutocompleteData,

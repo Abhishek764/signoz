@@ -2,27 +2,30 @@ import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { userEvent } from 'tests/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ROUTES from '../../../../constants/routes';
 import AllAttributes from '../AllAttributes';
 import { AllAttributesValue } from '../AllAttributesValue';
 import { getMockMetricAttributesData, MOCK_METRIC_NAME } from './testUtlls';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER}`,
 	}),
 }));
 
-const useGetMetricAttributesMock = jest.spyOn(
+const useGetMetricAttributesMock = vi.spyOn(
 	metricsExplorerHooks,
 	'useGetMetricAttributes',
 );
 
 describe('AllAttributes', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useGetMetricAttributesMock.mockReturnValue({
 			...getMockMetricAttributesData(),
 		});
@@ -140,10 +143,10 @@ describe('AllAttributes', () => {
 });
 
 describe('AllAttributesValue', () => {
-	const mockGoToMetricsExploreWithAppliedAttribute = jest.fn();
+	const mockGoToMetricsExploreWithAppliedAttribute = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('shows All values button when there are more than 5 values', () => {

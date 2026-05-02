@@ -1,4 +1,10 @@
-jest.mock('../TanStackTable.module.scss', () => ({
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import TanStackCustomTableRow from '../TanStackCustomTableRow';
+import type { FlatItem, TableRowContext } from '../types';
+
+vi.mock('../TanStackTable.module.scss', () => ({
 	__esModule: true,
 	default: {
 		tableRow: 'tableRow',
@@ -7,25 +13,20 @@ jest.mock('../TanStackTable.module.scss', () => ({
 	},
 }));
 
-jest.mock('../TanStackRow', () => ({
+vi.mock('../TanStackRow', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<td data-testid="mocked-row-cells">mocked cells</td>
 	),
 }));
 
-const mockSetRowHovered = jest.fn();
-const mockClearRowHovered = jest.fn();
+const mockSetRowHovered = vi.fn();
+const mockClearRowHovered = vi.fn();
 
-jest.mock('../TanStackTableStateContext', () => ({
+vi.mock('../TanStackTableStateContext', () => ({
 	useSetRowHovered: (_rowId: string): (() => void) => mockSetRowHovered,
 	useClearRowHovered: (_rowId: string): (() => void) => mockClearRowHovered,
 }));
-
-import { fireEvent, render, screen } from '@testing-library/react';
-
-import TanStackCustomTableRow from '../TanStackCustomTableRow';
-import type { FlatItem, TableRowContext } from '../types';
 
 const makeItem = (id: string): FlatItem<{ id: string }> => ({
 	kind: 'row',

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	createContext,
 	extractQueryPairs,
@@ -7,7 +8,7 @@ import {
 
 describe('extractQueryPairs', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should extract NOT EXISTS and NOT LIKE correctly', () => {
@@ -367,7 +368,7 @@ describe('extractQueryPairs', () => {
 		// We'll mock the function to simulate recursion
 
 		// Mock console.warn to capture the warning
-		const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+		const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		// Call the function multiple times to trigger recursion guard
 		// Note: This is a simplified test since we can't easily trigger the actual recursion

@@ -8,6 +8,8 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
@@ -20,8 +22,10 @@ import {
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 const ACTIVE_LOG_ID = 'test-log-id';
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.LOGS_EXPLORER}`,
 	}),
@@ -34,45 +38,37 @@ const lodsQueryServerRequest = (): void =>
 		),
 	);
 
-// mocking the graph components in this test as this should be handled separately
-jest.mock(
-	'container/TimeSeriesView/TimeSeriesView',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function TimeSeriesView() {
-			return <div>Time Series Chart</div>;
-		},
-);
-jest.mock(
-	'container/LogsExplorerChart',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function LogsExplorerChart() {
-			return <div>Histogram Chart</div>;
-		},
-);
+vi.mock('container/TimeSeriesView/TimeSeriesView', () => ({
+	default: function TimeSeriesView(): JSX.Element {
+		return <div>Time Series Chart</div>;
+	},
+}));
+vi.mock('container/LogsExplorerChart', () => ({
+	default: function LogsExplorerChart(): JSX.Element {
+		return <div>Histogram Chart</div>;
+	},
+}));
 
-jest.mock('constants/panelTypes', () => ({
+vi.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
 }));
 
-jest.mock('d3-interpolate', () => ({
-	interpolate: jest.fn(),
+vi.mock('d3-interpolate', () => ({
+	interpolate: vi.fn(),
 }));
 
-jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
+vi.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	__esModule: true,
-	useGetExplorerQueryRange: jest.fn(),
+	useGetExplorerQueryRange: vi.fn(),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-// Mock usePreferenceSync
-jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+vi.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	usePreferenceSync: (): any => ({
 		preferences: {
 			columns: [],
@@ -85,20 +81,20 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		},
 		loading: false,
 		error: null,
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
+		updateColumns: vi.fn(),
+		updateFormatting: vi.fn(),
 	}),
 }));
 
-jest.mock('hooks/logs/useCopyLogLink', () => ({
-	useCopyLogLink: jest.fn().mockReturnValue({
+vi.mock('hooks/logs/useCopyLogLink', () => ({
+	useCopyLogLink: vi.fn().mockReturnValue({
 		activeLogId: undefined,
 	}),
 }));
 
 // Set up the specific behavior for useGetExplorerQueryRange in individual test cases
 beforeEach(() => {
-	(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+	(useGetExplorerQueryRange as Mock).mockReturnValue({
 		data: { payload: logsQueryRangeSuccessNewFormatResponse },
 	});
 });
@@ -150,7 +146,7 @@ describe('LogsExplorerViews -', () => {
 
 	it('check isLoading state', async () => {
 		lodsQueryServerRequest();
-		(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+		(useGetExplorerQueryRange as Mock).mockReturnValue({
 			data: { payload: logsQueryRangeSuccessNewFormatResponse },
 			isLoading: true,
 			isFetching: false,
@@ -163,7 +159,7 @@ describe('LogsExplorerViews -', () => {
 
 	it('should add activeLogId filter when present in URL', async () => {
 		// Mock useCopyLogLink to return an activeLogId
-		(useCopyLogLink as jest.Mock).mockReturnValue({
+		(useCopyLogLink as Mock).mockReturnValue({
 			activeLogId: ACTIVE_LOG_ID,
 		});
 
@@ -188,7 +184,7 @@ describe('LogsExplorerViews -', () => {
 		);
 
 		await waitFor(() => {
-			const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+			const listCall = (useGetExplorerQueryRange as Mock).mock.calls.find(
 				(call) =>
 					call[0] &&
 					call[0].builder.queryData[0].filters.items.length ===
@@ -225,7 +221,7 @@ describe('LogsExplorerViews -', () => {
 
 	it('should update filter expression with activeLogId when present with existing filter expression', async () => {
 		// Mock useCopyLogLink to return an activeLogId
-		(useCopyLogLink as jest.Mock).mockReturnValue({
+		(useCopyLogLink as Mock).mockReturnValue({
 			activeLogId: ACTIVE_LOG_ID,
 		});
 
@@ -266,7 +262,7 @@ describe('LogsExplorerViews -', () => {
 
 		await waitFor(() => {
 			// Find the call made for LIST panel type (main logs list request)
-			const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+			const listCall = (useGetExplorerQueryRange as Mock).mock.calls.find(
 				(call) => call[1] === PANEL_TYPES.LIST && call[0],
 			);
 
@@ -285,11 +281,11 @@ describe('LogsExplorerViews -', () => {
 	describe('Queries by View', () => {
 		it('builds Frequency Chart query with COUNT and severity_text grouping and activeLogId bound', async () => {
 			// Enable frequency chart via localstorage and provide activeLogId
-			(useCopyLogLink as jest.Mock).mockReturnValue({
+			(useCopyLogLink as Mock).mockReturnValue({
 				activeLogId: ACTIVE_LOG_ID,
 			});
 			// Ensure default mock return exists
-			(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+			(useGetExplorerQueryRange as Mock).mockReturnValue({
 				data: { payload: logsQueryRangeSuccessNewFormatResponse },
 			});
 
@@ -318,7 +314,7 @@ describe('LogsExplorerViews -', () => {
 			);
 
 			await waitFor(() => {
-				const chartCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+				const chartCall = (useGetExplorerQueryRange as Mock).mock.calls.find(
 					(call) => call[1] === PANEL_TYPES.TIME_SERIES && call[0],
 				);
 				expect(chartCall).toBeDefined();
@@ -348,8 +344,8 @@ describe('LogsExplorerViews -', () => {
 		});
 
 		it('builds List View query with orderBy and clears groupBy/having', async () => {
-			(useCopyLogLink as jest.Mock).mockReturnValue({ activeLogId: undefined });
-			(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
+			(useCopyLogLink as Mock).mockReturnValue({ activeLogId: undefined });
+			(useGetExplorerQueryRange as Mock).mockReturnValue({
 				data: { payload: logsQueryRangeSuccessNewFormatResponse },
 			});
 
@@ -377,7 +373,7 @@ describe('LogsExplorerViews -', () => {
 			);
 
 			await waitFor(() => {
-				const listCall = (useGetExplorerQueryRange as jest.Mock).mock.calls.find(
+				const listCall = (useGetExplorerQueryRange as Mock).mock.calls.find(
 					(call) => call[1] === PANEL_TYPES.LIST && call[0],
 				);
 				expect(listCall).toBeDefined();

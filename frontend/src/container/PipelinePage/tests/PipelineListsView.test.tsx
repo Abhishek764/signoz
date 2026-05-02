@@ -1,5 +1,14 @@
 import { screen, within } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
@@ -17,14 +26,14 @@ import PipelineListsView from '../PipelineListsView';
 
 // Mock useUrlQuery hook
 const mockUrlQuery = {
-	get: jest.fn(),
-	set: jest.fn(),
-	toString: jest.fn(() => ''),
+	get: vi.fn(),
+	set: vi.fn(),
+	toString: vi.fn(() => ''),
 };
 
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
-	default: jest.fn(() => mockUrlQuery),
+	default: vi.fn(() => mockUrlQuery),
 }));
 
 const samplePipelinePreviewResponse = {
@@ -53,11 +62,11 @@ const samplePipelinePreviewResponse = {
 	isError: false,
 };
 
-jest.mock(
+vi.mock(
 	'container/PipelinePage/PipelineListsView/Preview/hooks/useSampleLogs',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(() => ({
+		default: vi.fn().mockImplementation(() => ({
 			logs: samplePipelinePreviewResponse.logs,
 			isLoading: samplePipelinePreviewResponse.isLoading,
 			isError: samplePipelinePreviewResponse.isError,
@@ -66,7 +75,7 @@ jest.mock(
 );
 
 // Mock usePreferenceSync
-jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+vi.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	usePreferenceSync: (): any => ({
 		preferences: {
 			columns: [],
@@ -79,8 +88,8 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		},
 		loading: false,
 		error: null,
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
+		updateColumns: vi.fn(),
+		updateFormatting: vi.fn(),
 	}),
 }));
 
@@ -93,7 +102,7 @@ describe('PipelinePage container test', () => {
 	});
 	afterEach(() => {
 		server.resetHandlers();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 	afterAll(() => {
 		server.close();
@@ -102,12 +111,12 @@ describe('PipelinePage container test', () => {
 		const { getByText, container } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
-					setActionType={jest.fn()}
+					setActionType={vi.fn()}
 					isActionMode="viewing-mode"
-					setActionMode={jest.fn()}
+					setActionMode={vi.fn()}
 					pipelineData={pipelineApiResponseMockData}
 					isActionType=""
-					refetchPipelineLists={jest.fn()}
+					refetchPipelineLists={vi.fn()}
 				/>
 			</PreferenceContextProvider>,
 		);
@@ -131,12 +140,12 @@ describe('PipelinePage container test', () => {
 		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
-					setActionType={jest.fn()}
+					setActionType={vi.fn()}
 					isActionMode="editing-mode"
-					setActionMode={jest.fn()}
+					setActionMode={vi.fn()}
 					pipelineData={pipelineApiResponseMockData}
 					isActionType=""
-					refetchPipelineLists={jest.fn()}
+					refetchPipelineLists={vi.fn()}
 				/>
 			</PreferenceContextProvider>,
 		);
@@ -164,12 +173,12 @@ describe('PipelinePage container test', () => {
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
-					setActionType={jest.fn()}
+					setActionType={vi.fn()}
 					isActionMode="editing-mode"
-					setActionMode={jest.fn()}
+					setActionMode={vi.fn()}
 					pipelineData={pipelineApiResponseMockData}
 					isActionType=""
-					refetchPipelineLists={jest.fn()}
+					refetchPipelineLists={vi.fn()}
 				/>
 			</PreferenceContextProvider>,
 		);
@@ -223,12 +232,12 @@ describe('PipelinePage container test', () => {
 		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
-					setActionType={jest.fn()}
+					setActionType={vi.fn()}
 					isActionMode="editing-mode"
-					setActionMode={jest.fn()}
+					setActionMode={vi.fn()}
 					pipelineData={pipelineApiResponseMockData}
 					isActionType=""
-					refetchPipelineLists={jest.fn()}
+					refetchPipelineLists={vi.fn()}
 				/>
 			</PreferenceContextProvider>,
 		);
@@ -293,12 +302,12 @@ describe('PipelinePage container test', () => {
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
-					setActionType={jest.fn()}
+					setActionType={vi.fn()}
 					isActionMode="editing-mode"
-					setActionMode={jest.fn()}
+					setActionMode={vi.fn()}
 					pipelineData={pipelineApiResponseMockData}
 					isActionType="edit-pipeline"
-					refetchPipelineLists={jest.fn()}
+					refetchPipelineLists={vi.fn()}
 				/>
 			</PreferenceContextProvider>,
 		);

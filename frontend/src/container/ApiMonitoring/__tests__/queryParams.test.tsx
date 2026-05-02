@@ -1,17 +1,20 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { History } from 'history';
 import {
 	ApiMonitoringParams,
 	DEFAULT_PARAMS,
 	getApiMonitoringParams,
 	setApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
+import { useHistory, useLocation } from 'react-router-dom';
 
-// Mock react-router-dom hooks
-jest.mock('react-router-dom', () => {
-	const originalModule = jest.requireActual('react-router-dom');
+vi.mock('react-router-dom', async () => {
+	const actual =
+		await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 	return {
-		...originalModule,
-		useLocation: jest.fn(),
-		useHistory: jest.fn(),
+		...actual,
+		useLocation: vi.fn(),
+		useHistory: vi.fn(),
 	};
 });
 
@@ -30,7 +33,6 @@ describe('API Monitoring Query Params', () => {
 				selectedEndPointName: '/api/test',
 			};
 
-			// Create a URL search string with encoded params
 			const urlParams = new URLSearchParams();
 			urlParams.set(
 				'apiMonitoringParams',
@@ -40,7 +42,6 @@ describe('API Monitoring Query Params', () => {
 
 			const result = getApiMonitoringParams(search);
 
-			// Only check specific properties that we set, not all DEFAULT_PARAMS
 			expect(result.showIP).toBe(mockParams.showIP);
 			expect(result.selectedDomain).toBe(mockParams.selectedDomain);
 			expect(result.selectedView).toBe(mockParams.selectedView);
@@ -59,8 +60,8 @@ describe('API Monitoring Query Params', () => {
 	describe('setApiMonitoringParams', () => {
 		it('updates URL with new params (push mode)', () => {
 			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
+				push: vi.fn(),
+				replace: vi.fn(),
 			};
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
@@ -75,22 +76,20 @@ describe('API Monitoring Query Params', () => {
 			});
 			expect(history.replace).not.toHaveBeenCalled();
 
-			// Verify that the search string contains the expected encoded params
 			const searchArg = history.push.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
 			);
 
-			// Test only the specific fields we set
 			expect(decoded.showIP).toBe(newParams.showIP);
 			expect(decoded.selectedDomain).toBe(newParams.selectedDomain);
 		});
 
 		it('updates URL with new params (replace mode)', () => {
 			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
+				push: vi.fn(),
+				replace: vi.fn(),
 			};
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
@@ -108,11 +107,10 @@ describe('API Monitoring Query Params', () => {
 
 		it('merges new params with existing params', () => {
 			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
+				push: vi.fn(),
+				replace: vi.fn(),
 			};
 
-			// Start with some existing params
 			const existingParams: Partial<ApiMonitoringParams> = {
 				showIP: true,
 				selectedDomain: 'domain-1',
@@ -126,7 +124,6 @@ describe('API Monitoring Query Params', () => {
 			);
 			const search = `?${urlParams.toString()}`;
 
-			// Add some new params
 			const newParams: Partial<ApiMonitoringParams> = {
 				selectedDomain: 'domain-2',
 				selectedEndPointName: '/api/test',
@@ -134,26 +131,21 @@ describe('API Monitoring Query Params', () => {
 
 			setApiMonitoringParams(newParams, search, history as any, false);
 
-			// Verify merged params
 			const searchArg = history.push.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
 			);
 
-			// Test only the specific fields
 			expect(decoded.showIP).toBe(existingParams.showIP);
 			expect(decoded.selectedView).toBe(existingParams.selectedView);
-			expect(decoded.selectedDomain).toBe(newParams.selectedDomain); // This should be overwritten
+			expect(decoded.selectedDomain).toBe(newParams.selectedDomain);
 			expect(decoded.selectedEndPointName).toBe(newParams.selectedEndPointName);
 		});
 	});
 
 	describe('useApiMonitoringParams hook without calling hook directly', () => {
-		// Instead of using the hook directly, We are testing the individual functions that make up the hook
-		// as the original hook contains react core hooks
 		const mockUseLocationAndHistory = (initialSearch = ''): any => {
-			// Create mock location object
 			const location = {
 				search: initialSearch,
 				pathname: '/some-path',
@@ -161,25 +153,22 @@ describe('API Monitoring Query Params', () => {
 				state: null,
 			};
 
-			// Create mock history object
 			const history = {
-				push: jest.fn((args) => {
-					// Simulate updating the location search
+				push: vi.fn((args) => {
 					location.search = args.search;
 				}),
-				replace: jest.fn((args) => {
+				replace: vi.fn((args) => {
 					location.search = args.search;
 				}),
 				length: 1,
 				location,
 			};
 
-			// Set up mocks for useLocation and useHistory
-			const useLocationMock = jest.requireMock('react-router-dom').useLocation;
-			const useHistoryMock = jest.requireMock('react-router-dom').useHistory;
+			const useLocationMock = vi.mocked(useLocation);
+			const useHistoryMock = vi.mocked(useHistory);
 
 			useLocationMock.mockReturnValue(location);
-			useHistoryMock.mockReturnValue(history);
+			useHistoryMock.mockReturnValue(history as unknown as History);
 
 			return { location, history };
 		};
@@ -200,7 +189,6 @@ describe('API Monitoring Query Params', () => {
 
 			const result = getApiMonitoringParams(search);
 
-			// Test only specific fields
 			expect(result.showIP).toBe(testParams.showIP);
 			expect(result.selectedDomain).toBe(testParams.selectedDomain);
 			expect(result.selectedView).toBe(testParams.selectedView);
@@ -214,7 +202,6 @@ describe('API Monitoring Query Params', () => {
 				showIP: false,
 			};
 
-			// Manually execute the core logic of the hook's setParams function
 			setApiMonitoringParams(newParams, location.search, history as any);
 
 			expect(history.push).toHaveBeenCalledWith({
@@ -227,13 +214,11 @@ describe('API Monitoring Query Params', () => {
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
 			);
 
-			// Test only specific fields
 			expect(decoded.selectedDomain).toBe(newParams.selectedDomain);
 			expect(decoded.showIP).toBe(newParams.showIP);
 		});
 
 		it('preserves existing params when updating', () => {
-			// Create a search string with existing params
 			const initialParams: Partial<ApiMonitoringParams> = {
 				showIP: false,
 				selectedDomain: 'initial-domain',
@@ -246,27 +231,22 @@ describe('API Monitoring Query Params', () => {
 			);
 			const initialSearch = `?${urlParams.toString()}`;
 
-			// Set up mocks
 			const { location, history } = mockUseLocationAndHistory(initialSearch);
 
-			// Manually execute the core logic
 			setApiMonitoringParams(
 				{ selectedView: 'new-view' },
 				location.search,
 				history as any,
 			);
 
-			// Verify history was updated
 			expect(history.push).toHaveBeenCalled();
 
-			// Parse the new query params from the URL
 			const searchArg = history.push.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
 			);
 
-			// Test only specific fields
 			expect(decoded.showIP).toBe(initialParams.showIP);
 			expect(decoded.selectedDomain).toBe(initialParams.selectedDomain);
 			expect(decoded.selectedView).toBe('new-view');

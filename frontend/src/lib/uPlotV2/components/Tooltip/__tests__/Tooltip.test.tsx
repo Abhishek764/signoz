@@ -5,7 +5,9 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { render, RenderResult, screen } from 'tests/test-utils';
+import type { MockedFunction } from 'vitest';
 import uPlot from 'uplot';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TooltipContentItem } from '../../types';
 import Tooltip from '../Tooltip';
@@ -21,8 +23,9 @@ type MockVirtuosoProps = {
 
 let mockTotalListHeight = 200;
 
-jest.mock('react-virtuoso', () => {
-	const actual = jest.requireActual('react-virtuoso');
+vi.mock('react-virtuoso', async () => {
+	const actual =
+		await vi.importActual<typeof import('react-virtuoso')>('react-virtuoso');
 
 	return {
 		...actual,
@@ -50,13 +53,11 @@ jest.mock('react-virtuoso', () => {
 	};
 });
 
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn(),
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: vi.fn(),
 }));
 
-const mockUseIsDarkMode = useIsDarkMode as jest.MockedFunction<
-	typeof useIsDarkMode
->;
+const mockUseIsDarkMode = useIsDarkMode as MockedFunction<typeof useIsDarkMode>;
 
 type TooltipTestProps = React.ComponentProps<typeof Tooltip>;
 
@@ -91,7 +92,7 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 		dataIndexes: [],
 		seriesIndex: null,
 		isPinned: false,
-		dismiss: jest.fn(),
+		dismiss: vi.fn(),
 		viaSync: false,
 	} as TooltipTestProps;
 
@@ -104,7 +105,7 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 
 describe('Tooltip', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 		mockTotalListHeight = 200;
 	});
@@ -194,7 +195,7 @@ describe('Tooltip', () => {
 
 describe('Tooltip footer hint', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 	});
 
@@ -233,7 +234,7 @@ describe('Tooltip footer hint', () => {
 	});
 
 	it('calls dismiss when Unpin button is clicked', async () => {
-		const dismiss = jest.fn();
+		const dismiss = vi.fn();
 		renderTooltip({ isPinned: true, canPinTooltip: true, dismiss });
 
 		const user = userEvent.setup();
@@ -253,7 +254,7 @@ describe('Tooltip footer hint', () => {
 
 describe('Tooltip header status pill', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 	});
 

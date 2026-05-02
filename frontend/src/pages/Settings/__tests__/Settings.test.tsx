@@ -1,24 +1,28 @@
 import React from 'react';
 import SettingsPage from 'pages/Settings/Settings';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from 'tests/test-utils';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
 
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 	__esModule: true,
 	default: ({ children }: { children: React.ReactNode }): React.ReactNode =>
 		children,
 }));
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('lib/history', () => ({
-	push: jest.fn(),
-	listen: jest.fn(() => jest.fn()),
-	location: { pathname: '/settings', search: '' },
+vi.mock('lib/history', () => ({
+	__esModule: true,
+	default: {
+		push: vi.fn(),
+		listen: vi.fn(() => vi.fn()),
+		location: { pathname: '/settings', search: '' },
+	},
 }));
 
 const getCloudAdminOverrides = (): any => ({

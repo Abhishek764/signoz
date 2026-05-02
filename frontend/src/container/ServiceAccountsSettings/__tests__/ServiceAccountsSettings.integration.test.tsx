@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
@@ -11,8 +12,8 @@ const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual('@signozhq/ui')),
 	DrawerWrapper: ({
 		children,
 		footer,
@@ -79,7 +80,7 @@ const mockServiceAccountsAPI = [
 
 describe('ServiceAccountsSettings (integration)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI })),
@@ -181,7 +182,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 	it('saving changes in the drawer refetches the list', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const listRefetchSpy = jest.fn();
+		const listRefetchSpy = vi.fn();
 
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) => {

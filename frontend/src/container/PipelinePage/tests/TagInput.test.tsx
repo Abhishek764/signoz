@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -14,7 +15,7 @@ describe('Pipeline Page', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<TagInput setTagsListData={jest.fn()} tagsListData={[]} placeHolder="" />
+						<TagInput setTagsListData={vi.fn()} tagsListData={[]} placeHolder="" />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

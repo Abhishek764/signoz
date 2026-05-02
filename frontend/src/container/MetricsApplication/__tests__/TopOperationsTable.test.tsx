@@ -11,6 +11,8 @@ import {
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import type { Mock, MockedFunction } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	createMockStore,
@@ -21,27 +23,32 @@ import {
 } from '../__mocks__/getTopOperation';
 import TopOperation from '../Tabs/Overview/TopOperation';
 
-// Mock dependencies
-jest.mock('hooks/useResourceAttribute');
-jest.mock('hooks/useResourceAttribute/utils', () => ({
+vi.mock('constants/env', () => ({
+	ENVIRONMENT: {
+		baseURL: 'http://localhost',
+		wsURL: '',
+	},
+}));
+
+vi.mock('hooks/useResourceAttribute');
+vi.mock('hooks/useResourceAttribute/utils', () => ({
 	convertRawQueriesToTraceSelectedTags: (): any[] => [],
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: jest.fn(),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useParams: (): { servicename: string } => ({
 		servicename: encodeURIComponent('test-service'),
 	}),
 }));
 
-// Mock the util functions that TopOperationsTable uses
-jest.mock('../Tabs/util', () => ({
+vi.mock('../Tabs/util', () => ({
 	useGetAPMToTracesQueries: (): any => ({
 		builder: {
 			queryData: [
@@ -55,12 +62,11 @@ jest.mock('../Tabs/util', () => ({
 	}),
 }));
 
-// Mock the resourceAttributesToTracesFilterItems function
-jest.mock('container/TraceDetail/utils', () => ({
+vi.mock('container/TraceDetail/utils', () => ({
 	resourceAttributesToTracesFilterItems: (): any[] => [],
 }));
 
-const mockedUseResourceAttribute = useResourceAttribute as jest.MockedFunction<
+const mockedUseResourceAttribute = useResourceAttribute as MockedFunction<
 	typeof useResourceAttribute
 >;
 
@@ -106,7 +112,7 @@ describe('TopOperation API Integration', () => {
 	let apiCalls: { endpoint: string; body: any }[] = [];
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		queryClient.clear();
 		apiCalls = [];
 

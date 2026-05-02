@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { getHttpStatusCode, isRetryableError } from '../errorUtils';
 
 // Mock APIError class

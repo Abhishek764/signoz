@@ -2,20 +2,29 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { updateSeriesVisibilityToLocalStorage } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
 import {
+	afterEach,
+	describe,
+	expect,
+	it,
+	vi,
+	type Mock,
+	type MockedFunction,
+} from 'vitest';
+import {
 	PlotContextProvider,
 	usePlotContext,
 } from 'lib/uPlotV2/context/PlotContext';
 import type uPlot from 'uplot';
 
-jest.mock(
+vi.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
 	() => ({
-		updateSeriesVisibilityToLocalStorage: jest.fn(),
+		updateSeriesVisibilityToLocalStorage: vi.fn(),
 	}),
 );
 
 const mockUpdateSeriesVisibilityToLocalStorage =
-	updateSeriesVisibilityToLocalStorage as jest.MockedFunction<
+	updateSeriesVisibilityToLocalStorage as MockedFunction<
 		typeof updateSeriesVisibilityToLocalStorage
 	>;
 
@@ -27,8 +36,8 @@ interface MockSeries extends Partial<uPlot.Series> {
 const createMockPlot = (series: MockSeries[] = []): uPlot =>
 	({
 		series,
-		batch: jest.fn((fn: () => void) => fn()),
-		setSeries: jest.fn(),
+		batch: vi.fn((fn: () => void) => fn()),
+		setSeries: vi.fn(),
 	}) as unknown as uPlot;
 
 interface TestComponentProps {
@@ -107,7 +116,7 @@ const TestComponent = ({
 
 describe('PlotContext', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('throws when usePlotContext is used outside provider', () => {
@@ -201,7 +210,7 @@ describe('PlotContext', () => {
 			await user.click(screen.getByTestId('init'));
 			await user.click(screen.getByTestId('toggle-visibility'));
 
-			const setSeries = (plot.setSeries as jest.Mock).mock.calls;
+			const setSeries = (plot.setSeries as Mock).mock.calls;
 
 			// index 0 is skipped, so we expect calls for 1 and 2
 			expect(setSeries).toStrictEqual([
@@ -242,11 +251,11 @@ describe('PlotContext', () => {
 			await user.click(screen.getByTestId('init'));
 			await user.click(screen.getByTestId('toggle-visibility'));
 
-			(plot.setSeries as jest.Mock).mockClear();
+			(plot.setSeries as Mock).mockClear();
 
 			await user.click(screen.getByTestId('toggle-visibility'));
 
-			const setSeries = (plot.setSeries as jest.Mock).mock.calls;
+			const setSeries = (plot.setSeries as Mock).mock.calls;
 
 			// After reset, all non-zero series should be shown
 			expect(setSeries).toStrictEqual([

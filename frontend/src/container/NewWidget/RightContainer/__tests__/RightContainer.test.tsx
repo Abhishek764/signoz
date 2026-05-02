@@ -1,8 +1,10 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -96,25 +98,29 @@ const mockWidget: Widgets = {
 const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 	rtlRender(
 		<MemoryRouter>
-			<QueryClientProvider client={queryClient}>
-				<Provider store={createMockStore()}>
-					<AppContext.Provider value={createMockAppContext() as IAppContext}>
-						<ErrorModalProvider>
-							<QueryBuilderProvider>{ui}</QueryBuilderProvider>
-						</ErrorModalProvider>
-					</AppContext.Provider>
-				</Provider>
-			</QueryClientProvider>
+			<CompatRouter>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={createMockStore()}>
+						<AppContext.Provider value={createMockAppContext() as IAppContext}>
+							<ErrorModalProvider>
+								<QueryBuilderProvider>{ui}</QueryBuilderProvider>
+							</ErrorModalProvider>
+						</AppContext.Provider>
+					</Provider>
+				</QueryClientProvider>
+			</CompatRouter>
 		</MemoryRouter>,
 	);
 
-jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
+const mockUseCreateAlerts = vi.hoisted(() => vi.fn(() => vi.fn()));
+
+vi.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	__esModule: true,
-	default: jest.fn(() => jest.fn()),
+	default: mockUseCreateAlerts,
 }));
 
-jest.mock('lucide-react', () => ({
-	...jest.requireActual('lucide-react'),
+vi.mock('lucide-react', async () => ({
+	...(await vi.importActual<typeof import('lucide-react')>('lucide-react')),
 	ConciergeBell: (): JSX.Element => <svg data-testid="lucide-concierge-bell" />,
 	SquareArrowOutUpRight: (): JSX.Element => (
 		<svg data-testid="lucide-square-arrow-out-up-right" />
@@ -125,65 +131,66 @@ jest.mock('lucide-react', () => ({
 describe('RightContainer - Alerts Section', () => {
 	const defaultProps: RightContainerProps = {
 		title: 'Test Widget',
-		setTitle: jest.fn(),
+		setTitle: vi.fn(),
 		description: 'Test Description',
-		setDescription: jest.fn(),
+		setDescription: vi.fn(),
 		opacity: '1',
-		setOpacity: jest.fn(),
+		setOpacity: vi.fn(),
 		selectedNullZeroValue: '',
-		setSelectedNullZeroValue: jest.fn(),
+		setSelectedNullZeroValue: vi.fn(),
 		selectedGraph: PANEL_TYPES.TIME_SERIES,
-		setSelectedTime: jest.fn(),
+		setSelectedTime: vi.fn(),
 		selectedTime: timeItems[0] as timePreferance,
 		yAxisUnit: '',
 		stackedBarChart: false,
-		setStackedBarChart: jest.fn(),
+		setStackedBarChart: vi.fn(),
 		bucketWidth: 0,
 		bucketCount: 0,
 		combineHistogram: false,
-		setCombineHistogram: jest.fn(),
-		setBucketWidth: jest.fn(),
-		setBucketCount: jest.fn(),
-		setYAxisUnit: jest.fn(),
+		setCombineHistogram: vi.fn(),
+		setBucketWidth: vi.fn(),
+		setBucketCount: vi.fn(),
+		setYAxisUnit: vi.fn(),
 		decimalPrecision: 2 as const,
-		setDecimalPrecision: jest.fn(),
-		setGraphHandler: jest.fn(),
+		setDecimalPrecision: vi.fn(),
+		setGraphHandler: vi.fn(),
 		thresholds: [],
-		setThresholds: jest.fn(),
+		setThresholds: vi.fn(),
 		selectedWidget: mockWidget,
 		isFillSpans: false,
-		setIsFillSpans: jest.fn(),
+		setIsFillSpans: vi.fn(),
 		softMin: null,
 		softMax: null,
 		columnUnits: {},
-		setColumnUnits: jest.fn(),
-		setSoftMin: jest.fn(),
-		setSoftMax: jest.fn(),
+		setColumnUnits: vi.fn(),
+		setSoftMin: vi.fn(),
+		setSoftMax: vi.fn(),
 		isLogScale: false,
-		setIsLogScale: jest.fn(),
+		setIsLogScale: vi.fn(),
 		legendPosition: LegendPosition.BOTTOM,
-		setLegendPosition: jest.fn(),
+		setLegendPosition: vi.fn(),
 		customLegendColors: {},
-		setCustomLegendColors: jest.fn(),
+		setCustomLegendColors: vi.fn(),
 		queryResponse: undefined,
 		contextLinks: { linksData: [] },
-		setContextLinks: jest.fn(),
+		setContextLinks: vi.fn(),
 		enableDrillDown: false,
 		isNewDashboard: false,
 		lineInterpolation: LineInterpolation.Spline,
 		fillMode: FillMode.None,
 		lineStyle: LineStyle.Solid,
-		setLineInterpolation: jest.fn(),
-		setFillMode: jest.fn(),
-		setLineStyle: jest.fn(),
+		setLineInterpolation: vi.fn(),
+		setFillMode: vi.fn(),
+		setLineStyle: vi.fn(),
 		showPoints: false,
-		setShowPoints: jest.fn(),
+		setShowPoints: vi.fn(),
 		spanGaps: false,
-		setSpanGaps: jest.fn(),
+		setSpanGaps: vi.fn(),
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
+		mockUseCreateAlerts.mockImplementation(() => vi.fn());
 	});
 
 	it('renders alerts section for TIME_SERIES panel type', () => {
@@ -204,11 +211,8 @@ describe('RightContainer - Alerts Section', () => {
 	});
 
 	it('calls onCreateAlertsHandler when alerts section is clicked', async () => {
-		const mockCreateAlertsHandler = jest.fn();
-		const useCreateAlerts = jest.requireMock(
-			'hooks/queryBuilder/useCreateAlerts',
-		).default;
-		useCreateAlerts.mockReturnValue(mockCreateAlertsHandler);
+		const mockCreateAlertsHandler = vi.fn();
+		mockUseCreateAlerts.mockReturnValue(mockCreateAlertsHandler);
 
 		render(<RightContainer {...defaultProps} />);
 
@@ -221,13 +225,9 @@ describe('RightContainer - Alerts Section', () => {
 	});
 
 	it('passes correct parameters to useCreateAlerts hook', () => {
-		const useCreateAlerts = jest.requireMock(
-			'hooks/queryBuilder/useCreateAlerts',
-		).default;
-
 		render(<RightContainer {...defaultProps} />);
 
-		expect(useCreateAlerts).toHaveBeenCalledWith(mockWidget, 'panelView');
+		expect(mockUseCreateAlerts).toHaveBeenCalledWith(mockWidget, 'panelView');
 	});
 
 	it('renders alerts section for VALUE panel type', () => {

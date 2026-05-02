@@ -2,20 +2,21 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { describe, expect, it, vi } from 'vitest';
 
 import { CreateAlertProvider } from '../../context';
 import AlertCondition from '../AlertCondition';
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock: any = jest.fn(() => ({
+	const UplotConstructor: any = vi.fn(() => ({
 		paths,
 	}));
-	uplotMock.paths = paths;
-	return uplotMock;
+	UplotConstructor.paths = paths;
+	return { default: UplotConstructor };
 });
 
 const STEPPER_TEST_ID = 'stepper';
@@ -27,8 +28,7 @@ const ANOMALY_TAB_TEXT = 'Anomaly';
 const THRESHOLD_TAB_TEXT = 'Threshold';
 const ACTIVE_TAB_CLASS = '.active-tab';
 
-// Mock the Stepper component
-jest.mock('../../Stepper', () => ({
+vi.mock('../../Stepper', () => ({
 	__esModule: true,
 	default: function MockStepper({
 		stepNumber,
@@ -43,8 +43,7 @@ jest.mock('../../Stepper', () => ({
 	},
 }));
 
-// Mock the AlertThreshold component
-jest.mock('../AlertThreshold', () => ({
+vi.mock('../AlertThreshold', () => ({
 	__esModule: true,
 	default: function MockAlertThreshold(): JSX.Element {
 		return (
@@ -53,8 +52,7 @@ jest.mock('../AlertThreshold', () => ({
 	},
 }));
 
-// Mock the AnomalyThreshold component
-jest.mock('../AnomalyThreshold', () => ({
+vi.mock('../AnomalyThreshold', () => ({
 	__esModule: true,
 	default: function MockAnomalyThreshold(): JSX.Element {
 		return (
@@ -65,8 +63,7 @@ jest.mock('../AnomalyThreshold', () => ({
 	},
 }));
 
-// Mock useQueryBuilder hook
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		currentQuery: {
 			builder: { queryData: unknown[]; queryFormulas: unknown[] };
@@ -83,7 +80,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 				queryFormulas: [],
 			},
 		},
-		redirectWithQueryBuilderData: jest.fn(),
+		redirectWithQueryBuilderData: vi.fn(),
 	}),
 }));
 
@@ -145,7 +142,6 @@ describe('AlertCondition', () => {
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
 		expect(screen.getByTestId(THRESHOLD_VIEW_TEST_ID)).toBeInTheDocument();
 
-		// Verify default props
 		expect(screen.getByTestId(ALERT_THRESHOLD_TEST_ID)).toBeInTheDocument();
 		expect(
 			screen.queryByTestId(ANOMALY_THRESHOLD_TEST_ID),

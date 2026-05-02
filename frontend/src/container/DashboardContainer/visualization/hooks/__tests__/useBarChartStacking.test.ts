@@ -1,10 +1,12 @@
 import { renderHook } from '@testing-library/react';
 import uPlot from 'uplot';
+import type { Mock } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { UseBarChartStackingParams } from '../useBarChartStacking';
 import { useBarChartStacking } from '../useBarChartStacking';
 
-type MockConfig = { addHook: jest.Mock };
+type MockConfig = { addHook: Mock };
 
 function asConfig(c: MockConfig): UseBarChartStackingParams['config'] {
 	return c as unknown as UseBarChartStackingParams['config'];
@@ -18,18 +20,18 @@ function createMockConfig(): {
 		seriesIndex: number | null,
 		opts: Partial<uPlot.Series> & { focus?: boolean },
 	) => void;
-	removeSetData: jest.Mock;
-	removeSetSeries: jest.Mock;
+	removeSetData: Mock;
+	removeSetSeries: Mock;
 } {
 	let setDataHandler: ((plot: uPlot) => void) | null = null;
 	let setSeriesHandler:
 		| ((plot: uPlot, seriesIndex: number | null, opts: uPlot.Series) => void)
 		| null = null;
 
-	const removeSetData = jest.fn();
-	const removeSetSeries = jest.fn();
+	const removeSetData = vi.fn();
+	const removeSetSeries = vi.fn();
 
-	const addHook = jest.fn(
+	const addHook = vi.fn(
 		(
 			hookName: string,
 			handler: (plot: uPlot, ...args: unknown[]) => void,
@@ -46,7 +48,7 @@ function createMockConfig(): {
 				) => void;
 				return removeSetSeries;
 			}
-			return jest.fn();
+			return vi.fn();
 		},
 	);
 
@@ -81,9 +83,9 @@ function createMockPlot(overrides: Partial<uPlot> = {}): uPlot {
 			[4, 5, 6],
 		],
 		series: [{ show: true }, { show: true }, { show: true }],
-		delBand: jest.fn(),
-		addBand: jest.fn(),
-		setData: jest.fn(),
+		delBand: vi.fn(),
+		addBand: vi.fn(),
+		setData: vi.fn(),
 		...overrides,
 	} as unknown as uPlot;
 }
@@ -305,7 +307,7 @@ describe('useBarChartStacking', () => {
 			}),
 		);
 
-		(plot.setData as jest.Mock).mockClear();
+		(plot.setData as Mock).mockClear();
 		invokeSetSeries(plot, 1, { focus: true } as uPlot.Series);
 
 		expect(plot.setData).not.toHaveBeenCalled();

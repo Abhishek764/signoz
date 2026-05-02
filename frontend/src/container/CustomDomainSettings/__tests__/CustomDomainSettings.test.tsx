@@ -1,22 +1,22 @@
 import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CustomDomainSettings from '../CustomDomainSettings';
 
-jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
-	__esModule: true,
+vi.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 	default: ({ buttonText }: { buttonText?: string }): JSX.Element => (
 		<button type="button">{buttonText ?? 'Facing issues?'}</button>
 	),
 }));
 
-const mockToastCustom = jest.fn();
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+const mockToastCustom = vi.fn();
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual('@signozhq/ui')),
 	toast: {
 		custom: (...args: unknown[]): unknown => mockToastCustom(...args),
-		dismiss: jest.fn(),
+		dismiss: vi.fn(),
 	},
 }));
 

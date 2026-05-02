@@ -6,6 +6,8 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -65,29 +67,43 @@ const checkStackSeriesState = (
 const MOCK_SEARCH_PARAMS =
 	'?graphType=bar&widgetId=b473eef0-8eb5-4dd3-8089-c1817734084f&compositeQuery=%7B"id"%3A"f026c678-9abf-42af-a3dc-f73dc8cbb810"%2C"builder"%3A%7B"queryData"%3A%5B%7B"dataSource"%3A"metrics"%2C"queryName"%3A"A"%2C"aggregateOperator"%3A"count"%2C"aggregateAttribute"%3A%7B"id"%3A"----"%2C"dataType"%3A""%2C"key"%3A""%2C"type"%3A""%7D%2C"timeAggregation"%3A"rate"%2C"spaceAggregation"%3A"sum"%2C"filter"%3A%7B"expression"%3A""%7D%2C"aggregations"%3A%5B%7B"metricName"%3A""%2C"temporality"%3A""%2C"timeAggregation"%3A"count"%2C"spaceAggregation"%3A"sum"%2C"reduceTo"%3A"avg"%7D%5D%2C"functions"%3A%5B%5D%2C"filters"%3A%7B"items"%3A%5B%5D%2C"op"%3A"AND"%7D%2C"expression"%3A"A"%2C"disabled"%3Afalse%2C"stepInterval"%3Anull%2C"having"%3A%5B%5D%2C"limit"%3Anull%2C"orderBy"%3A%5B%5D%2C"groupBy"%3A%5B%5D%2C"legend"%3A""%2C"reduceTo"%3A"avg"%2C"source"%3A""%7D%5D%2C"queryFormulas"%3A%5B%5D%2C"queryTraceOperator"%3A%5B%5D%7D%2C"clickhouse_sql"%3A%5B%7B"name"%3A"A"%2C"legend"%3A""%2C"disabled"%3Afalse%2C"query"%3A""%7D%5D%2C"promql"%3A%5B%7B"name"%3A"A"%2C"query"%3A""%2C"legend"%3A""%2C"disabled"%3Afalse%7D%5D%2C"queryType"%3A"builder"%7D&relativeTime=30m';
 // Mocks
-jest.mock('uplot', () => ({
-	paths: { spline: jest.fn(), bars: jest.fn() },
-	default: jest.fn(() => ({ paths: { spline: jest.fn(), bars: jest.fn() } })),
-}));
+vi.mock('uplot', () => {
+	const paths = {
+		spline: vi.fn(),
+		bars: vi.fn(),
+	};
+	const ctor = vi.fn(() => ({
+		paths,
+	})) as unknown as typeof vi.fn & { paths: typeof paths };
+	ctor.paths = paths;
+	return {
+		paths,
+		default: ctor,
+	};
+});
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string; search: string } => ({
 		pathname: '',
 		search: MOCK_SEARCH_PARAMS,
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: jest.fn(),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(),
-	useNavigationType: jest.fn(() => 'PUSH'),
+vi.mock('react-router-dom-v5-compat', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom-v5-compat')>(
+		'react-router-dom-v5-compat',
+	)),
+	useSearchParams: vi.fn(),
+	useNavigationType: vi.fn(() => 'PUSH'),
 }));
 
 describe('placeWidgetAtBottom', () => {
@@ -315,9 +331,9 @@ describe('getDefaultWidgetData', () => {
 describe('Stacking bar in new panel', () => {
 	it('New panel should have stack bar - true by default', () => {
 		// Mock useSearchParams to return the expected values
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams(MOCK_SEARCH_PARAMS),
-			jest.fn(),
+			vi.fn(),
 		]);
 
 		const { container, getByText } = render(
@@ -355,24 +371,16 @@ const STACKING_STATE_ATTR = 'data-stacking-state';
 
 describe('when switching to BAR panel type', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
-		// Mock useSearchParams to return the expected values
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams(MOCK_SEARCH_PARAMS),
-			jest.fn(),
+			vi.fn(),
 		]);
 	});
 
-	afterEach(() => {
-		jest.useRealTimers();
-	});
-
 	it('should preserve saved stacking value of true', async () => {
-		const user = userEvent.setup({
-			advanceTimers: jest.advanceTimersByTime.bind(jest),
-		});
+		const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 
 		const { getByTestId, getByText, container } = render(
 			<DashboardBootstrapWrapper dashboardId="">
@@ -391,13 +399,11 @@ describe('when switching to BAR panel type', () => {
 
 		await user.click(getByText('Bar')); // Panel Type Selected
 
-		// find dropdown with - .ant-select-dropdown
 		const panelDropdown = document.querySelector(
 			'.ant-select-dropdown',
 		) as HTMLElement;
 		expect(panelDropdown).toBeInTheDocument();
 
-		// Select TimeSeries from dropdown
 		const option = within(panelDropdown).getByText('Time Series');
 		await user.click(option);
 
@@ -406,30 +412,25 @@ describe('when switching to BAR panel type', () => {
 			'false',
 		);
 
-		// Since we are on timeseries panel, stack series should be false
 		expect(screen.queryByText('Stack series')).not.toBeInTheDocument();
 
-		// switch back to Bar panel
 		const panelTypeDropdown2 = getByTestId('panel-change-select') as HTMLElement;
 		expect(panelTypeDropdown2).toBeInTheDocument();
 
 		expect(getByTextUtil(panelTypeDropdown2, 'Time Series')).toBeInTheDocument();
 		await user.click(getByTextUtil(panelTypeDropdown2, 'Time Series'));
 
-		// find dropdown with - .ant-select-dropdown
 		const panelDropdown2 = document.querySelector(
 			'.ant-select-dropdown',
 		) as HTMLElement;
-		// // Select BAR from dropdown
 		const BarOption = within(panelDropdown2).getByText('Bar');
 		await user.click(BarOption);
 
-		// Stack series should be true
 		checkStackSeriesState(container, true);
 
 		expect(getByTestId('panel-change-select')).toHaveAttribute(
 			STACKING_STATE_ATTR,
 			'true',
 		);
-	});
+	}, 20_000);
 });

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { YAxisCategoryNames } from '../constants';
@@ -5,7 +6,7 @@ import { UniversalYAxisUnit, YAxisSource } from '../types';
 import YAxisUnitSelector from '../YAxisUnitSelector';
 
 describe('YAxisUnitSelector', () => {
-	const mockOnChange = jest.fn();
+	const mockOnChange = vi.fn();
 
 	beforeEach(() => {
 		mockOnChange.mockClear();

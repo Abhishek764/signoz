@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
@@ -18,16 +19,18 @@ import {
 import { WidgetGraphComponentProps } from './types';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
@@ -139,8 +142,8 @@ const mockProps: WidgetGraphComponentProps = {
 		isRefetchError: false,
 		isStale: true,
 		data: undefined,
-		refetch: jest.fn(),
-		remove: jest.fn(),
+		refetch: vi.fn(),
+		remove: vi.fn(),
 	},
 	errorMessage: '',
 	version: 'v4',
@@ -153,24 +156,24 @@ const mockProps: WidgetGraphComponentProps = {
 	],
 	isWarning: false,
 	isFetchingResponse: false,
-	setRequestData: jest.fn(),
-	onClickHandler: jest.fn(),
-	onDragSelect: jest.fn(),
+	setRequestData: vi.fn(),
+	onClickHandler: vi.fn(),
+	onDragSelect: vi.fn(),
 	openTracesButton: false,
-	onOpenTraceBtnClick: jest.fn(),
+	onOpenTraceBtnClick: vi.fn(),
 };
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+vi.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
 		dashboardData: {
 			data: {
 				variables: [],
 			},
 		},
-		setLayouts: jest.fn(),
-		setDashboardData: jest.fn(),
-		setColumnWidths: jest.fn(),
+		setLayouts: vi.fn(),
+		setDashboardData: vi.fn(),
+		setColumnWidths: vi.fn(),
 	}),
 }));
 

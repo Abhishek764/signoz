@@ -5,14 +5,15 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent } from 'tests/test-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import RolesSettings from '../RolesSettings';
 
-const rolesApiURL = 'http://localhost/api/v1/roles';
+const rolesApiURL = '*/api/v1/roles';
 
 describe('RolesSettings', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the header and search input', () => {

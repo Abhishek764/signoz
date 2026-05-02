@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { render as customRender } from 'tests/test-utils';
 import { ProcessorData } from 'types/api/pipeline/def';
@@ -5,9 +7,8 @@ import { ProcessorData } from 'types/api/pipeline/def';
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
 
-// Mock the config module to set JSON parser as default
-jest.mock('../PipelineListsView/AddNewProcessor/config', () => ({
-	...jest.requireActual('../PipelineListsView/AddNewProcessor/config'),
+vi.mock('../PipelineListsView/AddNewProcessor/config', async () => ({
+	...(await vi.importActual('../PipelineListsView/AddNewProcessor/config')),
 	DEFAULT_PROCESSOR_TYPE: 'json_parser',
 }));
 
@@ -34,11 +35,11 @@ const renderJsonProcessor = ({
 }): ReturnType<typeof customRender> => {
 	const defaultProps = {
 		isActionType,
-		setActionType: jest.fn(),
+		setActionType: vi.fn(),
 		selectedProcessorData: processorData,
-		setShowSaveButton: jest.fn(),
+		setShowSaveButton: vi.fn(),
 		expandedPipelineData: pipelineMockData[2],
-		setExpandedPipelineData: jest.fn(),
+		setExpandedPipelineData: vi.fn(),
 	};
 
 	return customRender(<AddNewProcessor {...defaultProps} />);

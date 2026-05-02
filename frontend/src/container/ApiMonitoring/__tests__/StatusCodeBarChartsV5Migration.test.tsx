@@ -13,6 +13,7 @@
  * - stepInterval: 60 → null
  * - Grouped by response_status_code
  */
+import { describe, expect, it } from 'vitest';
 import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -35,30 +36,24 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				emptyFilters,
 			);
 
-			// 5th payload (index 4) is the number of calls bar chart
 			const callsChartQuery = payload[4];
 			const queryA = callsChartQuery.query.builder.queryData[0];
 
-			// V5 format: filter.expression (not filters.items)
 			expect(queryA.filter).toBeDefined();
 			expect(queryA.filter?.expression).toBeDefined();
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Base filter 2: Kind
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
 
-			// Aggregation: count
 			expect(queryA.queryName).toBe('A');
 			expect(queryA.aggregateOperator).toBe('count');
 			expect(queryA.disabled).toBe(false);
 
-			// Grouped by response_status_code
 			expect(queryA.groupBy).toContainEqual(
 				expect.objectContaining({
 					key: 'response_status_code',
@@ -67,10 +62,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				}),
 			);
 
-			// V5 critical: stepInterval should be null
 			expect(queryA.stepInterval).toBeNull();
 
-			// Time aggregation
 			expect(queryA.timeAggregation).toBe('rate');
 		});
 	});
@@ -84,25 +77,20 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				emptyFilters,
 			);
 
-			// 6th payload (index 5) is the latency bar chart
 			const latencyChartQuery = payload[5];
 			const queryA = latencyChartQuery.query.builder.queryData[0];
 
-			// V5 format: filter.expression (not filters.items)
 			expect(queryA.filter).toBeDefined();
 			expect(queryA.filter?.expression).toBeDefined();
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Base filter 2: Kind
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
 
-			// Aggregation: p99 on duration_nano
 			expect(queryA.queryName).toBe('A');
 			expect(queryA.aggregateOperator).toBe('p99');
 			expect(queryA.aggregations?.[0]).toBeDefined();
@@ -111,7 +99,6 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			);
 			expect(queryA.disabled).toBe(false);
 
-			// Grouped by response_status_code
 			expect(queryA.groupBy).toContainEqual(
 				expect.objectContaining({
 					key: 'response_status_code',
@@ -120,10 +107,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				}),
 			);
 
-			// V5 critical: stepInterval should be null
 			expect(queryA.stepInterval).toBeNull();
 
-			// Time aggregation
 			expect(queryA.timeAggregation).toBe('p99');
 		});
 	});
@@ -171,14 +156,11 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 			const latencyExpression =
 				latencyChartQuery.query.builder.queryData[0].filter?.expression;
 
-			// Both charts should have the same filter expression
 			expect(callsExpression).toBe(latencyExpression);
 
-			// Verify base filters
 			expect(callsExpression).toContain('http_host');
 			expect(callsExpression).toContain("kind_string = 'Client'");
 
-			// Verify custom filters are merged
 			expect(callsExpression).toContain('service.name');
 			expect(callsExpression).toContain('user-service');
 			expect(callsExpression).toContain('deployment.environment');

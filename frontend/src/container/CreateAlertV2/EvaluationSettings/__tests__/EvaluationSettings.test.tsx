@@ -1,15 +1,16 @@
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 
 import EvaluationSettings from '../EvaluationSettings';
 import { createMockAlertContextState } from './testUtils';
 
-jest.mock('container/CreateAlertV2/utils', () => ({
-	...jest.requireActual('container/CreateAlertV2/utils'),
+vi.mock('container/CreateAlertV2/utils', async () => ({
+	...(await vi.importActual('container/CreateAlertV2/utils')),
 }));
 
-const mockSetEvaluationWindow = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+const mockSetEvaluationWindow = vi.fn();
+vi.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		setEvaluationWindow: mockSetEvaluationWindow,
 	}),

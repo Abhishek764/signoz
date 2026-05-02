@@ -8,14 +8,16 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 
 // Mock localStorage
 const mockLocalStorage: Record<string, string> = {};
 
-jest.mock('api/browser/localstorage/get', () => ({
+vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn((key: string) => mockLocalStorage[key] || null),
+	default: vi.fn((key: string) => mockLocalStorage[key] || null),
 }));
 
 const mockLogsColumns = [

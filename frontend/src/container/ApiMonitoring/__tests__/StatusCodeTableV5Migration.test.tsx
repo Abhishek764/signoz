@@ -11,6 +11,7 @@
  * - Three queries: A (count), B (p99 latency), C (rate)
  * - All grouped by response_status_code
  */
+import { describe, expect, it } from 'vitest';
 import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -33,25 +34,20 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 				emptyFilters,
 			);
 
-			// Second payload is the status code table query
 			const statusCodeQuery = payload[1];
 			const queryA = statusCodeQuery.query.builder.queryData[0];
 
-			// CRITICAL V5 MIGRATION: filter.expression (not filters.items)
 			expect(queryA.filter).toBeDefined();
 			expect(queryA.filter?.expression).toBeDefined();
 			expect(typeof queryA.filter?.expression).toBe('string');
 			expect(queryA).not.toHaveProperty('filters.items');
 
-			// Base filter 1: Domain (http_host)
 			expect(queryA.filter?.expression).toContain(
 				`http_host = '${mockDomainName}'`,
 			);
 
-			// Base filter 2: Kind
 			expect(queryA.filter?.expression).toContain("kind_string = 'Client'");
 
-			// Base filter 3: response_status_code EXISTS
 			expect(queryA.filter?.expression).toContain('response_status_code EXISTS');
 		});
 	});
@@ -68,7 +64,6 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			const statusCodeQuery = payload[1];
 			const [queryA, queryB, queryC] = statusCodeQuery.query.builder.queryData;
 
-			// Query A: Count
 			expect(queryA.queryName).toBe('A');
 			expect(queryA.aggregateOperator).toBe('count');
 			expect(queryA.aggregations?.[0]).toBeDefined();
@@ -77,7 +72,6 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			);
 			expect(queryA.disabled).toBe(false);
 
-			// Query B: P99 Latency
 			expect(queryB.queryName).toBe('B');
 			expect(queryB.aggregateOperator).toBe('p99');
 			expect((queryB.aggregations?.[0] as TraceAggregation)?.expression).toBe(
@@ -85,12 +79,10 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			);
 			expect(queryB.disabled).toBe(false);
 
-			// Query C: Rate
 			expect(queryC.queryName).toBe('C');
 			expect(queryC.aggregateOperator).toBe('rate');
 			expect(queryC.disabled).toBe(false);
 
-			// All group by response_status_code
 			[queryA, queryB, queryC].forEach((query) => {
 				expect(query.groupBy).toContainEqual(
 					expect.objectContaining({
@@ -101,7 +93,6 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 				);
 			});
 
-			// CRITICAL: All have identical filter expressions
 			expect(queryA.filter?.expression).toBe(queryB.filter?.expression);
 			expect(queryB.filter?.expression).toBe(queryC.filter?.expression);
 		});
@@ -146,18 +137,15 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 			const expression =
 				statusCodeQuery.query.builder.queryData[0].filter?.expression;
 
-			// Base filters present
 			expect(expression).toContain('http_host');
 			expect(expression).toContain("kind_string = 'Client'");
 			expect(expression).toContain('response_status_code EXISTS');
 
-			// Custom filters merged
 			expect(expression).toContain('service.name');
 			expect(expression).toContain('user-service');
 			expect(expression).toContain('deployment.environment');
 			expect(expression).toContain('production');
 
-			// All three queries have the same merged expression
 			const queries = statusCodeQuery.query.builder.queryData;
 			expect(queries[0].filter?.expression).toBe(queries[1].filter?.expression);
 			expect(queries[1].filter?.expression).toBe(queries[2].filter?.expression);

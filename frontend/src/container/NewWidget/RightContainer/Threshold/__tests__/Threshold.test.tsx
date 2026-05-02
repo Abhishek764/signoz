@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
@@ -7,17 +8,15 @@ import { render, screen } from 'tests/test-utils';
 
 import Threshold from '../Threshold';
 
-// Mock the getColumnUnit function
-jest.mock('lib/query/createTableColumnsFromQuery', () => ({
-	getColumnUnit: jest.fn(
+vi.mock('lib/query/createTableColumnsFromQuery', () => ({
+	getColumnUnit: vi.fn(
 		(option: string, columnUnits: Record<string, string>) =>
 			columnUnits[option] || 'percent',
 	),
 }));
 
-// Mock the unitOptions function to return YAxisCategory-shaped data
-jest.mock('container/NewWidget/utils', () => ({
-	unitOptions: jest.fn(() => [
+vi.mock('container/NewWidget/utils', () => ({
+	unitOptions: vi.fn(() => [
 		{
 			name: 'Mock Category',
 			units: [
@@ -58,7 +57,7 @@ const defaultProps = {
 		memory_usage: UniversalYAxisUnit.BYTES,
 	},
 	yAxisUnit: UniversalYAxisUnit.PERCENT,
-	moveThreshold: jest.fn(),
+	moveThreshold: vi.fn(),
 };
 
 const renderThreshold = (props = {}): void => {

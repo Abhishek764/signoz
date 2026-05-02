@@ -1,4 +1,5 @@
 import React, { ComponentType, Suspense } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	render,
 	screen,
@@ -6,6 +7,16 @@ import {
 } from '@testing-library/react';
 
 import Loadable from './index';
+
+vi.mock('react', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('react')>();
+	const lazy = vi.fn(actual.lazy);
+
+	return {
+		...actual,
+		lazy,
+	};
+});
 
 // Sample component to be loaded lazily
 function SampleComponent(): JSX.Element {
@@ -22,6 +33,10 @@ const loadSampleComponent = (): Promise<{
 	});
 
 describe('Loadable', () => {
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
 	it('should render the lazily loaded component', async () => {
 		const LoadableSampleComponent = Loadable(loadSampleComponent);
 
@@ -38,12 +53,10 @@ describe('Loadable', () => {
 	});
 
 	it('should call lazy with the provided import path', () => {
-		const reactLazySpy = jest.spyOn(React, 'lazy');
+		const reactLazySpy = vi.mocked(React.lazy);
 		Loadable(loadSampleComponent);
 
 		expect(reactLazySpy).toHaveBeenCalledTimes(1);
 		expect(reactLazySpy).toHaveBeenCalledWith(expect.any(Function));
-
-		reactLazySpy.mockRestore();
 	});
 });

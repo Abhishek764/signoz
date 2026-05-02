@@ -3,7 +3,9 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import { afterEach, beforeEach, vi } from 'vitest';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -55,7 +57,7 @@ const queryClient = new QueryClient({
 
 beforeEach(() => {
 	// jest.useFakeTimers();
-	jest.setSystemTime(new Date('2023-10-20'));
+	vi.setSystemTime(new Date('2023-10-20'));
 });
 
 afterEach(() => {
@@ -91,7 +93,7 @@ const mockStored = (role?: string): any =>
 		},
 	});
 
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
 	useTranslation: (): {
 		t: (str: string) => string;
 		i18n: {
@@ -233,17 +235,17 @@ export function getAppContextMock(
 			},
 		],
 		userPreferences: [],
-		updateUserPreferenceInContext: jest.fn(),
+		updateUserPreferenceInContext: vi.fn(),
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		showChangelogModal: false,
-		updateUser: jest.fn(),
-		updateOrg: jest.fn(),
-		updateOrgPreferences: jest.fn(),
-		activeLicenseRefetch: jest.fn(),
-		updateChangelog: jest.fn(),
-		toggleChangelogModal: jest.fn(),
+		updateUser: vi.fn(),
+		updateOrg: vi.fn(),
+		updateOrgPreferences: vi.fn(),
+		activeLicenseRefetch: vi.fn(),
+		updateChangelog: vi.fn(),
+		toggleChangelogModal: vi.fn(),
 		versionData: {
 			version: '1.0.0',
 			ee: 'Y',
@@ -284,25 +286,27 @@ export function AllTheProviders({
 
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
-			<NuqsAdapter>
-				<QueryClientProvider client={queryClient}>
-					<Provider store={mockStored(roleValue)}>
-						<AppContext.Provider
-							value={getAppContextMock(roleValue, appContextOverridesValue)}
-						>
-							<ResourceProvider>
-								<ErrorModalProvider>
-									<TimezoneProvider>
-										<PreferenceContextProvider>
-											{queryBuilderContent}
-										</PreferenceContextProvider>
-									</TimezoneProvider>
-								</ErrorModalProvider>
-							</ResourceProvider>
-						</AppContext.Provider>
-					</Provider>
-				</QueryClientProvider>
-			</NuqsAdapter>
+			<CompatRouter>
+				<NuqsAdapter>
+					<QueryClientProvider client={queryClient}>
+						<Provider store={mockStored(roleValue)}>
+							<AppContext.Provider
+								value={getAppContextMock(roleValue, appContextOverridesValue)}
+							>
+								<ResourceProvider>
+									<ErrorModalProvider>
+										<TimezoneProvider>
+											<PreferenceContextProvider>
+												{queryBuilderContent}
+											</PreferenceContextProvider>
+										</TimezoneProvider>
+									</ErrorModalProvider>
+								</ResourceProvider>
+							</AppContext.Provider>
+						</Provider>
+					</QueryClientProvider>
+				</NuqsAdapter>
+			</CompatRouter>
 		</MemoryRouter>
 	);
 }

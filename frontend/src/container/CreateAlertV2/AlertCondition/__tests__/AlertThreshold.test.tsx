@@ -3,12 +3,13 @@ import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CreateAlertProvider } from '../../context';
 import AlertThreshold from '../AlertThreshold';
 
 const mockChannels: Channels[] = [];
-const mockRefreshChannels = jest.fn();
+const mockRefreshChannels = vi.fn();
 const mockIsLoadingChannels = false;
 const mockIsErrorChannels = false;
 const mockProps = {
@@ -18,20 +19,19 @@ const mockProps = {
 	refreshChannels: mockRefreshChannels,
 };
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock: any = jest.fn(() => ({
+	const UplotConstructor: any = vi.fn(() => ({
 		paths,
 	}));
-	uplotMock.paths = paths;
-	return uplotMock;
+	UplotConstructor.paths = paths;
+	return { default: UplotConstructor };
 });
 
-// Mock the ThresholdItem component
-jest.mock('../ThresholdItem', () => ({
+vi.mock('../ThresholdItem', () => ({
 	__esModule: true,
 	default: function MockThresholdItem({
 		threshold,
@@ -59,8 +59,7 @@ jest.mock('../ThresholdItem', () => ({
 	},
 }));
 
-// Mock useQueryBuilder hook
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		currentQuery: {
 			dataSource: string;
@@ -84,10 +83,9 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-// Mock getAllChannels API
-jest.mock('api/channels/getAll', () => ({
+vi.mock('api/channels/getAll', () => ({
 	__esModule: true,
-	default: jest.fn(() =>
+	default: vi.fn(() =>
 		Promise.resolve({
 			data: [
 				{ id: '1', name: 'Email Channel' },
@@ -97,17 +95,16 @@ jest.mock('api/channels/getAll', () => ({
 	),
 }));
 
-// Mock alert format categories
-jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
-	getCategoryByOptionId: jest.fn(() => ({ name: 'bytes' })),
-	getCategorySelectOptionByName: jest.fn(() => [
+vi.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
+	getCategoryByOptionId: vi.fn(() => ({ name: 'bytes' })),
+	getCategorySelectOptionByName: vi.fn(() => [
 		{ label: 'Bytes', value: 'bytes' },
 		{ label: 'KB', value: 'kb' },
 	]),
 }));
 
-jest.mock('container/CreateAlertV2/utils', () => ({
-	...jest.requireActual('container/CreateAlertV2/utils'),
+vi.mock('container/CreateAlertV2/utils', async () => ({
+	...(await vi.importActual('container/CreateAlertV2/utils')),
 }));
 
 const TEST_STRINGS = {
@@ -148,7 +145,7 @@ const verifySelectRenders = (title: string): void => {
 
 describe('AlertThreshold', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the main condition sentence', () => {
@@ -196,7 +193,6 @@ describe('AlertThreshold', () => {
 		const addButton = screen.getByText(TEST_STRINGS.ADD_THRESHOLD);
 		fireEvent.click(addButton);
 
-		// Should now have multiple threshold items
 		const thresholdItems = screen.getAllByTestId(/threshold-item-/);
 		expect(thresholdItems).toHaveLength(2);
 	});
@@ -206,15 +202,12 @@ describe('AlertThreshold', () => {
 
 		const addButton = screen.getByText(TEST_STRINGS.ADD_THRESHOLD);
 
-		// First addition should add WARNING threshold
 		fireEvent.click(addButton);
 		expect(screen.getByText('warning')).toBeInTheDocument();
 
-		// Second addition should add INFO threshold
 		fireEvent.click(addButton);
 		expect(screen.getByText('info')).toBeInTheDocument();
 
-		// Third addition should add random threshold
 		fireEvent.click(addButton);
 		expect(screen.getAllByTestId(/threshold-item-/)).toHaveLength(4);
 	});
@@ -232,43 +225,35 @@ describe('AlertThreshold', () => {
 	it('shows remove button for non-first thresholds', () => {
 		renderAlertThreshold();
 
-		// Add a threshold
 		const addButton = screen.getByText(TEST_STRINGS.ADD_THRESHOLD);
 		fireEvent.click(addButton);
 
-		// Second threshold should have remove button
 		expect(screen.getByTestId(/remove-threshold-/)).toBeInTheDocument();
 	});
 
 	it('does not show remove button for first threshold', () => {
 		renderAlertThreshold();
 
-		// First threshold should not have remove button
 		expect(screen.queryByTestId(/remove-threshold-/)).not.toBeInTheDocument();
 	});
 
 	it('removes threshold when remove button is clicked', () => {
 		renderAlertThreshold();
 
-		// Add a threshold first
 		const addButton = screen.getByText(TEST_STRINGS.ADD_THRESHOLD);
 		fireEvent.click(addButton);
 
-		// Get the remove button and click it
 		const removeButton = screen.getByTestId(/remove-threshold-/);
 		fireEvent.click(removeButton);
 
-		// Should be back to one threshold
 		expect(screen.getAllByTestId(/threshold-item-/)).toHaveLength(1);
 	});
 
 	it('does not remove threshold if only one remains', () => {
 		renderAlertThreshold();
 
-		// Should only have one threshold initially
 		expect(screen.getAllByTestId(/threshold-item-/)).toHaveLength(1);
 
-		// Try to remove (should not work)
 		const thresholdItems = screen.getAllByTestId(/threshold-item-/);
 		expect(thresholdItems).toHaveLength(1);
 	});
@@ -276,14 +261,12 @@ describe('AlertThreshold', () => {
 	it('handles loading state for channels', () => {
 		renderAlertThreshold();
 
-		// Component should render even while channels are loading
 		expect(screen.getByText('Send a notification when')).toBeInTheDocument();
 	});
 
 	it('renders with correct initial state', () => {
 		renderAlertThreshold();
 
-		// Should have initial critical threshold
 		expect(screen.getByText('critical')).toBeInTheDocument();
 		verifySelectRenders(TEST_STRINGS.IS_ABOVE);
 		verifySelectRenders(TEST_STRINGS.AT_LEAST_ONCE);

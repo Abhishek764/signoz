@@ -1,25 +1,24 @@
 import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import type { MockedFunction } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from 'tests/test-utils';
 
 import ServicesUsingMetrics from './index';
 
-// Mock the useGetTopLevelOperations hook
-jest.mock('hooks/useGetTopLevelOperations', () => ({
+vi.mock('hooks/useGetTopLevelOperations', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const mockUseGetTopLevelOperations =
-	useGetTopLevelOperations as jest.MockedFunction<
-		typeof useGetTopLevelOperations
-	>;
+const mockUseGetTopLevelOperations = useGetTopLevelOperations as MockedFunction<
+	typeof useGetTopLevelOperations
+>;
 
 describe('ServicesUsingMetrics', () => {
 	beforeEach(() => {
-		// Reset all mocks before each test
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should render the ServicesUsingMetrics component', async () => {
@@ -47,8 +46,8 @@ describe('ServicesUsingMetrics', () => {
 			isPlaceholderData: false,
 			isPreviousData: false,
 			isStale: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
+			refetch: vi.fn(),
+			remove: vi.fn(),
 		} as any);
 
 		// Mock the query range API responses
@@ -112,8 +111,8 @@ describe('ServicesUsingMetrics', () => {
 			isPlaceholderData: false,
 			isPreviousData: false,
 			isStale: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
+			refetch: vi.fn(),
+			remove: vi.fn(),
 		} as any);
 
 		await act(async () => {
@@ -149,8 +148,8 @@ describe('ServicesUsingMetrics', () => {
 			isPlaceholderData: false,
 			isPreviousData: false,
 			isStale: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
+			refetch: vi.fn(),
+			remove: vi.fn(),
 		} as any);
 
 		// Mock the query range API responses

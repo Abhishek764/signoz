@@ -1,3 +1,5 @@
+import type { Mock, MockedFunction } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UseQueryResult } from 'react-query';
 import { fireEvent, screen } from '@testing-library/react';
 import type {
@@ -5,10 +7,7 @@ import type {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import {
-	mockLocation,
-	mockQueryParams,
-} from 'container/RoutingPolicies/__tests__/testUtils';
+import { mockQueryParams } from 'container/RoutingPolicies/__tests__/testUtils';
 import { render } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
@@ -75,43 +74,43 @@ const mockDowntimeQueryResult: Partial<DowntimeQueryResult> = {
 	isLoading: false,
 	isFetching: false,
 	isError: false,
-	refetch: jest.fn(),
+	refetch: vi.fn(),
 };
 
-const mockUseLocation = jest.fn().mockReturnValue({
+const mockUseLocation = vi.fn().mockReturnValue({
 	pathname: '/alerts',
 });
 let mockUrlQuery: URLSearchParams;
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): void => mockUseLocation(),
 }));
 
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => mockUrlQuery,
 }));
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: MockedFunction<() => void> } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('api/generated/services/downtimeschedules', () => ({
+vi.mock('api/generated/services/downtimeschedules', () => ({
 	useListDowntimeSchedules: (): DowntimeQueryResult =>
 		mockDowntimeQueryResult as DowntimeQueryResult,
 	useDeleteDowntimeScheduleByID: (): {
-		mutateAsync: jest.Mock;
+		mutateAsync: Mock;
 		isLoading: false;
 	} => ({
-		mutateAsync: jest.fn(),
+		mutateAsync: vi.fn(),
 		isLoading: false,
 	}),
 }));
-jest.mock('api/generated/services/rules', () => ({
+vi.mock('api/generated/services/rules', () => ({
 	useListRules: (): {
 		data: { data: [] };
 		isError: false;
@@ -125,9 +124,9 @@ jest.mock('api/generated/services/rules', () => ({
 
 describe('PlannedDowntime Component', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUrlQuery = mockQueryParams({});
-		mockLocation('/alerts');
+		mockUseLocation.mockReturnValue({ pathname: '/alerts' });
 	});
 
 	it('renders the PlannedDowntime component properly', () => {

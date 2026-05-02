@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	fireEvent,
 	render,
@@ -20,18 +21,18 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import { MetricNameSelector } from './MetricNameSelector';
 
-const mockUseListMetrics = jest.fn();
-jest.mock('api/generated/services/metrics', () => ({
+const mockUseListMetrics = vi.fn();
+vi.mock('api/generated/services/metrics', () => ({
 	useListMetrics: (...args: unknown[]): ReturnType<typeof mockUseListMetrics> =>
 		mockUseListMetrics(...args),
 }));
 
-jest.mock('hooks/useDebounce', () => ({
+vi.mock('hooks/useDebounce', () => ({
 	__esModule: true,
 	default: <T,>(value: T): T => value,
 }));
 
-jest.mock('../QueryBuilderSearch/OptionRenderer', () => ({
+vi.mock('../QueryBuilderSearch/OptionRenderer', () => ({
 	__esModule: true,
 	default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
 }));
@@ -41,24 +42,24 @@ jest.mock('../QueryBuilderSearch/OptionRenderer', () => ({
 const handleSetQueryDataRef: {
 	current: (index: number, query: IBuilderQuery) => void;
 } = {
-	current: jest.fn(),
+	current: vi.fn(),
 };
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): Record<string, unknown> => ({
 		handleSetQueryData: (index: number, query: IBuilderQuery): void =>
 			handleSetQueryDataRef.current(index, query),
-		handleSetTraceOperatorData: jest.fn(),
-		handleSetFormulaData: jest.fn(),
-		removeQueryBuilderEntityByIndex: jest.fn(),
+		handleSetTraceOperatorData: vi.fn(),
+		handleSetFormulaData: vi.fn(),
+		removeQueryBuilderEntityByIndex: vi.fn(),
 		panelType: 'TIME_SERIES',
 		initialDataSource: DataSource.METRICS,
 		currentQuery: {
 			builder: { queryData: [], queryFormulas: [], queryTraceOperator: [] },
 			queryType: 'builder',
 		},
-		setLastUsedQuery: jest.fn(),
-		redirectWithQueryBuilderData: jest.fn(),
+		setLastUsedQuery: vi.fn(),
+		redirectWithQueryBuilderData: vi.fn(),
 	}),
 }));
 
@@ -151,8 +152,8 @@ function getOptionLabels(testId: string): string[] {
 
 describe('MetricNameSelector', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		handleSetQueryDataRef.current = jest.fn();
+		vi.clearAllMocks();
+		handleSetQueryDataRef.current = vi.fn();
 		returnMetrics([]);
 	});
 
@@ -165,7 +166,7 @@ describe('MetricNameSelector', () => {
 			}),
 		]);
 
-		render(<MetricNameSelector query={makeQuery()} onChange={jest.fn()} />);
+		render(<MetricNameSelector query={makeQuery()} onChange={vi.fn()} />);
 
 		const input = screen.getByRole('combobox');
 		fireEvent.change(input, { target: { value: 'h' } });
@@ -181,7 +182,7 @@ describe('MetricNameSelector', () => {
 	it('retains typed metric name in input after blur', () => {
 		returnMetrics([makeMetric({ metricName: 'http_requests_total' })]);
 
-		render(<MetricNameSelector query={makeQuery()} onChange={jest.fn()} />);
+		render(<MetricNameSelector query={makeQuery()} onChange={vi.fn()} />);
 
 		const input = screen.getByRole('combobox');
 		fireEvent.change(input, { target: { value: 'http_requests_total' } });
@@ -198,7 +199,7 @@ describe('MetricNameSelector', () => {
 			queryKey: ['/api/v2/metrics'],
 		});
 
-		render(<MetricNameSelector query={makeQuery()} onChange={jest.fn()} />);
+		render(<MetricNameSelector query={makeQuery()} onChange={vi.fn()} />);
 
 		const input = screen.getByRole('combobox');
 		fireEvent.focus(input);
@@ -216,7 +217,7 @@ describe('MetricNameSelector', () => {
 		});
 
 		const { container } = render(
-			<MetricNameSelector query={makeQuery()} onChange={jest.fn()} />,
+			<MetricNameSelector query={makeQuery()} onChange={vi.fn()} />,
 		);
 
 		const input = screen.getByRole('combobox');
@@ -247,13 +248,13 @@ describe('MetricNameSelector', () => {
 		const { rerender } = render(
 			<MetricNameSelector
 				query={query}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				signalSource={undefined}
 			/>,
 		);
 
 		rerender(
-			<MetricNameSelector query={query} onChange={jest.fn()} signalSource="" />,
+			<MetricNameSelector query={query} onChange={vi.fn()} signalSource="" />,
 		);
 
 		await waitFor(() => {
@@ -302,17 +303,13 @@ describe('MetricNameSelector', () => {
 		});
 
 		const { rerender } = render(
-			<MetricNameSelector
-				query={emptyQuery}
-				onChange={jest.fn()}
-				signalSource=""
-			/>,
+			<MetricNameSelector query={emptyQuery} onChange={vi.fn()} signalSource="" />,
 		);
 
 		rerender(
 			<MetricNameSelector
 				query={hydratedQuery}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				signalSource=""
 			/>,
 		);
@@ -330,8 +327,8 @@ describe('MetricNameSelector', () => {
 
 describe('selecting a metric type updates the aggregation options', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		handleSetQueryDataRef.current = jest.fn();
+		vi.clearAllMocks();
+		handleSetQueryDataRef.current = vi.fn();
 		returnMetrics([]);
 	});
 
@@ -528,7 +525,7 @@ function StatefulMetricQueryHarness({
 			setQuery(newQuery);
 		};
 		return (): void => {
-			handleSetQueryDataRef.current = jest.fn();
+			handleSetQueryDataRef.current = vi.fn();
 		};
 	}, []);
 
@@ -572,8 +569,8 @@ function StatefulMetricQueryHarness({
 
 describe('switching between metrics of the same type preserves aggregation settings', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		handleSetQueryDataRef.current = jest.fn();
+		vi.clearAllMocks();
+		handleSetQueryDataRef.current = vi.fn();
 		returnMetrics([]);
 	});
 
@@ -762,8 +759,8 @@ describe('switching between metrics of the same type preserves aggregation setti
 
 describe('switching to a different metric type resets aggregation to new defaults', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		handleSetQueryDataRef.current = jest.fn();
+		vi.clearAllMocks();
+		handleSetQueryDataRef.current = vi.fn();
 		returnMetrics([]);
 	});
 
@@ -901,8 +898,8 @@ describe('switching to a different metric type resets aggregation to new default
 
 describe('typed metric not in search results is committed with unknown defaults', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		handleSetQueryDataRef.current = jest.fn();
+		vi.clearAllMocks();
+		handleSetQueryDataRef.current = vi.fn();
 		returnMetrics([]);
 	});
 
@@ -952,8 +949,8 @@ describe('typed metric not in search results is committed with unknown defaults'
 
 describe('Summary metric type is treated as Gauge', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		handleSetQueryDataRef.current = jest.fn();
+		vi.clearAllMocks();
+		handleSetQueryDataRef.current = vi.fn();
 		returnMetrics([]);
 	});
 

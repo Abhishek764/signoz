@@ -1,9 +1,11 @@
 /**
  * Tests for useSafeNavigate's mock contract.
  *
- * The real useSafeNavigate hook is globally replaced by a mock via
- * jest.config.ts moduleNameMapper, so we cannot test the real
- * implementation here. Instead we verify:
+ * Jest maps `hooks/useSafeNavigate` to `__mocks__/useSafeNavigate.ts` via
+ * moduleNameMapper; Vitest does not, so this file uses an inline `vi.mock`
+ * that mirrors that hand-written mock.
+ *
+ * We verify:
  *
  * 1. The mock accepts the newTab option without type errors — ensuring
  *    component tests that pass these options won't break.
@@ -11,7 +13,25 @@
  *    matches the real hook's behaviour.
  */
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { mockSafeNavigate } = vi.hoisted(() => ({
+	mockSafeNavigate: vi.fn(),
+}));
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): {
+		safeNavigate: typeof mockSafeNavigate;
+	} => ({
+		safeNavigate: mockSafeNavigate,
+	}),
+}));
+
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+
+beforeEach(() => {
+	mockSafeNavigate.mockClear();
+});
 
 describe('useSafeNavigate mock contract', () => {
 	it('mock returns a safeNavigate function', () => {

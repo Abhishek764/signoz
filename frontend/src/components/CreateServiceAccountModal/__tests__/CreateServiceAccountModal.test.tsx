@@ -1,28 +1,49 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toast } from '@signozhq/ui';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import {
-	render,
-	screen,
-	userEvent,
-	waitFor,
-	waitForElementToBeRemoved,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/icons', () => ({
+	X: ({ size: _size }: any): JSX.Element => <span aria-hidden="true" />,
 }));
 
-const mockToast = jest.mocked(toast);
+vi.mock('@signozhq/ui', () => ({
+	Button: ({
+		children,
+		loading: _loading,
+		variant: _variant,
+		color: _color,
+		...props
+	}: any): JSX.Element => <button {...props}>{children}</button>,
+	DialogFooter: ({ children, ...props }: any): JSX.Element => (
+		<div {...props}>{children}</div>
+	),
+	DialogWrapper: ({ title, open, children }: any): JSX.Element | null =>
+		open ? (
+			<div role="dialog" aria-label={title}>
+				{children}
+			</div>
+		) : null,
+	Input: (props: any): JSX.Element => <input {...props} />,
+	toast: { success: vi.fn(), error: vi.fn() },
+}));
 
-const showErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
+
+const mockToast = vi.mocked(toast);
+
+const showErrorModal = vi.hoisted(() => vi.fn());
+vi.mock('providers/ErrorModalProvider', async () => ({
 	__esModule: true,
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
+	...(await vi.importActual('providers/ErrorModalProvider')),
+	useErrorModal: vi.fn(() => ({
 		showErrorModal,
 		isErrorModalVisible: false,
 	})),
@@ -40,7 +61,7 @@ function renderModal(): ReturnType<typeof render> {
 
 describe('CreateServiceAccountModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(201), ctx.json({ status: 'success', data: {} })),
@@ -126,12 +147,16 @@ describe('CreateServiceAccountModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		const dialog = await screen.findByRole('dialog', {
+		await screen.findByRole('dialog', {
 			name: /New Service Account/i,
 		});
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		await waitForElementToBeRemoved(dialog);
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /New Service Account/i }),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {

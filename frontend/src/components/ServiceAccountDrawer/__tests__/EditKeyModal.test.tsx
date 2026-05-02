@@ -2,16 +2,25 @@ import { toast } from '@signozhq/ui';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type Mock,
+	vi,
+} from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockToast = jest.mocked(toast);
+const mockToast = vi.mocked(toast);
 
 const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/key-1';
 
@@ -29,7 +38,7 @@ function renderModal(
 		account: 'sa-1',
 		'edit-key': 'key-1',
 	},
-	onUrlUpdate?: jest.Mock,
+	onUrlUpdate?: Mock,
 ): ReturnType<typeof render> {
 	return render(
 		<NuqsTestingAdapter
@@ -44,7 +53,7 @@ function renderModal(
 
 describe('EditKeyModal (URL-controlled)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.put(SA_KEY_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
@@ -99,7 +108,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 
 	it('cancel clears edit-key param and closes modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 		renderModal(mockKey, undefined, onUrlUpdate);
 
 		await screen.findByDisplayValue('Original Key Name');

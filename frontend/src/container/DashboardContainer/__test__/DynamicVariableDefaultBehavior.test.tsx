@@ -1,5 +1,7 @@
 import React from 'react';
+import type { QueryKey, UseQueryOptions, UseQueryResult } from 'react-query';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 // eslint-disable-next-line no-restricted-imports
 import * as ReactRedux from 'react-redux';
 import {
@@ -16,7 +18,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import DynamicVariableInput from '../DashboardVariablesSelection/DynamicVariableInput';
 
 // Mock useVariableFetchState to return "fetching" state so useQuery is enabled
-jest.mock('hooks/dashboard/useVariableFetchState', () => ({
+vi.mock('hooks/dashboard/useVariableFetchState', () => ({
 	useVariableFetchState: (): Record<string, unknown> => ({
 		variableFetchCycleId: 0,
 		variableFetchState: 'loading',
@@ -29,21 +31,22 @@ jest.mock('hooks/dashboard/useVariableFetchState', () => ({
 }));
 
 // Mock the getFieldValues API
-jest.mock('api/dynamicVariables/getFieldValues', () => ({
-	getFieldValues: jest.fn(),
+vi.mock('api/dynamicVariables/getFieldValues', () => ({
+	getFieldValues: vi.fn(),
 }));
 
 // Mock useQuery from react-query
-jest.mock('react-query', () => {
-	const originalModule = jest.requireActual('react-query');
+vi.mock('react-query', async () => {
+	const originalModule =
+		await vi.importActual<typeof import('react-query')>('react-query');
 	return {
 		...originalModule,
-		useQuery: jest.fn(),
+		useQuery: vi.fn(),
 	};
 });
 
 describe('Dynamic Variable Default Behavior', () => {
-	const mockOnValueUpdate = jest.fn();
+	const mockOnValueUpdate = vi.fn();
 	const mockApiResponse = {
 		httpStatusCode: 200,
 		data: {
@@ -64,8 +67,8 @@ describe('Dynamic Variable Default Behavior', () => {
 
 	beforeEach(() => {
 		// Mock scrollIntoView for JSDOM environment
-		window.HTMLElement.prototype.scrollIntoView = jest.fn();
-		jest.clearAllMocks();
+		window.HTMLElement.prototype.scrollIntoView = vi.fn();
+		vi.clearAllMocks();
 
 		// Create a new QueryClient for each test
 		queryClient = new QueryClient({
@@ -77,12 +80,17 @@ describe('Dynamic Variable Default Behavior', () => {
 		});
 
 		// Mock getFieldValues API to return our test data
-		(getFieldValues as jest.Mock).mockResolvedValue(mockApiResponse);
+		vi.mocked(getFieldValues).mockResolvedValue(mockApiResponse);
 
 		// Mock useQuery implementation to avoid infinite re-renders
 		// and ensure onSuccess is called once
-		(useQuery as jest.Mock).mockImplementation((key, options) => {
-			const { onSuccess, enabled, queryFn } = options || {};
+		vi.mocked(useQuery).mockImplementation((queryKey, options) => {
+			const opts = (options ?? {}) as Omit<
+				UseQueryOptions<unknown, unknown, unknown, QueryKey>,
+				'queryKey'
+			>;
+			const { onSuccess, enabled, queryFn } = opts;
+			const key = queryKey as unknown[];
 			const variableName = key[1];
 			const dynamicVarsKey = key[2];
 
@@ -106,7 +114,7 @@ describe('Dynamic Variable Default Behavior', () => {
 						}
 					}
 					if (queryFn) {
-						queryFn({ signal: undefined });
+						queryFn({ signal: undefined } as any);
 					}
 				}
 			}, [enabled, variableName, dynamicVarsKey]); // Only depend on enabled/keys
@@ -115,11 +123,11 @@ describe('Dynamic Variable Default Behavior', () => {
 				isLoading: false,
 				isError: false,
 				data: mockApiResponse,
-				refetch: jest.fn(),
-			};
+				refetch: vi.fn(),
+			} as unknown as UseQueryResult;
 		});
 
-		jest.spyOn(ReactRedux, 'useSelector').mockReturnValue({
+		vi.spyOn(ReactRedux, 'useSelector').mockReturnValue({
 			minTime: '2023-01-01T00:00:00Z',
 			maxTime: '2023-01-02T00:00:00Z',
 		});

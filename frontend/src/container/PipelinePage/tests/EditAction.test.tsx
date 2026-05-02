@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -13,7 +14,7 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<EditAction isPipelineAction editAction={jest.fn()} />
+						<EditAction isPipelineAction editAction={vi.fn()} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

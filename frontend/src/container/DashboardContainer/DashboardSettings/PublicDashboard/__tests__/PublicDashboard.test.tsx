@@ -11,26 +11,36 @@ import { rest, server } from 'mocks-server/server';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 
 import PublicDashboardSetting from '../index';
 
 // Mock dependencies
-jest.mock('providers/Dashboard/store/useDashboardStore');
-jest.mock('react-use', () => ({
-	...jest.requireActual('react-use'),
-	useCopyToClipboard: jest.fn(),
+vi.mock('providers/Dashboard/store/useDashboardStore');
+vi.mock('react-use', async () => ({
+	...(await vi.importActual<typeof import('react-use')>('react-use')),
+	useCopyToClipboard: vi.fn(),
 }));
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui')>('@signozhq/ui')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
-const mockUseDashboard = jest.mocked(useDashboardStore);
-const mockUseCopyToClipboard = jest.mocked(useCopyToClipboard);
-const mockToast = jest.mocked(toast);
+const mockUseDashboard = vi.mocked(useDashboardStore);
+const mockUseCopyToClipboard = vi.mocked(useCopyToClipboard);
+const mockToast = vi.mocked(toast);
 
 // Test constants
 const MOCK_DASHBOARD_ID = 'test-dashboard-id';
@@ -60,13 +70,13 @@ afterAll(() => {
 	server.close();
 });
 
-const mockSetCopyPublicDashboardURL = jest.fn();
+const mockSetCopyPublicDashboardURL = vi.fn();
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 
 	// Mock window.open
-	window.open = jest.fn();
+	window.open = vi.fn();
 
 	// Mock useDashboardStore
 	mockUseDashboard.mockReturnValue({
@@ -82,7 +92,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	server.resetHandlers();
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 });
 
 describe('PublicDashboardSetting', () => {

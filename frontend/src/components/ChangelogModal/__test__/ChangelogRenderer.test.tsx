@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import {
 	ChangelogSchema,
 	DeploymentType,
@@ -9,13 +10,11 @@ import {
 import ChangelogRenderer from '../components/ChangelogRenderer';
 
 // Mock react-markdown to just render children as plain text
-jest.mock(
-	'react-markdown',
-	() =>
-		function ReactMarkdown({ children }: any) {
-			return <div>{children}</div>;
-		},
-);
+vi.mock('react-markdown', () => ({
+	default: function ReactMarkdown({ children }: any) {
+		return <div>{children}</div>;
+	},
+}));
 
 const mockChangelog: ChangelogSchema = {
 	id: 1,

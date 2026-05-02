@@ -10,6 +10,7 @@ import {
 	buildGraphMock,
 	onUpdateVariableNodeMock,
 } from './mock';
+import { describe, expect, it } from 'vitest';
 
 describe('dashboardVariables - utilities and processors', () => {
 	describe('onUpdateVariableNode', () => {

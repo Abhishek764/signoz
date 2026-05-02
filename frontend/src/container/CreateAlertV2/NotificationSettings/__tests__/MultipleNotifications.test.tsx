@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ALL_SELECTED_VALUE } from 'container/CreateAlertV2/constants';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import {
@@ -7,34 +8,39 @@ import {
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlertV2/context/constants';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import MultipleNotifications from '../MultipleNotifications';
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
-		paths,
-	}));
+	const UPlot = vi.fn(() => ({ paths }));
+	(UPlot as unknown as { paths: typeof paths }).paths = paths;
 	return {
+		__esModule: true,
+		default: UPlot,
 		paths,
-		default: uplotMock,
 	};
 });
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
 
 const TEST_QUERY = 'test-query';
 const TEST_QUERY_2 = 'test-query-2';
-const TEST_GROUP_BY_FIELDS = [{ key: 'service' }, { key: 'environment' }];
+const TEST_GROUP_BY_FIELDS = [
+	{ key: 'service', type: 'tag' as const },
+	{ key: 'environment', type: 'tag' as const },
+];
 const TRUE = 'true';
 const FALSE = 'false';
 const COMBOBOX_ROLE = 'combobox';
 const ARIA_DISABLED_ATTR = 'aria-disabled';
-const mockSetNotificationSettings = jest.fn();
+const mockSetNotificationSettings = vi.fn();
 const mockUseQueryBuilder = {
 	currentQuery: {
 		builder: {
@@ -46,10 +52,10 @@ const mockUseQueryBuilder = {
 			],
 		},
 	},
-};
+} as unknown as QueryBuilderContextType;
 
 const initialAlertThresholdState = createMockAlertContextState().thresholdState;
-jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+vi.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		thresholdState: {
 			...initialAlertThresholdState,
@@ -60,13 +66,11 @@ jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 );
 
 describe('MultipleNotifications', () => {
-	const { useQueryBuilder } = jest.requireMock(
-		'hooks/queryBuilder/useQueryBuilder',
-	);
+	const mockedUseQueryBuilder = vi.mocked(useQueryBuilder);
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		useQueryBuilder.mockReturnValue(mockUseQueryBuilder);
+		vi.clearAllMocks();
+		mockedUseQueryBuilder.mockReturnValue(mockUseQueryBuilder);
 	});
 
 	it('should render the multiple notifications component with no grouping fields and disabled input by default', () => {
@@ -83,7 +87,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should render the multiple notifications component with grouping fields and enabled input when space aggregation options are set', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -94,7 +98,7 @@ describe('MultipleNotifications', () => {
 					],
 				},
 			},
-		});
+		} as unknown as QueryBuilderContextType);
 		render(<MultipleNotifications />);
 
 		expect(
@@ -107,7 +111,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should render the multiple notifications component with grouping fields and enabled input when space aggregation options are set and multiple notifications are enabled', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -118,8 +122,8 @@ describe('MultipleNotifications', () => {
 					],
 				},
 			},
-		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+		} as unknown as QueryBuilderContextType);
+		vi.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 			createMockAlertContextState({
 				thresholdState: {
 					...INITIAL_ALERT_THRESHOLD_STATE,
@@ -143,22 +147,22 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should render unique group by options from all queries', async () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
 						{
 							queryName: 'test-query-1',
-							groupBy: [{ key: 'http.status_code' }],
+							groupBy: [{ key: 'http.status_code', type: 'tag' as const }],
 						},
 						{
 							queryName: TEST_QUERY_2,
-							groupBy: [{ key: 'service' }],
+							groupBy: [{ key: 'service', type: 'tag' as const }],
 						},
 					],
 				},
 			},
-		});
+		} as unknown as QueryBuilderContextType);
 
 		render(<MultipleNotifications />);
 
@@ -171,19 +175,19 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('selecting the "all" option shows correct group by description', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
 						{
 							queryName: TEST_QUERY_2,
-							groupBy: [{ key: 'service' }],
+							groupBy: [{ key: 'service', type: 'tag' as const }],
 						},
 					],
 				},
 			},
-		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+		} as unknown as QueryBuilderContextType);
+		vi.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 			createMockAlertContextState({
 				notificationSettings: {
 					...INITIAL_NOTIFICATION_SETTINGS_STATE,
@@ -200,18 +204,18 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('selecting "all" option should disable selection of other options', async () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
 						{
 							queryName: TEST_QUERY_2,
-							groupBy: [{ key: 'service' }],
+							groupBy: [{ key: 'service', type: 'tag' as const }],
 						},
 					],
 				},
 			},
-		});
+		} as unknown as QueryBuilderContextType);
 
 		render(<MultipleNotifications />);
 
@@ -227,19 +231,19 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('selecting "all" option should remove all other selected options', async () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
 						{
 							queryName: TEST_QUERY_2,
-							groupBy: [{ key: 'service' }],
+							groupBy: [{ key: 'service', type: 'tag' as const }],
 						},
 					],
 				},
 			},
-		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+		} as unknown as QueryBuilderContextType);
+		vi.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 			createMockAlertContextState({
 				notificationSettings: {
 					...INITIAL_NOTIFICATION_SETTINGS_STATE,

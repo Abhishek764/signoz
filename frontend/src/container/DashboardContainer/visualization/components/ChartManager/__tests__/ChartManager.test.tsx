@@ -1,25 +1,33 @@
 import userEvent from '@testing-library/user-event';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { render, screen } from 'tests/test-utils';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ChartManager from '../ChartManager';
 
-const mockSyncSeriesVisibilityToLocalStorage = jest.fn();
-const mockNotificationsSuccess = jest.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
 
-jest.mock('lib/uPlotV2/context/PlotContext', () => ({
+const mockSyncSeriesVisibilityToLocalStorage = vi.fn();
+const mockNotificationsSuccess = vi.fn();
+
+vi.mock('lib/uPlotV2/context/PlotContext', () => ({
 	usePlotContext: (): {
-		onToggleSeriesOnOff: jest.Mock;
-		onToggleSeriesVisibility: jest.Mock;
-		syncSeriesVisibilityToLocalStorage: jest.Mock;
+		onToggleSeriesOnOff: Mock;
+		onToggleSeriesVisibility: Mock;
+		syncSeriesVisibilityToLocalStorage: Mock;
 	} => ({
-		onToggleSeriesOnOff: jest.fn(),
-		onToggleSeriesVisibility: jest.fn(),
+		onToggleSeriesOnOff: vi.fn(),
+		onToggleSeriesVisibility: vi.fn(),
 		syncSeriesVisibilityToLocalStorage: mockSyncSeriesVisibilityToLocalStorage,
 	}),
 }));
 
-jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
+vi.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	__esModule: true,
 	default: (): {
 		legendItemsMap: { [key: number]: { show: boolean; label: string } };
@@ -32,7 +40,7 @@ jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	}),
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+vi.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (
 		selector?: (s: { dashboardData: { locked: boolean } | undefined }) => {
 			dashboardData: { locked: boolean };
@@ -46,15 +54,15 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	}): boolean => s.dashboardData?.locked ?? false,
 }));
 
-jest.mock('hooks/useNotifications', () => ({
-	useNotifications: (): { notifications: { success: jest.Mock } } => ({
+vi.mock('hooks/useNotifications', () => ({
+	useNotifications: (): { notifications: { success: Mock } } => ({
 		notifications: {
 			success: mockNotificationsSuccess,
 		},
 	}),
 }));
 
-jest.mock('components/ResizeTable', () => {
+vi.mock('components/ResizeTable', () => {
 	const MockTable = ({
 		dataSource,
 		columns,
@@ -95,10 +103,10 @@ const createAlignedData = (): uPlot.AlignedData => [
 ];
 
 describe('ChartManager', () => {
-	const mockOnCancel = jest.fn();
+	const mockOnCancel = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders filter input and action buttons', () => {

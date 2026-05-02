@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import { describe, expect, it } from 'vitest';
 
 import { getColorsForSeverityLabels, isRedLike } from '../utils';
 

@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -26,14 +27,12 @@ const DataTypes = {
 };
 
 // Mock the external utils dependencies that are used within our tested functions
-jest.mock('../utils', () => {
-	// Import the actual module to partial mock
-	const originalModule = jest.requireActual('../utils');
+vi.mock('../utils', async () => {
+	const originalModule =
+		await vi.importActual<typeof import('../utils')>('../utils');
 
-	// Return a mocked version
 	return {
 		...originalModule,
-		// Just export the functions we're testing directly
 		extractPortAndEndpoint: originalModule.extractPortAndEndpoint,
 		getEndPointDetailsQueryPayload: originalModule.getEndPointDetailsQueryPayload,
 		getRateOverTimeWidgetData: originalModule.getRateOverTimeWidgetData,
@@ -571,7 +570,7 @@ describe('API Monitoring Utils', () => {
 
 	describe('getFormattedEndPointStatusCodeChartData', () => {
 		afterEach(() => {
-			jest.resetAllMocks();
+			vi.resetAllMocks();
 		});
 
 		it('should format status code chart data correctly with sum aggregation', () => {
@@ -653,16 +652,15 @@ describe('API Monitoring Utils', () => {
 			expect(hasStatusCode500To599).toBe(true);
 		});
 
-		it('should handle undefined input', () => {
-			// Setup a mock
-			jest
-				.spyOn(
-					jest.requireActual('../utils'),
-					'getFormattedEndPointStatusCodeChartData',
-				)
+		it('should handle undefined input', async () => {
+			const utilsActual =
+				await vi.importActual<typeof import('../utils')>('../utils');
+			vi
+				.spyOn(utilsActual, 'getFormattedEndPointStatusCodeChartData')
 				.mockReturnValue({
 					data: {
 						result: [],
+						newResult: [],
 						resultType: 'matrix',
 					},
 				});

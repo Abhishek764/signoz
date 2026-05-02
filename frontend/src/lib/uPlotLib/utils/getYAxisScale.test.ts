@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';

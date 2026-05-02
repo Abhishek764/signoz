@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
@@ -6,7 +8,7 @@ import { TIMEZONE_DATA } from '../constants';
 import EvaluationCadence from '../EvaluationCadence';
 import { createMockAlertContextState } from './testUtils';
 
-jest.mock('../EvaluationCadence/EditCustomSchedule', () => ({
+vi.mock('../EvaluationCadence/EditCustomSchedule', () => ({
 	__esModule: true,
 	default: ({
 		setIsPreviewVisible,
@@ -21,25 +23,25 @@ jest.mock('../EvaluationCadence/EditCustomSchedule', () => ({
 		</div>
 	),
 }));
-jest.mock('../EvaluationCadence/EvaluationCadenceDetails', () => ({
+vi.mock('../EvaluationCadence/EvaluationCadenceDetails', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="evaluation-cadence-details">EvaluationCadenceDetails</div>
 	),
 }));
-jest.mock('../EvaluationCadence/EvaluationCadencePreview', () => ({
+vi.mock('../EvaluationCadence/EvaluationCadencePreview', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="evaluation-cadence-preview">EvaluationCadencePreview</div>
 	),
 }));
 
-const mockSetAdvancedOptions = jest.fn();
+const mockSetAdvancedOptions = vi.fn();
 const EVALUATION_CADENCE_DETAILS_TEST_ID = 'evaluation-cadence-details';
 const ADD_CUSTOM_SCHEDULE_TEXT = 'Add custom schedule';
 const EVALUATION_CADENCE_PREVIEW_TEST_ID = 'evaluation-cadence-preview';
 
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+vi.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		setAdvancedOptions: mockSetAdvancedOptions,
 	}),
@@ -94,7 +96,7 @@ describe('EvaluationCadence', () => {
 
 	// TODO: Unskip this when add custom schedule button is implemented
 	it.skip('should show the custom schedule text when the mode is custom with selected values', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,
@@ -144,7 +146,7 @@ describe('EvaluationCadence', () => {
 	});
 
 	it('should show evaluation cadence preview component when clicked on preview button in custom mode', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,

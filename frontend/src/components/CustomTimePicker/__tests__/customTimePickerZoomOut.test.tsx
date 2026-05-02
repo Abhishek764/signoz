@@ -2,23 +2,33 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import CustomTimePicker from '../CustomTimePicker';
 
-const MS_PER_MIN = 60 * 1000;
-const NOW_MS = 1705312800000;
-
-const mockDispatch = jest.fn();
-const mockSafeNavigate = jest.fn();
-const mockUrlQueryDelete = jest.fn();
-const mockUrlQuerySet = jest.fn();
+const {
+	MS_PER_MIN,
+	NOW_MS,
+	mockDispatch,
+	mockSafeNavigate,
+	mockUrlQueryDelete,
+	mockUrlQuerySet,
+} = vi.hoisted(() => ({
+	MS_PER_MIN: 60 * 1000,
+	NOW_MS: 1705312800000,
+	mockDispatch: vi.fn(),
+	mockSafeNavigate: vi.fn(),
+	mockUrlQueryDelete: vi.fn(),
+	mockUrlQuerySet: vi.fn(),
+}));
 
 interface MockAppState {
 	globalTime: Pick<GlobalReducer, 'minTime' | 'maxTime'>;
 }
 
-jest.mock('react-redux', () => ({
-	useDispatch: (): jest.Mock => mockDispatch,
+vi.mock('react-redux', () => ({
+	useDispatch: (): Mock => mockDispatch,
 	useSelector: (selector: (state: MockAppState) => unknown): unknown => {
 		const mockState: MockAppState = {
 			globalTime: {
@@ -30,8 +40,8 @@ jest.mock('react-redux', () => ({
 	},
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
@@ -43,7 +53,7 @@ interface MockUrlQuery {
 	toString: () => string;
 }
 
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): MockUrlQuery => ({
 		delete: mockUrlQueryDelete,
@@ -53,26 +63,46 @@ jest.mock('hooks/useUrlQuery', () => ({
 	}),
 }));
 
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	useTimezone: (): { timezone: { value: string; offset: string } } => ({
 		timezone: { value: 'UTC', offset: 'UTC' },
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
+vi.mock('react-router-dom', () => ({
 	useLocation: (): { pathname: string } => ({ pathname: '/logs-explorer' }),
+}));
+
+vi.mock('@signozhq/ui', () => ({
+	Button: ({
+		children,
+		prefix,
+		variant: _variant,
+		color: _color,
+		...props
+	}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+		prefix?: React.ReactNode;
+		variant?: string;
+		color?: string;
+	}): JSX.Element => (
+		<button type="button" {...props}>
+			{prefix}
+			{children}
+		</button>
+	),
+	Calendar: (): JSX.Element => <div data-testid="mock-calendar" />,
 }));
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const now = Date.now();
 const defaultProps = {
-	onSelect: jest.fn(),
-	onError: jest.fn(),
+	onSelect: vi.fn(),
+	onError: vi.fn(),
 	selectedValue: '15m',
 	selectedTime: '15m',
-	onValidCustomDateChange: jest.fn(),
+	onValidCustomDateChange: vi.fn(),
 	open: false,
-	setOpen: jest.fn(),
+	setOpen: vi.fn(),
 	items: [
 		{ value: '15m', label: 'Last 15 minutes' },
 		{ value: '1h', label: 'Last 1 hour' },
@@ -83,12 +113,12 @@ const defaultProps = {
 
 describe('CustomTimePicker - zoom out button', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
+		vi.clearAllMocks();
+		vi.spyOn(Date, 'now').mockReturnValue(NOW_MS);
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('should render zoom out button when showLiveLogs is false', () => {

@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { render } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -11,10 +13,10 @@ import {
 
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
 describe('Value panel wrappper tests', () => {

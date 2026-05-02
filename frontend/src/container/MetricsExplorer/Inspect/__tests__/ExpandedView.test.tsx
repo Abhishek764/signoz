@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,

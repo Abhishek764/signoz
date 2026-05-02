@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
@@ -8,24 +10,30 @@ import { createMockAlertContextState } from './testUtils';
 
 const ENTER_RRULE_PLACEHOLDER = 'Enter RRule';
 
-jest.mock('dayjs', () => {
-	const actualDayjs = jest.requireActual('dayjs');
-	const mockDayjs = (date?: any): any => {
+vi.mock('dayjs', async () => {
+	const originalDayjs = await vi.importActual<unknown>('dayjs');
+	const actualDefault = (originalDayjs as { default?: typeof import('dayjs') })
+		.default as typeof import('dayjs');
+	const mockDayjs = (date?: unknown): unknown => {
 		if (date) {
-			return actualDayjs(date);
+			return actualDefault(date as string | Date);
 		}
-		// 21 Jan 2025
-		return actualDayjs('2025-01-21T16:31:36.982Z');
+		return actualDefault('2025-01-21T16:31:36.982Z');
 	};
-	Object.keys(actualDayjs).forEach((key) => {
-		if (typeof (actualDayjs as any)[key] === 'function') {
-			(mockDayjs as any)[key] = (actualDayjs as any)[key];
+	Object.keys(actualDefault as object).forEach((key) => {
+		if (
+			typeof (actualDefault as unknown as Record<string, unknown>)[key] ===
+			'function'
+		) {
+			(mockDayjs as unknown as Record<string, unknown>)[key] = (
+				actualDefault as unknown as Record<string, unknown>
+			)[key];
 		}
 	});
-	(mockDayjs as any).tz = {
+	(mockDayjs as { tz?: { guess: () => string } }).tz = {
 		guess: (): string => 'Asia/Saigon',
 	};
-	return mockDayjs;
+	return { default: mockDayjs };
 });
 
 const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState =
@@ -37,16 +45,16 @@ const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState 
 		},
 	};
 
-const mockSetAdvancedOptions = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+const mockSetAdvancedOptions = vi.fn();
+vi.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 		setAdvancedOptions: mockSetAdvancedOptions,
 	}),
 );
 
-const mockSetIsOpen = jest.fn();
-const mockSetIsCustomScheduleButtonVisible = jest.fn();
+const mockSetIsOpen = vi.fn();
+const mockSetIsCustomScheduleButtonVisible = vi.fn();
 
 const SCHEDULE_PREVIEW_TEST_ID = 'schedule-preview';
 const NO_SCHEDULE_TEST_ID = 'no-schedule';
@@ -105,7 +113,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('when showing weekly occurence, the occurence options should be rendered', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -137,7 +145,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('render schedule preview in weekly occurence when days are selected', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -167,7 +175,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('when showing monthly occurence, the occurence options should be rendered', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -199,7 +207,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('render schedule preview in monthly occurence when days are selected', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,

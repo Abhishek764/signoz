@@ -1,14 +1,15 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UrlUpdateEvent } from 'nuqs/adapters/testing';
+import { OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import { describe, expect, it, vi } from 'vitest';
 
 import { renderTanStackTable } from './testUtils';
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('../TanStackTable.module.scss', () => ({
+vi.mock('../TanStackTable.module.scss', () => ({
 	__esModule: true,
 	default: {
 		tanStackTable: 'tanStackTable',
@@ -75,14 +76,14 @@ describe('TanStackTableView Integration', () => {
 
 		it('shows loading spinner for infinite scroll when loading', () => {
 			renderTanStackTable({
-				props: { isLoading: true, onEndReached: jest.fn() },
+				props: { isLoading: true, onEndReached: vi.fn() },
 			});
 			expect(screen.getByTestId('tanstack-infinite-loader')).toBeInTheDocument();
 		});
 
 		it('does not show loading spinner for infinite scroll when not loading', () => {
 			renderTanStackTable({
-				props: { isLoading: false, onEndReached: jest.fn() },
+				props: { isLoading: false, onEndReached: vi.fn() },
 			});
 			expect(
 				screen.queryByTestId('tanstack-infinite-loader'),
@@ -114,7 +115,7 @@ describe('TanStackTableView Integration', () => {
 
 		it('updates page when clicking page number', async () => {
 			const user = userEvent.setup();
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
 
 			renderTanStackTable({
 				props: {
@@ -151,7 +152,7 @@ describe('TanStackTableView Integration', () => {
 			renderTanStackTable({
 				props: {
 					pagination: { total: 100 },
-					onEndReached: jest.fn(), // This enables infinite scroll mode
+					onEndReached: vi.fn(), // This enables infinite scroll mode
 				},
 			});
 
@@ -193,7 +194,7 @@ describe('TanStackTableView Integration', () => {
 	describe('sorting', () => {
 		it('updates orderBy URL param when clicking sortable header', async () => {
 			const user = userEvent.setup();
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
 
 			renderTanStackTable({
 				props: { enableQueryParams: true },
@@ -222,7 +223,7 @@ describe('TanStackTableView Integration', () => {
 
 		it('toggles sort order on subsequent clicks', async () => {
 			const user = userEvent.setup();
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
 
 			renderTanStackTable({
 				props: { enableQueryParams: true },
@@ -256,7 +257,7 @@ describe('TanStackTableView Integration', () => {
 	describe('row selection', () => {
 		it('calls onRowClick with row data and itemKey', async () => {
 			const user = userEvent.setup();
-			const onRowClick = jest.fn();
+			const onRowClick = vi.fn();
 
 			renderTanStackTable({
 				props: {
@@ -296,8 +297,8 @@ describe('TanStackTableView Integration', () => {
 
 		it('calls onRowDeactivate when clicking active row', async () => {
 			const user = userEvent.setup();
-			const onRowClick = jest.fn();
-			const onRowDeactivate = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowDeactivate = vi.fn();
 
 			renderTanStackTable({
 				props: {
@@ -318,8 +319,8 @@ describe('TanStackTableView Integration', () => {
 		});
 
 		it('opens in new tab on ctrl+click', async () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 
 			renderTanStackTable({
 				props: {
@@ -343,8 +344,8 @@ describe('TanStackTableView Integration', () => {
 		});
 
 		it('opens in new tab on meta+click', async () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 
 			renderTanStackTable({
 				props: {
@@ -393,7 +394,7 @@ describe('TanStackTableView Integration', () => {
 
 	describe('infinite scroll', () => {
 		it('calls onEndReached when provided', async () => {
-			const onEndReached = jest.fn();
+			const onEndReached = vi.fn();
 
 			renderTanStackTable({
 				props: {
@@ -414,7 +415,7 @@ describe('TanStackTableView Integration', () => {
 			renderTanStackTable({
 				props: {
 					isLoading: true,
-					onEndReached: jest.fn(),
+					onEndReached: vi.fn(),
 				},
 			});
 
@@ -425,7 +426,7 @@ describe('TanStackTableView Integration', () => {
 			renderTanStackTable({
 				props: {
 					pagination: { total: 100 },
-					onEndReached: jest.fn(),
+					onEndReached: vi.fn(),
 				},
 			});
 

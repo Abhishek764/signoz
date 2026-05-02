@@ -1,5 +1,6 @@
 // Write a test for getUpdatedStepInterval function in src/container/FormAlertRules/utils.ts
 
+import { describe, expect, it } from 'vitest';
 import { getUpdatedStepInterval } from './utils';
 
 describe('getUpdatedStepInterval', () => {

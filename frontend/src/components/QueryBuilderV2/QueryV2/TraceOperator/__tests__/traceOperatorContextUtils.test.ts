@@ -1,5 +1,6 @@
 import { Token } from 'antlr4';
 import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	createTraceOperatorContext,
@@ -183,11 +184,11 @@ describe('traceOperatorContextUtils', () => {
 	describe('getTraceOperatorContextAtCursor', () => {
 		beforeEach(() => {
 			// Reset console.error mock
-			jest.spyOn(console, 'error').mockImplementation(() => {});
+			vi.spyOn(console, 'error').mockImplementation(() => {});
 		});
 
 		afterEach(() => {
-			jest.restoreAllMocks();
+			vi.restoreAllMocks();
 		});
 
 		it('should return default context for empty query', () => {

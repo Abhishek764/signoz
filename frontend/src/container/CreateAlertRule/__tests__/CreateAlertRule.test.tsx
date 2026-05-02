@@ -5,10 +5,11 @@ import * as useCompositeQueryParamHooks from 'hooks/queryBuilder/useGetComposite
 import * as useUrlQueryHooks from 'hooks/useUrlQuery';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { DataSource } from 'types/common/queryBuilder';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CreateAlertRule from '../index';
 
-jest.mock('container/FormAlertRules', () => ({
+vi.mock('container/FormAlertRules', () => ({
 	__esModule: true,
 	default: function MockFormAlertRules({
 		alertType,
@@ -27,7 +28,7 @@ jest.mock('container/FormAlertRules', () => ({
 		ANOMALY_DETECTION_ALERT: 'anomaly_rule',
 	},
 }));
-jest.mock('container/CreateAlertV2', () => ({
+vi.mock('container/CreateAlertV2', () => ({
 	__esModule: true,
 	default: function MockCreateAlertV2({
 		alertType,
@@ -43,22 +44,22 @@ jest.mock('container/CreateAlertV2', () => ({
 	},
 }));
 
-const useCompositeQueryParamSpy = jest.spyOn(
+const useCompositeQueryParamSpy = vi.spyOn(
 	useCompositeQueryParamHooks,
 	'useGetCompositeQueryParam',
 );
-const useUrlQuerySpy = jest.spyOn(useUrlQueryHooks, 'default');
+const useUrlQuerySpy = vi.spyOn(useUrlQueryHooks, 'default');
 
-const mockSetUrlQuery = jest.fn();
-const mockToString = jest.fn();
-const mockGetUrlQuery = jest.fn();
+const mockSetUrlQuery = vi.fn();
+const mockToString = vi.fn();
+const mockGetUrlQuery = vi.fn();
 
 const FORM_ALERT_RULES_TEXT = 'Form Alert Rules';
 const CREATE_ALERT_V2_TEXT = 'Create Alert V2';
 
 describe('CreateAlertRule', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useUrlQuerySpy.mockReturnValue({
 			set: mockSetUrlQuery,
 			toString: mockToString,

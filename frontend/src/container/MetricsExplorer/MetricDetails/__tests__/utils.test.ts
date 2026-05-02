@@ -3,6 +3,7 @@ import {
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	determineIsMonotonic,
@@ -62,12 +63,12 @@ describe('MetricDetails utils', () => {
 		const FEW_SECONDS_AGO = 'Few seconds ago';
 
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should return "Few seconds ago" for timestamps less than 60 seconds ago', () => {

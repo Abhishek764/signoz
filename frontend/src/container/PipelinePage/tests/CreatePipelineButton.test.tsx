@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -11,7 +13,7 @@ import store from 'store';
 import CreatePipelineButton from '../Layouts/Pipeline/CreatePipelineButton';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 
-jest.mock('api/common/logEvent');
+vi.mock('api/common/logEvent');
 
 describe('PipelinePage container test', () => {
 	it('should render CreatePipelineButton section', async () => {
@@ -20,9 +22,9 @@ describe('PipelinePage container test', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
-							setActionType={jest.fn()}
+							setActionType={vi.fn()}
 							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
+							setActionMode={vi.fn()}
 							pipelineData={pipelineApiResponseMockData}
 						/>
 					</I18nextProvider>
@@ -38,9 +40,9 @@ describe('PipelinePage container test', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
-							setActionType={jest.fn()}
+							setActionType={vi.fn()}
 							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
+							setActionMode={vi.fn()}
 							pipelineData={pipelineApiResponseMockData}
 						/>
 					</I18nextProvider>
@@ -64,9 +66,9 @@ describe('PipelinePage container test', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
-							setActionType={jest.fn()}
+							setActionType={vi.fn()}
 							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
+							setActionMode={vi.fn()}
 							pipelineData={{ ...pipelineApiResponseMockData, pipelines: [] }}
 						/>
 					</I18nextProvider>

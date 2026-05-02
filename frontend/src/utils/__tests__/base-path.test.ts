@@ -1,23 +1,21 @@
 /**
  * basePath is memoized at module init, so each describe block isolates the
- * module with a fresh DOM state using jest.isolateModules + require.
+ * module with a fresh DOM state using vi.resetModules + dynamic import.
  */
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 type BasePath = typeof import('../basePath');
 
-function loadModule(href?: string): BasePath {
+async function loadModule(href?: string): Promise<BasePath> {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
 		document.head.append(base);
 	}
 
-	let mod!: BasePath;
-	jest.isolateModules(() => {
-		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-		mod = require('../basePath');
-	});
-	return mod;
+	vi.resetModules();
+	return await import('../basePath');
 }
 
 afterEach(() => {
@@ -28,8 +26,8 @@ afterEach(() => {
 
 describe('at basePath="/"', () => {
 	let m: BasePath;
-	beforeEach(() => {
-		m = loadModule('/');
+	beforeEach(async () => {
+		m = await loadModule('/');
 	});
 
 	it('getBasePath returns "/"', () => {
@@ -58,8 +56,8 @@ describe('at basePath="/"', () => {
 
 describe('at basePath="/signoz/"', () => {
 	let m: BasePath;
-	beforeEach(() => {
-		m = loadModule('/signoz/');
+	beforeEach(async () => {
+		m = await loadModule('/signoz/');
 	});
 
 	it('getBasePath returns "/signoz/"', () => {
@@ -97,23 +95,23 @@ describe('at basePath="/signoz/"', () => {
 });
 
 describe('no <base> tag', () => {
-	it('getBasePath falls back to "/"', () => {
-		const m = loadModule();
+	it('getBasePath falls back to "/"', async () => {
+		const m = await loadModule();
 		expect(m.getBasePath()).toBe('/');
 	});
 });
 
 describe('href without trailing slash', () => {
-	it('normalises to trailing slash', () => {
-		const m = loadModule('/signoz');
+	it('normalises to trailing slash', async () => {
+		const m = await loadModule('/signoz');
 		expect(m.getBasePath()).toBe('/signoz/');
 		expect(m.withBasePath('/logs')).toBe('/signoz/logs');
 	});
 });
 
 describe('nested prefix "/a/b/prefix/"', () => {
-	it('withBasePath handles arbitrary depth', () => {
-		const m = loadModule('/a/b/prefix/');
+	it('withBasePath handles arbitrary depth', async () => {
+		const m = await loadModule('/a/b/prefix/');
 		expect(m.withBasePath('/logs')).toBe('/a/b/prefix/logs');
 		expect(m.withBasePath('/a/b/prefix/logs')).toBe('/a/b/prefix/logs');
 	});

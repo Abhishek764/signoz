@@ -1,37 +1,53 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from 'tests/test-utils';
 
-const successNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
+const successNotification = vi.fn();
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
+	useNotifications: vi.fn(() => ({
 		notifications: {
 			success: successNotification,
-			error: jest.fn(),
+			error: vi.fn(),
 		},
 	})),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
-	}),
-}));
+vi.mock('react-router-dom', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('react-router-dom')>();
+	return {
+		...actual,
+		useLocation: (): { pathname: string } => ({
+			pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
+		}),
+	};
+});
+
+vi.mock('components/ResizeTable', async () => {
+	const antd = await import('antd');
+	return {
+		ResizeTable: antd.Table,
+	};
+});
 
 describe('Alert Channels Settings List page', () => {
 	beforeEach(async () => {
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2023-10-20'));
 		render(<AlertChannels />);
 		await waitFor(() =>
 			expect(screen.getByText('sending_channels_note')).toBeInTheDocument(),
 		);
 	});
 	afterEach(() => {
-		jest.restoreAllMocks();
-		jest.useRealTimers();
+		cleanup();
+		vi.clearAllMocks();
 	});
 	describe('Should display the Alert Channels page properly', () => {
 		it('Should check if "The alerts will be sent to all the configured channels." is visible', () => {

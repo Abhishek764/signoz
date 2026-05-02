@@ -1,7 +1,17 @@
+import type { Mock } from 'vitest';
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { Layout } from 'react-grid-layout';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { StatusCodes } from 'http-status-codes';
 import {
 	publicDashboardResponse,
@@ -16,14 +26,18 @@ import { EQueryType } from 'types/common/dashboard';
 
 import PublicDashboardContainer from '../PublicDashboardContainer';
 
-// Mock dependencies
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn(() => false),
+const { mockUseIsDarkMode } = vi.hoisted(() => ({
+	mockUseIsDarkMode: vi.fn(() => false),
 }));
 
-jest.mock('lib/getMinMax', () => ({
+// Mock dependencies
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: mockUseIsDarkMode,
+}));
+
+vi.mock('lib/getMinMax', () => ({
 	__esModule: true,
-	default: jest.fn((interval: string) => {
+	default: vi.fn((interval: string) => {
 		if (interval === '1h') {
 			return {
 				minTime: 1000000000000,
@@ -37,7 +51,7 @@ jest.mock('lib/getMinMax', () => ({
 	}),
 }));
 
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: ({
 		onTimeChange,
@@ -63,7 +77,7 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	),
 }));
 
-jest.mock('../Panel', () => ({
+vi.mock('../Panel', () => ({
 	__esModule: true,
 	default: ({
 		widget,
@@ -82,7 +96,7 @@ jest.mock('../Panel', () => ({
 	),
 }));
 
-jest.mock('react-grid-layout', () => ({
+vi.mock('react-grid-layout', () => ({
 	__esModule: true,
 	default: ({
 		children,
@@ -107,36 +121,36 @@ jest.mock('react-grid-layout', () => ({
 }));
 
 // Mock dayjs
-jest.mock('dayjs', () => {
-	const actualDayjs = jest.requireActual('dayjs');
-	const mockUnix = jest.fn(() => 1000);
-	const mockUtcOffset = jest.fn(() => 0);
-	const mockTzMethod = jest.fn(() => ({
+vi.mock('dayjs', async (importOriginal) => {
+	const mod = await importOriginal<unknown>();
+	const actualDefault = ((mod as { default?: Record<string, unknown> })
+		.default ?? (mod as Record<string, unknown>)) as Record<string, unknown>;
+	const mockUnix = vi.fn(() => 1000);
+	const mockUtcOffset = vi.fn(() => 0);
+	const mockTzMethod = vi.fn(() => ({
 		utcOffset: mockUtcOffset,
 	}));
-	const mockSubtract = jest.fn(() => ({
-		subtract: jest.fn(),
+	const mockSubtract = vi.fn(() => ({
+		subtract: vi.fn(),
 		unix: mockUnix,
 		tz: mockTzMethod,
 	}));
-	const mockDayjs = jest.fn(() => ({
+	const mockDayjs = vi.fn(() => ({
 		subtract: mockSubtract,
 		unix: mockUnix,
 		tz: mockTzMethod,
 	}));
-	Object.keys(actualDayjs).forEach((key) => {
-		(mockDayjs as unknown as Record<string, unknown>)[key] = (
-			actualDayjs as Record<string, unknown>
-		)[key];
-	});
-	(mockDayjs as unknown as { extend: jest.Mock }).extend = jest.fn();
-	(mockDayjs as unknown as { tz: { guess: jest.Mock } }).tz = {
-		guess: jest.fn(() => 'UTC'),
+	for (const key of Object.keys(actualDefault)) {
+		(mockDayjs as unknown as Record<string, unknown>)[key] = actualDefault[key];
+	}
+	(mockDayjs as unknown as { extend: Mock }).extend = vi.fn();
+	(mockDayjs as unknown as { tz: { guess: Mock } }).tz = {
+		guess: vi.fn(() => 'UTC'),
 	};
-	return mockDayjs;
+	return Object.assign({}, mod as Record<string, unknown>, {
+		default: mockDayjs,
+	});
 });
-
-const mockUseIsDarkMode = jest.mocked(useIsDarkMode);
 
 // MSW setup
 beforeAll(() => {
@@ -241,7 +255,7 @@ const createMockData = (
 
 describe('Public Dashboard Container', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 
 		// Set up default MSW handler for widget query range API
@@ -684,9 +698,8 @@ describe('Public Dashboard Container', () => {
 			const gridLayout = container.querySelector('[data-testid="grid-layout"]');
 			expect(gridLayout).toBeInTheDocument();
 			if (gridLayout) {
-				// themeColors.snowWhite is '#fafafa' which computes to 'rgb(250, 250, 250)'
 				expect(gridLayout).toHaveStyle({
-					backgroundColor: 'rgb(250, 250, 250)',
+					backgroundColor: '#fafafa',
 				});
 			}
 		});

@@ -2,6 +2,15 @@ import { Route } from 'react-router-dom';
 import * as getDashboardModule from 'api/v1/dashboards/id/get';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
+import {
+	type Mock,
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { render, screen, waitFor } from 'tests/test-utils';
 
 import DashboardWidget from '../index';
@@ -35,15 +44,15 @@ const mockDashboardResponse = {
 	},
 };
 
-const mockSafeNavigate = jest.fn();
+const mockSafeNavigate = vi.fn();
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('container/NewWidget', () => ({
+vi.mock('container/NewWidget', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="new-widget">NewWidget</div>,
 }));
@@ -74,7 +83,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	jest.restoreAllMocks();
+	vi.restoreAllMocks();
 });
 
 describe('DashboardWidget', () => {
@@ -102,7 +111,7 @@ describe('DashboardWidget', () => {
 
 	it('shows spinner while dashboard is loading', () => {
 		// Spy instead of MSW delay('infinite') to avoid leaving an open network handle.
-		jest
+		vi
 			.spyOn(getDashboardModule, 'default')
 			.mockReturnValue(new Promise(() => {}));
 

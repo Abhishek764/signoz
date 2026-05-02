@@ -4,6 +4,8 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { render } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
+import type { Mock } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ColumnUnitSelector } from '../ColumnUnitSelector';
 
@@ -76,19 +78,19 @@ const compositeQueryParam = {
 	unit: '',
 };
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
-	useRouteMatch: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
+	useLocation: vi.fn(),
+	useRouteMatch: vi.fn(),
 }));
 
-jest.mock('hooks/queryBuilder/useGetCompositeQueryParam', () => ({
+vi.mock('hooks/queryBuilder/useGetCompositeQueryParam', () => ({
 	useGetCompositeQueryParam: (): Query => compositeQueryParam as Query,
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
@@ -97,7 +99,7 @@ describe('Column unit selector panel unit test', () => {
 		const mockLocation = {
 			pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD_WIDGET}/`,
 		};
-		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+		(useLocation as Mock).mockReturnValue(mockLocation);
 		const { getByText } = render(
 			<QueryBuilderProvider>
 				<ColumnUnitSelector

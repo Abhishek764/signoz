@@ -1,15 +1,18 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import CustomSelect from '../CustomSelect';
 
 // Mock scrollIntoView which isn't available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 // Mock clipboard API
-Object.assign(navigator, {
-	clipboard: {
-		writeText: jest.fn(() => Promise.resolve()),
+Object.defineProperty(navigator, 'clipboard', {
+	configurable: true,
+	value: {
+		writeText: vi.fn(() => Promise.resolve()),
 	},
 });
 
@@ -40,12 +43,12 @@ const mockGroupedOptions = [
 
 describe('CustomSelect - Comprehensive Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
-	let mockOnChange: jest.Mock;
+	let mockOnChange: Mock;
 
 	beforeEach(() => {
 		user = userEvent.setup();
-		mockOnChange = jest.fn();
-		jest.clearAllMocks();
+		mockOnChange = vi.fn();
+		vi.clearAllMocks();
 	});
 
 	// ===== 1. CUSTOM VALUES SUPPORT =====
@@ -679,8 +682,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			// Dropdown should close
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 
@@ -831,7 +833,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 	// ===== 13. ADVANCED CLEAR ACTIONS =====
 	describe('Advanced Clear Actions (ACA)', () => {
 		it('ACA-01: Clear action waiting behavior', async () => {
-			const mockOnChangeWithDelay = jest.fn().mockImplementation(
+			const mockOnChangeWithDelay = vi.fn().mockImplementation(
 				() =>
 					new Promise((resolve) => {
 						setTimeout(resolve, 100);
@@ -1076,8 +1078,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			// Dropdown should close after selection in single select
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 	});

@@ -1,4 +1,6 @@
 // Mock for useSafeNavigate hook to avoid React Router version conflicts in tests
+import { type MockedFunction, vi } from 'vitest';
+
 interface SafeNavigateOptions {
 	replace?: boolean;
 	state?: unknown;
@@ -14,15 +16,15 @@ interface SafeNavigateTo {
 type SafeNavigateToType = string | SafeNavigateTo;
 
 interface UseSafeNavigateReturn {
-	safeNavigate: jest.MockedFunction<
+	safeNavigate: MockedFunction<
 		(to: SafeNavigateToType, options?: SafeNavigateOptions) => void
 	>;
 }
 
 export const useSafeNavigate = (): UseSafeNavigateReturn => ({
-	safeNavigate: jest.fn(
+	safeNavigate: vi.fn(
 		(_to: SafeNavigateToType, _options?: SafeNavigateOptions) => {},
-	) as jest.MockedFunction<
+	) as MockedFunction<
 		(to: SafeNavigateToType, options?: SafeNavigateOptions) => void
 	>,
 });

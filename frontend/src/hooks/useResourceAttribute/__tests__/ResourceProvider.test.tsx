@@ -9,22 +9,23 @@ import { encode } from 'js-base64';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { getAppContextMock } from 'tests/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';
 
-const mockSafeNavigate = jest.fn();
+const mockSafeNavigate = vi.fn();
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: {
 			search: '',
 			pathname: '/',
@@ -32,9 +33,9 @@ jest.mock('lib/history', () => ({
 	},
 }));
 
-jest.mock('api/metrics/getResourceAttributes', () => ({
-	getResourceAttributesTagKeys: jest.fn(),
-	getResourceAttributesTagValues: jest.fn(),
+vi.mock('api/metrics/getResourceAttributes', () => ({
+	getResourceAttributesTagKeys: vi.fn(),
+	getResourceAttributesTagValues: vi.fn(),
 }));
 
 // eslint-disable-next-line import/first, import/order
@@ -46,12 +47,8 @@ import {
 // eslint-disable-next-line import/first, import/order
 import history from 'lib/history';
 
-const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
-	typeof getResourceAttributesTagKeys
->;
-const mockTagValues = getResourceAttributesTagValues as jest.MockedFunction<
-	typeof getResourceAttributesTagValues
->;
+const mockTagKeys = vi.mocked(getResourceAttributesTagKeys);
+const mockTagValues = vi.mocked(getResourceAttributesTagValues);
 
 function createWrapper({
 	routerHistory,

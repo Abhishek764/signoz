@@ -257,4 +257,16 @@ export const handlers = [
 	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(commonEnTranslation)),
 	),
+
+	rest.post('http://localhost/api/v5/substitute_vars', (_req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: {
+					compositeQuery: { builder: { queryData: [] } },
+				},
+			}),
+		),
+	),
 ];

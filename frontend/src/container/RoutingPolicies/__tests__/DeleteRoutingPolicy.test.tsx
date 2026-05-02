@@ -1,11 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import DeleteRoutingPolicy from '../DeleteRoutingPolicy';
 import { MOCK_ROUTING_POLICY_1 } from './testUtils';
 
 const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
-const mockHandleDelete = jest.fn();
-const mockHandleClose = jest.fn();
+const mockHandleDelete = vi.fn();
+const mockHandleClose = vi.fn();
 
 const DELETE_BUTTON_TEXT = 'Delete Routing Policy';
 const CANCEL_BUTTON_TEXT = 'Cancel';

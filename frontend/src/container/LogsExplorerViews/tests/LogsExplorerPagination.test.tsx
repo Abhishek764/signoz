@@ -1,5 +1,7 @@
 import React from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
+import { I18nextProvider } from 'react-i18next';
+import { render as rtlRender } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -9,6 +11,9 @@ import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
+import i18n from 'ReactI18';
+import store from 'store';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	act,
 	AllTheProviders,
@@ -32,10 +37,11 @@ let mockGlobalTimeState: {
 	selectedTime: any;
 } | null = null;
 
-// Mock UpdateTimeInterval to update the mock state that useSelector will use
-jest.mock('store/actions', () => {
-	const originalModule = jest.requireActual('store/actions');
-	const GetMinMax = jest.requireActual('lib/getMinMax').default;
+vi.mock('store/actions', async () => {
+	const originalModule =
+		await vi.importActual<typeof import('store/actions')>('store/actions');
+	const { default: GetMinMax } =
+		await vi.importActual<typeof import('lib/getMinMax')>('lib/getMinMax');
 
 	return {
 		...originalModule,
@@ -45,36 +51,32 @@ jest.mock('store/actions', () => {
 				dateTimeRange: [number, number] = [0, 0],
 			): ((dispatch: any) => void) =>
 			(): void => {
-				// Get the original min and max times
 				const { maxTime: originalMaxTime, minTime: originalMinTime } = GetMinMax(
 					interval,
 					dateTimeRange,
 				);
 
-				// Add 5 minutes to both times to ensure they are different
 				const fiveMinutesInNanoseconds = 5 * 60 * 1000 * 1000000;
 				const maxTime = originalMaxTime + fiveMinutesInNanoseconds;
 				const minTime = originalMinTime + fiveMinutesInNanoseconds;
 
-				// Update the mock state
 				mockGlobalTimeState = { minTime, maxTime, selectedTime: interval };
 			},
 	};
 });
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(() => {
+vi.mock('react-router-dom-v5-compat', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom-v5-compat')>(
+		'react-router-dom-v5-compat',
+	)),
+	useSearchParams: vi.fn(() => {
 		const searchParams = new URLSearchParams();
-
-		return [searchParams, jest.fn()];
+		return [searchParams, vi.fn()];
 	}),
 }));
 
-// Mock the Redux store's getState method to return updated global time
-const store = jest.requireActual('store').default;
 const originalGetState = store.getState;
-const getStateSpy = jest.spyOn(store, 'getState');
+const getStateSpy = vi.spyOn(store, 'getState');
 
 getStateSpy.mockImplementation(() => {
 	const originalState = originalGetState();
@@ -93,8 +95,10 @@ getStateSpy.mockImplementation(() => {
 	return originalState;
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { search: string; pathname: string } => ({
 		pathname: ROUTES.LOGS_EXPLORER,
 		search:
@@ -102,60 +106,51 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock(
-	'container/TopNav/DateTimeSelectionV2/index.tsx',
-	() =>
-		function MockDateTimeSelection(): JSX.Element {
-			return <div>MockDateTimeSelection</div>;
-		},
-);
-jest.mock(
-	'container/LogsExplorerChart',
-	() =>
-		function MockLogsExplorerChart(): JSX.Element {
-			return <div>MockLogsExplorerChart</div>;
-		},
-);
+vi.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+	default: function MockDateTimeSelection(): JSX.Element {
+		return <div>MockDateTimeSelection</div>;
+	},
+}));
+vi.mock('container/LogsExplorerChart', () => ({
+	default: function MockLogsExplorerChart(): JSX.Element {
+		return <div>MockLogsExplorerChart</div>;
+	},
+}));
 
-jest.mock(
+vi.mock(
 	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
-	() =>
-		function MockQueryBuilderSearchV2(): JSX.Element {
+	() => ({
+		default: function MockQueryBuilderSearchV2(): JSX.Element {
 			return <div>MockQueryBuilderSearchV2</div>;
 		},
+	}),
 );
-jest.mock(
-	'container/ExplorerOptions/ExplorerOptionWrapper',
-	() =>
-		function MockExplorerOptionWrapper(): JSX.Element {
-			return <div>MockExplorerOptionWrapper</div>;
-		},
-);
-jest.mock(
-	'components/QuickFilters/QuickFilters',
-	() =>
-		function MockQuickFilters(): JSX.Element {
-			return <div>MockQuickFilters</div>;
-		},
-);
+vi.mock('container/ExplorerOptions/ExplorerOptionWrapper', () => ({
+	default: function MockExplorerOptionWrapper(): JSX.Element {
+		return <div>MockExplorerOptionWrapper</div>;
+	},
+}));
+vi.mock('components/QuickFilters/QuickFilters', () => ({
+	default: function MockQuickFilters(): JSX.Element {
+		return <div>MockQuickFilters</div>;
+	},
+}));
 
-jest.mock(
-	'components/OverlayScrollbar/OverlayScrollbar',
-	() =>
-		function MockOverlayScrollbar({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element {
-			return <div>{children}</div>;
-		},
-);
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	default: function MockOverlayScrollbar({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return <div>{children}</div>;
+	},
+}));
 
 // --- Test Utilities ---
 
@@ -211,7 +206,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 
 	beforeEach(() => {
 		// Use real timers for test setup, especially for server delays
-		jest.useRealTimers();
+		vi.useRealTimers();
 		// Reset captured payloads array before each test
 		capturedPayloads = [];
 		// Reset mock call count for consistent test behavior
@@ -222,9 +217,8 @@ describe.skip('LogsExplorerViews Pagination', () => {
 
 	afterAll((): void => {
 		// Use fake timers after the tests are done.
-		jest.useFakeTimers();
-		// Explicitly set the fake system time if needed by other tests
-		jest.setSystemTime(new Date('2023-10-20'));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2023-10-20'));
 		// Clean up mock state completely
 		mockGlobalTimeState = null;
 	});
@@ -383,7 +377,7 @@ function LogsExplorerWithMockContext({
 			isDefaultQuery: (): boolean => false,
 			currentQuery,
 			stagedQuery,
-			setSupersetQuery: jest.fn(),
+			setSupersetQuery: vi.fn(),
 			supersetQuery: initialQueriesMap.logs,
 			initialDataSource: null,
 			panelType: PANEL_TYPES.LIST,
@@ -430,17 +424,13 @@ function LogsExplorerWithMockContext({
 	);
 }
 
-LogsExplorerWithMockContext.defaultProps = {
-	onStateChange: undefined,
-};
-
 describe('Logs Explorer -> stage and run query', () => {
 	let mockStagedQuery: Query;
 	let mockCurrentQuery: Query;
 
 	beforeEach(() => {
 		// Use real timers for test setup, especially for server delays
-		jest.useRealTimers();
+		vi.useRealTimers();
 		// Reset captured payloads array before each test
 		capturedPayloads = [];
 		// Reset mock call count for consistent test behavior
@@ -473,12 +463,14 @@ describe('Logs Explorer -> stage and run query', () => {
 			currentCurrentQuery = currentQuery;
 		};
 
-		render(
-			<LogsExplorerWithMockContext
-				initialStagedQuery={mockStagedQuery}
-				initialCurrentQuery={mockCurrentQuery}
-				onStateChange={handleStateChange}
-			/>,
+		rtlRender(
+			<I18nextProvider i18n={i18n}>
+				<LogsExplorerWithMockContext
+					initialStagedQuery={mockStagedQuery}
+					initialCurrentQuery={mockCurrentQuery}
+					onStateChange={handleStateChange}
+				/>
+			</I18nextProvider>,
 		);
 
 		await waitFor(() => {
@@ -537,5 +529,5 @@ describe('Logs Explorer -> stage and run query', () => {
 		// Verify that the IDs have changed (this confirms the Stage & Run Query button worked)
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
 		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
-	});
+	}, 20_000);
 });

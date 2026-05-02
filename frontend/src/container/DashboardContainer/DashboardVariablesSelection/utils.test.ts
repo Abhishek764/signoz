@@ -1,9 +1,12 @@
-jest.mock('providers/Dashboard/store/variableFetchStore', () => ({
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('providers/Dashboard/store/variableFetchStore', () => ({
 	variableFetchStore: {
-		getSnapshot: jest.fn(),
+		getSnapshot: vi.fn(),
 	},
-	onVariableFetchComplete: jest.fn(),
-	onVariableFetchFailure: jest.fn(),
+	onVariableFetchComplete: vi.fn(),
+	onVariableFetchFailure: vi.fn(),
 }));
 
 import {
@@ -449,12 +452,12 @@ describe('buildExistingDynamicVariableQuery', () => {
 });
 
 describe('settleVariableFetch', () => {
-	const mockGetSnapshot = variableFetchStore.getSnapshot as jest.Mock;
-	const mockComplete = onVariableFetchComplete as jest.Mock;
-	const mockFailure = onVariableFetchFailure as jest.Mock;
+	const mockGetSnapshot = variableFetchStore.getSnapshot as Mock;
+	const mockComplete = onVariableFetchComplete as Mock;
+	const mockFailure = onVariableFetchFailure as Mock;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should no-op when name is undefined', () => {

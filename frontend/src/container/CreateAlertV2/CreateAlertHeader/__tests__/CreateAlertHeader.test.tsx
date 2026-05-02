@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
@@ -10,40 +11,43 @@ import * as rulesHook from '../../../../api/generated/services/rules';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
-const mockSafeNavigate = jest.fn();
-jest.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
+const mockSafeNavigate = vi.fn();
+vi.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
 	safeNavigate: mockSafeNavigate,
 });
 
-jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
-	mutate: jest.fn(),
+vi.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
+	mutate: vi.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(rulesHook, 'useTestRule').mockReturnValue({
-	mutate: jest.fn(),
+vi.spyOn(rulesHook, 'useTestRule').mockReturnValue({
+	mutate: vi.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(rulesHook, 'useUpdateRuleByID').mockReturnValue({
-	mutate: jest.fn(),
+vi.spyOn(rulesHook, 'useUpdateRuleByID').mockReturnValue({
+	mutate: vi.fn(),
 	isLoading: false,
 } as any);
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock: any = vi.fn(() => ({
 		paths,
 	}));
+	uplotMock.paths = paths;
 	return {
 		paths,
 		default: uplotMock,
 	};
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { search: string } => ({
 		search: '',
 	}),

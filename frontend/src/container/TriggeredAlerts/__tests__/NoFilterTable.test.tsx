@@ -1,11 +1,37 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import { describe, expect, it, vi } from 'vitest';
 
 import NoFilterTable from '../NoFilterTable';
 import { createAlert } from './mockUtils';
 
-jest.mock('providers/Timezone', () => ({
-	useTimezone: jest.requireActual('./mockUtils').useMockTimezone,
-}));
+vi.mock('providers/Timezone', () => {
+	const mockTimezone: Timezone = {
+		name: 'timezone',
+		value: 'mock-timezone',
+		offset: '+1.30',
+		searchIndex: '1',
+	};
+	return {
+		useTimezone: (): {
+			timezone: Timezone;
+			browserTimezone: Timezone;
+			updateTimezone: ReturnType<typeof vi.fn>;
+			formatTimezoneAdjustedTimestamp: (date: string) => string;
+			isAdaptationEnabled: boolean;
+			setIsAdaptationEnabled: ReturnType<typeof vi.fn>;
+		} => ({
+			timezone: mockTimezone,
+			browserTimezone: mockTimezone,
+			updateTimezone: vi.fn(),
+			formatTimezoneAdjustedTimestamp: vi.fn((date: string) =>
+				new Date(date).toISOString(),
+			),
+			isAdaptationEnabled: true,
+			setIsAdaptationEnabled: vi.fn(),
+		}),
+	};
+});
 
 const allAlerts = [
 	createAlert({

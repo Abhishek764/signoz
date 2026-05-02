@@ -1,3 +1,5 @@
+import type { MockedFunction } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { rest, server } from 'mocks-server/server';
@@ -14,21 +16,19 @@ const SESSIONS_CONTEXT_ENDPOINT = '*/api/v2/sessions/context';
 const CALLBACK_AUTHN_ORG = 'callback_authn_org';
 const CALLBACK_AUTHN_URL = 'https://sso.example.com/auth';
 const PASSWORD_AUTHN_ORG = 'password_authn_org';
-const PASSWORD_AUTHN_EMAIL = 'jest.test@signoz.io';
+const PASSWORD_AUTHN_EMAIL = 'login.test@signoz.io';
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: {
 			search: '',
 		},
 	},
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockHistoryPush = history.push as MockedFunction<typeof history.push>;
 
 // Mock data
 const mockVersionSetupCompleted: Info = {
@@ -120,7 +120,7 @@ const mockEmailPasswordResponse: Token = {
 
 describe('Login Component', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		server.use(
 			rest.get(VERSION_ENDPOINT, (_, res, ctx) =>

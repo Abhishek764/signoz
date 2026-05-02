@@ -9,31 +9,32 @@ import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import EntityEvents from '../EntityEvents';
 
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
 }));
 
-const mockUseQuery = jest.fn();
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+const mockUseQuery = vi.fn();
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
 	useQuery: (queryKey: any, queryFn: any, options: any): any =>
 		mockUseQuery(queryKey, queryFn, options),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES}/`,
 	}),
 }));
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -58,23 +59,23 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 } as any);
 
 const mockUseQueryBuilderData = {
-	handleRunQuery: jest.fn(),
+	handleRunQuery: vi.fn(),
 	stagedQuery: initialQueriesMap[DataSource.METRICS],
-	updateAllQueriesOperators: jest.fn(),
+	updateAllQueriesOperators: vi.fn(),
 	currentQuery: initialQueriesMap[DataSource.METRICS],
-	resetQuery: jest.fn(),
-	redirectWithQueryBuilderData: jest.fn(),
-	isStagedQueryUpdated: jest.fn(),
-	handleSetQueryData: jest.fn(),
-	handleSetFormulaData: jest.fn(),
-	handleSetQueryItemData: jest.fn(),
-	handleSetConfig: jest.fn(),
-	removeQueryBuilderEntityByIndex: jest.fn(),
-	removeQueryTypeItemByIndex: jest.fn(),
-	isDefaultQuery: jest.fn(),
+	resetQuery: vi.fn(),
+	redirectWithQueryBuilderData: vi.fn(),
+	isStagedQueryUpdated: vi.fn(),
+	handleSetQueryData: vi.fn(),
+	handleSetFormulaData: vi.fn(),
+	handleSetQueryItemData: vi.fn(),
+	handleSetConfig: vi.fn(),
+	removeQueryBuilderEntityByIndex: vi.fn(),
+	removeQueryTypeItemByIndex: vi.fn(),
+	isDefaultQuery: vi.fn(),
 };
 
-jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	...mockUseQueryBuilderData,
 } as any);
 
@@ -83,7 +84,7 @@ const timeRange = {
 	endTime: 1718236800,
 };
 
-const mockHandleChangeEventFilters = jest.fn();
+const mockHandleChangeEventFilters = vi.fn();
 
 const mockFilters: IBuilderQuery['filters'] = {
 	items: [
@@ -104,7 +105,7 @@ const mockFilters: IBuilderQuery['filters'] = {
 };
 
 const isModalTimeSelection = false;
-const mockHandleTimeChange = jest.fn();
+const mockHandleTimeChange = vi.fn();
 const selectedInterval: Time = '1m';
 const category = InfraMonitoringEntity.PODS;
 const queryKey = 'pod-events';
@@ -230,7 +231,7 @@ const renderEntityEvents = (overrides = {}): any => {
 
 describe('EntityEvents', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseQuery.mockReturnValue({
 			data: mockEventsData,
 			isLoading: false,

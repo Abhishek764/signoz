@@ -3,29 +3,30 @@ import ROUTES from 'constants/routes';
 import * as useGetTenantLicense from 'hooks/useGetTenantLicense';
 import * as useSafeNavigate from 'hooks/useSafeNavigate';
 import { userEvent } from 'tests/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AlertNotFound from '../AlertNotFound';
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 	},
 }));
 
 import history from 'lib/history';
 
-const mockSafeNavigate = jest.fn();
-const useGetTenantLicenseSpy = jest.spyOn(
+const mockSafeNavigate = vi.fn();
+const useGetTenantLicenseSpy = vi.spyOn(
 	useGetTenantLicense,
 	'useGetTenantLicense',
 );
-const useSafeNavigateSpy = jest.spyOn(useSafeNavigate, 'useSafeNavigate');
+const useSafeNavigateSpy = vi.spyOn(useSafeNavigate, 'useSafeNavigate');
 
 describe('AlertNotFound', () => {
 	beforeEach(() => {
 		mockSafeNavigate.mockClear();
-		window.open = jest.fn();
+		window.open = vi.fn();
 		useGetTenantLicenseSpy.mockReturnValue({
 			isCloudUser: false,
 		} as ReturnType<typeof useGetTenantLicense.useGetTenantLicense>);

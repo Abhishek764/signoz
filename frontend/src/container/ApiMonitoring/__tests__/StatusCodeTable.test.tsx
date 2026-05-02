@@ -1,12 +1,10 @@
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-
-import '@testing-library/jest-dom';
 
 import StatusCodeTable from '../Explorer/Domains/DomainDetails/components/StatusCodeTable';
 
-// Mock the ErrorState component
-jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () =>
-	jest.fn().mockImplementation(({ refetch }) => (
+vi.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
+	default: vi.fn().mockImplementation(({ refetch }) => (
 		<div
 			data-testid="error-state-mock"
 			onClick={refetch}
@@ -21,14 +19,13 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () =>
 			Error state
 		</div>
 	)),
-);
+}));
 
-// Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...originalModule,
-		Table: jest
+		Table: vi
 			.fn()
 			.mockImplementation(({ loading, dataSource, columns, locale }) => (
 				<div data-testid="table-mock">
@@ -47,7 +44,7 @@ jest.mock('antd', () => {
 				</div>
 			)),
 		Typography: {
-			Text: jest.fn().mockImplementation(({ children, className }) => (
+			Text: vi.fn().mockImplementation(({ children, className }) => (
 				<div data-testid="typography-text" className={className}>
 					{children}
 				</div>
@@ -56,7 +53,6 @@ jest.mock('antd', () => {
 	};
 });
 
-// Create a mock query result type
 interface MockQueryResult {
 	isLoading: boolean;
 	isRefetching: boolean;
@@ -67,10 +63,9 @@ interface MockQueryResult {
 }
 
 describe('StatusCodeTable', () => {
-	const refetchFn = jest.fn();
+	const refetchFn = vi.fn();
 
 	it('renders loading state correctly', () => {
-		// Arrange
 		const mockQuery: MockQueryResult = {
 			isLoading: true,
 			isRefetching: false,
@@ -79,15 +74,12 @@ describe('StatusCodeTable', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
-		// Assert
 		expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
 	});
 
 	it('renders error state correctly', () => {
-		// Arrange
 		const mockQuery: MockQueryResult = {
 			isLoading: false,
 			isRefetching: false,
@@ -97,15 +89,12 @@ describe('StatusCodeTable', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
-		// Assert
 		expect(screen.getByTestId('error-state-mock')).toBeInTheDocument();
 	});
 
 	it('renders empty state when no data is available', () => {
-		// Arrange
 		const mockQuery: MockQueryResult = {
 			isLoading: false,
 			isRefetching: false,
@@ -126,22 +115,19 @@ describe('StatusCodeTable', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
-		// Assert
 		expect(screen.getByTestId('empty-table')).toBeInTheDocument();
 	});
 
 	it('renders table data correctly when data is available', () => {
-		// Arrange
 		const mockData = [
 			{
 				data: {
 					response_status_code: '200',
-					A: '150', // count
-					B: '10000000', // latency in nanoseconds
-					C: '5', // rate
+					A: '150',
+					B: '10000000',
+					C: '5',
 				},
 			},
 		];
@@ -166,10 +152,8 @@ describe('StatusCodeTable', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(<StatusCodeTable endPointStatusCodeDataQuery={mockQuery as any} />);
 
-		// Assert
 		expect(screen.getByTestId('table-data')).toBeInTheDocument();
 	});
 });

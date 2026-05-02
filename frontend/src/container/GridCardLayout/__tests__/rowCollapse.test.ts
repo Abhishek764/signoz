@@ -1,4 +1,5 @@
 import { Layout } from 'react-grid-layout';
+import { describe, expect, it } from 'vitest';
 
 import { applyRowCollapse, PanelMap } from '../utils';
 

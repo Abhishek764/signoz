@@ -1,22 +1,23 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 /**
  * localstorage/get — lazy migration tests.
  *
- * basePath is memoized at module init, so each describe block re-imports the
- * module with a fresh DOM state via jest.isolateModules.
+ * basePath is memoized at module init, so each test re-imports the module with
+ * a fresh DOM state via vi.resetModules and dynamic import.
  */
 
 type GetModule = typeof import('../get');
 
-function loadGetModule(href: string): GetModule {
+async function loadGetModule(href: string): Promise<GetModule> {
 	const base = document.createElement('base');
 	base.setAttribute('href', href);
 	document.head.append(base);
 
-	let mod!: GetModule;
-	jest.isolateModules(() => {
-		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-		mod = require('../get');
-	});
+	vi.resetModules();
+	const mod = await import('../get');
+	base.remove();
+
 	return mod;
 }
 
@@ -28,19 +29,19 @@ afterEach(() => {
 });
 
 describe('get — root path "/"', () => {
-	it('reads the bare key', () => {
-		const { default: get } = loadGetModule('/');
+	it('reads the bare key', async () => {
+		const { default: get } = await loadGetModule('/');
 		localStorage.setItem('AUTH_TOKEN', 'tok');
 		expect(get('AUTH_TOKEN')).toBe('tok');
 	});
 
-	it('returns null when key is absent', () => {
-		const { default: get } = loadGetModule('/');
+	it('returns null when key is absent', async () => {
+		const { default: get } = await loadGetModule('/');
 		expect(get('MISSING')).toBeNull();
 	});
 
-	it('does NOT promote bare keys (no-op at root)', () => {
-		const { default: get } = loadGetModule('/');
+	it('does NOT promote bare keys (no-op at root)', async () => {
+		const { default: get } = await loadGetModule('/');
 		localStorage.setItem('THEME', 'light');
 		get('THEME');
 		// bare key must still be present — no migration at root
@@ -49,19 +50,19 @@ describe('get — root path "/"', () => {
 });
 
 describe('get — prefixed path "/signoz/"', () => {
-	it('reads an already-scoped key directly', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('reads an already-scoped key directly', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		localStorage.setItem('/signoz/AUTH_TOKEN', 'scoped-tok');
 		expect(get('AUTH_TOKEN')).toBe('scoped-tok');
 	});
 
-	it('returns null when neither scoped nor bare key exists', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('returns null when neither scoped nor bare key exists', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		expect(get('MISSING')).toBeNull();
 	});
 
-	it('lazy-migrates bare key to scoped key on first read', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('lazy-migrates bare key to scoped key on first read', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		localStorage.setItem('AUTH_TOKEN', 'old-tok');
 
 		const result = get('AUTH_TOKEN');
@@ -71,8 +72,8 @@ describe('get — prefixed path "/signoz/"', () => {
 		expect(localStorage.getItem('AUTH_TOKEN')).toBeNull();
 	});
 
-	it('scoped key takes precedence over bare key', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('scoped key takes precedence over bare key', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		localStorage.setItem('AUTH_TOKEN', 'bare-tok');
 		localStorage.setItem('/signoz/AUTH_TOKEN', 'scoped-tok');
 
@@ -81,8 +82,8 @@ describe('get — prefixed path "/signoz/"', () => {
 		expect(localStorage.getItem('AUTH_TOKEN')).toBe('bare-tok');
 	});
 
-	it('subsequent reads after migration use scoped key (no double-write)', () => {
-		const { default: get } = loadGetModule('/signoz/');
+	it('subsequent reads after migration use scoped key (no double-write)', async () => {
+		const { default: get } = await loadGetModule('/signoz/');
 		localStorage.setItem('THEME', 'dark');
 
 		get('THEME'); // triggers migration
@@ -94,31 +95,15 @@ describe('get — prefixed path "/signoz/"', () => {
 });
 
 describe('get — two-prefix isolation', () => {
-	it('/signoz/ and /testing/ do not share migrated values', () => {
+	it('/signoz/ and /testing/ do not share migrated values', async () => {
 		localStorage.setItem('THEME', 'light');
 
-		const base1 = document.createElement('base');
-		base1.setAttribute('href', '/signoz/');
-		document.head.append(base1);
-		let getSignoz!: GetModule['default'];
-		jest.isolateModules(() => {
-			// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-			getSignoz = require('../get').default;
-		});
-		base1.remove();
+		const { default: getSignoz } = await loadGetModule('/signoz/');
 
 		// migrate bare → /signoz/THEME
 		getSignoz('THEME');
 
-		const base2 = document.createElement('base');
-		base2.setAttribute('href', '/testing/');
-		document.head.append(base2);
-		let getTesting!: GetModule['default'];
-		jest.isolateModules(() => {
-			// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-			getTesting = require('../get').default;
-		});
-		base2.remove();
+		const { default: getTesting } = await loadGetModule('/testing/');
 
 		// /testing/ prefix: bare key already gone, scoped key does not exist
 		expect(getTesting('THEME')).toBeNull();

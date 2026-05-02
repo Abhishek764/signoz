@@ -1,6 +1,7 @@
 import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
+import { expect, it } from 'vitest';
 import { render, renderHook } from '@testing-library/react';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import store from 'store';

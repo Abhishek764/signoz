@@ -17,8 +17,9 @@ import {
 	deriveResourcesForRelation,
 	objectsToPermissionConfig,
 } from '../utils';
+import { describe, expect, it, vi } from 'vitest';
 
-jest.mock('../RoleDetails/constants', () => {
+vi.mock('../RoleDetails/constants', () => {
 	const MockIcon = (): null => null;
 	return {
 		PERMISSION_ICON_MAP: {

@@ -1,4 +1,5 @@
 import uPlot from 'uplot';
+import { describe, expect, it } from 'vitest';
 
 import { DistributionType } from '../../config/types';
 import * as scaleUtils from '../scale';

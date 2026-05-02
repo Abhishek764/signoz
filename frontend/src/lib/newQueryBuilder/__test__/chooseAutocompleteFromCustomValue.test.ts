@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 

@@ -1,4 +1,27 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Pipeline Page > should render TagInput section 1`] = `
+<DocumentFragment>
+  <div
+    class="sc-iHGNWf hBXYJM"
+  >
+    <span
+      class="ant-input-affix-wrapper css-dev-only-do-not-override-2i2tap"
+      style="width: 78px; vertical-align: top; flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
+    >
+      <span
+        class="ant-input-prefix"
+      />
+      <input
+        class="ant-input css-dev-only-do-not-override-2i2tap"
+        placeholder=""
+        type="text"
+        value=""
+      />
+    </span>
+  </div>
+</DocumentFragment>
+`;
 
 exports[`Pipeline Page should render TagInput section 1`] = `
 <DocumentFragment>

@@ -1,12 +1,19 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'tests/test-utils';
+import { describe, expect, it, vi } from 'vitest';
 
 import { SeriesLabel } from '../SeriesLabel';
+
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: ReturnType<typeof vi.fn> } => ({
+		safeNavigate: vi.fn(),
+	}),
+}));
 
 describe('SeriesLabel', () => {
 	it('renders the label text', () => {
 		render(
-			<SeriesLabel label="Test Series Label" labelIndex={1} onClick={jest.fn()} />,
+			<SeriesLabel label="Test Series Label" labelIndex={1} onClick={vi.fn()} />,
 		);
 		expect(screen.getByTestId('series-label-button-1')).toHaveTextContent(
 			'Test Series Label',
@@ -14,7 +21,7 @@ describe('SeriesLabel', () => {
 	});
 
 	it('calls onClick with labelIndex when clicked', async () => {
-		const onClick = jest.fn();
+		const onClick = vi.fn();
 		render(<SeriesLabel label="Series A" labelIndex={2} onClick={onClick} />);
 
 		await userEvent.click(screen.getByTestId('series-label-button-2'));
@@ -25,14 +32,14 @@ describe('SeriesLabel', () => {
 
 	it('renders disabled button when disabled prop is true', () => {
 		render(
-			<SeriesLabel label="Disabled" labelIndex={0} onClick={jest.fn()} disabled />,
+			<SeriesLabel label="Disabled" labelIndex={0} onClick={vi.fn()} disabled />,
 		);
 		const button = screen.getByTestId('series-label-button-0');
 		expect(button).toBeDisabled();
 	});
 
 	it('has chart-manager-series-label class', () => {
-		render(<SeriesLabel label="Label" labelIndex={0} onClick={jest.fn()} />);
+		render(<SeriesLabel label="Label" labelIndex={0} onClick={vi.fn()} />);
 		const button = screen.getByTestId('series-label-button-0');
 		expect(button).toHaveClass('chart-manager-series-label');
 	});

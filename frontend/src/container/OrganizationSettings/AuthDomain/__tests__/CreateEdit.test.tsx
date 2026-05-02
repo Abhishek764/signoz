@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	fireEvent,
 	render,
@@ -17,11 +18,11 @@ import {
 	mockSamlWithAttributeMapping,
 } from './mocks';
 
-const mockOnClose = jest.fn();
+const mockOnClose = vi.fn();
 
 describe('CreateEdit Modal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('Provider Selection (Create Mode)', () => {
@@ -42,8 +43,6 @@ describe('CreateEdit Modal', () => {
 			const configureButtons = await screen.findAllByRole('button', {
 				name: /configure/i,
 			});
-			// Use fireEvent to skip userEvent's pointer simulation and the Antd
-			// Tooltip mouseEnterDelay timers it triggers on the Configure button.
 			fireEvent.click(configureButtons[0]);
 
 			await expect(

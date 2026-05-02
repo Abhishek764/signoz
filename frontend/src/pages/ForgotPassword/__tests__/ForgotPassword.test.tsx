@@ -1,27 +1,32 @@
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import {
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type MockedFunction,
+	vi,
+} from 'vitest';
 import { render, waitFor } from 'tests/test-utils';
 
 import ForgotPassword from '../index';
 
-// Mock dependencies
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: {
 			search: '',
 		},
 	},
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockHistoryPush = history.push as MockedFunction<typeof history.push>;
 
 describe('ForgotPassword Page', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('Route State Handling', () => {

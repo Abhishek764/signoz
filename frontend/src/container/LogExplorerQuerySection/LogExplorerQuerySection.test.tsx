@@ -1,3 +1,13 @@
+import type { MockedFunction } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -88,46 +98,46 @@ beforeAll(() => {
 	Element.prototype.getBoundingClientRect = (): DOMRect => mockRect;
 });
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+vi.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): { dashboardData: undefined } => ({
 		dashboardData: undefined,
 	}),
 }));
 
-jest.mock('api/querySuggestions/getKeySuggestions', () => ({
-	getKeySuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getKeySuggestions', () => ({
+	getKeySuggestions: vi.fn().mockResolvedValue({
 		data: {
 			data: { keys: {} },
 		},
 	}),
 }));
 
-jest.mock('api/querySuggestions/getValueSuggestion', () => ({
-	getValueSuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getValueSuggestion', () => ({
+	getValueSuggestions: vi.fn().mockResolvedValue({
 		data: { data: { values: { stringValues: [], numberValues: [] } } },
 	}),
 }));
 
 // Mock the hooks
-jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam');
-jest.mock('hooks/queryBuilder/useShareBuilderUrl');
+vi.mock('hooks/queryBuilder/useGetPanelTypesQueryParam');
+vi.mock('hooks/queryBuilder/useShareBuilderUrl');
 
-const mockUseGetPanelTypesQueryParam = jest.mocked(useGetPanelTypesQueryParam);
-const mockUseShareBuilderUrl = jest.mocked(useShareBuilderUrl);
+const mockUseGetPanelTypesQueryParam = vi.mocked(useGetPanelTypesQueryParam);
+const mockUseShareBuilderUrl = vi.mocked(useShareBuilderUrl);
 
-const mockUpdateAllQueriesOperators = jest.fn() as jest.MockedFunction<
+const mockUpdateAllQueriesOperators = vi.fn() as MockedFunction<
 	(query: Query, panelType: PANEL_TYPES, dataSource: DataSource) => Query
 >;
 
-const mockResetQuery = jest.fn() as jest.MockedFunction<
+const mockResetQuery = vi.fn() as MockedFunction<
 	(newCurrentQuery?: QueryState) => void
 >;
 
-const mockRedirectWithQueryBuilderData = jest.fn() as jest.MockedFunction<
+const mockRedirectWithQueryBuilderData = vi.fn() as MockedFunction<
 	(query: Query) => void
 >;
 
@@ -209,7 +219,7 @@ describe('LogExplorerQuerySection', () => {
 	let mockQueryBuilderContext: Partial<QueryBuilderContextType>;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		mockQuery = createMockQuery();
 
@@ -224,12 +234,12 @@ describe('LogExplorerQuerySection', () => {
 			redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
 			panelType: PANEL_TYPES.LIST,
 			initialDataSource: DataSource.LOGS,
-			addNewBuilderQuery: jest.fn() as jest.MockedFunction<() => void>,
-			addNewFormula: jest.fn() as jest.MockedFunction<() => void>,
-			handleSetConfig: jest.fn() as jest.MockedFunction<
+			addNewBuilderQuery: vi.fn() as MockedFunction<() => void>,
+			addNewFormula: vi.fn() as MockedFunction<() => void>,
+			handleSetConfig: vi.fn() as MockedFunction<
 				(panelType: PANEL_TYPES, dataSource: DataSource | null) => void
 			>,
-			addTraceOperator: jest.fn() as jest.MockedFunction<() => void>,
+			addTraceOperator: vi.fn() as MockedFunction<() => void>,
 		};
 
 		// Mock useGetPanelTypesQueryParam
@@ -240,7 +250,7 @@ describe('LogExplorerQuerySection', () => {
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should maintain query state across multiple view changes', () => {

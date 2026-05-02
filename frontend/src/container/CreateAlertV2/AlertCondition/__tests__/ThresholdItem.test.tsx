@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { DefaultOptionType } from 'antd/es/select';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
@@ -9,23 +10,23 @@ import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
 
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+vi.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock: any = jest.fn(() => ({
+	const uplotMock: any = vi.fn(() => ({
 		paths,
 	}));
 	uplotMock.paths = paths;
-	return uplotMock;
+	return { default: uplotMock };
 });
 
-const mockSetAlertState = jest.fn();
-const mockSetThresholdState = jest.fn();
-jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+const mockSetAlertState = vi.fn();
+const mockSetThresholdState = vi.fn();
+vi.spyOn(context, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		setThresholdState: mockSetThresholdState,
 		setAlertState: mockSetAlertState,
@@ -74,14 +75,14 @@ const mockUnits: DefaultOptionType[] = [
 
 const defaultProps: ThresholdItemProps = {
 	threshold: mockThreshold,
-	updateThreshold: jest.fn(),
-	removeThreshold: jest.fn(),
+	updateThreshold: vi.fn(),
+	removeThreshold: vi.fn(),
 	showRemoveButton: false,
 	channels: mockChannels,
 	isLoadingChannels: false,
 	units: mockUnits,
 	isErrorChannels: false,
-	refreshChannels: jest.fn(),
+	refreshChannels: vi.fn(),
 };
 
 const renderThresholdItem = (
@@ -120,7 +121,7 @@ const verifyUnitSelectorDisabled = (): void => {
 
 describe('ThresholdItem', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders threshold indicator with correct color', () => {
@@ -157,7 +158,7 @@ describe('ThresholdItem', () => {
 	});
 
 	it('updates threshold label when label input changes', () => {
-		const updateThreshold = jest.fn();
+		const updateThreshold = vi.fn();
 		renderThresholdItem({ updateThreshold });
 
 		const labelInput = screen.getByPlaceholderText(
@@ -175,7 +176,7 @@ describe('ThresholdItem', () => {
 	});
 
 	it('updates threshold value when value input changes', () => {
-		const updateThreshold = jest.fn();
+		const updateThreshold = vi.fn();
 		renderThresholdItem({ updateThreshold });
 
 		const valueInput = screen.getByPlaceholderText(
@@ -191,7 +192,7 @@ describe('ThresholdItem', () => {
 	});
 
 	it('updates threshold unit when unit selector changes', () => {
-		const updateThreshold = jest.fn();
+		const updateThreshold = vi.fn();
 		renderThresholdItem({ updateThreshold });
 
 		// Find the unit selector by its role and simulate change
@@ -207,7 +208,7 @@ describe('ThresholdItem', () => {
 	});
 
 	it('updates threshold channels when channels selector changes', () => {
-		const updateThreshold = jest.fn();
+		const updateThreshold = vi.fn();
 		renderThresholdItem({ updateThreshold });
 
 		// Find the channels selector by its role and simulate change
@@ -239,7 +240,7 @@ describe('ThresholdItem', () => {
 	});
 
 	it('calls removeThreshold when remove button is clicked', () => {
-		const removeThreshold = jest.fn();
+		const removeThreshold = vi.fn();
 		renderThresholdItem({ showRemoveButton: true, removeThreshold });
 
 		// The remove button is the first button (with circle-x icon)
@@ -269,7 +270,7 @@ describe('ThresholdItem', () => {
 
 	// TODO: Unskip this when recovery threshold is implemented
 	it.skip('updates recovery threshold value when input changes', () => {
-		const updateThreshold = jest.fn();
+		const updateThreshold = vi.fn();
 		renderThresholdItem({ updateThreshold });
 
 		// Show recovery threshold first

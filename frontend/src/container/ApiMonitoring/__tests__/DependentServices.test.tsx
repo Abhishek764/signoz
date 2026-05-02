@@ -1,11 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { getFormattedDependentServicesData } from 'container/ApiMonitoring/utils';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SuccessResponse } from 'types/api';
 
 import DependentServices from '../Explorer/Domains/DomainDetails/components/DependentServices';
 import ErrorState from '../Explorer/Domains/DomainDetails/components/ErrorState';
 
-// Create a partial mock of the UseQueryResult interface for testing
 interface MockQueryResult {
 	isLoading: boolean;
 	isRefetching: boolean;
@@ -14,9 +15,8 @@ interface MockQueryResult {
 	refetch: () => void;
 }
 
-// Mock the utility function
-jest.mock('container/ApiMonitoring/utils', () => ({
-	getFormattedDependentServicesData: jest.fn(),
+vi.mock('container/ApiMonitoring/utils', () => ({
+	getFormattedDependentServicesData: vi.fn(),
 	dependentServicesColumns: [
 		{ title: 'Dependent Services', dataIndex: 'serviceData', key: 'serviceData' },
 		{ title: 'AVG. LATENCY', dataIndex: 'latency', key: 'latency' },
@@ -25,10 +25,9 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 	],
 }));
 
-// Mock the ErrorState component
-jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
+vi.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 	__esModule: true,
-	default: jest.fn().mockImplementation(({ refetch }) => (
+	default: vi.fn().mockImplementation(({ refetch }) => (
 		<div data-testid="error-state-mock">
 			<button type="button" data-testid="refetch-button" onClick={refetch}>
 				Retry
@@ -37,12 +36,11 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 	)),
 }));
 
-// Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...originalModule,
-		Table: jest
+		Table: vi
 			.fn()
 			.mockImplementation(({ dataSource, loading, pagination, onRow }) => (
 				<div data-testid="table-mock">
@@ -70,7 +68,7 @@ jest.mock('antd', () => {
 				</div>
 			)),
 		Typography: {
-			Text: jest
+			Text: vi
 				.fn()
 				.mockImplementation(({ children }) => (
 					<div data-testid="typography-text">{children}</div>
@@ -80,7 +78,6 @@ jest.mock('antd', () => {
 });
 
 describe('DependentServices', () => {
-	// Sample mock data to use in tests
 	const mockDependentServicesData = [
 		{
 			key: 'service1',
@@ -106,23 +103,21 @@ describe('DependentServices', () => {
 		},
 	];
 
-	// Default props for tests
 	const mockTimeRange = {
 		startTime: 1609459200000,
 		endTime: 1609545600000,
 	};
 
-	const refetchFn = jest.fn();
+	const refetchFn = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(getFormattedDependentServicesData as jest.Mock).mockReturnValue(
+		vi.clearAllMocks();
+		(getFormattedDependentServicesData as Mock).mockReturnValue(
 			mockDependentServicesData,
 		);
 	});
 
 	it('renders loading state correctly', () => {
-		// Arrange
 		const mockQuery: MockQueryResult = {
 			isLoading: true,
 			isRefetching: false,
@@ -131,7 +126,6 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		const { container } = render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
@@ -139,12 +133,10 @@ describe('DependentServices', () => {
 			/>,
 		);
 
-		// Assert
 		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
 	});
 
 	it('renders error state correctly', () => {
-		// Arrange
 		const mockQuery: MockQueryResult = {
 			isLoading: false,
 			isRefetching: false,
@@ -153,7 +145,6 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
@@ -161,7 +152,6 @@ describe('DependentServices', () => {
 			/>,
 		);
 
-		// Assert
 		expect(screen.getByTestId('error-state-mock')).toBeInTheDocument();
 		expect(ErrorState).toHaveBeenCalledWith(
 			{ refetch: expect.any(Function) },
@@ -170,7 +160,6 @@ describe('DependentServices', () => {
 	});
 
 	it('renders data correctly when loaded', () => {
-		// Arrange
 		const mockData = {
 			payload: {
 				data: {
@@ -203,7 +192,6 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
@@ -211,22 +199,18 @@ describe('DependentServices', () => {
 			/>,
 		);
 
-		// Assert
 		expect(getFormattedDependentServicesData).toHaveBeenCalledWith(
 			mockData.payload.data.result[0].table.rows,
 		);
 
-		// Check the table was rendered with the correct data
 		expect(screen.getByTestId('table-mock')).toBeInTheDocument();
 		expect(screen.getByTestId('loading-state')).toHaveTextContent('Not Loading');
 		expect(screen.getByTestId('row-count')).toHaveTextContent('2');
 
-		// Default (collapsed) pagination should be 5
 		expect(screen.getByTestId('page-size')).toHaveTextContent('5');
 	});
 
 	it('handles refetching state correctly', () => {
-		// Arrange
 		const mockQuery: MockQueryResult = {
 			isLoading: false,
 			isRefetching: true,
@@ -235,7 +219,6 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		const { container } = render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
@@ -243,16 +226,13 @@ describe('DependentServices', () => {
 			/>,
 		);
 
-		// Assert
 		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
 	});
 
 	it('handles row click correctly', () => {
-		// Mock window.open
 		const originalOpen = window.open;
-		window.open = jest.fn();
+		window.open = vi.fn() as typeof window.open;
 
-		// Arrange
 		const mockData = {
 			payload: {
 				data: {
@@ -285,7 +265,6 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
 		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
@@ -293,21 +272,17 @@ describe('DependentServices', () => {
 			/>,
 		);
 
-		// Click on the first row
 		fireEvent.click(screen.getByTestId('table-row-0'));
 
-		// Assert
 		expect(window.open).toHaveBeenCalledWith(
 			expect.stringContaining('/services/auth-service'),
 			'_blank',
 		);
 
-		// Restore original window.open
 		window.open = originalOpen;
 	});
 
 	it('expands table when showing more', () => {
-		// Set up more than 5 items so the "show more" button appears
 		const moreItems = Array(8)
 			.fill(0)
 			.map((_, index) => ({
@@ -322,7 +297,7 @@ describe('DependentServices', () => {
 				errorPercentage: '1',
 			}));
 
-		(getFormattedDependentServicesData as jest.Mock).mockReturnValue(moreItems);
+		(getFormattedDependentServicesData as Mock).mockReturnValue(moreItems);
 
 		const mockData = {
 			payload: { data: { result: [{ table: { rows: [] } }] } },
@@ -335,7 +310,6 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Render the component
 		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
@@ -343,20 +317,15 @@ describe('DependentServices', () => {
 			/>,
 		);
 
-		// Find the "Show more" button (using container query since it might not have a testId)
 		const showMoreButton = screen.getByText(/Show more/i);
 		expect(showMoreButton).toBeInTheDocument();
 
-		// Initial page size should be 5
 		expect(screen.getByTestId('page-size')).toHaveTextContent('5');
 
-		// Click the button to expand
 		fireEvent.click(showMoreButton);
 
-		// Page size should now be the full data length
 		expect(screen.getByTestId('page-size')).toHaveTextContent('8');
 
-		// Text should have changed to "Show less"
 		expect(screen.getByText(/Show less/i)).toBeInTheDocument();
 	});
 });

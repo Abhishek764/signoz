@@ -12,13 +12,15 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { USER_ROLES } from 'types/roles';
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { AppProvider, useAppContext } from '../App';
 
 const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 const MY_USER_URL = 'http://localhost/api/v2/users/me';
 const MY_ORG_URL = 'http://localhost/api/v2/orgs/me';
 
-jest.mock('constants/env', () => ({
+vi.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
 }));
 

@@ -1,16 +1,18 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useDashboardsListQueryParams, {
 	DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
 	IDashboardsListQueryParams,
 } from '../useDashboardsListQueryParams';
 
-const mockSafeNavigate = jest.fn();
+const mockSafeNavigate = vi.fn();
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));

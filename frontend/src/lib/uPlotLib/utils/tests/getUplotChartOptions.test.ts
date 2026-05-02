@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 
@@ -7,9 +9,11 @@ import {
 	seriesDataTimeSeries,
 } from './__mocks__/uplotChartOptionsData';
 
-jest.mock('../../plugins/tooltipPlugin', () => jest.fn().mockReturnValue({}));
-jest.mock('../getSeriesData', () =>
-	jest.fn().mockImplementation((props) => {
+vi.mock('../../plugins/tooltipPlugin', () => ({
+	default: vi.fn().mockReturnValue({}),
+}));
+vi.mock('../getSeriesData', () => ({
+	default: vi.fn().mockImplementation((props) => {
 		const { panelType } = props;
 
 		if (panelType === PANEL_TYPES.TIME_SERIES) {
@@ -17,7 +21,7 @@ jest.mock('../getSeriesData', () =>
 		}
 		return seriesDataBarChart;
 	}),
-);
+}));
 
 describe('getUPlotChartOptions', () => {
 	it('should return uPlot options', () => {

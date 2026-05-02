@@ -4,28 +4,51 @@ import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 
 import SaveView from '..';
 
-const handleExplorerTabChangeTest = jest.fn();
-jest.mock('hooks/useHandleExplorerTabChange', () => ({
+const viewsListUrlLocal = 'http://localhost/api/v1/explorer/views';
+const viewsListUrlDev = 'http://localhost:3000/api/v1/explorer/views';
+const viewByIdUrlLocal = 'http://localhost/api/v1/explorer/views/test-uuid-1';
+const viewByIdUrlDev =
+	'http://localhost:3000/api/v1/explorer/views/test-uuid-1';
+
+const handleExplorerTabChangeTest = vi.fn();
+vi.mock('hooks/useHandleExplorerTabChange', () => ({
 	useHandleExplorerTabChange: () => ({
 		handleExplorerTabChange: handleExplorerTabChangeTest,
 	}),
 }));
 
-jest.mock('react-router-dom', () => {
-	const ROUTES = jest.requireActual('constants/routes').default;
-	return {
-		...jest.requireActual('react-router-dom'),
-		useLocation: jest.fn().mockReturnValue({
-			pathname: ROUTES.TRACES_SAVE_VIEWS,
-		}),
-	};
-});
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
+	useLocation: vi.fn().mockReturnValue({
+		pathname: '/traces/saved-views',
+	}),
+}));
 
 describe('SaveView', () => {
+	afterEach(
+		() =>
+			new Promise<void>((resolve) => {
+				setTimeout(resolve, 0);
+			}),
+	);
+
+	beforeEach(() => {
+		server.use(
+			rest.get(viewsListUrlLocal, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(explorerView)),
+			),
+			rest.get(viewsListUrlDev, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(explorerView)),
+			),
+		);
+	});
 	it('should render the SaveView component', async () => {
 		render(<SaveView />);
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
@@ -97,19 +120,29 @@ describe('SaveView', () => {
 
 	it('should be able to edit name of view', async () => {
 		server.use(
-			rest.put(
-				'http://localhost/api/v1/explorer/views/test-uuid-1',
-				(_req, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({
-							...explorerView,
-							data: [
-								...explorerView.data,
-								(explorerView.data[0].name = 'New Table View'),
-							],
-						}),
-					),
+			rest.put(viewByIdUrlLocal, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						...explorerView,
+						data: [
+							...explorerView.data,
+							(explorerView.data[0].name = 'New Table View'),
+						],
+					}),
+				),
+			),
+			rest.put(viewByIdUrlDev, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						...explorerView,
+						data: [
+							...explorerView.data,
+							(explorerView.data[0].name = 'New Table View'),
+						],
+					}),
+				),
 			),
 		);
 		render(<SaveView />);
@@ -135,9 +168,11 @@ describe('SaveView', () => {
 
 	it('should be able to delete a view', async () => {
 		server.use(
-			rest.delete(
-				'http://localhost/api/v1/explorer/views/test-uuid-1',
-				(_req, res, ctx) => res(ctx.status(200), ctx.json({ status: 'success' })),
+			rest.delete(viewByIdUrlLocal, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success' })),
+			),
+			rest.delete(viewByIdUrlDev, (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success' })),
 			),
 		);
 
@@ -158,7 +193,16 @@ describe('SaveView', () => {
 
 	it('should render empty state', async () => {
 		server.use(
-			rest.get('http://localhost/api/v1/explorer/views', (_req, res, ctx) =>
+			rest.get(viewsListUrlLocal, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: [],
+					}),
+				),
+			),
+			rest.get(viewsListUrlDev, (_req, res, ctx) =>
 				res(
 					ctx.status(200),
 					ctx.json({

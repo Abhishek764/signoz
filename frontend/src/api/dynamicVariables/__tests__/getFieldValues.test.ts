@@ -1,20 +1,23 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import axios from 'api';
 
 import { getFieldValues } from '../getFieldValues';
 
 // Mock the API instance
-jest.mock('api', () => ({
-	get: jest.fn(),
+vi.mock('api', () => ({
+	default: {
+		get: vi.fn(),
+	},
 }));
 
 describe('getFieldValues API', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should call the API with correct parameters (no options)', async () => {
 		// Mock API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		vi.mocked(axios.get).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -38,7 +41,7 @@ describe('getFieldValues API', () => {
 
 	it('should call the API with signal parameter', async () => {
 		// Mock API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		vi.mocked(axios.get).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -62,7 +65,7 @@ describe('getFieldValues API', () => {
 
 	it('should call the API with name parameter', async () => {
 		// Mock API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		vi.mocked(axios.get).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -86,7 +89,7 @@ describe('getFieldValues API', () => {
 
 	it('should call the API with value parameter', async () => {
 		// Mock API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		vi.mocked(axios.get).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -110,7 +113,7 @@ describe('getFieldValues API', () => {
 
 	it('should call the API with time range parameters', async () => {
 		// Mock API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		vi.mocked(axios.get).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -162,7 +165,7 @@ describe('getFieldValues API', () => {
 			},
 		};
 
-		(axios.get as jest.Mock).mockResolvedValueOnce(mockResponse);
+		vi.mocked(axios.get).mockResolvedValueOnce(mockResponse);
 
 		// Call the function
 		const result = await getFieldValues('traces', 'mixed.values');
@@ -193,7 +196,7 @@ describe('getFieldValues API', () => {
 		};
 
 		// Mock API to return our response
-		(axios.get as jest.Mock).mockResolvedValueOnce(mockApiResponse);
+		vi.mocked(axios.get).mockResolvedValueOnce(mockApiResponse);
 
 		// Call the function
 		const result = await getFieldValues('traces', 'service.name');

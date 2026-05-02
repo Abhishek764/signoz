@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
@@ -15,13 +18,13 @@ import { render, screen } from 'tests/test-utils';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
-	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: vi.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 describe('Create Alert Channel (Normal User)', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel', () => {
 		beforeEach(() => {

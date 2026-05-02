@@ -1,4 +1,6 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
+import type { MockInstance } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { GraphVisibilityState } from '../../types';
 import {
@@ -8,15 +10,17 @@ import {
 
 describe('legendVisibilityUtils', () => {
 	const storageKey = LOCALSTORAGE.GRAPH_VISIBILITY_STATES;
+	let getItemSpy: MockInstance<(key: string) => string | null>;
+	let setItemSpy: MockInstance<(key: string, value: string) => void>;
 
 	beforeEach(() => {
 		localStorage.clear();
-		jest.spyOn(window.localStorage.__proto__, 'getItem');
-		jest.spyOn(window.localStorage.__proto__, 'setItem');
+		getItemSpy = vi.spyOn(localStorage, 'getItem');
+		setItemSpy = vi.spyOn(localStorage, 'setItem');
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	describe('getStoredSeriesVisibility', () => {
@@ -24,7 +28,7 @@ describe('legendVisibilityUtils', () => {
 			const result = getStoredSeriesVisibility('widget-1');
 
 			expect(result).toBeNull();
-			expect(localStorage.getItem).toHaveBeenCalledWith(storageKey);
+			expect(getItemSpy).toHaveBeenCalledWith(storageKey);
 		});
 
 		it('returns null when widget has no stored dataIndex', () => {
@@ -215,7 +219,7 @@ describe('legendVisibilityUtils', () => {
 					],
 				},
 			];
-			expect(localStorage.setItem).toHaveBeenCalledWith(
+			expect(setItemSpy).toHaveBeenCalledWith(
 				storageKey,
 				JSON.stringify(expected),
 			);
@@ -245,12 +249,9 @@ describe('legendVisibilityUtils', () => {
 				{ label: 'CPU', show: true },
 			]);
 
-			expect(localStorage.setItem).toHaveBeenCalledTimes(1);
-			expect(localStorage.setItem).toHaveBeenCalledWith(
-				storageKey,
-				expect.any(String),
-			);
-			const [_, value] = (localStorage.setItem as jest.Mock).mock.calls[0];
+			expect(setItemSpy).toHaveBeenCalledTimes(1);
+			expect(setItemSpy).toHaveBeenCalledWith(storageKey, expect.any(String));
+			const [, value] = setItemSpy.mock.calls[0];
 			expect((): void => JSON.parse(value)).not.toThrow();
 			expect(JSON.parse(value)).toStrictEqual([
 				{ name: 'widget-1', dataIndex: [{ label: 'CPU', show: true }] },

@@ -1,3 +1,4 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
@@ -7,8 +8,8 @@ import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
 import { PreferenceMode } from '../types';
 
 // Mock setLocalStorageKey
-const mockSetLocalStorageKey = jest.fn();
-jest.mock('api/browser/localstorage/set', () => ({
+const mockSetLocalStorageKey = vi.fn();
+vi.mock('api/browser/localstorage/set', () => ({
 	__esModule: true,
 	default: (key: string, value: string): void =>
 		mockSetLocalStorageKey(key, value),
@@ -18,8 +19,8 @@ jest.mock('api/browser/localstorage/set', () => ({
 let mockLocalStorage: Record<string, string> = {};
 Object.defineProperty(global, 'localStorage', {
 	value: {
-		getItem: jest.fn((key: string) => mockLocalStorage[key] || null),
-		setItem: jest.fn((key: string, value: string) => {
+		getItem: vi.fn((key: string) => mockLocalStorage[key] || null),
+		setItem: vi.fn((key: string, value: string) => {
 			mockLocalStorage[key] = value;
 		}),
 	},
@@ -28,8 +29,8 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('tracesUpdaterConfig', () => {
 	// Mock functions
-	const mockRedirectWithOptionsData = jest.fn();
-	const mockSetSavedViewPreferences = jest.fn();
+	const mockRedirectWithOptionsData = vi.fn();
+	const mockSetSavedViewPreferences = vi.fn();
 
 	// Test data
 	const mockColumns: TelemetryFieldKey[] = [
@@ -41,7 +42,7 @@ describe('tracesUpdaterConfig', () => {
 	];
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		// Reset mockLocalStorage
 		mockLocalStorage = {};
 	});

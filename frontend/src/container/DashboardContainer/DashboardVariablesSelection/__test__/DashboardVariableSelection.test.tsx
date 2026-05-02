@@ -15,6 +15,8 @@ import {
 	initializeVariableFetchStore,
 } from 'providers/Dashboard/store/variableFetchStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import type { Mock, MockInstance } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import DashboardVariableSelection from '../DashboardVariableSelection';
 
@@ -30,14 +32,14 @@ const mockVariableItemCallbacks: {
 } = {};
 
 // Mock providers/Dashboard/Dashboard
-const mockSetDashboardData = jest.fn();
-const mockUpdateLocalStorageDashboardVariables = jest.fn();
+const mockSetDashboardData = vi.fn();
+const mockUpdateLocalStorageDashboardVariables = vi.fn();
 interface MockDashboardStoreState {
 	dashboardData?: { id: string };
 	setDashboardData: typeof mockSetDashboardData;
 	updateLocalStorageDashboardVariables: typeof mockUpdateLocalStorageDashboardVariables;
 }
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+vi.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (
 		selector?: (s: Record<string, unknown>) => MockDashboardStoreState,
 	): MockDashboardStoreState => {
@@ -52,9 +54,9 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 }));
 
 // Mock hooks/dashboard/useVariablesFromUrl
-const mockUpdateUrlVariable = jest.fn();
-const mockGetUrlVariables = jest.fn().mockReturnValue({});
-jest.mock('hooks/dashboard/useVariablesFromUrl', () => ({
+const mockUpdateUrlVariable = vi.fn();
+const mockGetUrlVariables = vi.fn().mockReturnValue({});
+vi.mock('hooks/dashboard/useVariablesFromUrl', () => ({
 	__esModule: true,
 	default: (): Record<string, unknown> => ({
 		updateUrlVariable: mockUpdateUrlVariable,
@@ -63,25 +65,25 @@ jest.mock('hooks/dashboard/useVariablesFromUrl', () => ({
 }));
 
 // Mock variableFetchStore functions
-jest.mock('providers/Dashboard/store/variableFetchStore', () => ({
-	initializeVariableFetchStore: jest.fn(),
-	enqueueFetchOfAllVariables: jest.fn(),
-	enqueueDescendantsOfVariable: jest.fn(),
+vi.mock('providers/Dashboard/store/variableFetchStore', () => ({
+	initializeVariableFetchStore: vi.fn(),
+	enqueueFetchOfAllVariables: vi.fn(),
+	enqueueDescendantsOfVariable: vi.fn(),
 }));
 
 // Mock initializeDefaultVariables
-jest.mock('providers/Dashboard/initializeDefaultVariables', () => ({
-	initializeDefaultVariables: jest.fn(),
+vi.mock('providers/Dashboard/initializeDefaultVariables', () => ({
+	initializeDefaultVariables: vi.fn(),
 }));
 
 // Mock react-redux useSelector for globalTime
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn().mockReturnValue({ minTime: 1000, maxTime: 2000 }),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual<typeof import('react-redux')>('react-redux')),
+	useSelector: vi.fn().mockReturnValue({ minTime: 1000, maxTime: 2000 }),
 }));
 
 // VariableItem mock captures the onValueUpdate prop for use in onValueUpdate tests
-jest.mock('../VariableItem', () => ({
+vi.mock('../VariableItem', () => ({
 	__esModule: true,
 	default: (props: any): JSX.Element => {
 		mockVariableItemCallbacks.onValueUpdate = props.onValueUpdate;
@@ -119,7 +121,7 @@ function resetStore(): void {
 describe('DashboardVariableSelection', () => {
 	beforeEach(() => {
 		resetStore();
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should call initializeVariableFetchStore and enqueueFetchOfAllVariables on mount', () => {
@@ -145,8 +147,8 @@ describe('DashboardVariableSelection', () => {
 		render(<DashboardVariableSelection />);
 
 		// Clear mocks after initial render
-		(initializeVariableFetchStore as jest.Mock).mockClear();
-		(enqueueFetchOfAllVariables as jest.Mock).mockClear();
+		(initializeVariableFetchStore as Mock).mockClear();
+		(enqueueFetchOfAllVariables as Mock).mockClear();
 
 		// Add a DYNAMIC variable which changes dynamicVariableOrder
 		act(() => {
@@ -176,8 +178,8 @@ describe('DashboardVariableSelection', () => {
 
 		render(<DashboardVariableSelection />);
 
-		(initializeVariableFetchStore as jest.Mock).mockClear();
-		(enqueueFetchOfAllVariables as jest.Mock).mockClear();
+		(initializeVariableFetchStore as Mock).mockClear();
+		(enqueueFetchOfAllVariables as Mock).mockClear();
 
 		// Remove dyn2, changing dynamicVariableOrder from ['dyn1','dyn2'] to ['dyn1']
 		act(() => {
@@ -204,8 +206,8 @@ describe('DashboardVariableSelection', () => {
 
 		render(<DashboardVariableSelection />);
 
-		(initializeVariableFetchStore as jest.Mock).mockClear();
-		(enqueueFetchOfAllVariables as jest.Mock).mockClear();
+		(initializeVariableFetchStore as Mock).mockClear();
+		(enqueueFetchOfAllVariables as Mock).mockClear();
 
 		// Update a non-dynamic variable's selectedValue — dynamicVariableOrder unchanged
 		act(() => {
@@ -229,13 +231,13 @@ describe('DashboardVariableSelection', () => {
 	});
 
 	describe('onValueUpdate', () => {
-		let updateStoreSpy: jest.SpyInstance;
+		let updateStoreSpy: MockInstance<typeof updateDashboardVariablesStore>;
 
 		beforeEach(() => {
 			resetStore();
-			jest.clearAllMocks();
+			vi.clearAllMocks();
 			// Real implementation pass-through — we just want to observe calls
-			updateStoreSpy = jest.spyOn(
+			updateStoreSpy = vi.spyOn(
 				dashboardVariablesStoreModule,
 				'updateDashboardVariablesStore',
 			);
@@ -259,7 +261,7 @@ describe('DashboardVariableSelection', () => {
 			updateStoreSpy.mockImplementation(() => {
 				callOrder.push('updateDashboardVariablesStore');
 			});
-			(enqueueDescendantsOfVariable as jest.Mock).mockImplementation(() => {
+			(enqueueDescendantsOfVariable as Mock).mockImplementation(() => {
 				callOrder.push('enqueueDescendantsOfVariable');
 			});
 
@@ -319,7 +321,7 @@ describe('DashboardVariableSelection', () => {
 		});
 
 		it('calls enqueueDescendantsOfVariable synchronously without a timer', () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 
 			setDashboardVariablesStore({
 				dashboardId: 'dash-1',
@@ -342,7 +344,7 @@ describe('DashboardVariableSelection', () => {
 			// Must be called immediately — no timer advancement needed
 			expect(enqueueDescendantsOfVariable).toHaveBeenCalledWith('env');
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('propagates allSelected and haveCustomValuesSelected to the store', () => {

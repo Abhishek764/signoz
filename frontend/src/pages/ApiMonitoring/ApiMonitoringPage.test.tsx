@@ -1,17 +1,18 @@
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import ApiMonitoringPage from './ApiMonitoringPage';
 
 // Mock the child component to isolate the ApiMonitoringPage logic
 // We are not testing ExplorerPage here, just that ApiMonitoringPage renders it via RouteTab.
-jest.mock('container/ApiMonitoring/Explorer/Explorer', () => ({
+vi.mock('container/ApiMonitoring/Explorer/Explorer', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div>Mocked Explorer Page</div>,
 }));
 
 // Mock the RouteTab component
-jest.mock('components/RouteTab', () => ({
+vi.mock('components/RouteTab', () => ({
 	__esModule: true,
 	default: ({
 		routes,
@@ -29,8 +30,10 @@ jest.mock('components/RouteTab', () => ({
 }));
 
 // Mock useLocation hook to properly return the path we're testing
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useLocation: (): { pathname: string } => ({
 		pathname: '/api-monitoring/explorer',
 	}),

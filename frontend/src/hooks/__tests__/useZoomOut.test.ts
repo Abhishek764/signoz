@@ -1,21 +1,23 @@
 import { act, renderHook } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useZoomOut } from '../useZoomOut';
 
-const mockDispatch = jest.fn();
-const mockSafeNavigate = jest.fn();
-const mockUrlQueryDelete = jest.fn();
-const mockUrlQuerySet = jest.fn();
-const mockUrlQueryToString = jest.fn(() => '');
+const mockDispatch = vi.fn();
+const mockSafeNavigate = vi.fn();
+const mockUrlQueryDelete = vi.fn();
+const mockUrlQuerySet = vi.fn();
+const mockUrlQueryToString = vi.fn(() => '');
 
 interface MockAppState {
 	globalTime: Pick<GlobalReducer, 'minTime' | 'maxTime'>;
 }
 
-jest.mock('react-redux', () => ({
-	useDispatch: (): jest.Mock => mockDispatch,
+vi.mock('react-redux', () => ({
+	useDispatch: (): Mock => mockDispatch,
 	useSelector: <T>(selector: (state: MockAppState) => T): T => {
 		const mockState: MockAppState = {
 			globalTime: {
@@ -27,11 +29,11 @@ jest.mock('react-redux', () => ({
 	},
 }));
 
-jest.mock('react-router-dom', () => ({
+vi.mock('react-router-dom', () => ({
 	useLocation: (): { pathname: string } => ({ pathname: '/logs-explorer' }),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
@@ -44,7 +46,7 @@ interface MockUrlQuery {
 	toString: typeof mockUrlQueryToString;
 }
 
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): MockUrlQuery => ({
 		delete: mockUrlQueryDelete,
@@ -54,8 +56,8 @@ jest.mock('hooks/useUrlQuery', () => ({
 	}),
 }));
 
-const mockGetNextZoomOutRange = jest.fn();
-jest.mock('lib/zoomOutUtils', () => ({
+const mockGetNextZoomOutRange = vi.fn();
+vi.mock('lib/zoomOutUtils', () => ({
 	getNextZoomOutRange: (
 		...args: unknown[]
 	): ReturnType<typeof mockGetNextZoomOutRange> =>
@@ -64,7 +66,7 @@ jest.mock('lib/zoomOutUtils', () => ({
 
 describe('useZoomOut', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUrlQueryToString.mockReturnValue('relativeTime=45m');
 	});
 

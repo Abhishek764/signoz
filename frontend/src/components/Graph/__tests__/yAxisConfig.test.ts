@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { PrecisionOptionsEnum } from '../types';
 import { getYAxisFormattedValue } from '../yAxisConfig';
 

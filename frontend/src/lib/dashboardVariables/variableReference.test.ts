@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 

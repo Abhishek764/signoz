@@ -1,4 +1,5 @@
 import { PrecisionOptionsEnum } from 'components/Graph/types';
+import { describe, expect, it } from 'vitest';
 
 import {
 	formatTableValueWithUnit,

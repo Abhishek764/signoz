@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { axiosResponseThresholdData } from './__mock__/axiosResponseMockThresholdData';
 import ApDexSettings from './ApDexSettings';
 
-jest.mock('hooks/apDex/useSetApDexSettings', () => ({
+vi.mock('hooks/apDex/useSetApDexSettings', () => ({
 	__esModule: true,
-	useSetApDexSettings: jest.fn().mockReturnValue({
-		mutateAsync: jest.fn(),
+	useSetApDexSettings: vi.fn().mockReturnValue({
+		mutateAsync: vi.fn(),
 		isLoading: false,
 		error: null,
 	}),
@@ -17,10 +18,10 @@ describe('ApDexSettings', () => {
 		render(
 			<ApDexSettings
 				servicename="mockServiceName"
-				handlePopOverClose={jest.fn()}
+				handlePopOverClose={vi.fn()}
 				isLoading={false}
 				data={axiosResponseThresholdData}
-				refetchGetApDexSetting={jest.fn()}
+				refetchGetApDexSetting={vi.fn()}
 			/>,
 		);
 
@@ -31,10 +32,10 @@ describe('ApDexSettings', () => {
 		const { container } = render(
 			<ApDexSettings
 				servicename="mockServiceName"
-				handlePopOverClose={jest.fn()}
+				handlePopOverClose={vi.fn()}
 				isLoading
 				data={axiosResponseThresholdData}
-				refetchGetApDexSetting={jest.fn()}
+				refetchGetApDexSetting={vi.fn()}
 			/>,
 		);
 
@@ -45,14 +46,14 @@ describe('ApDexSettings', () => {
 	});
 
 	it('should close the popover when the cancel button is clicked', async () => {
-		const mockHandlePopOverClose = jest.fn();
+		const mockHandlePopOverClose = vi.fn();
 		render(
 			<ApDexSettings
 				servicename="mockServiceName"
 				handlePopOverClose={mockHandlePopOverClose}
 				isLoading={false}
 				data={axiosResponseThresholdData}
-				refetchGetApDexSetting={jest.fn()}
+				refetchGetApDexSetting={vi.fn()}
 			/>,
 		);
 

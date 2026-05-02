@@ -1,5 +1,7 @@
 import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
 import { IAppContext, IUser } from 'providers/App/types';
+import type { Mock } from 'vitest';
+import { vi } from 'vitest';
 import { Channels } from 'types/api/channels/getAll';
 
 import { RoutingPolicy, UseRoutingPoliciesReturn } from '../types';
@@ -56,24 +58,24 @@ export function getUseRoutingPoliciesMockData(
 		channels: [MOCK_CHANNEL_1, MOCK_CHANNEL_2],
 		isLoadingChannels: false,
 		searchTerm: '',
-		setSearchTerm: jest.fn(),
+		setSearchTerm: vi.fn(),
 		isDeleteModalOpen: false,
-		handleDeleteModalOpen: jest.fn(),
-		handleDeleteModalClose: jest.fn(),
-		handleDeleteRoutingPolicy: jest.fn(),
+		handleDeleteModalOpen: vi.fn(),
+		handleDeleteModalClose: vi.fn(),
+		handleDeleteRoutingPolicy: vi.fn(),
 		isDeletingRoutingPolicy: false,
 		policyDetailsModalState: {
 			mode: null,
 			isOpen: false,
 		},
-		handlePolicyDetailsModalClose: jest.fn(),
-		handlePolicyDetailsModalOpen: jest.fn(),
-		handlePolicyDetailsModalAction: jest.fn(),
+		handlePolicyDetailsModalClose: vi.fn(),
+		handlePolicyDetailsModalOpen: vi.fn(),
+		handlePolicyDetailsModalAction: vi.fn(),
 		isPolicyDetailsModalActionLoading: false,
 		isErrorChannels: false,
-		refreshChannels: jest.fn(),
+		refreshChannels: vi.fn(),
 		isFetchingRoutingPolicies: false,
-		refetchRoutingPolicies: jest.fn(),
+		refetchRoutingPolicies: vi.fn(),
 		...overrides,
 	};
 }
@@ -111,20 +113,20 @@ export function getAppContextMockState(
 		orgPreferencesFetchError: undefined,
 		changelog: null,
 		showChangelogModal: false,
-		activeLicenseRefetch: jest.fn(),
-		updateUser: jest.fn(),
-		updateOrgPreferences: jest.fn(),
-		updateUserPreferenceInContext: jest.fn(),
-		updateOrg: jest.fn(),
-		updateChangelog: jest.fn(),
-		toggleChangelogModal: jest.fn(),
+		activeLicenseRefetch: vi.fn(),
+		updateUser: vi.fn(),
+		updateOrgPreferences: vi.fn(),
+		updateUserPreferenceInContext: vi.fn(),
+		updateOrg: vi.fn(),
+		updateChangelog: vi.fn(),
+		toggleChangelogModal: vi.fn(),
 		versionData: null,
 		hasEditPermission: false,
 	};
 }
 
-export function mockLocation(pathname: string): jest.Mock {
-	return jest.fn().mockReturnValue({
+export function mockLocation(pathname: string): Mock {
+	return vi.fn().mockReturnValue({
 		pathname,
 	});
 }

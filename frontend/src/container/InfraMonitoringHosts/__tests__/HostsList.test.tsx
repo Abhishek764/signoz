@@ -14,26 +14,27 @@ import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 
 import Hosts from '../Hosts';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-jest.mock('lib/getMinMax', () => ({
+vi.mock('lib/getMinMax', () => ({
 	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
+	default: vi.fn().mockImplementation(() => ({
 		minTime: 1713734400000,
 		maxTime: 1713738000000,
-		isValidShortHandDateTimeFormat: jest.fn().mockReturnValue(true),
+		isValidShortHandDateTimeFormat: vi.fn().mockReturnValue(true),
 	})),
-	getMinMaxForSelectedTime: jest.fn().mockReturnValue({
+	getMinMaxForSelectedTime: vi.fn().mockReturnValue({
 		minTime: 1713734400000000000,
 		maxTime: 1713738000000000000,
 	}),
 }));
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
 }));
-jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
+vi.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
 	default: ({ onSelect, selectedTime, selectedValue }: any): JSX.Element => (
 		<div data-testid="custom-time-picker">
@@ -52,22 +53,24 @@ const queryClient = new QueryClient({
 	},
 });
 
-jest.mock('react-router-dom', () => {
-	const ROUTES = jest.requireActual('constants/routes').default;
+vi.mock('react-router-dom', async () => {
+	const { default: ROUTES } = await import('constants/routes');
+	const actual =
+		await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 	return {
-		...jest.requireActual('react-router-dom'),
-		useLocation: jest.fn().mockReturnValue({
+		...actual,
+		useLocation: vi.fn().mockReturnValue({
 			pathname: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		}),
 	};
 });
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
+vi.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
 	timezone: {
 		offset: 0,
 	},
@@ -76,7 +79,7 @@ jest.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
 	},
 } as any);
 
-jest.spyOn(getHostListsApi, 'getHostLists').mockResolvedValue({
+vi.spyOn(getHostListsApi, 'getHostLists').mockResolvedValue({
 	statusCode: 200,
 	error: null,
 	message: 'Success',
@@ -109,7 +112,7 @@ jest.spyOn(getHostListsApi, 'getHostLists').mockResolvedValue({
 	params: {} as any,
 });
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -134,17 +137,17 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
-jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	currentQuery: initialQueriesMap.metrics,
-	setSupersetQuery: jest.fn(),
-	setLastUsedQuery: jest.fn(),
-	handleSetConfig: jest.fn(),
-	resetQuery: jest.fn(),
-	updateAllQueriesOperators: jest.fn(),
+	setSupersetQuery: vi.fn(),
+	setLastUsedQuery: vi.fn(),
+	handleSetConfig: vi.fn(),
+	resetQuery: vi.fn(),
+	updateAllQueriesOperators: vi.fn(),
 } as any);
 
-jest.spyOn(useQueryBuilderOperations, 'useQueryOperations').mockReturnValue({
-	handleChangeQueryData: jest.fn(),
+vi.spyOn(useQueryBuilderOperations, 'useQueryOperations').mockReturnValue({
+	handleChangeQueryData: vi.fn(),
 } as any);
 
 const Wrapper = withNuqsTestingAdapter({ searchParams: {} });

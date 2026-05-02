@@ -1,13 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import TanStackRowCells from '../TanStackRow';
 import type { TableRowContext } from '../types';
 
-const flexRenderMock = jest.fn((def: unknown) =>
+const flexRenderMock = vi.fn((def: unknown) =>
 	typeof def === 'function' ? def({}) : def,
 );
-jest.mock('@tanstack/react-table', () => ({
+vi.mock('@tanstack/react-table', () => ({
 	flexRender: (def: unknown, _ctx?: unknown): unknown => flexRenderMock(def),
 }));
 
@@ -58,7 +59,7 @@ describe('TanStackRowCells', () => {
 
 	it('calls onRowClick when a cell is clicked', async () => {
 		const user = userEvent.setup();
-		const onRowClick = jest.fn();
+		const onRowClick = vi.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
@@ -90,8 +91,8 @@ describe('TanStackRowCells', () => {
 
 	it('calls onRowDeactivate instead of onRowClick when row is active', async () => {
 		const user = userEvent.setup();
-		const onRowClick = jest.fn();
-		const onRowDeactivate = jest.fn();
+		const onRowClick = vi.fn();
+		const onRowDeactivate = vi.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
@@ -188,8 +189,8 @@ describe('TanStackRowCells', () => {
 
 	describe('new tab click', () => {
 		it('calls onRowClickNewTab on ctrl+click', () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 			const ctx: TableRowContext<Row> = {
 				colCount: 1,
 				onRowClick,
@@ -221,8 +222,8 @@ describe('TanStackRowCells', () => {
 		});
 
 		it('calls onRowClickNewTab on meta+click (cmd)', () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 			const ctx: TableRowContext<Row> = {
 				colCount: 1,
 				onRowClick,
@@ -254,8 +255,8 @@ describe('TanStackRowCells', () => {
 		});
 
 		it('does not call onRowClick when modifier key is pressed', () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 			const ctx: TableRowContext<Row> = {
 				colCount: 1,
 				onRowClick,

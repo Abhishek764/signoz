@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { usePrefillAlertConditions } from '../usePrefillAlertConditions';
@@ -15,7 +16,7 @@ const TEST_MAPPINGS = {
 	},
 };
 
-jest.mock('react-router-dom-v5-compat', () => {
+vi.mock('react-router-dom-v5-compat', async () => {
 	const mockThreshold1 = {
 		index: '0d11f426-a02e-48da-867c-b79c6ef1ff06',
 		isEditEnabled: false,
@@ -43,8 +44,8 @@ jest.mock('react-router-dom-v5-compat', () => {
 		thresholdValue: 900,
 	};
 	return {
-		...jest.requireActual('react-router-dom-v5-compat'),
-		useLocation: jest.fn().mockReturnValue({
+		...(await vi.importActual('react-router-dom-v5-compat')),
+		useLocation: vi.fn().mockReturnValue({
 			state: {
 				thresholds: [mockThreshold1, mockThreshold2],
 			},

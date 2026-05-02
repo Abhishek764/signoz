@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import store from 'store';
@@ -14,13 +15,21 @@ import {
 	TimeAggregationOptions,
 } from '../types';
 
-const mockResizeObserver = jest.fn();
-mockResizeObserver.mockImplementation(() => ({
-	observe: (): void => undefined,
-	unobserve: (): void => undefined,
-	disconnect: (): void => undefined,
-}));
-window.ResizeObserver = mockResizeObserver;
+class ResizeObserverMock {
+	observe(): void {
+		// jsdom stub
+	}
+
+	unobserve(): void {
+		// jsdom stub
+	}
+
+	disconnect(): void {
+		// jsdom stub
+	}
+}
+
+window.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 describe('GraphView', () => {
 	const mockTimeSeries: InspectMetricsSeries[] = [
@@ -46,11 +55,11 @@ describe('GraphView', () => {
 		metricType: MetrictypesTypeDTO.gauge,
 		spaceAggregationSeriesMap: new Map(),
 		inspectionStep: InspectionStep.COMPLETED,
-		setPopoverOptions: jest.fn(),
+		setPopoverOptions: vi.fn(),
 		popoverOptions: null,
-		setShowExpandedView: jest.fn(),
-		setExpandedViewOptions: jest.fn(),
-		resetInspection: jest.fn(),
+		setShowExpandedView: vi.fn(),
+		setExpandedViewOptions: vi.fn(),
+		resetInspection: vi.fn(),
 		showExpandedView: false,
 		metricInspectionAppliedOptions: {
 			timeAggregationInterval: 60,
@@ -63,7 +72,7 @@ describe('GraphView', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders graph view by default', () => {

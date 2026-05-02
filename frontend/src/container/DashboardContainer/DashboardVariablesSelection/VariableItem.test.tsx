@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import type { MockInstance } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
-
-import '@testing-library/jest-dom/extend-expect';
 
 import VariableItem from './VariableItem';
 
@@ -26,17 +26,17 @@ const mockCustomVariableData: IDashboardVariable = {
 	customValue: 'option1,option2,option3',
 };
 
-const mockOnValueUpdate = jest.fn();
+const mockOnValueUpdate = vi.fn();
 
 describe('VariableItem', () => {
-	let useEffectSpy: jest.SpyInstance;
+	let useEffectSpy: MockInstance<typeof React.useEffect>;
 
 	beforeEach(() => {
-		useEffectSpy = jest.spyOn(React, 'useEffect');
+		useEffectSpy = vi.spyOn(React, 'useEffect');
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useEffectSpy.mockRestore();
 	});
 
@@ -149,6 +149,6 @@ describe('VariableItem', () => {
 			</MockQueryClientProvider>,
 		);
 
-		expect(useEffect).toHaveBeenCalled();
+		expect(React.useEffect).toHaveBeenCalled();
 	});
 });

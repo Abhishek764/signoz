@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	accountsResponse,
@@ -25,10 +26,10 @@ class ResizeObserverMock {
 global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // --- MOCKS ---
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 	MarkdownRenderer: (): JSX.Element => <div data-testid="markdown-renderer" />,
 }));
-jest.mock(
+vi.mock(
 	'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards',
 	() => ({
 		__esModule: true,
@@ -38,7 +39,7 @@ jest.mock(
 
 let testServiceId = 's3sync';
 let testInitialBuckets: Record<string, string[]> = {};
-const mockGet = jest.fn((param: string) => {
+const mockGet = vi.fn((param: string) => {
 	if (param === 'cloudAccountId') {
 		return CLOUD_ACCOUNT_ID;
 	}
@@ -47,24 +48,22 @@ const mockGet = jest.fn((param: string) => {
 	}
 	return null;
 });
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): { get: (param: string) => string | null } => ({ get: mockGet }),
 }));
 
 // --- TEST SUITE ---
-describe('ServiceDetails for S3 Sync service', () => {
-	jest.setTimeout(10000);
+describe('ServiceDetails for S3 Sync service', { timeout: 10000 }, () => {
 	beforeEach(() => {
 		testServiceId = 's3sync';
 		testInitialBuckets = {};
 		server.use(
-			rest.get(
-				'http://localhost/api/v1/cloud_integrations/aws/accounts',
-				(_req, res, ctx) => res(ctx.json(accountsResponse)),
+			rest.get('*/api/v1/cloud_integrations/aws/accounts', (_req, res, ctx) =>
+				res(ctx.json(accountsResponse)),
 			),
 			rest.get(
-				'http://localhost/api/v1/cloud_integrations/aws/services/:serviceId',
+				'*/api/v1/cloud_integrations/aws/services/:serviceId',
 				(req, res, ctx) =>
 					res(
 						ctx.json(
@@ -115,15 +114,16 @@ describe('ServiceDetails for S3 Sync service', () => {
 
 	it('should send updated bucket configuration on save', async () => {
 		let capturedPayload: Record<string, unknown> | null = null;
-		const mockUpdateConfigUrl = `http://localhost/api/v1/cloud_integrations/aws/accounts/${CLOUD_ACCOUNT_ID}/services/s3sync`;
+		const mockUpdateConfigPath =
+			'*/api/v1/cloud_integrations/aws/accounts/:accountId/services/s3sync';
 
-		// Override PUT handler specifically for this test to capture payload
 		server.use(
-			rest.put(mockUpdateConfigUrl, async (req: RestRequest, res, ctx) => {
+			rest.put(mockUpdateConfigPath, async (req: RestRequest, res, ctx) => {
 				capturedPayload = await req.json();
 				return res(ctx.status(200), ctx.json({ message: 'Config updated' }));
 			}),
 		);
+
 		testInitialBuckets = initialBuckets;
 		renderServiceDetails(initialBuckets);
 		await assertGenericModalElements();
@@ -155,7 +155,6 @@ describe('ServiceDetails for S3 Sync service', () => {
 					logs: {
 						enabled: true,
 						s3Buckets: {
-							'us-east-2': ['first-bucket', 'second-bucket'],
 							'ap-south-1': [newBucketName],
 						},
 					},

@@ -3,33 +3,41 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type MockedFunction,
+	vi,
+} from 'vitest';
 
 import ResetPassword from '../index';
 
-// Mock dependencies
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: {
 			search: '?token=reset-token-123',
 		},
 	},
 }));
 
-jest.mock('api/utils', () => ({
-	Logout: jest.fn(),
+vi.mock('api/utils', () => ({
+	Logout: vi.fn(),
 }));
 
-const mockSuccessNotification = jest.fn();
-const mockErrorNotification = jest.fn();
+const mockSuccessNotification = vi.fn();
+const mockErrorNotification = vi.fn();
 
 interface MockNotifications {
-	success: jest.MockedFunction<(...args: unknown[]) => void>;
-	error: jest.MockedFunction<(...args: unknown[]) => void>;
+	success: MockedFunction<(...args: unknown[]) => void>;
+	error: MockedFunction<(...args: unknown[]) => void>;
 }
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): { notifications: MockNotifications } => ({
 		notifications: {
 			success: mockSuccessNotification,
@@ -40,13 +48,12 @@ jest.mock('hooks/useNotifications', () => ({
 
 const RESET_PASSWORD_ENDPOINT = '*/resetPassword';
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockHistoryPush = history.push as MockedFunction<typeof history.push>;
 
 describe('ResetPassword Component', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.useRealTimers();
+		vi.clearAllMocks();
 		mockSuccessNotification.mockClear();
 		mockErrorNotification.mockClear();
 		window.history.pushState({}, '', '/password-reset?token=reset-token-123');
@@ -103,7 +110,7 @@ describe('ResetPassword Component', () => {
 
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
-			await user.tab(); // Blur the confirm password field to trigger validation
+			await user.tab();
 
 			await waitFor(() => {
 				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
@@ -129,7 +136,6 @@ describe('ResetPassword Component', () => {
 			await user.type(passwordInput, 'newPassword123');
 			await user.type(confirmPasswordInput, 'newPassword123');
 
-			// Wait for debounced validation
 			await waitFor(
 				() => {
 					expect(submitButton).not.toBeDisabled();
@@ -152,7 +158,7 @@ describe('ResetPassword Component', () => {
 
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
-			await user.tab(); // Blur the confirm password field to trigger validation
+			await user.tab();
 
 			await waitFor(() => {
 				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
@@ -160,7 +166,7 @@ describe('ResetPassword Component', () => {
 
 			await user.clear(confirmPasswordInput);
 			await user.type(confirmPasswordInput, 'password123');
-			await user.tab(); // Blur again to trigger validation
+			await user.tab();
 
 			await waitFor(
 				() => {
@@ -297,7 +303,7 @@ describe('ResetPassword Component', () => {
 
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
-			await user.tab(); // Blur the confirm password field to trigger validation
+			await user.tab();
 
 			await waitFor(() => {
 				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
@@ -347,7 +353,6 @@ describe('ResetPassword Component', () => {
 
 			await user.click(submitButton);
 
-			// Button should be disabled during API call
 			await waitFor(() => {
 				expect(submitButton).toBeDisabled();
 			});

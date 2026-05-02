@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as appHooks from 'providers/App/App';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
@@ -9,13 +10,13 @@ import {
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
 
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+vi.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
-const mockHandlePolicyDetailsModalAction = jest.fn();
-const mockCloseModal = jest.fn();
+const mockHandlePolicyDetailsModalAction = vi.fn();
+const mockCloseModal = vi.fn();
 const mockChannels = [MOCK_CHANNEL_1, MOCK_CHANNEL_2];
 const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
-const mockRefreshChannels = jest.fn();
+const mockRefreshChannels = vi.fn();
 
 const NEW_NAME = 'New Name';
 const NEW_EXPRESSION = 'New Expression';
@@ -24,6 +25,10 @@ const SAVE_BUTTON_TEXT = 'Save Routing Policy';
 const NO_CHANNELS_FOUND_TEXT = 'No channels yet.';
 
 describe('RoutingPolicyDetails', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
 	it('renders base create layout with header, 3 inputs and footer', () => {
 		render(
 			<RoutingPolicyDetails
@@ -373,7 +378,7 @@ describe('RoutingPolicyDetails', () => {
 	});
 
 	it('should show admin message for non-admin users in empty state', () => {
-		jest
+		vi
 			.spyOn(appHooks, 'useAppContext')
 			.mockReturnValue(getAppContextMockState({ role: 'VIEWER' }));
 

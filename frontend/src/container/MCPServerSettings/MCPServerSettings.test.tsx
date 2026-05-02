@@ -1,48 +1,57 @@
+import {
+	type Mock,
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import MCPServerSettings from './MCPServerSettings';
 
-const mockLogEvent = jest.fn();
-const mockCopyToClipboard = jest.fn();
-const mockHistoryPush = jest.fn();
-const mockUseGetGlobalConfig = jest.fn();
-const mockUseGetHosts = jest.fn();
-const mockUseGetTenantLicense = jest.fn();
-const mockToastSuccess = jest.fn();
-const mockToastWarning = jest.fn();
+const mockLogEvent = vi.fn();
+const mockCopyToClipboard = vi.fn();
+const mockHistoryPush = vi.fn();
+const mockUseGetGlobalConfig = vi.fn();
+const mockUseGetHosts = vi.fn();
+const mockUseGetTenantLicense = vi.fn();
+const mockToastSuccess = vi.fn();
+const mockToastWarning = vi.fn();
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
 	default: (...args: unknown[]): unknown => mockLogEvent(...args),
 }));
 
-jest.mock('api/generated/services/global', () => ({
+vi.mock('api/generated/services/global', () => ({
 	useGetGlobalConfig: (...args: unknown[]): unknown =>
 		mockUseGetGlobalConfig(...args),
 }));
 
-jest.mock('api/generated/services/zeus', () => ({
+vi.mock('api/generated/services/zeus', () => ({
 	useGetHosts: (...args: unknown[]): unknown => mockUseGetHosts(...args),
 }));
 
-jest.mock('hooks/useGetTenantLicense', () => ({
+vi.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: (): unknown => mockUseGetTenantLicense(),
 }));
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	__esModule: true,
-	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopyToClipboard],
+	useCopyToClipboard: (): [unknown, Mock] => [null, mockCopyToClipboard],
 }));
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+vi.mock('@signozhq/ui', async () => ({
+	...(await vi.importActual('@signozhq/ui')),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 		warning: (...args: unknown[]): unknown => mockToastWarning(...args),
 	},
 }));
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
 		push: (...args: unknown[]): unknown => mockHistoryPush(...args),
@@ -50,7 +59,7 @@ jest.mock('lib/history', () => ({
 	},
 }));
 
-jest.mock('utils/basePath', () => ({
+vi.mock('utils/basePath', () => ({
 	getBaseUrl: (): string => 'http://localhost',
 	getBasePath: (): string => '/',
 	withBasePath: (p: string): string => p,
@@ -106,7 +115,7 @@ describe('MCPServerSettings', () => {
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('shows loading spinner while config is loading', () => {

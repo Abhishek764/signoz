@@ -1,15 +1,16 @@
 import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import getLocal from '../../../api/browser/localstorage/get';
 import AppLoading from '../AppLoading';
 
-jest.mock('../../../api/browser/localstorage/get', () => ({
+vi.mock('../../../api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 // Access the mocked function
-const mockGet = getLocal as unknown as jest.Mock;
+const mockGet = vi.mocked(getLocal);
 
 describe('AppLoading', () => {
 	const SIGNOZ_TEXT = 'SigNoz';
@@ -18,12 +19,12 @@ describe('AppLoading', () => {
 	const CONTAINER_SELECTOR = '.app-loading-container';
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should render loading screen with dark theme by default', () => {
 		// Mock localStorage to return dark theme (or undefined for default)
-		mockGet.mockReturnValue(undefined);
+		mockGet.mockReturnValue(null);
 
 		render(<AppLoading />);
 
@@ -40,14 +41,17 @@ describe('AppLoading', () => {
 
 	it('should have proper structure and content', () => {
 		// Mock localStorage to return dark theme
-		mockGet.mockReturnValue(undefined);
+		mockGet.mockReturnValue(null);
 
 		render(<AppLoading />);
 
 		// Check for brand logo
 		const logo = screen.getByAltText(SIGNOZ_TEXT);
 		expect(logo).toBeInTheDocument();
-		expect(logo).toHaveAttribute('src', 'test-file-stub');
+		expect(logo).toHaveAttribute(
+			'src',
+			expect.stringContaining('data:image/svg+xml'),
+		);
 
 		// Check for brand title
 		const title = screen.getByText(SIGNOZ_TEXT);

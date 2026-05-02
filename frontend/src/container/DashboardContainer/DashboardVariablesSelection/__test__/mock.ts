@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 export const onUpdateVariableNodeMock = {
 	nodeToUpdate: 'deployment_environment',
 	graph: {
@@ -20,7 +22,7 @@ export const onUpdateVariableNodeMock = {
 		'k8s_namespace_name',
 		'http_status_code',
 	],
-	callback: jest.fn(),
+	callback: vi.fn(),
 };
 
 export const buildGraphMock = {

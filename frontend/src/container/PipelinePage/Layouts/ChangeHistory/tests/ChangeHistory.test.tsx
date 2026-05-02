@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports

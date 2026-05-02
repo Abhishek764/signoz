@@ -1,37 +1,56 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { EQueryType } from 'types/common/dashboard';
 
 import * as createAlertState from '../../context';
 import Footer from '../Footer';
 
 // Mock the hooks used by Footer component
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('@signozhq/ui', () => ({
+	Button: ({
+		children,
+		color: _color,
+		variant: _variant,
+		...props
+	}: any): JSX.Element => (
+		<button type="button" {...props}>
+			{children}
+		</button>
+	),
+	toast: {
+		error: vi.fn(),
+		success: vi.fn(),
+	},
 }));
-jest.mock('providers/ErrorModalProvider', () => ({
-	useErrorModal: (): { showErrorModal: jest.Mock } => ({
-		showErrorModal: jest.fn(),
+
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
+}));
+
+vi.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: ReturnType<typeof vi.fn> } => ({
+		showErrorModal: vi.fn(),
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: vi.fn(),
 }));
 
-const mockCreateAlertRule = jest.fn();
-const mockTestAlertRule = jest.fn();
-const mockUpdateAlertRule = jest.fn();
-const mockDiscardAlertRule = jest.fn();
+const mockCreateAlertRule = vi.fn();
+const mockTestAlertRule = vi.fn();
+const mockUpdateAlertRule = vi.fn();
+const mockDiscardAlertRule = vi.fn();
 
-// Import the mocked hooks
-const { useQueryBuilder } = jest.requireMock(
-	'hooks/queryBuilder/useQueryBuilder',
-);
-const { useSafeNavigate } = jest.requireMock('hooks/useSafeNavigate');
+const mockedUseQueryBuilder = vi.mocked(useQueryBuilder);
+const mockedUseSafeNavigate = vi.mocked(useSafeNavigate);
 
 const mockAlertContextState = createMockAlertContextState({
 	createAlertRule: mockCreateAlertRule,
@@ -64,7 +83,7 @@ const mockAlertContextState = createMockAlertContextState({
 	},
 });
 
-jest
+vi
 	.spyOn(createAlertState, 'useCreateAlertState')
 	.mockReturnValue(mockAlertContextState);
 
@@ -78,20 +97,22 @@ const PLAY_ICON_SELECTOR = 'svg.lucide-play';
 
 describe('Footer', () => {
 	beforeEach(() => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
+				id: '',
 				builder: {
 					queryData: [],
 					queryFormulas: [],
+					queryTraceOperator: [],
 				},
 				promql: [],
 				clickhouse_sql: [],
-				queryType: 'builder',
+				queryType: EQueryType.QUERY_BUILDER,
 			},
-		});
+		} as unknown as ReturnType<typeof useQueryBuilder>);
 
-		useSafeNavigate.mockReturnValue({
-			safeNavigate: jest.fn(),
+		mockedUseSafeNavigate.mockReturnValue({
+			safeNavigate: vi.fn(),
 		});
 	});
 
@@ -115,7 +136,7 @@ describe('Footer', () => {
 	});
 
 	it('update alert rule action works correctly', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isEditMode: true,
 		});
@@ -131,7 +152,7 @@ describe('Footer', () => {
 	});
 
 	it('all buttons are disabled when creating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
@@ -147,7 +168,7 @@ describe('Footer', () => {
 	});
 
 	it('all buttons are disabled when updating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
@@ -164,7 +185,7 @@ describe('Footer', () => {
 	});
 
 	it('all buttons are disabled when testing alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
@@ -181,7 +202,7 @@ describe('Footer', () => {
 	});
 
 	it('create and test buttons are disabled when alert name is missing', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			alertState: {
 				...mockAlertContextState.alertState,
@@ -199,7 +220,7 @@ describe('Footer', () => {
 	});
 
 	it('create and test buttons are disabled when notifcation channels are missing and routing policies are disabled', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			notificationSettings: {
 				...mockAlertContextState.notificationSettings,
@@ -227,7 +248,7 @@ describe('Footer', () => {
 	});
 
 	it('buttons are enabled even with no notification channels when routing policies are enabled', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			notificationSettings: {
 				...mockAlertContextState.notificationSettings,
@@ -256,7 +277,7 @@ describe('Footer', () => {
 	});
 
 	it('should show loader icon on test notification button when testing alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
@@ -273,7 +294,7 @@ describe('Footer', () => {
 	});
 
 	it('should not show check icon on save alert rule button when updating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
@@ -290,7 +311,7 @@ describe('Footer', () => {
 	});
 
 	it('should not show check icon on save alert rule button when creating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
+		vi.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});

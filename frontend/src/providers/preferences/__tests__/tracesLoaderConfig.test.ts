@@ -1,3 +1,4 @@
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import {
@@ -11,9 +12,9 @@ import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 // Mock localStorage
 const mockLocalStorage: Record<string, string> = {};
 
-jest.mock('api/browser/localstorage/get', () => ({
+vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn((key: string) => mockLocalStorage[key] || null),
+	default: vi.fn((key: string) => mockLocalStorage[key] || null),
 }));
 
 describe('tracesLoaderConfig', () => {

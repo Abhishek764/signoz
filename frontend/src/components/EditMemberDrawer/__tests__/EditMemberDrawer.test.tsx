@@ -1,8 +1,9 @@
 import type { ChangeEventHandler, ReactNode } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
 import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useListRoles } from 'api/generated/services/role';
 import {
 	useCreateResetPasswordToken,
 	useDeleteUser,
@@ -17,10 +18,19 @@ import {
 	listRolesSuccessResponse,
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
-import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
+
+vi.mock('api/generated/services/role', async () => {
+	const actual = await vi.importActual<
+		typeof import('api/generated/services/role')
+	>('api/generated/services/role');
+	return {
+		...actual,
+		useListRoles: vi.fn(),
+	};
+});
 
 vi.mock('api/generated/services/users', () => ({
 	useDeleteUser: vi.fn(),
@@ -131,8 +141,6 @@ vi.mock('react-use', () => ({
 	],
 }));
 
-const ROLES_ENDPOINT = '*/api/v1/roles';
-
 const mockDeleteMutate = vi.fn();
 const mockCreateTokenMutateAsync = vi.fn();
 
@@ -213,11 +221,16 @@ describe('EditMemberDrawer', () => {
 		mockCopyState.value = undefined;
 		mockCopyState.error = undefined;
 		showErrorModal.mockClear();
-		server.use(
-			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-			),
-		);
+		(useListRoles as Mock).mockReturnValue({
+			data: listRolesSuccessResponse,
+			isLoading: false,
+			isError: false,
+			error: null,
+			refetch: vi.fn(),
+			isFetching: false,
+			isSuccess: true,
+			status: 'success',
+		});
 		(useGetUser as Mock).mockReturnValue({
 			data: mockFetchedUser,
 			isLoading: false,
@@ -266,14 +279,12 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	afterEach(() => {
-		server.resetHandlers();
-	});
-
-	it('renders active member details and disables Save when form is not dirty', () => {
+	it('renders active member details and disables Save when form is not dirty', async () => {
 		renderDrawer();
 
-		expect(screen.getByDisplayValue('Alice Smith')).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('Alice Smith'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText('alice@signoz.io')).toBeInTheDocument();
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
 		expect(
@@ -345,7 +356,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Open the roles dropdown and select signoz-editor
+		await screen.findByTitle('signoz-admin');
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-editor'));
 
@@ -374,7 +385,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Switch from signoz-admin to signoz-viewer using single-select
+		await screen.findByTitle('signoz-admin');
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-viewer'));
 

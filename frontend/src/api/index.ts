@@ -15,6 +15,7 @@ import { getBasePath } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
+import { retryRequestAfterAuth } from 'api/interceptors';
 import { Logout } from './utils';
 
 const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
@@ -129,13 +130,10 @@ export const interceptorRejected = async (
 					afterLogin(response.data.accessToken, response.data.refreshToken, true);
 
 					try {
-						const reResponse = await axios({
-							...value.config,
-							headers: {
-								...value.config.headers,
-								Authorization: `Bearer ${response.data.accessToken}`,
-							},
-						});
+						const reResponse = await retryRequestAfterAuth(
+							value.config,
+							response.data.accessToken,
+						);
 
 						return await Promise.resolve(reResponse);
 					} catch (error) {

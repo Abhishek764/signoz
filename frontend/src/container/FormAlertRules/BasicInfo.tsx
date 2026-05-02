@@ -188,6 +188,7 @@ function BasicInfo({
 				<FormItemMedium
 					name="alert_all_configured_channels"
 					label="Alert all the configured channels"
+					valuePropName="checked"
 				>
 					<Tooltip
 						title={

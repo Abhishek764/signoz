@@ -16,20 +16,3 @@ exports[`PipelinePage container test > should render Tags section 1`] = `
   </span>
 </DocumentFragment>
 `;
-
-exports[`PipelinePage container test should render Tags section 1`] = `
-<DocumentFragment>
-  <span>
-    <span
-      class="ant-tag ant-tag-magenta css-dev-only-do-not-override-2i2tap"
-    >
-      server
-    </span>
-    <span
-      class="ant-tag ant-tag-magenta css-dev-only-do-not-override-2i2tap"
-    >
-      app
-    </span>
-  </span>
-</DocumentFragment>
-`;

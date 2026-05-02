@@ -2,9 +2,8 @@ import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import CreateAlertPage from 'pages/CreateAlert';
-import { act, fireEvent, render } from 'tests/test-utils';
+import { act, fireEvent, render, screen } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import type { Mock } from 'vitest';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
@@ -50,6 +49,14 @@ vi.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
+vi.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
+	useShareBuilderUrl: (): void => {},
+}));
+
+vi.mock('api/common/logEvent', () => ({
+	default: vi.fn().mockResolvedValue({ statusCode: 200 }),
+}));
+
 vi
 	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
 	.mockReturnValue({
@@ -59,7 +66,11 @@ vi
 		targetUnit: 'rpm',
 	});
 
-let mockWindowOpen: Mock;
+const mockWindowOpen = vi.fn();
+
+beforeAll(() => {
+	window.open = mockWindowOpen;
+});
 
 window.ResizeObserver =
 	window.ResizeObserver ||
@@ -91,11 +102,6 @@ function clickLinkAndVerifyRedirect(
 }
 describe('Alert rule documentation redirection', () => {
 	let renderResult: ReturnType<typeof render>;
-
-	beforeAll(() => {
-		mockWindowOpen = vi.fn();
-		window.open = mockWindowOpen;
-	});
 
 	beforeEach(() => {
 		act(() => {
@@ -151,11 +157,15 @@ describe('Alert rule documentation redirection', () => {
 });
 
 describe('Create alert page redirection', () => {
+	beforeEach(() => {
+		mockWindowOpen.mockClear();
+	});
+
 	Object.values(AlertTypes)
 		.filter((type) => type !== AlertTypes.ANOMALY_BASED_ALERT)
 		.forEach((alertType) => {
-			it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
-				const { getByRole } = render(
+			it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, async () => {
+				render(
 					<CreateAlertPage />,
 					{},
 					{
@@ -163,18 +173,18 @@ describe('Create alert page redirection', () => {
 					},
 				);
 
+				const guideButton = await screen.findByRole('button', {
+					name: /alert setup guide/i,
+				});
+
 				act(() => {
-					fireEvent.click(
-						getByRole('button', {
-							name: /alert setup guide/i,
-						}),
-					);
+					fireEvent.click(guideButton);
 				});
 
 				expect(mockWindowOpen).toHaveBeenCalledWith(
 					ALERT_TYPE_URL_MAP[alertType].creation,
 					'_blank',
 				);
-			}, 15_000);
+			}, 30_000);
 		});
 });

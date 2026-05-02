@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
@@ -30,6 +31,8 @@ import {
 } from 'types/api/licensesV3/getActive';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 import { ROLES, USER_ROLES } from 'types/roles';
+
+import { testI18n } from './testI18n';
 // import { MemoryRouter as V5MemoryRouter } from 'react-router-dom-v5-compat';
 
 // Mock ResizeObserver
@@ -92,20 +95,6 @@ const mockStored = (role?: string): any =>
 			],
 		},
 	});
-
-vi.mock('react-i18next', () => ({
-	useTranslation: (): {
-		t: (str: string) => string;
-		i18n: {
-			changeLanguage: () => Promise<void>;
-		};
-	} => ({
-		t: (str: string): string => str,
-		i18n: {
-			changeLanguage: (): Promise<void> => new Promise(() => {}),
-		},
-	}),
-}));
 
 export function getAppContextMock(
 	role: string,
@@ -285,29 +274,31 @@ export function AllTheProviders({
 	);
 
 	return (
-		<MemoryRouter initialEntries={[initialRouteValue]}>
-			<CompatRouter>
-				<NuqsAdapter>
-					<QueryClientProvider client={queryClient}>
-						<Provider store={mockStored(roleValue)}>
-							<AppContext.Provider
-								value={getAppContextMock(roleValue, appContextOverridesValue)}
-							>
-								<ResourceProvider>
-									<ErrorModalProvider>
-										<TimezoneProvider>
-											<PreferenceContextProvider>
-												{queryBuilderContent}
-											</PreferenceContextProvider>
-										</TimezoneProvider>
-									</ErrorModalProvider>
-								</ResourceProvider>
-							</AppContext.Provider>
-						</Provider>
-					</QueryClientProvider>
-				</NuqsAdapter>
-			</CompatRouter>
-		</MemoryRouter>
+		<I18nextProvider i18n={testI18n}>
+			<MemoryRouter initialEntries={[initialRouteValue]}>
+				<CompatRouter>
+					<NuqsAdapter>
+						<QueryClientProvider client={queryClient}>
+							<Provider store={mockStored(roleValue)}>
+								<AppContext.Provider
+									value={getAppContextMock(roleValue, appContextOverridesValue)}
+								>
+									<ResourceProvider>
+										<ErrorModalProvider>
+											<TimezoneProvider>
+												<PreferenceContextProvider>
+													{queryBuilderContent}
+												</PreferenceContextProvider>
+											</TimezoneProvider>
+										</ErrorModalProvider>
+									</ResourceProvider>
+								</AppContext.Provider>
+							</Provider>
+						</QueryClientProvider>
+					</NuqsAdapter>
+				</CompatRouter>
+			</MemoryRouter>
+		</I18nextProvider>
 	);
 }
 

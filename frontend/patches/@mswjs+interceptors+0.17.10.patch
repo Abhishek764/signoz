@@ -1,0 +1,46 @@
+diff --git a/node_modules/@mswjs/interceptors/lib/interceptors/XMLHttpRequest/XMLHttpRequestOverride.js b/node_modules/@mswjs/interceptors/lib/interceptors/XMLHttpRequest/XMLHttpRequestOverride.js
+index 2480e76..67208c4 100644
+--- a/node_modules/@mswjs/interceptors/lib/interceptors/XMLHttpRequest/XMLHttpRequestOverride.js
++++ b/node_modules/@mswjs/interceptors/lib/interceptors/XMLHttpRequest/XMLHttpRequestOverride.js
+@@ -345,7 +345,14 @@ var createXMLHttpRequestOverride = function (options) {
+                 });
+             };
+             XMLHttpRequestOverride.prototype.abort = function () {
+-                this.log('abort');
++                if (typeof this.log === 'function') {
++                    this.log('abort');
++                }
++                if (typeof this.setReadyState !== 'function' ||
++                    typeof this.trigger !== 'function' ||
++                    typeof this.readyState !== 'number') {
++                    return;
++                }
+                 if (this.readyState > this.UNSENT && this.readyState < this.DONE) {
+                     this.setReadyState(this.UNSENT);
+                     this.trigger('abort');
+@@ -459,14 +466,17 @@ var createXMLHttpRequestOverride = function (options) {
+                     }
+                     finally { if (e_2) throw e_2.error; }
+                 }
+-                request.onabort = this.abort;
+-                request.onerror = this.onerror;
+-                request.ontimeout = this.ontimeout;
+-                request.onload = this.onload;
+-                request.onloadstart = this.onloadstart;
+-                request.onloadend = this.onloadend;
+-                request.onprogress = this.onprogress;
+-                request.onreadystatechange = this.onreadystatechange;
++                request.abort = this.abort.bind(this);
++                request.onabort = this.abort.bind(this);
++                request.onerror = this.onerror ? this.onerror.bind(this) : null;
++                request.ontimeout = this.ontimeout ? this.ontimeout.bind(this) : null;
++                request.onload = this.onload ? this.onload.bind(this) : null;
++                request.onloadstart = this.onloadstart ? this.onloadstart.bind(this) : null;
++                request.onloadend = this.onloadend ? this.onloadend.bind(this) : null;
++                request.onprogress = this.onprogress ? this.onprogress.bind(this) : null;
++                request.onreadystatechange = this.onreadystatechange
++                    ? this.onreadystatechange.bind(this)
++                    : null;
+             };
+             /**
+              * Propagates the mock XMLHttpRequest instance listeners

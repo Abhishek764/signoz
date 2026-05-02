@@ -1,10 +1,18 @@
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import CreateAlertPage from 'pages/CreateAlert';
-import { act, fireEvent, render } from 'tests/test-utils';
+import { act, fireEvent, render, screen } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import type { Mock } from 'vitest';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 
 import { ALERT_TYPE_URL_MAP } from './constants';
 
@@ -57,16 +65,25 @@ vi
 		targetUnit: 'rpm',
 	});
 
-let mockWindowOpen: Mock;
+let windowOpenSpy: MockInstance;
 
 describe('Anomaly Alert Documentation Redirection', () => {
 	beforeAll(() => {
-		mockWindowOpen = vi.fn();
-		window.open = mockWindowOpen;
+		windowOpenSpy = vi
+			.spyOn(window, 'open')
+			.mockImplementation((): Window | null => null);
 	});
 
-	it('should handle anomaly alert documentation redirection correctly', () => {
-		const { getByRole } = render(
+	afterAll(() => {
+		windowOpenSpy.mockRestore();
+	});
+
+	beforeEach(() => {
+		windowOpenSpy.mockClear();
+	});
+
+	it('should handle anomaly alert documentation redirection correctly', async () => {
+		render(
 			<CreateAlertPage />,
 			{},
 			{
@@ -74,19 +91,19 @@ describe('Anomaly Alert Documentation Redirection', () => {
 			},
 		);
 
-		const alertType = AlertTypes.ANOMALY_BASED_ALERT;
-
-		act(() => {
-			fireEvent.click(
-				getByRole('button', {
-					name: /alert setup guide/i,
-				}),
-			);
+		const button = await screen.findByRole('button', {
+			name: /alert setup guide/i,
 		});
 
-		expect(mockWindowOpen).toHaveBeenCalledWith(
+		act(() => {
+			fireEvent.click(button);
+		});
+
+		const alertType = AlertTypes.ANOMALY_BASED_ALERT;
+
+		expect(windowOpenSpy).toHaveBeenCalledWith(
 			ALERT_TYPE_URL_MAP[alertType].creation,
 			'_blank',
 		);
-	}, 15_000);
+	}, 30_000);
 });

@@ -1144,7 +1144,10 @@ function MultiIngestionSettings(): JSX.Element {
 																				<div className="title">
 																					Daily limit
 																					<div className="limit-enable-disable-toggle">
-																						<Form.Item name="enableDailyLimit">
+																						<Form.Item
+																							name="enableDailyLimit"
+																							valuePropName="checked"
+																						>
 																							<Switch
 																								size="small"
 																								checked={activeSignal?.config?.day?.enabled}
@@ -1234,7 +1237,10 @@ function MultiIngestionSettings(): JSX.Element {
 																				<div className="title">
 																					Per Second limit
 																					<div className="limit-enable-disable-toggle">
-																						<Form.Item name="enableSecondLimit">
+																						<Form.Item
+																							name="enableSecondLimit"
+																							valuePropName="checked"
+																						>
 																							<Switch
 																								size="small"
 																								checked={activeSignal?.config?.second?.enabled}

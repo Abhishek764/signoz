@@ -79,9 +79,9 @@ function FormAlertChannels({
 					label={t('field_send_resolved')}
 					labelAlign="left"
 					name="send_resolved"
+					valuePropName="checked"
 				>
 					<Switch
-						defaultChecked={initialValue?.send_resolved}
 						data-testid="field-send-resolved-checkbox"
 						onChange={(value): void => {
 							setSelectedConfig((state) => ({

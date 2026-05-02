@@ -1,4 +1,4 @@
-import React, { ComponentType, Suspense } from 'react';
+import { ComponentType, lazy as reactLazy, Suspense } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	render,
@@ -53,10 +53,9 @@ describe('Loadable', () => {
 	});
 
 	it('should call lazy with the provided import path', () => {
-		const reactLazySpy = vi.mocked(React.lazy);
 		Loadable(loadSampleComponent);
 
-		expect(reactLazySpy).toHaveBeenCalledTimes(1);
-		expect(reactLazySpy).toHaveBeenCalledWith(expect.any(Function));
+		expect(vi.mocked(reactLazy)).toHaveBeenCalledTimes(1);
+		expect(vi.mocked(reactLazy)).toHaveBeenCalledWith(expect.any(Function));
 	});
 });

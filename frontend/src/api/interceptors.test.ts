@@ -1,7 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import axios, { AxiosHeaders, AxiosResponse } from 'axios';
 
-import { interceptorRejected } from './index';
+const { retryRequestMock, postRotateMock } = vi.hoisted(() => ({
+	retryRequestMock: vi.fn(),
+	postRotateMock: vi.fn(() =>
+		Promise.resolve({
+			data: { accessToken: 'new-token', refreshToken: 'new-refresh' },
+		}),
+	),
+}));
+
+vi.mock('api/interceptors', () => ({
+	__esModule: true,
+	retryRequestAfterAuth: retryRequestMock,
+}));
 
 vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
@@ -10,11 +22,7 @@ vi.mock('api/browser/localstorage/get', () => ({
 
 vi.mock('api/v2/sessions/rotate/post', () => ({
 	__esModule: true,
-	default: vi.fn(() =>
-		Promise.resolve({
-			data: { accessToken: 'new-token', refreshToken: 'new-refresh' },
-		}),
-	),
+	default: postRotateMock,
 }));
 
 vi.mock('AppRoutes/utils', () => ({
@@ -23,30 +31,30 @@ vi.mock('AppRoutes/utils', () => ({
 }));
 
 vi.mock('axios', async () => {
-	const actualAxios = await vi.importActual<typeof import('axios')>('axios');
-	const mockAxios = vi.fn().mockResolvedValue({ data: 'success' });
-
+	const actual = await vi.importActual<typeof import('axios')>('axios');
 	return {
-		...actualAxios,
-		default: Object.assign(mockAxios, {
-			...actualAxios.default,
-			isAxiosError: vi.fn().mockReturnValue(true),
-			create: actualAxios.default.create,
+		...actual,
+		default: Object.assign(actual.default, {
+			isAxiosError: vi.fn(() => true),
 		}),
 		__esModule: true,
 	};
 });
 
 describe('interceptorRejected', () => {
+	let interceptorRejected: (value: AxiosResponse) => Promise<AxiosResponse>;
+
+	beforeAll(async () => {
+		vi.resetModules();
+		const mod = await import('./index');
+		interceptorRejected = mod.interceptorRejected;
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
-		(
-			axios as unknown as {
-				mockResolvedValue: (value: AxiosResponse<{ data: string }>) => void;
-			}
-		).mockResolvedValue({ data: 'success' } as unknown as AxiosResponse<{
-			data: string;
-		}>);
+		retryRequestMock.mockResolvedValue({
+			data: 'success',
+		} as unknown as AxiosResponse<{ data: string }>);
 		(
 			axios.isAxiosError as unknown as {
 				mockReturnValue: (value: boolean) => void;
@@ -86,11 +94,12 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = axios as unknown as ReturnType<typeof vi.fn>;
-		expect(mockAxiosFn.mock.calls).toHaveLength(1);
-		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
-		expect(Array.isArray(JSON.parse(retryCallConfig.data))).toBe(true);
-		expect(JSON.parse(retryCallConfig.data)).toStrictEqual(arrayPayload);
+		expect(retryRequestMock).toHaveBeenCalledTimes(1);
+		const retryCallConfig = retryRequestMock.mock.calls[0][0];
+		expect(Array.isArray(JSON.parse(retryCallConfig.data as string))).toBe(true);
+		expect(JSON.parse(retryCallConfig.data as string)).toStrictEqual(
+			arrayPayload,
+		);
 	});
 
 	it('should preserve object payload structure when retrying a 401 request', async () => {
@@ -122,10 +131,11 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = axios as unknown as ReturnType<typeof vi.fn>;
-		expect(mockAxiosFn.mock.calls).toHaveLength(1);
-		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
-		expect(JSON.parse(retryCallConfig.data)).toStrictEqual(objectPayload);
+		expect(retryRequestMock).toHaveBeenCalledTimes(1);
+		const retryCallConfig = retryRequestMock.mock.calls[0][0];
+		expect(JSON.parse(retryCallConfig.data as string)).toStrictEqual(
+			objectPayload,
+		);
 	});
 
 	it('should handle undefined data gracefully when retrying', async () => {
@@ -155,9 +165,8 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = axios as unknown as ReturnType<typeof vi.fn>;
-		expect(mockAxiosFn.mock.calls).toHaveLength(1);
-		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
+		expect(retryRequestMock).toHaveBeenCalledTimes(1);
+		const retryCallConfig = retryRequestMock.mock.calls[0][0];
 		expect(retryCallConfig.data).toBeUndefined();
 	});
 });

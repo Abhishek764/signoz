@@ -4,13 +4,12 @@ import {
 	Button,
 	Checkbox,
 	Input,
-	RadioGroup,
-	RadioGroupItem,
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 } from '@signozhq/ui';
+import { ClarificationFieldTypeDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import type {
 	ClarificationEventDTO,
 	ClarificationFieldEventDTO,
@@ -48,7 +47,7 @@ export default function ClarificationForm({
 
 	const fields = clarification.fields ?? [];
 	const initialAnswers = Object.fromEntries(
-		fields.map((f) => [f.id, f.default ?? '']),
+		fields.map((f) => [f.id, initialAnswerFor(f)]),
 	);
 	const [answers, setAnswers] =
 		useState<Record<string, unknown>>(initialAnswers);
@@ -136,8 +135,27 @@ export default function ClarificationForm({
 }
 
 // ---------------------------------------------------------------------------
-// Field renderer — handles text, number, select, radio, checkbox
+// Field renderer — covers every variant of ClarificationFieldTypeDTO:
+// text, number, select, multi_select, boolean.
 // ---------------------------------------------------------------------------
+
+/**
+ * Per-type seed value. The DTO's `default` is `string | string[] | null`,
+ * which doesn't fit boolean fields cleanly — we coerce 'true'/'false' strings
+ * for them, fall back to `[]` for multi_select, and the raw string otherwise.
+ */
+function initialAnswerFor(f: ClarificationFieldEventDTO): unknown {
+	const raw = f.default;
+	if (f.type === ClarificationFieldTypeDTO.boolean) {
+		// `default` is typed string | string[] | null; backend sends
+		// 'true'/'false' as strings for boolean fields.
+		return raw === 'true';
+	}
+	if (f.type === ClarificationFieldTypeDTO.multi_select) {
+		return Array.isArray(raw) ? raw : [];
+	}
+	return raw ?? '';
+}
 
 interface FieldInputProps {
 	field: ClarificationFieldEventDTO;
@@ -148,8 +166,8 @@ interface FieldInputProps {
 function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 	const { id, type, label, required, options, allowCustom } = field;
 
-	// Local UI state for the synthetic "custom" option on select / radio /
-	// checkbox fields with `allowCustom`. The free-text input only renders
+	// Local UI state for the synthetic "custom" option on select /
+	// multi_select fields with `allowCustom`. The free-text input only renders
 	// when this is true; the typed value is what's actually sent up via
 	// `onChange` (never the sentinel / "Other" label).
 	const [isCustom, setIsCustom] = useState(false);
@@ -159,7 +177,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 	// `allowCustom` (in which case the dropdown still appears with just the
 	// "Other (type your own)" entry — a plain `options: null` would
 	// otherwise fall through to the bare text-input renderer).
-	if (type === 'select' && (options || allowCustom)) {
+	if (type === ClarificationFieldTypeDTO.select && (options || allowCustom)) {
 		const handleSelectChange = (next: string | string[]): void => {
 			// `multiple` is off → callback receives a single string. The wider
 			// `string | string[]` typing comes from the shared Select root.
@@ -216,74 +234,30 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 		);
 	}
 
-	// Same fallback logic as the select branch — render the radio group
-	// when there are options OR when the field is `allowCustom` only.
-	if (type === 'radio' && (options || allowCustom)) {
-		const handleRadioChange = (next: string): void => {
-			if (next === CUSTOM_OPTION_SENTINEL) {
-				setIsCustom(true);
-				onChange(customValue);
-			} else {
-				setIsCustom(false);
-				onChange(next);
-			}
-		};
-
-		const radioValue = isCustom
-			? CUSTOM_OPTION_SENTINEL
-			: typeof value === 'string'
-				? value
-				: '';
-
+	// Boolean — single yes/no checkbox. The label sits inside the checkbox
+	// so the click target covers both, matching how multi_select rows render.
+	if (type === ClarificationFieldTypeDTO.boolean) {
+		const checked = value === true;
 		return (
 			<div className={styles.field}>
-				<span className={styles.label}>
+				<Checkbox
+					className={styles.checkboxLabel}
+					value={checked}
+					onChange={(): void => onChange(!checked)}
+				>
 					{label}
 					{required && <span className={styles.required}>*</span>}
-				</span>
-				<RadioGroup
-					name={id}
-					value={radioValue}
-					onChange={handleRadioChange}
-					className={styles.radioGroup}
-				>
-					{options?.map((opt) => (
-						<RadioGroupItem
-							key={opt}
-							value={opt}
-							containerClassName={styles.radioLabel}
-						>
-							{opt}
-						</RadioGroupItem>
-					))}
-					{allowCustom && (
-						<RadioGroupItem
-							value={CUSTOM_OPTION_SENTINEL}
-							containerClassName={styles.radioLabel}
-						>
-							{CUSTOM_OPTION_LABEL}
-						</RadioGroupItem>
-					)}
-				</RadioGroup>
-				{isCustom && (
-					<Input
-						type="text"
-						className={styles.input}
-						placeholder="Enter a custom value"
-						value={customValue}
-						onChange={(e): void => {
-							setCustomValue(e.target.value);
-							onChange(e.target.value);
-						}}
-					/>
-				)}
+				</Checkbox>
 			</div>
 		);
 	}
 
 	// Same fallback logic as the select branch — render the checkbox group
 	// when there are options OR when the field is `allowCustom` only.
-	if (type === 'checkbox' && (options || allowCustom)) {
+	if (
+		type === ClarificationFieldTypeDTO.multi_select &&
+		(options || allowCustom)
+	) {
 		const selected = Array.isArray(value) ? (value as string[]) : [];
 		// Anything in the value array that isn't one of the predefined options
 		// is treated as a custom entry — we keep at most one custom entry,

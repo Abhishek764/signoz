@@ -14,7 +14,7 @@ import {
 } from '@signozhq/ui';
 import type {
 	ApprovalEventDTO,
-	ApprovalEventDTODiffAnyOf,
+	ApprovalEventDTODiff,
 } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	Check,
@@ -204,7 +204,7 @@ export default function ApprovalCard({
 type DiffViewMode = 'split' | 'unified';
 
 interface DiffViewProps {
-	diff: ApprovalEventDTODiffAnyOf;
+	diff: ApprovalEventDTODiff;
 	expanded?: boolean;
 	/** When true, long lines wrap instead of horizontally scrolling. */
 	wrapText?: boolean;

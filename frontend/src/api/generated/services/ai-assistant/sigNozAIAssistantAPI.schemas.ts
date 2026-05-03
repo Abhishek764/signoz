@@ -6,6 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 /**
+ * Result of an undo/revert/restore operation as reported to the client.
+ */
+export enum ActionLifecycleResultDTO {
+	deleted = 'deleted',
+	reverted = 'reverted',
+	restored = 'restored',
+}
+/**
  * Shared response for undo, revert, restore.
  */
 export interface ActionResultResponseDTO {
@@ -21,12 +29,14 @@ export interface ActionResultResponseDTO {
 	 * @type string
 	 */
 	resourceId: string;
-	/**
-	 * @type string
-	 */
-	action: string;
+	action: ActionLifecycleResultDTO;
 }
 
+export enum ApplyFilterSignalDTO {
+	logs = 'logs',
+	traces = 'traces',
+	metrics = 'metrics',
+}
 /**
  * Resolved approval (approved/rejected/superseded) anchored on the assistant message that proposed it. Pending approvals never appear here - they live at the top-level pendingApproval slot.
  */
@@ -36,14 +46,8 @@ export interface ApprovalActionSummaryDTO {
 	 * @format uuid
 	 */
 	approvalId: string;
-	/**
-	 * @type string
-	 */
-	state: string;
-	/**
-	 * @type string
-	 */
-	actionType: string;
+	state: ApprovalStateDTO;
+	actionType: ApprovalActionTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -59,9 +63,17 @@ export interface ApprovalActionSummaryDTO {
 	resolvedAt: string;
 }
 
-export type ApprovalSummaryDTODiffAnyOf = { [key: string]: unknown };
-
-export type ApprovalSummaryDTODiff = ApprovalSummaryDTODiffAnyOf | null;
+export enum ApprovalActionTypeDTO {
+	modify = 'modify',
+	delete = 'delete',
+}
+export enum ApprovalStateDTO {
+	pending = 'pending',
+	approved = 'approved',
+	rejected = 'rejected',
+	superseded = 'superseded',
+}
+export type ApprovalSummaryDTODiff = { [key: string]: unknown };
 
 export interface ApprovalSummaryDTO {
 	/**
@@ -79,14 +91,8 @@ export interface ApprovalSummaryDTO {
 	 * @format uuid
 	 */
 	sourceMessageId: string;
-	/**
-	 * @type string
-	 */
-	state: string;
-	/**
-	 * @type string
-	 */
-	actionType: string;
+	state: ApprovalStateDTO;
+	actionType: ApprovalActionTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -95,6 +101,9 @@ export interface ApprovalSummaryDTO {
 	 * @type string
 	 */
 	summary: string;
+	/**
+	 * @type object
+	 */
 	diff?: ApprovalSummaryDTODiff;
 	/**
 	 * @type string
@@ -136,14 +145,8 @@ export interface CancelResponseDTO {
 	 * @format uuid
 	 */
 	executionId: string;
-	/**
-	 * @type string
-	 */
-	previousState: string;
-	/**
-	 * @type string
-	 */
-	state: string;
+	previousState: ExecutionStateDTO;
+	state: ExecutionStateDTO;
 }
 
 export type ClarificationFieldDTOOptions = string[] | null;
@@ -155,10 +158,7 @@ export interface ClarificationFieldDTO {
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	type: string;
+	type: ClarificationFieldTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -175,6 +175,18 @@ export interface ClarificationFieldDTO {
 	default?: ClarificationFieldDTODefault;
 }
 
+export enum ClarificationFieldTypeDTO {
+	text = 'text',
+	number = 'number',
+	select = 'select',
+	multi_select = 'multi_select',
+	boolean = 'boolean',
+}
+export enum ClarificationStateDTO {
+	pending = 'pending',
+	submitted = 'submitted',
+	superseded = 'superseded',
+}
 export type ClarificationSummaryDTODiscoveredContextAnyOf = {
 	[key: string]: unknown;
 };
@@ -198,10 +210,7 @@ export interface ClarificationSummaryDTO {
 	 * @format uuid
 	 */
 	sourceMessageId: string;
-	/**
-	 * @type string
-	 */
-	state: string;
+	state: ClarificationStateDTO;
 	/**
 	 * @type string
 	 */
@@ -322,6 +331,16 @@ export interface ErrorResponseAdditionalDTO {
 	message: string;
 }
 
+export enum ExecutionStateDTO {
+	queued = 'queued',
+	running = 'running',
+	awaiting_approval = 'awaiting_approval',
+	awaiting_clarification = 'awaiting_clarification',
+	resumed = 'resumed',
+	completed = 'completed',
+	failed = 'failed',
+	canceled = 'canceled',
+}
 export enum FeedbackRatingDTO {
 	positive = 'positive',
 	negative = 'negative',
@@ -366,7 +385,7 @@ export type MessageActionDTOInput = MessageActionDTOInputAnyOf | null;
 
 export type MessageActionDTOTooltip = string | null;
 
-export type MessageActionDTOSignal = string | null;
+export type MessageActionDTOSignal = ApplyFilterSignalDTO | null;
 
 export type MessageActionDTOQueryAnyOf = { [key: string]: unknown };
 
@@ -403,6 +422,9 @@ export enum MessageActionKindDTO {
 	open_docs = 'open_docs',
 	apply_filter = 'apply_filter',
 }
+export enum MessageContentTypeDTO {
+	markdown = 'markdown',
+}
 /**
  * "auto" if derived from current page; "mention" if explicitly @-picked.
  */
@@ -438,14 +460,14 @@ export type MessageContextDTOMetadata = MessageContextDTOMetadataAnyOf | null;
 
 export interface MessageContextDTO {
 	/**
-	 * @type string
 	 * @enum auto,mention
+	 * @type string
 	 * @description "auto" if derived from current page; "mention" if explicitly @-picked.
 	 */
 	source: MessageContextDTOSource;
 	/**
-	 * @type string
 	 * @enum dashboard,alert,saved_view,logs_explorer,traces_explorer,metrics_explorer,service
+	 * @type string
 	 * @description Resource taxonomy. Use metadata.page for concrete page identity.
 	 */
 	type: MessageContextDTOType;
@@ -460,6 +482,11 @@ export interface MessageContextDTO {
 	metadata?: MessageContextDTOMetadata;
 }
 
+export enum MessageRoleDTO {
+	user = 'user',
+	assistant = 'assistant',
+	system = 'system',
+}
 export type MessageSummaryDTOContent = string | null;
 
 export type MessageSummaryDTOToolCallsAnyOfItem = { [key: string]: unknown };
@@ -493,14 +520,8 @@ export interface MessageSummaryDTO {
 	 * @format uuid
 	 */
 	messageId: string;
-	/**
-	 * @type string
-	 */
-	role: string;
-	/**
-	 * @type string
-	 */
-	contentType?: string;
+	role: MessageRoleDTO;
+	contentType?: MessageContentTypeDTO;
 	content?: MessageSummaryDTOContent;
 	/**
 	 * @type boolean
@@ -597,7 +618,7 @@ export interface RevertRequestDTO {
 
 export type ThreadDetailResponseDTOTitle = string | null;
 
-export type ThreadDetailResponseDTOState = string | null;
+export type ThreadDetailResponseDTOState = ExecutionStateDTO | null;
 
 export type ThreadDetailResponseDTOActiveExecutionId = string | null;
 
@@ -656,7 +677,7 @@ export interface ThreadListResponseDTO {
 
 export type ThreadSummaryDTOTitle = string | null;
 
-export type ThreadSummaryDTOState = string | null;
+export type ThreadSummaryDTOState = ExecutionStateDTO | null;
 
 export type ThreadSummaryDTOActiveExecutionId = string | null;
 
@@ -729,9 +750,7 @@ export interface ValidationErrorDTO {
 	ctx?: ValidationErrorDTOCtx;
 }
 
-export type ApprovalEventDTODiffAnyOf = { [key: string]: unknown };
-
-export type ApprovalEventDTODiff = ApprovalEventDTODiffAnyOf | null;
+export type ApprovalEventDTODiff = { [key: string]: unknown };
 
 export interface ApprovalEventDTO {
 	/**
@@ -750,10 +769,7 @@ export interface ApprovalEventDTO {
 	 * @type string
 	 */
 	approvalId: string;
-	/**
-	 * @type string
-	 */
-	actionType: string;
+	actionType: ApprovalActionTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -762,6 +778,9 @@ export interface ApprovalEventDTO {
 	 * @type string
 	 */
 	summary: string;
+	/**
+	 * @type object
+	 */
 	diff?: ApprovalEventDTODiff;
 }
 
@@ -774,10 +793,7 @@ export interface ClarificationFieldEventDTO {
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	type: string;
+	type: ClarificationFieldTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -907,7 +923,7 @@ export type MessageActionEventDTOInput = MessageActionEventDTOInputAnyOf | null;
 
 export type MessageActionEventDTOTooltip = string | null;
 
-export type MessageActionEventDTOSignal = string | null;
+export type MessageActionEventDTOSignal = ApplyFilterSignalDTO | null;
 
 export type MessageActionEventDTOQueryAnyOf = { [key: string]: unknown };
 
@@ -965,16 +981,6 @@ export interface MessageEventDTO {
 	actions?: MessageEventDTOActions;
 }
 
-export enum ExecutionStateDTO {
-	queued = 'queued',
-	running = 'running',
-	awaiting_approval = 'awaiting_approval',
-	awaiting_clarification = 'awaiting_clarification',
-	resumed = 'resumed',
-	completed = 'completed',
-	failed = 'failed',
-	canceled = 'canceled',
-}
 export interface StatusEventDTO {
 	/**
 	 * @type string
@@ -1074,6 +1080,22 @@ export interface ToolResultEventDTO {
 	 * @type object
 	 */
 	result: ToolResultEventDTOResult;
+}
+
+export interface UserMessageEventDTO {
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	executionId: string;
+	/**
+	 * @type integer
+	 */
+	eventId?: number;
+	message: MessageSummaryDTO;
 }
 
 export type CreateThreadApiV1AssistantThreadsPostHeaders = {

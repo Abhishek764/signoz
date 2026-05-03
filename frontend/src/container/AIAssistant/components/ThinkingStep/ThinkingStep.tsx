@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Button } from '@signozhq/ui';
+import { KeyboardEvent, useState } from 'react';
 import { Brain, ChevronDown, ChevronRight } from '@signozhq/icons';
 
 import styles from './ThinkingStep.module.scss';
@@ -14,13 +13,22 @@ export default function ThinkingStep({
 }: ThinkingStepProps): JSX.Element {
 	const [expanded, setExpanded] = useState(false);
 
+	const toggle = (): void => setExpanded((v) => !v);
+	const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			toggle();
+		}
+	};
+
 	return (
 		<div className={styles.step}>
-			<Button
-				variant="ghost"
-				color="secondary"
+			<div
+				role="button"
+				tabIndex={0}
 				className={styles.header}
-				onClick={(): void => setExpanded((v) => !v)}
+				onClick={toggle}
+				onKeyDown={handleKeyDown}
 				aria-expanded={expanded}
 			>
 				<Brain size={12} className={styles.icon} />
@@ -30,7 +38,7 @@ export default function ThinkingStep({
 				) : (
 					<ChevronRight size={11} className={styles.chevron} />
 				)}
-			</Button>
+			</div>
 
 			{expanded && (
 				<div className={styles.body}>

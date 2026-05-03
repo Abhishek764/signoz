@@ -1175,7 +1175,7 @@ export const useRejectApiV1AssistantRejectPost = <
 	return useMutation(mutationOptions);
 };
 /**
- * Provides structured answers to a clarification request. Starts a new execution that resumes the agent with the answers as tool results.
+ * Provides structured answers to a clarification request. Persists the answers as a user transcript message, emits `user_message` as the first replayable event on the new execution stream, and resumes the agent with the answers as tool results.
  * @summary Submit clarification answers
  */
 export const clarifyApiV1AssistantClarifyPost = (

@@ -68,6 +68,8 @@ type Module interface {
 	CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypesv2.Dashboard, error)
 
 	UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypesv2.Dashboard, error)
+
+	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, deletedBy string) error
 }
 
 type Handler interface {
@@ -107,4 +109,6 @@ type Handler interface {
 	CreatePublicV2(http.ResponseWriter, *http.Request)
 
 	UpdatePublicV2(http.ResponseWriter, *http.Request)
+
+	DeleteV2(http.ResponseWriter, *http.Request)
 }

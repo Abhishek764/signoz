@@ -116,6 +116,23 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authZ.EditAccess(provider.dashboardHandler.DeleteV2), handler.OpenAPIDef{
+		ID:                  "DeleteDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Delete dashboard (v2)",
+		Description:         "This endpoint soft-deletes a v2-shape dashboard. Locked dashboards are rejected. Hard deletion happens later via the purge cron.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.UpdatePublicV2), handler.OpenAPIDef{
 		ID:                  "UpdatePublicDashboardV2",
 		Tags:                []string{"dashboard"},

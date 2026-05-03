@@ -198,6 +198,10 @@ func (d *Dashboard) CanUpdate() error {
 	return nil
 }
 
+func (d *Dashboard) CanDelete() error {
+	return d.CanUpdate()
+}
+
 func (d *Dashboard) Update(updateable UpdateableDashboard, updatedBy string, resolvedTags []*tagtypes.Tag) error {
 	if err := d.CanUpdate(); err != nil {
 		return err

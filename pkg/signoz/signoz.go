@@ -30,6 +30,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/dashboardpurger"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -495,6 +497,12 @@ func New(
 		return nil, err
 	}
 
+	// Initialize dashboard purger — periodic hard-delete of soft-deleted rows.
+	dashboardPurger, err := dashboardpurger.NewFactory(impldashboard.NewStore(sqlstore)).New(ctx, providerSettings, config.DashboardPurger)
+	if err != nil {
+		return nil, err
+	}
+
 	registry, err := factory.NewRegistry(
 		ctx,
 		instrumentation.Logger(),
@@ -509,6 +517,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("user"), userService, factory.MustNewName("authz")),
 		factory.NewNamedService(factory.MustNewName("auditor"), auditor),
 		factory.NewNamedService(factory.MustNewName("ruler"), rulerInstance),
+		factory.NewNamedService(factory.MustNewName("dashboardpurger"), dashboardPurger),
 	)
 	if err != nil {
 		return nil, err

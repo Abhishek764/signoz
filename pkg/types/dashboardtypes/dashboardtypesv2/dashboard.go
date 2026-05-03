@@ -168,6 +168,29 @@ func NewDashboardFromStorable(storable *dashboardtypes.StorableDashboard, public
 	}, nil
 }
 
+func (d *Dashboard) CanLockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if d.CreatedBy != updatedBy && !isAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
+	}
+	if d.Locked == lock {
+		if lock {
+			return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "dashboard is already locked")
+		}
+		return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "dashboard is already unlocked")
+	}
+	return nil
+}
+
+func (d *Dashboard) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if err := d.CanLockUnlock(lock, isAdmin, updatedBy); err != nil {
+		return err
+	}
+	d.Locked = lock
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
 func (d *Dashboard) CanUpdate() error {
 	if d.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")

@@ -62,6 +62,12 @@ type Module interface {
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypesv2.Dashboard, error)
 
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypesv2.UpdateableDashboard) (*dashboardtypesv2.Dashboard, error)
+
+	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
+
+	CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypesv2.Dashboard, error)
+
+	UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypesv2.Dashboard, error)
 }
 
 type Handler interface {
@@ -93,4 +99,12 @@ type Handler interface {
 	GetV2(http.ResponseWriter, *http.Request)
 
 	UpdateV2(http.ResponseWriter, *http.Request)
+
+	LockV2(http.ResponseWriter, *http.Request)
+
+	UnlockV2(http.ResponseWriter, *http.Request)
+
+	CreatePublicV2(http.ResponseWriter, *http.Request)
+
+	UpdatePublicV2(http.ResponseWriter, *http.Request)
 }

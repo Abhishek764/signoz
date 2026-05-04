@@ -1,19 +1,13 @@
 /**
- * AI Assistant page-action factories for the Logs Explorer.
+ * AI Assistant page-action factories for the Traces Explorer.
  *
- * Each factory closes over live page state/callbacks so that `execute()`
- * always operates on the current query. The page component instantiates these
- * with `useMemo` and passes them to `usePageActions`.
+ * Mirrors the logs equivalents — each factory closes over live page
+ * state/callbacks so `execute()` always operates on the current query, and
+ * the page component instantiates them via `useMemo` + `usePageActions`.
  *
- * Filter flow: the V5 query-builder UI binds the WHERE clause CodeMirror
- * editor to `currentQuery.builder.queryData[0].filter.expression`. So we
- * derive the expression from our items via `convertFiltersToExpression`
- * (the same helper `useGetCompositeQueryParam` uses on URL parse) and push
- * BOTH `filters.items` and `filter.expression` into the QueryBuilder
- * provider via `handleSetQueryData`. We then call `redirectWithQueryBuilderData`
- * so the change persists in the URL — and because the items + expression we
- * write match what the URL parser would derive from items alone, the post-
- * navigate state stays consistent with the immediate UI update.
+ * See `pages/LogsExplorer/aiActions.ts` for the rationale behind writing
+ * BOTH `filters.items` and `filter.expression` and then re-using the same
+ * URL parser shape via `redirectWithQueryBuilderData`.
  */
 
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
@@ -49,8 +43,10 @@ interface AddFilterParams {
 	value: string;
 }
 
+type TracesView = 'list' | 'timeseries' | 'table' | 'trace';
+
 interface ChangeViewParams {
-	view: 'list' | 'timeseries' | 'table';
+	view: TracesView;
 }
 
 interface SaveViewParams {
@@ -58,15 +54,15 @@ interface SaveViewParams {
 }
 
 /**
- * Replace all active filters and navigate to the updated query URL
+ * Replace all active span filters and navigate to the updated query URL
  * (which makes the WHERE clause reflect the new filters and triggers a re-run).
  */
-export function logsRunQueryAction(
+export function tracesRunQueryAction(
 	deps: FilterDeps,
 ): PageAction<RunQueryParams> {
 	return {
-		id: 'logs.runQuery',
-		description: 'Replace the active log filters and re-run the query',
+		id: 'traces.runQuery',
+		description: 'Replace the active trace filters and re-run the query',
 		parameters: {
 			type: 'object',
 			properties: {
@@ -78,7 +74,7 @@ export function logsRunQueryAction(
 						properties: {
 							key: {
 								type: 'string',
-								description: 'Attribute key, e.g. severity_text',
+								description: 'Attribute key, e.g. service.name, http.status_code',
 							},
 							op: {
 								type: 'string',
@@ -99,7 +95,7 @@ export function logsRunQueryAction(
 		execute: async ({ filters }): Promise<ActionResult> => {
 			const baseQuery = deps.currentQuery.builder.queryData[0];
 			if (!baseQuery) {
-				throw new Error('No active query found in Logs Explorer.');
+				throw new Error('No active query found in Traces Explorer.');
 			}
 
 			const tagItems = filters.map(aiFilterToTagFilterItem);
@@ -110,8 +106,6 @@ export function logsRunQueryAction(
 				filter: convertFiltersToExpression(newFilters),
 			};
 
-			// Push to in-memory state first so the WHERE clause re-renders without
-			// waiting on a URL round-trip. Then sync URL for persistence/sharing.
 			deps.handleSetQueryData(0, updatedBuilderQuery);
 			deps.redirectWithQueryBuilderData(
 				replaceFirstQueryData(deps.currentQuery, updatedBuilderQuery),
@@ -135,20 +129,21 @@ export function logsRunQueryAction(
 }
 
 /**
- * Append a single filter to the existing query and navigate to the updated URL.
+ * Append a single filter to the existing trace query and navigate to the
+ * updated URL.
  */
-export function logsAddFilterAction(
+export function tracesAddFilterAction(
 	deps: FilterDeps,
 ): PageAction<AddFilterParams> {
 	return {
-		id: 'logs.addFilter',
-		description: 'Add a single filter to the current log query and re-run',
+		id: 'traces.addFilter',
+		description: 'Add a single filter to the current trace query and re-run',
 		parameters: {
 			type: 'object',
 			properties: {
 				key: {
 					type: 'string',
-					description: 'Attribute key, e.g. severity_text',
+					description: 'Attribute key, e.g. service.name, http.status_code',
 				},
 				op: {
 					type: 'string',
@@ -165,7 +160,7 @@ export function logsAddFilterAction(
 		execute: async ({ key, op, value }): Promise<ActionResult> => {
 			const baseQuery = deps.currentQuery.builder.queryData[0];
 			if (!baseQuery) {
-				throw new Error('No active query found in Logs Explorer.');
+				throw new Error('No active query found in Traces Explorer.');
 			}
 
 			const existing = baseQuery.filters?.items ?? [];
@@ -188,21 +183,21 @@ export function logsAddFilterAction(
 }
 
 /**
- * Switch the explorer between list / timeseries / table views.
+ * Switch the traces explorer between list / timeseries / table / trace views.
  */
-export function logsChangeViewAction(deps: {
-	onChangeView: (view: 'list' | 'timeseries' | 'table') => void;
+export function tracesChangeViewAction(deps: {
+	onChangeView: (view: TracesView) => void;
 }): PageAction<ChangeViewParams> {
 	return {
-		id: 'logs.changeView',
+		id: 'traces.changeView',
 		description:
-			'Switch the Logs Explorer between list, timeseries, and table views',
+			'Switch the Traces Explorer between list, timeseries, table, and trace views',
 		parameters: {
 			type: 'object',
 			properties: {
 				view: {
 					type: 'string',
-					enum: ['list', 'timeseries', 'table'],
+					enum: ['list', 'timeseries', 'table', 'trace'],
 					description: 'The panel view to switch to',
 				},
 			},
@@ -216,14 +211,15 @@ export function logsChangeViewAction(deps: {
 }
 
 /**
- * Save the current query as a named view (stub — wires to real API when available).
+ * Save the current trace query as a named view (stub — wires to real API
+ * when available).
  */
-export function logsSaveViewAction(deps: {
+export function tracesSaveViewAction(deps: {
 	onSaveView: (name: string) => Promise<void>;
 }): PageAction<SaveViewParams> {
 	return {
-		id: 'logs.saveView',
-		description: 'Save the current log query as a named view',
+		id: 'traces.saveView',
+		description: 'Save the current trace query as a named view',
 		parameters: {
 			type: 'object',
 			properties: {

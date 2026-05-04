@@ -1,7 +1,5 @@
 import React from 'react';
 import cx from 'classnames';
-import { Button, Tooltip } from '@signozhq/ui';
-import { Pencil } from '@signozhq/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -77,27 +75,18 @@ function renderBlock(block: MessageBlock, index: number): JSX.Element {
 interface MessageBubbleProps {
 	message: Message;
 	onRegenerate?: () => void;
-	/**
-	 * When provided, a Pencil icon appears on user messages. Clicking it
-	 * pushes the message content into the chat input textarea so the user
-	 * can tweak it and send it as a fresh message (the original stays in
-	 * history). The actual submit happens via the input bar's Send button.
-	 */
-	onEdit?: (text: string) => void;
 	isLastAssistant?: boolean;
 }
 
 export default function MessageBubble({
 	message,
 	onRegenerate,
-	onEdit,
 	isLastAssistant = false,
 }: MessageBubbleProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
 	const isUser = message.role === 'user';
 	const hasBlocks = !isUser && message.blocks && message.blocks.length > 0;
-	const canEdit = isUser && Boolean(onEdit);
 
 	const messageClass = cx(
 		styles.message,
@@ -156,20 +145,6 @@ export default function MessageBubble({
 							<ActionsSection actions={message.actions} />
 						)}
 					</div>
-
-					{isUser && canEdit && (
-						<Tooltip title="Edit and resend">
-							<Button
-								variant="link"
-								size="icon"
-								color="secondary"
-								className={styles.editBtn}
-								onClick={(): void => onEdit?.(message.content)}
-								aria-label="Edit and resend message"
-								prefix={<Pencil size={10} />}
-							/>
-						</Tooltip>
-					)}
 				</div>
 
 				{!isUser && (

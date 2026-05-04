@@ -46,15 +46,12 @@ interface VirtualizedMessagesProps {
 	conversationId: string;
 	messages: Message[];
 	isStreaming: boolean;
-	/** Click handler for the per-bubble "Edit and resend" action. */
-	onEditMessage?: (text: string) => void;
 }
 
 export default function VirtualizedMessages({
 	conversationId,
 	messages,
 	isStreaming,
-	onEditMessage,
 }: VirtualizedMessagesProps): JSX.Element {
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const streamingStatus = useAIAssistantStore(
@@ -179,7 +176,6 @@ export default function VirtualizedMessages({
 							onRegenerate={
 								isLastAssistant && !showStreamingSlot ? handleRegenerate : undefined
 							}
-							onEdit={msg.role === 'user' && !isStreaming ? onEditMessage : undefined}
 							isLastAssistant={isLastAssistant}
 						/>
 					);

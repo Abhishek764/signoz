@@ -25,7 +25,6 @@ import {
 	ThreadSummary,
 	updateThread,
 } from '../../../api/ai/chat';
-import { PageActionRegistry } from '../pageActions/PageActionRegistry';
 import {
 	Conversation,
 	ConversationStreamState,
@@ -531,11 +530,27 @@ function toBlocks(
 		.filter((b): b is MessageBlock => b !== null);
 }
 
+/**
+ * `sendMessage` prepends a `[PAGE_CONTEXT]…[/PAGE_CONTEXT]` block to the user's
+ * text so the agent has the available page actions + state. The backend stores
+ * and returns the full string, which would otherwise leak into the user's
+ * bubble on reload. Strip it once here so every consumer of the store sees
+ * just the original prompt.
+ */
+const PAGE_CONTEXT_PREFIX_RE = /^\[PAGE_CONTEXT\][\s\S]*?\[\/PAGE_CONTEXT\]\n?/;
+
+function stripPageContextPrefix(content: string): string {
+	return content.replace(PAGE_CONTEXT_PREFIX_RE, '');
+}
+
 function toMessage(m: MessageSummary): Message {
+	const rawContent = m.content ?? '';
+	const content =
+		m.role === 'user' ? stripPageContextPrefix(rawContent) : rawContent;
 	return {
 		id: m.messageId,
 		role: m.role as MessageRole,
-		content: m.content ?? '',
+		content,
 		blocks: toBlocks(m.blocks),
 		actions: m.actions ?? undefined,
 		feedbackRating: m.feedbackRating ?? undefined,
@@ -546,36 +561,6 @@ function toMessage(m: MessageSummary): Message {
 // ---------------------------------------------------------------------------
 // Misc store helpers
 // ---------------------------------------------------------------------------
-
-function buildContextPrefix(): string {
-	const descriptors = PageActionRegistry.snapshot();
-	if (descriptors.length === 0) {
-		return '';
-	}
-
-	const actionLines = descriptors
-		.map(
-			(a) =>
-				`  - id: ${a.id}\n    description: "${
-					a.description
-				}"\n    params: ${JSON.stringify(a.parameters.properties)}`,
-		)
-		.join('\n');
-
-	const contextEntries = descriptors
-		.filter((a) => a.context !== undefined)
-		.map((a) => `  ${a.id}: ${JSON.stringify(a.context)}`);
-
-	const lines = [
-		'[PAGE_CONTEXT]',
-		'actions:',
-		actionLines,
-		...(contextEntries.length > 0 ? ['state:', ...contextEntries] : []),
-		'[/PAGE_CONTEXT]',
-		'',
-	];
-	return lines.join('\n');
-}
 
 function deriveTitle(text: string): string {
 	const trimmed = text.trim().replace(/\s+/g, ' ');
@@ -957,12 +942,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							}
 						});
 					}
-					const contextPrefix = buildContextPrefix();
-					const executionId = await sendMessageToThread(
-						threadId,
-						contextPrefix + text,
-						contexts,
-					);
+					const executionId = await sendMessageToThread(threadId, text, contexts);
 					const ctrl = newStreamController(convId);
 					await runStreamingLoop(executionId, {
 						conversationId: convId,

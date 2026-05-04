@@ -11,7 +11,7 @@ $radius: 4px;
 	}
 
 	&.compact {
-		padding: 6px 12px;
+		padding: 6px;
 	}
 }
 
@@ -51,6 +51,7 @@ $radius: 4px;
 	letter-spacing: -0.065px;
 
 	max-width: 100%;
+	min-width: 60%;
 
 	.user & {
 		background: var(--primary, var(--bg-robin-500));
@@ -87,16 +88,6 @@ $radius: 4px;
 	align-items: center;
 	gap: 2px;
 	max-width: 100%;
-}
-
-.editBtn {
-	flex-shrink: 0;
-	height: auto !important;
-	min-height: 0 !important;
-	padding: 4px !important;
-	color: var(--l3-foreground, var(--l2-foreground)) !important;
-	opacity: var(--feedback-opacity, 0);
-	transition: opacity 0.12s;
 }
 
 .markdown {
@@ -294,6 +285,8 @@ $radius: 4px;
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
+	padding: 4px 0;
+	height: 20px;
 
 	span {
 		display: inline-block;

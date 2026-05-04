@@ -79,6 +79,7 @@ function LogsExplorer(): JSX.Element {
 		handleRunQuery,
 		handleSetConfig,
 		currentQuery,
+		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -141,10 +142,12 @@ function LogsExplorer(): JSX.Element {
 				? [
 						logsRunQueryAction({
 							currentQuery,
+							handleSetQueryData,
 							redirectWithQueryBuilderData,
 						}),
 						logsAddFilterAction({
 							currentQuery,
+							handleSetQueryData,
 							redirectWithQueryBuilderData,
 						}),
 						logsChangeViewAction({
@@ -163,6 +166,7 @@ function LogsExplorer(): JSX.Element {
 		[
 			isAIAssistantEnabled,
 			currentQuery,
+			handleSetQueryData,
 			redirectWithQueryBuilderData,
 			handleChangeSelectedView,
 		],

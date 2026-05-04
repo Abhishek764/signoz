@@ -15,13 +15,19 @@ export default function ToolCallStep({
 	toolCall,
 }: ToolCallStepProps): JSX.Element {
 	const [expanded, setExpanded] = useState(false);
-	const { toolName, input, result, done } = toolCall;
+	const { toolName, input, result, done, displayText } = toolCall;
 
-	// Format tool name: "signoz_get_dashboard" → "Get Dashboard"
-	const label = toolName
-		.replace(/^[a-z]+_/, '') // strip prefix like "signoz_"
-		.replace(/_/g, ' ')
-		.replace(/\b\w/g, (c) => c.toUpperCase());
+	// Prefer the server-supplied `displayText` from `ToolCallEventDTO` —
+	// it's the human-friendly title the backend wants surfaced. Fall back
+	// to a derived label ("signoz_get_dashboard" → "Get Dashboard") when
+	// the field is empty / null / missing.
+	const label =
+		displayText && displayText.trim().length > 0
+			? displayText
+			: toolName
+					.replace(/^[a-z]+_/, '') // strip prefix like "signoz_"
+					.replace(/_/g, ' ')
+					.replace(/\b\w/g, (c) => c.toUpperCase());
 
 	const toggle = (): void => setExpanded((v) => !v);
 

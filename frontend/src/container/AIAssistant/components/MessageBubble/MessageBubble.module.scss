@@ -50,8 +50,8 @@ $radius: 4px;
 	line-height: 20px; /* 153.846% */
 	letter-spacing: -0.065px;
 
-	max-width: 100%;
-	min-width: 60%;
+	max-width: 90%;
+	min-width: 200px;
 
 	.user & {
 		background: var(--primary, var(--bg-robin-500));

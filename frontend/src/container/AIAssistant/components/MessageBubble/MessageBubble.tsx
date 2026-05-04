@@ -55,6 +55,7 @@ function renderBlock(block: MessageBlock, index: number): JSX.Element {
 						input: block.toolInput,
 						result: block.result,
 						done: true,
+						displayText: block.displayText,
 					}}
 				/>
 			);

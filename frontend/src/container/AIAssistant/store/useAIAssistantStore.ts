@@ -265,6 +265,7 @@ async function runStreamingLoop(
 							toolName: event.toolName,
 							input: event.toolInput,
 							done: false,
+							displayText: event.displayText,
 						},
 					});
 				}
@@ -354,6 +355,7 @@ function streamEventsToBlocks(
 					toolInput: e.toolCall.input,
 					result: e.toolCall.result,
 					success: e.toolCall.done,
+					displayText: e.toolCall.displayText,
 				};
 			}
 			return null;
@@ -523,6 +525,7 @@ function toBlocks(
 					toolInput: b.toolInput,
 					result: b.result,
 					success: typeof b.success === 'boolean' ? b.success : undefined,
+					displayText: typeof b.displayText === 'string' ? b.displayText : undefined,
 				};
 			}
 			return null;

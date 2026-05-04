@@ -59,6 +59,11 @@ export interface ToolCallBlock {
 	toolInput: unknown;
 	result?: unknown;
 	success?: boolean;
+	/**
+	 * Optional human-friendly title from the `ToolCallEventDTO`. When present
+	 * the UI prefers it over a derived label built from `toolName`.
+	 */
+	displayText?: string | null;
 }
 
 export type MessageBlock = TextBlock | ThinkingBlock | ToolCallBlock;
@@ -116,6 +121,11 @@ export interface StreamingToolCall {
 	result?: unknown;
 	/** True once the corresponding tool_result event has been received. */
 	done: boolean;
+	/**
+	 * Optional human-friendly title from the `ToolCallEventDTO`. When present
+	 * the UI prefers it over a derived label built from `toolName`.
+	 */
+	displayText?: string | null;
 }
 
 /**

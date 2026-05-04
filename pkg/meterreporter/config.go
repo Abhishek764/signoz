@@ -24,7 +24,7 @@ func newConfig() factory.Config {
 	return Config{
 		Interval:              6 * time.Hour,
 		Timeout:               5 * time.Minute,
-		CatchupMaxDaysPerTick: 30,
+		CatchupMaxDaysPerTick: 180,
 	}
 }
 

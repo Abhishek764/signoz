@@ -45,8 +45,8 @@ func (c Config) Validate() error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::timeout must be less than meterreporter::interval")
 	}
 
-	if c.CatchupMaxDaysPerTick < 1 || c.CatchupMaxDaysPerTick > 60 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::catchup_max_days_per_tick must be between 1 and 60")
+	if c.CatchupMaxDaysPerTick < 1 || c.CatchupMaxDaysPerTick > 180 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::catchup_max_days_per_tick must be between 1 and 180")
 	}
 
 	return nil

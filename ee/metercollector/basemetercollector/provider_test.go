@@ -98,11 +98,11 @@ func (f *fakeLicensing) Refresh(context.Context, valuer.UUID) error {
 }
 
 func (f *fakeLicensing) Checkout(context.Context, valuer.UUID, *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
-	return nil, nil
+	return &licensetypes.GettableSubscription{}, nil
 }
 
 func (f *fakeLicensing) Portal(context.Context, valuer.UUID, *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
-	return nil, nil
+	return &licensetypes.GettableSubscription{}, nil
 }
 
 func (f *fakeLicensing) GetFeatureFlags(context.Context, valuer.UUID) ([]*licensetypes.Feature, error) {
@@ -110,5 +110,5 @@ func (f *fakeLicensing) GetFeatureFlags(context.Context, valuer.UUID) ([]*licens
 }
 
 func (f *fakeLicensing) Collect(context.Context, valuer.UUID) (map[string]any, error) {
-	return nil, nil
+	return map[string]any{}, nil
 }

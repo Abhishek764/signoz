@@ -59,7 +59,7 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether the enterprise meter reporter runs instead of the noop reporter",
-			DefaultVariant: featuretypes.MustNewName("enabled"),
+			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{

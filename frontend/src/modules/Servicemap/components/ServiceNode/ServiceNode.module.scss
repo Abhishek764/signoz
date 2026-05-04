@@ -1,0 +1,35 @@
+.node {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow: visible;
+}
+
+.circle {
+	border-radius: 50%;
+	border: 1px solid var(--l3-border);
+	box-sizing: border-box;
+	position: relative;
+}
+
+.handle {
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	pointer-events: none;
+	border: none;
+}
+
+.label {
+	margin-top: 6px;
+	max-width: 120px;
+	font-size: 12px;
+	line-height: 14px;
+	text-align: center;
+	color: var(--l1-foreground);
+	font-family: Inter, sans-serif;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	user-select: none;
+}

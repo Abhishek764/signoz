@@ -1,0 +1,22 @@
+.container {
+	width: 100%;
+	height: calc(100vh - 124px);
+	position: relative;
+	background: var(--l1-background);
+	border: 1px solid var(--l3-border);
+	border-radius: 8px;
+	overflow: hidden;
+
+	// ReactFlow defaults edge pointer-events to `visibleStroke`, which means
+	// our thin dashed line only captures hover on the painted dash segments.
+	// Force `stroke` on the wide invisible interaction path so the entire edge
+	// length is hoverable for the tooltip.
+	:global(.react-flow__edge-interaction) {
+		pointer-events: stroke;
+		cursor: default;
+	}
+
+	:global(.react-flow__edge) {
+		pointer-events: stroke;
+	}
+}

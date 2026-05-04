@@ -1,6 +1,6 @@
 //@ts-nocheck
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -16,27 +16,9 @@ import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
 
-import Map from './Map';
+import Map from './components/Map/Map';
 
-const Container = styled.div`
-	.force-graph-container {
-		overflow: scroll;
-	}
-
-	.force-graph-container .graph-tooltip {
-		background: black;
-		padding: 1px;
-		.keyval {
-			display: flex;
-			.key {
-				margin-right: 4px;
-			}
-			.val {
-				margin-left: auto;
-			}
-		}
-	}
-`;
+const Container = styled.div``;
 
 interface ServiceMapProps extends RouteComponentProps<any> {
 	serviceMap: ServiceMapStore;
@@ -49,6 +31,11 @@ interface ServiceMapProps extends RouteComponentProps<any> {
 interface graphNode {
 	id: string;
 	group: number;
+	fontSize: number;
+	width: number;
+	color: string;
+	nodeVal: number;
+	name: string;
 }
 interface graphLink {
 	source: string;
@@ -64,8 +51,6 @@ export interface graphDataType {
 }
 
 function ServiceMap(props: ServiceMapProps): JSX.Element {
-	const fgRef = useRef();
-
 	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
 
 	const { queries } = useResourceAttribute();
@@ -77,10 +62,6 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		 */
 		getDetailedServiceMapItems(globalTime, queries);
 	}, [globalTime, getDetailedServiceMapItems, queries]);
-
-	useEffect(() => {
-		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
-	});
 
 	if (serviceMap.loading) {
 		return <Spinner size="large" tip="Loading..." />;
@@ -108,7 +89,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 				}
 			/>
 
-			<Map fgRef={fgRef} serviceMap={serviceMap} />
+			<Map serviceMap={serviceMap} />
 		</div>
 	);
 }

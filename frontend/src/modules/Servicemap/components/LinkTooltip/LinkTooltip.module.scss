@@ -1,0 +1,27 @@
+.tooltip {
+	position: fixed;
+	pointer-events: none;
+	z-index: 1000;
+	padding: 12px;
+	min-width: 160px;
+	font-size: 12px;
+	font-family: Inter, sans-serif;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	color: var(--popover-foreground);
+	background: var(--popover);
+	border: 1px solid var(--secondary-border);
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+}
+
+.label {
+	margin-right: 8px;
+}
+
+.value {
+	margin-left: auto;
+}

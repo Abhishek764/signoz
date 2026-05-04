@@ -1,5 +1,6 @@
 //@ts-nocheck
 
+import dagre from '@dagrejs/dagre';
 import {
 	cloneDeep,
 	find,
@@ -32,7 +33,7 @@ export const getDimensions = (
 	};
 };
 
-export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
+export const getGraphData = (serviceMap, _isDarkMode): graphDataType => {
 	const { items } = serviceMap;
 	const services = Object.values(groupBy(items, 'child')).map((e) => {
 		return {
@@ -62,9 +63,13 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	const uniqParent = uniqBy(cloneDeep(items), 'parent').map((e) => e.parent);
 	const uniqChild = uniqBy(cloneDeep(items), 'child').map((e) => e.child);
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
+	// Semantic tokens auto-flip with theme; passed as CSS variable strings so
+	// the consuming component can apply them directly via `style.background`.
+	const HEALTHY_COLOR = 'var(--l3-background)';
+	const ERROR_COLOR = 'var(--danger-background)';
 	const nodes = uniqNodes.map((node, i) => {
 		const service = find(services, (service) => service.serviceName === node);
-		let color = isDarkMode ? '#7CA568' : '#D5F2BB';
+		let color = HEALTHY_COLOR;
 		if (!service) {
 			return {
 				id: node,
@@ -77,7 +82,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 			};
 		}
 		if (service.errorRate > 0) {
-			color = isDarkMode ? '#DB836E' : '#F98989';
+			color = ERROR_COLOR;
 		}
 		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {
@@ -96,20 +101,6 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	};
 };
 
-export const getZoomPx = (): number => {
-	const { width } = window.screen;
-	if (width < 1400) {
-		return 190;
-	}
-	if (width > 1400 && width < 1700) {
-		return 380;
-	}
-	if (width > 1700) {
-		return 470;
-	}
-	return 190;
-};
-
 const getRound2DigitsAfterDecimal = (num: number): number => {
 	if (num === 0) {
 		return 0;
@@ -117,27 +108,21 @@ const getRound2DigitsAfterDecimal = (num: number): number => {
 	return num.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/)[0];
 };
 
-export const getTooltip = (link: {
+export interface LinkTooltip {
+	p99: string | number;
+	callRate: string | number;
+	errorRate: string | number;
+}
+
+export const getLinkTooltip = (link: {
 	p99: number;
 	errorRate: number;
 	callRate: number;
-	id: string;
-}): string => {
-	return `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
-								<div class="keyval">
-									<div class="key">P99 latency:</div>
-									<div class="val">${getRound2DigitsAfterDecimal(link.p99 / 1000000)}ms</div>
-								</div>
-								<div class="keyval">
-									<div class="key">Request:</div>
-									<div class="val">${getRound2DigitsAfterDecimal(link.callRate)}/sec</div>
-								</div>
-								<div class="keyval">
-									<div class="key">Error Rate:</div>
-									<div class="val">${getRound2DigitsAfterDecimal(link.errorRate)}%</div>
-								</div>
-							</div>`;
-};
+}): LinkTooltip => ({
+	p99: getRound2DigitsAfterDecimal(link.p99 / 1000000),
+	callRate: getRound2DigitsAfterDecimal(link.callRate),
+	errorRate: getRound2DigitsAfterDecimal(link.errorRate),
+});
 
 export const transformLabel = (label: string, zoomLevel: number): string => {
 	//? 13 is the minimum label length. Scaling factor of 0.9 which is slightly less than 1
@@ -149,4 +134,52 @@ export const transformLabel = (label: string, zoomLevel: number): string => {
 		return `${label.slice(0, MAX_SHOW)}...`;
 	}
 	return label;
+};
+
+// Layered DAG layout via dagre. For service maps the data flows
+// caller -> callee, so a left-to-right rank direction reads naturally and
+// minimises edge crossings vs. a force-directed simulation.
+//
+// `nodeBoxWidth` reserves space for the label rendered below each circle —
+// the visible label can be up to ~120px wide, so dagre needs to know that
+// horizontally adjacent ranks must keep that distance.
+export const computeNodePositions = (
+	nodes: { id: string }[],
+	links: { source: string; target: string }[],
+	nodeBoxWidth = 130,
+	nodeBoxHeight = 80,
+): Record<string, { x: number; y: number }> => {
+	const result: Record<string, { x: number; y: number }> = {};
+	if (nodes.length === 0) {
+		return result;
+	}
+
+	const g = new dagre.graphlib.Graph({ multigraph: true, compound: false });
+	g.setGraph({
+		rankdir: 'LR',
+		nodesep: 40,
+		ranksep: 90,
+		marginx: 40,
+		marginy: 40,
+	});
+	g.setDefaultEdgeLabel(() => ({}));
+
+	nodes.forEach((node) => {
+		g.setNode(node.id, { width: nodeBoxWidth, height: nodeBoxHeight });
+	});
+	links.forEach((link, i) => {
+		// `name` makes parallel edges (same source+target, different metrics)
+		// safe under multigraph mode.
+		g.setEdge(link.source, link.target, {}, `${link.source}-${link.target}-${i}`);
+	});
+
+	dagre.layout(g);
+
+	nodes.forEach((node) => {
+		const laidOut = g.node(node.id);
+		if (laidOut) {
+			result[node.id] = { x: laidOut.x, y: laidOut.y };
+		}
+	});
+	return result;
 };

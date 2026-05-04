@@ -37,7 +37,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns a v2-shape dashboard with its tags and public sharing config (if any).",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

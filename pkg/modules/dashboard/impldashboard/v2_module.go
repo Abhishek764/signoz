@@ -46,7 +46,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	return dashboard, nil
 }
 
-func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	storable, public, err := module.store.GetV2(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -57,5 +57,5 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return nil, err
 	}
 
-	return dashboardtypesv2.NewDashboardFromStorable(storable, public, tags)
+	return dashboardtypes.NewDashboardV2FromStorable(storable, public, tags)
 }

@@ -129,10 +129,10 @@ func NewDashboardV2(orgID valuer.UUID, createdBy string, postable PostableDashbo
 }
 
 // rejects rows that don't carry a v2-shape blob — those are pre-migration v1 dashboards that the v2 API can't render.
-func NewDashboardFromStorable(storable *dashboardtypes.StorableDashboard, public *dashboardtypes.StorablePublicDashboard, tags []*tagtypes.Tag) (*Dashboard, error) {
+func NewDashboardV2FromStorable(storable *StorableDashboard, public *StorablePublicDashboard, tags []*tagtypes.Tag) (*DashboardV2, error) {
 	metadata, _ := storable.Data["metadata"].(map[string]any)
 	if metadata == nil || metadata["schemaVersion"] != SchemaVersion {
-		return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodeDashboardInvalidData, "dashboard %s is not in %s schema", storable.ID, SchemaVersion)
+		return nil, errors.Newf(errors.TypeUnsupported, ErrCodeDashboardInvalidData, "dashboard %s is not in %s schema", storable.ID, SchemaVersion)
 	}
 
 	raw, err := json.Marshal(storable.Data)
@@ -144,12 +144,12 @@ func NewDashboardFromStorable(storable *dashboardtypes.StorableDashboard, public
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal stored v2 dashboard data")
 	}
 
-	var publicConfig *dashboardtypes.PublicDashboard
+	var publicConfig *PublicDashboard
 	if public != nil {
-		publicConfig = dashboardtypes.NewPublicDashboardFromStorablePublicDashboard(public)
+		publicConfig = NewPublicDashboardFromStorablePublicDashboard(public)
 	}
 
-	return &Dashboard{
+	return &DashboardV2{
 		Identifiable:  storable.Identifiable,
 		TimeAuditable: storable.TimeAuditable,
 		UserAuditable: storable.UserAuditable,

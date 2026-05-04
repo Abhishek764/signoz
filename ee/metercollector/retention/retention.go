@@ -27,14 +27,6 @@ var (
 	labelValuePattern = regexp.MustCompile(`^[A-Za-z0-9_.\-:]+$`)
 )
 
-// Slice is a half-open time range using one TTL recipe.
-type Slice struct {
-	StartMs     int64
-	EndMs       int64
-	Rules       []retentiontypes.CustomRetentionRule
-	DefaultDays int
-}
-
 // LoadActiveSlices returns TTL slices covering [startMs, endMs).
 // tableName must be fully qualified, for example "signoz_logs.logs_v2".
 func LoadActiveSlices(
@@ -44,7 +36,7 @@ func LoadActiveSlices(
 	tableName string,
 	fallbackDefaultDays int,
 	startMs, endMs int64,
-) ([]Slice, error) {
+) ([]retentiontypes.Slice, error) {
 	if startMs >= endMs {
 		return nil, nil
 	}
@@ -76,7 +68,7 @@ func LoadActiveSlices(
 	return buildSlicesFromRows(rows, fallbackDefaultDays, startMs, endMs)
 }
 
-func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]Slice, error) {
+func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]retentiontypes.Slice, error) {
 	if startMs >= endMs {
 		return nil, nil
 	}
@@ -101,7 +93,7 @@ func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, star
 		return nil, err
 	}
 
-	slices := make([]Slice, 0, len(inWindow)+1)
+	slices := make([]retentiontypes.Slice, 0, len(inWindow)+1)
 	cursor := startMs
 	for _, row := range inWindow {
 		rowMs := row.CreatedAt.UnixMilli()
@@ -113,7 +105,7 @@ func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, star
 			}
 			continue
 		}
-		slices = append(slices, Slice{
+		slices = append(slices, retentiontypes.Slice{
 			StartMs:     cursor,
 			EndMs:       rowMs,
 			Rules:       activeRules,
@@ -127,7 +119,7 @@ func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, star
 	}
 
 	if cursor < endMs {
-		slices = append(slices, Slice{
+		slices = append(slices, retentiontypes.Slice{
 			StartMs:     cursor,
 			EndMs:       endMs,
 			Rules:       activeRules,

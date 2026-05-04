@@ -150,7 +150,7 @@ func (provider *Provider) PutMetersV2(ctx context.Context, key string, data []by
 	return err
 }
 
-func (provider *Provider) PutMeterReadings(ctx context.Context, key string, idempotencyKey string, data []byte) error {
+func (provider *Provider) PutMetersV3(ctx context.Context, key string, idempotencyKey string, data []byte) error {
 	headers := http.Header{}
 	if idempotencyKey != "" {
 		headers.Set("X-Idempotency-Key", idempotencyKey)

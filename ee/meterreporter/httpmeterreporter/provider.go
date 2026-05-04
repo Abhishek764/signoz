@@ -621,7 +621,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 	// if err != nil {
 	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
 	// }
-	// if err := provider.zeus.PutMeterReadings(ctx, licenseKey, idempotencyKey, body); err != nil {
+	// if err := provider.zeus.PutMetersV3(ctx, licenseKey, idempotencyKey, body); err != nil {
 	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "ship meter readings for %s", date)
 	// }
 	_ = licenseKey

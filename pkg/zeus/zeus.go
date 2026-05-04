@@ -35,10 +35,10 @@ type Zeus interface {
 	// Puts the meters for the given license key using Zeus.
 	PutMetersV2(context.Context, string, []byte) error
 
-	// PutMeterReadings ships one day's batch of meter readings to the v2/meters
+	// PutMetersV3 ships one day's batch of meter readings to the v2/meters
 	// endpoint. idempotencyKey is propagated as X-Idempotency-Key so Zeus can
 	// UPSERT on retries. The batch is accepted or rejected as a whole.
-	PutMeterReadings(ctx context.Context, licenseKey string, idempotencyKey string, body []byte) error
+	PutMetersV3(ctx context.Context, licenseKey string, idempotencyKey string, body []byte) error
 
 	// GetMeterCheckpoints returns the latest sealed (is_completed=true) UTC day
 	// Zeus has stored for each billing meter name. Missing meter names are

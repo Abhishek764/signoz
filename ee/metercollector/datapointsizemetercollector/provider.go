@@ -164,7 +164,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterr
 }
 
 // buildQuery stays local because each meter owns its billing query.
-func buildQuery(meterName string, slice retention.Slice) (string, []any, []dimensionColumn, error) {
+func buildQuery(meterName string, slice retentiontypes.Slice) (string, []any, []dimensionColumn, error) {
 	retentionExpr, err := retention.BuildMultiIfSQL(slice.Rules, slice.DefaultDays)
 	if err != nil {
 		return "", nil, nil, err

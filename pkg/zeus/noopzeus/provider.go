@@ -49,8 +49,8 @@ func (provider *provider) PutMetersV2(_ context.Context, _ string, _ []byte) err
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v2 is not supported")
 }
 
-func (provider *provider) PutMeterReadings(_ context.Context, _ string, _ string, _ []byte) error {
-	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meter readings is not supported")
+func (provider *provider) PutMetersV3(_ context.Context, _ string, _ string, _ []byte) error {
+	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v3 is not supported")
 }
 
 func (provider *provider) GetMeterCheckpoints(_ context.Context, _ string) ([]zeustypes.MeterCheckpoint, error) {

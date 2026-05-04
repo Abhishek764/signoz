@@ -33,7 +33,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 			end.UnixMilli(),
 		)
 		require.NoError(t, err)
-		require.Equal(t, []Slice{{
+		require.Equal(t, []retentiontypes.Slice{{
 			StartMs:     start.UnixMilli(),
 			EndMs:       end.UnixMilli(),
 			Rules:       []retentiontypes.CustomRetentionRule{ruleA},
@@ -55,7 +55,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 			end.UnixMilli(),
 		)
 		require.NoError(t, err)
-		require.Equal(t, []Slice{
+		require.Equal(t, []retentiontypes.Slice{
 			{
 				StartMs:     start.UnixMilli(),
 				EndMs:       firstChange.UnixMilli(),
@@ -79,7 +79,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 	t.Run("no rows uses fallback", func(t *testing.T) {
 		slices, err := buildSlicesFromRows(nil, 30, start.UnixMilli(), end.UnixMilli())
 		require.NoError(t, err)
-		require.Equal(t, []Slice{{
+		require.Equal(t, []retentiontypes.Slice{{
 			StartMs:     start.UnixMilli(),
 			EndMs:       end.UnixMilli(),
 			DefaultDays: 30,

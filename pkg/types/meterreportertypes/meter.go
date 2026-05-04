@@ -29,7 +29,7 @@ type Meter struct {
 	Dimensions map[string]string `json:"dimensions"`
 }
 
-// PostableMeters is one day of meters for Zeus.PutMeterReadings.
+// PostableMeters is one day of meters for Zeus.PutMetersV3.
 type PostableMeters struct {
 	// Meters is the set of meter values being shipped for one day.
 	Meters []Meter `json:"meters"`

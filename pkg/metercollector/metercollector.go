@@ -20,7 +20,7 @@ import (
 //
 // Contract:
 //   - Name(), Unit(), Aggregation() are pure, called freely.
-//   - Collect MUST stamp signoz.billing.organization.id on every meter it
+//   - Collect MUST stamp DimensionOrganizationID on every meter it
 //     emits.
 //   - Collect SHOULD return a zero-value sentinel meter when the window saw
 //     no data, so Zeus's MAX(start_date) checkpoint can advance past empty
@@ -29,7 +29,7 @@ import (
 //     a returned error never aborts a tick.
 type MeterCollector interface {
 	Name() metercollectortypes.Name
-	Unit() string
-	Aggregation() string
+	Unit() metercollectortypes.Unit
+	Aggregation() metercollectortypes.Aggregation
 	Collect(ctx context.Context, orgID valuer.UUID, window meterreportertypes.Window) ([]meterreportertypes.Meter, error)
 }

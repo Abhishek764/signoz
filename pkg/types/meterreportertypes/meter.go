@@ -1,5 +1,7 @@
 package meterreportertypes
 
+import "github.com/SigNoz/signoz/pkg/types/metercollectortypes"
+
 // Meter is a single meter value sent to Zeus. Re-sending the same logical
 // meter for a window is expected and will overwrite the prior value instead
 // of duplicating usage.
@@ -11,10 +13,10 @@ type Meter struct {
 	Value float64 `json:"value"`
 
 	// Unit is the metric unit for this meter.
-	Unit string `json:"unit"`
+	Unit metercollectortypes.Unit `json:"unit"`
 
 	// Aggregation names the aggregation applied to produce Value.
-	Aggregation string `json:"aggregation"`
+	Aggregation metercollectortypes.Aggregation `json:"aggregation"`
 
 	// StartUnixMilli is the inclusive lower bound of the reporting window in
 	// epoch milliseconds (UTC day start for both sealed and partial values).

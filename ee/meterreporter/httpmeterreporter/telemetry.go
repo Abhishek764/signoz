@@ -1,4 +1,4 @@
-package signozmeterreporter
+package httpmeterreporter
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -12,8 +12,10 @@ type reporterMetrics struct {
 	postErrors           metric.Int64Counter
 	checkpointErrors     metric.Int64Counter
 	catchupDaysProcessed metric.Int64Counter
-	collectDuration      metric.Float64Histogram
-	shipDuration         metric.Float64Histogram
+	collectDuration      metric.Float64Counter
+	collectOperations    metric.Int64Counter
+	shipDuration         metric.Float64Counter
+	shipOperations       metric.Int64Counter
 }
 
 func newReporterMetrics(meter metric.Meter) (*reporterMetrics, error) {
@@ -49,12 +51,22 @@ func newReporterMetrics(meter metric.Meter) (*reporterMetrics, error) {
 		errs = errors.Join(errs, err)
 	}
 
-	collectDuration, err := meter.Float64Histogram("signoz.meterreporter.collect.duration", metric.WithDescription("Time taken to collect readings from all registered meters in a single phase of a tick, tagged with phase={sealed|today}."), metric.WithUnit("s"))
+	collectDuration, err := meter.Float64Counter("signoz.meterreporter.collect.duration.seconds", metric.WithDescription("Cumulative time spent collecting readings from all registered meters in a single phase of a tick, tagged with phase={sealed|today}."), metric.WithUnit("s"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	shipDuration, err := meter.Float64Histogram("signoz.meterreporter.ship.duration", metric.WithDescription("Time taken to ship (marshal + POST) collected readings to Zeus in a single phase of a tick, tagged with phase={sealed|today}."), metric.WithUnit("s"))
+	collectOperations, err := meter.Int64Counter("signoz.meterreporter.collect.operations", metric.WithDescription("Total number of collection phases that recorded collect duration, tagged with phase={sealed|today}."))
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	shipDuration, err := meter.Float64Counter("signoz.meterreporter.ship.duration.seconds", metric.WithDescription("Cumulative time spent shipping collected readings to Zeus in a single phase of a tick, tagged with phase={sealed|today}."), metric.WithUnit("s"))
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	shipOperations, err := meter.Int64Counter("signoz.meterreporter.ship.operations", metric.WithDescription("Total number of ship phases that recorded ship duration, tagged with phase={sealed|today}."))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
@@ -71,6 +83,8 @@ func newReporterMetrics(meter metric.Meter) (*reporterMetrics, error) {
 		checkpointErrors:     checkpointErrors,
 		catchupDaysProcessed: catchupDaysProcessed,
 		collectDuration:      collectDuration,
+		collectOperations:    collectOperations,
 		shipDuration:         shipDuration,
+		shipOperations:       shipOperations,
 	}, nil
 }

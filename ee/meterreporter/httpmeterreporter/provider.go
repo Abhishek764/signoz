@@ -1,20 +1,22 @@
-package signozmeterreporter
+package httpmeterreporter
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -26,6 +28,8 @@ import (
 )
 
 var _ factory.ServiceWithHealthy = (*Provider)(nil)
+
+var errCodeReportFailed = errors.MustNewCode("meterreporter_report_failed")
 
 const (
 	phaseSealed = "sealed"
@@ -53,7 +57,7 @@ const (
 	resultSuccess = "success"
 	resultFailure = "failure"
 
-	providerName = "signoz"
+	providerName = "http"
 )
 
 // Provider is the enterprise meter reporter. It ticks on a fixed interval,
@@ -61,14 +65,14 @@ const (
 // ships the resulting readings to Zeus. Community builds wire a noop provider
 // instead, so this type never runs there.
 type Provider struct {
-	settings factory.ScopedProviderSettings
-	config   meterreporter.Config
-	meters   []Meter
-	deps     CollectorDeps
+	settings   factory.ScopedProviderSettings
+	config     meterreporter.Config
+	collectors []metercollector.MeterCollector
 
-	licensing licensing.Licensing
-	orgGetter organization.Getter
-	zeus      zeus.Zeus
+	licensing      licensing.Licensing
+	telemetryStore telemetrystore.TelemetryStore
+	orgGetter      organization.Getter
+	zeus           zeus.Zeus
 
 	healthyC     chan struct{}
 	stopC        chan struct{}
@@ -76,20 +80,20 @@ type Provider struct {
 	metrics      *reporterMetrics
 }
 
-// NewFactory wires the signoz meter reporter into the provider registry. The
-// returned factory is registered alongside the noop factory so the "provider"
-// config field picks the right implementation at startup.
+// NewFactory wires the HTTP meter reporter into the provider registry. The
+// enterprise composition root registers it alongside noop and selects the
+// active provider from flagger at startup.
 func NewFactory(
+	collectors map[metercollectortypes.Name]metercollector.MeterCollector,
 	licensing licensing.Licensing,
 	telemetryStore telemetrystore.TelemetryStore,
-	sqlstore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	zeus zeus.Zeus,
 ) factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("signoz"),
+		factory.MustNewName(providerName),
 		func(ctx context.Context, providerSettings factory.ProviderSettings, config meterreporter.Config) (meterreporter.Reporter, error) {
-			return newProvider(ctx, providerSettings, config, licensing, telemetryStore, sqlstore, orgGetter, zeus)
+			return newProvider(ctx, providerSettings, config, collectors, licensing, telemetryStore, orgGetter, zeus)
 		},
 	)
 }
@@ -98,39 +102,64 @@ func newProvider(
 	_ context.Context,
 	providerSettings factory.ProviderSettings,
 	config meterreporter.Config,
+	collectors map[metercollectortypes.Name]metercollector.MeterCollector,
 	licensing licensing.Licensing,
 	telemetryStore telemetrystore.TelemetryStore,
-	sqlstore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	zeus zeus.Zeus,
 ) (*Provider, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/meterreporter/signozmeterreporter")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter")
 
 	metrics, err := newReporterMetrics(settings.Meter())
 	if err != nil {
 		return nil, err
 	}
 
-	meters, err := DefaultMeters()
+	orderedCollectors, err := validateCollectors(collectors)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Provider{
-		settings: settings,
-		config:   config,
-		meters:   meters,
-		deps: CollectorDeps{
-			TelemetryStore: telemetryStore,
-			SQLStore:       sqlstore,
-		},
-		licensing: licensing,
-		orgGetter: orgGetter,
-		zeus:      zeus,
-		healthyC:  make(chan struct{}),
-		stopC:     make(chan struct{}),
-		metrics:   metrics,
+		settings:       settings,
+		config:         config,
+		collectors:     orderedCollectors,
+		licensing:      licensing,
+		telemetryStore: telemetryStore,
+		orgGetter:      orgGetter,
+		zeus:           zeus,
+		healthyC:       make(chan struct{}),
+		stopC:          make(chan struct{}),
+		metrics:        metrics,
 	}, nil
+}
+
+func validateCollectors(collectors map[metercollectortypes.Name]metercollector.MeterCollector) ([]metercollector.MeterCollector, error) {
+	ordered := make([]metercollector.MeterCollector, 0, len(collectors))
+	for name, collector := range collectors {
+		if name.IsZero() {
+			return nil, errors.New(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "empty meter name in collector registry")
+		}
+		if collector == nil {
+			return nil, errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "nil collector for meter %q", name.String())
+		}
+		if collector.Name() != name {
+			return nil, errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "registry key %q does not match collector.Name() %q", name.String(), collector.Name().String())
+		}
+		if collector.Unit().IsZero() {
+			return nil, errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "meter %q has empty unit", name.String())
+		}
+		if collector.Aggregation().IsZero() {
+			return nil, errors.Newf(errors.TypeInvalidInput, meterreporter.ErrCodeInvalidInput, "meter %q has empty aggregation", name.String())
+		}
+		ordered = append(ordered, collector)
+	}
+
+	sort.Slice(ordered, func(i, j int) bool {
+		return ordered[i].Name().String() < ordered[j].Name().String()
+	})
+
+	return ordered, nil
 }
 
 // Start runs an initial tick, then loops on Config.Interval until Stop is
@@ -144,7 +173,7 @@ func (provider *Provider) Start(ctx context.Context) error {
 		slog.Duration("interval", provider.config.Interval),
 		slog.Duration("timeout", provider.config.Timeout),
 		slog.Int("catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
-		slog.Int("meters", len(provider.meters)),
+		slog.Int("meters", len(provider.collectors)),
 	)
 
 	provider.goroutinesWg.Add(1)
@@ -198,7 +227,7 @@ func (provider *Provider) runTick(parentCtx context.Context) {
 	tickStart := time.Now()
 	ctx, span := provider.settings.Tracer().Start(parentCtx, "meterreporter.Tick", trace.WithAttributes(
 		attribute.String(attrMeterReporterProvider, providerName),
-		attribute.Int("meterreporter.meters", len(provider.meters)),
+		attribute.Int("meterreporter.meters", len(provider.collectors)),
 		attribute.Int("meterreporter.catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
 	))
 	defer span.End()
@@ -210,7 +239,7 @@ func (provider *Provider) runTick(parentCtx context.Context) {
 
 	provider.settings.Logger().DebugContext(ctx, "meter reporter tick started",
 		slog.Duration("timeout", provider.config.Timeout),
-		slog.Int("meters", len(provider.meters)),
+		slog.Int("meters", len(provider.collectors)),
 	)
 
 	if err := provider.tick(ctx); err != nil {
@@ -317,7 +346,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 		slog.Int("catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
 	)
 	for day := catchupStart; !day.After(end); day = day.AddDate(0, 0, 1) {
-		window := Window{
+		window := meterreportertypes.Window{
 			StartUnixMilli: day.UnixMilli(),
 			EndUnixMilli:   day.AddDate(0, 0, 1).UnixMilli(),
 			IsCompleted:    true,
@@ -338,7 +367,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 	}
 
 	// Concern B — today partial. Runs every tick; concern A failures don't block it.
-	todayWindow := Window{
+	todayWindow := meterreportertypes.Window{
 		StartUnixMilli: todayStart.UnixMilli(),
 		EndUnixMilli:   now.UnixMilli(),
 		IsCompleted:    false,
@@ -353,7 +382,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 // Per-meter collect failures are logged and counted but never bubble. For
 // sealed windows, readings whose day is at-or-before the per-meter checkpoint
 // are dropped to save bandwidth.
-func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window Window, checkpointsByMeter map[string]time.Time) error {
+func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window meterreportertypes.Window, checkpointsByMeter map[string]time.Time) error {
 	phaseLabel := phaseToday
 	if window.IsCompleted {
 		phaseLabel = phaseSealed
@@ -377,23 +406,24 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 		slog.String("date", date),
 		slog.Int64("start_unix_milli", window.StartUnixMilli),
 		slog.Int64("end_unix_milli", window.EndUnixMilli),
-		slog.Int("meters", len(provider.meters)),
+		slog.Int("meters", len(provider.collectors)),
 	)
 
 	collectStart := time.Now()
-	readings := make([]meterreportertypes.Meter, 0, len(provider.meters))
-	for _, meter := range provider.meters {
+	readings := make([]meterreportertypes.Meter, 0, len(provider.collectors))
+	for _, collector := range provider.collectors {
+		meterName := collector.Name().String()
 		collectStart := time.Now()
 		collectCtx, collectSpan := provider.settings.Tracer().Start(ctx, "meterreporter.CollectMeter", trace.WithAttributes(
 			attribute.String(attrPhase, phaseLabel),
 			attribute.String(attrOrgID, orgID.StringValue()),
-			attribute.String(attrMeter, meter.Name.String()),
+			attribute.String(attrMeter, meterName),
 			attribute.String(attrDate, date),
 			attribute.Int64(attrWindowStartUnixMilli, window.StartUnixMilli),
 			attribute.Int64(attrWindowEndUnixMilli, window.EndUnixMilli),
 			attribute.Bool(attrWindowCompleted, window.IsCompleted),
 		))
-		collectedReadings, err := meter.Collect(collectCtx, provider.deps, meter, orgID, window)
+		collectedReadings, err := collector.Collect(collectCtx, orgID, window)
 		if err != nil {
 			collectSpan.RecordError(err)
 			collectSpan.SetStatus(codes.Error, err.Error())
@@ -405,7 +435,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 			provider.metrics.collectErrors.Add(ctx, 1, phaseAttr)
 			provider.settings.Logger().WarnContext(ctx, "meter collection failed",
 				errors.Attr(err),
-				slog.String("meter", meter.Name.String()),
+				slog.String("meter", meterName),
 				slog.String("org_id", orgID.StringValue()),
 				slog.String("phase", phaseLabel),
 				slog.String("date", date),
@@ -420,7 +450,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 		)
 		collectSpan.End()
 		provider.settings.Logger().DebugContext(ctx, "meter collection completed",
-			slog.String("meter", meter.Name.String()),
+			slog.String("meter", meterName),
 			slog.String("org_id", orgID.StringValue()),
 			slog.String("phase", phaseLabel),
 			slog.String("date", date),
@@ -430,7 +460,8 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 		readings = append(readings, collectedReadings...)
 	}
 	collectDuration := time.Since(collectStart)
-	provider.metrics.collectDuration.Record(ctx, collectDuration.Seconds(), phaseAttr)
+	provider.metrics.collectDuration.Add(ctx, collectDuration.Seconds(), phaseAttr)
+	provider.metrics.collectOperations.Add(ctx, 1, phaseAttr)
 	span.SetAttributes(attribute.Int(attrReadingsCollected, len(readings)))
 
 	if window.IsCompleted {
@@ -467,7 +498,8 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 	shipStart := time.Now()
 	err := provider.shipReadings(ctx, licenseKey, date, readings)
 	shipDuration := time.Since(shipStart)
-	provider.metrics.shipDuration.Record(ctx, shipDuration.Seconds(), phaseAttr)
+	provider.metrics.shipDuration.Add(ctx, shipDuration.Seconds(), phaseAttr)
+	provider.metrics.shipOperations.Add(ctx, 1, phaseAttr)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -526,9 +558,9 @@ func dropCheckpointed(readings []meterreportertypes.Meter, windowDay time.Time, 
 func (provider *Provider) catchupStart(floor time.Time, todayStart time.Time, checkpointsByMeter map[string]time.Time) time.Time {
 	catchupStart := todayStart
 
-	for _, meter := range provider.meters {
+	for _, collector := range provider.collectors {
 		next := floor
-		if checkpoint, ok := checkpointsByMeter[meter.Name.String()]; ok {
+		if checkpoint, ok := checkpointsByMeter[collector.Name().String()]; ok {
 			next = checkpoint.AddDate(0, 0, 1)
 			if next.Before(floor) {
 				next = floor
@@ -560,7 +592,7 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.DataFloor")
 	defer span.End()
 
-	if provider.deps.TelemetryStore == nil {
+	if provider.telemetryStore == nil {
 		span.SetAttributes(attribute.String(attrResult, resultSuccess))
 		return todayStart
 	}
@@ -571,7 +603,7 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var minMs int64
-	if err := provider.deps.TelemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minMs); err != nil {
+	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minMs); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		span.SetAttributes(attribute.String(attrResult, resultFailure))
@@ -623,8 +655,8 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
 			slog.String("meter", reading.MeterName),
 			slog.Float64("value", reading.Value),
-			slog.String("unit", reading.Unit),
-			slog.String("aggregation", reading.Aggregation),
+			slog.String("unit", reading.Unit.StringValue()),
+			slog.String("aggregation", reading.Aggregation.StringValue()),
 			slog.Int64("start_unix_milli", reading.StartUnixMilli),
 			slog.Int64("end_unix_milli", reading.EndUnixMilli),
 			slog.Bool("is_completed", reading.IsCompleted),

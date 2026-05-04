@@ -10,10 +10,6 @@ import (
 var _ factory.Config = (*Config)(nil)
 
 type Config struct {
-	// Provider picks the reporter implementation. "noop" is the default and is
-	// what community builds ship; "signoz" is the enterprise cron-based reporter.
-	Provider string `mapstructure:"provider"`
-
 	// Interval is how often the reporter ticks (collect + ship). The validator
 	// enforces a 5m floor — any sooner and we'd hammer ClickHouse for nothing,
 	// since Zeus UPSERTs inside a UTC day anyway.
@@ -34,7 +30,6 @@ type Config struct {
 
 func newConfig() factory.Config {
 	return Config{
-		Provider:              "noop",
 		Interval:              6 * time.Hour,
 		Timeout:               5 * time.Minute,
 		CatchupMaxDaysPerTick: 30,

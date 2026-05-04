@@ -17,7 +17,14 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
-	"github.com/SigNoz/signoz/ee/meterreporter/signozmeterreporter"
+	"github.com/SigNoz/signoz/ee/metercollector/basemetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/datapointcountmetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/datapointsizemetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/logcountmetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/logsizemetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/spancountmetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/spansizemetercollector"
+	"github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
@@ -36,9 +43,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	pkgflagger "github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
@@ -59,7 +68,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -159,12 +171,18 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			}
 			return factories
 		},
-		func(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore, orgGetter organization.Getter, zeus zeus.Zeus) factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]] {
+		func(ctx context.Context, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			factories := signoz.NewMeterReporterProviderFactories()
-			if err := factories.Add(signozmeterreporter.NewFactory(licensing, telemetryStore, sqlStore, orgGetter, zeus)); err != nil {
+			if err := factories.Add(httpmeterreporter.NewFactory(newMeterCollectors(licensing, telemetryStore, sqlStore), licensing, telemetryStore, orgGetter, zeus)); err != nil {
 				panic(err)
 			}
-			return factories
+
+			evalCtx := featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})
+			if flagger.BooleanOrEmpty(ctx, pkgflagger.FeatureUseMeterReporter, evalCtx) {
+				return factories, "http"
+			}
+
+			return factories, "noop"
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)
@@ -224,4 +242,16 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	}
 
 	return nil
+}
+
+func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore) map[metercollectortypes.Name]metercollector.MeterCollector {
+	return map[metercollectortypes.Name]metercollector.MeterCollector{
+		basemetercollector.MeterName:           basemetercollector.New(licensing),
+		logcountmetercollector.MeterName:       logcountmetercollector.New(telemetryStore, sqlStore),
+		logsizemetercollector.MeterName:        logsizemetercollector.New(telemetryStore, sqlStore),
+		datapointcountmetercollector.MeterName: datapointcountmetercollector.New(telemetryStore, sqlStore),
+		datapointsizemetercollector.MeterName:  datapointsizemetercollector.New(telemetryStore, sqlStore),
+		spancountmetercollector.MeterName:      spancountmetercollector.New(telemetryStore, sqlStore),
+		spansizemetercollector.MeterName:       spansizemetercollector.New(telemetryStore, sqlStore),
+	}
 }

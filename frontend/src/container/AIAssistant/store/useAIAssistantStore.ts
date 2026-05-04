@@ -18,6 +18,7 @@ import {
 	listThreads,
 	MessageContext,
 	MessageSummary,
+	regenerateMessage,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
 	streamEvents,
@@ -482,6 +483,10 @@ export interface AIAssistantStore {
 		answers: Record<string, unknown>,
 	) => Promise<void>;
 	cancelStream: (conversationId: string) => void;
+	regenerateAssistantMessage: (
+		conversationId: string,
+		messageId: string,
+	) => Promise<void>;
 	submitMessageFeedback: (
 		messageId: string,
 		rating: 'positive' | 'negative',
@@ -1040,6 +1045,56 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					cancelExecution(conv.threadId).catch((err) => {
 						console.error('[AIAssistant] cancelExecution failed:', err);
 					});
+				}
+			},
+
+			regenerateAssistantMessage: async (
+				conversationId: string,
+				messageId: string,
+			): Promise<void> => {
+				const conv = get().conversations[conversationId];
+				if (!conv) {
+					return;
+				}
+				const targetIndex = conv.messages.findIndex((m) => m.id === messageId);
+				if (targetIndex < 0) {
+					return;
+				}
+
+				// The backend rewinds history up to (excluding) `messageId` and
+				// kicks off a fresh execution. Mirror that locally so the
+				// streaming bubble doesn't render alongside the stale reply
+				// that's about to be replaced.
+				set((s) => {
+					const c = s.conversations[conversationId];
+					if (c) {
+						c.messages = c.messages.slice(0, targetIndex);
+					}
+					resetStreamingState(s, conversationId);
+				});
+
+				try {
+					const executionId = await regenerateMessage(messageId);
+					const ctrl = newStreamController(conversationId);
+					await runStreamingLoop(executionId, {
+						conversationId,
+						set,
+						signal: ctrl.signal,
+					});
+					streamControllers.delete(conversationId);
+					if (!hasPendingInput(conversationId, get)) {
+						finalizeStreamingMessage(conversationId, set, get);
+					}
+				} catch (err) {
+					if (err instanceof DOMException && err.name === 'AbortError') {
+						return;
+					}
+					console.error('[AIAssistant] regenerateAssistantMessage failed:', err);
+					finalizeStreamingError(
+						conversationId,
+						'Something went wrong while regenerating the response. Please try again.',
+						set,
+					);
 				}
 			},
 

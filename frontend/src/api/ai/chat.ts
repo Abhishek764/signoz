@@ -49,6 +49,7 @@ import type {
 	MessageContextDTOType,
 	MessageEventDTO,
 	MessageSummaryDTO,
+	RegenerateResponseDTO,
 	StatusEventDTO,
 	ThinkingEventDTO,
 	ThreadDetailResponseDTO,
@@ -386,6 +387,24 @@ export async function clarifyExecution(
 	const response = await AIAssistantInstance.post<ClarifyResponseDTO>(
 		'/clarify',
 		{ clarificationId, answers },
+		{ signal },
+	);
+	return response.data.executionId;
+}
+
+/**
+ * Clean-slate regeneration of an assistant response. The backend rewinds the
+ * conversation up to (excluding) the supplied messageId and starts a fresh
+ * execution. Returns the new executionId — open an SSE stream for it the
+ * same way `sendMessage` and `approve` do.
+ */
+export async function regenerateMessage(
+	messageId: string,
+	signal?: AbortSignal,
+): Promise<string> {
+	const response = await AIAssistantInstance.post<RegenerateResponseDTO>(
+		`/messages/${messageId}/regenerate`,
+		undefined,
 		{ signal },
 	);
 	return response.data.executionId;

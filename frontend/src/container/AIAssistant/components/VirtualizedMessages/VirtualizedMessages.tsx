@@ -54,6 +54,9 @@ export default function VirtualizedMessages({
 	isStreaming,
 }: VirtualizedMessagesProps): JSX.Element {
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
+	const regenerateAssistantMessage = useAIAssistantStore(
+		(s) => s.regenerateAssistantMessage,
+	);
 	const streamingStatus = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.streamingStatus ?? '',
 	);
@@ -77,12 +80,15 @@ export default function VirtualizedMessages({
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 	const scrollerRef = useRef<HTMLElement | Window | null>(null);
 
-	const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
-	const handleRegenerate = useCallback((): void => {
-		if (lastUserMessage && !isStreaming) {
-			sendMessage(lastUserMessage.content, lastUserMessage.attachments);
-		}
-	}, [lastUserMessage, isStreaming, sendMessage]);
+	const handleRegenerate = useCallback(
+		(messageId: string): void => {
+			if (isStreaming) {
+				return;
+			}
+			void regenerateAssistantMessage(conversationId, messageId);
+		},
+		[conversationId, isStreaming, regenerateAssistantMessage],
+	);
 
 	// Scroll all the way to the actual bottom — including the 64px of bottom
 	// padding on the scroller — so the last bubble has visible breathing room
@@ -174,7 +180,9 @@ export default function VirtualizedMessages({
 						<MessageBubble
 							message={msg}
 							onRegenerate={
-								isLastAssistant && !showStreamingSlot ? handleRegenerate : undefined
+								isLastAssistant && !showStreamingSlot
+									? (): void => handleRegenerate(msg.id)
+									: undefined
 							}
 							isLastAssistant={isLastAssistant}
 						/>

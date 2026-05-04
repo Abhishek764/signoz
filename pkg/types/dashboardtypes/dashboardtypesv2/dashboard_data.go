@@ -79,19 +79,7 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 	if !ok || composite == nil {
 		return nil
 	}
-	specJSON, err := json.Marshal(composite)
-	if err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "%s.spec", path)
-	}
-	var subs struct {
-		Queries []struct {
-			Type qb.QueryType `json:"type"`
-		} `json:"queries"`
-	}
-	if err := json.Unmarshal(specJSON, &subs); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "%s.spec", path)
-	}
-	for si, sub := range subs.Queries {
+	for si, sub := range composite.Queries {
 		subKind, ok := compositeSubQueryTypeToPluginKind[sub.Type]
 		if !ok {
 			continue

@@ -576,6 +576,39 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 	}
 }
 
+func TestInvalidatePanelWithoutQueries(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}}}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected panel-without-queries to be rejected")
+	require.Contains(t, err.Error(), "at least one query")
+}
+
+func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+					"queries": []
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected panel with explicit empty queries array to be rejected")
+	require.Contains(t, err.Error(), "at least one query")
+}
+
 func TestValidateRequiredFields(t *testing.T) {
 	wrapVariable := func(pluginKind, pluginSpec string) string {
 		return `{
@@ -680,7 +713,8 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
@@ -727,7 +761,8 @@ func TestNumberPanelDefaults(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
@@ -790,7 +825,8 @@ func TestStorageRoundTrip(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			},
 			"p2": {
@@ -799,7 +835,8 @@ func TestStorageRoundTrip(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},

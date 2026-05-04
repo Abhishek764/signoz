@@ -54,6 +54,9 @@ func (d *DashboardData) Validate() error {
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		panelKind := panel.Spec.Plugin.Kind
+		if len(panel.Spec.Queries) == 0 {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have at least one query", path)
+		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
 			queryPath := fmt.Sprintf("%s.spec.queries[%d].spec.plugin", path, qi)

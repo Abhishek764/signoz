@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 // Accepts both V2 (spanId) and V3 (span_id) span shapes
 // TODO: Remove V2 (spanId) support when phasing out V2
@@ -10,7 +11,6 @@ interface SpanLike {
 	spanId?: string;
 	span_id?: string;
 }
-import { getAbsoluteUrl } from 'utils/basePath';
 
 export const useCopySpanLink = (
 	span?: SpanLike,

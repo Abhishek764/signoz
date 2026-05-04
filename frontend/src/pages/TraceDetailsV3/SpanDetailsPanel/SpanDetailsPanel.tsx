@@ -38,6 +38,7 @@ import { getLeafKeyFromPath } from 'periscope/components/PrettyView/utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { openInNewTab } from 'utils/navigation';
 
 import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
@@ -217,13 +218,7 @@ function SpanDetailsContent({
 		searchParams.set(QueryParams.startTime, startTimeMs.toString());
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 
-		window.open(
-			`${window.location.origin}${
-				ROUTES.LOGS_EXPLORER
-			}?${searchParams.toString()}`,
-			'_blank',
-			'noopener,noreferrer',
-		);
+		openInNewTab(`${ROUTES.LOGS_EXPLORER}?${searchParams.toString()}`);
 	}, [selectedSpan.trace_id, traceStartTime, traceEndTime]);
 
 	const emptyLogsStateConfig = useMemo(

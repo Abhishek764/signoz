@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
-import { DownOutlined } from '@ant-design/icons';
+import { ChevronDown } from '@signozhq/icons';
 import { Button, Dropdown, Typography } from 'antd';
 import TimeItems, {
 	timePreferance,
@@ -47,7 +47,7 @@ function TimePreference({
 						{selectedTime.name}
 					</Typography.Text>
 				</div>
-				<DownOutlined />
+				<ChevronDown />
 			</Button>
 		</Dropdown>
 	);

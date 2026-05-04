@@ -9,11 +9,7 @@ import React, {
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import {
-	LoadingOutlined,
-	SearchOutlined,
-	SyncOutlined,
-} from '@ant-design/icons';
+import { LoaderCircle, RefreshCw, Search } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -338,7 +334,7 @@ function FullView({
 								)}
 								<div className="time-container">
 									{response.isFetching && (
-										<Spin spinning indicator={<LoadingOutlined spin />} />
+										<Spin spinning indicator={<LoaderCircle className="animate-spin" />} />
 									)}
 									<TimePreference
 										selectedTime={selectedTime}
@@ -352,7 +348,7 @@ function FullView({
 											response.refetch();
 										}}
 										type="primary"
-										icon={<SyncOutlined />}
+										icon={<RefreshCw />}
 									/>
 								</div>
 							</TimeContainer>
@@ -395,7 +391,7 @@ function FullView({
 						>
 							{isTablePanel && (
 								<Input
-									addonBefore={<SearchOutlined size={14} />}
+									addonBefore={<Search size={14} />}
 									className="global-search"
 									placeholder="Search..."
 									allowClear

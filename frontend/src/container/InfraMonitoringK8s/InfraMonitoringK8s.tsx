@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VerticalAlignTopOutlined } from '@ant-design/icons';
+import { ArrowUpToLine } from '@signozhq/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
@@ -335,7 +335,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								<Typography.Text>Filters</Typography.Text>
 
 								<Tooltip title="Collapse Filters">
-									<VerticalAlignTopOutlined
+									<ArrowUpToLine
 										rotate={270}
 										onClick={handleFilterVisibilityChange}
 									/>

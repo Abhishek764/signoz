@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckOutlined } from '@ant-design/icons';
+import { Check } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
@@ -613,7 +613,7 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<CheckOutlined />}
+							icon={<Check />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
 						>

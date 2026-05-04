@@ -1,7 +1,7 @@
 import { MouseEventHandler, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Card, Divider, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
@@ -315,7 +315,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				>
 					<TextContainer onClick={isDefaultOpen ? onCloseHandler : onExpandHandler}>
 						<IconContainer>
-							{!IsPanelOpen ? <RightOutlined /> : <DownOutlined />}
+							{!IsPanelOpen ? <ChevronRight /> : <ChevronDown />}
 						</IconContainer>
 
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>

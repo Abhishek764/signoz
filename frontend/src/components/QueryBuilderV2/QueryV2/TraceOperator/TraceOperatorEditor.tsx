@@ -2,7 +2,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -35,6 +34,7 @@ import { getTraceOperatorContextAtCursor } from './utils/traceOperatorContextUti
 import { getInvolvedQueriesInTraceOperator } from './utils/utils';
 
 import '../QuerySearch/QuerySearch.styles.scss';
+import { CircleCheck } from '@signozhq/icons';
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({
@@ -467,7 +467,7 @@ function TraceOperatorEditor({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck />}
 									className="periscope-btn ghost"
 								/>
 							) : (

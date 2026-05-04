@@ -1,5 +1,5 @@
 import React from 'react';
-import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { PipelineData } from 'types/api/pipeline/def';
 
 function TableExpandIcon({
@@ -14,9 +14,9 @@ function TableExpandIcon({
 	};
 
 	if (expanded) {
-		return <DownOutlined onClick={handleOnExpand} />;
+		return <ChevronDown onClick={handleOnExpand} />;
 	}
-	return <RightOutlined onClick={handleOnExpand} />;
+	return <ChevronRight onClick={handleOnExpand} />;
 }
 
 interface TableExpandIconProps {

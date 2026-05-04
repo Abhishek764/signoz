@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoaderCircle } from '@signozhq/icons';
 import {
 	Button,
 	Spin,
@@ -411,7 +411,7 @@ export function K8sBaseList<T>({
 				}}
 				loading={{
 					spinning: showTableLoadingState,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					indicator: <Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />,
 				}}
 				locale={{
 					emptyText: showTableLoadingState ? null : emptyTableMessage,

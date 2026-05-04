@@ -1,5 +1,5 @@
 import { memo, MouseEventHandler } from 'react';
-import { LinkOutlined } from '@ant-design/icons';
+import { Link } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import { TextSelect } from 'lucide-react';
 
@@ -29,7 +29,7 @@ function LogLinesActionButtons({
 			<Tooltip title="Copy Link">
 				<Button
 					size="small"
-					icon={<LinkOutlined size={14} />}
+					icon={<Link size={14} />}
 					onClick={onLogCopy}
 					className="copy-log-btn"
 				/>

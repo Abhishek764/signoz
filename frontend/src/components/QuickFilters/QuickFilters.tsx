@@ -1,9 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-	FilterOutlined,
-	SyncOutlined,
-	VerticalAlignTopOutlined,
-} from '@ant-design/icons';
+import { ArrowUpToLine, Filter, RefreshCw } from '@signozhq/icons';
 import {
 	Combobox,
 	ComboboxCommand,
@@ -176,7 +172,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<FilterOutlined />
+			<Filter />
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
@@ -227,13 +223,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<section className="right-actions">
 			<Tooltip title="Reset All">
 				<div className="right-action-icon-container">
-					<SyncOutlined className="sync-icon" onClick={handleReset} />
+					<RefreshCw className="sync-icon" onClick={handleReset} />
 				</div>
 			</Tooltip>
 			{showFilterCollapse && (
 				<Tooltip title="Collapse Filters">
 					<div className="right-action-icon-container">
-						<VerticalAlignTopOutlined
+						<ArrowUpToLine
 							rotate={270}
 							onClick={handleFilterVisibilityChange}
 						/>

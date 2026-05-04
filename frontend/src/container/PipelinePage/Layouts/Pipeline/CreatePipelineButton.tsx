@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import logEvent from 'api/common/logEvent';
 import TextToolTip from 'components/TextToolTip';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
+import { Pencil, Plus } from '@signozhq/icons';
 
 function CreatePipelineButton({
 	setActionType,
@@ -46,7 +46,7 @@ function CreatePipelineButton({
 			/>
 			{isAddNewPipelineVisible && (
 				<CustomButton
-					icon={<EditFilled />}
+					icon={<Pencil />}
 					onClick={onEnterEditMode}
 					disabled={isDisabled}
 				>
@@ -55,7 +55,7 @@ function CreatePipelineButton({
 			)}
 			{!isAddNewPipelineVisible && (
 				<CustomButton
-					icon={<PlusOutlined />}
+					icon={<Plus />}
 					onClick={onAddNewPipeline}
 					type="primary"
 				>

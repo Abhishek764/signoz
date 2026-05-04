@@ -1,5 +1,5 @@
 import { MouseEvent, useCallback } from 'react';
-import { DeleteOutlined } from '@ant-design/icons';
+import { Trash2 } from '@signozhq/icons';
 import { Col, Row, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
@@ -86,7 +86,8 @@ function MenuItemGenerator({
 				</Col>
 				<Col span={2}>
 					<Typography.Link>
-						<DeleteOutlined onClick={onDeleteHandler} />
+						//TODO: make sure icons support onClick event
+						<Trash2 onClick={onDeleteHandler} />
 					</Typography.Link>
 				</Col>
 			</Row>

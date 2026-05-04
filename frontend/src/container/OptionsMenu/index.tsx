@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingFilled, SettingOutlined } from '@ant-design/icons';
+import { Settings } from '@signozhq/icons';
 import { Popover, Space } from 'antd';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -36,8 +36,8 @@ function OptionsMenu({
 		),
 		[config, selectedOptionFormat],
 	);
-
-	const SettingIcon = isDarkMode ? SettingOutlined : SettingFilled;
+//TODO: discuss with design on this.
+	const SettingIcon = isDarkMode ? Settings : Settings;
 
 	return (
 		<OptionsContainer>

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { SearchOutlined } from '@ant-design/icons';
+import { Search } from '@signozhq/icons';
 import {
 	Button,
 	Flex,
@@ -723,7 +723,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														placeholder="Search"
 														maxLength={20}
 														onChange={handleSearch}
-														addonAfter={<SearchOutlined />}
+														addonAfter={<Search />}
 													/>
 												</div>
 

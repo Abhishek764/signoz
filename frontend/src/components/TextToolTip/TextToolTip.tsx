@@ -1,9 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { blue, grey } from '@ant-design/colors';
-import {
-	QuestionCircleFilled,
-	QuestionCircleOutlined,
-} from '@ant-design/icons';
+import { CircleHelp } from '@signozhq/icons';
 import { Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -63,11 +60,11 @@ function TextToolTip({
 		}),
 		[isDarkMode],
 	);
-
+//TODO: DISCUSS THIS WE MIGHT NEED TO REVERT THIS.
 	// Use provided icons or fallback to default icons
-	const defaultFilledIcon = <QuestionCircleFilled style={iconStyle} />;
+	const defaultFilledIcon = <CircleHelp style={iconStyle} />;
 	const defaultOutlinedIcon = (
-		<QuestionCircleOutlined style={iconOutlinedStyle} />
+		<CircleHelp style={iconOutlinedStyle} />
 	);
 
 	const renderIcon = (): ReactNode => {

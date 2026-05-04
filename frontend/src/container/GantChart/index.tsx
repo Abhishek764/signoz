@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import { SquareMinus, SquarePlus } from '@signozhq/icons';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -42,11 +42,11 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 				title={isExpandAll ? 'Collapse All' : 'Expand All'}
 			>
 				{isExpandAll ? (
-					<MinusSquareOutlined
+					<SquareMinus
 						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
 					/>
 				) : (
-					<PlusSquareOutlined
+					<SquarePlus
 						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
 					/>
 				)}

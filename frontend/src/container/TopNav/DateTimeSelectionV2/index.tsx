@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
-import { SyncOutlined } from '@ant-design/icons';
+import { RefreshCw } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -741,7 +741,7 @@ function DateTimeSelection({
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
 								<Button
-									icon={<SyncOutlined />}
+									icon={<RefreshCw />}
 									loading={!!isRefreshingQueries}
 									onClick={onRefreshHandler}
 								/>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ExclamationCircleFilled } from '@ant-design/icons';
+import { CircleAlert } from '@signozhq/icons';
 import { Tooltip, Typography } from 'antd';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 
@@ -139,7 +139,7 @@ function ValueGraph({
 					}
 				>
 					<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
-						<ExclamationCircleFilled
+						<CircleAlert
 							className="value-graph-icon"
 							data-testid="conflicting-thresholds"
 						/>

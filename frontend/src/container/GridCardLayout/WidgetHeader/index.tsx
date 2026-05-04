@@ -1,16 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import {
-	AlertOutlined,
-	CloudDownloadOutlined,
-	CopyOutlined,
-	DeleteOutlined,
-	EditFilled,
-	FullscreenOutlined,
-	InfoCircleOutlined,
-	MoreOutlined,
-	SearchOutlined,
-} from '@ant-design/icons';
+import { Bell, CloudDownload, Copy, EllipsisVertical, Fullscreen, Info, Pencil, Search, Trash2 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
@@ -148,35 +138,35 @@ function WidgetHeader({
 		(): MenuItem[] => [
 			{
 				key: MenuItemKeys.View,
-				icon: <FullscreenOutlined />,
+				icon: <Fullscreen />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
 				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
 				disabled: queryResponse.isFetching,
 			},
 			{
 				key: MenuItemKeys.Edit,
-				icon: <EditFilled />,
+				icon: <Pencil />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Clone,
-				icon: <CopyOutlined />,
+				icon: <Copy />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Download,
-				icon: <CloudDownloadOutlined />,
+				icon: <CloudDownload />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
 				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
 				disabled: false,
 			},
 			{
 				key: MenuItemKeys.Delete,
-				icon: <DeleteOutlined />,
+				icon: <Trash2 />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
@@ -184,7 +174,7 @@ function WidgetHeader({
 			},
 			{
 				key: MenuItemKeys.CreateAlerts,
-				icon: <AlertOutlined />,
+				icon: <Bell />,
 				label: (
 					<span
 						style={{
@@ -242,7 +232,7 @@ function WidgetHeader({
 		<div className="widget-header-container">
 			{showGlobalSearch ? (
 				<Input
-					addonBefore={<SearchOutlined size={14} />}
+					addonBefore={<Search size={14} />}
 					placeholder="Search..."
 					bordered={false}
 					data-testid="widget-header-search-input"
@@ -283,7 +273,7 @@ function WidgetHeader({
 								className="info-tooltip"
 								placement="right"
 							>
-								<InfoCircleOutlined />
+								<Info />
 							</Tooltip>
 						)}
 					</div>
@@ -312,7 +302,7 @@ function WidgetHeader({
 							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 						)}
 						{globalSearchAvailable && (
-							<SearchOutlined
+							<Search
 								className="search-header-icons"
 								onClick={(): void => setShowGlobalSearch(true)}
 								data-testid="widget-header-search"
@@ -321,7 +311,7 @@ function WidgetHeader({
 
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
 							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-								<MoreOutlined
+								<EllipsisVertical
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
 										globalSearchAvailable ? 'widget-header-more-options-visible' : ''

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { red } from '@ant-design/colors';
-import { ExclamationCircleTwoTone } from '@ant-design/icons';
+import { CircleAlert } from '@signozhq/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -118,7 +118,8 @@ function ImportJSON({
 
 	const getErrorNode = (error: string): JSX.Element => (
 		<Space>
-			<ExclamationCircleTwoTone twoToneColor={[red[7], '#1f1f1f']} />
+			{/* //TODO: dicuss this */}
+			<CircleAlert twoToneColor={[red[7], '#1f1f1f']} />
 			<Typography style={{ color: 'var(--warning-background)' }}>
 				{error}
 			</Typography>

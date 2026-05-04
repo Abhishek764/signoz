@@ -6,11 +6,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import {
-	FilterOutlined,
-	SyncOutlined,
-	VerticalAlignTopOutlined,
-} from '@ant-design/icons';
+import { ArrowUpToLine, Filter as FilterIcon, RefreshCw } from '@signozhq/icons';
+
 import { Button, Flex, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
@@ -246,7 +243,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			<Flex justify="space-between" align="center" className="filter-header">
 				<Flex gap={8} align="center">
 					<div className="filter-title">
-						<FilterOutlined />
+						<FilterIcon />
 						<Typography.Text>Filters</Typography.Text>
 					</div>
 					<Tooltip title="Reset" placement="right">
@@ -255,7 +252,7 @@ export function Filter(props: FilterProps): JSX.Element {
 							className="sync-icon"
 							data-testid="reset-filters"
 						>
-							<SyncOutlined />
+							<RefreshCw />
 						</Button>
 					</Tooltip>
 				</Flex>
@@ -265,7 +262,7 @@ export function Filter(props: FilterProps): JSX.Element {
 						className="arrow-icon"
 						data-testid="toggle-filter-panel"
 					>
-						<VerticalAlignTopOutlined rotate={270} />
+						<ArrowUpToLine rotate={270} />
 					</Button>
 				</Tooltip>
 			</Flex>

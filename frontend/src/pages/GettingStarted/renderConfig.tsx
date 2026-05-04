@@ -1,11 +1,3 @@
-import {
-	AlertFilled,
-	AlignLeftOutlined,
-	ApiFilled,
-	BarChartOutlined,
-	DashboardFilled,
-	SoundFilled,
-} from '@ant-design/icons';
 import { Typography } from 'antd';
 import Slack from 'container/SideNav/Slack';
 import store from 'store';
@@ -21,6 +13,8 @@ import railsPngUrl from '@/assets/Logos/rails.png';
 import rustPngUrl from '@/assets/Logos/rust.png';
 
 import { TGetStartedContentSection } from './types';
+import { AlignLeft, BellRing, ChartBar, LayoutDashboard, Volume2 } from '@signozhq/icons';
+import { ApiFilled } from '@ant-design/icons';
 
 export const GetStartedContent = (): TGetStartedContentSection[] => {
 	const {
@@ -102,12 +96,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send metrics to SigNoz',
-					icon: <BarChartOutlined style={{ fontSize: '3.5rem' }} />,
+					icon: <ChartBar style={{ fontSize: '3.5rem' }} />,
 					url: 'https://signoz.io/docs/userguide/send-metrics/',
 				},
 				{
 					title: 'Create and Manage Dashboards',
-					icon: <DashboardFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <LayoutDashboard style={{ fontSize: '3.5rem' }} />,
 					url: 'https://signoz.io/docs/userguide/manage-dashboards-and-panels/',
 				},
 			],
@@ -117,7 +111,7 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send your logs to SigNoz',
-					icon: <AlignLeftOutlined style={{ fontSize: '3.5rem' }} />,
+					icon: <AlignLeft style={{ fontSize: '3.5rem' }} />,
 					url: 'https://signoz.io/docs/userguide/logs/',
 				},
 				{
@@ -132,12 +126,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Create alert rules on metrics',
-					icon: <AlertFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <BellRing style={{ fontSize: '3.5rem' }} />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/',
 				},
 				{
 					title: 'Configure alert notification channels',
-					icon: <SoundFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <Volume2 style={{ fontSize: '3.5rem' }} />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
 				},
 			],

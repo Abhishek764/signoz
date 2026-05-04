@@ -1,4 +1,4 @@
-import { ArrowRightOutlined, PlayCircleFilled } from '@ant-design/icons';
+import { ArrowRight, CirclePlay } from '@signozhq/icons';
 import { Flex, Typography } from 'antd';
 import { openInNewTab } from 'utils/navigation';
 
@@ -25,9 +25,9 @@ function InfoLinkText({
 			}}
 			className="info-link-container"
 		>
-			{leftIconVisible && <PlayCircleFilled />}
+			{leftIconVisible && <CirclePlay />}
 			<Typography.Text className="info-text">{infoText}</Typography.Text>
-			{rightIconVisible && <ArrowRightOutlined rotate={315} />}
+			{rightIconVisible && <ArrowRight rotate={315} />}
 		</Flex>
 	);
 }

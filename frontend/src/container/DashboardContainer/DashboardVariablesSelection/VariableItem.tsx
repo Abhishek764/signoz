@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Info } from '@signozhq/icons';
 import { Tooltip, Typography } from 'antd';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -35,7 +35,7 @@ function VariableItem({
 				${name}
 				{description && (
 					<Tooltip title={description}>
-						<InfoCircleOutlined className="info-icon" />
+						<Info className="info-icon" />
 					</Tooltip>
 				)}
 			</Typography.Text>

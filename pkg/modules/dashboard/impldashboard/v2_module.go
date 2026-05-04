@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypesv2.PostableDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	if err := postable.Validate(); err != nil {
 		return nil, err
 	}
@@ -21,7 +20,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 		return nil, err
 	}
 
-	dashboard := dashboardtypesv2.NewDashboard(orgID, createdBy, postable, resolvedTags)
+	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, resolvedTags)
 
 	storableDashboard, err := dashboard.ToStorableDashboard()
 	if err != nil {
@@ -47,7 +46,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	return dashboard, nil
 }
 
-func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	storable, public, err := module.store.GetV2(ctx, orgID, id)
 	if err != nil {
 		return nil, err
@@ -58,7 +57,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return nil, err
 	}
 
-	return dashboardtypesv2.NewDashboardFromStorable(storable, public, tags)
+	return dashboardtypes.NewDashboardV2FromStorable(storable, public, tags)
 }
 
 func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypesv2.UpdateableDashboard) (*dashboardtypesv2.Dashboard, error) {

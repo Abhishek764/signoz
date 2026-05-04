@@ -6,10 +6,13 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
+
+const LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
 
 var (
 	ErrCodePricingRuleNotFound       = errors.MustNewCode("pricing_rule_not_found")

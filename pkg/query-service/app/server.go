@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"github.com/gorilla/handlers"
@@ -131,14 +130,12 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	llmCostFeature := impllmpricingrule.NewLLMCostFeature(signoz.Modules.LLMPricingRule)
-
 	agentConfMgr, err := agentConf.Initiate(
 		&agentConf.ManagerOptions{
 			Store: signoz.SQLStore,
 			AgentFeatures: []agentConf.AgentFeature{
 				logParsingPipelineController,
-				llmCostFeature,
+				signoz.Modules.LLMPricingRule,
 			},
 		},
 	)

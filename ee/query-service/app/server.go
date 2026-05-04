@@ -12,7 +12,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 
 	"github.com/gorilla/handlers"
 
@@ -113,11 +112,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	}
 
 	// initiate agent config handler
-	llmCostFeature := impllmpricingrule.NewLLMCostFeature(signoz.Modules.LLMPricingRule)
-
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
 		Store:         signoz.SQLStore,
-		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController, llmCostFeature},
+		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController, signoz.Modules.LLMPricingRule},
 	})
 	if err != nil {
 		return nil, err

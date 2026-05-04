@@ -2,12 +2,14 @@ package impllmpricingrule
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -73,6 +75,52 @@ func (module *module) Delete(ctx context.Context, orgID, id valuer.UUID) error {
 	agentConf.NotifyConfigUpdate(ctx)
 
 	return nil
+}
+
+func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
+	return llmpricingruletypes.LLMCostFeatureType
+}
+
+// RecommendAgentConfig reads pricing rules and generates the
+// signozllmpricing processor config for deployment to OTel collectors via OpAMP.
+func (module *module) RecommendAgentConfig(
+	orgId valuer.UUID,
+	currentConfYaml []byte,
+	configVersion *opamptypes.AgentConfigVersion,
+) ([]byte, string, error) {
+	ctx := context.Background()
+
+	rules, err := module.getEnabledRules(ctx, orgId)
+	if err != nil {
+		return nil, "", err
+	}
+
+	updatedConf, err := generateCollectorConfigWithLLMPricingProcessor(currentConfYaml, rules)
+	if err != nil {
+		return nil, "", err
+	}
+
+	serialized, err := json.Marshal(rules)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return updatedConf, string(serialized), nil
+}
+
+func (module *module) getEnabledRules(ctx context.Context, orgId valuer.UUID) ([]*llmpricingruletypes.LLMPricingRule, error) {
+	rules, _, err := module.List(ctx, orgId, 0, 10000)
+	if err != nil {
+		return nil, err
+	}
+
+	enabled := make([]*llmpricingruletypes.LLMPricingRule, 0, len(rules))
+	for _, r := range rules {
+		if r.Enabled {
+			enabled = append(enabled, r)
+		}
+	}
+	return enabled, nil
 }
 
 // findExisting returns the row matching the updatable's ID or SourceID.

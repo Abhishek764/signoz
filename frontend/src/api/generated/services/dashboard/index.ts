@@ -21,9 +21,9 @@ import type {
 	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
+	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
-	Dashboardtypesv2PostableDashboardDTO,
 	DeletePublicDashboardPathParameters,
 	GetPublicDashboard200,
 	GetPublicDashboardData200,
@@ -642,14 +642,14 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
  * @summary Create dashboard (v2)
  */
 export const createDashboardV2 = (
-	dashboardtypesv2PostableDashboardDTO: BodyType<Dashboardtypesv2PostableDashboardDTO>,
+	dashboardtypesPostableDashboardV2DTO: BodyType<DashboardtypesPostableDashboardV2DTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateDashboardV2201>({
 		url: `/api/v2/dashboards`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesv2PostableDashboardDTO,
+		data: dashboardtypesPostableDashboardV2DTO,
 		signal,
 	});
 };
@@ -661,13 +661,13 @@ export const getCreateDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardV2>>,
 		TError,
-		{ data: BodyType<Dashboardtypesv2PostableDashboardDTO> },
+		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createDashboardV2>>,
 	TError,
-	{ data: BodyType<Dashboardtypesv2PostableDashboardDTO> },
+	{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
 	TContext
 > => {
 	const mutationKey = ['createDashboardV2'];
@@ -681,7 +681,7 @@ export const getCreateDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createDashboardV2>>,
-		{ data: BodyType<Dashboardtypesv2PostableDashboardDTO> }
+		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -695,7 +695,7 @@ export type CreateDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof createDashboardV2>>
 >;
 export type CreateDashboardV2MutationBody =
-	BodyType<Dashboardtypesv2PostableDashboardDTO>;
+	BodyType<DashboardtypesPostableDashboardV2DTO>;
 export type CreateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -708,13 +708,13 @@ export const useCreateDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardV2>>,
 		TError,
-		{ data: BodyType<Dashboardtypesv2PostableDashboardDTO> },
+		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createDashboardV2>>,
 	TError,
-	{ data: BodyType<Dashboardtypesv2PostableDashboardDTO> },
+	{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateDashboardV2MutationOptions(options);

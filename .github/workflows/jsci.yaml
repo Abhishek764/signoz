@@ -22,7 +22,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      ENABLE_PNPM: true
+      JS_PKG_MANAGER: pnpm
   test:
     if: |
       github.event_name == 'merge_group' ||
@@ -33,7 +33,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      ENABLE_PNPM: true
+      JS_PKG_MANAGER: pnpm
   fmt:
     if: |
       github.event_name == 'merge_group' ||
@@ -44,7 +44,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      ENABLE_PNPM: true
+      JS_PKG_MANAGER: pnpm
   lint:
     if: |
       github.event_name == 'merge_group' ||
@@ -55,7 +55,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      ENABLE_PNPM: true
+      JS_PKG_MANAGER: pnpm
   languages:
     if: |
       github.event_name == 'merge_group' ||

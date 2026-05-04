@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -31,7 +30,7 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := dashboardtypesv2.PostableDashboard{}
+	req := dashboardtypes.PostableDashboardV2{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
@@ -43,7 +42,7 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, dashboardtypesv2.NewGettableDashboardFromDashboard(dashboard))
+	render.Success(rw, http.StatusCreated, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
 }
 
 func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {
@@ -79,7 +78,7 @@ func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypesv2.NewGettableDashboardFromDashboard(dashboard))
+	render.Success(rw, http.StatusOK, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
 }
 
 func (handler *handler) LockV2(rw http.ResponseWriter, r *http.Request) {
@@ -168,7 +167,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := dashboardtypesv2.UpdateableDashboard{}
+	req := dashboardtypes.UpdateableDashboardV2{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
@@ -180,7 +179,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypesv2.NewGettableDashboardFromDashboard(dashboard))
+	render.Success(rw, http.StatusOK, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
 }
 
 func (handler *handler) CreatePublicV2(rw http.ResponseWriter, r *http.Request) {
@@ -222,7 +221,7 @@ func (handler *handler) CreatePublicV2(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypesv2.NewGettableDashboardFromDashboard(dashboard))
+	render.Success(rw, http.StatusOK, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
 }
 
 func (handler *handler) UpdatePublicV2(rw http.ResponseWriter, r *http.Request) {
@@ -264,7 +263,7 @@ func (handler *handler) UpdatePublicV2(rw http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypesv2.NewGettableDashboardFromDashboard(dashboard))
+	render.Success(rw, http.StatusOK, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
 }
 
 func (handler *handler) DeleteV2(rw http.ResponseWriter, r *http.Request) {

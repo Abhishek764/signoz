@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -200,15 +199,15 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, data)
 }
 
-func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypesv2.PostableDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, postable)
 }
 
-func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
 
-func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypesv2.UpdateableDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.UpdateV2(ctx, orgID, id, updatedBy, updateable)
 }
 
@@ -216,7 +215,7 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
 	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
@@ -242,7 +241,7 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 	return module.pkgDashboardModule.DeleteV2(ctx, orgID, id, deletedBy)
 }
 
-func (module *module) UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
 	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}

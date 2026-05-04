@@ -2,12 +2,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
-import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';
 import ConversationView from 'container/AIAssistant/ConversationView';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
-import { Minimize2, Plus } from '@signozhq/icons';
+import { Minimize2, Plus, Sparkles } from '@signozhq/icons';
 
 import styles from './AIAssistantPage.module.scss';
 
@@ -69,15 +68,15 @@ export default function AIAssistantPage(): JSX.Element {
 			<div className={styles.page}>
 				<div className={styles.header}>
 					<div className={styles.title}>
-						<AIAssistantIcon size={22} />
+						<Sparkles size={18} color="var(--primary)" />
 						<span>AI Assistant</span>
 					</div>
 
 					<div className={styles.actions}>
 						<Tooltip title="New conversation">
 							<Button
-								variant="ghost"
-								size="sm"
+								variant="solid"
+								color="secondary"
 								prefix={<Plus size={14} />}
 								onClick={handleNewConversation}
 							>
@@ -87,13 +86,13 @@ export default function AIAssistantPage(): JSX.Element {
 
 						<Tooltip title="Minimize to panel">
 							<Button
-								variant="ghost"
+								variant="solid"
 								size="icon"
+								color="secondary"
 								onClick={handleMinimize}
 								aria-label="Minimize to panel"
-							>
-								<Minimize2 size={14} />
-							</Button>
+								prefix={<Minimize2 size={14} />}
+							/>
 						</Tooltip>
 					</div>
 				</div>

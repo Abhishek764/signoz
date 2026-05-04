@@ -483,7 +483,7 @@ export default function ActionsSection({
 	return (
 		<div className={styles.section}>
 			<div className={styles.heading}>
-				<Sparkles size={11} className={styles.headingIcon} />
+				<Sparkles size={12} className={styles.headingIcon} />
 				<span className={styles.headingText}>Suggested actions</span>
 			</div>
 

@@ -43,7 +43,7 @@ $radius: 4px;
 
 .bubble {
 	border-radius: $radius;
-	padding: 4px 8px;
+	padding: 8px;
 	font-size: 12px;
 	font-style: normal;
 	font-weight: 400;
@@ -96,7 +96,7 @@ $radius: 4px;
 	// ToolCall / Suggested actions) above and below it. Reset when this
 	// is the only / first / last child so the bubble doesn't grow taller
 	// than its content.
-	margin: 16px 0;
+	margin: 12px 0;
 
 	&:first-child {
 		margin-top: 0;

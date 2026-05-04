@@ -1022,6 +1022,10 @@ export type ToolCallEventDTOToolCallId = string | null;
 
 export type ToolCallEventDTOToolInput = { [key: string]: unknown };
 
+export type ToolCallEventDTODisplayText = string | null;
+
+export type ToolCallEventDTOIconKey = string | null;
+
 export interface ToolCallEventDTO {
 	/**
 	 * @type string
@@ -1045,6 +1049,8 @@ export interface ToolCallEventDTO {
 	 * @type object
 	 */
 	toolInput: ToolCallEventDTOToolInput;
+	displayText?: ToolCallEventDTODisplayText;
+	iconKey?: ToolCallEventDTOIconKey;
 }
 
 export type ToolResultEventDTOMessageId = string | null;
@@ -1052,6 +1058,10 @@ export type ToolResultEventDTOMessageId = string | null;
 export type ToolResultEventDTOToolCallId = string | null;
 
 export type ToolResultEventDTOResult = { [key: string]: unknown };
+
+export type ToolResultEventDTODisplayText = string | null;
+
+export type ToolResultEventDTOIconKey = string | null;
 
 export interface ToolResultEventDTO {
 	/**
@@ -1080,6 +1090,8 @@ export interface ToolResultEventDTO {
 	 * @type object
 	 */
 	result: ToolResultEventDTOResult;
+	displayText?: ToolResultEventDTODisplayText;
+	iconKey?: ToolResultEventDTOIconKey;
 }
 
 export interface UserMessageEventDTO {

@@ -104,7 +104,7 @@ export default function MessageFeedback({
 			<div className={styles.actions}>
 				<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 					<Button
-						className={cx(styles.btn, { [styles.active]: copied })}
+						className={styles.btn}
 						size="icon"
 						variant="ghost"
 						onClick={handleCopy}

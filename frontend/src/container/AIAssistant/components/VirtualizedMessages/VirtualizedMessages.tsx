@@ -7,11 +7,11 @@ import {
 	ChartBar,
 	Search,
 	Zap,
+	Sparkles,
 } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
-import AIAssistantIcon from '../AIAssistantIcon';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 
@@ -126,7 +126,7 @@ export default function VirtualizedMessages({
 		return (
 			<div className={styles.empty}>
 				<div className={styles.emptyIcon}>
-					<AIAssistantIcon size={40} />
+					<Sparkles size={24} color="var(--primary)" />
 				</div>
 				<h3 className={styles.emptyTitle}>SigNoz AI Assistant</h3>
 				<p className={styles.emptySubtitle}>

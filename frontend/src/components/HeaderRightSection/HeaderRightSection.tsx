@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Dot } from '@signozhq/icons';
+import { Dot, Sparkles } from '@signozhq/icons';
 import { Button, Tooltip } from '@signozhq/ui';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
-import AIAssistantIcon from 'container/AIAssistant/components/AIAssistantIcon';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
@@ -99,8 +98,8 @@ function HeaderRightSection({
 
 					<Tooltip title="AI Assistant">
 						<Button
-							variant="ghost"
-							size="icon"
+							variant="solid"
+							color="secondary"
 							onClick={openAIAssistant}
 							aria-label={
 								showHeaderPendingBadge
@@ -109,8 +108,10 @@ function HeaderRightSection({
 										: `Open AI Assistant, ${pendingUserInputCount} actions need your response`
 									: 'Open AI Assistant'
 							}
-							prefix={<AIAssistantIcon />}
-						/>
+							prefix={<Sparkles size={14} color="var(--primary)" />}
+						>
+							AI Assistant
+						</Button>
 					</Tooltip>
 				</div>
 			)}

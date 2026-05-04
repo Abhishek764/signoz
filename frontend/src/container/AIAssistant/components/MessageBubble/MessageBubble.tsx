@@ -14,6 +14,7 @@ import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
 import ThinkingStep from '../ThinkingStep';
 import ToolCallStep from '../ToolCallStep';
+import UserMessageActions from '../UserMessageActions';
 
 import styles from './MessageBubble.module.scss';
 
@@ -154,6 +155,8 @@ export default function MessageBubble({
 						isLastAssistant={isLastAssistant}
 					/>
 				)}
+
+				{isUser && <UserMessageActions message={message} />}
 			</div>
 		</div>
 	);

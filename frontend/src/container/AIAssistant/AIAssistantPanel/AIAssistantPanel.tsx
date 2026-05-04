@@ -2,9 +2,8 @@ import { useCallback, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Plus, X } from '@signozhq/icons';
+import { History, Maximize2, Plus, Sparkles, X } from '@signozhq/icons';
 
-import AIAssistantIcon from '../components/AIAssistantIcon';
 import HistorySidebar from '../components/HistorySidebar';
 import ConversationView from '../ConversationView';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -94,7 +93,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				<div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown} />
 				<div className={styles.header}>
 					<div className={styles.title}>
-						<AIAssistantIcon size={18} />
+						<Sparkles size={18} color="var(--primary)" />
 						<span>AI Assistant</span>
 					</div>
 

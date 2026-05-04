@@ -2,7 +2,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
+import {
+	ClipboardList,
+	Compass,
+	Dot,
+	House,
+	Plus,
+	Wrench,
+} from '@signozhq/icons';
 import { Button, PersistedAnnouncementBanner } from '@signozhq/ui';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -36,7 +43,6 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import crackerUrl from '@/assets/Icons/cracker.svg';
 import dashboardUrl from '@/assets/Icons/dashboard.svg';
-import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
 import wrenchUrl from '@/assets/Icons/wrench.svg';
 import allInOneUrl from '@/assets/Images/allInOne.svg';
 import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
@@ -322,17 +328,9 @@ export default function Home(): JSX.Element {
 									<Button
 										variant="solid"
 										color="secondary"
-										size="sm"
-										className="periscope-btn secondary welcome-checklist-btn"
+										prefix={<ClipboardList size={14} />}
 									>
-										<img
-											src={spinnerHalfBlueUrl}
-											alt="spinner-half-blue"
-											width={16}
-											height={16}
-											className="welcome-checklist-icon"
-										/>
-										&nbsp; Welcome checklist
+										Welcome checklist
 									</Button>
 								</Popover>
 							)}

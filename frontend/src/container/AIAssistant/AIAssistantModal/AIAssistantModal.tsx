@@ -3,9 +3,8 @@ import { createPortal } from 'react-dom';
 import { useHistory } from 'react-router-dom';
 import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
+import { History, Maximize2, Minus, Plus, Sparkles, X } from '@signozhq/icons';
 
-import AIAssistantIcon from '../components/AIAssistantIcon';
 import HistorySidebar from '../components/HistorySidebar';
 import ConversationView from '../ConversationView';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -127,7 +126,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					{/* Header */}
 					<div className={styles.header}>
 						<div className={styles.title}>
-							<AIAssistantIcon size={16} />
+							<Sparkles size={16} color="var(--primary)" />
 							<span>AI Assistant</span>
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>

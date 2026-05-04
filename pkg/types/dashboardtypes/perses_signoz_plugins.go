@@ -1,11 +1,10 @@
-package dashboardtypesv2
+package dashboardtypes
 
 import (
 	"encoding/json"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -80,7 +79,7 @@ type BuilderQuerySpec struct {
 func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 	spec, err := qb.UnmarshalBuilderQueryBySignal(data)
 	if err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid builder query spec")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid builder query spec")
 	}
 	b.Spec = spec
 	return nil
@@ -295,7 +294,7 @@ func (t TimePreference) MarshalJSON() ([]byte, error) {
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
 	if v == "" {
 		*t = TimePreferenceGlobalTime
@@ -307,7 +306,7 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 		*t = tp
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`", v)
 	}
 }
 
@@ -336,7 +335,7 @@ func (l LegendPosition) MarshalJSON() ([]byte, error) {
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
 	}
 	if v == "" {
 		*l = LegendPositionBottom
@@ -348,7 +347,7 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		*l = lp
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
 	}
 }
 
@@ -377,7 +376,7 @@ func (f ThresholdFormat) MarshalJSON() ([]byte, error) {
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
 	}
 	if v == "" {
 		*f = ThresholdFormatText
@@ -389,7 +388,7 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 		*f = tf
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be `text` or `background`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be `text` or `background`", v)
 	}
 }
 
@@ -429,7 +428,7 @@ func (o ComparisonOperator) MarshalJSON() ([]byte, error) {
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
 	if v == "" {
 		*o = ComparisonOperatorGT
@@ -443,7 +442,7 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 		*o = co
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
 	}
 }
 
@@ -474,7 +473,7 @@ func (li LineInterpolation) MarshalJSON() ([]byte, error) {
 func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
 	if v == "" {
 		*li = LineInterpolationSpline
@@ -486,7 +485,7 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 		*li = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `step_after`, or `step_before`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `step_after`, or `step_before`", v)
 	}
 }
 
@@ -515,7 +514,7 @@ func (ls LineStyle) MarshalJSON() ([]byte, error) {
 func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
 	}
 	if v == "" {
 		*ls = LineStyleSolid
@@ -527,7 +526,7 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 		*ls = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
 	}
 }
 
@@ -557,7 +556,7 @@ func (fm FillMode) MarshalJSON() ([]byte, error) {
 func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
 	if v == "" {
 		*fm = FillModeSolid
@@ -569,7 +568,7 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		*fm = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
 	}
 }
 
@@ -616,12 +615,12 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 			p.String = valuer.NewString(strconv.Itoa(n))
 			return nil
 		default:
-			return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid precision option %d: must be `0`, `1`, `2`, `3`, `4`, or `full`", n)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d: must be `0`, `1`, `2`, `3`, `4`, or `full`", n)
 		}
 	}
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
 	}
 	if v == "" {
 		*p = PrecisionOption2
@@ -633,6 +632,6 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 		*p = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
 	}
 }

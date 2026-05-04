@@ -1,4 +1,4 @@
-package dashboardtypesv2
+package dashboardtypes
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,7 +68,7 @@ func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput),
 		"outer wrap should classify the error as TypeInvalidInput")
-	assert.True(t, errors.Asc(err, dashboardtypes.ErrCodeDashboardInvalidInput),
+	assert.True(t, errors.Asc(err, ErrCodeDashboardInvalidInput),
 		"outer wrap should stamp ErrCodeDashboardInvalidInput")
 }
 

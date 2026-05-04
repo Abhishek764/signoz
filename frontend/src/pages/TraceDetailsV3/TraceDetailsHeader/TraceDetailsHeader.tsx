@@ -38,6 +38,7 @@ function TraceDetailsHeader({
 	const handlePreviousBtnClick = useCallback((): void => {
 		const isSpaNavigate =
 			document.referrer &&
+			// oxlint-disable-next-line signoz/no-raw-absolute-path
 			new URL(document.referrer).origin === window.location.origin;
 		const hasBackHistory = window.history.length > 1;
 

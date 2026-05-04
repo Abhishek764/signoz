@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 
 import {
 	deserializeKeyPath,
@@ -14,7 +16,7 @@ const STORAGE_PREFIX = 'pinnedFields';
 
 function loadFromStorage(storageKey: string): string[] {
 	try {
-		const stored = localStorage.getItem(storageKey);
+		const stored = getLocalStorageKey(storageKey);
 		return stored ? JSON.parse(stored) : [];
 	} catch {
 		return [];
@@ -22,7 +24,7 @@ function loadFromStorage(storageKey: string): string[] {
 }
 
 function saveToStorage(storageKey: string, keys: string[]): void {
-	localStorage.setItem(storageKey, JSON.stringify(keys));
+	setLocalStorageKey(storageKey, JSON.stringify(keys));
 }
 
 export interface PinnedEntry {

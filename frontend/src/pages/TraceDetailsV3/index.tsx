@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -182,14 +184,14 @@ function TraceDetailsV3(): JSX.Element {
 
 	const [spanDetailVariant, setSpanDetailVariant] = useState<SpanDetailVariant>(
 		() =>
-			(localStorage.getItem(
+			(getLocalStorageKey(
 				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
 			) as SpanDetailVariant) || SpanDetailVariant.DOCKED,
 	);
 
 	const handleVariantChange = useCallback(
 		(newVariant: SpanDetailVariant): void => {
-			localStorage.setItem(
+			setLocalStorageKey(
 				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
 				newVariant,
 			);

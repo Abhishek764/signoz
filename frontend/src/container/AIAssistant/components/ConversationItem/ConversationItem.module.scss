@@ -111,3 +111,37 @@ $radius: 4px;
 		color: var(--bg-cherry-500, #ef4444) !important;
 	}
 }
+
+// Compact menu — narrower than the design-system default so the
+// content (Rename / Copy link / Archive) doesn't dwarf the row.
+.menu {
+	min-width: 160px !important;
+	width: 160px !important;
+}
+
+// Shared sizing for every dropdown item so the menu reads compact —
+// matches the row's own 12px label scale.
+.menuItem {
+	font-size: 12px !important;
+	cursor: pointer !important;
+}
+
+// Amber treatment for the destructive-but-recoverable Archive action —
+// less alarming than red since the conversation can be restored later.
+// Targets both the label text and the leading icon (icons inherit color
+// via `currentColor`).
+.archiveItem {
+	color: var(--bg-amber-400, #fbbf24) !important;
+
+	svg {
+		color: inherit !important;
+	}
+}
+
+.restoreItem {
+	color: var(--primary) !important;
+
+	svg {
+		color: inherit !important;
+	}
+}

@@ -42,6 +42,16 @@ $radius: 4px;
 	line-height: 1;
 }
 
+.searchBar {
+	padding: 0 12px 8px;
+	flex-shrink: 0;
+}
+
+.search {
+	width: 100%;
+	font-size: 12px;
+}
+
 .list {
 	position: relative;
 	flex: 1;
@@ -105,6 +115,9 @@ $radius: 4px;
 }
 
 .group {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 	margin-bottom: 8px;
 
 	&.archived {

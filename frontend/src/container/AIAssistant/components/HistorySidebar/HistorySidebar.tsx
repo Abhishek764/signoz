@@ -1,5 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
+import { Input } from '@signozhq/ui';
+import { Search } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
@@ -76,38 +78,55 @@ export default function HistorySidebar({
 	);
 	const loadThread = useAIAssistantStore((s) => s.loadThread);
 	const fetchThreads = useAIAssistantStore((s) => s.fetchThreads);
-	const deleteConversation = useAIAssistantStore((s) => s.deleteConversation);
+	const archiveConversation = useAIAssistantStore((s) => s.archiveConversation);
 	const restoreConversation = useAIAssistantStore((s) => s.restoreConversation);
 	const renameConversation = useAIAssistantStore((s) => s.renameConversation);
+
+	const [searchQuery, setSearchQuery] = useState('');
 
 	// Fetch threads from backend on mount
 	useEffect(() => {
 		void fetchThreads();
 	}, [fetchThreads]);
 
+	// Case-insensitive substring match against the conversation title.
+	// Untitled conversations match the literal placeholder so users
+	// searching for "new" can still find them.
+	const trimmedQuery = searchQuery.trim().toLowerCase();
+	const matchesQuery = (c: Conversation): boolean => {
+		if (!trimmedQuery) {
+			return true;
+		}
+		const title = (c.title ?? 'New conversation').toLowerCase();
+		return title.includes(trimmedQuery);
+	};
+
 	const sortedActive = useMemo(
 		() =>
 			Object.values(conversations)
-				.filter((c) => !c.archived)
+				.filter((c) => !c.archived && matchesQuery(c))
 				.sort(
 					(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
 				),
-		[conversations],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[conversations, trimmedQuery],
 	);
 
 	const sortedArchived = useMemo(
 		() =>
 			Object.values(conversations)
-				.filter((c) => Boolean(c.archived) && c.threadId)
+				.filter((c) => Boolean(c.archived) && c.threadId && matchesQuery(c))
 				.sort(
 					(a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
 				),
-		[conversations],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[conversations, trimmedQuery],
 	);
 
 	const groups = useMemo(() => groupByDate(sortedActive), [sortedActive]);
 
 	const hasAnySidebarRows = groups.length > 0 || sortedArchived.length > 0;
+	const isSearching = trimmedQuery.length > 0;
 
 	const handleSelect = (id: string): void => {
 		const conv = conversations[id];
@@ -132,6 +151,17 @@ export default function HistorySidebar({
 				{isLoadingThreads && <HeaderLoadingDots />}
 			</div>
 
+			<div className={styles.searchBar}>
+				<Input
+					type="text"
+					value={searchQuery}
+					onChange={(e): void => setSearchQuery(e.target.value)}
+					placeholder="Search conversations…"
+					prefix={<Search size={12} />}
+					className={styles.search}
+				/>
+			</div>
+
 			<div className={styles.list} aria-busy={isLoadingThreads}>
 				{isLoadingThreads && (
 					<span className={styles.srOnly} role="status">
@@ -140,7 +170,9 @@ export default function HistorySidebar({
 				)}
 
 				{!isLoadingThreads && !hasAnySidebarRows && (
-					<p className={styles.empty}>No conversations yet.</p>
+					<p className={styles.empty}>
+						{isSearching ? 'No matching conversations.' : 'No conversations yet.'}
+					</p>
 				)}
 
 				{groups.map(({ label, items }) => (
@@ -153,7 +185,7 @@ export default function HistorySidebar({
 								isActive={conv.id === activeConversationId}
 								onSelect={handleSelect}
 								onRename={renameConversation}
-								onDelete={deleteConversation}
+								onArchive={archiveConversation}
 								onRestore={restoreConversation}
 							/>
 						))}
@@ -170,7 +202,7 @@ export default function HistorySidebar({
 								isActive={conv.id === activeConversationId}
 								onSelect={handleSelect}
 								onRename={renameConversation}
-								onDelete={deleteConversation}
+								onArchive={archiveConversation}
 								onRestore={restoreConversation}
 							/>
 						))}

@@ -463,7 +463,7 @@ export interface AIAssistantStore {
 	startNewConversation: () => string;
 	setActiveConversation: (id: string) => void;
 	clearConversation: (id: string) => void;
-	deleteConversation: (id: string) => void;
+	archiveConversation: (id: string) => void;
 	restoreConversation: (id: string) => void;
 	renameConversation: (id: string, title: string) => void;
 	markBlockAnswered: (messageId: string, answer: string) => void;
@@ -810,7 +810,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 			},
 
-			deleteConversation: (id: string): void => {
+			archiveConversation: (id: string): void => {
 				const conv = get().conversations[id];
 				if (!conv) {
 					return;

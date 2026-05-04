@@ -1,9 +1,14 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
-import { Button, Input, Tooltip } from '@signozhq/ui';
+import ROUTES from 'constants/routes';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { Button, Dropdown, Input, toast } from '@signozhq/ui';
 import {
 	Archive,
 	ArchiveRestore,
+	EllipsisVertical,
+	Link,
 	MessageSquare,
 	Pencil,
 } from '@signozhq/icons';
@@ -17,7 +22,7 @@ interface ConversationItemProps {
 	isActive: boolean;
 	onSelect: (id: string) => void;
 	onRename: (id: string, title: string) => void;
-	onDelete: (id: string) => void;
+	onArchive: (id: string) => void;
 	onRestore: (id: string) => void;
 }
 
@@ -49,25 +54,33 @@ export default function ConversationItem({
 	isActive,
 	onSelect,
 	onRename,
-	onDelete,
+	onArchive,
 	onRestore,
 }: ConversationItemProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editValue, setEditValue] = useState('');
 	const inputRef = useRef<HTMLInputElement>(null);
+	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isArchived = Boolean(conversation.archived);
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
-	const startEditing = useCallback(
-		(e: React.MouseEvent) => {
-			e.stopPropagation();
-			setEditValue(conversation.title ?? '');
-			setIsEditing(true);
-		},
-		[conversation.title],
-	);
+	const handleCopyLink = useCallback((): void => {
+		// Prefer the server-side `threadId` so the link resolves for anyone
+		// with access to this conversation. Fall back to the local id for
+		// drafts that haven't synced yet — useful for the current session
+		// even if the URL won't reload elsewhere.
+		const id = conversation.threadId ?? conversation.id;
+		const path = ROUTES.AI_ASSISTANT.replace(':conversationId', id);
+		copyToClipboard(getAbsoluteUrl(path));
+		toast.success('Conversation link copied to clipboard');
+	}, [conversation.threadId, conversation.id, copyToClipboard]);
+
+	const startEditing = useCallback((): void => {
+		setEditValue(conversation.title ?? '');
+		setIsEditing(true);
+	}, [conversation.title]);
 
 	useEffect(() => {
 		if (isEditing) {
@@ -93,26 +106,52 @@ export default function ConversationItem({
 		[commitEdit],
 	);
 
-	const handleDelete = useCallback(
-		(e: React.MouseEvent) => {
-			e.stopPropagation();
-			onDelete(conversation.id);
-		},
-		[conversation.id, onDelete],
-	);
-
-	const handleRestore = useCallback(
-		(e: React.MouseEvent) => {
-			e.stopPropagation();
-			onRestore(conversation.id);
-		},
-		[conversation.id, onRestore],
-	);
-
 	const itemClass = cx(styles.item, {
 		[styles.active]: isActive,
 		[styles.archived]: isArchived,
 	});
+
+	// Dropdown items mirror the previous inline buttons but live in a single
+	// trigger so the row stays compact. Archive/Restore swap based on the
+	// archived state — same handler wiring as before.
+	const baseItems = [
+		{
+			key: 'rename',
+			label: 'Rename',
+			icon: <Pencil size={12} />,
+			className: styles.menuItem,
+			onClick: (): void => startEditing(),
+		},
+		{
+			key: 'copy-link',
+			label: 'Copy link',
+			icon: <Link size={12} />,
+			className: styles.menuItem,
+			onClick: handleCopyLink,
+		},
+		{ type: 'divider' as const, key: 'divider' },
+	];
+	const menuItems = isArchived
+		? [
+				...baseItems,
+				{
+					key: 'restore',
+					label: 'Restore',
+					icon: <ArchiveRestore size={12} />,
+					className: cx(styles.menuItem, styles.restoreItem),
+					onClick: (): void => onRestore(conversation.id),
+				},
+			]
+		: [
+				...baseItems,
+				{
+					key: 'archive',
+					label: 'Archive',
+					icon: <Archive size={12} />,
+					className: cx(styles.menuItem, styles.archiveItem),
+					onClick: (): void => onArchive(conversation.id),
+				},
+			];
 
 	return (
 		<div
@@ -151,41 +190,28 @@ export default function ConversationItem({
 			</div>
 
 			{!isEditing && (
-				<div className={styles.actions}>
-					<Tooltip title="Rename">
+				<div
+					className={styles.actions}
+					// Stop the row's onSelect from firing when the user opens the
+					// menu or clicks an item — the menu lives in a portal so its
+					// own clicks don't bubble, but the trigger button does.
+					onClick={(e): void => e.stopPropagation()}
+				>
+					<Dropdown
+						menu={{ items: menuItems }}
+						align="end"
+						sideOffset={4}
+						className={styles.menu}
+					>
 						<Button
 							variant="link"
 							size="icon"
-							color="primary"
+							color="none"
 							className={styles.btn}
-							onClick={startEditing}
-							aria-label="Rename conversation"
-							prefix={<Pencil size={11} />}
+							aria-label="Conversation actions"
+							prefix={<EllipsisVertical size={12} />}
 						/>
-					</Tooltip>
-					{isArchived ? (
-						<Tooltip title="Restore to conversations">
-							<Button
-								variant="link"
-								size="icon"
-								color="primary"
-								onClick={handleRestore}
-								aria-label="Restore conversation"
-								prefix={<ArchiveRestore size={11} />}
-							/>
-						</Tooltip>
-					) : (
-						<Tooltip title="Archive">
-							<Button
-								variant="link"
-								size="icon"
-								color="destructive"
-								onClick={handleDelete}
-								aria-label="Archive conversation"
-								prefix={<Archive size={11} />}
-							/>
-						</Tooltip>
-					)}
+					</Dropdown>
 				</div>
 			)}
 		</div>

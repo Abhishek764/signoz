@@ -1,7 +1,6 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
-import APIKeys from 'container/APIKeys/APIKeys';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
@@ -9,6 +8,7 @@ import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
+import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
@@ -22,10 +22,10 @@ import {
 	Cpu,
 	CreditCard,
 	Keyboard,
-	KeySquare,
 	Pencil,
 	Plus,
 	Shield,
+	Sparkles,
 	User,
 	Users,
 } from 'lucide-react';
@@ -111,19 +111,6 @@ export const generalSettingsCloud = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.SETTINGS,
 		key: ROUTES.SETTINGS,
-	},
-];
-
-export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: APIKeys,
-		name: (
-			<div className="periscope-tab">
-				<KeySquare size={16} /> {t('routes:api_keys').toString()}
-			</div>
-		),
-		route: ROUTES.API_KEYS,
-		key: ROUTES.API_KEYS,
 	},
 ];
 
@@ -217,6 +204,19 @@ export const serviceAccountsSettings = (
 		),
 		route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 		key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+	},
+];
+
+export const mcpServerSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: MCPServerSettings,
+		name: (
+			<div className="periscope-tab">
+				<Sparkles size={16} /> {t('routes:mcp_server').toString()}
+			</div>
+		),
+		route: ROUTES.MCP_SERVER,
+		key: ROUTES.MCP_SERVER,
 	},
 ];
 

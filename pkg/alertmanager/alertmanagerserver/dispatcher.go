@@ -47,7 +47,7 @@ type Dispatcher struct {
 	receiverRoutes      map[string]*dispatch.Route
 }
 
-// We use the upstream Limits interface from Prometheus
+// We use the upstream Limits interface from Prometheus.
 type Limits = dispatch.Limits
 
 // NewDispatcher returns a new Dispatcher.
@@ -273,12 +273,13 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
-// no data alert will only have ruleId and no data label
+// no data alert will only have ruleId and no data label.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
 	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
 	if err != nil {
-		d.logger.ErrorContext(d.ctx, "error getting alert notification config", slog.String("rule_id", ruleId), errors.Attr(err))
+		//nolint:sloglint
+		d.logger.ErrorContext(d.ctx, "error getting alert notification config", slog.String("rule.id", ruleId), errors.Attr(err))
 		return
 	}
 	renotifyInterval := config.Renotify.RenotifyInterval
@@ -328,7 +329,12 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	go ag.run(func(ctx context.Context, alerts ...*types.Alert) bool {
 		_, _, err := d.stage.Exec(ctx, d.logger, alerts...)
 		if err != nil {
-			logger := d.logger.With(slog.Int("num_alerts", len(alerts)), errors.Attr(err))
+			receiverName, _ := notify.ReceiverName(ctx)
+			logger := d.logger.With(
+				slog.String("receiver", receiverName),
+				slog.Int("num_alerts", len(alerts)),
+				errors.Attr(err),
+			)
 			if errors.Is(ctx.Err(), context.Canceled) {
 				// It is expected for the context to be canceled on
 				// configuration reload or shutdown. In this case, the
@@ -510,7 +516,7 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 	}
 }
 
-// unlimitedLimits provides unlimited aggregation groups for SigNoz
+// unlimitedLimits provides unlimited aggregation groups for SigNoz.
 type unlimitedLimits struct{}
 
 func (u *unlimitedLimits) MaxNumberOfAggregationGroups() int { return 0 }

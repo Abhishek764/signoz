@@ -84,7 +84,7 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 	}
 }
 
-// implement custom json unmarshaler for the QueryEnvelope
+// implement custom json unmarshaler for the QueryEnvelope.
 func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	var shadow struct {
 		Type QueryType       `json:"type"`
@@ -99,45 +99,11 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	// 2. Decode the spec based on the Type.
 	switch shadow.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
-		var header struct {
-			Signal telemetrytypes.Signal `json:"signal"`
+		spec, err := UnmarshalBuilderQueryBySignal(shadow.Spec)
+		if err != nil {
+			return err
 		}
-		if err := json.Unmarshal(shadow.Spec, &header); err != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"cannot detect builder signal: %v",
-				err,
-			)
-		}
-
-		switch header.Signal {
-		case telemetrytypes.SignalTraces:
-			var spec QueryBuilderQuery[TraceAggregation]
-			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-				return wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
-			}
-			q.Spec = spec
-		case telemetrytypes.SignalLogs:
-			var spec QueryBuilderQuery[LogAggregation]
-			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-				return wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
-			}
-			q.Spec = spec
-		case telemetrytypes.SignalMetrics:
-			var spec QueryBuilderQuery[MetricAggregation]
-			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-				return wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
-			}
-			q.Spec = spec
-		default:
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"unknown builder signal %q",
-				header.Signal,
-			).WithAdditional(
-				"Valid signals are: traces, logs, metrics",
-			)
-		}
+		q.Spec = spec
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
@@ -191,6 +157,49 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalBuilderQueryBySignal peeks at the "signal" field in the JSON data and
+// unmarshals into the correct generic QueryBuilderQuery type. Returns the typed spec.
+func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
+	var header struct {
+		Signal telemetrytypes.Signal `json:"signal"`
+	}
+	if err := json.Unmarshal(data, &header); err != nil {
+		return nil, errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"cannot detect builder signal: %v",
+			err,
+		)
+	}
+
+	switch header.Signal {
+	case telemetrytypes.SignalTraces:
+		var spec QueryBuilderQuery[TraceAggregation]
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return nil, wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
+		}
+		return spec, nil
+	case telemetrytypes.SignalLogs:
+		var spec QueryBuilderQuery[LogAggregation]
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return nil, wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
+		}
+		return spec, nil
+	case telemetrytypes.SignalMetrics:
+		var spec QueryBuilderQuery[MetricAggregation]
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return nil, wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
+		}
+		return spec, nil
+	default:
+		return nil, errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid signal %q; allowed values: %v",
+			header.Signal.StringValue(),
+			telemetrytypes.Signal{}.Enum(),
+		)
+	}
+}
+
 type CompositeQuery struct {
 	// Queries is the queries to use for the request.
 	Queries []QueryEnvelope `json:"queries"`
@@ -202,7 +211,7 @@ func (c *CompositeQuery) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages
+// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages.
 func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 	type Alias CompositeQuery
 
@@ -305,7 +314,7 @@ func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
-func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
+func (r *QueryRangeRequest) StepIntervalForQuery(name string) (int64, error) {
 	stepsMap := make(map[string]int64)
 	for _, query := range r.CompositeQuery.Queries {
 		switch spec := query.Spec.(type) {
@@ -317,11 +326,13 @@ func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
 			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case PromQuery:
 			stepsMap[spec.Name] = spec.Step.Milliseconds()
+		case QueryBuilderTraceOperator:
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		}
 	}
 
 	if step, ok := stepsMap[name]; ok {
-		return step
+		return step, nil
 	}
 
 	exprStr := ""
@@ -335,12 +346,15 @@ func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
 		}
 	}
 
-	expression, _ := govaluate.NewEvaluableExpressionWithFunctions(exprStr, EvalFuncs())
+	expression, err := govaluate.NewEvaluableExpressionWithFunctions(exprStr, EvalFuncs())
+	if err != nil {
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression for formula query %q: %s", name, err.Error())
+	}
 	steps := []int64{}
 	for _, v := range expression.Vars() {
 		steps = append(steps, stepsMap[v])
 	}
-	return LCMList(steps)
+	return LCMList(steps), nil
 }
 
 func (r *QueryRangeRequest) NumAggregationForQuery(name string) int64 {
@@ -535,7 +549,7 @@ func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 	return false
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryRangeRequest

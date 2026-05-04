@@ -4,7 +4,6 @@ import { Color } from '@signozhq/design-tokens';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
@@ -15,6 +14,7 @@ import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
+import { InspectMetricsSeries } from './types';
 import {
 	ExpandedViewProps,
 	InspectionStep,
@@ -34,15 +34,14 @@ function ExpandedView({
 	metricInspectionAppliedOptions,
 	timeAggregatedSeriesMap,
 }: ExpandedViewProps): JSX.Element {
-	const [
-		selectedTimeSeries,
-		setSelectedTimeSeries,
-	] = useState<InspectMetricsSeries | null>(null);
+	const [selectedTimeSeries, setSelectedTimeSeries] =
+		useState<InspectMetricsSeries | null>(null);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.InspectPointClicked, {
 			[MetricsExplorerEventKeys.Modal]: 'inspect',
-			[MetricsExplorerEventKeys.Filters]: metricInspectionAppliedOptions.filters,
+			[MetricsExplorerEventKeys.Filters]:
+				metricInspectionAppliedOptions.filterExpression,
 			[MetricsExplorerEventKeys.TimeAggregationInterval]:
 				metricInspectionAppliedOptions.timeAggregationInterval,
 			[MetricsExplorerEventKeys.TimeAggregationOption]:
@@ -236,15 +235,15 @@ function ExpandedView({
 											selectedTimeSeries?.values.find(
 												(value) => value?.timestamp >= (options?.timestamp || 0),
 											)?.value ?? options?.value
-									  } is the ${
+										} is the ${
 											TIME_AGGREGATION_OPTIONS[
 												metricInspectionAppliedOptions.timeAggregationOption ??
 													TimeAggregationOptions.SUM
 											]
-									  } of`
-									: selectedTimeSeries?.values.find(
+										} of`
+									: (selectedTimeSeries?.values.find(
 											(value) => value?.timestamp >= (options?.timestamp || 0),
-									  )?.value ?? options?.value}
+										)?.value ?? options?.value)}
 							</Typography.Text>
 						</div>
 

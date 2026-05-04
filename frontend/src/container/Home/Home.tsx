@@ -1,13 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
-import { Button, Popover } from 'antd';
+import { Button, PersistedAnnouncementBanner } from '@signozhq/ui';
+import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
-import { PersistedAnnouncementBanner } from 'components/AnnouncementBanner';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -15,9 +16,7 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
-import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
-import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -33,6 +32,15 @@ import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
 import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import crackerUrl from '@/assets/Icons/cracker.svg';
+import dashboardUrl from '@/assets/Icons/dashboard.svg';
+import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
+import wrenchUrl from '@/assets/Icons/wrench.svg';
+import allInOneUrl from '@/assets/Images/allInOne.svg';
+import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
+import dottedDividerUrl from '@/assets/Images/dotted-divider.svg';
+import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
 
 import AlertRules from './AlertRules/AlertRules';
 import { defaultChecklistItemsState } from './constants';
@@ -62,9 +70,8 @@ export default function Home(): JSX.Element {
 		defaultChecklistItemsState,
 	);
 
-	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
-		false,
-	);
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] =
+		useState(false);
 
 	useEffect(() => {
 		const now = new Date();
@@ -81,7 +88,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.LOGS],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.LOGS,
 			},
@@ -91,7 +98,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.LOGS],
@@ -106,7 +113,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.TRACES],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.TRACES,
 			},
@@ -116,7 +123,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.TRACES],
@@ -126,44 +133,12 @@ export default function Home(): JSX.Element {
 	);
 
 	// Detect Metrics
-	const query = useMemo(() => {
-		const baseQuery = getMetricsListQuery();
-
-		let queryStartTime = startTime;
-		let queryEndTime = endTime;
-
-		if (!startTime || !endTime) {
-			const now = new Date();
-			const startTime = new Date(now.getTime() - homeInterval);
-			const endTime = now;
-
-			queryStartTime = startTime.getTime();
-			queryEndTime = endTime.getTime();
-		}
-
-		return {
-			...baseQuery,
-			limit: 10,
-			offset: 0,
-			filters: {
-				items: [],
-				op: 'AND',
-			},
-			start: queryStartTime,
-			end: queryEndTime,
-		};
-	}, [startTime, endTime]);
-
-	const { data: metricsData } = useGetMetricsList(query, {
-		enabled: !!query,
-		queryKey: ['metricsList', query],
-	});
+	const { data: metricsOnboardingData } = useGetMetricsOnboardingStatus();
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
-	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
-		false,
-	);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] =
+		useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
@@ -283,14 +258,12 @@ export default function Home(): JSX.Element {
 	}, [tracesData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		const metricsDataTotal = metricsData?.payload?.data?.total ?? 0;
-
-		if (metricsDataTotal > 0) {
+		if (metricsOnboardingData?.data?.hasMetrics) {
 			setIsMetricsIngestionActive(true);
 			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
 			handleUpdateChecklistDoneItem('SEND_METRICS');
 		}
-	}, [metricsData, handleUpdateChecklistDoneItem]);
+	}, [metricsOnboardingData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
 		logEvent('Homepage: Visited', {});
@@ -298,22 +271,21 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			{IS_SERVICE_ACCOUNTS_ENABLED && (
+			{user?.role === USER_ROLES.ADMIN && (
 				<PersistedAnnouncementBanner
-					type="warning"
+					type="info"
 					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-					message={
-						<>
-							<strong>API Keys</strong> have been deprecated and replaced by{' '}
-							<strong>Service Accounts</strong>. Please migrate to Service Accounts for
-							programmatic API access.
-						</>
-					}
 					action={{
 						label: 'Go to Service Accounts',
 						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
 					}}
-				/>
+				>
+					<>
+						<strong>API keys</strong> have been deprecated in favour of{' '}
+						<strong>Service accounts</strong>. The existing API Keys have been
+						migrated to service accounts.
+					</>
+				</PersistedAnnouncementBanner>
 			)}
 
 			<div className="sticky-header">
@@ -343,12 +315,13 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
-										type="default"
-										size="small"
+										variant="solid"
+										color="secondary"
+										size="sm"
 										className="periscope-btn secondary welcome-checklist-btn"
 									>
 										<img
-											src="/Icons/spinner-half-blue.svg"
+											src={spinnerHalfBlueUrl}
 											alt="spinner-half-blue"
 											width={16}
 											height={16}
@@ -375,7 +348,7 @@ export default function Home(): JSX.Element {
 					/>
 
 					<div className="divider">
-						<img src="/Images/dotted-divider.svg" alt="divider" />
+						<img src={dottedDividerUrl} alt="divider" />
 					</div>
 
 					<div className="active-ingestions-container">
@@ -518,7 +491,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/wrench.svg"
+													src={wrenchUrl}
 													alt="wrench"
 													width={16}
 													height={16}
@@ -537,9 +510,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
@@ -553,9 +527,10 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
@@ -569,9 +544,10 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
@@ -593,12 +569,7 @@ export default function Home(): JSX.Element {
 									<div className="section-container">
 										<div className="section-content">
 											<div className="section-icon">
-												<img
-													src="/Icons/dashboard.svg"
-													alt="dashboard"
-													width={16}
-													height={16}
-												/>
+												<img src={dashboardUrl} alt="dashboard" width={16} height={16} />
 											</div>
 
 											<div className="section-title">
@@ -612,9 +583,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
+												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
@@ -637,7 +609,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/cracker.svg"
+													src={crackerUrl}
 													alt="cracker"
 													width={16}
 													height={16}
@@ -656,9 +628,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
+												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
@@ -716,7 +689,7 @@ export default function Home(): JSX.Element {
 											<div className="checklist-container-right-img">
 												<div className="checklist-img-bg-container">
 													<img
-														src="/Images/perilianBackground.svg"
+														src={perilianBackgroundUrl}
 														alt="not-found"
 														className="checklist-img-bg"
 													/>
@@ -724,11 +697,7 @@ export default function Home(): JSX.Element {
 
 												<div className="checklist-img-container">
 													<img
-														src={
-															isDarkMode
-																? '/Images/allInOne.svg'
-																: '/Images/allInOneLightMode.svg'
-														}
+														src={isDarkMode ? allInOneUrl : allInOneLightModeUrl}
 														alt="checklist-img"
 														className="checklist-img"
 													/>
@@ -741,7 +710,8 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
-											type="link"
+											variant="link"
+											color="secondary"
 											onClick={handleWillDoThisLater}
 											loading={updatingUserPreferences}
 										>

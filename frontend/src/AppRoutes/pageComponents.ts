@@ -157,10 +157,6 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
-export const APIKeys = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
-);
-
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
 );
@@ -248,10 +244,16 @@ export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
-export const InstalledIntegrations = Loadable(
+export const Integrations = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+export const IntegrationsDetailsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsDetailsPage" */ 'pages/IntegrationsDetailsPage'
 		),
 );
 

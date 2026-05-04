@@ -38,7 +38,6 @@ const ROUTES = {
 	SETTINGS: '/settings',
 	MY_SETTINGS: '/settings/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
-	API_KEYS: '/settings/api-keys',
 	INGESTION_SETTINGS: '/settings/ingestion-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
@@ -66,6 +65,7 @@ const ROUTES = {
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/settings/shortcuts',
 	INTEGRATIONS: '/integrations',
+	INTEGRATIONS_DETAIL: '/integrations/:integrationId',
 	MESSAGING_QUEUES_BASE: '/messaging-queues',
 	MESSAGING_QUEUES_KAFKA: '/messaging-queues/kafka',
 	MESSAGING_QUEUES_KAFKA_DETAIL: '/messaging-queues/kafka/detail',
@@ -87,6 +87,7 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
+	MCP_SERVER: '/settings/mcp-server',
 } as const;
 
 export default ROUTES;

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { Checkbox } from '@signozhq/checkbox';
-import { toast } from '@signozhq/sonner';
+import { Checkbox, toast } from '@signozhq/ui';
 import { Button, Select, Typography } from 'antd';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
@@ -15,6 +15,8 @@ import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
 
 import './PublicDashboard.styles.scss';
 
@@ -56,10 +58,10 @@ function PublicDashboardSetting(): JSX.Element {
 		PublicDashboardMetaProps | undefined
 	>(undefined);
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
-	const [defaultTimeRange, setDefaultTimeRange] = useState('30m');
+	const [defaultTimeRange, setDefaultTimeRange] = useState(DEFAULT_TIME_RANGE);
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -84,8 +86,8 @@ function PublicDashboardSetting(): JSX.Element {
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
 	} = useGetPublicDashboardMeta(
-		selectedDashboard?.id || '',
-		!!selectedDashboard?.id && isPublicDashboardEnabled,
+		dashboardData?.id || '',
+		!!dashboardData?.id && isPublicDashboardEnabled,
 	);
 
 	const isPublicDashboard = !!publicDashboardData?.publicPath;
@@ -99,7 +101,7 @@ function PublicDashboardSetting(): JSX.Element {
 			console.error('Error getting public dashboard', errorPublicDashboard);
 			setPublicDashboardData(undefined);
 			setTimeRangeEnabled(true);
-			setDefaultTimeRange('30m');
+			setDefaultTimeRange(DEFAULT_TIME_RANGE);
 		}
 	}, [publicDashboardResponse, errorPublicDashboard]);
 
@@ -109,7 +111,7 @@ function PublicDashboardSetting(): JSX.Element {
 				publicDashboardResponse?.data?.timeRangeEnabled || false,
 			);
 			setDefaultTimeRange(
-				publicDashboardResponse?.data?.defaultTimeRange || '30m',
+				publicDashboardResponse?.data?.defaultTimeRange || DEFAULT_TIME_RANGE,
 			);
 		}
 	}, [publicDashboardResponse]);
@@ -154,36 +156,36 @@ function PublicDashboardSetting(): JSX.Element {
 	});
 
 	const handleCreatePublicDashboard = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		createPublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: dashboardData.id,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
 	};
 
 	const handleUpdatePublicDashboard = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		updatePublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: dashboardData.id,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
 	};
 
 	const handleRevokePublicDashboardAccess = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		revokePublicDashboardAccess({
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 		});
 	};
 
@@ -212,7 +214,7 @@ function PublicDashboardSetting(): JSX.Element {
 
 		try {
 			setCopyPublicDashboardURL(
-				`${window.location.origin}${publicDashboardResponse?.data?.publicPath}`,
+				getAbsoluteUrl(publicDashboardResponse?.data?.publicPath ?? ''),
 			);
 			toast.success('Copied Public Dashboard URL successfully');
 		} catch (error) {
@@ -221,7 +223,7 @@ function PublicDashboardSetting(): JSX.Element {
 	};
 
 	const publicDashboardURL = useMemo(
-		() => `${window.location.origin}${publicDashboardResponse?.data?.publicPath}`,
+		() => getAbsoluteUrl(publicDashboardResponse?.data?.publicPath ?? ''),
 		[publicDashboardResponse],
 	);
 
@@ -246,10 +248,11 @@ function PublicDashboardSetting(): JSX.Element {
 				<div className="timerange-enabled-checkbox">
 					<Checkbox
 						id="enable-time-range"
-						checked={timeRangeEnabled}
-						onCheckedChange={handleTimeRangeEnabled}
-						labelName="Enable time range"
-					/>
+						value={timeRangeEnabled}
+						onChange={handleTimeRangeEnabled}
+					>
+						Enable time range
+					</Checkbox>
 				</div>
 
 				<div className="default-time-range-select">
@@ -293,7 +296,7 @@ function PublicDashboardSetting(): JSX.Element {
 								icon={<ExternalLink size={12} />}
 								onClick={(): void => {
 									if (publicDashboardURL) {
-										window.open(publicDashboardURL, '_blank');
+										openInNewTab(publicDashboardURL);
 									}
 								}}
 							/>

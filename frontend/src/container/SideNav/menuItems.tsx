@@ -19,7 +19,6 @@ import {
 	Github,
 	HardDrive,
 	Home,
-	Key,
 	Keyboard,
 	Layers2,
 	LayoutGrid,
@@ -33,6 +32,7 @@ import {
 	Settings,
 	Shield,
 	Slack,
+	Sparkles,
 	Unplug,
 	User,
 	UserPlus,
@@ -338,6 +338,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 				isEnabled: false,
 				itemKey: 'integrations',
 			},
+			{
+				key: ROUTES.MCP_SERVER,
+				label: 'MCP Server',
+				icon: <Sparkles size={16} />,
+				isEnabled: false,
+				itemKey: 'mcp-server',
+			},
 		],
 	},
 
@@ -365,13 +372,6 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <Bot size={16} />,
 				isEnabled: false,
 				itemKey: 'service-accounts',
-			},
-			{
-				key: ROUTES.API_KEYS,
-				label: 'API Keys',
-				icon: <Key size={16} />,
-				isEnabled: false,
-				itemKey: 'api-keys',
 			},
 			{
 				key: ROUTES.INGESTION_SETTINGS,
@@ -512,7 +512,7 @@ export const getUserSettingsDropdownMenuItems = ({
 						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
 						dataTestId: 'manage-license-nav-item',
 					},
-			  ]
+				]
 			: []),
 		{
 			key: 'keyboard-shortcuts',

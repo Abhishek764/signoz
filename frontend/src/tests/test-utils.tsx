@@ -39,12 +39,15 @@ class ResizeObserverMock {
 	disconnect(): void {}
 }
 
-global.ResizeObserver = (ResizeObserverMock as unknown) as typeof ResizeObserver;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
+			retry: false,
+		},
+		mutations: {
 			retry: false,
 		},
 	},
@@ -116,7 +119,7 @@ export function getAppContextMock(
 				status: '',
 				updated_at: '0',
 			},
-			state: LicenseState.ACTIVE,
+			state: LicenseState.ACTIVATED,
 			status: LicenseStatus.VALID,
 			platform: LicensePlatform.CLOUD,
 			created_at: '0',

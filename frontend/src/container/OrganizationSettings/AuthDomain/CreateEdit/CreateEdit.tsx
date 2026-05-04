@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { toast } from '@signozhq/sonner';
+import { Button, toast } from '@signozhq/ui';
 import { Form, Modal } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -8,6 +7,7 @@ import {
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
 import {
+	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
 	AuthtypesRoleMappingDTO,
@@ -58,9 +58,9 @@ interface CreateOrEditProps {
 function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { isCreate, record, onClose } = props;
 	const [form] = Form.useForm<FormValues>();
-	const [authnProvider, setAuthnProvider] = useState<string>(
-		record?.ssoType || '',
-	);
+	const [authnProvider, setAuthnProvider] = useState<
+		AuthtypesAuthNProviderDTO | ''
+	>(record?.ssoType || '');
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
@@ -78,15 +78,11 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const samlEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
-	const {
-		mutate: createAuthDomain,
-		isLoading: isCreating,
-	} = useCreateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: createAuthDomain, isLoading: isCreating } =
+		useCreateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: updateAuthDomain,
-		isLoading: isUpdating,
-	} = useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateAuthDomain, isLoading: isUpdating } =
+		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	/**
 	 * Prepares Google Auth config for API payload
@@ -140,6 +136,10 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		try {
 			await form.validateFields();
 		} catch {
+			return;
+		}
+
+		if (authnProvider === '') {
 			return;
 		}
 

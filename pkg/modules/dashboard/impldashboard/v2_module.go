@@ -60,7 +60,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return dashboardtypes.NewDashboardV2FromStorable(storable, public, tags)
 }
 
-func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypesv2.UpdateableDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	if err := updateable.Validate(); err != nil {
 		return nil, err
 	}

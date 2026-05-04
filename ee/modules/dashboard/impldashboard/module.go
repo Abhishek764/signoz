@@ -207,7 +207,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
 
-func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypesv2.UpdateableDashboard) (*dashboardtypesv2.Dashboard, error) {
+func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.UpdateV2(ctx, orgID, id, updatedBy, updateable)
 }
 

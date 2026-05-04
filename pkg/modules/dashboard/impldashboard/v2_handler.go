@@ -108,7 +108,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := dashboardtypesv2.UpdateableDashboard{}
+	req := dashboardtypes.UpdateableDashboardV2{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
@@ -120,5 +120,5 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, dashboardtypesv2.NewGettableDashboardFromDashboard(dashboard))
+	render.Success(rw, http.StatusOK, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
 }

@@ -30,7 +30,6 @@ func TestDashboardDataMatchesPerses(t *testing.T) {
 		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[v1.DatasourceSpec]()},
 		{"Variable", typeOf[Variable](), typeOf[dashboard.Variable]()},
 		{"ListVariableSpec", typeOf[ListVariableSpec](), typeOf[dashboard.ListVariableSpec]()},
-		{"TextVariableSpec", typeOf[TextVariableSpec](), typeOf[dashboard.TextVariableSpec]()},
 		{"Layout", typeOf[Layout](), typeOf[dashboard.Layout]()},
 	}
 
@@ -133,7 +132,7 @@ func jsonFields(t reflect.Type) map[string]struct{} {
 	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
-		// Skip unexported fields (e.g., dashboard.TextVariableSpec has an
+		// Skip unexported fields (e.g., dashboard.ListVariableSpec has an
 		// unexported `variableSpec` interface tag).
 		if !f.IsExported() && !f.Anonymous {
 			continue

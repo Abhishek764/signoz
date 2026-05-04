@@ -142,6 +142,15 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 		return err
 	}
 
+	// Promote `x-signoz-discriminator` markers (set by Exposer impls
+	// in pkg/types via `Schema.ExtraProperties`) into real OpenAPI 3
+	// `discriminator` fields. jsonschema-go.Schema has no
+	// Discriminator field of its own and openapi-go only carries
+	// `x-` prefixed extras through ExtraProperties unchanged, so the
+	// type-side declaration goes through this marker convention and
+	// the spec-side promotion happens here.
+	attachDiscriminators(openapi.reflector.Spec)
+
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
 	// to float64, causing large integers (e.g. epoch millisecond timestamps) to
 	// render in scientific notation (1.6409952e+12).
@@ -166,6 +175,67 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	}
 
 	return os.WriteFile(path, spec, 0o600)
+}
+
+// signozDiscriminatorKey is the marker that `JSONSchema()` Exposer
+// impls in pkg/types use to declare an OpenAPI 3 discriminator. The
+// keyword itself isn't a JSON Schema concept and the marker can't be
+// promoted from `jsonschema-go.Schema.ExtraProperties` to
+// `openapi3.Schema.Discriminator` by the upstream conversion code
+// (which only carries through `x-`-prefixed extras into
+// `MapOfAnything`). `attachDiscriminators` reads this marker and
+// promotes it to a real `Discriminator` field on the openapi3 schema
+// (then deletes the marker so it doesn't pollute the rendered YAML).
+//
+// The marker value is a `map[string]any` with:
+//   - "propertyName" (string, required)  — the discriminator field
+//   - "mapping"      (map[string]string, optional) — value→$ref
+const signozDiscriminatorKey = "x-signoz-discriminator"
+
+// attachDiscriminators walks every component schema in the spec and
+// promotes any `x-signoz-discriminator` extension into a proper
+// OpenAPI 3 `discriminator` object on the parent schema. Schemas
+// without the marker are untouched; malformed markers (wrong shape,
+// missing propertyName) are silently dropped — better to leave the
+// schema discriminator-less than to fail OpenAPI generation.
+func attachDiscriminators(spec *openapi3.Spec) {
+	if spec.Components == nil || spec.Components.Schemas == nil {
+		return
+	}
+	for name, entry := range spec.Components.Schemas.MapOfSchemaOrRefValues {
+		if entry.Schema == nil {
+			continue
+		}
+		raw, ok := entry.Schema.MapOfAnything[signozDiscriminatorKey]
+		if !ok {
+			continue
+		}
+		marker, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		propertyName, ok := marker["propertyName"].(string)
+		if !ok || propertyName == "" {
+			continue
+		}
+		disc := openapi3.Discriminator{PropertyName: propertyName}
+		if rawMapping, ok := marker["mapping"]; ok {
+			if mapping, ok := rawMapping.(map[string]string); ok {
+				disc.Mapping = mapping
+			} else if mapping, ok := rawMapping.(map[string]any); ok {
+				converted := make(map[string]string, len(mapping))
+				for k, v := range mapping {
+					if s, ok := v.(string); ok {
+						converted[k] = s
+					}
+				}
+				disc.Mapping = converted
+			}
+		}
+		entry.Schema.Discriminator = &disc
+		delete(entry.Schema.MapOfAnything, signozDiscriminatorKey)
+		spec.Components.Schemas.MapOfSchemaOrRefValues[name] = entry
+	}
 }
 
 // convertJSONNumbers recursively walks a decoded JSON structure and converts

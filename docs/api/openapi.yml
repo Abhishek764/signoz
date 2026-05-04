@@ -4350,6 +4350,11 @@ components:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
       type: object
     RuletypesEvaluationEnvelope:
+      discriminator:
+        mapping:
+          cumulative: '#/components/schemas/RuletypesEvaluationCumulative'
+          rolling: '#/components/schemas/RuletypesEvaluationRolling'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesEvaluationRolling'
       - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
@@ -4679,6 +4684,10 @@ components:
       - compositeQuery
       type: object
     RuletypesRuleThresholdData:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/RuletypesThresholdBasic'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
       properties:

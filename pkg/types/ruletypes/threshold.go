@@ -40,7 +40,10 @@ type thresholdBasic struct {
 	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)."`
 }
 
-var _ jsonschema.OneOfExposer = RuleThresholdData{}
+var (
+	_ jsonschema.OneOfExposer = RuleThresholdData{}
+	_ jsonschema.Preparer     = RuleThresholdData{}
+)
 
 // JSONSchemaOneOf returns the oneOf variants for the RuleThresholdData discriminated union.
 // Each variant represents a different threshold kind with its corresponding spec schema.
@@ -48,6 +51,29 @@ func (RuleThresholdData) JSONSchemaOneOf() []any {
 	return []any{
 		thresholdBasic{},
 	}
+}
+
+// PrepareJSONSchema attaches the `x-signoz-discriminator` ExtraProperty.
+// `signoz.attachDiscriminators` (called once after spec reflection)
+// promotes this marker into a real OpenAPI 3 `discriminator` field on
+// the openapi3.Schema. jsonschema-go.Schema has no Discriminator field
+// of its own, so this two-step (declare on the type, promote in the
+// spec) is what gets a literal `discriminator:` keyword into the
+// output without changing the wire shape.
+//
+// Adding a new threshold kind: add the variant to `JSONSchemaOneOf`
+// AND the mapping below.
+func (RuleThresholdData) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			"basic": "#/components/schemas/RuletypesThresholdBasic",
+		},
+	}
+	return nil
 }
 
 func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {

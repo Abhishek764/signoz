@@ -1,4 +1,4 @@
-package dashboardtypesv2
+package dashboardtypes
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
@@ -38,7 +37,7 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 	type alias DashboardData
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid dashboard spec")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid dashboard spec")
 	}
 	*d = DashboardData(tmp)
 	return d.Validate()
@@ -51,7 +50,7 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 func (d *DashboardData) Validate() error {
 	for key, panel := range d.Panels {
 		if panel == nil {
-			return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		panelKind := panel.Spec.Plugin.Kind
@@ -68,7 +67,7 @@ func (d *DashboardData) Validate() error {
 
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	if !slices.Contains(allowed, plugin.Kind) {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput,
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind)
 	}
 
@@ -86,7 +85,7 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 			continue
 		}
 		if !slices.Contains(allowed, subKind) {
-			return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput,
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 				"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
 				path, si, sub.Type, panelKind)
 		}

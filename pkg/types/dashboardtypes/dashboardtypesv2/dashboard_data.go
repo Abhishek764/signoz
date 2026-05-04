@@ -38,7 +38,7 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 	type alias DashboardData
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid dashboard spec")
 	}
 	*d = DashboardData(tmp)
 	return d.Validate()

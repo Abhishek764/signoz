@@ -270,7 +270,7 @@ func extractKindAndSpec(data []byte) (string, []byte, error) {
 		Spec json.RawMessage `json:"spec"`
 	}
 	if err := json.Unmarshal(data, &head); err != nil {
-		return "", nil, err
+		return "", nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid plugin envelope")
 	}
 	return head.Kind, head.Spec, nil
 }

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,6 +38,39 @@ func TestValidateDashboardWithSections(t *testing.T) {
 func TestInvalidateNotAJSON(t *testing.T) {
 	_, err := unmarshalDashboard([]byte("not json"))
 	require.Error(t, err, "expected error for invalid JSON")
+}
+
+// TestUnmarshalErrorPreservesNestedMessage guards the wrap on dec.Decode in
+// DashboardData.UnmarshalJSON. The wrap stamps a consistent type/code on
+// decode failures, but must not smother the rich messages produced by nested
+// UnmarshalJSON methods (panel/query/variable/datasource plugin envelopes).
+func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "NonExistentPanel", "spec": {}}
+				}
+			}
+		},
+		"layouts": []
+	}`)
+
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err)
+
+	require.Contains(t, err.Error(), "unknown panel plugin kind",
+		"outer wrap should not smother the inner UnmarshalJSON message")
+	require.Contains(t, err.Error(), `"NonExistentPanel"`,
+		"the offending value should still appear in the error")
+	require.Contains(t, err.Error(), "allowed values:",
+		"the allowed-values hint should still appear in the error")
+
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput),
+		"outer wrap should classify the error as TypeInvalidInput")
+	assert.True(t, errors.Asc(err, dashboardtypes.ErrCodeDashboardInvalidInput),
+		"outer wrap should stamp ErrCodeDashboardInvalidInput")
 }
 
 func TestValidateEmptySpec(t *testing.T) {

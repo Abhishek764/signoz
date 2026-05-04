@@ -130,7 +130,7 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 });
 
 // css config
-const CONNECTOR_WIDTH = 20;
+const CONNECTOR_WIDTH = 30;
 const VERTICAL_CONNECTOR_WIDTH = 1;
 
 interface SpanStateClasses {
@@ -534,14 +534,15 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 					return next;
 				});
-			} else {
-				// Backend mode: trigger API call (current behavior)
-				setInterestedSpanId({
-					spanId,
-					isUncollapsed: !collapse,
-					scrollToSpan: false,
-				});
 			}
+			// Backend mode: trigger API call (current behavior)
+			// keeping this for both mode to support scroll to view to function well.
+			// interestedspan would not make api call in frontend mode so it is safe to use for both mode.
+			setInterestedSpanId({
+				spanId,
+				isUncollapsed: !collapse,
+				scrollToSpan: false,
+			});
 		},
 		[isFullDataLoaded, setLocalUncollapsedNodes, setInterestedSpanId],
 	);
@@ -619,7 +620,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				});
 			}
 		},
-		[spans, setInterestedSpanId],
+		[spans, setInterestedSpanId, isFullDataLoaded],
 	);
 
 	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] = useState(

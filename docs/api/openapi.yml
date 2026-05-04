@@ -2137,6 +2137,101 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/VariableDisplay'
+        name:
+          type: string
+        value:
+          type: string
+      type: object
+    DashboardtypesAxes:
+      properties:
+        isLogScale:
+          type: boolean
+        softMax:
+          nullable: true
+          type: number
+        softMin:
+          nullable: true
+          type: number
+      type: object
+    DashboardtypesBarChartPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBarChartVisualization'
+      type: object
+    DashboardtypesBarChartVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        stackedBarChart:
+          type: boolean
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesBasicVisualization:
+      properties:
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesBuilderQuerySpec:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+    DashboardtypesComparisonOperator:
+      enum:
+      - '>'
+      - <
+      - '>='
+      - <=
+      - =
+      - above
+      - below
+      - above_or_equal
+      - below_or_equal
+      - equal
+      - not_equal
+      type: string
+    DashboardtypesComparisonThreshold:
+      properties:
+        color:
+          type: string
+        format:
+          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+        operator:
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
+    DashboardtypesCustomVariableSpec:
+      properties:
+        customValue:
+          type: string
+      required:
+      - customValue
+      type: object
     DashboardtypesDashboard:
       properties:
         createdAt:
@@ -2158,6 +2253,126 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardData:
+      properties:
+        datasources:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          type: object
+        display:
+          $ref: '#/components/schemas/CommonDisplay'
+        duration:
+          type: string
+        layouts:
+          items:
+            $ref: '#/components/schemas/DashboardtypesLayout'
+          nullable: true
+          type: array
+        links:
+          items:
+            $ref: '#/components/schemas/V1Link'
+          type: array
+        panels:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardtypesPanel'
+          nullable: true
+          type: object
+        refreshInterval:
+          type: string
+        variables:
+          items:
+            $ref: '#/components/schemas/DashboardtypesVariable'
+          type: array
+      type: object
+    DashboardtypesDashboardMetadata:
+      properties:
+        image:
+          type: string
+        schemaVersion:
+          type: string
+        uploadedGrafana:
+          type: boolean
+      type: object
+    DashboardtypesDatasourcePlugin:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+    DashboardtypesDatasourcePluginKind:
+      enum:
+      - signoz/Datasource
+      type: string
+    DashboardtypesDatasourcePluginVariantStruct:
+      properties:
+        kind:
+          enum:
+          - signoz/Datasource
+          type: string
+        spec:
+          nullable: true
+          type: object
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesDatasourceSpec:
+      properties:
+        default:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/CommonDisplay'
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesDatasourcePlugin'
+      type: object
+    DashboardtypesDynamicVariableSpec:
+      properties:
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      required:
+      - name
+      type: object
+    DashboardtypesFillMode:
+      enum:
+      - solid
+      - gradient
+      - none
+      type: string
+    DashboardtypesGettableDashboardInfo:
+      properties:
+        data:
+          $ref: '#/components/schemas/DashboardtypesDashboardData'
+        metadata:
+          $ref: '#/components/schemas/DashboardtypesDashboardMetadata'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          type: array
+      type: object
+    DashboardtypesGettableDashboardV2:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        info:
+          $ref: '#/components/schemas/DashboardtypesGettableDashboardInfo'
+        locked:
+          type: boolean
+        orgId:
+          type: string
+        publicConfig:
+          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
         defaultTimeRange:
@@ -2174,228 +2389,7 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
-    DashboardtypesPostablePublicDashboard:
-      properties:
-        defaultTimeRange:
-          type: string
-        timeRangeEnabled:
-          type: boolean
-      type: object
-    DashboardtypesStorableDashboardData:
-      additionalProperties: {}
-      type: object
-    DashboardtypesUpdatablePublicDashboard:
-      properties:
-        defaultTimeRange:
-          type: string
-        timeRangeEnabled:
-          type: boolean
-      type: object
-    Dashboardtypesv2Axes:
-      properties:
-        isLogScale:
-          type: boolean
-        softMax:
-          nullable: true
-          type: number
-        softMin:
-          nullable: true
-          type: number
-      type: object
-    Dashboardtypesv2BarChartPanelSpec:
-      properties:
-        axes:
-          $ref: '#/components/schemas/Dashboardtypesv2Axes'
-        formatting:
-          $ref: '#/components/schemas/Dashboardtypesv2PanelFormatting'
-        legend:
-          $ref: '#/components/schemas/Dashboardtypesv2Legend'
-        thresholds:
-          items:
-            $ref: '#/components/schemas/Dashboardtypesv2ThresholdWithLabel'
-          nullable: true
-          type: array
-        visualization:
-          $ref: '#/components/schemas/Dashboardtypesv2BarChartVisualization'
-      type: object
-    Dashboardtypesv2BarChartVisualization:
-      properties:
-        fillSpans:
-          type: boolean
-        stackedBarChart:
-          type: boolean
-        timePreference:
-          $ref: '#/components/schemas/Dashboardtypesv2TimePreference'
-      type: object
-    Dashboardtypesv2BasicVisualization:
-      properties:
-        timePreference:
-          $ref: '#/components/schemas/Dashboardtypesv2TimePreference'
-      type: object
-    Dashboardtypesv2BuilderQuerySpec:
-      oneOf:
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
-      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
-    Dashboardtypesv2ComparisonOperator:
-      enum:
-      - '>'
-      - <
-      - '>='
-      - <=
-      - =
-      - above
-      - below
-      - above_or_equal
-      - below_or_equal
-      - equal
-      - not_equal
-      type: string
-    Dashboardtypesv2ComparisonThreshold:
-      properties:
-        color:
-          type: string
-        format:
-          $ref: '#/components/schemas/Dashboardtypesv2ThresholdFormat'
-        operator:
-          $ref: '#/components/schemas/Dashboardtypesv2ComparisonOperator'
-        unit:
-          type: string
-        value:
-          format: double
-          type: number
-      required:
-      - value
-      - color
-      type: object
-    Dashboardtypesv2CustomVariableSpec:
-      properties:
-        customValue:
-          type: string
-      required:
-      - customValue
-      type: object
-    Dashboardtypesv2DashboardData:
-      properties:
-        datasources:
-          additionalProperties:
-            $ref: '#/components/schemas/Dashboardtypesv2DatasourceSpec'
-          type: object
-        display:
-          $ref: '#/components/schemas/CommonDisplay'
-        duration:
-          type: string
-        layouts:
-          items:
-            $ref: '#/components/schemas/Dashboardtypesv2Layout'
-          nullable: true
-          type: array
-        links:
-          items:
-            $ref: '#/components/schemas/V1Link'
-          type: array
-        panels:
-          additionalProperties:
-            $ref: '#/components/schemas/Dashboardtypesv2Panel'
-          nullable: true
-          type: object
-        refreshInterval:
-          type: string
-        variables:
-          items:
-            $ref: '#/components/schemas/Dashboardtypesv2Variable'
-          type: array
-      type: object
-    Dashboardtypesv2DashboardInfo:
-      properties:
-        data:
-          $ref: '#/components/schemas/Dashboardtypesv2DashboardData'
-        metadata:
-          $ref: '#/components/schemas/Dashboardtypesv2DashboardMetadata'
-        tags:
-          items:
-            $ref: '#/components/schemas/TagtypesTag'
-          type: array
-      type: object
-    Dashboardtypesv2DashboardMetadata:
-      properties:
-        image:
-          type: string
-        schemaVersion:
-          type: string
-        uploadedGrafana:
-          type: boolean
-      type: object
-    Dashboardtypesv2DatasourcePlugin:
-      oneOf:
-      - $ref: '#/components/schemas/Dashboardtypesv2DatasourcePluginVariantStruct'
-    Dashboardtypesv2DatasourcePluginKind:
-      enum:
-      - signoz/Datasource
-      type: string
-    Dashboardtypesv2DatasourcePluginVariantStruct:
-      properties:
-        kind:
-          enum:
-          - signoz/Datasource
-          type: string
-        spec:
-          nullable: true
-          type: object
-      required:
-      - kind
-      - spec
-      type: object
-    Dashboardtypesv2DatasourceSpec:
-      properties:
-        default:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/CommonDisplay'
-        plugin:
-          $ref: '#/components/schemas/Dashboardtypesv2DatasourcePlugin'
-      type: object
-    Dashboardtypesv2DynamicVariableSpec:
-      properties:
-        name:
-          type: string
-        signal:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      required:
-      - name
-      type: object
-    Dashboardtypesv2FillMode:
-      enum:
-      - solid
-      - gradient
-      - none
-      type: string
-    Dashboardtypesv2GettableDashboard:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        info:
-          $ref: '#/components/schemas/Dashboardtypesv2DashboardInfo'
-        locked:
-          type: boolean
-        orgId:
-          type: string
-        publicConfig:
-          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - id
-      type: object
-    Dashboardtypesv2HistogramBuckets:
+    DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
           nullable: true
@@ -2406,17 +2400,17 @@ components:
         mergeAllActiveQueries:
           type: boolean
       type: object
-    Dashboardtypesv2HistogramPanelSpec:
+    DashboardtypesHistogramPanelSpec:
       properties:
         histogramBuckets:
-          $ref: '#/components/schemas/Dashboardtypesv2HistogramBuckets'
+          $ref: '#/components/schemas/DashboardtypesHistogramBuckets'
         legend:
-          $ref: '#/components/schemas/Dashboardtypesv2Legend'
+          $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
-    Dashboardtypesv2Layout:
+    DashboardtypesLayout:
       oneOf:
-      - $ref: '#/components/schemas/Dashboardtypesv2LayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
-    Dashboardtypesv2LayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
+    DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
       properties:
         kind:
           enum:
@@ -2428,7 +2422,7 @@ components:
       - kind
       - spec
       type: object
-    Dashboardtypesv2Legend:
+    DashboardtypesLegend:
       properties:
         customColors:
           additionalProperties:
@@ -2436,33 +2430,33 @@ components:
           nullable: true
           type: object
         position:
-          $ref: '#/components/schemas/Dashboardtypesv2LegendPosition'
+          $ref: '#/components/schemas/DashboardtypesLegendPosition'
       type: object
-    Dashboardtypesv2LegendPosition:
+    DashboardtypesLegendPosition:
       enum:
       - bottom
       - right
       type: string
-    Dashboardtypesv2LineInterpolation:
+    DashboardtypesLineInterpolation:
       enum:
       - linear
       - spline
       - step_after
       - step_before
       type: string
-    Dashboardtypesv2LineStyle:
+    DashboardtypesLineStyle:
       enum:
       - solid
       - dashed
       type: string
-    Dashboardtypesv2ListPanelSpec:
+    DashboardtypesListPanelSpec:
       properties:
         selectFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
       type: object
-    Dashboardtypesv2ListVariableSpec:
+    DashboardtypesListVariableSpec:
       properties:
         allowAllValue:
           type: boolean
@@ -2479,47 +2473,47 @@ components:
         name:
           type: string
         plugin:
-          $ref: '#/components/schemas/Dashboardtypesv2VariablePlugin'
+          $ref: '#/components/schemas/DashboardtypesVariablePlugin'
         sort:
           nullable: true
           type: string
       type: object
-    Dashboardtypesv2NumberPanelSpec:
+    DashboardtypesNumberPanelSpec:
       properties:
         formatting:
-          $ref: '#/components/schemas/Dashboardtypesv2PanelFormatting'
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         thresholds:
           items:
-            $ref: '#/components/schemas/Dashboardtypesv2ComparisonThreshold'
+            $ref: '#/components/schemas/DashboardtypesComparisonThreshold'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/Dashboardtypesv2BasicVisualization'
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
-    Dashboardtypesv2Panel:
+    DashboardtypesPanel:
       properties:
         kind:
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2PanelSpec'
+          $ref: '#/components/schemas/DashboardtypesPanelSpec'
       type: object
-    Dashboardtypesv2PanelFormatting:
+    DashboardtypesPanelFormatting:
       properties:
         decimalPrecision:
-          $ref: '#/components/schemas/Dashboardtypesv2PrecisionOption'
+          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
         unit:
           type: string
       type: object
-    Dashboardtypesv2PanelPlugin:
+    DashboardtypesPanelPlugin:
       oneOf:
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TimeSeriesPanelSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BarChartPanelSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2NumberPanelSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2PieChartPanelSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TablePanelSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2HistogramPanelSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListPanelSpec'
-    Dashboardtypesv2PanelPluginKind:
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+    DashboardtypesPanelPluginKind:
       enum:
       - signoz/TimeSeriesPanel
       - signoz/BarChartPanel
@@ -2529,91 +2523,91 @@ components:
       - signoz/HistogramPanel
       - signoz/ListPanel
       type: string
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BarChartPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
       properties:
         kind:
           enum:
           - signoz/BarChartPanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2BarChartPanelSpec'
+          $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2HistogramPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec:
       properties:
         kind:
           enum:
           - signoz/HistogramPanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2HistogramPanelSpec'
+          $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec:
       properties:
         kind:
           enum:
           - signoz/ListPanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2ListPanelSpec'
+          $ref: '#/components/schemas/DashboardtypesListPanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2NumberPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec:
       properties:
         kind:
           enum:
           - signoz/NumberPanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2NumberPanelSpec'
+          $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2PieChartPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec:
       properties:
         kind:
           enum:
           - signoz/PieChartPanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2PieChartPanelSpec'
+          $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TablePanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec:
       properties:
         kind:
           enum:
           - signoz/TablePanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2TablePanelSpec'
+          $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TimeSeriesPanelSpec:
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec:
       properties:
         kind:
           enum:
           - signoz/TimeSeriesPanel
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2TimeSeriesPanelSpec'
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2PanelSpec:
+    DashboardtypesPanelSpec:
       properties:
         display:
           $ref: '#/components/schemas/V1PanelDisplay'
@@ -2622,33 +2616,40 @@ components:
             $ref: '#/components/schemas/V1Link'
           type: array
         plugin:
-          $ref: '#/components/schemas/Dashboardtypesv2PanelPlugin'
+          $ref: '#/components/schemas/DashboardtypesPanelPlugin'
         queries:
           items:
-            $ref: '#/components/schemas/Dashboardtypesv2Query'
+            $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
       type: object
-    Dashboardtypesv2PieChartPanelSpec:
+    DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
-          $ref: '#/components/schemas/Dashboardtypesv2PanelFormatting'
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
-          $ref: '#/components/schemas/Dashboardtypesv2Legend'
+          $ref: '#/components/schemas/DashboardtypesLegend'
         visualization:
-          $ref: '#/components/schemas/Dashboardtypesv2BasicVisualization'
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
-    Dashboardtypesv2PostableDashboard:
+    DashboardtypesPostableDashboardV2:
       properties:
         data:
-          $ref: '#/components/schemas/Dashboardtypesv2DashboardData'
+          $ref: '#/components/schemas/DashboardtypesDashboardData'
         metadata:
-          $ref: '#/components/schemas/Dashboardtypesv2DashboardMetadata'
+          $ref: '#/components/schemas/DashboardtypesDashboardMetadata'
         tags:
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
           type: array
       type: object
-    Dashboardtypesv2PrecisionOption:
+    DashboardtypesPostablePublicDashboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        timeRangeEnabled:
+          type: boolean
+      type: object
+    DashboardtypesPrecisionOption:
       enum:
       - "0"
       - "1"
@@ -2657,22 +2658,22 @@ components:
       - "4"
       - full
       type: string
-    Dashboardtypesv2Query:
+    DashboardtypesQuery:
       properties:
         kind:
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2QuerySpec'
+          $ref: '#/components/schemas/DashboardtypesQuerySpec'
       type: object
-    Dashboardtypesv2QueryPlugin:
+    DashboardtypesQueryPlugin:
       oneOf:
-      - $ref: '#/components/schemas/Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BuilderQuerySpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
-      - $ref: '#/components/schemas/Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
-      - $ref: '#/components/schemas/Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
-      - $ref: '#/components/schemas/Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
-      - $ref: '#/components/schemas/Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
-    Dashboardtypesv2QueryPluginKind:
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+    DashboardtypesQueryPluginKind:
       enum:
       - signoz/BuilderQuery
       - signoz/CompositeQuery
@@ -2681,19 +2682,19 @@ components:
       - signoz/ClickHouseSQL
       - signoz/TraceOperator
       type: string
-    Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2BuilderQuerySpec:
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
       properties:
         kind:
           enum:
           - signoz/BuilderQuery
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2BuilderQuerySpec'
+          $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
       properties:
         kind:
           enum:
@@ -2705,7 +2706,7 @@ components:
       - kind
       - spec
       type: object
-    Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
       properties:
         kind:
           enum:
@@ -2717,7 +2718,7 @@ components:
       - kind
       - spec
       type: object
-    Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
       properties:
         kind:
           enum:
@@ -2729,7 +2730,7 @@ components:
       - kind
       - spec
       type: object
-    Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
       properties:
         kind:
           enum:
@@ -2741,7 +2742,7 @@ components:
       - kind
       - spec
       type: object
-    Dashboardtypesv2QueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
       properties:
         kind:
           enum:
@@ -2753,28 +2754,31 @@ components:
       - kind
       - spec
       type: object
-    Dashboardtypesv2QuerySpec:
+    DashboardtypesQuerySpec:
       properties:
         name:
           type: string
         plugin:
-          $ref: '#/components/schemas/Dashboardtypesv2QueryPlugin'
+          $ref: '#/components/schemas/DashboardtypesQueryPlugin'
       type: object
-    Dashboardtypesv2QueryVariableSpec:
+    DashboardtypesQueryVariableSpec:
       properties:
         queryValue:
           type: string
       required:
       - queryValue
       type: object
-    Dashboardtypesv2SpanGaps:
+    DashboardtypesSpanGaps:
       properties:
         fillLessThan:
           type: string
         fillOnlyBelow:
           type: boolean
       type: object
-    Dashboardtypesv2TableFormatting:
+    DashboardtypesStorableDashboardData:
+      additionalProperties: {}
+      type: object
+    DashboardtypesTableFormatting:
       properties:
         columnUnits:
           additionalProperties:
@@ -2782,30 +2786,30 @@ components:
           nullable: true
           type: object
         decimalPrecision:
-          $ref: '#/components/schemas/Dashboardtypesv2PrecisionOption'
+          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
       type: object
-    Dashboardtypesv2TablePanelSpec:
+    DashboardtypesTablePanelSpec:
       properties:
         formatting:
-          $ref: '#/components/schemas/Dashboardtypesv2TableFormatting'
+          $ref: '#/components/schemas/DashboardtypesTableFormatting'
         thresholds:
           items:
-            $ref: '#/components/schemas/Dashboardtypesv2TableThreshold'
+            $ref: '#/components/schemas/DashboardtypesTableThreshold'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/Dashboardtypesv2BasicVisualization'
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
-    Dashboardtypesv2TableThreshold:
+    DashboardtypesTableThreshold:
       properties:
         color:
           type: string
         columnName:
           type: string
         format:
-          $ref: '#/components/schemas/Dashboardtypesv2ThresholdFormat'
+          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
         operator:
-          $ref: '#/components/schemas/Dashboardtypesv2ComparisonOperator'
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
         unit:
           type: string
         value:
@@ -2816,23 +2820,12 @@ components:
       - color
       - columnName
       type: object
-    Dashboardtypesv2TextVariableSpec:
-      properties:
-        constant:
-          type: boolean
-        display:
-          $ref: '#/components/schemas/VariableDisplay'
-        name:
-          type: string
-        value:
-          type: string
-      type: object
-    Dashboardtypesv2ThresholdFormat:
+    DashboardtypesThresholdFormat:
       enum:
       - text
       - background
       type: string
-    Dashboardtypesv2ThresholdWithLabel:
+    DashboardtypesThresholdWithLabel:
       properties:
         color:
           type: string
@@ -2848,7 +2841,7 @@ components:
       - color
       - label
       type: object
-    Dashboardtypesv2TimePreference:
+    DashboardtypesTimePreference:
       enum:
       - global_time
       - last_5_min
@@ -2861,115 +2854,122 @@ components:
       - last_1_week
       - last_1_month
       type: string
-    Dashboardtypesv2TimeSeriesChartAppearance:
+    DashboardtypesTimeSeriesChartAppearance:
       properties:
         fillMode:
-          $ref: '#/components/schemas/Dashboardtypesv2FillMode'
+          $ref: '#/components/schemas/DashboardtypesFillMode'
         lineInterpolation:
-          $ref: '#/components/schemas/Dashboardtypesv2LineInterpolation'
+          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
         lineStyle:
-          $ref: '#/components/schemas/Dashboardtypesv2LineStyle'
+          $ref: '#/components/schemas/DashboardtypesLineStyle'
         showPoints:
           type: boolean
         spanGaps:
-          $ref: '#/components/schemas/Dashboardtypesv2SpanGaps'
+          $ref: '#/components/schemas/DashboardtypesSpanGaps'
       type: object
-    Dashboardtypesv2TimeSeriesPanelSpec:
+    DashboardtypesTimeSeriesPanelSpec:
       properties:
         axes:
-          $ref: '#/components/schemas/Dashboardtypesv2Axes'
+          $ref: '#/components/schemas/DashboardtypesAxes'
         chartAppearance:
-          $ref: '#/components/schemas/Dashboardtypesv2TimeSeriesChartAppearance'
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesChartAppearance'
         formatting:
-          $ref: '#/components/schemas/Dashboardtypesv2PanelFormatting'
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
-          $ref: '#/components/schemas/Dashboardtypesv2Legend'
+          $ref: '#/components/schemas/DashboardtypesLegend'
         thresholds:
           items:
-            $ref: '#/components/schemas/Dashboardtypesv2ThresholdWithLabel'
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
           nullable: true
           type: array
         visualization:
-          $ref: '#/components/schemas/Dashboardtypesv2TimeSeriesVisualization'
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesVisualization'
       type: object
-    Dashboardtypesv2TimeSeriesVisualization:
+    DashboardtypesTimeSeriesVisualization:
       properties:
         fillSpans:
           type: boolean
         timePreference:
-          $ref: '#/components/schemas/Dashboardtypesv2TimePreference'
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
       type: object
-    Dashboardtypesv2Variable:
-      oneOf:
-      - $ref: '#/components/schemas/Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListVariableSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextVariableSpec'
-    Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2ListVariableSpec:
+    DashboardtypesUpdatablePublicDashboard:
       properties:
-        kind:
-          enum:
-          - ListVariable
+        defaultTimeRange:
           type: string
-        spec:
-          $ref: '#/components/schemas/Dashboardtypesv2ListVariableSpec'
-      required:
-      - kind
-      - spec
+        timeRangeEnabled:
+          type: boolean
       type: object
-    Dashboardtypesv2VariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2TextVariableSpec:
+    DashboardtypesVariable:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec'
+    DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec:
       properties:
         kind:
           enum:
           - TextVariable
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2TextVariableSpec'
+          $ref: '#/components/schemas/DashboardTextVariableSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2VariablePlugin:
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
+      properties:
+        kind:
+          enum:
+          - ListVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePlugin:
       oneOf:
-      - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpec'
-      - $ref: '#/components/schemas/Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpec'
-    Dashboardtypesv2VariablePluginKind:
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec'
+    DashboardtypesVariablePluginKind:
       enum:
       - signoz/DynamicVariable
       - signoz/QueryVariable
       - signoz/CustomVariable
       type: string
-    Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2CustomVariableSpec:
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec:
       properties:
         kind:
           enum:
           - signoz/CustomVariable
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2CustomVariableSpec'
+          $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2DynamicVariableSpec:
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec:
       properties:
         kind:
           enum:
           - signoz/DynamicVariable
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2DynamicVariableSpec'
+          $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
       required:
       - kind
       - spec
       type: object
-    Dashboardtypesv2VariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDashboardtypesv2QueryVariableSpec:
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec:
       properties:
         kind:
           enum:
           - signoz/QueryVariable
           type: string
         spec:
-          $ref: '#/components/schemas/Dashboardtypesv2QueryVariableSpec'
+          $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
       required:
       - kind
       - spec
@@ -3464,6 +3464,158 @@ components:
       - list
       - grouped_list
       type: string
+    LlmpricingruletypesGettablePricingRules:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - total
+      - offset
+      - limit
+      type: object
+    LlmpricingruletypesLLMPricingCacheCosts:
+      properties:
+        mode:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
+        read:
+          format: double
+          type: number
+        write:
+          format: double
+          type: number
+      required:
+      - mode
+      type: object
+    LlmpricingruletypesLLMPricingRule:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        isOverride:
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          $ref: '#/components/schemas/LlmpricingruletypesStringSlice'
+        orgId:
+          type: string
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
+        sourceId:
+          type: string
+        syncedAt:
+          format: date-time
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - modelName
+      - provider
+      - modelPattern
+      - unit
+      - pricing
+      - isOverride
+      - enabled
+      type: object
+    LlmpricingruletypesLLMPricingRuleCacheMode:
+      enum:
+      - subtract
+      - additive
+      - unknown
+      type: string
+    LlmpricingruletypesLLMPricingRuleUnit:
+      enum:
+      - per_million_tokens
+      type: string
+    LlmpricingruletypesLLMRulePricing:
+      properties:
+        cache:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingCacheCosts'
+        input:
+          format: double
+          type: number
+        output:
+          format: double
+          type: number
+      required:
+      - input
+      - output
+      type: object
+    LlmpricingruletypesStringSlice:
+      items:
+        type: string
+      nullable: true
+      type: array
+    LlmpricingruletypesUpdatableLLMPricingRule:
+      properties:
+        enabled:
+          type: boolean
+        id:
+          nullable: true
+          type: string
+        isOverride:
+          nullable: true
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
+        sourceId:
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
+      required:
+      - modelName
+      - provider
+      - modelPattern
+      - unit
+      - pricing
+      - enabled
+      type: object
+    LlmpricingruletypesUpdatableLLMPricingRules:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRule'
+          nullable: true
+          type: array
+      required:
+      - rules
+      type: object
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:
@@ -5623,38 +5775,19 @@ components:
           nullable: true
           type: string
       type: object
-    TagtypesPostableTag:
+    TagtypesGettableTag:
       properties:
         name:
           type: string
       required:
       - name
       type: object
-    TagtypesTag:
+    TagtypesPostableTag:
       properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        internalName:
-          type: string
         name:
           type: string
-        orgId:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
       required:
-      - id
       - name
-      - internalName
-      - orgId
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -8571,6 +8704,218 @@ paths:
       summary: Create bulk invite
       tags:
       - users
+  /api/v1/llm_pricing_rules:
+    get:
+      deprecated: false
+      description: Returns all LLM pricing rules for the authenticated org, with pagination.
+      operationId: ListLLMPricingRules
+      parameters:
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesGettablePricingRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List pricing rules
+      tags:
+      - llmpricingrules
+    put:
+      deprecated: false
+      description: Single write endpoint used by both the user and the Zeus sync job.
+        Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true)
+        are fully preserved when the request does not provide isOverride; only synced_at
+        is stamped.
+      operationId: CreateOrUpdateLLMPricingRules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRules'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create or update pricing rules
+      tags:
+      - llmpricingrules
+  /api/v1/llm_pricing_rules/{id}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a pricing rule. If auto-synced, it will be recreated
+        on the next sync cycle.
+      operationId: DeleteLLMPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a pricing rule
+      tags:
+      - llmpricingrules
+    get:
+      deprecated: false
+      description: Returns a single LLM pricing rule by ID.
+      operationId: GetLLMPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a pricing rule
+      tags:
+      - llmpricingrules
   /api/v1/logs/promote_paths:
     get:
       deprecated: false
@@ -11430,7 +11775,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Dashboardtypesv2PostableDashboard'
+              $ref: '#/components/schemas/DashboardtypesPostableDashboardV2'
       responses:
         "201":
           content:
@@ -11438,7 +11783,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/Dashboardtypesv2GettableDashboard'
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
                   status:
                     type: string
                 required:
@@ -17857,9 +18202,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - VIEWER
       - tokenizer:
-        - ADMIN
+        - VIEWER
       summary: Get host info from Zeus.
       tags:
       - zeus

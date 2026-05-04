@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -19,9 +18,9 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Tags:                []string{"dashboard"},
 		Summary:             "Create dashboard (v2)",
 		Description:         "This endpoint creates a v2-shape dashboard with structured metadata, a typed data tree, and resolved tags.",
-		Request:             new(dashboardtypesv2.PostableDashboard),
+		Request:             new(dashboardtypes.PostableDashboardV2),
 		RequestContentType:  "application/json",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},
@@ -38,7 +37,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns a v2-shape dashboard with its tags and public sharing config (if any).",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -53,9 +52,9 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Tags:                []string{"dashboard"},
 		Summary:             "Update dashboard (v2)",
 		Description:         "This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.",
-		Request:             new(dashboardtypesv2.UpdateableDashboard),
+		Request:             new(dashboardtypes.UpdateableDashboardV2),
 		RequestContentType:  "application/json",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -106,7 +105,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates the public sharing config for a v2 dashboard and returns the dashboard with the new public config attached. Lock state does not gate this endpoint.",
 		Request:             new(dashboardtypes.PostablePublicDashboard),
 		RequestContentType:  "application/json",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -123,7 +122,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Description:         "This endpoint updates the public sharing config (time range settings) of an already-public v2 dashboard. Lock state does not gate this endpoint.",
 		Request:             new(dashboardtypes.UpdatablePublicDashboard),
 		RequestContentType:  "application/json",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

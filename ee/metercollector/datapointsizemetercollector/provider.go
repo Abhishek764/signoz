@@ -131,33 +131,15 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterr
 
 	meters := make([]meterreportertypes.Meter, 0, len(accumulator))
 	for _, b := range accumulator {
-		meters = append(meters, meterreportertypes.Meter{
-			MeterName:      meterName,
-			Value:          b.value,
-			Unit:           meterUnit,
-			Aggregation:    meterAggregation,
-			StartUnixMilli: window.StartUnixMilli,
-			EndUnixMilli:   window.EndUnixMilli,
-			IsCompleted:    window.IsCompleted,
-			Dimensions:     b.dimensions,
-		})
+		meters = append(meters, meterreportertypes.NewMeter(MeterName, b.value, meterUnit, meterAggregation, window, b.dimensions))
 	}
 
 	// Empty windows still emit a sentinel so checkpoints can advance.
 	if len(meters) == 0 && len(slices) > 0 {
-		meters = append(meters, meterreportertypes.Meter{
-			MeterName:      meterName,
-			Value:          0,
-			Unit:           meterUnit,
-			Aggregation:    meterAggregation,
-			StartUnixMilli: window.StartUnixMilli,
-			EndUnixMilli:   window.EndUnixMilli,
-			IsCompleted:    window.IsCompleted,
-			Dimensions: map[string]string{
-				metercollector.DimensionOrganizationID: orgID.StringValue(),
-				metercollector.DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
-			},
-		})
+		meters = append(meters, meterreportertypes.NewMeter(MeterName, 0, meterUnit, meterAggregation, window, map[string]string{
+			metercollector.DimensionOrganizationID: orgID.StringValue(),
+			metercollector.DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
+		}))
 	}
 
 	return meters, nil

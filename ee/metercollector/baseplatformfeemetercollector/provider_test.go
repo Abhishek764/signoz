@@ -23,18 +23,11 @@ func TestCollectEmitsBasePlatformFeeMeterForValidLicense(t *testing.T) {
 
 	readings, err := provider.Collect(context.Background(), orgID, window)
 	require.NoError(t, err)
-	require.Equal(t, []meterreportertypes.Meter{{
-		MeterName:      MeterName.String(),
-		Value:          1,
-		Unit:           metercollectortypes.UnitCount,
-		Aggregation:    metercollectortypes.AggregationMax,
-		StartUnixMilli: window.StartUnixMilli,
-		EndUnixMilli:   window.EndUnixMilli,
-		IsCompleted:    true,
-		Dimensions: map[string]string{
+	require.Equal(t, []meterreportertypes.Meter{
+		meterreportertypes.NewMeter(MeterName, 1, metercollectortypes.UnitCount, metercollectortypes.AggregationMax, window, map[string]string{
 			metercollector.DimensionOrganizationID: orgID.StringValue(),
-		},
-	}}, readings)
+		}),
+	}, readings)
 }
 
 func TestCollectSkipsNilLicense(t *testing.T) {

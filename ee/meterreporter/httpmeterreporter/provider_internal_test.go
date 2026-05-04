@@ -32,21 +32,29 @@ func TestValidateCollectorsRejectsBadRegistry(t *testing.T) {
 }
 
 func TestDropCheckpointed(t *testing.T) {
+	meterA := metercollectortypes.MustNewName("signoz.test.a")
+	meterB := metercollectortypes.MustNewName("signoz.test.b")
+	meterC := metercollectortypes.MustNewName("signoz.test.c")
 	windowDay := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
+	window := meterreportertypes.Window{
+		StartUnixMilli: windowDay.UnixMilli(),
+		EndUnixMilli:   windowDay.AddDate(0, 0, 1).UnixMilli(),
+		IsCompleted:    true,
+	}
 	readings := []meterreportertypes.Meter{
-		{MeterName: "signoz.test.a"},
-		{MeterName: "signoz.test.b"},
-		{MeterName: "signoz.test.c"},
+		meterreportertypes.NewMeter(meterA, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
+		meterreportertypes.NewMeter(meterB, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
+		meterreportertypes.NewMeter(meterC, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
 	}
 
 	kept := dropCheckpointed(readings, windowDay, map[string]time.Time{
-		"signoz.test.a": windowDay,
-		"signoz.test.b": windowDay.AddDate(0, 0, -1),
+		meterA.String(): windowDay,
+		meterB.String(): windowDay.AddDate(0, 0, -1),
 	})
 
 	require.Equal(t, []meterreportertypes.Meter{
-		{MeterName: "signoz.test.b"},
-		{MeterName: "signoz.test.c"},
+		meterreportertypes.NewMeter(meterB, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
+		meterreportertypes.NewMeter(meterC, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
 	}, kept)
 }
 

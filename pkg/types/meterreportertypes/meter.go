@@ -29,6 +29,27 @@ type Meter struct {
 	Dimensions map[string]string `json:"dimensions"`
 }
 
+// NewMeter builds a meter from typed metadata and a reporting window.
+func NewMeter(
+	name metercollectortypes.Name,
+	value float64,
+	unit metercollectortypes.Unit,
+	aggregation metercollectortypes.Aggregation,
+	window Window,
+	dimensions map[string]string,
+) Meter {
+	return Meter{
+		MeterName:      name.String(),
+		Value:          value,
+		Unit:           unit,
+		Aggregation:    aggregation,
+		StartUnixMilli: window.StartUnixMilli,
+		EndUnixMilli:   window.EndUnixMilli,
+		IsCompleted:    window.IsCompleted,
+		Dimensions:     dimensions,
+	}
+}
+
 // PostableMeters is one day of meters for Zeus.PutMetersV3.
 type PostableMeters struct {
 	// Meters is the set of meter values being shipped for one day.

@@ -50,16 +50,9 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterr
 		return nil, nil
 	}
 
-	return []meterreportertypes.Meter{{
-		MeterName:      MeterName.String(),
-		Value:          1,
-		Unit:           meterUnit,
-		Aggregation:    meterAggregation,
-		StartUnixMilli: window.StartUnixMilli,
-		EndUnixMilli:   window.EndUnixMilli,
-		IsCompleted:    window.IsCompleted,
-		Dimensions: map[string]string{
+	return []meterreportertypes.Meter{
+		meterreportertypes.NewMeter(MeterName, 1, meterUnit, meterAggregation, window, map[string]string{
 			metercollector.DimensionOrganizationID: orgID.StringValue(),
-		},
-	}}, nil
+		}),
+	}, nil
 }

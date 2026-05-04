@@ -285,6 +285,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RuleStateHistory,
 			handlers.SpanMapperHandler,
 			handlers.AlertmanagerHandler,
+			handlers.LLMPricingRuleHandler,
 			handlers.TraceDetail,
 			handlers.RulerHandler,
 		),

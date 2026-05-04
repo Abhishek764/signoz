@@ -1,5 +1,5 @@
-// Package basemetercollector collects the license-derived base meter.
-package basemetercollector
+// Package baseplatformfeemetercollector collects the license-derived base platform fee meter.
+package baseplatformfeemetercollector
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 
 // MeterName is the typed registry key for this collector.
 var (
-	MeterName        = metercollectortypes.MustNewName("signoz.meter.base")
+	MeterName        = metercollectortypes.MustNewName("signoz.meter.base.platform.fee")
 	meterUnit        = metercollectortypes.UnitCount
 	meterAggregation = metercollectortypes.AggregationMax
 )
 
 var _ metercollector.MeterCollector = (*Provider)(nil)
 
-// Provider collects base meters.
+// Provider collects base platform fee meters.
 type Provider struct {
 	licensing licensing.Licensing
 }
@@ -44,7 +44,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterr
 
 	license, err := p.licensing.GetActive(ctx, orgID)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "fetch active license for base meter")
+		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "fetch active license for base platform fee meter")
 	}
 	if license == nil || license.Key == "" {
 		return nil, nil

@@ -1,4 +1,4 @@
-package basemetercollector
+package baseplatformfeemetercollector
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCollectEmitsBaseMeterForValidLicense(t *testing.T) {
+func TestCollectEmitsBasePlatformFeeMeterForValidLicense(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	window := completedWindow()
 	provider := New(&fakeLicensing{
@@ -46,7 +46,7 @@ func TestCollectSkipsNilLicense(t *testing.T) {
 func TestProviderMetadata(t *testing.T) {
 	provider := New(&fakeLicensing{})
 
-	require.Equal(t, "signoz.meter.base", provider.Name().String())
+	require.Equal(t, "signoz.meter.base.platform.fee", provider.Name().String())
 	require.Equal(t, metercollectortypes.UnitCount, provider.Unit())
 	require.Equal(t, metercollectortypes.AggregationMax, provider.Aggregation())
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
-	"github.com/SigNoz/signoz/ee/metercollector/basemetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/baseplatformfeemetercollector"
 	"github.com/SigNoz/signoz/ee/metercollector/datapointcountmetercollector"
 	"github.com/SigNoz/signoz/ee/metercollector/datapointsizemetercollector"
 	"github.com/SigNoz/signoz/ee/metercollector/logcountmetercollector"
@@ -246,12 +246,12 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore) map[metercollectortypes.Name]metercollector.MeterCollector {
 	return map[metercollectortypes.Name]metercollector.MeterCollector{
-		basemetercollector.MeterName:           basemetercollector.New(licensing),
-		logcountmetercollector.MeterName:       logcountmetercollector.New(telemetryStore, sqlStore),
-		logsizemetercollector.MeterName:        logsizemetercollector.New(telemetryStore, sqlStore),
-		datapointcountmetercollector.MeterName: datapointcountmetercollector.New(telemetryStore, sqlStore),
-		datapointsizemetercollector.MeterName:  datapointsizemetercollector.New(telemetryStore, sqlStore),
-		spancountmetercollector.MeterName:      spancountmetercollector.New(telemetryStore, sqlStore),
-		spansizemetercollector.MeterName:       spansizemetercollector.New(telemetryStore, sqlStore),
+		baseplatformfeemetercollector.MeterName: baseplatformfeemetercollector.New(licensing),
+		logcountmetercollector.MeterName:        logcountmetercollector.New(telemetryStore, sqlStore),
+		logsizemetercollector.MeterName:         logsizemetercollector.New(telemetryStore, sqlStore),
+		datapointcountmetercollector.MeterName:  datapointcountmetercollector.New(telemetryStore, sqlStore),
+		datapointsizemetercollector.MeterName:   datapointsizemetercollector.New(telemetryStore, sqlStore),
+		spancountmetercollector.MeterName:       spancountmetercollector.New(telemetryStore, sqlStore),
+		spansizemetercollector.MeterName:        spansizemetercollector.New(telemetryStore, sqlStore),
 	}
 }

@@ -1,4 +1,4 @@
-package dashboardtypesv2
+package dashboardtypes
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -17,15 +16,15 @@ const (
 	MaxTagsPerDashboard = 5
 )
 
-type Dashboard struct {
+type DashboardV2 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID        valuer.UUID                     `json:"orgId"`
-	Locked       bool                            `json:"locked"`
-	Info         DashboardInfo                   `json:"info"`
-	PublicConfig *dashboardtypes.PublicDashboard `json:"publicConfig,omitempty"`
+	OrgID        valuer.UUID      `json:"orgId"`
+	Locked       bool             `json:"locked"`
+	Info         DashboardInfo    `json:"info"`
+	PublicConfig *PublicDashboard `json:"publicConfig,omitempty"`
 }
 
 // DashboardInfo is the serializable view of a dashboard's contents — what the UI renders as "the dashboard JSON".
@@ -46,45 +45,45 @@ type DashboardMetadata struct {
 	UploadedGrafana bool   `json:"uploadedGrafana"`
 }
 
-type PostableDashboard struct {
+type PostableDashboardV2 struct {
 	StoredDashboardInfo
 	Tags []tagtypes.PostableTag `json:"tags,omitempty"`
 }
 
-func (p *PostableDashboard) UnmarshalJSON(data []byte) error {
+func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
-	type alias PostableDashboard
+	type alias PostableDashboardV2
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "%s", err.Error())
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
-	*p = PostableDashboard(tmp)
+	*p = PostableDashboardV2(tmp)
 	return p.Validate()
 }
 
-func (p *PostableDashboard) Validate() error {
+func (p *PostableDashboardV2) Validate() error {
 	if p.Metadata.SchemaVersion != SchemaVersion {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "metadata.schemaVersion must be %q, got %q", SchemaVersion, p.Metadata.SchemaVersion)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "metadata.schemaVersion must be %q, got %q", SchemaVersion, p.Metadata.SchemaVersion)
 	}
 	if p.Data.Display == nil || p.Data.Display.Name == "" {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "data.display.name is required")
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "data.display.name is required")
 	}
 	if len(p.Tags) > MaxTagsPerDashboard {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
 	return p.Data.Validate()
 }
 
-type GettableDashboard struct {
+type GettableDashboardV2 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID        valuer.UUID                              `json:"orgId"`
-	Locked       bool                                     `json:"locked"`
-	Info         GettableDashboardInfo                    `json:"info"`
-	PublicConfig *dashboardtypes.GettablePublicDasbhboard `json:"publicConfig,omitempty"`
+	OrgID        valuer.UUID               `json:"orgId"`
+	Locked       bool                      `json:"locked"`
+	Info         GettableDashboardInfo     `json:"info"`
+	PublicConfig *GettablePublicDasbhboard `json:"publicConfig,omitempty"`
 }
 
 type GettableDashboardInfo struct {
@@ -92,8 +91,8 @@ type GettableDashboardInfo struct {
 	Tags []*tagtypes.GettableTag `json:"tags,omitempty"`
 }
 
-func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard {
-	gettable := &GettableDashboard{
+func NewGettableDashboardV2FromDashboardV2(dashboard *DashboardV2) *GettableDashboardV2 {
+	gettable := &GettableDashboardV2{
 		Identifiable:  dashboard.Identifiable,
 		TimeAuditable: dashboard.TimeAuditable,
 		UserAuditable: dashboard.UserAuditable,
@@ -105,15 +104,15 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) *GettableDashboard 
 		},
 	}
 	if dashboard.PublicConfig != nil {
-		gettable.PublicConfig = dashboardtypes.NewGettablePublicDashboard(dashboard.PublicConfig)
+		gettable.PublicConfig = NewGettablePublicDashboard(dashboard.PublicConfig)
 	}
 	return gettable
 }
 
-func NewDashboard(orgID valuer.UUID, createdBy string, postable PostableDashboard, resolvedTags []*tagtypes.Tag) *Dashboard {
+func NewDashboardV2(orgID valuer.UUID, createdBy string, postable PostableDashboardV2, resolvedTags []*tagtypes.Tag) *DashboardV2 {
 	now := time.Now()
 
-	return &Dashboard{
+	return &DashboardV2{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
@@ -132,12 +131,12 @@ func NewDashboard(orgID valuer.UUID, createdBy string, postable PostableDashboar
 // ToStorableDashboard packages a Dashboard into the bun row that goes into
 // the dashboard table. Tags are intentionally omitted — they live in
 // tag_relations and are inserted separately by the caller.
-func (d *Dashboard) ToStorableDashboard() (*dashboardtypes.StorableDashboard, error) {
+func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
 	data, err := d.Info.toStorableDashboardData()
 	if err != nil {
 		return nil, err
 	}
-	return &dashboardtypes.StorableDashboard{
+	return &StorableDashboard{
 		Identifiable:  types.Identifiable{ID: d.ID},
 		TimeAuditable: d.TimeAuditable,
 		UserAuditable: d.UserAuditable,
@@ -147,12 +146,12 @@ func (d *Dashboard) ToStorableDashboard() (*dashboardtypes.StorableDashboard, er
 	}, nil
 }
 
-func (s StoredDashboardInfo) toStorableDashboardData() (dashboardtypes.StorableDashboardData, error) {
+func (s StoredDashboardInfo) toStorableDashboardData() (StorableDashboardData, error) {
 	raw, err := json.Marshal(s)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal v2 dashboard data")
 	}
-	out := dashboardtypes.StorableDashboardData{}
+	out := StorableDashboardData{}
 	if err := json.Unmarshal(raw, &out); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal v2 dashboard data")
 	}

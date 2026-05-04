@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/dashboardtypesv2"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -19,9 +18,9 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Tags:                []string{"dashboard"},
 		Summary:             "Create dashboard (v2)",
 		Description:         "This endpoint creates a v2-shape dashboard with structured metadata, a typed data tree, and resolved tags.",
-		Request:             new(dashboardtypesv2.PostableDashboard),
+		Request:             new(dashboardtypes.PostableDashboardV2),
 		RequestContentType:  "application/json",
-		Response:            new(dashboardtypesv2.GettableDashboard),
+		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},

@@ -3,6 +3,9 @@ package dashboardtypesv2
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
+	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -32,7 +35,7 @@ func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := panelPluginSpecs[PanelPluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(panelPluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -84,7 +87,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := queryPluginSpecs[QueryPluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown query plugin kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown query plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(queryPluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -135,7 +138,7 @@ func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := variablePluginSpecs[VariablePluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(variablePluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -183,7 +186,7 @@ func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -251,6 +254,14 @@ var (
 	}
 )
 
+func allowedValuesForKind[K ~string](kinds []K) string {
+	parts := make([]string, len(kinds))
+	for i, k := range kinds {
+		parts[i] = "`" + string(k) + "`"
+	}
+	return strings.Join(parts, ", ")
+}
+
 // extractKindAndSpec parses a {"kind": "...", "spec": {...}} envelope and returns
 // kind and the raw spec bytes for typed decoding.
 func extractKindAndSpec(data []byte) (string, []byte, error) {
@@ -259,7 +270,7 @@ func extractKindAndSpec(data []byte) (string, []byte, error) {
 		Spec json.RawMessage `json:"spec"`
 	}
 	if err := json.Unmarshal(data, &head); err != nil {
-		return "", nil, err
+		return "", nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid plugin envelope")
 	}
 	return head.Kind, head.Spec, nil
 }

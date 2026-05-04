@@ -38,7 +38,7 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 	type alias DashboardData
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid dashboard spec")
 	}
 	*d = DashboardData(tmp)
 	return d.Validate()
@@ -77,21 +77,10 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 	}
 	composite, ok := plugin.Spec.(*CompositeQuerySpec)
 	if !ok || composite == nil {
-		return nil
+		// Unreachable via UnmarshalJSON; reaching here means a Go caller broke the Kind/Spec pairing.
+		return errors.NewInternalf(errors.CodeInternal, "%s: composite query plugin has unexpected spec type %T", path, plugin.Spec)
 	}
-	specJSON, err := json.Marshal(composite)
-	if err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "%s.spec", path)
-	}
-	var subs struct {
-		Queries []struct {
-			Type qb.QueryType `json:"type"`
-		} `json:"queries"`
-	}
-	if err := json.Unmarshal(specJSON, &subs); err != nil {
-		return errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "%s.spec", path)
-	}
-	for si, sub := range subs.Queries {
+	for si, sub := range composite.Queries {
 		subKind, ok := compositeSubQueryTypeToPluginKind[sub.Type]
 		if !ok {
 			continue

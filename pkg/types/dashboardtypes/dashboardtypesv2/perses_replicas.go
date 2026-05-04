@@ -1,6 +1,9 @@
 package dashboardtypesv2
 
 import (
+	"maps"
+	"slices"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
@@ -55,7 +58,7 @@ type QuerySpec struct {
 // ══════════════════════════════════════════════
 
 // Variable is the list/text sum type. Spec is set to *ListVariableSpec or
-// *TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
+// *dashboard.TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
 	Kind variable.Kind `json:"kind"`
@@ -80,14 +83,14 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 		v.Kind = variable.KindList
 		v.Spec = spec
 	case string(variable.KindText):
-		spec, err := decodeSpec(specJSON, new(TextVariableSpec), kind)
+		spec, err := decodeSpec(specJSON, new(dashboard.TextVariableSpec), kind)
 		if err != nil {
 			return err
 		}
 		v.Kind = variable.KindText
 		v.Spec = spec
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable kind %q; allowed values: %s", kind, allowedValuesForKind([]variable.Kind{variable.KindList, variable.KindText}))
 	}
 	return nil
 }
@@ -95,7 +98,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 func (Variable) JSONSchemaOneOf() []any {
 	return []any{
 		VariableEnvelope[ListVariableSpec]{Kind: string(variable.KindList)},
-		VariableEnvelope[TextVariableSpec]{Kind: string(variable.KindText)},
+		VariableEnvelope[dashboard.TextVariableSpec]{Kind: string(variable.KindText)},
 	}
 }
 
@@ -120,15 +123,6 @@ type ListVariableSpec struct {
 	Sort            *variable.Sort         `json:"sort,omitempty"`
 	Plugin          VariablePlugin         `json:"plugin"`
 	Name            string                 `json:"name"`
-}
-
-// TextVariableSpec mirrors dashboard.TextVariableSpec (variable.TextSpec +
-// Name). No plugin.
-type TextVariableSpec struct {
-	Display  *variable.Display `json:"display,omitempty"`
-	Value    string            `json:"value"`
-	Constant bool              `json:"constant,omitempty"`
-	Name     string            `json:"name"`
 }
 
 // ══════════════════════════════════════════════
@@ -162,7 +156,7 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := layoutSpecs[dashboard.LayoutKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown layout kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown layout kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(layoutSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {

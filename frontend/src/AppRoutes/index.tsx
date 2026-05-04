@@ -18,6 +18,7 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -60,6 +61,7 @@ function App(): JSX.Element {
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const { hostname, pathname } = window.location;
 
@@ -213,12 +215,9 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (!isLoggedInState || isFetchingFeatureFlags) {
+		if (!isLoggedInState) {
 			return;
 		}
-		const isAIAssistantEnabled =
-			featureFlags?.find((f) => f.name === FeatureKeys.AI_ASSISTANT_ENABLED)
-				?.active ?? false;
 
 		setRoutes((prev) => {
 			const hasAi = prev.some((r) => r.path === ROUTES.AI_ASSISTANT);
@@ -234,7 +233,7 @@ function App(): JSX.Element {
 			}
 			return prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT);
 		});
-	}, [isLoggedInState, isFetchingFeatureFlags, featureFlags]);
+	}, [isLoggedInState, isAIAssistantEnabled]);
 
 	const isDarkMode = useIsDarkMode();
 

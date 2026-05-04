@@ -218,13 +218,6 @@ export function getAppContextMock(
 				usage_limit: -1,
 				route: '',
 			},
-			{
-				name: FeatureKeys.AI_ASSISTANT_ENABLED,
-				active: false,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,

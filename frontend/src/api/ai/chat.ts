@@ -59,7 +59,7 @@ import type {
 } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import { AI_BASE_URL, AIAssistantInstance } from './instance';
+import { AIAssistantInstance, getAIBaseUrl } from './instance';
 
 // ---------------------------------------------------------------------------
 // SSE-only auth wrapper.
@@ -343,7 +343,7 @@ export async function* streamEvents(
 	signal?: AbortSignal,
 ): AsyncGenerator<SSEEvent> {
 	const res = await fetchSSEWithAuth(
-		`${AI_BASE_URL}/executions/${executionId}/events`,
+		`${getAIBaseUrl()}/executions/${executionId}/events`,
 		signal,
 	);
 	if (!res.ok || !res.body) {

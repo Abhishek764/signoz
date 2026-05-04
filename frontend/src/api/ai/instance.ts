@@ -7,17 +7,33 @@ import {
 	interceptorsResponse,
 } from 'api';
 
-// Direct URL to the AI backend — set VITE_AI_BACKEND_URL in .env. Vite's
-// `define` block maps that env var to `process.env.AI_BACKEND_URL` at build
-// time (matching how the rest of this codebase reads VITE_* envs), which
-// also keeps the call site valid CommonJS so Jest doesn't choke on it.
-const AI_BACKEND = process.env.AI_BACKEND_URL || 'http://localhost:8001';
-
 /** Path-only base for the AI Assistant API. */
 export const AI_API_PATH = '/api/v1/assistant';
 
-/** Full base URL used by the axios instance and the SSE fetch path. */
-export const AI_BASE_URL = `${AI_BACKEND}${AI_API_PATH}`;
+/**
+ * AI backend URL — sourced from the global config's `ai_assistant_url` field
+ * at runtime. `useIsAIAssistantEnabled` keeps this in sync via `setAIBackendUrl`
+ * whenever the config response changes; consumers (the axios instance and the
+ * SSE fetch path) read it lazily so they always see the current value.
+ */
+let aiBackendUrl: string | null = null;
+
+export function setAIBackendUrl(url: string | null): void {
+	aiBackendUrl = url;
+	AIAssistantInstance.defaults.baseURL = url ? `${url}${AI_API_PATH}` : '';
+}
+
+/**
+ * Full base URL for the AI Assistant API (host + path). Throws when the
+ * config hasn't yet provided a URL — should never happen in practice
+ * because `useIsAIAssistantEnabled` gates every consumer surface.
+ */
+export function getAIBaseUrl(): string {
+	if (!aiBackendUrl) {
+		throw new Error('AI assistant URL is not configured.');
+	}
+	return `${aiBackendUrl}${AI_API_PATH}`;
+}
 
 /**
  * Dedicated axios instance for the AI Assistant.
@@ -32,9 +48,7 @@ export const AI_BASE_URL = `${AI_BACKEND}${AI_API_PATH}`;
  * Only the SSE stream (`streamEvents`) still needs raw fetch since axios
  * doesn't expose `ReadableStream` — that path keeps its own auth wrapper.
  */
-export const AIAssistantInstance = axios.create({
-	baseURL: AI_BASE_URL,
-});
+export const AIAssistantInstance = axios.create({});
 
 AIAssistantInstance.interceptors.request.use(interceptorsRequestResponse);
 AIAssistantInstance.interceptors.request.use(interceptorsRequestBasePath);

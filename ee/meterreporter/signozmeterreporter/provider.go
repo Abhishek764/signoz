@@ -381,7 +381,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 	)
 
 	collectStart := time.Now()
-	readings := make([]meterreportertypes.Reading, 0, len(provider.meters))
+	readings := make([]meterreportertypes.Meter, 0, len(provider.meters))
 	for _, meter := range provider.meters {
 		collectStart := time.Now()
 		collectCtx, collectSpan := provider.settings.Tracer().Start(ctx, "meterreporter.CollectMeter", trace.WithAttributes(
@@ -503,7 +503,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 // dropCheckpointed removes readings already shipped per the per-meter
 // checkpoint. A reading survives if its meter has no checkpoint, or the
 // checkpoint is strictly before windowDay.
-func dropCheckpointed(readings []meterreportertypes.Reading, windowDay time.Time, checkpointsByMeter map[string]time.Time) []meterreportertypes.Reading {
+func dropCheckpointed(readings []meterreportertypes.Meter, windowDay time.Time, checkpointsByMeter map[string]time.Time) []meterreportertypes.Meter {
 	if len(checkpointsByMeter) == 0 {
 		return readings
 	}
@@ -600,7 +600,7 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 // makes repeat ticks within the same UTC day UPSERT instead of duplicating.
 // Zeus accepts or rejects the batch as a whole — partial acceptance is not
 // supported, so a single error here means none of the readings were stored.
-func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Reading) error {
+func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Meter) error {
 	idempotencyKey := fmt.Sprintf("meter-cron:%s", date)
 	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.ShipReadings", trace.WithAttributes(
 		attribute.String(attrDate, date),
@@ -634,7 +634,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 	}
 
 	// TODO: re-enable once /v2/meters is live in staging.
-	// body, err := json.Marshal(meterreportertypes.PostableMeterReadings{Meters: readings})
+	// body, err := json.Marshal(meterreportertypes.PostableMeters{Meters: readings})
 	// if err != nil {
 	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
 	// }

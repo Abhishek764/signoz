@@ -1,4 +1,9 @@
-package meterreportertypes
+// Package metercollectortypes holds value types that identify a billing meter.
+//
+// Name lives here, not in meterreportertypes, because a meter's identity is
+// owned by the collector that produces it. The reporter only sees Name as a
+// map key; it never constructs one.
+package metercollectortypes
 
 import (
 	"regexp"

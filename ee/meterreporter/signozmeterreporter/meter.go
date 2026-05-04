@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
@@ -25,7 +26,7 @@ type CollectorDeps struct {
 	SQLStore       sqlstore.SQLStore
 }
 
-type CollectorFunc func(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error)
+type CollectorFunc func(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error)
 
 const (
 	dimensionOrganizationID = "signoz.billing.organization.id"
@@ -36,7 +37,7 @@ const (
 // Meter is one registered billing meter. Name must be unique — Zeus
 // checkpoints and upserts by it.
 type Meter struct {
-	Name        meterreportertypes.Name
+	Name        metercollectortypes.Name
 	Unit        string
 	Aggregation string
 	Collect     CollectorFunc

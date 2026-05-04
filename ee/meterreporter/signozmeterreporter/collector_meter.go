@@ -25,27 +25,27 @@ type retentionReadingBucket struct {
 	value      float64
 }
 
-func CollectLogCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error) {
+func CollectLogCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error) {
 	return collectMeterSamplesByRetention(ctx, deps, meter, orgID, window, RetentionDomainLogs)
 }
 
-func CollectLogSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error) {
+func CollectLogSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error) {
 	return collectMeterSamplesByRetention(ctx, deps, meter, orgID, window, RetentionDomainLogs)
 }
 
-func CollectMetricDatapointCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error) {
+func CollectMetricDatapointCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error) {
 	return collectMeterSamplesByRetention(ctx, deps, meter, orgID, window, RetentionDomainMetrics)
 }
 
-func CollectMetricDatapointSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error) {
+func CollectMetricDatapointSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error) {
 	return collectMeterSamplesByRetention(ctx, deps, meter, orgID, window, RetentionDomainMetrics)
 }
 
-func CollectSpanCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error) {
+func CollectSpanCountMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error) {
 	return collectMeterSamplesByRetention(ctx, deps, meter, orgID, window, RetentionDomainTraces)
 }
 
-func CollectSpanSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Reading, error) {
+func CollectSpanSizeMeter(ctx context.Context, deps CollectorDeps, meter Meter, orgID valuer.UUID, window Window) ([]meterreportertypes.Meter, error) {
 	return collectMeterSamplesByRetention(ctx, deps, meter, orgID, window, RetentionDomainTraces)
 }
 
@@ -56,7 +56,7 @@ func collectMeterSamplesByRetention(
 	orgID valuer.UUID,
 	window Window,
 	domain RetentionDomain,
-) ([]meterreportertypes.Reading, error) {
+) ([]meterreportertypes.Meter, error) {
 	if deps.TelemetryStore == nil {
 		return nil, errors.New(errors.TypeInternal, errCodeReportFailed, "telemetry store is nil")
 	}
@@ -120,9 +120,9 @@ func collectMeterSamplesByRetention(
 		}
 	}
 
-	readings := make([]meterreportertypes.Reading, 0, len(accumulator))
+	readings := make([]meterreportertypes.Meter, 0, len(accumulator))
 	for _, bucket := range accumulator {
-		readings = append(readings, meterreportertypes.Reading{
+		readings = append(readings, meterreportertypes.Meter{
 			MeterName:      meterName,
 			Value:          bucket.value,
 			Unit:           meter.Unit,
@@ -137,7 +137,7 @@ func collectMeterSamplesByRetention(
 	// Zero usage is itself a billing event; the sentinel also lets Zeus's
 	// MAX(start_date) checkpoint advance past genuinely empty days.
 	if len(readings) == 0 && len(slices) > 0 {
-		readings = append(readings, meterreportertypes.Reading{
+		readings = append(readings, meterreportertypes.Meter{
 			MeterName:      meterName,
 			Value:          0,
 			Unit:           meter.Unit,

@@ -2,19 +2,19 @@ package signozmeterreporter
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 )
 
 // Refer to these symbols (not string literals) so typos become compile errors
 // instead of silently spawning unbilled meter rows at Zeus.
 var (
-	MeterLogCount             = meterreportertypes.MustNewName("signoz.meter.log.count")
-	MeterLogSize              = meterreportertypes.MustNewName("signoz.meter.log.size")
-	MeterMetricDatapointCount = meterreportertypes.MustNewName("signoz.meter.metric.datapoint.count")
-	MeterMetricDatapointSize  = meterreportertypes.MustNewName("signoz.meter.metric.datapoint.size")
-	MeterSpanCount            = meterreportertypes.MustNewName("signoz.meter.span.count")
-	MeterSpanSize             = meterreportertypes.MustNewName("signoz.meter.span.size")
+	MeterLogCount             = metercollectortypes.MustNewName("signoz.meter.log.count")
+	MeterLogSize              = metercollectortypes.MustNewName("signoz.meter.log.size")
+	MeterMetricDatapointCount = metercollectortypes.MustNewName("signoz.meter.metric.datapoint.count")
+	MeterMetricDatapointSize  = metercollectortypes.MustNewName("signoz.meter.metric.datapoint.size")
+	MeterSpanCount            = metercollectortypes.MustNewName("signoz.meter.span.count")
+	MeterSpanSize             = metercollectortypes.MustNewName("signoz.meter.span.size")
 )
 
 const AggregationSum = "sum"

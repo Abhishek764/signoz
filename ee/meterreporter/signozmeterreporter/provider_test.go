@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 )
 
@@ -14,8 +15,8 @@ func TestCatchupStartBootstrapsMissingMeter(t *testing.T) {
 	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
 		meters: []Meter{
-			{Name: meterreportertypes.MustNewName("meter.a")},
-			{Name: meterreportertypes.MustNewName("meter.b")},
+			{Name: metercollectortypes.MustNewName("meter.a")},
+			{Name: metercollectortypes.MustNewName("meter.b")},
 		},
 	}
 
@@ -35,7 +36,7 @@ func TestCatchupStartClampsOldCheckpointToFloor(t *testing.T) {
 	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
 		meters: []Meter{
-			{Name: meterreportertypes.MustNewName("meter.a")},
+			{Name: metercollectortypes.MustNewName("meter.a")},
 		},
 	}
 
@@ -56,8 +57,8 @@ func TestCatchupStartClampsToYesterdayWhenAllCheckpointsAreYesterday(t *testing.
 	floor := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
 	provider := &Provider{
 		meters: []Meter{
-			{Name: meterreportertypes.MustNewName("meter.a")},
-			{Name: meterreportertypes.MustNewName("meter.b")},
+			{Name: metercollectortypes.MustNewName("meter.a")},
+			{Name: metercollectortypes.MustNewName("meter.b")},
 		},
 	}
 
@@ -79,7 +80,7 @@ func TestDropCheckpointed(t *testing.T) {
 		"meter.a": day,                  // exactly at day → drop
 		"meter.b": day.AddDate(0, 0, -1), // before day → keep
 	}
-	readings := []meterreportertypes.Reading{
+	readings := []meterreportertypes.Meter{
 		{MeterName: "meter.a"},
 		{MeterName: "meter.b"},
 		{MeterName: "meter.c"}, // no checkpoint → keep
@@ -98,7 +99,7 @@ func TestDropCheckpointed(t *testing.T) {
 func TestDropCheckpointedEmptyCheckpointsKeepsAll(t *testing.T) {
 	t.Parallel()
 
-	readings := []meterreportertypes.Reading{
+	readings := []meterreportertypes.Meter{
 		{MeterName: "meter.a"},
 		{MeterName: "meter.b"},
 	}

@@ -12,8 +12,13 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import NoData from 'pages/TraceDetailV2/NoData/NoData';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import {
+	SpanV3,
+	TraceDetailV3URLProps,
+	WaterfallAggregationRequest,
+} from 'types/api/trace/getTraceV3';
 
+import { COLOR_BY_FIELDS } from './constants';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
@@ -80,6 +85,17 @@ function TraceDetailsV3(): JSX.Element {
 		});
 	}, [urlQuery]);
 
+	// Hardcoded for now — fetch aggregations for all 3 candidate color-by fields
+	// upfront so a future color-by-field switch doesn't need to refetch.
+	const waterfallAggregationsRequest = useMemo<WaterfallAggregationRequest[]>(
+		() =>
+			COLOR_BY_FIELDS.flatMap((field) => [
+				{ field, aggregation: 'execution_time_percentage' as const },
+				{ field, aggregation: 'span_count' as const },
+			]),
+		[],
+	);
+
 	// Once all spans are loaded (frontend mode), freeze query params so
 	// subsequent interestedSpanId changes don't trigger unnecessary refetches.
 	const fullDataLoadedRef = useRef(false);
@@ -87,6 +103,7 @@ function TraceDetailsV3(): JSX.Element {
 		selectedSpanId: interestedSpanId.spanId,
 		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 		uncollapsedSpans: uncollapsedNodes,
+		aggregations: waterfallAggregationsRequest,
 	});
 
 	const queryParams = fullDataLoadedRef.current
@@ -95,6 +112,7 @@ function TraceDetailsV3(): JSX.Element {
 				selectedSpanId: interestedSpanId.spanId,
 				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 				uncollapsedSpans: uncollapsedNodes,
+				aggregations: waterfallAggregationsRequest,
 			};
 
 	const {
@@ -106,6 +124,7 @@ function TraceDetailsV3(): JSX.Element {
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
+		aggregations: queryParams.aggregations,
 	});
 
 	const allSpans = traceData?.payload?.spans || [];
@@ -120,6 +139,7 @@ function TraceDetailsV3(): JSX.Element {
 			selectedSpanId: interestedSpanId.spanId,
 			isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 			uncollapsedSpans: uncollapsedNodes,
+			aggregations: waterfallAggregationsRequest,
 		};
 	}
 
@@ -343,7 +363,7 @@ function TraceDetailsV3(): JSX.Element {
 									onVariantChange={handleVariantChange}
 									traceStartTime={traceData?.payload?.startTimestampMillis}
 									traceEndTime={traceData?.payload?.endTimestampMillis}
-									serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap}
+									aggregations={traceData?.payload?.aggregations}
 								/>
 							</div>
 						)}
@@ -357,7 +377,7 @@ function TraceDetailsV3(): JSX.Element {
 							onVariantChange={handleVariantChange}
 							traceStartTime={traceData?.payload?.startTimestampMillis}
 							traceEndTime={traceData?.payload?.endTimestampMillis}
-							serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap}
+							aggregations={traceData?.payload?.aggregations}
 						/>
 					)}
 				</>

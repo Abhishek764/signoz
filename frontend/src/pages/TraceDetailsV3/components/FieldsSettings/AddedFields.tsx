@@ -29,13 +29,8 @@ function SortableField({
 	allowDrag: boolean;
 	allowRemove: boolean;
 }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: field });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: field });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),

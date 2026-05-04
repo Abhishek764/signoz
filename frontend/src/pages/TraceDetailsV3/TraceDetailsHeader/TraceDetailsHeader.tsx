@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Button } from '@signozhq/ui';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -46,7 +48,7 @@ function TraceDetailsHeader({
 	const { id: traceID } = useParams<TraceDetailV2URLProps>();
 	const [showTraceDetails, setShowTraceDetails] = useState(
 		() =>
-			localStorage.getItem(LOCALSTORAGE.TRACE_DETAILS_SHOW_TRACE_OVERVIEW) ===
+			getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_SHOW_TRACE_OVERVIEW) ===
 			'true',
 	);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -73,7 +75,7 @@ function TraceDetailsHeader({
 	const handleToggleTraceDetails = useCallback((): void => {
 		setShowTraceDetails((prev) => {
 			const next = !prev;
-			localStorage.setItem(
+			setLocalStorageKey(
 				LOCALSTORAGE.TRACE_DETAILS_SHOW_TRACE_OVERVIEW,
 				String(next),
 			);
@@ -84,9 +86,8 @@ function TraceDetailsHeader({
 	const durationMs = traceMetadata
 		? traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis
 		: 0;
-	const { time: formattedDuration, timeUnitName } = convertTimeToRelevantUnit(
-		durationMs,
-	);
+	const { time: formattedDuration, timeUnitName } =
+		convertTimeToRelevantUnit(durationMs);
 
 	return (
 		<div className="trace-details-header-wrapper">

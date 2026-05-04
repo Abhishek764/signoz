@@ -144,15 +144,10 @@ function Filters({
 		expressionRef,
 		runQuery,
 	};
-	const {
-		isHighlightErrors,
-		handleToggle: handleToggleHighlightErrors,
-	} = useHighlightErrors(filterProps);
-	const {
-		selectedCategory,
-		categories,
-		handleCategoryChange,
-	} = useSpanCategoryFilter(filterProps);
+	const { isHighlightErrors, handleToggle: handleToggleHighlightErrors } =
+		useHighlightErrors(filterProps);
+	const { selectedCategory, categories, handleCategoryChange } =
+		useSpanCategoryFilter(filterProps);
 
 	const { search } = useLocation();
 	const history = useHistory();

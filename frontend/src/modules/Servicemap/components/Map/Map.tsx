@@ -31,6 +31,8 @@ const edgeTypes = { flow: FlowEdge };
 
 const EDGE_STROKE = 'var(--l3-foreground)';
 const PARTICLE_COLOR = 'var(--accent-primary)';
+const BG_COLOR = 'var(--l2-background)';
+
 const EDGE_STYLE = {
 	stroke: EDGE_STROKE,
 	strokeWidth: 1.25,
@@ -164,7 +166,12 @@ function ServiceMap({ serviceMap }: any): JSX.Element {
 				onEdgeMouseMove={handleEdgeMouseMove}
 				onEdgeMouseLeave={handleEdgeMouseLeave}
 			>
-				<Background variant={BackgroundVariant.Dots} gap={24} size={1} />
+				<Background
+					bgColor={BG_COLOR}
+					variant={BackgroundVariant.Dots}
+					gap={24}
+					size={1}
+				/>
 				<Controls showInteractive={false} />
 			</ReactFlow>
 			{hovered && (

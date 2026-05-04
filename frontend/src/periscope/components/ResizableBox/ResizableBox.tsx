@@ -67,8 +67,8 @@ function ResizableBox({
 	const containerStyle = disabled
 		? undefined
 		: isHorizontal
-		? { width: size }
-		: { height: size };
+			? { width: size }
+			: { height: size };
 	const handleClass = `resizable-box__handle resizable-box__handle--${direction}`;
 
 	return (

@@ -28,9 +28,8 @@ export function SpanTooltipContent({
 	relativeStartMs,
 	durationMs,
 }: SpanTooltipContentProps): JSX.Element {
-	const { time: formattedDuration, timeUnitName } = convertTimeToRelevantUnit(
-		durationMs,
-	);
+	const { time: formattedDuration, timeUnitName } =
+		convertTimeToRelevantUnit(durationMs);
 
 	return (
 		<div className="span-hover-card-content">

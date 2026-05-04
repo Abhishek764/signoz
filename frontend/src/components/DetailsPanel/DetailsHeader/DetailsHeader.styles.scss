@@ -2,10 +2,11 @@
 	// ghost + secondary missing hover bg token in @signozhq/button
 	--button-ghost-hover-background: var(--l3-background);
 
+	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 12px;
+	padding: 0 12px;
 	border-bottom: 1px solid var(--l1-border);
 	height: 36px;
 	background: var(--l2-background);

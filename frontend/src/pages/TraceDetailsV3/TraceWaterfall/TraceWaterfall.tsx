@@ -85,9 +85,10 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	}, [errorFetchingTraceData, isFetchingTraceData, traceData]);
 
 	// capture the spans from the response, since we do not need to do any manipulation on the same we will keep this as a simple constant [ memoized ]
-	const allSpans = useMemo(() => traceData?.payload?.spans || [], [
-		traceData?.payload?.spans,
-	]);
+	const allSpans = useMemo(
+		() => traceData?.payload?.spans || [],
+		[traceData?.payload?.spans],
+	);
 
 	// In frontend mode, compute visible spans from local collapse state.
 	// In backend mode, the API already returns only visible spans.

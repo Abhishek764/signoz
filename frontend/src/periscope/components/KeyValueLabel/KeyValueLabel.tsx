@@ -44,7 +44,7 @@ export default function KeyValueLabel({
 									if (e.key === 'Enter' || e.key === ' ') {
 										onClick();
 									}
-							  }
+								}
 							: undefined
 					}
 				>

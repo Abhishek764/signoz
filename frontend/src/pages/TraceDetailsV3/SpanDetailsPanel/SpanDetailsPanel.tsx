@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import {
 	Bookmark,
 	CalendarClock,
@@ -458,7 +458,7 @@ function SpanDetailsPanel({
 						variant="ghost"
 						size="sm"
 						color="secondary"
-						prefixIcon={<ChartBar size={14} />}
+						prefix={<ChartBar size={14} />}
 						onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
 					>
 						Analytics
@@ -491,7 +491,9 @@ function SpanDetailsPanel({
 			actions.push({
 				key: 'dock-toggle',
 				component: (
-					<Tooltip title={isDocked ? 'Open as floating panel' : 'Dock on the side'}>
+					<Tooltip
+						title={isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
+					>
 						<Button
 							variant="ghost"
 							size="icon"

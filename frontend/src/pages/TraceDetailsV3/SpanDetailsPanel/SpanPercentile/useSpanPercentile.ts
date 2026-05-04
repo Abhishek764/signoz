@@ -54,19 +54,15 @@ export interface UseSpanPercentileReturn {
 function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 	const [isOpen, setIsOpen] = useState(false);
 	const [selectedTimeRange, setSelectedTimeRange] = useState(1);
-	const [
-		resourceAttributesSearchQuery,
-		setResourceAttributesSearchQuery,
-	] = useState('');
+	const [resourceAttributesSearchQuery, setResourceAttributesSearchQuery] =
+		useState('');
 	const [spanPercentileData, setSpanPercentileData] = useState<{
 		percentile: number;
 		description: string;
 		percentiles: Record<string, number>;
 	} | null>(null);
-	const [
-		showResourceAttributesSelector,
-		setShowResourceAttributesSelector,
-	] = useState(false);
+	const [showResourceAttributesSelector, setShowResourceAttributesSelector] =
+		useState(false);
 	const [selectedResourceAttributes, setSelectedResourceAttributes] = useState<
 		Record<string, string>
 	>({});
@@ -75,9 +71,8 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 	>([]);
 	const [initialWaitCompleted, setInitialWaitCompleted] = useState(false);
 	const [shouldFetchData, setShouldFetchData] = useState(false);
-	const [shouldUpdateUserPreference, setShouldUpdateUserPreference] = useState(
-		false,
-	);
+	const [shouldUpdateUserPreference, setShouldUpdateUserPreference] =
+		useState(false);
 
 	const resourceAttributesSelectorRef = useRef<HTMLDivElement | null>(null);
 
@@ -104,9 +99,8 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 		[selectedSpan.timestamp, selectedTimeRange],
 	);
 
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-	);
+	const { mutate: updateUserPreferenceMutation } =
+		useMutation(updateUserPreference);
 
 	const {
 		data: userSelectedResourceAttributes,
@@ -208,8 +202,9 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 
 	useEffect(() => {
 		if (userSelectedResourceAttributes) {
-			const userList = (userSelectedResourceAttributes?.data
-				?.value as string[]).map((attr: string) => attr);
+			const userList = (
+				userSelectedResourceAttributes?.data?.value as string[]
+			).map((attr: string) => attr);
 			let selectedMap: Record<string, string> = {};
 			userList.forEach((attr: string) => {
 				selectedMap[attr] = allSpanAttributes[attr] || '';

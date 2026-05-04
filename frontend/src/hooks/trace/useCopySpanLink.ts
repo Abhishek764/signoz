@@ -10,6 +10,7 @@ interface SpanLike {
 	spanId?: string;
 	span_id?: string;
 }
+import { getAbsoluteUrl } from 'utils/basePath';
 
 export const useCopySpanLink = (
 	span?: SpanLike,
@@ -34,7 +35,7 @@ export const useCopySpanLink = (
 				urlQuery.set('spanId', id);
 			}
 
-			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
+			const link = getAbsoluteUrl(`${pathname}?${urlQuery.toString()}`);
 
 			setCopy(link);
 			toast.success('Copied to clipboard', {

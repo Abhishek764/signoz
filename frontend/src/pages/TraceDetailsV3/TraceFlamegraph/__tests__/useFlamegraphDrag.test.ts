@@ -18,7 +18,7 @@ function createMockCanvas(): HTMLCanvasElement {
 				bottom: 400,
 				right: 800,
 				toJSON: (): Record<string, unknown> => ({}),
-			} as DOMRect),
+			}) as DOMRect,
 	);
 	return canvas;
 }
@@ -54,12 +54,12 @@ describe('useFlamegraphDrag', () => {
 		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
 
 		act(() => {
-			result.current.handleMouseDown(({
+			result.current.handleMouseDown({
 				button: 0,
 				clientX: 100,
 				clientY: 50,
 				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
+			} as unknown as React.MouseEvent);
 		});
 
 		expect(result.current.isDraggingRef.current).toBe(true);
@@ -69,12 +69,12 @@ describe('useFlamegraphDrag', () => {
 		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
 
 		act(() => {
-			result.current.handleMouseDown(({
+			result.current.handleMouseDown({
 				button: 1,
 				clientX: 100,
 				clientY: 50,
 				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
+			} as unknown as React.MouseEvent);
 		});
 
 		expect(result.current.isDraggingRef.current).toBe(false);
@@ -84,19 +84,19 @@ describe('useFlamegraphDrag', () => {
 		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
 
 		act(() => {
-			result.current.handleMouseDown(({
+			result.current.handleMouseDown({
 				button: 0,
 				clientX: 100,
 				clientY: 50,
 				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
+			} as unknown as React.MouseEvent);
 		});
 
 		act(() => {
-			result.current.handleMouseMove(({
+			result.current.handleMouseMove({
 				clientX: 150,
 				clientY: 100,
-			} as unknown) as React.MouseEvent);
+			} as unknown as React.MouseEvent);
 		});
 
 		expect(defaultArgs.setViewStartTs).toHaveBeenCalled();
@@ -108,12 +108,12 @@ describe('useFlamegraphDrag', () => {
 		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
 
 		act(() => {
-			result.current.handleMouseDown(({
+			result.current.handleMouseDown({
 				button: 0,
 				clientX: 100,
 				clientY: 50,
 				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
+			} as unknown as React.MouseEvent);
 		});
 
 		act(() => {
@@ -127,12 +127,12 @@ describe('useFlamegraphDrag', () => {
 		const { result } = renderHook(() => useFlamegraphDrag(defaultArgs));
 
 		act(() => {
-			result.current.handleMouseDown(({
+			result.current.handleMouseDown({
 				button: 0,
 				clientX: 100,
 				clientY: 50,
 				preventDefault: jest.fn(),
-			} as unknown) as React.MouseEvent);
+			} as unknown as React.MouseEvent);
 		});
 
 		act(() => {

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Typography } from 'antd';
 import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
@@ -28,6 +28,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { openInNewTab } from 'utils/navigation';
 import { v4 as uuid } from 'uuid';
 
 import noDataUrl from '@/assets/Icons/no-data.svg';
@@ -143,7 +144,7 @@ function SpanLogs({
 
 			const url = `${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`;
 
-			window.open(url, '_blank');
+			openInNewTab(url);
 		},
 		[
 			isLogSpanRelated,
@@ -245,7 +246,7 @@ function SpanLogs({
 				<Button
 					className="action-btn"
 					variant="action"
-					prefixIcon={<Compass size={14} />}
+					prefix={<Compass size={14} />}
 					onClick={handleExplorerPageRedirect}
 					size="md"
 				>

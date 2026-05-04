@@ -33,7 +33,7 @@ document.createElement = function (
 };
 
 function createMockCtx(): jest.Mocked<CanvasRenderingContext2D> {
-	return ({
+	return {
 		beginPath: jest.fn(),
 		roundRect: jest.fn(),
 		fill: jest.fn(),
@@ -46,9 +46,9 @@ function createMockCtx(): jest.Mocked<CanvasRenderingContext2D> {
 		strokeRect: jest.fn(),
 		setLineDash: jest.fn(),
 		measureText: jest.fn(
-			(text: string) => ({ width: text.length * 6 } as TextMetrics),
+			(text: string) => ({ width: text.length * 6 }) as TextMetrics,
 		),
-		createPattern: jest.fn(() => ({} as CanvasPattern)),
+		createPattern: jest.fn(() => ({}) as CanvasPattern),
 		clip: jest.fn(),
 		rect: jest.fn(),
 		fillText: jest.fn(),
@@ -59,7 +59,7 @@ function createMockCtx(): jest.Mocked<CanvasRenderingContext2D> {
 		textBaseline: '',
 		lineWidth: 0,
 		globalAlpha: 1,
-	} as unknown) as jest.Mocked<CanvasRenderingContext2D>;
+	} as unknown as jest.Mocked<CanvasRenderingContext2D>;
 }
 
 const METRICS: FlamegraphRowMetrics = getFlamegraphRowMetrics(24);
@@ -241,7 +241,7 @@ describe('Canvas Draw Utils', () => {
 		it('draws name only when width >= MIN_WIDTH_FOR_NAME but < MIN_WIDTH_FOR_NAME_AND_DURATION', () => {
 			const ctx = createMockCtx();
 			ctx.measureText = jest.fn(
-				(t: string) => ({ width: t.length * 6 } as TextMetrics),
+				(t: string) => ({ width: t.length * 6 }) as TextMetrics,
 			);
 
 			drawSpanBar({
@@ -266,7 +266,7 @@ describe('Canvas Draw Utils', () => {
 		it('draws name + duration when width >= MIN_WIDTH_FOR_NAME_AND_DURATION', () => {
 			const ctx = createMockCtx();
 			ctx.measureText = jest.fn(
-				(t: string) => ({ width: t.length * 6 } as TextMetrics),
+				(t: string) => ({ width: t.length * 6 }) as TextMetrics,
 			);
 
 			drawSpanBar({
@@ -301,7 +301,7 @@ describe('Canvas Draw Utils', () => {
 		it('uses full text when it fits', () => {
 			const ctx = createMockCtx();
 			ctx.measureText = jest.fn(
-				(t: string) => ({ width: t.length * 4 } as TextMetrics),
+				(t: string) => ({ width: t.length * 4 }) as TextMetrics,
 			);
 
 			drawSpanBar({
@@ -331,7 +331,7 @@ describe('Canvas Draw Utils', () => {
 				(t: string) =>
 					({
 						width: t.includes('...') ? 24 : t.length * 10,
-					} as TextMetrics),
+					}) as TextMetrics,
 			);
 
 			drawSpanBar({

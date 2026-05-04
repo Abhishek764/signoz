@@ -82,9 +82,8 @@ function TraceDetailsFilter({
 	traceId,
 	onFilteredSpansChange,
 }: TraceDetailsFilterProps): JSX.Element {
-	const [builderQuery, setBuilderQuery] = useState<IBuilderQuery>(
-		buildInitialQuery,
-	);
+	const [builderQuery, setBuilderQuery] =
+		useState<IBuilderQuery>(buildInitialQuery);
 	const [noData, setNoData] = useState(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState(0);
@@ -121,10 +120,8 @@ function TraceDetailsFilter({
 	const handleScopeChange = useCallback((value: TagFilter): void => {
 		setBuilderQuery((prev) => {
 			const currentExpression = prev.filter?.expression || '';
-			const {
-				filters: mergedFilters,
-				filter: mergedFilter,
-			} = convertFiltersToExpressionWithExistingQuery(value, currentExpression);
+			const { filters: mergedFilters, filter: mergedFilter } =
+				convertFiltersToExpressionWithExistingQuery(value, currentExpression);
 			return {
 				...prev,
 				filters: mergedFilters,
@@ -146,10 +143,10 @@ function TraceDetailsFilter({
 		[filteredSpanIds, history, search],
 	);
 
-	const query = useMemo(() => prepareApiQuery(builderQuery, traceId), [
-		builderQuery,
-		traceId,
-	]);
+	const query = useMemo(
+		() => prepareApiQuery(builderQuery, traceId),
+		[builderQuery, traceId],
+	);
 
 	const { isFetching, error } = useGetQueryRange(
 		{

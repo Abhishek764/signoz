@@ -219,7 +219,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 					)}
 				</div>,
 				document.body,
-		  )
+			)
 		: null;
 
 	return (

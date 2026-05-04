@@ -44,19 +44,26 @@ function TraceFlamegraph({
 		[history, search],
 	);
 
-	const { data, isFetching, error: fetchError } = useGetTraceFlamegraph({
+	const {
+		data,
+		isFetching,
+		error: fetchError,
+	} = useGetTraceFlamegraph({
 		traceId,
 		// selectedSpanId: firstSpanAtFetchLevel,
 		limit: FLAMEGRAPH_SPAN_LIMIT,
 	});
 
-	const spans = useMemo(() => data?.payload?.spans || [], [
-		data?.payload?.spans,
-	]);
-
-	const { layout, isComputing, error: workerError } = useVisualLayoutWorker(
-		spans,
+	const spans = useMemo(
+		() => data?.payload?.spans || [],
+		[data?.payload?.spans],
 	);
+
+	const {
+		layout,
+		isComputing,
+		error: workerError,
+	} = useVisualLayoutWorker(spans);
 
 	const content = useMemo(() => {
 		// Loading: fetching data or worker computing layout

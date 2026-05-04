@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .query-builder-v2 {
 	display: flex;
 	flex-direction: row;
@@ -8,8 +10,14 @@
 	border-bottom: 1px solid var(--l1-border);
 	border-top: 1px solid var(--l1-border);
 
-	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', sans-serif;
+	font-family:
+		Inter,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		sans-serif;
 
 	border-right: none;
 	border-left: none;
@@ -274,7 +282,7 @@
 					.ant-input-group-addon {
 						border-top-left-radius: 0px !important;
 						border-top-right-radius: 0px !important;
-						background: var(--l3-background);
+						background: var(--l2-background);
 						color: var(--l2-foreground);
 						font-size: 12px;
 						font-weight: 300;

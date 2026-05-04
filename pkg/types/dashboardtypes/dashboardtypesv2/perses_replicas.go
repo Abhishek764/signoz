@@ -1,6 +1,9 @@
 package dashboardtypesv2
 
 import (
+	"maps"
+	"slices"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
@@ -87,7 +90,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 		v.Kind = variable.KindText
 		v.Spec = spec
 	default:
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable kind %q; allowed values: %s", kind, allowedValuesForKind([]variable.Kind{variable.KindList, variable.KindText}))
 	}
 	return nil
 }
@@ -162,7 +165,7 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := layoutSpecs[dashboard.LayoutKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown layout kind %q", kind)
+		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown layout kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(layoutSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {

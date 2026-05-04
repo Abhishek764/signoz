@@ -1,4 +1,4 @@
-package dashboardtypesv2
+package dashboardtypes
 
 // TestDashboardDataMatchesPerses asserts that DashboardData
 // and every nested SigNoz-owned type cover the JSON field set of their Perses

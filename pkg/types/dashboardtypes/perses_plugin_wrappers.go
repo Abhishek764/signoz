@@ -1,4 +1,4 @@
-package dashboardtypesv2
+package dashboardtypes
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/swaggest/jsonschema-go"
 )
@@ -35,7 +35,7 @@ func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := panelPluginSpecs[PanelPluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(panelPluginSpecs))))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(panelPluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -87,7 +87,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := queryPluginSpecs[QueryPluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown query plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(queryPluginSpecs))))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown query plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(queryPluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -138,7 +138,7 @@ func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := variablePluginSpecs[VariablePluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(variablePluginSpecs))))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(variablePluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -186,7 +186,7 @@ func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs))))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -270,7 +270,7 @@ func extractKindAndSpec(data []byte) (string, []byte, error) {
 		Spec json.RawMessage `json:"spec"`
 	}
 	if err := json.Unmarshal(data, &head); err != nil {
-		return "", nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "invalid plugin envelope")
+		return "", nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid plugin envelope")
 	}
 	return head.Kind, head.Spec, nil
 }
@@ -278,15 +278,15 @@ func extractKindAndSpec(data []byte) (string, []byte, error) {
 // decodeSpec strict-decodes a spec JSON into target and runs struct-tag validation (go-playground/validator).
 func decodeSpec(specJSON []byte, target any, kind string) (any, error) {
 	if len(specJSON) == 0 {
-		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardInvalidInput, "kind %q: spec is required", kind)
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "kind %q: spec is required", kind)
 	}
 	dec := json.NewDecoder(bytes.NewReader(specJSON))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(target); err != nil {
-		return nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "kind %q: invalid spec JSON", kind)
+		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "kind %q: invalid spec JSON", kind)
 	}
 	if err := validator.New().Struct(target); err != nil {
-		return nil, errors.WrapInvalidInputf(err, dashboardtypes.ErrCodeDashboardInvalidInput, "kind %q: spec failed validation", kind)
+		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "kind %q: spec failed validation", kind)
 	}
 	return target, nil
 }

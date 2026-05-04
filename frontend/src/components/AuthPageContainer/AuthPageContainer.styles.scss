@@ -43,12 +43,12 @@
 .masked-dots {
 	mask-image: radial-gradient(
 		circle at 50% 0%,
-		color-mix(in srgb, var(--background) 10%, transparent) 0%,
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0%,
 		transparent 56.77%
 	);
 	-webkit-mask-image: radial-gradient(
 		circle at 50% 0%,
-		color-mix(in srgb, var(--background) 10%, transparent) 0%,
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0%,
 		transparent 56.77%
 	);
 }
@@ -140,31 +140,6 @@
 
 		@media (max-width: 768px) {
 			padding-top: 0;
-		}
-	}
-}
-
-.lightMode {
-	.bg-dot-pattern {
-		background: radial-gradient(
-			circle,
-			var(--l3-background) 1px,
-			transparent 1px
-		);
-		background-size: 12px 12px;
-	}
-
-	.auth-page-gradient {
-		background: radial-gradient(
-			ellipse at center top,
-			color-mix(in srgb, var(--primary-background) 12%, transparent) 0%,
-			transparent 60%
-		);
-		opacity: 0.8;
-		filter: blur(200px);
-
-		@media (min-width: 768px) {
-			filter: blur(300px);
 		}
 	}
 }

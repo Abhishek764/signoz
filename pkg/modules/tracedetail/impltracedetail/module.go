@@ -2,68 +2,51 @@ package impltracedetail
 
 import (
 	"context"
-	"log/slog"
-	"sort"
-	"time"
 
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
-	tracedetailv2 "github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store  tracedetailtypes.TraceStore
-	cache  cache.Cache
-	logger *slog.Logger
+	store    tracedetailtypes.TraceStore
+	settings factory.ScopedProviderSettings
+	config   tracedetail.Config
 }
 
-func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, providerSettings factory.ProviderSettings) tracedetail.Module {
+func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
+	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
 	return &module{
-		store:  newClickhouseTraceStore(telemetryStore),
-		cache:  cache,
-		logger: providerSettings.Logger,
+		config:   cfg,
+		store:    traceStore,
+		settings: scopedProviderSettings,
 	}
 }
 
-func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.WaterfallResponse, error) {
-	traceData, err := m.getTraceData(ctx, orgID, traceID)
+func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedetailtypes.PostableWaterfall) (*tracedetailtypes.GettableWaterfallTrace, error) {
+	waterfallTrace, err := m.getTraceData(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Span selection: all spans or windowed
-	limit := min(req.Limit, tracedetailtypes.MaxLimitToSelectAllSpans)
-	selectAllSpans := traceData.TotalSpans <= uint64(limit)
-
-	var (
-		selectedSpans                          []*tracedetailtypes.WaterfallSpan
-		uncollapsedSpans                       []string
-		rootServiceName, rootServiceEntryPoint string
+	selectedSpans, uncollapsedSpans, selectedAllSpans := waterfallTrace.GetWaterfallSpans(
+		req.UncollapsedSpans,
+		req.SelectedSpanID,
+		min(req.Limit, m.config.Waterfall.MaxLimitToSelectAllSpans),
+		m.config.Waterfall.SpanPageSize,
+		m.config.Waterfall.MaxDepthToAutoExpand,
 	)
-	if selectAllSpans {
-		selectedSpans, rootServiceName, rootServiceEntryPoint = GetAllSpans(traceData.TraceRoots)
-	} else {
-		selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint = GetSelectedSpans(
-			req.UncollapsedSpans, req.SelectedSpanID, traceData.TraceRoots, traceData.SpanIDToSpanNodeMap,
-		)
+
+	aggregationResults := make([]tracedetailtypes.SpanAggregationResult, 0, len(req.Aggregations))
+	for _, a := range req.Aggregations {
+		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
 	}
 
-	return tracedetailtypes.NewWaterfallResponse(traceData, selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint, selectAllSpans), nil
+	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.
-func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
-	if cached, err := m.getFromCache(ctx, orgID, traceID); err == nil {
-		return cached, nil
-	}
-
-	m.logger.DebugContext(ctx, "cache miss for v3 waterfall", slog.String("trace_id", traceID))
-
+func (m *module) getTraceData(ctx context.Context, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -78,99 +61,6 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 		return nil, tracedetailtypes.ErrTraceNotFound
 	}
 
-	traceData := computeWaterfallTrace(spanItems)
-
-	if cacheErr := m.cache.Set(ctx, orgID, waterfallCacheKey(traceID), traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
-		m.logger.ErrorContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))
-	}
-
+	traceData := tracedetailtypes.NewWaterfallTraceFromSpans(spanItems)
 	return traceData, nil
-}
-
-func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
-	cachedData := new(tracedetailtypes.WaterfallTrace)
-	err := m.cache.Get(ctx, orgID, waterfallCacheKey(traceID), cachedData)
-	if err != nil {
-		return nil, err
-	}
-
-	// Skip cache if trace end time falls within flux interval
-	if time.Since(time.Unix(0, int64(cachedData.EndTime))) < tracedetailtypes.FluxInterval {
-		m.logger.InfoContext(ctx, "trace end time within flux interval, skipping v3 waterfall cache", slog.String("trace_id", traceID))
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "trace end time within flux interval, traceID: %s", traceID)
-	}
-
-	m.logger.InfoContext(ctx, "cache hit for v3 waterfall", slog.String("trace_id", traceID))
-	return cachedData, nil
-}
-
-// computeWaterfallTrace builds a WaterfallTrace from raw span rows by constructing
-// the parent-child tree, inserting missing span placeholders, and calculating service times.
-func computeWaterfallTrace(spanItems []tracedetailtypes.SpanModel) *tracedetailtypes.WaterfallTrace {
-
-	var (
-		startTime, endTime, totalErrorSpans uint64
-		spanIDToSpanNodeMap                 = make(map[string]*tracedetailtypes.WaterfallSpan, len(spanItems))
-		serviceNameIntervalMap              = map[string][]tracedetailv2.Interval{}
-		traceRoots                          []*tracedetailtypes.WaterfallSpan
-		hasMissingSpans                     bool
-	)
-
-	for _, item := range spanItems {
-		span := item.ToSpan()
-		startTimeUnixNano := uint64(item.StartTime.UnixNano())
-		if startTime == 0 || startTimeUnixNano < startTime {
-			startTime = startTimeUnixNano
-		}
-		endTime = max(endTime, startTimeUnixNano+span.DurationNano)
-
-		if span.HasError {
-			totalErrorSpans++
-		}
-
-		serviceNameIntervalMap[span.ServiceName] = append(
-			serviceNameIntervalMap[span.ServiceName],
-			tracedetailv2.Interval{StartTime: startTimeUnixNano, Duration: span.DurationNano, Service: span.ServiceName},
-		)
-
-		spanIDToSpanNodeMap[span.SpanID] = span
-	}
-
-	for _, spanNode := range spanIDToSpanNodeMap {
-		if spanNode.ParentSpanID != "" {
-			if parentNode, exists := spanIDToSpanNodeMap[spanNode.ParentSpanID]; exists {
-				parentNode.Children = append(parentNode.Children, spanNode)
-			} else {
-				missingSpan := tracedetailtypes.NewMissingWaterfallSpan(spanNode.ParentSpanID, spanNode.TraceID, spanNode.TimeUnixMilli, spanNode.DurationNano)
-				missingSpan.Children = append(missingSpan.Children, spanNode)
-				spanIDToSpanNodeMap[missingSpan.SpanID] = missingSpan
-				traceRoots = append(traceRoots, missingSpan)
-				hasMissingSpans = true
-			}
-		} else if !containsSpan(traceRoots, spanNode) {
-			traceRoots = append(traceRoots, spanNode)
-		}
-	}
-
-	for _, root := range traceRoots {
-		SortSpanChildren(root)
-	}
-
-	sort.Slice(traceRoots, func(i, j int) bool {
-		if traceRoots[i].TimeUnixMilli == traceRoots[j].TimeUnixMilli {
-			return traceRoots[i].Name < traceRoots[j].Name
-		}
-		return traceRoots[i].TimeUnixMilli < traceRoots[j].TimeUnixMilli
-	})
-
-	return tracedetailtypes.NewWaterfallTrace(
-		startTime,
-		endTime,
-		uint64(len(spanItems)),
-		totalErrorSpans,
-		spanIDToSpanNodeMap,
-		tracedetailv2.CalculateServiceTime(serviceNameIntervalMap),
-		traceRoots,
-		hasMissingSpans,
-	)
 }

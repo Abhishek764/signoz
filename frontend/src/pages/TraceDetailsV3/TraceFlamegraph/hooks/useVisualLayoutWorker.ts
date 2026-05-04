@@ -21,9 +21,11 @@ function createLayoutWorker(): Worker {
 	});
 }
 
-export function useVisualLayoutWorker(
-	spans: FlamegraphSpan[][],
-): { layout: VisualLayout; isComputing: boolean; error: Error | null } {
+export function useVisualLayoutWorker(spans: FlamegraphSpan[][]): {
+	layout: VisualLayout;
+	isComputing: boolean;
+	error: Error | null;
+} {
 	const [layout, setLayout] = useState<VisualLayout>(EMPTY_LAYOUT);
 	const [isComputing, setIsComputing] = useState(false);
 	const [error, setError] = useState<Error | null>(null);

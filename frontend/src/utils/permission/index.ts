@@ -133,4 +133,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	METER_EXPLORER_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	PUBLIC_DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALERT_TYPE_SELECTION: ['ADMIN', 'EDITOR'],
+	MCP_SERVER: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

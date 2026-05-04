@@ -60,7 +60,7 @@ export function getIntervals(
 		intervalSpread < 1.0
 			? intervalSpread
 			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
-			  10 ** (integerPartLength - 1);
+				10 ** (integerPartLength - 1);
 
 	// Unit must suit both: (1) tick granularity (intervalSpread) and (2) label magnitude
 	// (offsetTimestamp). When zoomed deep into a trace, labels show offsetTimestamp + elapsed,

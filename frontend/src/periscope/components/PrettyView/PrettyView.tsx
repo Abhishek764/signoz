@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Input } from '@signozhq/ui';
 import { toast } from '@signozhq/ui';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ActionMenu, ActionMenuItem } from 'periscope/components/ActionMenu';

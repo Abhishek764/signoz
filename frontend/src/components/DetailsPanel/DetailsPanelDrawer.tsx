@@ -1,4 +1,4 @@
-import { DrawerWrapper } from '@signozhq/drawer';
+import { DrawerWrapper } from '@signozhq/ui';
 
 import './DetailsPanelDrawer.styles.scss';
 
@@ -24,12 +24,11 @@ function DetailsPanelDrawer({
 				}
 			}}
 			direction="right"
-			type="panel"
 			showOverlay={false}
-			allowOutsideClick
 			className={`details-panel-drawer ${className || ''}`}
-			content={<div className="details-panel-drawer__body">{children}</div>}
-		/>
+		>
+			<div className="details-panel-drawer__body">{children}</div>
+		</DrawerWrapper>
 	);
 }
 

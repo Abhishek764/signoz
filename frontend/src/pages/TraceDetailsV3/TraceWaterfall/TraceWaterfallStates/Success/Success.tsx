@@ -623,9 +623,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		[spans, setInterestedSpanId, isFullDataLoaded],
 	);
 
-	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] = useState(
-		false,
-	);
+	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] =
+		useState(false);
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
 		SpanV3 | undefined
 	>(undefined);
@@ -862,17 +861,13 @@ function Success(props: ISuccessProps): JSX.Element {
 					<div className="waterfall-status-col">
 						{virtualItems.map((virtualRow) => {
 							const span = spans[virtualRow.index];
-							const {
-								isSelected,
-								isDimmed,
-								isSelectedNonMatching,
-								isMatching,
-							} = getSpanStateClasses(
-								span.span_id,
-								selectedSpan,
-								filteredSpanIds,
-								isFilterActive,
-							);
+							const { isSelected, isDimmed, isSelectedNonMatching, isMatching } =
+								getSpanStateClasses(
+									span.span_id,
+									selectedSpan,
+									filteredSpanIds,
+									isFilterActive,
+								);
 							return (
 								<div
 									key={`status-${String(virtualRow.key)}`}

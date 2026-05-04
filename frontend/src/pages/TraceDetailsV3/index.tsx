@@ -93,7 +93,7 @@ function TraceDetailsV3(): JSX.Element {
 				selectedSpanId: interestedSpanId.spanId,
 				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 				uncollapsedSpans: uncollapsedNodes,
-		  };
+			};
 
 	const {
 		data: traceData,

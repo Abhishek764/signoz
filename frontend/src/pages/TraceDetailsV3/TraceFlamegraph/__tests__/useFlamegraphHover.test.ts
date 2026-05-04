@@ -21,7 +21,7 @@ function createMockCanvas(): HTMLCanvasElement {
 				bottom: 400,
 				right: 800,
 				toJSON: (): Record<string, unknown> => ({}),
-			} as DOMRect),
+			}) as DOMRect,
 	);
 	return canvas;
 }

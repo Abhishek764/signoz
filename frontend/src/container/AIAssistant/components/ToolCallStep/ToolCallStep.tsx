@@ -1,11 +1,6 @@
-import { useState, KeyboardEvent } from 'react';
+import { useState } from 'react';
 import cx from 'classnames';
-import {
-	ChevronDown,
-	ChevronRight,
-	LoaderCircle,
-	Wrench,
-} from '@signozhq/icons';
+import { ChevronDown, ChevronRight, LoaderCircle } from '@signozhq/icons';
 
 import { StreamingToolCall } from '../../types';
 
@@ -15,7 +10,7 @@ interface ToolCallStepProps {
 	toolCall: StreamingToolCall;
 }
 
-/** Displays a single tool invocation, collapsible, with in/out detail. */
+/** Collapsible tool-call row — chevron + label, in/out detail in the body. */
 export default function ToolCallStep({
 	toolCall,
 }: ToolCallStepProps): JSX.Element {
@@ -29,34 +24,18 @@ export default function ToolCallStep({
 		.replace(/\b\w/g, (c) => c.toUpperCase());
 
 	const toggle = (): void => setExpanded((v) => !v);
-	const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			toggle();
-		}
-	};
 
 	return (
-		<div className={cx(styles.step, { [styles.running]: !done })}>
-			<div
-				className={styles.header}
-				onClick={toggle}
-				onKeyDown={handleKeyDown}
-				role="button"
-				tabIndex={0}
-				aria-expanded={expanded}
-			>
-				{done ? (
-					<Wrench size={12} className={cx(styles.icon, styles.done)} />
+		<div className={cx(styles.row, { [styles.running]: !done })}>
+			<div className={styles.header} onClick={toggle}>
+				{!done ? (
+					<LoaderCircle size={12} className={cx(styles.chevron, styles.spin)} />
+				) : expanded ? (
+					<ChevronDown size={12} className={styles.chevron} />
 				) : (
-					<LoaderCircle size={12} className={cx(styles.icon, styles.spin)} />
+					<ChevronRight size={12} className={styles.chevron} />
 				)}
 				<span className={styles.label}>{label}</span>
-				{expanded ? (
-					<ChevronDown size={11} className={styles.chevron} />
-				) : (
-					<ChevronRight size={11} className={styles.chevron} />
-				)}
 			</div>
 
 			{expanded && (

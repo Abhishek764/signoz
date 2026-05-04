@@ -1,30 +1,20 @@
-// Thinking blocks share the same de-emphasised "activity log" treatment as
-// tool calls — slim row, left rail, no border or surface. See
-// `ToolCallStep.module.scss` for the rationale.
-.step {
+// Minimal expandable row — chevron + label, no icon, no left rail.
+// Matches the tool-call row treatment so consecutive thinking + tool
+// activity reads as one quiet "what the agent did" log.
+.row {
 	width: 100%;
-	font-size: 11px;
-	border-left: 2px solid var(--l2-border);
-	padding-left: 8px;
-
-	// Tighten consecutive thinking rows so they read as one activity group.
-	& + & {
-		margin-top: -6px;
-	}
+	font-size: 12px;
 }
 
 .header {
 	display: flex;
 	align-items: center;
-	gap: 6px;
-	width: 100%;
-	padding: 2px 0;
+	gap: 10px;
+	padding: 4px 0;
 	background: transparent;
 	border: none;
 	cursor: pointer;
-	font-size: 10px;
 	color: var(--l3-foreground, #6b7280);
-	font-style: italic;
 	transition: color 0.12s ease;
 
 	&:hover {
@@ -32,28 +22,22 @@
 	}
 }
 
-.icon {
+.chevron {
 	flex-shrink: 0;
-	color: var(--l3-foreground, #6b7280);
+	color: inherit;
 }
 
 .label {
-	font-weight: 500;
-}
-
-.chevron {
-	flex-shrink: 0;
-	color: var(--l3-foreground, #6b7280);
-	margin-left: auto;
+	font-weight: 400;
 }
 
 .body {
 	margin-top: 4px;
-	padding: 4px 0;
+	padding: 4px 0 4px 22px;
 }
 
 .content {
-	font-size: 11px;
+	font-size: 12px;
 	color: var(--l3-foreground, #6b7280);
 	font-style: italic;
 	margin: 0;

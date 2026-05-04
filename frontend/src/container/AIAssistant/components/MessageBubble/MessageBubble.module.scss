@@ -60,14 +60,13 @@ $radius: 4px;
 	}
 
 	.assistant & {
-		// Flex column so text blocks, tool steps and cards space evenly.
-		// 14px reads as a clear "section break" between the prose and the
-		// auxiliary tool-call rows; consecutive tool calls reclaim some of
-		// that gap via a negative margin in `ToolCallStep.module.scss`.
+		// Flex column for text blocks, tool steps and cards. No parent
+		// gap — auxiliary blocks (Thinking / ToolCall / actions) stack
+		// flush, and the prose `.markdown` block adds its own 24px top
+		// and bottom margins to mark itself as the message's focal point.
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 14px;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
 		border-bottom-left-radius: $radius;
@@ -93,6 +92,19 @@ $radius: 4px;
 .markdown {
 	width: 100%;
 	word-break: break-word;
+	// Anchor the prose block apart from any auxiliary rows (Thinking /
+	// ToolCall / Suggested actions) above and below it. Reset when this
+	// is the only / first / last child so the bubble doesn't grow taller
+	// than its content.
+	margin: 16px 0;
+
+	&:first-child {
+		margin-top: 0;
+	}
+
+	&:last-child {
+		margin-bottom: 0;
+	}
 
 	p {
 		margin: 0 0 0.65em;

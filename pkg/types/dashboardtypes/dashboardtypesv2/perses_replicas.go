@@ -58,7 +58,7 @@ type QuerySpec struct {
 // ══════════════════════════════════════════════
 
 // Variable is the list/text sum type. Spec is set to *ListVariableSpec or
-// *TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
+// *dashboard.TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
 	Kind variable.Kind `json:"kind"`
@@ -83,7 +83,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 		v.Kind = variable.KindList
 		v.Spec = spec
 	case string(variable.KindText):
-		spec, err := decodeSpec(specJSON, new(TextVariableSpec), kind)
+		spec, err := decodeSpec(specJSON, new(dashboard.TextVariableSpec), kind)
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 func (Variable) JSONSchemaOneOf() []any {
 	return []any{
 		VariableEnvelope[ListVariableSpec]{Kind: string(variable.KindList)},
-		VariableEnvelope[TextVariableSpec]{Kind: string(variable.KindText)},
+		VariableEnvelope[dashboard.TextVariableSpec]{Kind: string(variable.KindText)},
 	}
 }
 
@@ -123,15 +123,6 @@ type ListVariableSpec struct {
 	Sort            *variable.Sort         `json:"sort,omitempty"`
 	Plugin          VariablePlugin         `json:"plugin"`
 	Name            string                 `json:"name"`
-}
-
-// TextVariableSpec mirrors dashboard.TextVariableSpec (variable.TextSpec +
-// Name). No plugin.
-type TextVariableSpec struct {
-	Display  *variable.Display `json:"display,omitempty"`
-	Value    string            `json:"value"`
-	Constant bool              `json:"constant,omitempty"`
-	Name     string            `json:"name"`
 }
 
 // ══════════════════════════════════════════════

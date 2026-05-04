@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +24,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 
 	t.Run("row before window is active at start", func(t *testing.T) {
 		slices, err := buildSlicesFromRows(
-			[]*types.TTLSetting{
+			[]*retentiontypes.TTLSetting{
 				ttlSetting(t, start.Add(-time.Hour), 45, []retentiontypes.CustomRetentionRule{ruleA}),
 			},
 			30,
@@ -46,7 +45,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 		secondChange := start.Add(18 * time.Hour)
 
 		slices, err := buildSlicesFromRows(
-			[]*types.TTLSetting{
+			[]*retentiontypes.TTLSetting{
 				ttlSetting(t, firstChange, 21, []retentiontypes.CustomRetentionRule{ruleA}),
 				ttlSetting(t, secondChange, 14, []retentiontypes.CustomRetentionRule{ruleB}),
 			},
@@ -140,15 +139,15 @@ func TestRuleDimensionKeysDedupes(t *testing.T) {
 	require.Equal(t, []string{"service.name", "env", "cluster"}, keys)
 }
 
-func ttlSetting(t *testing.T, createdAt time.Time, ttlDays int, rules []retentiontypes.CustomRetentionRule) *types.TTLSetting {
+func ttlSetting(t *testing.T, createdAt time.Time, ttlDays int, rules []retentiontypes.CustomRetentionRule) *retentiontypes.TTLSetting {
 	t.Helper()
 
 	condition, err := json.Marshal(rules)
 	require.NoError(t, err)
 
-	return &types.TTLSetting{
-		TimeAuditable: types.TimeAuditable{CreatedAt: createdAt},
-		TTL:           ttlDays,
-		Condition:     string(condition),
+	return &retentiontypes.TTLSetting{
+		CreatedAt: createdAt,
+		TTL:       ttlDays,
+		Condition: string(condition),
 	}
 }

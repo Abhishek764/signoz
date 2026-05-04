@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
@@ -1343,7 +1342,7 @@ func getLocalTableName(tableName string) string {
 
 }
 
-func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *retentiontypes.TTLParams) (*retentiontypes.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -1378,7 +1377,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		if apiErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == types.TTLSettingStatusPending {
+		if statusItem.Status == retentiontypes.TTLSettingStatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
@@ -1426,18 +1425,14 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			// we will change ttl for only the new parts and not the old ones
 			query += " SETTINGS materialize_ttl_after_modify=0"
 
-			ttl := types.TTLSetting{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
+			ttl := retentiontypes.TTLSetting{
+				ID:             valuer.GenerateUUID(),
+				CreatedAt:      time.Now(),
+				UpdatedAt:      time.Now(),
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
-				Status:         types.TTLSettingStatusPending,
+				Status:         retentiontypes.TTLSettingStatusPending,
 				ColdStorageTTL: coldStorageDuration,
 				OrgID:          orgID,
 			}
@@ -1461,9 +1456,9 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						sqlDB.
 						BunDB().
 						NewUpdate().
-						Model(new(types.TTLSetting)).
+						Model(new(retentiontypes.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
-						Set("status = ?", types.TTLSettingStatusFailed).
+						Set("status = ?", retentiontypes.TTLSettingStatusFailed).
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
@@ -1481,9 +1476,9 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					sqlDB.
 					BunDB().
 					NewUpdate().
-					Model(new(types.TTLSetting)).
+					Model(new(retentiontypes.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
-					Set("status = ?", types.TTLSettingStatusFailed).
+					Set("status = ?", retentiontypes.TTLSettingStatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
@@ -1496,9 +1491,9 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				sqlDB.
 				BunDB().
 				NewUpdate().
-				Model(new(types.TTLSetting)).
+				Model(new(retentiontypes.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", types.TTLSettingStatusSuccess).
+				Set("status = ?", retentiontypes.TTLSettingStatusSuccess).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
@@ -1508,10 +1503,10 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 		}
 
 	}(ttlPayload)
-	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+	return &retentiontypes.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, params *retentiontypes.TTLParams) (*retentiontypes.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -1541,7 +1536,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 		if apiErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == types.TTLSettingStatusPending {
+		if statusItem.Status == retentiontypes.TTLSettingStatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
@@ -1564,18 +1559,14 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				timestamp = "end"
 			}
 
-			ttl := types.TTLSetting{
-				Identifiable: types.Identifiable{
-					ID: valuer.GenerateUUID(),
-				},
-				TimeAuditable: types.TimeAuditable{
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
+			ttl := retentiontypes.TTLSetting{
+				ID:             valuer.GenerateUUID(),
+				CreatedAt:      time.Now(),
+				UpdatedAt:      time.Now(),
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
-				Status:         types.TTLSettingStatusPending,
+				Status:         retentiontypes.TTLSettingStatusPending,
 				ColdStorageTTL: coldStorageDuration,
 				OrgID:          orgID,
 			}
@@ -1611,9 +1602,9 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 						sqlDB.
 						BunDB().
 						NewUpdate().
-						Model(new(types.TTLSetting)).
+						Model(new(retentiontypes.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
-						Set("status = ?", types.TTLSettingStatusFailed).
+						Set("status = ?", retentiontypes.TTLSettingStatusFailed).
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
@@ -1632,9 +1623,9 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 					sqlDB.
 					BunDB().
 					NewUpdate().
-					Model(new(types.TTLSetting)).
+					Model(new(retentiontypes.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
-					Set("status = ?", types.TTLSettingStatusFailed).
+					Set("status = ?", retentiontypes.TTLSettingStatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
@@ -1647,9 +1638,9 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				sqlDB.
 				BunDB().
 				NewUpdate().
-				Model(new(types.TTLSetting)).
+				Model(new(retentiontypes.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", types.TTLSettingStatusSuccess).
+				Set("status = ?", retentiontypes.TTLSettingStatusSuccess).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
@@ -1658,7 +1649,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			}
 		}(distributedTableName)
 	}
-	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+	return &retentiontypes.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
 func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, error) {
@@ -1687,7 +1678,7 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 	return true, nil
 }
 
-func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
+func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *retentiontypes.CustomRetentionTTLParams) (*retentiontypes.CustomRetentionTTLResponse, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -1702,7 +1693,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	if !hasCustomRetention {
 		r.logger.Info("Custom retention not supported, falling back to standard TTL method", "orgID", orgID)
 
-		ttlParams := &model.TTLParams{
+		ttlParams := &retentiontypes.TTLParams{
 			Type:        params.Type,
 			DelDuration: int64(params.DefaultTTLDays * 24 * 3600),
 		}
@@ -1723,7 +1714,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			return nil, errorsV2.Wrapf(apiErr.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to set standard TTL")
 		}
 
-		return &model.CustomRetentionTTLResponse{
+		return &retentiontypes.CustomRetentionTTLResponse{
 			Message: fmt.Sprintf("Custom retention not supported, applied standard TTL of %d days. %s", params.DefaultTTLDays, ttlResult.Message),
 		}, nil
 	}
@@ -1734,7 +1725,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	uuidWithHyphen := valuer.GenerateUUID()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 
-	if params.Type != constants.LogsTTL {
+	if params.Type != retentiontypes.LogsTTL {
 		return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL only supported for logs")
 	}
 
@@ -1765,7 +1756,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		if apiErr != nil {
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
 		}
-		if statusItem.Status == types.TTLSettingStatusPending {
+		if statusItem.Status == retentiontypes.TTLSettingStatusPending {
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention TTL is already running")
 		}
 	}
@@ -1839,19 +1830,15 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	}
 
 	for tableName, queries := range ttlPayload {
-		customTTL := types.TTLSetting{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
+		customTTL := retentiontypes.TTLSetting{
+			ID:             valuer.GenerateUUID(),
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
 			TransactionID:  uuid,
 			TableName:      tableName,
 			TTL:            params.DefaultTTLDays,
 			Condition:      string(ttlConditionsJSON),
-			Status:         types.TTLSettingStatusPending,
+			Status:         retentiontypes.TTLSettingStatusPending,
 			ColdStorageTTL: coldStorageDuration,
 			OrgID:          orgID,
 		}
@@ -1867,7 +1854,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
 			if err != nil {
 				r.logger.Error("error in setting cold storage", errorsV2.Attr(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, types.TTLSettingStatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed)
 				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
 			}
 		}
@@ -1876,15 +1863,15 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			r.logger.Debug("Executing custom retention TTL request: ", "request", query, "step", i+1)
 			if err := r.db.Exec(ctx, query); err != nil {
 				r.logger.Error("error while setting custom retention ttl", errorsV2.Attr(err))
-				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, types.TTLSettingStatusFailed)
+				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed)
 				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
 			}
 		}
 
-		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, types.TTLSettingStatusSuccess)
+		r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusSuccess)
 	}
 
-	return &model.CustomRetentionTTLResponse{
+	return &retentiontypes.CustomRetentionTTLResponse{
 		Message: "custom retention TTL has been successfully set up",
 	}, nil
 }
@@ -1962,7 +1949,7 @@ func (r *ClickHouseReader) buildMultiIfExpression(ttlConditions []retentiontypes
 	return result
 }
 
-func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*model.GetCustomRetentionTTLResponse, error) {
+func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID string) (*retentiontypes.GetCustomRetentionTTLResponse, error) {
 	// Check if V2 (custom retention) is supported
 	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
 	if err != nil {
@@ -1971,14 +1958,14 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		hasCustomRetention = false
 	}
 
-	response := &model.GetCustomRetentionTTLResponse{}
+	response := &retentiontypes.GetCustomRetentionTTLResponse{}
 
 	if hasCustomRetention {
 		// V2 - Custom retention is supported
 		response.Version = "v2"
 
 		// Get the latest custom retention TTL setting
-		customTTL := new(types.TTLSetting)
+		customTTL := new(retentiontypes.TTLSetting)
 		err := r.sqlDB.BunDB().NewSelect().
 			Model(customTTL).
 			Where("org_id = ?", orgID).
@@ -1996,7 +1983,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			// No V2 configuration found, return defaults
 			response.DefaultTTLDays = retentiontypes.DefaultLogsRetentionDays
 			response.TTLConditions = []retentiontypes.CustomRetentionRule{}
-			response.Status = types.TTLSettingStatusSuccess
+			response.Status = retentiontypes.TTLSettingStatusSuccess
 			response.ColdStorageTTLDays = -1
 			return response, nil
 		}
@@ -2020,8 +2007,8 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		response.Version = "v1"
 
 		// Get V1 TTL configuration
-		ttlParams := &model.GetTTLParams{
-			Type: constants.LogsTTL,
+		ttlParams := &retentiontypes.GetTTLParams{
+			Type: retentiontypes.LogsTTL,
 		}
 
 		ttlResult, apiErr := r.GetTTL(ctx, orgID, ttlParams)
@@ -2047,8 +2034,8 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 	return response, nil
 }
 
-func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, error) {
-	ttl := new(types.TTLSetting)
+func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*retentiontypes.TTLSetting, error) {
+	ttl := new(retentiontypes.TTLSetting)
 	err := r.sqlDB.BunDB().NewSelect().
 		Model(ttl).
 		Where("table_name = ?", tableName).
@@ -2069,7 +2056,7 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 	statusItem, apiErr := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
 	if apiErr == nil && statusItem != nil {
 		_, dbErr := r.sqlDB.BunDB().NewUpdate().
-			Model(new(types.TTLSetting)).
+			Model(new(retentiontypes.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
 			Set("status = ?", status).
 			Where("id = ?", statusItem.ID.StringValue()).
@@ -2185,16 +2172,16 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 // SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
-func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *retentiontypes.TTLParams) (*retentiontypes.SetTTLResponseItem, *model.ApiError) {
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
 
 	switch params.Type {
-	case constants.TraceTTL:
+	case retentiontypes.TraceTTL:
 		return r.setTTLTraces(ctx, orgID, params)
-	case constants.MetricsTTL:
+	case retentiontypes.MetricsTTL:
 		return r.setTTLMetrics(ctx, orgID, params)
-	case constants.LogsTTL:
+	case retentiontypes.LogsTTL:
 		return r.setTTLLogs(ctx, orgID, params)
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", params.Type)}
@@ -2202,7 +2189,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *mod
 
 }
 
-func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, params *retentiontypes.TTLParams) (*retentiontypes.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -2231,23 +2218,19 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		if apiErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == types.TTLSettingStatusPending {
+		if statusItem.Status == retentiontypes.TTLSettingStatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 	}
 	metricTTL := func(tableName string) {
-		ttl := types.TTLSetting{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
+		ttl := retentiontypes.TTLSetting{
+			ID:             valuer.GenerateUUID(),
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
 			TransactionID:  uuid,
 			TableName:      tableName,
 			TTL:            int(params.DelDuration),
-			Status:         types.TTLSettingStatusPending,
+			Status:         retentiontypes.TTLSettingStatusPending,
 			ColdStorageTTL: coldStorageDuration,
 			OrgID:          orgID,
 		}
@@ -2283,9 +2266,9 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 					sqlDB.
 					BunDB().
 					NewUpdate().
-					Model(new(types.TTLSetting)).
+					Model(new(retentiontypes.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
-					Set("status = ?", types.TTLSettingStatusFailed).
+					Set("status = ?", retentiontypes.TTLSettingStatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
@@ -2304,9 +2287,9 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 				sqlDB.
 				BunDB().
 				NewUpdate().
-				Model(new(types.TTLSetting)).
+				Model(new(retentiontypes.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
-				Set("status = ?", types.TTLSettingStatusFailed).
+				Set("status = ?", retentiontypes.TTLSettingStatusFailed).
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
@@ -2319,9 +2302,9 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			sqlDB.
 			BunDB().
 			NewUpdate().
-			Model(new(types.TTLSetting)).
+			Model(new(retentiontypes.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
-			Set("status = ?", types.TTLSettingStatusSuccess).
+			Set("status = ?", retentiontypes.TTLSettingStatusSuccess).
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
@@ -2332,7 +2315,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 	for _, tableName := range tableNames {
 		go metricTTL(tableName)
 	}
-	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+	return &retentiontypes.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
 func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID string, numberOfTransactionsStore int) {
@@ -2342,7 +2325,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		BunDB().
 		NewSelect().
 		Column("transaction_id").
-		Model(new(types.TTLSetting)).
+		Model(new(retentiontypes.TTLSetting)).
 		Where("org_id = ?", orgID).
 		Group("transaction_id").
 		OrderExpr("MAX(created_at) DESC").
@@ -2357,7 +2340,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		sqlDB.
 		BunDB().
 		NewDelete().
-		Model(new(types.TTLSetting)).
+		Model(new(retentiontypes.TTLSetting)).
 		Where("transaction_id NOT IN (?)", bun.In(limitTransactions)).
 		Exec(ctx)
 	if err != nil {
@@ -2366,9 +2349,9 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 }
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
-func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
+func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*retentiontypes.TTLSetting, *model.ApiError) {
 	r.logger.Info("checkTTLStatusItem query", "tableName", tableName)
-	ttl := new(types.TTLSetting)
+	ttl := new(retentiontypes.TTLSetting)
 	err := r.
 		sqlDB.
 		BunDB().
@@ -2389,26 +2372,26 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string,
 // getTTLQueryStatus fetches ttl_status table status from DB
 func (r *ClickHouseReader) getTTLQueryStatus(ctx context.Context, orgID string, tableNameArray []string) (string, *model.ApiError) {
 	failFlag := false
-	status := types.TTLSettingStatusSuccess
+	status := retentiontypes.TTLSettingStatusSuccess
 	for _, tableName := range tableNameArray {
 		statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
-		emptyStatusStruct := new(types.TTLSetting)
+		emptyStatusStruct := new(retentiontypes.TTLSetting)
 		if statusItem == emptyStatusStruct {
 			return "", nil
 		}
 		if apiErr != nil {
 			return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == types.TTLSettingStatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
-			status = types.TTLSettingStatusPending
+		if statusItem.Status == retentiontypes.TTLSettingStatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
+			status = retentiontypes.TTLSettingStatusPending
 			return status, nil
 		}
-		if statusItem.Status == types.TTLSettingStatusFailed {
+		if statusItem.Status == retentiontypes.TTLSettingStatusFailed {
 			failFlag = true
 		}
 	}
 	if failFlag {
-		status = types.TTLSettingStatusFailed
+		status = retentiontypes.TTLSettingStatusFailed
 	}
 
 	return status, nil
@@ -2461,7 +2444,7 @@ func getLocalTableNameArray(tableNames []string) []string {
 }
 
 // GetTTL returns current ttl, expected ttl and past setTTL status for metrics/traces.
-func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *retentiontypes.GetTTLParams) (*retentiontypes.GetTTLResponseItem, *model.ApiError) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -2496,8 +2479,8 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		return delTTL, moveTTL
 	}
 
-	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
-		var dbResp []model.DBResponseTTL
+	getMetricsTTL := func() (*retentiontypes.DBResponseTTL, *model.ApiError) {
+		var dbResp []retentiontypes.DBResponseTTL
 
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleLocalTableName)
 
@@ -2514,8 +2497,8 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		}
 	}
 
-	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
-		var dbResp []model.DBResponseTTL
+	getTracesTTL := func() (*retentiontypes.DBResponseTTL, *model.ApiError) {
+		var dbResp []retentiontypes.DBResponseTTL
 
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.traceLocalTableName, signozTraceDBName)
 
@@ -2532,8 +2515,8 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		}
 	}
 
-	getLogsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
-		var dbResp []model.DBResponseTTL
+	getLogsTTL := func() (*retentiontypes.DBResponseTTL, *model.ApiError) {
+		var dbResp []retentiontypes.DBResponseTTL
 
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.logsLocalTableName, r.logsDB)
 
@@ -2551,7 +2534,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 	}
 
 	switch ttlParams.Type {
-	case constants.TraceTTL:
+	case retentiontypes.TraceTTL:
 		tableNameArray := []string{
 			r.TraceDB + "." + r.traceTableName,
 			r.TraceDB + "." + r.traceResourceTableV3,
@@ -2579,9 +2562,9 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
+		return &retentiontypes.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
-	case constants.MetricsTTL:
+	case retentiontypes.MetricsTTL:
 		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, apiErr := r.getTTLQueryStatus(ctx, orgID, tableNameArray)
@@ -2602,9 +2585,9 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
+		return &retentiontypes.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
-	case constants.LogsTTL:
+	case retentiontypes.LogsTTL:
 		tableNameArray := []string{r.logsDB + "." + r.logsTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, apiErr := r.getTTLQueryStatus(ctx, orgID, tableNameArray)
@@ -2625,7 +2608,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{LogsTime: delTTL, LogsMoveTime: moveTTL, ExpectedLogsTime: ttlQuery.TTL, ExpectedLogsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
+		return &retentiontypes.GetTTLResponseItem{LogsTime: delTTL, LogsMoveTime: moveTTL, ExpectedLogsTime: ttlQuery.TTL, ExpectedLogsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be metrics|traces, got %v",

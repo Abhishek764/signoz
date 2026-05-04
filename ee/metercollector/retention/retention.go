@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -50,14 +49,14 @@ func LoadActiveSlices(
 		return nil, errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "non-positive fallbackDefaultDays %d", fallbackDefaultDays)
 	}
 
-	rows := []*types.TTLSetting{}
+	rows := []*retentiontypes.TTLSetting{}
 	err := sqlstore.
 		BunDB().
 		NewSelect().
 		Model(&rows).
 		Where("table_name = ?", tableName).
 		Where("org_id = ?", orgID.StringValue()).
-		Where("status = ?", types.TTLSettingStatusSuccess).
+		Where("status = ?", retentiontypes.TTLSettingStatusSuccess).
 		Where("created_at < ?", time.UnixMilli(endMs).UTC()).
 		OrderExpr("created_at ASC").
 		Scan(ctx)
@@ -68,14 +67,14 @@ func LoadActiveSlices(
 	return buildSlicesFromRows(rows, fallbackDefaultDays, startMs, endMs)
 }
 
-func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]retentiontypes.Slice, error) {
+func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]retentiontypes.Slice, error) {
 	if startMs >= endMs {
 		return nil, nil
 	}
 
 	// The latest row before the window is active at the window start.
-	var activeAtStart *types.TTLSetting
-	inWindow := make([]*types.TTLSetting, 0, len(rows))
+	var activeAtStart *retentiontypes.TTLSetting
+	inWindow := make([]*retentiontypes.TTLSetting, 0, len(rows))
 	for _, row := range rows {
 		rowMs := row.CreatedAt.UnixMilli()
 		if rowMs <= startMs {
@@ -131,7 +130,7 @@ func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, star
 }
 
 // parseTTLSetting returns rules and default days for one ttl_setting row.
-func parseTTLSetting(row *types.TTLSetting, fallbackDefaultDays int) ([]retentiontypes.CustomRetentionRule, int, error) {
+func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([]retentiontypes.CustomRetentionRule, int, error) {
 	if row == nil {
 		return nil, fallbackDefaultDays, nil
 	}

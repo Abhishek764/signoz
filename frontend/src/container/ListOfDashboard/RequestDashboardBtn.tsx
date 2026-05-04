@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoaderCircle } from '@signozhq/icons';
 import { Button, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
@@ -78,7 +78,7 @@ export function RequestDashboardBtn(): JSX.Element {
 						className="periscope-btn primary"
 						icon={
 							isSubmittingRequestForDashboard ? (
-								<LoadingOutlined />
+								<LoaderCircle />
 							) : (
 								<Check size={12} />
 							)

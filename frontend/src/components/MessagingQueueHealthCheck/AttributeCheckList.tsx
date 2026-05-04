@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
+import { ChevronDown, LoaderCircle } from '@signozhq/icons';
 import {
 	Modal,
 	Select,
@@ -229,7 +229,7 @@ function AttributeCheckList({
 		>
 			{loading ? (
 				<div className="loader-container">
-					<Spin indicator={<LoadingOutlined spin />} size="large" />
+					<Spin indicator={<LoaderCircle className="animate-spin" />} size="large" />
 				</div>
 			) : (
 				<div className="modal-content">
@@ -254,7 +254,7 @@ function AttributeCheckList({
 					/>
 					<Tree
 						showLine
-						switcherIcon={<CaretDownOutlined />}
+						switcherIcon={<ChevronDown />}
 						treeData={treeData}
 						height={450}
 						className="attribute-tree"

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
+import { LoaderCircle, Search } from '@signozhq/icons';
+import { LoadingOutlined  } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -107,7 +108,7 @@ const getColumnSearchProps = (
 					type="primary"
 					size="small"
 					onClick={(): void => handleSearch(selectedKeys as string[], confirm)}
-					icon={<SearchOutlined />}
+					icon={<Search />}
 				>
 					Search
 				</Button>
@@ -131,7 +132,7 @@ const getColumnSearchProps = (
 		</div>
 	),
 	filterIcon: (filtered: boolean): JSX.Element => (
-		<SearchOutlined
+		<Search
 			style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }}
 		/>
 	),
@@ -516,7 +517,7 @@ export default function CeleryOverviewTable({
 				bordered={false}
 				loading={{
 					spinning: isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					indicator: <Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />,
 				}}
 				locale={{
 					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,

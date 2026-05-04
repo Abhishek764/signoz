@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoaderCircle } from '@signozhq/icons';
 import {
 	Spin,
 	Table,
@@ -85,7 +85,7 @@ function MetricsTable({
 						indicator: (
 							<Spin
 								data-testid="metrics-table-loading-state"
-								indicator={<LoadingOutlined size={14} spin />}
+								indicator={<LoaderCircle size={14} className="animate-spin" />}
 							/>
 						),
 					}}

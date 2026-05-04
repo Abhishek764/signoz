@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
-import { CaretDownFilled } from '@ant-design/icons';
+import { ChevronDown } from '@signozhq/icons';
 import { Button, Checkbox, Popover, Typography } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
@@ -202,7 +202,7 @@ function AutoRefresh({
 				title="Set auto refresh"
 				type={showAutoRefreshBtnPrimary ? 'primary' : 'default'}
 			>
-				<CaretDownFilled />
+				<ChevronDown />
 			</ButtonContainer>
 		</Popover>
 	);

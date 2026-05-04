@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { GripVertical, Plus } from '@signozhq/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -58,7 +58,8 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
-								<HolderOutlined
+								// TODO: NEED TO CHECK REF HERE.
+								<GripVertical
 									ref={setActivatorNodeRef}
 									style={{ touchAction: 'none', cursor: 'move' }}
 									{...listeners}
@@ -437,7 +438,7 @@ function VariablesSettings({
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<PlusOutlined /> Add Variable
+							<Plus /> Add Variable
 						</Button>
 					</Row>
 

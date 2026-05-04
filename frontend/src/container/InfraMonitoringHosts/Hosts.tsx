@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -39,6 +38,7 @@ import {
 import { getHostsQuickFiltersConfig } from './utils';
 
 import styles from './InfraMonitoringHosts.module.scss';
+import { ArrowUpToLine } from '@signozhq/icons';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -148,7 +148,7 @@ function Hosts(): JSX.Element {
 							<div className={styles.quickFiltersContainerHeader}>
 								<Typography.Text>Filters</Typography.Text>
 								<Tooltip title="Collapse Filters">
-									<VerticalAlignTopOutlined
+									<ArrowUpToLine
 										rotate={270}
 										onClick={handleFilterVisibilityChange}
 									/>

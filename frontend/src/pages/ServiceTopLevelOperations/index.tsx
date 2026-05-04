@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
-import { SyncOutlined } from '@ant-design/icons';
+import { RefreshCw } from '@signozhq/icons';
 import { Alert, Table, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
@@ -113,7 +113,8 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			{isLoading && (
 				<div className="loading-top-level-operations">
 					<Typography.Title level={5}>
-						<SyncOutlined spin /> Loading ...
+						{/* //TODO: use className here */}
+						<RefreshCw  /> Loading ...
 					</Typography.Title>
 				</div>
 			)}

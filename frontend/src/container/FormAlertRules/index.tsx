@@ -4,7 +4,7 @@ import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
+import { CircleAlert, Save } from '@signozhq/icons';
 import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -635,7 +635,7 @@ function FormAlertRules({
 			</Typography.Text>
 		);
 		Modal.confirm({
-			icon: <ExclamationCircleOutlined />,
+			icon: <CircleAlert />,
 			title: t('confirm_save_title'),
 			centered: true,
 			content,
@@ -954,7 +954,7 @@ function FormAlertRules({
 							loading={loading || false}
 							type="primary"
 							onClick={onSaveHandler}
-							icon={<SaveOutlined />}
+							icon={<Save />}
 							disabled={
 								isAlertNameMissing ||
 								!isChannelConfigurationValid ||

@@ -2,8 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Compass, ScrollText } from '@signozhq/icons';
+import { Compass, LoaderCircle, ScrollText } from '@signozhq/icons';
 import { Button } from '@signozhq/ui';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
@@ -480,7 +479,7 @@ function GeneralSettings({
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin spinning size="small" indicator={<LoaderCircle className="animate-spin" />} />{' '}
 							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
@@ -523,7 +522,7 @@ function GeneralSettings({
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin spinning size="small" indicator={<LoaderCircle className="animate-spin" />} />{' '}
 							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
@@ -565,7 +564,7 @@ function GeneralSettings({
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin spinning size="small" indicator={<LoaderCircle className="animate-spin" />} />{' '}
 							{t('retention_save_button.pending', { name: 'logs' })}
 						</span>
 					) : (

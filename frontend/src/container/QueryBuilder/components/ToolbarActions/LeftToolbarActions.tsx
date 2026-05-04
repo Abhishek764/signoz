@@ -1,4 +1,4 @@
-import { FilterOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
@@ -30,8 +30,8 @@ export default function LeftToolbarActions({
 			{!showFilter && (
 				<Tooltip title="Show Filters">
 					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<FilterOutlined />
-						<VerticalAlignTopOutlined rotate={90} />
+						<Filter />
+						<ArrowUpToLine rotate={90} />
 					</Button>
 				</Tooltip>
 			)}

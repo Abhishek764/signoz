@@ -1,6 +1,6 @@
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ExclamationCircleFilled } from '@ant-design/icons';
+import { CircleAlert } from '@signozhq/icons';
 import { Space, Tooltip } from 'antd';
 import { TableColumnType as ColumnType } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -179,7 +179,7 @@ function GridTableComponent({
 
 								{hasMultipleMatches && (
 									<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
-										<ExclamationCircleFilled className="value-graph-icon" />
+										<CircleAlert className="value-graph-icon" />
 									</Tooltip>
 								)}
 							</Space>

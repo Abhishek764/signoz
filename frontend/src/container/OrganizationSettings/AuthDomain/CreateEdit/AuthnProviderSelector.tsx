@@ -1,7 +1,8 @@
-import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 
 import './CreateEdit.styles.scss';
+import { Key } from '@signozhq/icons';
+import { GoogleSquareFilled } from '@ant-design/icons';
 
 interface AuthNProvider {
 	key: string;
@@ -25,7 +26,7 @@ function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 			title: 'SAML Authentication',
 			description:
 				'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
-			icon: <KeyOutlined style={{ fontSize: '37px' }} />,
+			icon: <Key style={{ fontSize: '37px' }} />,
 			enabled: samlEnabled,
 		},
 
@@ -34,7 +35,7 @@ function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 			title: 'OIDC Authentication',
 			description:
 				'Authenticate using OpenID Connect providers like Azure, Active Directory, Okta, or other OIDC compliant solutions',
-			icon: <KeyOutlined style={{ fontSize: '37px' }} />,
+			icon: <Key style={{ fontSize: '37px' }} />,
 			enabled: samlEnabled,
 		},
 	];

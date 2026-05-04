@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus } from '@signozhq/icons';
 import { Button, Form, Select, Switch, Tooltip } from 'antd';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
@@ -254,7 +254,7 @@ function BasicInfo({
 					>
 						<Button
 							onClick={handleCreateNewChannels}
-							icon={<PlusOutlined />}
+							icon={<Plus />}
 							className="create-notification-btn"
 							disabled={!addNewChannelPermission}
 						>

@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus } from '@signozhq/icons';
 import { Button, Tag } from 'antd';
 import Input from 'components/Input';
 import { Check, X } from 'lucide-react';
@@ -96,7 +96,7 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 					style={{
 						fontSize: '11px',
 					}}
-					icon={<PlusOutlined />}
+					icon={<Plus />}
 					onClick={showInput}
 				>
 					New Tag

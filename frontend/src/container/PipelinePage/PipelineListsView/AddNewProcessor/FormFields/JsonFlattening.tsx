@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Info } from '@signozhq/icons';
 import { Form, Input, Space, Switch, Tooltip } from 'antd';
 import { ProcessorData } from 'types/api/pipeline/def';
 
@@ -86,7 +86,7 @@ function JsonFlattening({
 					/>
 					Enable Mapping
 					<Tooltip title="The order of filled keys will determine the priority of keys i.e. earlier keys have higher precedence">
-						<InfoCircleOutlined />
+						<Info />
 					</Tooltip>
 				</Space>
 			</Form.Item>

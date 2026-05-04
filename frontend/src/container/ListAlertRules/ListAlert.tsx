@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus } from '@signozhq/icons';
 import { Button, Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
@@ -390,7 +390,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						<Button
 							type="primary"
 							onClick={onClickNewAlertHandler}
-							icon={<PlusOutlined />}
+							icon={<Plus />}
 						>
 							New Alert
 						</Button>

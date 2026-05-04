@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
+import { Search } from '@signozhq/icons';
 import { Popconfirm, PopconfirmProps } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
@@ -27,7 +27,7 @@ export const getColumnSearchProps = (
 	search: string,
 ): ColumnType<ServicesList> => ({
 	filterDropdown,
-	filterIcon: <SearchOutlined />,
+	filterIcon: <Search />,
 	onFilter: (
 		value: string | number | boolean,
 		record: ServicesList,

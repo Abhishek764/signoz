@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { CloseOutlined } from '@ant-design/icons';
+import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -135,7 +135,7 @@ function LabelsInput({
 								className="labels-input__remove-button"
 								onClick={(): void => handleRemoveLabel(key)}
 							>
-								<CloseOutlined />
+								<X />
 							</button>
 						</span>
 					))}

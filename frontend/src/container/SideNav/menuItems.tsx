@@ -1,4 +1,4 @@
-import { RocketOutlined } from '@ant-design/icons';
+import { Rocket } from '@signozhq/icons';
 import { Style } from '@signozhq/design-tokens';
 import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
@@ -48,13 +48,13 @@ import {
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
 	label: 'Get Started',
-	icon: <RocketOutlined rotate={45} />,
+	icon: <Rocket rotate={45} />,
 };
 
 export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
-	icon: <RocketOutlined rotate={45} />,
+	icon: <Rocket rotate={45} />,
 };
 
 export const homeMenuItem = {
@@ -376,7 +376,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.INGESTION_SETTINGS,
 				label: 'Ingestion',
-				icon: <RocketOutlined rotate={45} />,
+				icon: <Rocket rotate={45} />,
 				isEnabled: false,
 				itemKey: 'ingestion',
 			},

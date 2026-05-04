@@ -8,7 +8,7 @@ import React, {
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { CircleAlert, Plus } from '@signozhq/icons';
 import { Card, Form, Modal, Table, Typography } from 'antd';
 import type { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
@@ -171,7 +171,7 @@ function PipelineListsView({
 		}: AlertMessage) => {
 			modal.confirm({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
-				icon: <ExclamationCircleOutlined />,
+				icon: <CircleAlert />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <span className={`${className}-ok-text`}>{buttontext}</span>,
 				cancelText: <span>{t('cancel')}</span>,
@@ -407,7 +407,7 @@ function PipelineListsView({
 				<FooterButton
 					type="link"
 					onClick={addNewPipelineHandler}
-					icon={<PlusOutlined />}
+					icon={<Plus />}
 				>
 					{t('add_new_pipeline')}
 				</FooterButton>

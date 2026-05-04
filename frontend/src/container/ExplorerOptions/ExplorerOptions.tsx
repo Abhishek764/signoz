@@ -9,7 +9,7 @@ import {
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Info } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -970,7 +970,7 @@ function ExplorerOptions({
 									</div>
 								}
 							>
-								<InfoCircleOutlined className="info-icon" />
+								<Info className="info-icon" />
 							</Tooltip>
 						)}
 						<Tooltip title="Hide">

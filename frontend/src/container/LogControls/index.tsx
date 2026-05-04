@@ -1,7 +1,6 @@
 import { memo, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { FastBackwardOutlined } from '@ant-design/icons';
 import { Button, Divider } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import Controls from 'container/Controls';
@@ -26,6 +25,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
+import { SkipBack } from '@signozhq/icons';
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -115,7 +115,7 @@ function LogControls(): JSX.Element | null {
 				disabled={order === OrderPreferenceItems.ASC}
 				onClick={handleGoToLatest}
 			>
-				<FastBackwardOutlined /> Go to latest
+				<SkipBack /> Go to latest
 			</Button>
 			<Divider type="vertical" />
 			<Controls

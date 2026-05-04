@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CloudDownloadOutlined } from '@ant-design/icons';
+import { CloudDownload } from '@signozhq/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
 import { unparse } from 'papaparse';
 
@@ -74,7 +74,7 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 				size="small"
 				type="link"
 			>
-				<CloudDownloadOutlined />
+				<CloudDownload />
 				Download
 			</Button>
 		</Dropdown>

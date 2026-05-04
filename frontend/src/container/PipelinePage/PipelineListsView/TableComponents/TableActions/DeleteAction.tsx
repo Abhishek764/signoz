@@ -1,4 +1,4 @@
-import { DeleteFilled } from '@ant-design/icons';
+import { Trash2 } from '@signozhq/icons';
 
 import { iconStyle, smallIconStyle } from '../../config';
 
@@ -7,11 +7,11 @@ function DeleteAction({
 	deleteAction,
 }: DeleteActionProps): JSX.Element {
 	if (isPipelineAction) {
-		return <DeleteFilled onClick={deleteAction} style={iconStyle} />;
+		return <Trash2 onClick={deleteAction} style={iconStyle} />;
 	}
 	return (
 		<span key="delete-action">
-			<DeleteFilled onClick={deleteAction} style={smallIconStyle} />
+			<Trash2 onClick={deleteAction} style={smallIconStyle} />
 		</span>
 	);
 }

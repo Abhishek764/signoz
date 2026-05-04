@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Col, Typography } from 'antd';
 import { StyledCol, StyledRow } from 'components/Styled';
 import {
@@ -128,9 +128,9 @@ function Trace(props: TraceProps): JSX.Element {
 	const icon = useMemo(
 		() =>
 			isOpen ? (
-				<CaretDownFilled style={iconStyles} />
+				<ChevronDown style={iconStyles} />
 			) : (
-				<CaretRightFilled style={iconStyles} />
+				<ChevronRight style={iconStyles} />
 			),
 		[isOpen, iconStyles],
 	);

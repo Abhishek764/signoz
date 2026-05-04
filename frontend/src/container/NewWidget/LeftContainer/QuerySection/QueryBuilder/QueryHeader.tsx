@@ -1,11 +1,5 @@
 import { ReactNode, useState } from 'react';
-import {
-	DeleteOutlined,
-	DownOutlined,
-	EyeFilled,
-	EyeInvisibleFilled,
-	RightOutlined,
-} from '@ant-design/icons';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from '@signozhq/icons';
 import { Button, Row } from 'antd';
 
 import { QueryWrapper } from '../styles';
@@ -36,7 +30,7 @@ function QueryHeader({
 				<Row>
 					<Button
 						type="default"
-						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
+						icon={disabled ? <EyeOff /> : <Eye />}
 						onClick={onDisable}
 						className="action-btn"
 					>
@@ -44,7 +38,7 @@ function QueryHeader({
 					</Button>
 					<Button
 						type="default"
-						icon={collapse ? <RightOutlined /> : <DownOutlined />}
+						icon={collapse ? <ChevronRight /> : <ChevronDown />}
 						onClick={(): void => setCollapse(!collapse)}
 						className="action-btn"
 					/>
@@ -54,7 +48,7 @@ function QueryHeader({
 					<Button
 						type="default"
 						danger
-						icon={<DeleteOutlined />}
+						icon={<Trash2 />}
 						onClick={onDelete}
 						className="action-btn"
 					/>

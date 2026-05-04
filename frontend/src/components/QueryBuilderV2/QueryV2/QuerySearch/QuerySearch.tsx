@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircleFilled } from '@ant-design/icons';
+import { CircleCheck } from '@signozhq/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -1445,7 +1445,7 @@ function QuerySearch({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck />}
 									className="periscope-btn ghost"
 								/>
 							) : (

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { EllipsisOutlined } from '@ant-design/icons';
+import { Ellipsis } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, TableColumnsType as ColumnsType } from 'antd';
 import ClientSideQBSearch, {
@@ -126,7 +126,7 @@ export const timelineTableColumns = ({
 				relatedLogsLink={record.relatedLogsLink}
 			>
 				<Button type="text" ghost>
-					<EllipsisOutlined className="dropdown-icon" />
+					<Ellipsis className="dropdown-icon" />
 				</Button>
 			</ConditionalAlertPopover>
 		),

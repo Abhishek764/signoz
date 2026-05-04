@@ -5,7 +5,7 @@ import { UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { WarningOutlined } from '@ant-design/icons';
+import { TriangleAlert } from '@signozhq/icons';
 import {
 	Button,
 	ResizableHandle,
@@ -955,7 +955,7 @@ function NewWidget({
 				title={
 					isQueryModified ? (
 						<Space>
-							<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+							<TriangleAlert style={{ fontSize: '16px', color: '#fdd600' }} />
 							Unsaved Changes
 						</Space>
 					) : (
@@ -986,7 +986,7 @@ function NewWidget({
 			<Modal
 				title={
 					<Space>
-						<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+						<TriangleAlert style={{ fontSize: '16px', color: '#fdd600' }} />
 						Unsaved Changes
 					</Space>
 				}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { CaretRightFilled } from '@ant-design/icons';
+import { ChevronRight } from '@signozhq/icons';
 import { Popover } from 'antd';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
@@ -107,7 +107,7 @@ function Search({
 					disabled={traces.filterLoading}
 					placeholder="Click to filter by tags"
 					type="search"
-					enterButton={<CaretRightFilled />}
+					enterButton={<ChevronRight />}
 					onSearch={(string): void => {
 						if (string.length === 0) {
 							updateTagVisibility(false);

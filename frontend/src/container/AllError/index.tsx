@@ -4,7 +4,7 @@ import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
+import { Search } from '@signozhq/icons';
 import {
 	Button,
 	Card,
@@ -199,7 +199,7 @@ function AllErrors(): JSX.Element {
 		</Typography>
 	);
 
-	const filterIcon = useCallback(() => <SearchOutlined />, []);
+	const filterIcon = useCallback(() => <Search />, []);
 
 	const handleSearch = useCallback(
 		(
@@ -275,7 +275,7 @@ function AllErrors(): JSX.Element {
 					<Button
 						type="primary"
 						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						icon={<SearchOutlined />}
+						icon={<Search />}
 						size="small"
 					>
 						Search

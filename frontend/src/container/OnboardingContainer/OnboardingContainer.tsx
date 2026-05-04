@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { ArrowRight } from '@signozhq/icons';
 import { Button, Card, Form, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
@@ -360,7 +360,7 @@ export default function Onboarding(): JSX.Element {
 					<div className="continue-to-next-step">
 						<Button
 							type="primary"
-							icon={<ArrowRightOutlined />}
+							icon={<ArrowRight />}
 							onClick={(e): void => handleNext(e)}
 						>
 							{t('get_started')}

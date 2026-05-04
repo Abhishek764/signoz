@@ -1,5 +1,7 @@
 package llmpricingruletypes
 
+const ProcessorName = "signozllmpricing"
+
 // LLMPricingRuleProcessorConfig is the top-level config for the signozllmpricing
 // OTel processor that gets deployed to collectors via OpAMP.
 type LLMPricingRuleProcessorConfig struct {

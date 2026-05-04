@@ -60,10 +60,7 @@ const (
 	providerName = "http"
 )
 
-// Provider is the enterprise meter reporter. It ticks on a fixed interval,
-// invokes every registered Collector against the instance's licensed org, and
-// ships the resulting readings to Zeus. Community builds wire a noop provider
-// instead, so this type never runs there.
+// Provider collects registered meters and ships them to Zeus.
 type Provider struct {
 	settings   factory.ScopedProviderSettings
 	config     meterreporter.Config
@@ -80,9 +77,7 @@ type Provider struct {
 	metrics      *reporterMetrics
 }
 
-// NewFactory wires the HTTP meter reporter into the provider registry. The
-// enterprise composition root registers it alongside noop and selects the
-// active provider from flagger at startup.
+// NewFactory registers the HTTP meter reporter.
 func NewFactory(
 	collectors map[metercollectortypes.Name]metercollector.MeterCollector,
 	licensing licensing.Licensing,
@@ -162,10 +157,7 @@ func validateCollectors(collectors map[metercollectortypes.Name]metercollector.M
 	return ordered, nil
 }
 
-// Start runs an initial tick, then loops on Config.Interval until Stop is
-// called. It blocks until the loop goroutine returns — that shape matches the
-// factory.Service contract the rest of the codebase uses, so the supervisor
-// can join on it the same way as other long-running services.
+// Start runs an immediate tick, then repeats on Config.Interval.
 func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
@@ -199,9 +191,7 @@ func (provider *Provider) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop signals the tick loop and waits for any in-flight tick to finish.
-// Drain time is bounded by Config.Timeout because every tick runs under that
-// deadline, so shutdown can't stall on a hung ClickHouse or Zeus call.
+// Stop signals the tick loop and waits for any in-flight tick.
 func (provider *Provider) Stop(ctx context.Context) error {
 	<-provider.healthyC
 	provider.settings.Logger().InfoContext(ctx, "meter reporter stopping")
@@ -220,9 +210,7 @@ func (provider *Provider) Healthy() <-chan struct{} {
 	return provider.healthyC
 }
 
-// runTick executes one collect-and-ship cycle under Config.Timeout. Errors
-// from tick are logged and counted only — they never propagate, because the
-// reporter must keep firing on subsequent intervals even if one batch fails.
+// runTick executes one collect-and-ship cycle under Config.Timeout.
 func (provider *Provider) runTick(parentCtx context.Context) {
 	tickStart := time.Now()
 	ctx, span := provider.settings.Tracer().Start(parentCtx, "meterreporter.Tick", trace.WithAttributes(
@@ -264,21 +252,10 @@ func (provider *Provider) runTick(parentCtx context.Context) {
 	provider.settings.Logger().DebugContext(ctx, "meter reporter tick completed", slog.Duration("duration", time.Since(tickStart)))
 }
 
-// tick runs one collect-and-ship cycle for the instance's single active org.
-// Two concerns:
-//
-//	(A) sealed catchup — forward-fills is_completed=true days from the Zeus
-//	    checkpoint up to yesterday, capped by CatchupMaxDaysPerTick. Stops at
-//	    the first ship failure; next tick retries from the same point.
-//	(B) today partial — re-emits [00:00 UTC, now) every tick as
-//	    is_completed=false. The day-scoped X-Idempotency-Key makes
-//	    successive writes upsert.
-//
-// Per-meter collect failures and ship failures are logged and counted; they
-// never abort the tick.
+// tick processes sealed catchup days, then today's partial window.
 func (provider *Provider) tick(ctx context.Context) error {
 	now := time.Now().UTC()
-	// One snapshot drives every window boundary so a tick can't straddle midnight.
+	// Use one timestamp so a tick cannot straddle midnight.
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	yesterday := todayStart.AddDate(0, 0, -1)
 
@@ -293,8 +270,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 	}
 	org := orgs[0]
 	if len(orgs) > 1 {
-		// signoz_meter samples carry no org marker, so we can't disambiguate;
-		// fall back to the first org and warn so the misconfig is visible.
+		// signoz_meter samples have no org marker.
 		provider.settings.Logger().WarnContext(ctx, "multiple orgs on a single instance; reporting only the first",
 			slog.Int("org_count", len(orgs)),
 			slog.String("selected_org_id", org.ID.StringValue()),
@@ -326,8 +302,6 @@ func (provider *Provider) tick(ctx context.Context) error {
 	// }
 	checkpointsByMeter := make(map[string]time.Time)
 
-	// Concern A — sealed-range processor. catchupStart() already clamps to
-	// yesterday, so we can step straight into the loop.
 	floor := provider.dataFloor(ctx, todayStart)
 	catchupStart := provider.catchupStart(floor, todayStart, checkpointsByMeter)
 	end := catchupStart.AddDate(0, 0, provider.config.CatchupMaxDaysPerTick-1)
@@ -366,7 +340,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 		}
 	}
 
-	// Concern B — today partial. Runs every tick; concern A failures don't block it.
+	// Today's partial window runs every tick.
 	todayWindow := meterreportertypes.Window{
 		StartUnixMilli: todayStart.UnixMilli(),
 		EndUnixMilli:   now.UnixMilli(),
@@ -377,11 +351,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 	return nil
 }
 
-// runPhase collects every meter for one window and ships the resulting batch.
-// Returns err only on ship failure — the sealed loop breaks on first failure.
-// Per-meter collect failures are logged and counted but never bubble. For
-// sealed windows, readings whose day is at-or-before the per-meter checkpoint
-// are dropped to save bandwidth.
+// runPhase collects all meters for one window and ships the batch.
 func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window meterreportertypes.Window, checkpointsByMeter map[string]time.Time) error {
 	phaseLabel := phaseToday
 	if window.IsCompleted {
@@ -532,9 +502,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 	return nil
 }
 
-// dropCheckpointed removes readings already shipped per the per-meter
-// checkpoint. A reading survives if its meter has no checkpoint, or the
-// checkpoint is strictly before windowDay.
+// dropCheckpointed removes readings already covered by meter checkpoints.
 func dropCheckpointed(readings []meterreportertypes.Meter, windowDay time.Time, checkpointsByMeter map[string]time.Time) []meterreportertypes.Meter {
 	if len(checkpointsByMeter) == 0 {
 		return readings
@@ -549,12 +517,7 @@ func dropCheckpointed(readings []meterreportertypes.Meter, windowDay time.Time, 
 	return kept
 }
 
-// catchupStart picks the earliest UTC day this tick should re-process.
-// Meters with no checkpoint bootstrap from floor; older checkpoints are
-// clamped up to floor. The yesterday-clamp at the bottom guarantees
-// yesterday is always retried within Zeus's 24h mutable window so a
-// partial-failure tick can't leave a missing (workspace, retention) bucket
-// hidden behind the per-meter MAX(start_date) checkpoint.
+// catchupStart returns the earliest UTC day that still needs sealed reporting.
 func (provider *Provider) catchupStart(floor time.Time, todayStart time.Time, checkpointsByMeter map[string]time.Time) time.Time {
 	catchupStart := todayStart
 
@@ -579,15 +542,7 @@ func (provider *Provider) catchupStart(floor time.Time, todayStart time.Time, ch
 	return catchupStart
 }
 
-// dataFloor returns the earliest day signoz_meter.distributed_samples holds a
-// sample, truncated to UTC midnight. With no data — or on query failure —
-// returns todayStart, which the yesterday-clamp in catchupStart turns into a
-// single sealed-day pass.
-//
-// Unfiltered by metric_name on purpose: the meter table is billing-only by
-// design, so the global min spans logs/metrics/traces. Filtering would let
-// earlier metric or trace data slip past the floor and under-bill on backfill.
-// The CH meter-table TTL caps how old the data can ever be.
+// dataFloor returns the earliest signoz_meter sample day, or today on failure.
 func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) time.Time {
 	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.DataFloor")
 	defer span.End()
@@ -628,10 +583,7 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 	return floor
 }
 
-// shipReadings POSTs the day's batch to Zeus. The date-scoped idempotency key
-// makes repeat ticks within the same UTC day UPSERT instead of duplicating.
-// Zeus accepts or rejects the batch as a whole — partial acceptance is not
-// supported, so a single error here means none of the readings were stored.
+// shipReadings sends one day's meter batch to Zeus.
 func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Meter) error {
 	idempotencyKey := fmt.Sprintf("meter-cron:%s", date)
 	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.ShipReadings", trace.WithAttributes(
@@ -649,8 +601,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 		slog.Bool("dry_run", true),
 	)
 
-	// Staging visibility while /v2/meters is offline. Drop or demote
-	// to Debug once Zeus accepts the writes.
+	// Temporary visibility while /v2/meters is offline.
 	for _, reading := range readings {
 		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
 			slog.String("meter", reading.MeterName),

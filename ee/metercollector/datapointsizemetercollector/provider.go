@@ -1,11 +1,5 @@
-// Package datapointsizemetercollector emits the
-// signoz.meter.metric.datapoint.size meter: the size of metric datapoints
-// ingested per (workspace, retention) bucket.
-//
-// The query body in this file is inlined on purpose. Per the meterreporter
-// duplication policy, no helper is shared with the count sibling even though
-// the two queries look similar, so a future change to one meter's billing
-// shape can never silently change the other.
+// Package datapointsizemetercollector collects metric datapoint size meters
+// by workspace and retention. Keep the query local to this meter.
 package datapointsizemetercollector
 
 import (
@@ -30,8 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// MeterName is exported so the EE composition root can register this
-// collector under a typed name constant rather than a string literal.
+// MeterName is the typed registry key for this collector.
 var (
 	MeterName        = metercollectortypes.MustNewName("signoz.meter.metric.datapoint.size")
 	meterUnit        = metercollectortypes.UnitBytes
@@ -40,9 +33,7 @@ var (
 
 var _ metercollector.MeterCollector = (*Provider)(nil)
 
-// Provider is this package's MeterCollector implementation. Exposed so
-// constructor return type can be checked at the call site, but only
-// constructed via New.
+// Provider collects datapoint size meters.
 type Provider struct {
 	telemetryStore telemetrystore.TelemetryStore
 	sqlStore       sqlstore.SQLStore
@@ -61,10 +52,7 @@ func (p *Provider) Aggregation() metercollectortypes.Aggregation {
 	return meterAggregation
 }
 
-// Collect aggregates datapoint-size samples for the request window, broken
-// out by retention bucket. Returns at least one zero-valued sentinel meter on
-// a non-empty window with no data so Zeus's MAX(start_date) checkpoint can
-// advance past empty days.
+// Collect aggregates datapoint size for the window and emits an empty-day sentinel.
 func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
 	if !window.IsValid() {
 		return nil, errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "invalid window [%d, %d)", window.StartUnixMilli, window.EndUnixMilli)
@@ -155,8 +143,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterr
 		})
 	}
 
-	// Zero usage is itself a billing event; the sentinel also lets Zeus's
-	// MAX(start_date) checkpoint advance past genuinely empty days.
+	// Empty windows still emit a sentinel so checkpoints can advance.
 	if len(meters) == 0 && len(slices) > 0 {
 		meters = append(meters, meterreportertypes.Meter{
 			MeterName:      meterName,
@@ -176,10 +163,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterr
 	return meters, nil
 }
 
-// buildQuery is inlined per the duplication policy. Even though the count
-// sibling produces a structurally similar query, do not factor a shared
-// builder: billing shape changes for datapoint.size must never bleed into
-// datapoint.count.
+// buildQuery stays local because each meter owns its billing query.
 func buildQuery(meterName string, slice retention.Slice) (string, []any, []dimensionColumn, error) {
 	retentionExpr, err := retention.BuildMultiIfSQL(slice.Rules, slice.DefaultDays)
 	if err != nil {

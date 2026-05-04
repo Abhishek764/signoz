@@ -1,8 +1,4 @@
-// Package metercollectortypes holds value types that identify a billing meter.
-//
-// Name lives here, not in meterreportertypes, because a meter's identity is
-// owned by the collector that produces it. The reporter only sees Name as a
-// map key; it never constructs one.
+// Package metercollectortypes holds billing meter value types.
 package metercollectortypes
 
 import (
@@ -13,9 +9,7 @@ import (
 
 var nameRegex = regexp.MustCompile(`^[a-z][a-z0-9_.]+$`)
 
-// Name is a concrete type for a meter name. Dotted namespace identifiers like
-// "signoz.meter.log.count" are permitted; arbitrary strings are not, to avoid
-// typos silently producing distinct meter rows at Zeus.
+// Name is a validated dotted meter name.
 type Name struct {
 	s string
 }

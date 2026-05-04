@@ -10,21 +10,13 @@ import (
 var _ factory.Config = (*Config)(nil)
 
 type Config struct {
-	// Interval is how often the reporter ticks (collect + ship). The validator
-	// enforces a 5m floor — any sooner and we'd hammer ClickHouse for nothing,
-	// since Zeus UPSERTs inside a UTC day anyway.
+	// Interval is how often the reporter collects and ships meters.
 	Interval time.Duration `mapstructure:"interval"`
 
-	// Timeout bounds a single tick (collect + marshal + POST). Must be strictly
-	// less than Interval so a slow tick can't overlap the next one. Catch-up
-	// ticks can issue up to CatchupMaxDaysPerTick day-scoped POSTs back-to-back,
-	// so the default is sized to cover that.
+	// Timeout bounds one collect-and-ship tick.
 	Timeout time.Duration `mapstructure:"timeout"`
 
-	// CatchupMaxDaysPerTick caps how many sealed (is_completed=true) days the
-	// orchestrator processes per tick, bounding Zeus POST blast radius. At the
-	// default 30/tick and a 6h Interval, a full 12-month bootstrap catch-up
-	// converges in roughly 3 days.
+	// CatchupMaxDaysPerTick caps sealed-day catchup work per tick.
 	CatchupMaxDaysPerTick int `mapstructure:"catchup_max_days_per_tick"`
 }
 

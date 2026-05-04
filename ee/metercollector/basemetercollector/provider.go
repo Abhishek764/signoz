@@ -1,10 +1,4 @@
-// Package basemetercollector emits the signoz.meter.base meter.
-//
-// The base meter is license-derived rather than telemetry-derived: when an
-// organization has an active license, the collector emits value=1 with max
-// aggregation for the request window. The reporter has no special-case path
-// for this meter; it is just another MeterCollector in the hard-coded
-// registry.
+// Package basemetercollector collects the license-derived base meter.
 package basemetercollector
 
 import (
@@ -18,8 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// MeterName is exported so the EE composition root can register this
-// collector under a typed name constant rather than a string literal.
+// MeterName is the typed registry key for this collector.
 var (
 	MeterName        = metercollectortypes.MustNewName("signoz.meter.base")
 	meterUnit        = metercollectortypes.UnitCount
@@ -28,9 +21,7 @@ var (
 
 var _ metercollector.MeterCollector = (*Provider)(nil)
 
-// Provider is this package's MeterCollector implementation. Exposed so
-// constructor return type can be checked at the call site, but only
-// constructed via New.
+// Provider collects base meters.
 type Provider struct {
 	licensing licensing.Licensing
 }
@@ -45,8 +36,7 @@ func (p *Provider) Aggregation() metercollectortypes.Aggregation {
 	return meterAggregation
 }
 
-// Collect emits a single base-meter reading when the org has an active
-// license. Missing or inactive licenses produce no reading.
+// Collect emits value 1 when the org has an active license.
 func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
 	if !window.IsValid() {
 		return nil, errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "invalid window [%d, %d)", window.StartUnixMilli, window.EndUnixMilli)

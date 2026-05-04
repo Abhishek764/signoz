@@ -1,20 +1,5 @@
-// Package retention loads active retention slices from the TTL settings
-// table and renders the ClickHouse SQL fragments meter collectors need to
-// bucket samples by retention.
-//
-// The package is intentionally narrow:
-//   - It parses ttl_setting rows into time-bounded slices, one per recipe
-//     active in the requested window.
-//   - It renders SQL multiIf expressions over a slice's rules.
-//
-// It does NOT know anything about meter domains. Each collector passes the
-// fully-qualified table name it queries (e.g. "signoz_logs.logs_v2") and
-// the per-domain fallback retention default to apply when a ttl_setting row
-// is missing or carries a malformed TTL. Retention substitutes the default
-// internally so every emitted Slice has a populated DefaultDays. The
-// duplication policy is preserved: no aggregating SQL lives here, and the
-// per-domain knowledge (table name, fallback default) stays inlined in
-// each meter's own collector package.
+// Package retention builds retention slices and SQL expressions for meters.
+// Collectors still own their table names, defaults, and aggregation queries.
 package retention
 
 import (
@@ -36,17 +21,13 @@ import (
 
 const secondsPerDay = 24 * 60 * 60
 
-// Inlined into SQL — strict allowlist guards against injection from a
-// malformed ttl_setting row.
+// These values are inlined into SQL, so keep the allowlist strict.
 var (
 	labelKeyPattern   = regexp.MustCompile(`^[A-Za-z0-9_.\-]+$`)
 	labelValuePattern = regexp.MustCompile(`^[A-Za-z0-9_.\-:]+$`)
 )
 
-// Slice is a half-open time range where one ttl_setting recipe applies.
-// DefaultDays is the effective fallback retention for samples that match no
-// rule in this slice — either the row's parsed TTL or the caller-supplied
-// fallback when the row is missing or malformed.
+// Slice is a half-open time range using one TTL recipe.
 type Slice struct {
 	StartMs     int64
 	EndMs       int64
@@ -54,13 +35,8 @@ type Slice struct {
 	DefaultDays int
 }
 
-// LoadActiveSlices returns slices covering [startMs, endMs) in chronological
-// order, one per ttl_setting recipe active in that span for the given table.
-//
-// tableName must be fully qualified ("db.table"); it is matched against the
-// ttl_setting.table_name column. fallbackDefaultDays is the value Slice
-// .DefaultDays takes when no row is active for a slice or the active row's
-// TTL is missing/malformed.
+// LoadActiveSlices returns TTL slices covering [startMs, endMs).
+// tableName must be fully qualified, for example "signoz_logs.logs_v2".
 func LoadActiveSlices(
 	ctx context.Context,
 	sqlstore sqlstore.SQLStore,
@@ -105,8 +81,7 @@ func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, star
 		return nil, nil
 	}
 
-	// The latest row at or before startMs is the active config at the
-	// window start; rows strictly inside become slice boundaries.
+	// The latest row before the window is active at the window start.
 	var activeAtStart *types.TTLSetting
 	inWindow := make([]*types.TTLSetting, 0, len(rows))
 	for _, row := range rows {
@@ -163,10 +138,7 @@ func buildSlicesFromRows(rows []*types.TTLSetting, fallbackDefaultDays int, star
 	return slices, nil
 }
 
-// parseTTLSetting unpacks one ttl_setting row.
-// V1 (Condition=="") stores TTL in seconds; V2 stores TTL in days.
-// Falls back to fallbackDefaultDays when row is nil or its TTL is non-
-// positive after parsing.
+// parseTTLSetting returns rules and default days for one ttl_setting row.
 func parseTTLSetting(row *types.TTLSetting, fallbackDefaultDays int) ([]retentiontypes.CustomRetentionRule, int, error) {
 	if row == nil {
 		return nil, fallbackDefaultDays, nil
@@ -174,7 +146,7 @@ func parseTTLSetting(row *types.TTLSetting, fallbackDefaultDays int) ([]retentio
 
 	defaultDays := row.TTL
 	if row.Condition == "" {
-		// V1 stores seconds — round up to whole days.
+		// V1 stores seconds; round up to days.
 		defaultDays = (row.TTL + secondsPerDay - 1) / secondsPerDay
 	}
 	if defaultDays <= 0 {
@@ -193,13 +165,7 @@ func parseTTLSetting(row *types.TTLSetting, fallbackDefaultDays int) ([]retentio
 	return rules, defaultDays, nil
 }
 
-// BuildMultiIfSQL renders the retention-days SELECT expression for one slice
-// — first matching rule wins. The toInt32 wrapper pins the column type so
-// Scan(&int32) works regardless of arm widths (ClickHouse otherwise infers
-// UInt8/UInt16 from the largest arm).
-//
-// defaultDays is the value returned for samples that match no rule —
-// typically slice.DefaultDays.
+// BuildMultiIfSQL renders the retention-days expression for one slice.
 func BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
 		return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "non-positive default retention %d", defaultDays)
@@ -227,9 +193,7 @@ func BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int
 	return "toInt32(multiIf(" + strings.Join(arms, ", ") + "))", nil
 }
 
-// BuildRuleIndexSQL renders the retention-rule-index SELECT expression for
-// one slice. Returns -1 when no rule matches, so collectors can detect the
-// fallback bucket and skip applying rule-specific dimensions.
+// BuildRuleIndexSQL renders the matched rule index, or -1 for fallback.
 func BuildRuleIndexSQL(rules []retentiontypes.CustomRetentionRule) (string, error) {
 	if len(rules) == 0 {
 		return "toInt32(-1)", nil
@@ -278,10 +242,7 @@ func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRul
 	return strings.Join(filterExprs, " AND "), nil
 }
 
-// RuleDimensionKeys returns the de-duplicated set of label keys mentioned by
-// any rule's filters. Collectors use this to know which JSONExtractString
-// columns to project so each rule's dimensions can be stamped on the
-// outgoing meters.
+// RuleDimensionKeys returns unique label keys referenced by retention rules.
 func RuleDimensionKeys(rules []retentiontypes.CustomRetentionRule) ([]string, error) {
 	keys := make([]string, 0)
 	seen := make(map[string]struct{})

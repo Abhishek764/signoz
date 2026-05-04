@@ -47,7 +47,7 @@ func (store *store) Get(ctx context.Context, orgID, id valuer.UUID) (*llmpricing
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule %s not found", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule %s not found in the org", id)
 	}
 
 	return rule, nil
@@ -64,7 +64,7 @@ func (store *store) GetBySourceID(ctx context.Context, orgID, sourceID valuer.UU
 		Where("source_id = ?", sourceID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule with source_id %s not found", sourceID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule with source_id %s not found in the org", sourceID)
 	}
 
 	return rule, nil
@@ -76,7 +76,10 @@ func (store *store) Create(ctx context.Context, rule *llmpricingruletypes.LLMPri
 		NewInsert().
 		Model(rule).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, llmpricingruletypes.ErrCodePricingRuleAlreadyExists, "pricing rule with model %s already exists", rule.Model)
+	}
+	return nil
 }
 
 func (store *store) Update(ctx context.Context, rule *llmpricingruletypes.LLMPricingRule) error {
@@ -86,7 +89,7 @@ func (store *store) Update(ctx context.Context, rule *llmpricingruletypes.LLMPri
 		Model(rule).
 		Where("org_id = ?", rule.OrgID).
 		Where("id = ?", rule.ID).
-		ExcludeColumn("id", "org_id", "created_at", "created_by").
+		ExcludeColumn("id", "org_id", "source_id", "created_at", "created_by").
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -97,7 +100,7 @@ func (store *store) Update(ctx context.Context, rule *llmpricingruletypes.LLMPri
 		return err
 	}
 	if rowsAffected == 0 {
-		return errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule %s not found", rule.ID)
+		return errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule %s not found in the org", rule.ID)
 	}
 
 	return nil
@@ -120,12 +123,12 @@ func (store *store) Delete(ctx context.Context, orgID, id valuer.UUID) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule %s not found", id)
+		return errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "pricing rule %s not found in the org", id)
 	}
 
 	return nil
 }
 
-func (s *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
-	return s.sqlstore.RunInTxCtx(ctx, nil, cb)
+func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return store.sqlstore.RunInTxCtx(ctx, nil, cb)
 }

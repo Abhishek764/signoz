@@ -12,9 +12,24 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
+const (
+	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
+
+	GenAIRequestModel                  = "gen_ai.request.model"
+	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
+	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
+	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
+	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
+
+	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
+	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
+	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
+	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
+	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
+)
 
 var (
+	ErrCodePricingRuleAlreadyExists  = errors.MustNewCode("pricing_rule_already_exists")
 	ErrCodePricingRuleNotFound       = errors.MustNewCode("pricing_rule_not_found")
 	ErrCodePricingRuleInvalidInput   = errors.MustNewCode("pricing_rule_invalid_input")
 	ErrCodeInvalidCollectorConfig    = errors.MustNewCode("invalid_collector_config")

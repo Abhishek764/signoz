@@ -41,21 +41,21 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 func (module *module) CreateOrUpdate(ctx context.Context, orgID valuer.UUID, userEmail string, rules []llmpricingruletypes.UpdatableLLMPricingRule) error {
 	now := time.Now()
 
+	upsert := func(ctx context.Context, u llmpricingruletypes.UpdatableLLMPricingRule) error {
+		existing, err := module.findExisting(ctx, orgID, u)
+		if err != nil && errors.Ast(err, errors.TypeNotFound) {
+			return module.store.Create(ctx, llmpricingruletypes.NewLLMPricingRuleFromUpdatable(u, orgID, userEmail, now))
+		}
+		if err != nil {
+			return err
+		}
+		existing.Update(u, userEmail, now)
+		return module.store.Update(ctx, existing)
+	}
+
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		for _, u := range rules {
-			existing, err := module.findExisting(ctx, orgID, u)
-			if err != nil {
-				if !errors.Ast(err, errors.TypeNotFound) {
-					return err
-				}
-				if err := module.store.Create(ctx, llmpricingruletypes.NewLLMPricingRuleFromUpdatable(u, orgID, userEmail, now)); err != nil {
-					return err
-				}
-				continue
-			}
-
-			existing.Update(u, userEmail, now)
-			if err := module.store.Update(ctx, existing); err != nil {
+			if err := upsert(ctx, u); err != nil {
 				return err
 			}
 		}
@@ -86,13 +86,13 @@ func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
 // RecommendAgentConfig reads pricing rules and generates the
 // signozllmpricing processor config for deployment to OTel collectors via OpAMP.
 func (module *module) RecommendAgentConfig(
-	orgId valuer.UUID,
+	orgID valuer.UUID,
 	currentConfYaml []byte,
 	configVersion *opamptypes.AgentConfigVersion,
 ) ([]byte, string, error) {
 	ctx := context.Background()
 
-	rules, err := module.getEnabledRules(ctx, orgId)
+	rules, err := module.getEnabledRules(ctx, orgID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -110,8 +110,8 @@ func (module *module) RecommendAgentConfig(
 	return updatedConf, string(serialized), nil
 }
 
-func (module *module) getEnabledRules(ctx context.Context, orgId valuer.UUID) ([]*llmpricingruletypes.LLMPricingRule, error) {
-	rules, _, err := module.List(ctx, orgId, 0, 10000)
+func (module *module) getEnabledRules(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.LLMPricingRule, error) {
+	rules, _, err := module.List(ctx, orgID, 0, 10000)
 	if err != nil {
 		return nil, err
 	}
@@ -162,22 +162,22 @@ func buildProcessorConfig(rules []*llmpricingruletypes.LLMPricingRule) *llmprici
 
 	return &llmpricingruletypes.LLMPricingRuleProcessorConfig{
 		Attrs: llmpricingruletypes.LLMPricingRuleProcessorAttrs{
-			Model:      "gen_ai.request.model",
-			In:         "gen_ai.usage.input_tokens",
-			Out:        "gen_ai.usage.output_tokens",
-			CacheRead:  "gen_ai.usage.cache_read.input_tokens",
-			CacheWrite: "gen_ai.usage.cache_creation.input_tokens",
+			Model:      llmpricingruletypes.GenAIRequestModel,
+			In:         llmpricingruletypes.GenAIUsageInputTokens,
+			Out:        llmpricingruletypes.GenAIUsageOutputTokens,
+			CacheRead:  llmpricingruletypes.GenAIUsageCacheReadInputTokens,
+			CacheWrite: llmpricingruletypes.GenAIUsageCacheCreationInputTokens,
 		},
 		DefaultPricing: llmpricingruletypes.LLMPricingRuleProcessorDefaultPricing{
-			Unit:  "per_million_tokens",
+			Unit:  llmpricingruletypes.UnitPerMillionTokens.StringValue(),
 			Rules: pricingRules,
 		},
 		OutputAttrs: llmpricingruletypes.LLMPricingRuleProcessorOutputAttrs{
-			In:         "_signoz.gen_ai.cost_input",
-			Out:        "_signoz.gen_ai.cost_output",
-			CacheRead:  "_signoz.gen_ai.cost_cache_read",
-			CacheWrite: "_signoz.gen_ai.cost_cache_write",
-			Total:      "_signoz.gen_ai.total_cost",
+			In:         llmpricingruletypes.SignozGenAICostInput,
+			Out:        llmpricingruletypes.SignozGenAICostOutput,
+			CacheRead:  llmpricingruletypes.SignozGenAICostCacheRead,
+			CacheWrite: llmpricingruletypes.SignozGenAICostCacheWrite,
+			Total:      llmpricingruletypes.SignozGenAITotalCost,
 		},
 	}
 }

@@ -75,17 +75,19 @@ func (migration *addLLMPricingRules) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tableSQLs...)
 
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(
+		&sqlschema.PartialUniqueIndex{
+			TableName:   "llm_pricing_rule",
+			ColumnNames: []sqlschema.ColumnName{"org_id", "source_id"},
+			Where:       "source_id IS NOT NULL",
+		})
+
+	sqls = append(sqls, indexSQLs...)
+
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
-	}
-
-	// Partial unique index: one Zeus-synced rule per (org, source). User-created
-	// rules carry source_id = NULL and are intentionally excluded from the
-	// constraint (a single org may have many).
-	if _, err := tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS llm_pricing_rule_org_source_unique ON llm_pricing_rule (org_id, source_id) WHERE source_id IS NOT NULL`); err != nil {
-		return err
 	}
 
 	return tx.Commit()

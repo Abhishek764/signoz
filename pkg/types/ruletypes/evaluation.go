@@ -274,13 +274,6 @@ func (EvaluationEnvelope) JSONSchemaOneOf() []any {
 	}
 }
 
-// PrepareJSONSchema attaches the `x-signoz-discriminator` ExtraProperty;
-// `signoz.attachDiscriminators` promotes it into a real OpenAPI 3
-// `discriminator` field after reflection. See the matching method on
-// `RuleThresholdData` for rationale.
-//
-// Adding a new evaluation kind: add the variant to `JSONSchemaOneOf`
-// AND the mapping below.
 func (EvaluationEnvelope) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	if schema.ExtraProperties == nil {
 		schema.ExtraProperties = map[string]any{}

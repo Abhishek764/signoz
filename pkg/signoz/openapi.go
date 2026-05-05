@@ -204,12 +204,8 @@ func convertJSONNumbers(v interface{}) {
 	}
 }
 
-// attachDiscriminators walks every component schema in the spec and
-// promotes any `x-signoz-discriminator` extension into a proper
-// OpenAPI 3 `discriminator` object on the parent schema. Schemas
-// without the marker are untouched; malformed markers (wrong shape,
-// missing propertyName) are silently dropped — better to leave the
-// schema discriminator-less than to fail OpenAPI generation.
+// attachDiscriminators promotes x-signoz-discriminator extensions
+// into openapi3 Discriminator fields. Malformed markers are dropped.
 func attachDiscriminators(spec *openapi3.Spec) {
 	if spec.Components == nil || spec.Components.Schemas == nil {
 		return

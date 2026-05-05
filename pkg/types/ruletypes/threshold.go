@@ -53,16 +53,9 @@ func (RuleThresholdData) JSONSchemaOneOf() []any {
 	}
 }
 
-// PrepareJSONSchema attaches the `x-signoz-discriminator` ExtraProperty.
-// `signoz.attachDiscriminators` (called once after spec reflection)
-// promotes this marker into a real OpenAPI 3 `discriminator` field on
-// the openapi3.Schema. jsonschema-go.Schema has no Discriminator field
-// of its own, so this two-step (declare on the type, promote in the
-// spec) is what gets a literal `discriminator:` keyword into the
-// output without changing the wire shape.
-//
-// Adding a new threshold kind: add the variant to `JSONSchemaOneOf`
-// AND the mapping below.
+// PrepareJSONSchema marks the schema with x-signoz-discriminator;
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3
+// discriminator after reflection.
 func (RuleThresholdData) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	if schema.ExtraProperties == nil {
 		schema.ExtraProperties = map[string]any{}

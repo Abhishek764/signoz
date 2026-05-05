@@ -4,7 +4,7 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Ellipsis, GripVertical, X } from '@signozhq/icons';
+import { ArrowDown, ArrowUp,ArrowUpDown , Ellipsis, GripVertical, X } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
@@ -176,12 +176,17 @@ function TanStackHeaderRow<TData>({
 									? column.header()
 									: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
 						</span>
-						<span className={headerStyles.tanstackSortIndicator}>
+						<span
+							className={headerStyles.tanstackSortIndicator}
+							data-sort-direction={currentSortDirection || 'none'}
+						>
 							{currentSortDirection === 'asc' ? (
-								<ChevronUp size={SORT_ICON_SIZE} />
+								<ArrowUp size={SORT_ICON_SIZE} />
 							) : currentSortDirection === 'desc' ? (
-								<ChevronDown size={SORT_ICON_SIZE} />
-							) : null}
+								<ArrowDown size={SORT_ICON_SIZE} />
+							) : (
+								<ArrowUpDown size={SORT_ICON_SIZE} />
+							)}
 						</span>
 					</button>
 				) : (

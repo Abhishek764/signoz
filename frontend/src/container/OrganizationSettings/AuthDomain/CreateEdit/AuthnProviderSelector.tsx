@@ -1,11 +1,12 @@
 import { Button, Typography } from 'antd';
+import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
 
 import './CreateEdit.styles.scss';
 import { Key } from '@signozhq/icons';
 import { GoogleSquareFilled } from '@ant-design/icons';
 
 interface AuthNProvider {
-	key: string;
+	key: AuthtypesAuthNProviderDTO;
 	title: string;
 	description: string;
 	icon: JSX.Element;
@@ -15,14 +16,14 @@ interface AuthNProvider {
 function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 	return [
 		{
-			key: 'google_auth',
+			key: AuthtypesAuthNProviderDTO.google_auth,
 			title: 'Google Apps Authentication',
 			description: 'Let members sign-in with a Google workspace account',
 			icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
 			enabled: true,
 		},
 		{
-			key: 'saml',
+			key: AuthtypesAuthNProviderDTO.saml,
 			title: 'SAML Authentication',
 			description:
 				'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
@@ -31,7 +32,7 @@ function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 		},
 
 		{
-			key: 'oidc',
+			key: AuthtypesAuthNProviderDTO.oidc,
 			title: 'OIDC Authentication',
 			description:
 				'Authenticate using OpenID Connect providers like Azure, Active Directory, Okta, or other OIDC compliant solutions',
@@ -45,7 +46,9 @@ function AuthnProviderSelector({
 	setAuthnProvider,
 	samlEnabled,
 }: {
-	setAuthnProvider: React.Dispatch<React.SetStateAction<string>>;
+	setAuthnProvider: React.Dispatch<
+		React.SetStateAction<AuthtypesAuthNProviderDTO | ''>
+	>;
 	samlEnabled: boolean;
 }): JSX.Element {
 	const authnProviders = getAuthNProviders(samlEnabled);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { PipelineData } from 'types/api/pipeline/def';
+import { Flex } from 'antd';
 
 function TableExpandIcon({
 	expanded,
@@ -14,9 +15,17 @@ function TableExpandIcon({
 	};
 
 	if (expanded) {
-		return <ChevronDown onClick={handleOnExpand} />;
+		return (
+			<Flex align="center" justify="center">
+				<ChevronDown size="2xl" onClick={handleOnExpand} />
+			</Flex>
+		);
 	}
-	return <ChevronRight onClick={handleOnExpand} />;
+	return (
+		<Flex align="center" justify="center">
+			<ChevronRight size="2xl" onClick={handleOnExpand} />
+		</Flex>
+	);
 }
 
 interface TableExpandIconProps {

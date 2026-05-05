@@ -7,11 +7,11 @@ function DeleteAction({
 	deleteAction,
 }: DeleteActionProps): JSX.Element {
 	if (isPipelineAction) {
-		return <Trash2 onClick={deleteAction} style={iconStyle} />;
+		return <Trash2 size="lg" onClick={deleteAction} style={iconStyle} />;
 	}
 	return (
 		<span key="delete-action">
-			<Trash2 onClick={deleteAction} style={smallIconStyle} />
+			<Trash2 size="lg" onClick={deleteAction} style={smallIconStyle} />
 		</span>
 	);
 }

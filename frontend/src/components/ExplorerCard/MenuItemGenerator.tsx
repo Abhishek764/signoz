@@ -31,7 +31,7 @@ function MenuItemGenerator({
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
 
-	const onDeleteHandler = (event: MouseEvent<HTMLElement>): void => {
+	const onDeleteHandler = (event: MouseEvent<SVGSVGElement>): void => {
 		event.stopPropagation();
 		deleteViewHandler({
 			deleteViewAsync,
@@ -86,7 +86,6 @@ function MenuItemGenerator({
 				</Col>
 				<Col span={2}>
 					<Typography.Link>
-						//TODO: make sure icons support onClick event
 						<Trash2 onClick={onDeleteHandler} />
 					</Typography.Link>
 				</Col>

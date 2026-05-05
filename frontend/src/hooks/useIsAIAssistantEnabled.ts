@@ -29,15 +29,11 @@ function validUrl(value: string | null | undefined): string | null {
 export function useIsAIAssistantEnabled(): boolean {
 	const { data, isLoading, isError } = useGetGlobalConfig();
 	const url =
-		!isLoading && !isError
-			? validUrl(data?.data?.ai_assistant_url)
-			: 'http://localhost:8001';
-
-	const defaultUrl = 'http://localhost:8001';
+		!isLoading && !isError ? validUrl(data?.data?.ai_assistant_url) : null;
 
 	useEffect(() => {
-		setAIBackendUrl(url || defaultUrl);
-	}, [url, defaultUrl]);
+		setAIBackendUrl(url);
+	}, [url]);
 
-	return url !== null;
+	return !!url;
 }

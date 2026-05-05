@@ -4574,6 +4574,43 @@ export interface DashboardtypesHistogramPanelSpecDTO {
 	legend?: DashboardtypesLegendDTO;
 }
 
+/**
+ * @nullable
+ */
+export type DashboardtypesJSONPatchDocumentDTO =
+	| DashboardtypesJSONPatchOperationDTO[]
+	| null;
+
+export enum DashboardtypesJSONPatchOperationDTOOp {
+	add = 'add',
+	remove = 'remove',
+	replace = 'replace',
+	move = 'move',
+	copy = 'copy',
+	test = 'test',
+}
+export interface DashboardtypesJSONPatchOperationDTO {
+	/**
+	 * @type string
+	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
+	 */
+	from?: string;
+	/**
+	 * @enum add,remove,replace,move,copy,test
+	 * @type string
+	 */
+	op: DashboardtypesJSONPatchOperationDTOOp;
+	/**
+	 * @type string
+	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0, /tags/-.
+	 */
+	path: string;
+	/**
+	 * @description Value to add/replace/test against. The expected type depends on the path — a string for /data/display/name, a Panel for /data/panels/<id>, a PostableTag for /tags/-, etc. Required for add/replace/test; ignored for remove/move/copy.
+	 */
+	value?: unknown;
+}
+
 export type DashboardtypesLayoutDTO =
 	DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO;
 
@@ -10022,6 +10059,17 @@ export type GetDashboardV2PathParameters = {
 	id: string;
 };
 export type GetDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PatchDashboardV2PathParameters = {
+	id: string;
+};
+export type PatchDashboardV2200 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
 	 * @type string

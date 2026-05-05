@@ -111,6 +111,51 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	return existing, nil
 }
 
+func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := existing.CanUpdate(); err != nil {
+		return nil, err
+	}
+
+	updateable, err := patch.Apply(existing)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, updateable.Tags, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+	tagIDs := make([]valuer.UUID, len(resolvedTags))
+	for i, t := range resolvedTags {
+		tagIDs[i] = t.ID
+	}
+
+	if err := existing.Update(*updateable, updatedBy, resolvedTags); err != nil {
+		return nil, err
+	}
+
+	storable, err := existing.ToStorableDashboard()
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		if err := module.tagModule.SyncLinksForEntity(ctx, orgID, dashboardtypes.EntityTypeDashboard, id, tagIDs); err != nil {
+			return err
+		}
+		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
 // CreatePublicV2 is not supported in the community build.
 func (module *module) CreatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")

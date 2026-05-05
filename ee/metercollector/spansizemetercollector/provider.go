@@ -18,17 +18,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MeterName is the typed registry key for this collector.
 var (
-	MeterName        = metercollectortypes.MustNewName("signoz.meter.span.size")
-	meterUnit        = metercollectortypes.UnitBytes
-	meterAggregation = metercollectortypes.AggregationSum
+	MeterName        = zeustypes.MustNewMeterName("signoz.meter.span.size")
+	meterUnit        = zeustypes.MeterUnitBytes
+	meterAggregation = zeustypes.MeterAggregationSum
 )
 
 var _ metercollector.MeterCollector = (*Provider)(nil)
@@ -46,14 +45,14 @@ func New(telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStor
 	}
 }
 
-func (p *Provider) Name() metercollectortypes.Name { return MeterName }
-func (p *Provider) Unit() metercollectortypes.Unit { return meterUnit }
-func (p *Provider) Aggregation() metercollectortypes.Aggregation {
+func (p *Provider) Name() zeustypes.MeterName { return MeterName }
+func (p *Provider) Unit() zeustypes.MeterUnit { return meterUnit }
+func (p *Provider) Aggregation() zeustypes.MeterAggregation {
 	return meterAggregation
 }
 
 // Collect aggregates span size for the window and emits an empty-day sentinel.
-func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
+func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	meterName := MeterName.String()
 
 	slices, err := retention.LoadActiveSlices(
@@ -125,14 +124,14 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *meter
 		}
 	}
 
-	meters := make([]meterreportertypes.Meter, 0, len(accumulator))
+	meters := make([]zeustypes.Meter, 0, len(accumulator))
 	for _, b := range accumulator {
-		meters = append(meters, meterreportertypes.NewMeter(MeterName, b.value, meterUnit, meterAggregation, window, b.dimensions))
+		meters = append(meters, zeustypes.NewMeter(MeterName, b.value, meterUnit, meterAggregation, window, b.dimensions))
 	}
 
 	// Empty windows still emit a sentinel so checkpoints can advance.
 	if len(meters) == 0 && len(slices) > 0 {
-		meters = append(meters, meterreportertypes.NewMeter(MeterName, 0, meterUnit, meterAggregation, window, map[string]string{
+		meters = append(meters, zeustypes.NewMeter(MeterName, 0, meterUnit, meterAggregation, window, map[string]string{
 			metercollector.DimensionOrganizationID: orgID.StringValue(),
 			metercollector.DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
 		}))

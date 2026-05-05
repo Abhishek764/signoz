@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/metercollector"
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
@@ -38,8 +38,8 @@ func TestProviderMetadata(t *testing.T) {
 	provider := New(nil, nil)
 
 	require.Equal(t, "signoz.meter.span.count", provider.Name().String())
-	require.Equal(t, metercollectortypes.UnitCount, provider.Unit())
-	require.Equal(t, metercollectortypes.AggregationSum, provider.Aggregation())
+	require.Equal(t, zeustypes.MeterUnitCount, provider.Unit())
+	require.Equal(t, zeustypes.MeterAggregationSum, provider.Aggregation())
 }
 
 func TestBucketKeyIsStable(t *testing.T) {

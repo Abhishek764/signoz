@@ -69,8 +69,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -244,8 +244,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	return nil
 }
 
-func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore) map[metercollectortypes.Name]metercollector.MeterCollector {
-	return map[metercollectortypes.Name]metercollector.MeterCollector{
+func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore) map[zeustypes.MeterName]metercollector.MeterCollector {
+	return map[zeustypes.MeterName]metercollector.MeterCollector{
 		baseplatformfeemetercollector.MeterName: baseplatformfeemetercollector.New(licensing),
 		logcountmetercollector.MeterName:        logcountmetercollector.New(telemetryStore, sqlStore),
 		logsizemetercollector.MeterName:         logsizemetercollector.New(telemetryStore, sqlStore),

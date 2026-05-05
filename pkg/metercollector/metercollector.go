@@ -4,16 +4,15 @@ package metercollector
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MeterCollector owns one billing meter's metadata and collection query.
 // Collect stamps DimensionOrganizationID and returns errors instead of panics.
 type MeterCollector interface {
-	Name() metercollectortypes.Name
-	Unit() metercollectortypes.Unit
-	Aggregation() metercollectortypes.Aggregation
-	Collect(ctx context.Context, orgID valuer.UUID, window *meterreportertypes.Window) ([]meterreportertypes.Meter, error)
+	Name() zeustypes.MeterName
+	Unit() zeustypes.MeterUnit
+	Aggregation() zeustypes.MeterAggregation
+	Collect(ctx context.Context, orgID valuer.UUID, window *zeustypes.MeterWindow) ([]zeustypes.Meter, error)
 }

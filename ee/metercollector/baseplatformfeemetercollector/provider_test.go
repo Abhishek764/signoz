@@ -8,8 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
@@ -23,8 +22,8 @@ func TestCollectEmitsBasePlatformFeeMeterForValidLicense(t *testing.T) {
 
 	readings, err := provider.Collect(context.Background(), orgID, window)
 	require.NoError(t, err)
-	require.Equal(t, []meterreportertypes.Meter{
-		meterreportertypes.NewMeter(MeterName, 1, metercollectortypes.UnitCount, metercollectortypes.AggregationMax, window, map[string]string{
+	require.Equal(t, []zeustypes.Meter{
+		zeustypes.NewMeter(MeterName, 1, zeustypes.MeterUnitCount, zeustypes.MeterAggregationMax, window, map[string]string{
 			metercollector.DimensionOrganizationID: orgID.StringValue(),
 		}),
 	}, readings)
@@ -40,13 +39,13 @@ func TestProviderMetadata(t *testing.T) {
 	provider := New(&fakeLicensing{})
 
 	require.Equal(t, "signoz.meter.base.platform.fee", provider.Name().String())
-	require.Equal(t, metercollectortypes.UnitCount, provider.Unit())
-	require.Equal(t, metercollectortypes.AggregationMax, provider.Aggregation())
+	require.Equal(t, zeustypes.MeterUnitCount, provider.Unit())
+	require.Equal(t, zeustypes.MeterAggregationMax, provider.Aggregation())
 }
 
-func completedWindow() *meterreportertypes.Window {
+func completedWindow() *zeustypes.MeterWindow {
 	start := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
-	return meterreportertypes.MustNewWindow(start.UnixMilli(), start.AddDate(0, 0, 1).UnixMilli(), true)
+	return zeustypes.MustNewMeterWindow(start.UnixMilli(), start.AddDate(0, 0, 1).UnixMilli(), true)
 }
 
 var _ licensing.Licensing = (*fakeLicensing)(nil)

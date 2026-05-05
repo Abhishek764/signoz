@@ -16,8 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/huandu/go-sqlbuilder"
@@ -79,7 +78,7 @@ type Provider struct {
 
 // NewFactory registers the HTTP meter reporter.
 func NewFactory(
-	collectors map[metercollectortypes.Name]metercollector.MeterCollector,
+	collectors map[zeustypes.MeterName]metercollector.MeterCollector,
 	licensing licensing.Licensing,
 	telemetryStore telemetrystore.TelemetryStore,
 	orgGetter organization.Getter,
@@ -97,7 +96,7 @@ func newProvider(
 	_ context.Context,
 	providerSettings factory.ProviderSettings,
 	config meterreporter.Config,
-	collectors map[metercollectortypes.Name]metercollector.MeterCollector,
+	collectors map[zeustypes.MeterName]metercollector.MeterCollector,
 	licensing licensing.Licensing,
 	telemetryStore telemetrystore.TelemetryStore,
 	orgGetter organization.Getter,
@@ -129,7 +128,7 @@ func newProvider(
 	}, nil
 }
 
-func validateCollectors(collectors map[metercollectortypes.Name]metercollector.MeterCollector) ([]metercollector.MeterCollector, error) {
+func validateCollectors(collectors map[zeustypes.MeterName]metercollector.MeterCollector) ([]metercollector.MeterCollector, error) {
 	ordered := make([]metercollector.MeterCollector, 0, len(collectors))
 	for name, collector := range collectors {
 		if name.IsZero() {
@@ -320,7 +319,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 		slog.Int("catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
 	)
 	for day := catchupStart; !day.After(end); day = day.AddDate(0, 0, 1) {
-		window, err := meterreportertypes.NewWindow(day.UnixMilli(), day.AddDate(0, 0, 1).UnixMilli(), true)
+		window, err := zeustypes.NewMeterWindow(day.UnixMilli(), day.AddDate(0, 0, 1).UnixMilli(), true)
 		if err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "build sealed meter window")
 		}
@@ -341,7 +340,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 
 	// Today's partial window runs every tick.
 	if now.UnixMilli() > todayStart.UnixMilli() {
-		todayWindow, err := meterreportertypes.NewWindow(todayStart.UnixMilli(), now.UnixMilli(), false)
+		todayWindow, err := zeustypes.NewMeterWindow(todayStart.UnixMilli(), now.UnixMilli(), false)
 		if err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "build current-day meter window")
 		}
@@ -352,7 +351,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 }
 
 // runPhase collects all meters for one window and ships the batch.
-func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window *meterreportertypes.Window, checkpointsByMeter map[string]time.Time) error {
+func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window *zeustypes.MeterWindow, checkpointsByMeter map[string]time.Time) error {
 	phaseLabel := phaseToday
 	if window.IsCompleted {
 		phaseLabel = phaseSealed
@@ -380,7 +379,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 	)
 
 	collectStart := time.Now()
-	readings := make([]meterreportertypes.Meter, 0, len(provider.collectors))
+	readings := make([]zeustypes.Meter, 0, len(provider.collectors))
 	for _, collector := range provider.collectors {
 		meterName := collector.Name().String()
 		collectStart := time.Now()
@@ -503,7 +502,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 }
 
 // dropCheckpointed removes readings already covered by meter checkpoints.
-func dropCheckpointed(readings []meterreportertypes.Meter, windowDay time.Time, checkpointsByMeter map[string]time.Time) []meterreportertypes.Meter {
+func dropCheckpointed(readings []zeustypes.Meter, windowDay time.Time, checkpointsByMeter map[string]time.Time) []zeustypes.Meter {
 	if len(checkpointsByMeter) == 0 {
 		return readings
 	}
@@ -584,7 +583,7 @@ func (provider *Provider) dataFloor(ctx context.Context, todayStart time.Time) t
 }
 
 // shipReadings sends one day's meter batch to Zeus.
-func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []meterreportertypes.Meter) error {
+func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, date string, readings []zeustypes.Meter) error {
 	idempotencyKey := fmt.Sprintf("meter-cron:%s", date)
 	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.ShipReadings", trace.WithAttributes(
 		attribute.String(attrDate, date),
@@ -617,7 +616,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 	}
 
 	// TODO: re-enable once /v2/meters is live in staging.
-	// body, err := json.Marshal(meterreportertypes.PostableMeters{Meters: readings})
+	// body, err := json.Marshal(zeustypes.PostableMeters{Meters: readings})
 	// if err != nil {
 	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
 	// }

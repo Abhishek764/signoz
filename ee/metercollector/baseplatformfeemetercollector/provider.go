@@ -7,16 +7,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/metercollector"
-	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // MeterName is the typed registry key for this collector.
 var (
-	MeterName        = metercollectortypes.MustNewName("signoz.meter.base.platform.fee")
-	meterUnit        = metercollectortypes.UnitCount
-	meterAggregation = metercollectortypes.AggregationMax
+	MeterName        = zeustypes.MustNewMeterName("signoz.meter.base.platform.fee")
+	meterUnit        = zeustypes.MeterUnitCount
+	meterAggregation = zeustypes.MeterAggregationMax
 )
 
 var _ metercollector.MeterCollector = (*Provider)(nil)
@@ -30,14 +29,14 @@ func New(licensing licensing.Licensing) *Provider {
 	return &Provider{licensing: licensing}
 }
 
-func (p *Provider) Name() metercollectortypes.Name { return MeterName }
-func (p *Provider) Unit() metercollectortypes.Unit { return meterUnit }
-func (p *Provider) Aggregation() metercollectortypes.Aggregation {
+func (p *Provider) Name() zeustypes.MeterName { return MeterName }
+func (p *Provider) Unit() zeustypes.MeterUnit { return meterUnit }
+func (p *Provider) Aggregation() zeustypes.MeterAggregation {
 	return meterAggregation
 }
 
 // Collect emits value 1 when the org has an active license.
-func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
+func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	license, err := p.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "fetch active license for base platform fee meter")
@@ -46,8 +45,8 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *meter
 		return nil, nil
 	}
 
-	return []meterreportertypes.Meter{
-		meterreportertypes.NewMeter(MeterName, 1, meterUnit, meterAggregation, window, map[string]string{
+	return []zeustypes.Meter{
+		zeustypes.NewMeter(MeterName, 1, meterUnit, meterAggregation, window, map[string]string{
 			metercollector.DimensionOrganizationID: orgID.StringValue(),
 		}),
 	}, nil

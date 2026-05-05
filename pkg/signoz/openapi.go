@@ -44,6 +44,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const signozDiscriminatorKey string = "x-signoz-discriminator"
+
 type OpenAPI struct {
 	apiserver apiserver.APIServer
 	reflector *openapi3.Reflector
@@ -142,13 +144,6 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 		return err
 	}
 
-	// Promote `x-signoz-discriminator` markers (set by Exposer impls
-	// in pkg/types via `Schema.ExtraProperties`) into real OpenAPI 3
-	// `discriminator` fields. jsonschema-go.Schema has no
-	// Discriminator field of its own and openapi-go only carries
-	// `x-` prefixed extras through ExtraProperties unchanged, so the
-	// type-side declaration goes through this marker convention and
-	// the spec-side promotion happens here.
 	attachDiscriminators(openapi.reflector.Spec)
 
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
@@ -177,20 +172,37 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	return os.WriteFile(path, spec, 0o600)
 }
 
-// signozDiscriminatorKey is the marker that `JSONSchema()` Exposer
-// impls in pkg/types use to declare an OpenAPI 3 discriminator. The
-// keyword itself isn't a JSON Schema concept and the marker can't be
-// promoted from `jsonschema-go.Schema.ExtraProperties` to
-// `openapi3.Schema.Discriminator` by the upstream conversion code
-// (which only carries through `x-`-prefixed extras into
-// `MapOfAnything`). `attachDiscriminators` reads this marker and
-// promotes it to a real `Discriminator` field on the openapi3 schema
-// (then deletes the marker so it doesn't pollute the rendered YAML).
-//
-// The marker value is a `map[string]any` with:
-//   - "propertyName" (string, required)  — the discriminator field
-//   - "mapping"      (map[string]string, optional) — value→$ref
-const signozDiscriminatorKey = "x-signoz-discriminator"
+// convertJSONNumbers recursively walks a decoded JSON structure and converts
+// json.Number values to int64 (preferred) or float64 so that YAML marshaling
+// renders them as plain numbers instead of quoted strings.
+func convertJSONNumbers(v interface{}) {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		for k, elem := range val {
+			if n, ok := elem.(json.Number); ok {
+				if i, err := n.Int64(); err == nil {
+					val[k] = i
+				} else if f, err := n.Float64(); err == nil {
+					val[k] = f
+				}
+			} else {
+				convertJSONNumbers(elem)
+			}
+		}
+	case []interface{}:
+		for i, elem := range val {
+			if n, ok := elem.(json.Number); ok {
+				if i64, err := n.Int64(); err == nil {
+					val[i] = i64
+				} else if f, err := n.Float64(); err == nil {
+					val[i] = f
+				}
+			} else {
+				convertJSONNumbers(elem)
+			}
+		}
+	}
+}
 
 // attachDiscriminators walks every component schema in the spec and
 // promotes any `x-signoz-discriminator` extension into a proper
@@ -235,37 +247,5 @@ func attachDiscriminators(spec *openapi3.Spec) {
 		entry.Schema.Discriminator = &disc
 		delete(entry.Schema.MapOfAnything, signozDiscriminatorKey)
 		spec.Components.Schemas.MapOfSchemaOrRefValues[name] = entry
-	}
-}
-
-// convertJSONNumbers recursively walks a decoded JSON structure and converts
-// json.Number values to int64 (preferred) or float64 so that YAML marshaling
-// renders them as plain numbers instead of quoted strings.
-func convertJSONNumbers(v interface{}) {
-	switch val := v.(type) {
-	case map[string]interface{}:
-		for k, elem := range val {
-			if n, ok := elem.(json.Number); ok {
-				if i, err := n.Int64(); err == nil {
-					val[k] = i
-				} else if f, err := n.Float64(); err == nil {
-					val[k] = f
-				}
-			} else {
-				convertJSONNumbers(elem)
-			}
-		}
-	case []interface{}:
-		for i, elem := range val {
-			if n, ok := elem.(json.Number); ok {
-				if i64, err := n.Int64(); err == nil {
-					val[i] = i64
-				} else if f, err := n.Float64(); err == nil {
-					val[i] = f
-				}
-			} else {
-				convertJSONNumbers(elem)
-			}
-		}
 	}
 }

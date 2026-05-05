@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
@@ -151,7 +152,9 @@ func ttlSetting(t *testing.T, createdAt time.Time, ttlDays int, rules []retentio
 	require.NoError(t, err)
 
 	return &retentiontypes.TTLSetting{
-		CreatedAt: createdAt,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: createdAt,
+		},
 		TTL:       ttlDays,
 		Condition: string(condition),
 	}

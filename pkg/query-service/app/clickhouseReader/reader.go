@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
@@ -1426,9 +1427,13 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			query += " SETTINGS materialize_ttl_after_modify=0"
 
 			ttl := retentiontypes.TTLSetting{
-				ID:             valuer.GenerateUUID(),
-				CreatedAt:      time.Now(),
-				UpdatedAt:      time.Now(),
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
@@ -1560,9 +1565,13 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			}
 
 			ttl := retentiontypes.TTLSetting{
-				ID:             valuer.GenerateUUID(),
-				CreatedAt:      time.Now(),
-				UpdatedAt:      time.Now(),
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
@@ -1831,9 +1840,13 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 
 	for tableName, queries := range ttlPayload {
 		customTTL := retentiontypes.TTLSetting{
-			ID:             valuer.GenerateUUID(),
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 			TransactionID:  uuid,
 			TableName:      tableName,
 			TTL:            params.DefaultTTLDays,
@@ -2224,9 +2237,13 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 	}
 	metricTTL := func(tableName string) {
 		ttl := retentiontypes.TTLSetting{
-			ID:             valuer.GenerateUUID(),
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 			TransactionID:  uuid,
 			TableName:      tableName,
 			TTL:            int(params.DelDuration),

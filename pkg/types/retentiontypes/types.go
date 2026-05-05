@@ -1,11 +1,6 @@
 package retentiontypes
 
-import (
-	"time"
-
-	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
-)
+import "time"
 
 const (
 	DefaultLogsRetentionDays    = 15
@@ -31,21 +26,6 @@ type Slice struct {
 	EndMs       int64
 	Rules       []CustomRetentionRule
 	DefaultDays int
-}
-
-type TTLSetting struct {
-	bun.BaseModel `bun:"table:ttl_setting"`
-	ID            valuer.UUID `json:"id" bun:"id,pk,type:text" required:"true"`
-	CreatedAt     time.Time   `bun:"created_at" json:"createdAt"`
-	UpdatedAt     time.Time   `bun:"updated_at" json:"updatedAt"`
-
-	TransactionID  string `bun:"transaction_id,type:text,notnull"`
-	TableName      string `bun:"table_name,type:text,notnull"`
-	TTL            int    `bun:"ttl,notnull,default:0"`
-	ColdStorageTTL int    `bun:"cold_storage_ttl,notnull,default:0"`
-	Status         string `bun:"status,type:text,notnull"`
-	OrgID          string `json:"-" bun:"org_id,notnull"`
-	Condition      string `bun:"condition,type:text"`
 }
 
 type TTLParams struct {

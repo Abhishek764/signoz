@@ -203,7 +203,7 @@ function PipelineExpandView({
 		if (prevPipelinesCount === 0 || isEditingActionMode) {
 			return (
 				<FooterButton type="link" onClick={addNewProcessorHandler}>
-					<CirclePlus />
+					<CirclePlus size="lg" />
 					<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
 				</FooterButton>
 			);

@@ -171,7 +171,7 @@ function PipelineListsView({
 		}: AlertMessage) => {
 			modal.confirm({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
-				icon: <CircleAlert />,
+				icon: <CircleAlert size="xl" className="modal-icon-container" />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <span className={`${className}-ok-text`}>{buttontext}</span>,
 				cancelText: <span>{t('cancel')}</span>,
@@ -407,7 +407,7 @@ function PipelineListsView({
 				<FooterButton
 					type="link"
 					onClick={addNewPipelineHandler}
-					icon={<Plus />}
+					icon={<Plus size="lg" />}
 				>
 					{t('add_new_pipeline')}
 				</FooterButton>

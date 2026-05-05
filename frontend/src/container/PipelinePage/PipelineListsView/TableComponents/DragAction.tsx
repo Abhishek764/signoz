@@ -8,7 +8,7 @@ function DragAction({ isEnabled, onChange }: DragActionProps): JSX.Element {
 	return (
 		<LastActionColumn>
 			<Switch defaultChecked={isEnabled} onChange={onChange} />
-			<GripVertical style={holdIconStyle} />
+			<GripVertical size="lg" style={holdIconStyle} />
 		</LastActionColumn>
 	);
 }

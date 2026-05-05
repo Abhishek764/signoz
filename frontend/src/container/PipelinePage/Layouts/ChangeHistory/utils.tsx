@@ -1,5 +1,11 @@
 import { Spin } from 'antd';
-import { CircleAlert, CircleCheck, CircleMinus, CircleX, Loader } from '@signozhq/icons';
+import {
+	CircleMinus,
+	Loader,
+	SolidCheckCircle2,
+	SolidAlertOctagon,
+	SolidXCircle,
+} from '@signozhq/icons';
 
 export function getDeploymentStage(value: string): string {
 	switch (value) {
@@ -22,16 +28,18 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 	switch (value) {
 		case 'in_progress':
 			return (
-				<Spin indicator={<Loader style={{ fontSize: 15 }} className="animate-spin" />} />
+				<Spin
+					indicator={<Loader style={{ fontSize: 15 }} className="animate-spin" />}
+				/>
 			);
 		case 'deployed':
-			return <CircleCheck />;
+			return <SolidCheckCircle2 size="md" />;
 		case 'dirty':
-			return <CircleAlert />;
+			return <SolidAlertOctagon size="md" />;
 		case 'failed':
-			return <CircleX />;
+			return <SolidXCircle size="md" />;
 		case 'unknown':
-			return <CircleMinus />;
+			return <CircleMinus size="md" />;
 		default:
 			return <span />;
 	}

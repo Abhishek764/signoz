@@ -6,7 +6,8 @@ import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
-import { Pencil, Plus } from '@signozhq/icons';
+import { PencilLine, Plus } from '@signozhq/icons';
+import { Flex } from 'antd';
 
 function CreatePipelineButton({
 	setActionType,
@@ -46,11 +47,13 @@ function CreatePipelineButton({
 			/>
 			{isAddNewPipelineVisible && (
 				<CustomButton
-					icon={<Pencil />}
 					onClick={onEnterEditMode}
 					disabled={isDisabled}
 				>
-					{t('enter_edit_mode')}
+					<Flex align="center" gap={4}>
+						<PencilLine size="md" />
+						{t('enter_edit_mode')}
+					</Flex>
 				</CustomButton>
 			)}
 			{!isAddNewPipelineVisible && (

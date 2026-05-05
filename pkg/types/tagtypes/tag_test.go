@@ -162,6 +162,14 @@ func (f *fakeStore) CreateRelations(_ context.Context, _ []*TagRelation) error {
 	return nil
 }
 
+func (f *fakeStore) ListByEntity(_ context.Context, _ valuer.UUID) ([]*Tag, error) {
+	return nil, nil
+}
+
+func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ valuer.UUID, _ []valuer.UUID) error {
+	return nil
+}
+
 func TestResolve(t *testing.T) {
 	t.Run("empty input does not hit store", func(t *testing.T) {
 		store := &fakeStore{}

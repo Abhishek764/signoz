@@ -29,9 +29,19 @@ func (ThresholdKind) Enum() []any {
 	}
 }
 
+// RuleThresholdData's Kind/Spec are tagged json:"-" so the schema
+// reflector skips them — the oneOf variants already declare both
+// fields. Wire serialization goes through MarshalJSON below.
 type RuleThresholdData struct {
-	Kind ThresholdKind `json:"kind" required:"true"`
-	Spec any           `json:"spec" required:"true"`
+	Kind ThresholdKind `json:"-"`
+	Spec any           `json:"-"`
+}
+
+func (r RuleThresholdData) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Kind ThresholdKind `json:"kind"`
+		Spec any           `json:"spec"`
+	}{r.Kind, r.Spec})
 }
 
 // thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.

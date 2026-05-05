@@ -4361,13 +4361,6 @@ components:
       oneOf:
       - $ref: '#/components/schemas/RuletypesEvaluationRolling'
       - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -4696,13 +4689,6 @@ components:
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesRuleType:
       enum:

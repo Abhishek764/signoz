@@ -18,14 +18,15 @@ import (
 // buildNodeRecords assembles the page records. Condition counts come from
 // conditionCounts in both modes. In list mode (isNodeNameInGroupBy=true) each
 // group is one node, so exactly one count is 1; Condition is derived from
-// which one. In grouped_list mode Condition stays NodeConditionNone.
+// which one. In grouped_list mode Condition stays NodeConditionNoData.
 func buildNodeRecords(
 	isNodeNameInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
-	conditionCounts map[string]nodeConditionCounts,
+	nodeConditionCounts map[string]nodeConditionCounts,
+	podPhaseCounts map[string]podPhaseCounts,
 ) []inframonitoringtypes.NodeRecord {
 	metricsMap := parseFullQueryResponse(resp, groupBy)
 
@@ -36,7 +37,7 @@ func buildNodeRecords(
 
 		record := inframonitoringtypes.NodeRecord{ // initialize with default values
 			NodeName:              nodeName,
-			Condition:             inframonitoringtypes.NodeConditionNone,
+			Condition:             inframonitoringtypes.NodeConditionNoData,
 			NodeCPU:               -1,
 			NodeCPUAllocatable:    -1,
 			NodeMemory:            -1,
@@ -59,18 +60,30 @@ func buildNodeRecords(
 			}
 		}
 
-		if conditionCountsForGroup, ok := conditionCounts[compositeKey]; ok {
-			record.ReadyNodesCount = conditionCountsForGroup.Ready
-			record.NotReadyNodesCount = conditionCountsForGroup.NotReady
+		if nodeConditionCountsForGroup, ok := nodeConditionCounts[compositeKey]; ok {
+			record.NodeCountsByReadiness = inframonitoringtypes.NodeCountsByReadiness{
+				Ready:    nodeConditionCountsForGroup.Ready,
+				NotReady: nodeConditionCountsForGroup.NotReady,
+			}
 
 			// In list mode each group is one node; the count==1 bucket identifies the condition.
 			if isNodeNameInGroupBy {
 				switch {
-				case conditionCountsForGroup.Ready == 1:
+				case nodeConditionCountsForGroup.Ready == 1:
 					record.Condition = inframonitoringtypes.NodeConditionReady
-				case conditionCountsForGroup.NotReady == 1:
+				case nodeConditionCountsForGroup.NotReady == 1:
 					record.Condition = inframonitoringtypes.NodeConditionNotReady
 				}
+			}
+		}
+
+		if podPhaseCountsForGroup, ok := podPhaseCounts[compositeKey]; ok {
+			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
+				Pending:   podPhaseCountsForGroup.Pending,
+				Running:   podPhaseCountsForGroup.Running,
+				Succeeded: podPhaseCountsForGroup.Succeeded,
+				Failed:    podPhaseCountsForGroup.Failed,
+				Unknown:   podPhaseCountsForGroup.Unknown,
 			}
 		}
 

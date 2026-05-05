@@ -9,14 +9,14 @@ type NodeCondition struct {
 var (
 	NodeConditionReady    = NodeCondition{valuer.NewString("ready")}
 	NodeConditionNotReady = NodeCondition{valuer.NewString("not_ready")}
-	NodeConditionNone     = NodeCondition{valuer.NewString("")}
+	NodeConditionNoData   = NodeCondition{valuer.NewString("no_data")}
 )
 
 func (NodeCondition) Enum() []any {
 	return []any{
 		NodeConditionReady,
 		NodeConditionNotReady,
-		NodeConditionNone,
+		NodeConditionNoData,
 	}
 }
 

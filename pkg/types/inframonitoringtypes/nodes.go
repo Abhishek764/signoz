@@ -17,11 +17,18 @@ type Nodes struct {
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
+// NodeCountsByReadiness buckets node counts by their latest k8s.node.condition_ready
+// value in the time window. Reusable across record types (node / cluster).
+type NodeCountsByReadiness struct {
+	Ready    int `json:"ready" required:"true"`
+	NotReady int `json:"notReady" required:"true"`
+}
+
 type NodeRecord struct {
 	NodeName              string                 `json:"nodeName" required:"true"`
 	Condition             NodeCondition          `json:"condition" required:"true"`
-	ReadyNodesCount       int                    `json:"readyNodesCount" required:"true"`
-	NotReadyNodesCount    int                    `json:"notReadyNodesCount" required:"true"`
+	NodeCountsByReadiness NodeCountsByReadiness  `json:"nodeCountsByReadiness" required:"true"`
+	PodCountsByPhase      PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
 	NodeCPU               float64                `json:"nodeCPU" required:"true"`
 	NodeCPUAllocatable    float64                `json:"nodeCPUAllocatable" required:"true"`
 	NodeMemory            float64                `json:"nodeMemory" required:"true"`

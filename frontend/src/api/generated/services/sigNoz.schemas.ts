@@ -120,6 +120,1412 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	updatedBy?: string | null;
 }
 
+export type AlertmanagertypesPostableChannelDTO =
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  });
+
 export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type array
@@ -165,21 +1571,47 @@ export interface AuthtypesAttributeMappingDTO {
 	role?: string;
 }
 
-export interface AuthtypesAuthDomainConfigDTO {
-	googleAuthConfig?: AuthtypesGoogleConfigDTO;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
-	roleMapping?: AuthtypesRoleMappingDTO;
-	samlConfig?: AuthtypesSamlConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	ssoEnabled?: boolean;
-	/**
-	 * @type string
-	 */
-	ssoType?: string;
-}
+export type AuthtypesAuthDomainConfigDTO =
+	| (AuthtypesSamlConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  })
+	| (AuthtypesGoogleConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  })
+	| (AuthtypesOIDCConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  });
 
+export enum AuthtypesAuthNProviderDTO {
+	google_auth = 'google_auth',
+	saml = 'saml',
+	email_password = 'email_password',
+	oidc = 'oidc',
+}
 export interface AuthtypesAuthNProviderInfoDTO {
 	/**
 	 * @type string
@@ -202,10 +1634,7 @@ export interface AuthtypesAuthNSupportDTO {
 }
 
 export interface AuthtypesCallbackAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
+	provider?: AuthtypesAuthNProviderDTO;
 	/**
 	 * @type string
 	 */
@@ -214,12 +1643,12 @@ export interface AuthtypesCallbackAuthNSupportDTO {
 
 export interface AuthtypesGettableAuthDomainDTO {
 	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
+	config?: AuthtypesAuthDomainConfigDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
 	createdAt?: Date;
-	googleAuthConfig?: AuthtypesGoogleConfigDTO;
 	/**
 	 * @type string
 	 */
@@ -228,21 +1657,10 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 */
 	name?: string;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
 	/**
 	 * @type string
 	 */
 	orgId?: string;
-	roleMapping?: AuthtypesRoleMappingDTO;
-	samlConfig?: AuthtypesSamlConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	ssoEnabled?: boolean;
-	/**
-	 * @type string
-	 */
-	ssoType?: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -401,10 +1819,7 @@ export interface AuthtypesOrgSessionContextDTO {
 }
 
 export interface AuthtypesPasswordAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
+	provider?: AuthtypesAuthNProviderDTO;
 }
 
 export interface AuthtypesPatchableObjectsDTO {
@@ -575,7 +1990,7 @@ export interface AuthtypesTransactionDTO {
 	relation: string;
 }
 
-export interface AuthtypesUpdateableAuthDomainDTO {
+export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 }
 
@@ -3124,6 +4539,11 @@ export interface GlobaltypesAPIKeyConfigDTO {
 export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string
+	 * @nullable true
+	 */
+	ai_assistant_url: string | null;
+	/**
+	 * @type string
 	 */
 	external_url: string;
 	identN?: GlobaltypesIdentNConfigDTO;
@@ -3314,8 +4734,19 @@ export interface InframonitoringtypesNamespacesDTO {
 export enum InframonitoringtypesNodeConditionDTO {
 	ready = 'ready',
 	not_ready = 'not_ready',
-	'' = '',
+	no_data = 'no_data',
 }
+export interface InframonitoringtypesNodeCountsByReadinessDTO {
+	/**
+	 * @type integer
+	 */
+	notReady: number;
+	/**
+	 * @type integer
+	 */
+	ready: number;
+}
+
 /**
  * @nullable
  */
@@ -3340,6 +4771,7 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 * @format double
 	 */
 	nodeCPUAllocatable: number;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -3354,14 +4786,7 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 * @type string
 	 */
 	nodeName: string;
-	/**
-	 * @type integer
-	 */
-	notReadyNodesCount: number;
-	/**
-	 * @type integer
-	 */
-	readyNodesCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
 export interface InframonitoringtypesNodesDTO {
@@ -3383,13 +4808,36 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesPodCountsByPhaseDTO {
+	/**
+	 * @type integer
+	 */
+	failed: number;
+	/**
+	 * @type integer
+	 */
+	pending: number;
+	/**
+	 * @type integer
+	 */
+	running: number;
+	/**
+	 * @type integer
+	 */
+	succeeded: number;
+	/**
+	 * @type integer
+	 */
+	unknown: number;
+}
+
 export enum InframonitoringtypesPodPhaseDTO {
 	pending = 'pending',
 	running = 'running',
 	succeeded = 'succeeded',
 	failed = 'failed',
 	unknown = 'unknown',
-	'' = '',
+	no_data = 'no_data',
 }
 /**
  * @nullable
@@ -3400,18 +4848,10 @@ export type InframonitoringtypesPodRecordDTOMeta = {
 
 export interface InframonitoringtypesPodRecordDTO {
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesPodRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
 	/**
 	 * @type integer
 	 * @format int64
@@ -3432,6 +4872,7 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podCPURequest: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -3452,18 +4893,6 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @type string
 	 */
 	podUID: string;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesPodsDTO {
@@ -3609,6 +5038,170 @@ export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
 }
+export interface LlmpricingruletypesGettablePricingRulesDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: LlmpricingruletypesLLMPricingRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset: number;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export interface LlmpricingruletypesLLMPricingCacheCostsDTO {
+	mode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	read?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	write?: number;
+}
+
+export interface LlmpricingruletypesLLMPricingRuleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isOverride: boolean;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	modelPattern: LlmpricingruletypesStringSliceDTO;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 */
+	sourceId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	syncedAt?: Date | null;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export enum LlmpricingruletypesLLMPricingRuleCacheModeDTO {
+	subtract = 'subtract',
+	additive = 'additive',
+	unknown = 'unknown',
+}
+export enum LlmpricingruletypesLLMPricingRuleUnitDTO {
+	per_million_tokens = 'per_million_tokens',
+}
+export interface LlmpricingruletypesLLMRulePricingDTO {
+	cache?: LlmpricingruletypesLLMPricingCacheCostsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	input: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	output: number;
+}
+
+/**
+ * @nullable
+ */
+export type LlmpricingruletypesStringSliceDTO = string[] | null;
+
+export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	id?: string | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	isOverride?: boolean | null;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	sourceId?: string | null;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
+}
+
+export interface LlmpricingruletypesUpdatableLLMPricingRulesDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	rules: LlmpricingruletypesUpdatableLLMPricingRuleDTO[] | null;
+}
+
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -6967,8 +8560,8 @@ export type ListAuthDomains200 = {
 	status: string;
 };
 
-export type CreateAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
@@ -6978,6 +8571,17 @@ export type CreateAuthDomain200 = {
 export type DeleteAuthDomainPathParameters = {
 	id: string;
 };
+export type GetAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomain200 = {
+	data: AuthtypesGettableAuthDomainDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
@@ -7194,6 +8798,41 @@ export type GetGlobalConfig200 = {
 
 export type CreateInvite201 = {
 	data: TypesInviteDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListLLMPricingRulesParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListLLMPricingRules200 = {
+	data: LlmpricingruletypesGettablePricingRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRule200 = {
+	data: LlmpricingruletypesLLMPricingRuleDTO;
 	/**
 	 * @type string
 	 */

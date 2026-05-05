@@ -10,8 +10,8 @@ import { K8sBaseList } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import {
-	useInfraMonitoringCurrentPage,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
+	useInfraMonitoringPageListing,
 } from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -30,9 +30,9 @@ import {
 	hostWidgetInfo,
 } from './constants';
 import {
-	hostColumns,
+	getHostItemKey,
+	getHostRowKey,
 	hostColumnsConfig,
-	hostRenderRowData,
 } from './table.config';
 import { getHostsQuickFiltersConfig } from './utils';
 
@@ -41,8 +41,8 @@ import { ArrowUpToLine, Filter } from '@signozhq/icons';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
-	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -169,10 +169,10 @@ function Hosts(): JSX.Element {
 						<K8sBaseList
 							controlListPrefix={controlListPrefix}
 							entity={InfraMonitoringEntity.HOSTS}
-							tableColumnsDefinitions={hostColumns}
 							tableColumns={hostColumnsConfig}
 							fetchListData={fetchListData}
-							renderRowData={hostRenderRowData}
+							getRowKey={getHostRowKey}
+							getItemKey={getHostItemKey}
 							eventCategory={InfraMonitoringEvents.HostEntity}
 						/>
 					</div>

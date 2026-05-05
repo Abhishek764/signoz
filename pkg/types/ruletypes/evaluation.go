@@ -243,21 +243,9 @@ func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 	return cumulativeWindow.Frequency
 }
 
-// EvaluationEnvelope's Kind/Spec are tagged json:"-" so the schema
-// reflector skips them — the oneOf variants already declare both
-// fields and would otherwise be intersected with this parent's
-// duplicate properties block. Wire serialization goes through
-// MarshalJSON below.
 type EvaluationEnvelope struct {
-	Kind EvaluationKind `json:"-"`
-	Spec any            `json:"-"`
-}
-
-func (e EvaluationEnvelope) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Kind EvaluationKind `json:"kind"`
-		Spec any            `json:"spec"`
-	}{e.Kind, e.Spec})
+	Kind EvaluationKind `json:"kind" required:"true"`
+	Spec any            `json:"spec" required:"true"`
 }
 
 // evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.

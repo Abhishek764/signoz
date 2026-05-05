@@ -242,6 +242,12 @@ func attachDiscriminators(spec *openapi3.Spec) {
 		}
 		entry.Schema.Discriminator = &disc
 		delete(entry.Schema.MapOfAnything, signozDiscriminatorKey)
+		// The parent's reflected `properties` / `required` duplicate
+		// what the oneOf variants already declare, and orval intersects
+		// the two — turning a clean discriminated union DTO into a
+		// noisy union of intersections. Drop them here.
+		entry.Schema.Properties = nil
+		entry.Schema.Required = nil
 		spec.Components.Schemas.MapOfSchemaOrRefValues[name] = entry
 	}
 }

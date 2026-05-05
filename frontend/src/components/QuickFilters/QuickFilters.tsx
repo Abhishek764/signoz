@@ -171,7 +171,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<Filter />
+			<Filter size="md" />
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
@@ -222,14 +222,15 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<section className="right-actions">
 			<Tooltip title="Reset All">
 				<div className="right-action-icon-container">
-					<RefreshCw className="sync-icon" onClick={handleReset} />
+					<RefreshCw className="sync-icon" size="md" onClick={handleReset} />
 				</div>
 			</Tooltip>
 			{showFilterCollapse && (
 				<Tooltip title="Collapse Filters">
 					<div className="right-action-icon-container">
 						<ArrowUpToLine
-							rotate={270}
+							style={{ rotate: '270deg', cursor: 'pointer' }}
+							size="md"
 							onClick={handleFilterVisibilityChange}
 						/>
 					</div>

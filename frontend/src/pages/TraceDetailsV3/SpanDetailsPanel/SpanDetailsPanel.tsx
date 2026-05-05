@@ -36,10 +36,7 @@ import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { getLeafKeyFromPath } from 'periscope/components/PrettyView/utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	SpanV3,
-	WaterfallAggregationResponse,
-} from 'types/api/trace/getTraceV3';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
 
@@ -69,7 +66,6 @@ interface SpanDetailsPanelProps {
 	onVariantChange?: (variant: SpanDetailVariant) => void;
 	traceStartTime?: number;
 	traceEndTime?: number;
-	aggregations?: WaterfallAggregationResponse[];
 }
 
 function SpanDetailsContent({
@@ -443,7 +439,6 @@ function SpanDetailsPanel({
 	onVariantChange,
 	traceStartTime,
 	traceEndTime,
-	aggregations,
 }: SpanDetailsPanelProps): JSX.Element {
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
@@ -545,7 +540,6 @@ function SpanDetailsPanel({
 		<AnalyticsPanel
 			isOpen={isAnalyticsOpen}
 			onClose={(): void => setIsAnalyticsOpen(false)}
-			aggregations={aggregations}
 		/>
 	);
 

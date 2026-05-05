@@ -2,7 +2,11 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import { TraceProvider } from '../../../../contexts/TraceContext';
 import { SpanDuration } from '../Success';
+
+const renderWithTraceProvider: typeof render = (ui, options) =>
+	render(<TraceProvider aggregations={undefined}>{ui}</TraceProvider>, options);
 
 // Constants to avoid string duplication
 const SPAN_DURATION_TEXT = '1.16 ms';
@@ -91,7 +95,7 @@ describe('SpanDuration', () => {
 	it('calls handleSpanClick when clicked', () => {
 		const mockHandleSpanClick = jest.fn();
 
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -111,7 +115,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('shows action buttons on hover', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -132,7 +136,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('applies interested-span class when span is selected', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -150,7 +154,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('applies highlighted-span class when span matches filter', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -169,7 +173,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('applies dimmed-span class when span does not match filter', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -188,7 +192,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('prioritizes interested-span over highlighted-span when span is selected and matches filter', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -208,7 +212,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('applies selected-non-matching-span class when span is selected but does not match filter', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -229,7 +233,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('applies interested-span class when span is selected and no filter is active', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}
@@ -250,7 +254,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('dims span when filter is active but no matches found', () => {
-		render(
+		renderWithTraceProvider(
 			<SpanDuration
 				span={mockSpan}
 				traceMetadata={mockTraceMetadata}

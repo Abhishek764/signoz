@@ -3,6 +3,8 @@ import type { MenuItem } from '@signozhq/ui';
 import { Button, Dropdown } from '@signozhq/ui';
 import { Ellipsis } from 'lucide-react';
 
+import { useTraceContext } from '../contexts/TraceContext';
+
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
 	onToggleTraceDetails: () => void;
@@ -12,21 +14,60 @@ function TraceOptionsMenu({
 	showTraceDetails,
 	onToggleTraceDetails,
 }: TraceOptionsMenuProps): JSX.Element {
-	const menuItems: MenuItem[] = useMemo(
-		() => [
+	const { colorByField, setColorByField, availableColorByOptions } =
+		useTraceContext();
+
+	const menuItems: MenuItem[] = useMemo(() => {
+		const items: MenuItem[] = [
 			{
 				key: 'toggle-trace-details',
 				label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
 				onClick: onToggleTraceDetails,
 			},
-			// {
-			// 	key: 'preview-fields',
-			// 	label: 'Preview fields',
-			// 	onClick: (): void => setIsPreviewFieldsOpen(!isPreviewFieldsOpen),
-			// },
-		],
-		[showTraceDetails, onToggleTraceDetails],
-	);
+		];
+
+		// Only show the "Colour by" submenu if there's an actual choice to make.
+		if (availableColorByOptions.length > 1) {
+			items.push({
+				key: 'colour-by',
+				label: 'Colour by',
+				children: [
+					{
+						type: 'group',
+						label: 'COLOUR BY',
+						children: [
+							{
+								type: 'radio-group',
+								value: colorByField.name,
+								onChange: (name: string): void => {
+									const next = availableColorByOptions.find(
+										(o) => o.field.name === name,
+									);
+									if (next) {
+										setColorByField(next.field);
+									}
+								},
+								children: availableColorByOptions.map((opt) => ({
+									type: 'radio',
+									key: opt.field.name,
+									label: opt.label,
+									value: opt.field.name,
+								})),
+							},
+						],
+					},
+				],
+			});
+		}
+
+		return items;
+	}, [
+		showTraceDetails,
+		onToggleTraceDetails,
+		colorByField.name,
+		setColorByField,
+		availableColorByOptions,
+	]);
 
 	return (
 		<Dropdown menu={{ items: menuItems }}>

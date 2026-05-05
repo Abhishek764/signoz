@@ -5,6 +5,7 @@ import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 
+import { COLOR_BY_FIELDS } from '../constants';
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
 import { FLAMEGRAPH_SPAN_LIMIT } from './constants';
 import FlamegraphCanvas from './FlamegraphCanvas';
@@ -44,6 +45,8 @@ function TraceFlamegraph({
 		[history, search],
 	);
 
+	const flamegraphSelectFields = useMemo(() => COLOR_BY_FIELDS, []);
+
 	const {
 		data,
 		isFetching,
@@ -52,6 +55,7 @@ function TraceFlamegraph({
 		traceId,
 		// selectedSpanId: firstSpanAtFetchLevel,
 		limit: FLAMEGRAPH_SPAN_LIMIT,
+		selectFields: flamegraphSelectFields,
 	});
 
 	const spans = useMemo(

@@ -3,10 +3,17 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 /**
  * Look up an attribute from both `resource` and `attributes` on a span.
  * Resources are checked first (service.name, k8s.* etc. live there).
+ *
+ * Accepts both `SpanV3` (waterfall) and `FlamegraphSpan` (flamegraph) by typing
+ * structurally — the only fields touched are `resource` and `attributes`.
+ *
  * TODO: Remove tagMap fallback when phasing out V2
  */
 export function getSpanAttribute(
-	span: SpanV3,
+	span: {
+		resource?: Record<string, string>;
+		attributes?: Record<string, any>;
+	},
 	key: string,
 ): string | undefined {
 	return (

@@ -4,16 +4,13 @@ import { DetailsHeader } from 'components/DetailsPanel';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import { WaterfallAggregationResponse } from 'types/api/trace/getTraceV3';
 
-import { DEFAULT_COLOR_BY_FIELD } from '../../constants';
-import { getAggregationMap } from '../../utils/aggregations';
+import { useTraceContext } from '../../contexts/TraceContext';
 import './AnalyticsPanel.styles.scss';
 
 interface AnalyticsPanelProps {
 	isOpen: boolean;
 	onClose: () => void;
-	aggregations?: WaterfallAggregationResponse[];
 }
 
 const PANEL_WIDTH = 350;
@@ -24,18 +21,17 @@ const PANEL_MARGIN_BOTTOM = 50;
 function AnalyticsPanel({
 	isOpen,
 	onClose,
-	aggregations,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const fieldName = DEFAULT_COLOR_BY_FIELD.name;
+	const { getAggregationMap } = useTraceContext();
 
 	const execTimePct = useMemo(
-		() => getAggregationMap(aggregations, 'execution_time_percentage', fieldName),
-		[aggregations, fieldName],
+		() => getAggregationMap('execution_time_percentage'),
+		[getAggregationMap],
 	);
 
 	const spanCounts = useMemo(
-		() => getAggregationMap(aggregations, 'span_count', fieldName),
-		[aggregations, fieldName],
+		() => getAggregationMap('span_count'),
+		[getAggregationMap],
 	);
 
 	const execTimeRows = useMemo(() => {

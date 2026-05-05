@@ -22,12 +22,11 @@ import { Button, Popover, Typography } from 'antd';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
-import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { colorToRgb, generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
 	ArrowUpRight,
@@ -36,6 +35,7 @@ import {
 	Link,
 	ListPlus,
 } from 'lucide-react';
+import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
@@ -206,14 +206,9 @@ const SpanOverview = memo(function SpanOverview({
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const { onSpanCopy } = useCopySpanLink(span);
+	const { resolveSpanColor } = useTraceContext();
 
-	let color = generateColor(
-		span['service.name'],
-		themeColors.traceDetailColorsV3,
-	);
-	if (span.has_error) {
-		color = `var(--bg-cherry-500)`;
-	}
+	const color = resolveSpanColor(span);
 
 	// Smart highlighting logic
 	const {
@@ -365,16 +360,10 @@ export const SpanDuration = memo(function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.duration_nano * 1e2) / (spread * 1e6);
 
-	let color = generateColor(
-		span['service.name'],
-		themeColors.traceDetailColorsV3,
-	);
-	let rgbColor = colorToRgb(color);
-
-	if (span.has_error) {
-		color = `var(--bg-cherry-500)`;
-		rgbColor = '239, 68, 68';
-	}
+	const { resolveSpanColor } = useTraceContext();
+	const color = resolveSpanColor(span);
+	// `resolveSpanColor` returns a CSS variable for errors; `colorToRgb` can't parse it.
+	const rgbColor = span.has_error ? '239, 68, 68' : colorToRgb(color);
 
 	const {
 		isSelected,

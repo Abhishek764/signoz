@@ -36,8 +36,8 @@ type RuleThresholdData struct {
 
 // thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
 type thresholdBasic struct {
-	Kind ThresholdKind       `json:"kind" description:"The kind of threshold."`
-	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)."`
+	Kind ThresholdKind       `json:"kind" description:"The kind of threshold." required:"true"`
+	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)." required:"true"`
 }
 
 var (

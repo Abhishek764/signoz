@@ -7007,7 +7007,7 @@ export interface RuletypesThresholdBasicDTO {
 	 * @enum basic
 	 */
 	kind: RuletypesThresholdBasicDTOKind;
-	spec?: RuletypesBasicRuleThresholdsDTO;
+	spec: RuletypesBasicRuleThresholdsDTO;
 }
 
 export enum RuletypesThresholdKindDTO {

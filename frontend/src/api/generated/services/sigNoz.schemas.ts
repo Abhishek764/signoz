@@ -10015,6 +10015,17 @@ export type CreateDashboardV2201 = {
 	status: string;
 };
 
+export type GetDashboardV2PathParameters = {
+	id: string;
+};
+export type GetDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array

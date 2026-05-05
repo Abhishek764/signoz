@@ -5285,22 +5285,11 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	 */
 	desiredPods: number;
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -5335,14 +5324,6 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	 * @type string
 	 */
 	statefulSetName: string;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesStatefulSetsDTO {

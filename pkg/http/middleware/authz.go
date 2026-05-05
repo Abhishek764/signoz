@@ -260,15 +260,11 @@ func (middleware *AuthZ) CheckAll(next http.HandlerFunc, groups []AuthZCheckGrou
 				}
 
 				roleSelectors := make([]coretypes.Selector, len(check.Roles))
-				for i, role := range check.Roles {
-					roleSelectors[i] = coretypes.TypeRole.MustSelector(role)
+				for idx, role := range check.Roles {
+					roleSelectors[idx] = coretypes.TypeRole.MustSelector(role)
 				}
 
-				err = middleware.authzService.CheckWithTupleCreation(
-					ctx, claims, orgID,
-					check.Relation, check.Resource,
-					selectors, roleSelectors,
-				)
+				err = middleware.authzService.CheckWithTupleCreation(ctx, claims, orgID, check.Relation, check.Resource, selectors, roleSelectors)
 				if err == nil {
 					groupPassed = true
 					break

@@ -52,7 +52,6 @@ func (provider *provider) roleAttachSelectorFromPath(req *http.Request, claims a
 	return provider.serviceAccountModule.RoleAttachSelectors(req.Context(), valuer.MustNewUUID(claims.OrgID), roleID)
 }
 
-
 func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/service_accounts", handler.New(provider.authZ.Check(provider.serviceAccountHandler.Create, authtypes.Relation{Verb: coretypes.VerbCreate}, coretypes.ResourceMetaResourcesServiceAccount, serviceAccountCollectionSelectorCallback, serviceAccountAdminRoles), handler.OpenAPIDef{
 		ID:                  "CreateServiceAccount",
@@ -227,7 +226,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, serviceAccountAdminRoles), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbCreate}, coretypes.ResourceMetaResourcesServiceAccount, serviceAccountCollectionSelectorCallback, serviceAccountAdminRoles), handler.OpenAPIDef{
 		ID:                  "CreateServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Create a service account key",
@@ -278,7 +277,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, serviceAccountAdminRoles), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbDelete}, coretypes.ResourceMetaResourcesServiceAccount, serviceAccountCollectionSelectorCallback, serviceAccountAdminRoles), handler.OpenAPIDef{
 		ID:                  "RevokeServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Revoke a service account key",

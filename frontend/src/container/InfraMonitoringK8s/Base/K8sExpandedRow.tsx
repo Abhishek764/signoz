@@ -209,22 +209,6 @@ export function K8sExpandedRow<T>({
 				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
 			)}
 
-<<<<<<< HEAD
-			{isFetching || isLoading ? (
-				<LoadingContainer />
-			) : (
-				<div data-testid="expanded-table">
-					<Table
-						columns={nestedColumns}
-						dataSource={formattedData}
-						pagination={false}
-						scroll={{ x: true }}
-						tableLayout="fixed"
-						showHeader={false}
-						loading={{
-							spinning: isFetching || isLoading,
-							indicator: <Spin indicator={<Loader size={14} className="animate-spin" />} />,
-=======
 			<div data-testid="expanded-table">
 				<TanStackTableStateProvider>
 					<TanStackTable<T>
@@ -237,7 +221,6 @@ export function K8sExpandedRow<T>({
 						onRowClick={handleRowClick}
 						enableQueryParams={{
 							orderBy: orderByParamKey,
->>>>>>> origin
 						}}
 						tableScrollerProps={{
 							className: styles.expandedTable,

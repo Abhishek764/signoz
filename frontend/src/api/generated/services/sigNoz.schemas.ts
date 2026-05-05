@@ -6587,7 +6587,7 @@ export interface RuletypesEvaluationCumulativeDTO {
 	 * @enum cumulative
 	 */
 	kind: RuletypesEvaluationCumulativeDTOKind;
-	spec?: RuletypesCumulativeWindowDTO;
+	spec: RuletypesCumulativeWindowDTO;
 }
 
 export type RuletypesEvaluationEnvelopeDTO =
@@ -6613,7 +6613,7 @@ export interface RuletypesEvaluationRollingDTO {
 	 * @enum rolling
 	 */
 	kind: RuletypesEvaluationRollingDTOKind;
-	spec?: RuletypesRollingWindowDTO;
+	spec: RuletypesRollingWindowDTO;
 }
 
 export interface RuletypesGettableTestRuleDTO {

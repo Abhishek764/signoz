@@ -250,14 +250,14 @@ type EvaluationEnvelope struct {
 
 // evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.
 type evaluationRolling struct {
-	Kind EvaluationKind `json:"kind" description:"The kind of evaluation."`
-	Spec RollingWindow  `json:"spec" description:"The rolling window evaluation specification."`
+	Kind EvaluationKind `json:"kind" description:"The kind of evaluation." required:"true"`
+	Spec RollingWindow  `json:"spec" description:"The rolling window evaluation specification." required:"true"`
 }
 
 // evaluationCumulative is the OpenAPI schema for an EvaluationEnvelope with kind=cumulative.
 type evaluationCumulative struct {
-	Kind EvaluationKind   `json:"kind" description:"The kind of evaluation."`
-	Spec CumulativeWindow `json:"spec" description:"The cumulative window evaluation specification."`
+	Kind EvaluationKind   `json:"kind" description:"The kind of evaluation." required:"true"`
+	Spec CumulativeWindow `json:"spec" description:"The cumulative window evaluation specification." required:"true"`
 }
 
 var (

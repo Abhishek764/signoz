@@ -4348,6 +4348,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesEvaluationEnvelope:
       discriminator:
@@ -4377,6 +4380,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesGettableTestRule:
       properties:

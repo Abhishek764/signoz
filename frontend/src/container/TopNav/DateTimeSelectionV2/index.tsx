@@ -742,7 +742,7 @@ function DateTimeSelection({
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
 								<Button
-									icon={<RefreshCw />}
+									icon={<RefreshCw size={16} />}
 									loading={!!isRefreshingQueries}
 									onClick={onRefreshHandler}
 								/>

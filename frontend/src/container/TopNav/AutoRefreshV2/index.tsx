@@ -201,7 +201,7 @@ function AutoRefresh({
 				title="Set auto refresh"
 				type={showAutoRefreshBtnPrimary ? 'primary' : 'default'}
 			>
-				<ChevronDown />
+				<ChevronDown size={14} />
 			</ButtonContainer>
 		</Popover>
 	);

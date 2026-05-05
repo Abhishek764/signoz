@@ -33,7 +33,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import { cloneDeep } from 'lodash-es';
-import { ArrowDown, ArrowUp, BarChart, Braces, ChevronDown, ChevronUp, Compass, Copy, Filter, Table, TextSelect, X } from '@signozhq/icons';
+import { ArrowDown, ArrowUp, Braces, ChevronDown, ChevronUp, Compass, Copy, Filter, Histogram, Table, TextSelect, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -485,7 +485,7 @@ function LogDetailInner({
 							value={VIEW_TYPES.INFRAMETRICS}
 						>
 							<div className="view-title">
-								<BarChart size={14} />
+								<Histogram size="md" />
 								Metrics
 							</div>
 						</Radio.Button>

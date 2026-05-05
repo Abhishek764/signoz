@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Plus } from '@signozhq/icons';
+import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
 import {
@@ -13,7 +13,6 @@ import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { USER_ROLES } from 'types/roles';

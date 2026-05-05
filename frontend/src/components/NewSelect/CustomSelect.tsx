@@ -6,7 +6,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import { ChevronDown, LoaderCircle, RefreshCw, X } from '@signozhq/icons';
+import { ArrowDown, ArrowUp, ChevronDown, Info, LoaderCircle, RefreshCw, X } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import cx from 'classnames';
@@ -14,7 +14,6 @@ import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -599,7 +598,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<RefreshCw
-										twoToneColor={Color.BG_CHERRY_400}
+										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();
 											onRetry();

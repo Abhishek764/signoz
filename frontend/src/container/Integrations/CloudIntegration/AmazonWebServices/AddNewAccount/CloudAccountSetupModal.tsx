@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, DrawerWrapper } from '@signozhq/ui';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
-import { SquareArrowOutUpRight } from 'lucide-react';
+import { SquareArrowOutUpRight } from '@signozhq/icons';
 
 import {
 	ActiveViewEnum,

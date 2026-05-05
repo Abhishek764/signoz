@@ -20,16 +20,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { commaValuesParser } from 'lib/dashboardVariables/customCommaValuesParser';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
 import { isEmpty, map } from 'lodash-es';
-import {
-	ArrowLeft,
-	Check,
-	ClipboardType,
-	DatabaseZap,
-	Info,
-	LayoutList,
-	Pyramid,
-	X,
-} from 'lucide-react';
+import { ArrowLeft, Check, ClipboardType, DatabaseZap, Info, LayoutList, Pyramid, X } from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {

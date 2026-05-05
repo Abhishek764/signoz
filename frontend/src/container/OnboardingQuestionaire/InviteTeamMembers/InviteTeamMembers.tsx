@@ -7,14 +7,7 @@ import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce } from 'lodash-es';
-import {
-	ArrowRight,
-	ChevronDown,
-	CircleAlert,
-	Loader2,
-	Plus,
-	Trash2,
-} from 'lucide-react';
+import { ArrowRight, ChevronDown, CircleAlert, LoaderCircle, Plus, Trash2 } from '@signozhq/icons';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
@@ -372,7 +365,7 @@ function InviteTeamMembers({
 						disabled={isInviteButtonDisabled}
 						suffix={
 							isButtonDisabled ? (
-								<Loader2 className="animate-spin" size={12} />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<ArrowRight size={12} />
 							)

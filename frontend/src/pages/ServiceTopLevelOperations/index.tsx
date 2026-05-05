@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
-import { RefreshCw } from '@signozhq/icons';
+import { BarChart, RefreshCw } from '@signozhq/icons';
 import { Alert, Table, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
@@ -10,7 +10,6 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { BarChart2 } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
@@ -97,7 +96,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 				<Link to={ROUTES.APPLICATION}>
 					<span className="breadcrumb">
 						{' '}
-						<BarChart2 size={12} /> services{' '}
+						<BarChart size={12} /> services{' '}
 					</span>
 				</Link>
 				<div className="divider">/</div>

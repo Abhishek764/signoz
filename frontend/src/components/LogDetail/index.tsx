@@ -33,20 +33,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import { cloneDeep } from 'lodash-es';
-import {
-	ArrowDown,
-	ArrowUp,
-	BarChart2,
-	Braces,
-	ChevronDown,
-	ChevronUp,
-	Compass,
-	Copy,
-	Filter,
-	Table,
-	TextSelect,
-	X,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, BarChart, Braces, ChevronDown, ChevronUp, Compass, Copy, Filter, Table, TextSelect, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -498,7 +485,7 @@ function LogDetailInner({
 							value={VIEW_TYPES.INFRAMETRICS}
 						>
 							<div className="view-title">
-								<BarChart2 size={14} />
+								<BarChart size={14} />
 								Metrics
 							</div>
 						</Radio.Button>

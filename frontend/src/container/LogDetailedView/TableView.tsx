@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { Link } from '@signozhq/icons';
+import { Link, Pin } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -26,7 +26,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-import { Pin } from 'lucide-react';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';

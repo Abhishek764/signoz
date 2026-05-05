@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Input, Typography } from 'antd';
 import cx from 'classnames';
-import { X } from 'lucide-react';
+import { X } from '@signozhq/icons';
 
 import './InputWithLabel.styles.scss';
 

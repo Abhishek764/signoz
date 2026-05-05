@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Modal, Typography } from 'antd';
-import { Calendar, Info } from 'lucide-react';
+import { Calendar, Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../../context';
 import { TIMEZONE_DATA } from '../constants';

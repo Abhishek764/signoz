@@ -1,6 +1,6 @@
 import { Button, Typography } from 'antd';
 import classNames from 'classnames';
-import { Check } from 'lucide-react';
+import { Check } from '@signozhq/icons';
 
 import {
 	EVALUATION_WINDOW_TIMEFRAME,

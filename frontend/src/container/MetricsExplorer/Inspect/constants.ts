@@ -1,6 +1,7 @@
 import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+//TODO: replace this
 import {
 	BarChart,
 	BarChart2,

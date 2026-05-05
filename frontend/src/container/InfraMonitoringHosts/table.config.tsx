@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info } from '@signozhq/icons';
+import { Group, Info } from '@signozhq/icons';
 import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import { K8sRenderedRowData } from 'container/InfraMonitoringK8s/Base/types';
@@ -11,7 +11,6 @@ import {
 } from 'container/InfraMonitoringK8s/Base/utils';
 import { ValidateColumnValueWrapper } from 'container/InfraMonitoringK8s/commonUtils';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
-import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { getMemoryProgressColor, getProgressColor } from './constants';

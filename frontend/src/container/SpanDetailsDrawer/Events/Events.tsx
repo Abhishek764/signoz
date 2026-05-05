@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Collapse, Input, Modal, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import { Diamond } from 'lucide-react';
+import { Diamond } from '@signozhq/icons';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';

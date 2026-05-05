@@ -1,7 +1,8 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
-import { Binoculars, DraftingCompass, ScrollText } from 'lucide-react';
+import { Binoculars } from 'lucide-react';
+import { DraftingCompass, ScrollText } from '@signozhq/icons';
 
 import './GraphControlsPanel.styles.scss';
 

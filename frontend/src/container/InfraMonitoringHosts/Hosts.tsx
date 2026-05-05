@@ -15,7 +15,6 @@ import {
 } from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Filter } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -38,7 +37,7 @@ import {
 import { getHostsQuickFiltersConfig } from './utils';
 
 import styles from './InfraMonitoringHosts.module.scss';
-import { ArrowUpToLine } from '@signozhq/icons';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);

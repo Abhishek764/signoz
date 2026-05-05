@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Info, LoaderCircle } from '@signozhq/icons';
+import { ChevronDown, ChevronUp, Info, LoaderCircle } from '@signozhq/icons';
 import { Button, Spin, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -8,7 +8,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';

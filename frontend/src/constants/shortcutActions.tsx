@@ -2,22 +2,7 @@ import React from 'react';
 import ROUTES from 'constants/routes';
 import { GlobalShortcutsName } from 'constants/shortcuts/globalShortcuts';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
-import {
-	BarChart2,
-	BellDot,
-	BugIcon,
-	Compass,
-	DraftingCompass,
-	Expand,
-	HardDrive,
-	Home,
-	LayoutGrid,
-	ListMinus,
-	ScrollText,
-	Settings,
-	TowerControl,
-	Workflow,
-} from 'lucide-react';
+import { BarChart, BellDot, Bug, Compass, DraftingCompass, Expand, HardDrive, Home, LayoutGrid, ListMinus, ScrollText, Settings, TowerControl, Workflow } from '@signozhq/icons';
 import { ROLES } from 'types/roles';
 
 export type CmdAction = {
@@ -86,7 +71,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			shortcut: [GlobalShortcutsName.NavigateToExceptions],
 			keywords: 'exceptions errors',
 			section: 'Navigation',
-			icon: <BugIcon size={14} />,
+			icon: <Bug size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.ALL_ERROR),
 		},
@@ -140,7 +125,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			shortcut: [GlobalShortcutsName.NavigateToMetricsSummary],
 			keywords: 'metrics summary',
 			section: 'Metrics',
-			icon: <BarChart2 size={14} />,
+			icon: <BarChart size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.METRICS_EXPLORER),
 		},

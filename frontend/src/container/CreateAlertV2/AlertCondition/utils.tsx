@@ -9,7 +9,7 @@ import {
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';

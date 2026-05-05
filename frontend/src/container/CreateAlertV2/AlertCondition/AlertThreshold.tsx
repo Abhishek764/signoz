@@ -3,7 +3,7 @@ import { Button, Select, Tooltip, Typography } from 'antd';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getRandomColor from 'lib/getRandomColor';
-import { Plus } from 'lucide-react';
+import { Plus } from '@signozhq/icons';
 import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';

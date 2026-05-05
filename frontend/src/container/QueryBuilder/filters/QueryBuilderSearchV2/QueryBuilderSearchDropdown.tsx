@@ -1,13 +1,6 @@
 import { Typography } from 'antd';
 import cx from 'classnames';
-import {
-	ArrowDown,
-	ArrowUp,
-	ChevronUp,
-	Command,
-	CornerDownLeft,
-	Slash,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronUp, Command, CornerDownLeft, Slash } from '@signozhq/icons';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 

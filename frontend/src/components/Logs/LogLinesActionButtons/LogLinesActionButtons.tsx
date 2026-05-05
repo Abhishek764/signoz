@@ -1,7 +1,6 @@
 import { memo, MouseEventHandler } from 'react';
-import { Link } from '@signozhq/icons';
+import { Link, TextSelect } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
-import { TextSelect } from 'lucide-react';
 
 import './LogLinesActionButtons.styles.scss';
 

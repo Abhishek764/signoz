@@ -24,16 +24,7 @@ import {
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isEqual, isUndefined } from 'lodash-es';
-import {
-	ArrowDown,
-	ArrowUp,
-	ChevronDown,
-	ChevronUp,
-	Command,
-	CornerDownLeft,
-	Filter,
-	Slash,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Command, CornerDownLeft, Filter, Slash } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,

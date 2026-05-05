@@ -99,7 +99,8 @@ jest.mock('hooks/dashboard/useGetResolvedText', () => {
 	};
 });
 
-jest.mock('lucide-react', () => ({
+jest.mock('@signozhq/icons', () => ({
+	...jest.requireActual('@signozhq/icons'),
 	CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
 	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
 	X: (): JSX.Element => <svg data-testid="lucide-x" />,

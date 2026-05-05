@@ -113,8 +113,8 @@ jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	default: jest.fn(() => jest.fn()),
 }));
 
-jest.mock('lucide-react', () => ({
-	...jest.requireActual('lucide-react'),
+jest.mock('@signozhq/icons', () => ({
+	...jest.requireActual('@signozhq/icons'),
 	ConciergeBell: (): JSX.Element => <svg data-testid="lucide-concierge-bell" />,
 	SquareArrowOutUpRight: (): JSX.Element => (
 		<svg data-testid="lucide-square-arrow-out-up-right" />

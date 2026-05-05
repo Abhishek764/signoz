@@ -5,7 +5,7 @@ import { UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { TriangleAlert } from '@signozhq/icons';
+import { Check, TriangleAlert, X } from '@signozhq/icons';
 import {
 	Button,
 	ResizableHandle,
@@ -41,7 +41,6 @@ import {
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
-import { Check, X } from 'lucide-react';
 import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 import {
 	clearSelectedRowWidgetId,

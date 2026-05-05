@@ -1,43 +1,8 @@
-import { Rocket } from '@signozhq/icons';
+import { ArrowUpRight, BarChart, BellDot, Book, Bot, Boxes, Bug, Building2, ChartArea, Cloudy, DraftingCompass, FileKey2, Github, HardDrive, Home, Keyboard, Layers2, LayoutGrid, ListMinus, LogOut, MessageSquareText, Plus, Receipt, Rocket, Route, ScrollText, Settings, Shield, Slack, Sparkles, Unplug, User, UserPlus, Users } from '@signozhq/icons';
+import { Binoculars } from 'lucide-react';
 import { Style } from '@signozhq/design-tokens';
 import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
-import {
-	ArrowUpRight,
-	BarChart2,
-	BellDot,
-	Binoculars,
-	Book,
-	Bot,
-	Boxes,
-	BugIcon,
-	Building2,
-	ChartArea,
-	Cloudy,
-	DraftingCompass,
-	FileKey2,
-	Github,
-	HardDrive,
-	Home,
-	Keyboard,
-	Layers2,
-	LayoutGrid,
-	ListMinus,
-	LogOut,
-	MessageSquareText,
-	Plus,
-	Receipt,
-	Route,
-	ScrollText,
-	Settings,
-	Shield,
-	Slack,
-	Sparkles,
-	Unplug,
-	User,
-	UserPlus,
-	Users,
-} from 'lucide-react';
 
 import {
 	SecondaryMenuItemKey,
@@ -122,7 +87,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
-		icon: <BarChart2 size={16} />,
+		icon: <BarChart size={16} />,
 		isNew: false,
 		itemKey: 'metrics',
 	},
@@ -166,7 +131,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugIcon size={16} />,
+		icon: <Bug size={16} />,
 		itemKey: 'exceptions',
 	},
 	{
@@ -239,7 +204,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	{
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
-		icon: <BarChart2 size={16} />,
+		icon: <BarChart size={16} />,
 		isNew: false,
 		isEnabled: true,
 		itemKey: 'metrics',
@@ -262,7 +227,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugIcon size={16} />,
+		icon: <Bug size={16} />,
 		isEnabled: true,
 		itemKey: 'exceptions',
 	},

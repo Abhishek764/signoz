@@ -3,7 +3,7 @@ import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
-import { Plus } from '@signozhq/icons';
+import { Check, ClipboardCopy, Ellipsis, FileJson, FolderKanban, Fullscreen, Globe, LockKeyhole, PenLine, Plus, X } from '@signozhq/icons';
 import {
 	Button,
 	Card,
@@ -27,18 +27,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty } from 'lodash-es';
-import {
-	Check,
-	ClipboardCopy,
-	Ellipsis,
-	FileJson,
-	FolderKanban,
-	Fullscreen,
-	Globe,
-	LockKeyhole,
-	PenLine,
-	X,
-} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import {

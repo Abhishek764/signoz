@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { LoaderCircle } from '@signozhq/icons';
+import { CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
-import { CircleCheck } from 'lucide-react';
 
 import solidXCircleUrl from '@/assets/Icons/solid-x-circle.svg';
 

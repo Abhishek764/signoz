@@ -343,7 +343,7 @@ export default function ConnectionStatus(): JSX.Element {
 							(getStartedSource !== 'kafka' ? (
 								<>
 								//TODO: check this
-									<CircleCheck twoToneColor="#52c41a" />
+									<CircleCheck color="#52c41a" />
 									<span> Success </span>
 								</>
 							) : (
@@ -355,7 +355,7 @@ export default function ConnectionStatus(): JSX.Element {
 							!isReceivingData &&
 							(getStartedSource !== 'kafka' ? (
 								<>
-									<CircleX twoToneColor="#e84749" />
+									<CircleX color="#e84749" />
 									<span> Failed </span>
 								</>
 							) : (

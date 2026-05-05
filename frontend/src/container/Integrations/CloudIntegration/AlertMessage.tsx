@@ -1,6 +1,6 @@
 import { Callout } from '@signozhq/ui';
 import { Spin } from 'antd';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from '@signozhq/icons';
 
 import { ModalStateEnum } from '../HeroSection/types';
 

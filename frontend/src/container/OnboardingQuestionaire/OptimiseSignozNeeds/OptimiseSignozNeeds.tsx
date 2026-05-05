@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui';
 import { Slider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight, Loader2, Minus } from 'lucide-react';
+import { ArrowRight, LoaderCircle, Minus } from '@signozhq/icons';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
@@ -292,7 +292,7 @@ function OptimiseSignozNeeds({
 						disabled={isUpdatingProfile || isNextDisabled}
 						suffix={
 							isUpdatingProfile ? (
-								<Loader2 className="animate-spin" size={12} />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<ArrowRight size={12} />
 							)

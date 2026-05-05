@@ -4,12 +4,11 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
-import { EllipsisVertical, X } from '@signozhq/icons';
+import { ChevronDown, ChevronUp, EllipsisVertical, GripVertical, X } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 
 import { SortState, TableColumnDef } from './types';
 

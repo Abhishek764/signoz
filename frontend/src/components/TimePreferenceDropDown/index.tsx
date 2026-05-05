@@ -1,11 +1,10 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
-import { ChevronDown } from '@signozhq/icons';
+import { ChevronDown, Globe } from '@signozhq/icons';
 import { Button, Dropdown, Typography } from 'antd';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import { Globe } from 'lucide-react';
 
 import { menuItems } from './config';
 

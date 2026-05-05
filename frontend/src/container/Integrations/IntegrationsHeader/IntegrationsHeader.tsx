@@ -4,7 +4,7 @@ import { Button, DialogWrapper, Input, toast } from '@signozhq/ui';
 import { Flex, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import { ArrowRight, Cable, Check } from 'lucide-react';
+import { ArrowRight, Cable, Check } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { routePermission } from 'utils/permission';
 

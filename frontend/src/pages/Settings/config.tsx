@@ -14,21 +14,7 @@ import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
 import RoleDetailsPage from 'container/RolesSettings/RoleDetails';
 import { TFunction } from 'i18next';
-import {
-	Backpack,
-	BellDot,
-	Bot,
-	Building,
-	Cpu,
-	CreditCard,
-	Keyboard,
-	Pencil,
-	Plus,
-	Shield,
-	Sparkles,
-	User,
-	Users,
-} from 'lucide-react';
+import { Backpack, BellDot, Bot, Building, Cpu, CreditCard, Keyboard, Pencil, Plus, Shield, Sparkles, User, Users } from '@signozhq/icons';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import MembersSettings from 'pages/MembersSettings';
 import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';

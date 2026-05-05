@@ -24,7 +24,6 @@ import {
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { TriangleAlert } from 'lucide-react';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -34,7 +33,7 @@ import { getTraceOperatorContextAtCursor } from './utils/traceOperatorContextUti
 import { getInvolvedQueriesInTraceOperator } from './utils/utils';
 
 import '../QuerySearch/QuerySearch.styles.scss';
-import { CircleCheck } from '@signozhq/icons';
+import { CircleCheck, TriangleAlert } from '@signozhq/icons';
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({

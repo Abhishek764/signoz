@@ -5,13 +5,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import history from 'lib/history';
-import {
-	ArrowLeft,
-	BetweenHorizonalStart,
-	CalendarClock,
-	DraftingCompass,
-	Timer,
-} from 'lucide-react';
+import { ArrowLeft, BetweenHorizontalStart, CalendarClock, DraftingCompass, Timer } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import './TraceMetadata.styles.scss';
@@ -76,7 +70,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 				{isDataLoading && (
 					<div className="second-row">
 						<div className="service-entry-info">
-							<BetweenHorizonalStart size={14} />
+							<BetweenHorizontalStart size={14} />
 							<Skeleton.Input active className="skeleton-input" size="small" />
 							<Skeleton.Input active className="skeleton-input" size="small" />
 							<Skeleton.Input active className="skeleton-input" size="small" />
@@ -86,7 +80,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 				{!isDataLoading && !notFound && (
 					<div className="second-row">
 						<div className="service-entry-info">
-							<BetweenHorizonalStart size={14} />
+							<BetweenHorizontalStart size={14} />
 							<Typography.Text className="text">{rootServiceName}</Typography.Text>
 							&#8212;
 							<Typography.Text className="text root-span-name">

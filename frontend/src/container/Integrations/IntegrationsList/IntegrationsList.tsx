@@ -4,7 +4,7 @@ import { Badge } from '@signozhq/ui';
 import { Button, Skeleton, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { MoveUpRight, RotateCw } from 'lucide-react';
+import { MoveUpRight, RotateCw } from '@signozhq/icons';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';

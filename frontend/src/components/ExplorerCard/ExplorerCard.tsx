@@ -38,7 +38,7 @@ import {
 } from './styles';
 import { ExplorerCardProps } from './types';
 import { deleteViewHandler } from './utils';
-import { EllipsisVertical, Save, Share2, Trash2 } from '@signozhq/icons';
+import { Ellipsis, Save, Share2, Trash2 } from '@signozhq/icons';
 
 function ExplorerCard({
 	sourcepage,
@@ -246,7 +246,7 @@ function ExplorerCard({
 								<Share2 onClick={onCopyUrlHandler} />
 								{viewKey && (
 									<Dropdown trigger={['click']} menu={moreOptionMenu}>
-										<EllipsisVertical />
+										<Ellipsis />
 									</Dropdown>
 								)}
 							</Space>

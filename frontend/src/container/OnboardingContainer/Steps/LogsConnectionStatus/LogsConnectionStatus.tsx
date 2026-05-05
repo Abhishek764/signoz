@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CircleCheck, CircleX, LoaderCircle } from '@signozhq/icons';
+import { CircleCheck, CircleX, Loader } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -241,7 +241,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isFetching) && <LoaderCircle />}
+						{(loading || isFetching) && <Loader />}
 						{!(loading || isFetching) && isReceivingData && (
 							<>
 								<CircleCheck color="#52c41a" />

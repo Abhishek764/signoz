@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye } from '@signozhq/icons';
+import { EyeOpen } from '@signozhq/icons';
 import { Divider, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
@@ -28,7 +28,7 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 
 	return (
 		<>
-			<Eye style={iconStyle} onClick={onOpenPreview} />
+			<EyeOpen style={iconStyle} onClick={onOpenPreview} />
 			<Modal
 				open={isModalOpen}
 				onCancel={closeModal}

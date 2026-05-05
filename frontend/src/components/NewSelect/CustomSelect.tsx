@@ -6,7 +6,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Info, LoaderCircle, RefreshCw, X } from '@signozhq/icons';
+import { ArrowDown, ArrowUp, ChevronDown, Info, Loader, RefreshCw, X } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import cx from 'classnames';
@@ -575,7 +575,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoaderCircle />
+								<Loader />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -583,7 +583,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoaderCircle />
+								<Loader />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}

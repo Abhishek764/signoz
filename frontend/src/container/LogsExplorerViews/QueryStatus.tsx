@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { CircleCheck, LoaderCircle } from '@signozhq/icons';
+import { CircleCheck, Loader } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
 
@@ -20,7 +20,7 @@ export default function QueryStatus(
 
 	const content = useMemo((): React.ReactElement => {
 		if (loading) {
-			return <Spin spinning size="small" indicator={<LoaderCircle className="animate-spin" />} />;
+			return <Spin spinning size="small" indicator={<Loader className="animate-spin" />} />;
 		}
 		if (error) {
 			return (

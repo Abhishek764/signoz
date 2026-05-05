@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Bell, CircleX, CloudDownload, Copy, EllipsisVertical, Fullscreen, Info, Pencil, Search, SquareArrowOutUpRight, Trash2, X } from '@signozhq/icons';
+import { Bell, CircleX, CloudDownload, Copy, Ellipsis, Fullscreen, Pencil, Search, SolidInfoCircle, SquareArrowOutUpRight, Trash2, X } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
@@ -272,7 +272,7 @@ function WidgetHeader({
 								className="info-tooltip"
 								placement="right"
 							>
-								<Info />
+								<SolidInfoCircle />
 							</Tooltip>
 						)}
 					</div>
@@ -310,7 +310,7 @@ function WidgetHeader({
 
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
 							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-								<EllipsisVertical
+								<Ellipsis
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
 										globalSearchAvailable ? 'widget-header-more-options-visible' : ''

@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, EyeClosed, EyeOpen, Trash2 } from '@signozhq/icons';
 import { Button, Row } from 'antd';
 
 import { QueryWrapper } from '../styles';
@@ -30,7 +30,7 @@ function QueryHeader({
 				<Row>
 					<Button
 						type="default"
-						icon={disabled ? <EyeOff /> : <Eye />}
+						icon={disabled ? <EyeClosed /> : <EyeOpen />}
 						onClick={onDisable}
 						className="action-btn"
 					>

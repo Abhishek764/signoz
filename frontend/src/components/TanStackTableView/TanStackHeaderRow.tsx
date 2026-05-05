@@ -4,7 +4,7 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
-import { ChevronDown, ChevronUp, EllipsisVertical, GripVertical, X } from '@signozhq/icons';
+import { ChevronDown, ChevronUp, Ellipsis, GripVertical, X } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
@@ -207,7 +207,7 @@ function TanStackHeaderRow<TData>({
 									event.stopPropagation();
 								}}
 							>
-								<EllipsisVertical />
+								<Ellipsis />
 							</span>
 						</PopoverTrigger>
 						<PopoverContent

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Info, LoaderCircle } from '@signozhq/icons';
+import { ChevronDown, ChevronUp, Loader, SolidInfoCircle } from '@signozhq/icons';
 import { Button, Spin, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -186,10 +186,10 @@ function Filters({
 					/>
 				</div>
 			)}
-			{isFetching && <Spin indicator={<LoaderCircle className="animate-spin" />} size="small" />}
+			{isFetching && <Spin indicator={<Loader className="animate-spin" />} size="small" />}
 			{error && (
 				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
-					<Info size={14} />
+					<SolidInfoCircle size={14} />
 				</Tooltip>
 			)}
 			{noData && (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Link, LoaderCircle } from '@signozhq/icons';
+import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -230,7 +230,7 @@ const useBaseAggregateOptions = ({
 											key={key}
 											icon={
 												isLoading ? (
-													<LoaderCircle className="animate-spin" />
+													<Loader className="animate-spin" />
 												) : (
 													<span style={{ color: aggregateData?.seriesColor }}>{icon}</span>
 												)

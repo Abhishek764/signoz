@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { LoaderCircle } from '@signozhq/icons';
+import { Loader } from '@signozhq/icons';
 import { Spin, SpinProps } from 'antd';
 
 import { SpinerStyle } from './styles';
@@ -7,7 +7,7 @@ import { SpinerStyle } from './styles';
 function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
 	return (
 		<SpinerStyle height={height} style={style}>
-			<Spin spinning size={size} tip={tip} indicator={<LoaderCircle className="animate-spin" />} />
+			<Spin spinning size={size} tip={tip} indicator={<Loader className="animate-spin" />} />
 		</SpinerStyle>
 	);
 }

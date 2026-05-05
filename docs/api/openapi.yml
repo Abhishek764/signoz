@@ -2599,7 +2599,7 @@ components:
       enum:
       - ready
       - not_ready
-      - ""
+      - no_data
       type: string
     InframonitoringtypesNodeRecord:
       properties:
@@ -2684,7 +2684,7 @@ components:
       - succeeded
       - failed
       - unknown
-      - ""
+      - no_data
       type: string
     InframonitoringtypesPodRecord:
       properties:

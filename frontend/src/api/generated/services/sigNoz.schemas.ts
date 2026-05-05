@@ -4666,7 +4666,7 @@ export interface InframonitoringtypesHostsDTO {
 export enum InframonitoringtypesNodeConditionDTO {
 	ready = 'ready',
 	not_ready = 'not_ready',
-	'' = '',
+	no_data = 'no_data',
 }
 /**
  * @nullable
@@ -4761,7 +4761,7 @@ export enum InframonitoringtypesPodPhaseDTO {
 	succeeded = 'succeeded',
 	failed = 'failed',
 	unknown = 'unknown',
-	'' = '',
+	no_data = 'no_data',
 }
 /**
  * @nullable

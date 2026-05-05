@@ -18,7 +18,7 @@ import (
 // buildNodeRecords assembles the page records. Condition counts come from
 // conditionCounts in both modes. In list mode (isNodeNameInGroupBy=true) each
 // group is one node, so exactly one count is 1; Condition is derived from
-// which one. In grouped_list mode Condition stays NodeConditionNone.
+// which one. In grouped_list mode Condition stays NodeConditionNoData.
 func buildNodeRecords(
 	isNodeNameInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
@@ -37,7 +37,7 @@ func buildNodeRecords(
 
 		record := inframonitoringtypes.NodeRecord{ // initialize with default values
 			NodeName:              nodeName,
-			Condition:             inframonitoringtypes.NodeConditionNone,
+			Condition:             inframonitoringtypes.NodeConditionNoData,
 			NodeCPU:               -1,
 			NodeCPUAllocatable:    -1,
 			NodeMemory:            -1,

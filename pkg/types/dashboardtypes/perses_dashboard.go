@@ -75,7 +75,7 @@ type JSONPatchDocument []JSONPatchOperation
 type JSONPatchOperation struct {
 	Op    string `json:"op" required:"true"`
 	Path  string `json:"path" required:"true" description:"JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0, /tags/-."`
-	Value any    `json:"value,omitempty" description:"Value to add/replace/test against. The expected type depends on the path — a string for /data/display/name, a Panel for /data/panels/<id>, a PostableTag for /tags/-, etc. Required for add/replace/test; ignored for remove/move/copy."`
+	Value any    `json:"value,omitempty" description:"Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable; /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /data/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy."`
 	From  string `json:"from,omitempty" description:"Source JSON Pointer for move/copy ops; ignored for other ops."`
 }
 

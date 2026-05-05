@@ -2,17 +2,17 @@ import {
 	// oxlint-disable-next-line no-restricted-imports
 	createContext,
 	ReactNode,
+	useCallback,
 	// oxlint-disable-next-line no-restricted-imports
 	useContext,
-	useEffect,
 	useMemo,
-	useState,
 } from 'react';
-import getLocalStorageKey from 'api/browser/localstorage/get';
-import setLocalStorageKey from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
+import { useMutation } from 'react-query';
+import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import { themeColors } from 'constants/theme';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { useAppContext } from 'providers/App/App';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import {
 	SpanV3,
@@ -48,31 +48,53 @@ interface TraceContextValue {
 
 const TraceContext = createContext<TraceContextValue | null>(null);
 
-function readPersistedColorByField(): TelemetryFieldKey {
-	const name = getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_COLOR_BY_FIELD);
-	return COLOR_BY_FIELDS.find((f) => f.name === name) ?? DEFAULT_COLOR_BY_FIELD;
-}
-
 export function TraceProvider({
 	aggregations,
 	children,
 }: {
 	aggregations: WaterfallAggregationResponse[] | undefined;
 	children: ReactNode;
-}): JSX.Element {
-	// `persistedColorByField` is the user's choice (localStorage-backed). The
-	// effective `colorByField` falls back to default when the persisted choice
-	// isn't available on this trace — without overwriting the preference, so
-	// it returns when the user opens a trace that does have that field.
-	const [persistedColorByField, setPersistedColorByField] =
-		useState<TelemetryFieldKey>(readPersistedColorByField);
+}): JSX.Element | null {
+	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
+	const { mutate: updateUserPreferenceMutation } = useMutation(
+		updateUserPreferenceAPI,
+	);
 
-	useEffect(() => {
-		setLocalStorageKey(
-			LOCALSTORAGE.TRACE_DETAILS_COLOR_BY_FIELD,
-			persistedColorByField.name,
+	// Source of truth: user-preferences API (loaded once on app init via
+	// AppProvider). Render nothing until it resolves so we never paint the
+	// default colour first and then swap to the user's persisted choice.
+	// AppProvider fires the prefs query as soon as the user is logged in, so
+	// this is usually already settled by the time TraceDetailsV3 mounts.
+	const persistedColorByField = useMemo<TelemetryFieldKey>(() => {
+		const pref = userPreferences?.find(
+			(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_COLOR_BY_ATTRIBUTE,
 		);
-	}, [persistedColorByField]);
+		const name = (pref?.value as string) || '';
+		return COLOR_BY_FIELDS.find((f) => f.name === name) ?? DEFAULT_COLOR_BY_FIELD;
+	}, [userPreferences]);
+
+	const setColorByField = useCallback(
+		(field: TelemetryFieldKey): void => {
+			// Optimistically reflect the choice in the in-memory cache so the UI
+			// reacts immediately (the GET /user/preferences response on app init
+			// always includes the registered key, so `existing` will be defined).
+			const existing = userPreferences?.find(
+				(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_COLOR_BY_ATTRIBUTE,
+			);
+			if (existing) {
+				updateUserPreferenceInContext({ ...existing, value: field.name });
+			}
+			updateUserPreferenceMutation({
+				name: USER_PREFERENCES.SPAN_DETAILS_COLOR_BY_ATTRIBUTE,
+				value: field.name,
+			});
+		},
+		[
+			userPreferences,
+			updateUserPreferenceInContext,
+			updateUserPreferenceMutation,
+		],
+	);
 
 	const value = useMemo<TraceContextValue>(() => {
 		const isFieldAvailable = (fieldName: string): boolean => {
@@ -118,14 +140,18 @@ export function TraceProvider({
 
 		return {
 			colorByField,
-			setColorByField: setPersistedColorByField,
+			setColorByField,
 			aggregations,
 			getAggregationMap,
 			getSpanGroupValue,
 			resolveSpanColor,
 			availableColorByOptions,
 		};
-	}, [persistedColorByField, aggregations]);
+	}, [persistedColorByField, aggregations, setColorByField]);
+
+	if (!userPreferences) {
+		return null;
+	}
 
 	return <TraceContext.Provider value={value}>{children}</TraceContext.Provider>;
 }

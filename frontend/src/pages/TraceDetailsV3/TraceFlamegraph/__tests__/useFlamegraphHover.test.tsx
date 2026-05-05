@@ -1,5 +1,6 @@
 import React from 'react';
 import { act, renderHook } from '@testing-library/react';
+import { AllTheProviders } from 'tests/test-utils';
 
 import { TraceProvider } from '../../contexts/TraceContext';
 import { useFlamegraphHover } from '../hooks/useFlamegraphHover';
@@ -7,14 +8,18 @@ import type { SpanRect } from '../types';
 import { MOCK_SPAN, MOCK_TRACE_METADATA } from './testUtils';
 
 function wrapper({ children }: { children: React.ReactNode }): JSX.Element {
-	return <TraceProvider aggregations={undefined}>{children}</TraceProvider>;
+	return (
+		<AllTheProviders>
+			<TraceProvider aggregations={undefined}>{children}</TraceProvider>
+		</AllTheProviders>
+	);
 }
 
 function createMockCanvas(): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
 	canvas.width = 800;
 	canvas.height = 400;
-	canvas.getBoundingClientRect = jest.fn(
+	jest.spyOn(canvas, 'getBoundingClientRect').mockImplementation(
 		(): DOMRect =>
 			({
 				left: 0,

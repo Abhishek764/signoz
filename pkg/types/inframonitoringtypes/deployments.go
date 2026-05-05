@@ -27,11 +27,7 @@ type DeploymentRecord struct {
 	DeploymentMemoryLimit   float64                `json:"deploymentMemoryLimit" required:"true"`
 	DesiredPods             int                    `json:"desiredPods" required:"true"`
 	AvailablePods           int                    `json:"availablePods" required:"true"`
-	PendingPodCount         int                    `json:"pendingPodCount" required:"true"`
-	RunningPodCount         int                    `json:"runningPodCount" required:"true"`
-	SucceededPodCount       int                    `json:"succeededPodCount" required:"true"`
-	FailedPodCount          int                    `json:"failedPodCount" required:"true"`
-	UnknownPodCount         int                    `json:"unknownPodCount" required:"true"`
+	PodCountsByPhase        PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
 	Meta                    map[string]interface{} `json:"meta" required:"true"`
 }
 

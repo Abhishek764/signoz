@@ -4689,30 +4689,11 @@ export interface InframonitoringtypesDeploymentRecordDTO {
 	 */
 	desiredPods: number;
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesDeploymentRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
 export interface InframonitoringtypesDeploymentsDTO {

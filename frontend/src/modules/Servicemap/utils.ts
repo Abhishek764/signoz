@@ -1,6 +1,8 @@
 //@ts-nocheck
 
 import dagre from '@dagrejs/dagre';
+import { themeColors } from 'constants/theme';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	cloneDeep,
 	find,
@@ -13,8 +15,14 @@ import {
 
 import { graphDataType } from './ServiceMap';
 
-const MIN_WIDTH = 10;
-const MAX_WIDTH = 20;
+// Radius in px. The original force-graph render implicitly applied a
+// `sqrt(nodeVal) * nodeRelSize` curve, which compressed the visible range
+// even though the underlying values spanned 10–20. We keep that compression
+// here (smaller min/max ratio than the raw spec) so low-traffic / source-only
+// nodes stay readable. The max matches NODE_DIAMETER/2 so the busiest node
+// fills the layout box.
+const MIN_WIDTH = 22;
+const MAX_WIDTH = 32;
 const DEFAULT_FONT_SIZE = 6;
 
 export const getDimensions = (
@@ -124,6 +132,13 @@ export const getLinkTooltip = (link: {
 	errorRate: getRound2DigitsAfterDecimal(link.errorRate),
 });
 
+// Edges share a color with every other edge pointing at the same destination
+// service (mirrors the original `linkAutoColorBy={(d) => d.target}` behaviour).
+// Hashing onto the existing chart palette keeps it visually consistent with
+// the rest of the app and stable across renders for a given target id.
+export const getEdgeColor = (targetId: string): string =>
+	generateColor(targetId, themeColors.chartcolors);
+
 export const transformLabel = (label: string, zoomLevel: number): string => {
 	//? 13 is the minimum label length. Scaling factor of 0.9 which is slightly less than 1
 	//? ensures smoother zoom transitions, gradually increasing MAX_LENGTH, displaying more of the label as
@@ -147,7 +162,7 @@ export const computeNodePositions = (
 	nodes: { id: string }[],
 	links: { source: string; target: string }[],
 	nodeBoxWidth = 130,
-	nodeBoxHeight = 80,
+	nodeBoxHeight = 100,
 ): Record<string, { x: number; y: number }> => {
 	const result: Record<string, { x: number; y: number }> = {};
 	if (nodes.length === 0) {

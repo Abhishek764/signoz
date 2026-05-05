@@ -5,6 +5,12 @@
 	overflow: visible;
 }
 
+.box {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .circle {
 	border-radius: 50%;
 	border: 1px solid var(--l3-border);

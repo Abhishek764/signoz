@@ -21,6 +21,7 @@ import ServiceNode, { ServiceNodeData } from '../ServiceNode/ServiceNode';
 import LinkTooltip from '../LinkTooltip/LinkTooltip';
 import {
 	computeNodePositions,
+	getEdgeColor,
 	getGraphData,
 	getLinkTooltip,
 	LinkTooltip as LinkTooltipData,
@@ -29,12 +30,10 @@ import {
 const nodeTypes = { service: ServiceNode };
 const edgeTypes = { flow: FlowEdge };
 
-const EDGE_STROKE = 'var(--l3-foreground)';
 const PARTICLE_COLOR = 'var(--accent-primary)';
 const BG_COLOR = 'var(--l2-background)';
 
-const EDGE_STYLE = {
-	stroke: EDGE_STROKE,
+const BASE_EDGE_STYLE = {
 	strokeWidth: 1.25,
 	strokeDasharray: '5 4',
 };
@@ -71,7 +70,7 @@ function ServiceMap({ serviceMap }: any): JSX.Element {
 						x: center.x - NODE_DIAMETER / 2,
 						y: center.y - NODE_OUTER_HEIGHT / 2,
 					},
-					data: { label: node.id, color: node.color },
+					data: { label: node.id, color: node.color, width: node.width },
 					draggable: true,
 					selectable: false,
 				};
@@ -101,7 +100,9 @@ function ServiceMap({ serviceMap }: any): JSX.Element {
 					maxCallRate,
 				},
 				// markerEnd: EDGE_MARKER,
-				style: EDGE_STYLE,
+				// Stroke is hashed off the target so edges sharing a destination read
+				// as a single visual fan-in (matches the pre-rewrite behaviour).
+				style: { ...BASE_EDGE_STYLE, stroke: getEdgeColor(link.target) },
 			})),
 		[links, maxCallRate],
 	);

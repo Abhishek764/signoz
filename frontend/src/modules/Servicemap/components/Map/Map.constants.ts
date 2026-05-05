@@ -1,7 +1,7 @@
 // Geometry of a service node as drawn on the map. The dagre layout uses a
 // taller bounding box (label + circle) than the circle itself, so the outer
 // height is exposed for the position centering calc.
-export const NODE_DIAMETER = 44;
+export const NODE_DIAMETER = 64;
 export const LABEL_HEIGHT = 18;
 export const NODE_LABEL_GAP = 6;
 export const NODE_OUTER_HEIGHT = NODE_DIAMETER + LABEL_HEIGHT + NODE_LABEL_GAP;

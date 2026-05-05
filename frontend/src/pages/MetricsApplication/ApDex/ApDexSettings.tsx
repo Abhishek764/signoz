@@ -61,7 +61,7 @@ function ApDexSettings({
 	return (
 		<Card
 			title={APPLICATION_SETTINGS}
-			extra={<X width={10} height={10} onClick={handlePopOverClose} />}
+			extra={<X  size="md" onClick={handlePopOverClose} />}
 			actions={[
 				<SaveAndCancelContainer key="SaveAndCancelContainer">
 					<Button onClick={handlePopOverClose}>Cancel</Button>

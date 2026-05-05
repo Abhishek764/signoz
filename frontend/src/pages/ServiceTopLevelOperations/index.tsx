@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
-import { BarChart, RefreshCw } from '@signozhq/icons';
+import { Histogram, RefreshCw } from '@signozhq/icons';
 import { Alert, Table, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
@@ -96,7 +96,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 				<Link to={ROUTES.APPLICATION}>
 					<span className="breadcrumb">
 						{' '}
-						<BarChart size={12} /> services{' '}
+						<Histogram size={12} /> services{' '}
 					</span>
 				</Link>
 				<div className="divider">/</div>
@@ -113,7 +113,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 				<div className="loading-top-level-operations">
 					<Typography.Title level={5}>
 						{/* //TODO: use className here */}
-						<RefreshCw  /> Loading ...
+						<RefreshCw className="animate-spin" size="sm" /> Loading ...
 					</Typography.Title>
 				</div>
 			)}

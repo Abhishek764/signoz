@@ -56,7 +56,7 @@ export function DeleteButton({
 				</Typography.Title>
 			),
 			icon: (
-				<CircleAlert style={{ color: 'var(--danger-background)' }} />
+				<CircleAlert style={{ color: 'var(--danger-background)' , marginInlineEnd: '12px' }} size='3xl' />
 			),
 			okText: 'Delete',
 			okButtonProps: {
@@ -120,7 +120,7 @@ export function DeleteButton({
 					className="delete-btn"
 					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<Trash2 /> Delete dashboard
+					<Trash2 size={14} /> Delete dashboard
 				</TableLinkText>
 			</Tooltip>
 

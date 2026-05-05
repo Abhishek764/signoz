@@ -96,6 +96,122 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesPostableChannel:
+      oneOf:
+      - required:
+        - discord_configs
+      - required:
+        - email_configs
+      - required:
+        - incidentio_configs
+      - required:
+        - pagerduty_configs
+      - required:
+        - slack_configs
+      - required:
+        - webhook_configs
+      - required:
+        - opsgenie_configs
+      - required:
+        - wechat_configs
+      - required:
+        - pushover_configs
+      - required:
+        - victorops_configs
+      - required:
+        - sns_configs
+      - required:
+        - telegram_configs
+      - required:
+        - webex_configs
+      - required:
+        - msteams_configs
+      - required:
+        - msteamsv2_configs
+      - required:
+        - jira_configs
+      - required:
+        - rocketchat_configs
+      - required:
+        - mattermost_configs
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
+      required:
+      - name
+      type: object
     AlertmanagertypesPostableRoutePolicy:
       properties:
         channels:
@@ -133,6 +249,10 @@ components:
           type: string
       type: object
     AuthtypesAuthDomainConfig:
+      oneOf:
+      - $ref: '#/components/schemas/AuthtypesSamlConfig'
+      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
+      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
       properties:
         googleAuthConfig:
           $ref: '#/components/schemas/AuthtypesGoogleConfig'
@@ -145,8 +265,15 @@ components:
         ssoEnabled:
           type: boolean
         ssoType:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
+    AuthtypesAuthNProvider:
+      enum:
+      - google_auth
+      - saml
+      - email_password
+      - oidc
+      type: string
     AuthtypesAuthNProviderInfo:
       properties:
         relayStatePath:
@@ -169,7 +296,7 @@ components:
     AuthtypesCallbackAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
         url:
           type: string
       type: object
@@ -177,26 +304,16 @@ components:
       properties:
         authNProviderInfo:
           $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
         createdAt:
           format: date-time
           type: string
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
         id:
           type: string
         name:
           type: string
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
         orgId:
-          type: string
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
           type: string
         updatedAt:
           format: date-time
@@ -323,7 +440,7 @@ components:
     AuthtypesPasswordAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
     AuthtypesPatchableObjects:
       properties:
@@ -458,7 +575,7 @@ components:
       - relation
       - object
       type: object
-    AuthtypesUpdateableAuthDomain:
+    AuthtypesUpdatableAuthDomain:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
@@ -2363,6 +2480,9 @@ components:
       type: object
     GlobaltypesConfig:
       properties:
+        ai_assistant_url:
+          nullable: true
+          type: string
         external_url:
           type: string
         identN:
@@ -2376,6 +2496,7 @@ components:
       - external_url
       - ingestion_url
       - mcp_url
+      - ai_assistant_url
       type: object
     GlobaltypesIdentNConfig:
       properties:
@@ -2412,37 +2533,22 @@ components:
           type: number
         clusterName:
           type: string
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
           type: object
-        notReadyNodesCount:
-          type: integer
-        pendingPodCount:
-          type: integer
-        readyNodesCount:
-          type: integer
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
+        nodeCountsByReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
       required:
       - clusterName
       - clusterCPU
       - clusterCPUAllocatable
       - clusterMemory
       - clusterMemoryAllocatable
-      - readyNodesCount
-      - notReadyNodesCount
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - nodeCountsByReadiness
+      - podCountsByPhase
       - meta
       type: object
     InframonitoringtypesClusters:
@@ -2576,20 +2682,12 @@ components:
           type: string
         desiredPods:
           type: integer
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
           type: object
-        pendingPodCount:
-          type: integer
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
       required:
       - deploymentName
       - deploymentCPU
@@ -2600,11 +2698,7 @@ components:
       - deploymentMemoryLimit
       - desiredPods
       - availablePods
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - meta
       type: object
     InframonitoringtypesDeployments:
@@ -2715,8 +2809,6 @@ components:
           type: integer
         desiredSuccessfulPods:
           type: integer
-        failedPodCount:
-          type: integer
         failedPods:
           type: integer
         jobCPU:
@@ -2743,15 +2835,9 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
-        pendingPodCount:
-          type: integer
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         successfulPods:
-          type: integer
-        unknownPodCount:
           type: integer
       required:
       - jobName
@@ -2765,11 +2851,7 @@ components:
       - activePods
       - failedPods
       - successfulPods
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - meta
       type: object
     InframonitoringtypesJobs:
@@ -2798,8 +2880,6 @@ components:
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
@@ -2812,23 +2892,13 @@ components:
           type: number
         namespaceName:
           type: string
-        pendingPodCount:
-          type: integer
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
       required:
       - namespaceName
       - namespaceCPU
       - namespaceMemory
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - meta
       type: object
     InframonitoringtypesNamespaces:
@@ -2859,8 +2929,18 @@ components:
       enum:
       - ready
       - not_ready
-      - ""
+      - no_data
       type: string
+    InframonitoringtypesNodeCountsByReadiness:
+      properties:
+        notReady:
+          type: integer
+        ready:
+          type: integer
+      required:
+      - ready
+      - notReady
+      type: object
     InframonitoringtypesNodeRecord:
       properties:
         condition:
@@ -2875,6 +2955,8 @@ components:
         nodeCPUAllocatable:
           format: double
           type: number
+        nodeCountsByReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
         nodeMemory:
           format: double
           type: number
@@ -2883,15 +2965,13 @@ components:
           type: number
         nodeName:
           type: string
-        notReadyNodesCount:
-          type: integer
-        readyNodesCount:
-          type: integer
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
       required:
       - nodeName
       - condition
-      - readyNodesCount
-      - notReadyNodesCount
+      - nodeCountsByReadiness
+      - podCountsByPhase
       - nodeCPU
       - nodeCPUAllocatable
       - nodeMemory
@@ -2922,6 +3002,25 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesPodCountsByPhase:
+      properties:
+        failed:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        succeeded:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -2929,18 +3028,14 @@ components:
       - succeeded
       - failed
       - unknown
-      - ""
+      - no_data
       type: string
     InframonitoringtypesPodRecord:
       properties:
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
           type: object
-        pendingPodCount:
-          type: integer
         podAge:
           format: int64
           type: integer
@@ -2953,6 +3048,8 @@ components:
         podCPURequest:
           format: double
           type: number
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podMemory:
           format: double
           type: number
@@ -2966,12 +3063,6 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podUID:
           type: string
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
       required:
       - podUID
       - podCPU
@@ -2981,11 +3072,7 @@ components:
       - podMemoryRequest
       - podMemoryLimit
       - podPhase
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - podAge
       - meta
       type: object
@@ -3294,16 +3381,12 @@ components:
           type: integer
         desiredPods:
           type: integer
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
           type: object
-        pendingPodCount:
-          type: integer
-        runningPodCount:
-          type: integer
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         statefulSetCPU:
           format: double
           type: number
@@ -3324,10 +3407,6 @@ components:
           type: number
         statefulSetName:
           type: string
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
       required:
       - statefulSetName
       - statefulSetCPU
@@ -3338,11 +3417,7 @@ components:
       - statefulSetMemoryLimit
       - desiredPods
       - availablePods
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - meta
       type: object
     InframonitoringtypesStatefulSets:
@@ -3428,6 +3503,158 @@ components:
       - total
       - requiredMetricsCheck
       - endTimeBeforeRetention
+      type: object
+    LlmpricingruletypesGettablePricingRules:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - total
+      - offset
+      - limit
+      type: object
+    LlmpricingruletypesLLMPricingCacheCosts:
+      properties:
+        mode:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
+        read:
+          format: double
+          type: number
+        write:
+          format: double
+          type: number
+      required:
+      - mode
+      type: object
+    LlmpricingruletypesLLMPricingRule:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        isOverride:
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          $ref: '#/components/schemas/LlmpricingruletypesStringSlice'
+        orgId:
+          type: string
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
+        sourceId:
+          type: string
+        syncedAt:
+          format: date-time
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - modelName
+      - provider
+      - modelPattern
+      - unit
+      - pricing
+      - isOverride
+      - enabled
+      type: object
+    LlmpricingruletypesLLMPricingRuleCacheMode:
+      enum:
+      - subtract
+      - additive
+      - unknown
+      type: string
+    LlmpricingruletypesLLMPricingRuleUnit:
+      enum:
+      - per_million_tokens
+      type: string
+    LlmpricingruletypesLLMRulePricing:
+      properties:
+        cache:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingCacheCosts'
+        input:
+          format: double
+          type: number
+        output:
+          format: double
+          type: number
+      required:
+      - input
+      - output
+      type: object
+    LlmpricingruletypesStringSlice:
+      items:
+        type: string
+      nullable: true
+      type: array
+    LlmpricingruletypesUpdatableLLMPricingRule:
+      properties:
+        enabled:
+          type: boolean
+        id:
+          nullable: true
+          type: string
+        isOverride:
+          nullable: true
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
+        sourceId:
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
+      required:
+      - modelName
+      - provider
+      - modelPattern
+      - unit
+      - pricing
+      - enabled
+      type: object
+    LlmpricingruletypesUpdatableLLMPricingRules:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRule'
+          nullable: true
+          type: array
+      required:
+      - rules
       type: object
     MetricsexplorertypesInspectMetricsRequest:
       properties:
@@ -6310,7 +6537,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesPostableChannel'
       responses:
         "201":
           content:
@@ -7589,20 +7816,20 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
                 required:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -7687,6 +7914,63 @@ paths:
       summary: Delete auth domain
       tags:
       - authdomains
+    get:
+      deprecated: false
+      description: This endpoint returns an auth domain by ID
+      operationId: GetAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get auth domain by ID
+      tags:
+      - authdomains
     put:
       deprecated: false
       description: This endpoint updates an auth domain
@@ -7701,7 +7985,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
+              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
       responses:
         "204":
           description: No Content
@@ -8472,6 +8756,218 @@ paths:
       summary: Create bulk invite
       tags:
       - users
+  /api/v1/llm_pricing_rules:
+    get:
+      deprecated: false
+      description: Returns all LLM pricing rules for the authenticated org, with pagination.
+      operationId: ListLLMPricingRules
+      parameters:
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesGettablePricingRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List pricing rules
+      tags:
+      - llmpricingrules
+    put:
+      deprecated: false
+      description: Single write endpoint used by both the user and the Zeus sync job.
+        Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true)
+        are fully preserved when the request does not provide isOverride; only synced_at
+        is stamped.
+      operationId: CreateOrUpdateLLMPricingRules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRules'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create or update pricing rules
+      tags:
+      - llmpricingrules
+  /api/v1/llm_pricing_rules/{id}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a pricing rule. If auto-synced, it will be recreated
+        on the next sync cycle.
+      operationId: DeleteLLMPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a pricing rule
+      tags:
+      - llmpricingrules
+    get:
+      deprecated: false
+      description: Returns a single LLM pricing rule by ID.
+      operationId: GetLLMPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a pricing rule
+      tags:
+      - llmpricingrules
   /api/v1/logs/promote_paths:
     get:
       deprecated: false
@@ -11835,19 +12331,18 @@ paths:
       description: 'Returns a paginated list of Kubernetes clusters with key aggregated
         metrics derived by summing per-node values within the group: CPU usage, CPU
         allocatable, memory working set, memory allocatable. Each row also reports
-        per-group node counts bucketed by each node''s latest k8s.node.condition_ready
-        value (readyNodesCount, notReadyNodesCount) and per-group pod counts bucketed
-        by each pod''s latest k8s.pod.phase value (pendingPodCount, runningPodCount,
-        succeededPodCount, failedPodCount, unknownPodCount). Each cluster includes
-        metadata attributes (k8s.cluster.name). The response type is ''list'' for
-        the default k8s.cluster.name grouping or ''grouped_list'' for custom groupBy
-        keys; in both modes every row aggregates nodes and pods in the group. Supports
-        filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable
-        / memory / memory_allocatable, and pagination via offset/limit. Also reports
-        missing required metrics and whether the requested time range falls before
-        the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable,
-        clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data
-        is available for that field.'
+        per-group nodeCountsByReadiness ({ ready, notReady } from each node''s latest
+        k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending,
+        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
+        value). Each cluster includes metadata attributes (k8s.cluster.name). The
+        response type is ''list'' for the default k8s.cluster.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates nodes and pods
+        in the group. Supports filtering via a filter expression, custom groupBy,
+        ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
+        via offset/limit. Also reports missing required metrics and whether the requested
+        time range falls before the data retention boundary. Numeric metric fields
+        (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable)
+        return -1 as a sentinel when no data is available for that field.'
       operationId: ListClusters
       requestBody:
         content:
@@ -11987,21 +12482,20 @@ paths:
         the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest,
         deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.deployment.desired) and
-        availablePods (k8s.deployment.available) replica counts and per-group pod
-        counts bucketed by each pod''s latest k8s.pod.phase value (pendingPodCount,
-        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount). Each
-        deployment includes metadata attributes (k8s.deployment.name, k8s.namespace.name,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.deployment.name
-        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates pods owned by deployments in the group. Supports filtering
-        via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
-        / memory / memory_request / memory_limit / desired_pods / available_pods,
-        and pagination via offset/limit. Also reports missing required metrics and
-        whether the requested time range falls before the data retention boundary.
-        Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit,
-        deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods,
-        availablePods) return -1 as a sentinel when no data is available for that
-        field.'
+        availablePods (k8s.deployment.available) replica counts and per-group podCountsByPhase
+        ({ pending, running, succeeded, failed, unknown } from each pod''s latest
+        k8s.pod.phase value). Each deployment includes metadata attributes (k8s.deployment.name,
+        k8s.namespace.name, k8s.cluster.name). The response type is ''list'' for the
+        default k8s.deployment.name grouping or ''grouped_list'' for custom groupBy
+        keys; in both modes every row aggregates pods owned by deployments in the
+        group. Supports filtering via a filter expression, custom groupBy, ordering
+        by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
+        / desired_pods / available_pods, and pagination via offset/limit. Also reports
+        missing required metrics and whether the requested time range falls before
+        the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest,
+        deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit,
+        desiredPods, availablePods) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListDeployments
       requestBody:
         content:
@@ -12134,12 +12628,11 @@ paths:
         (k8s.job.desired_successful_pods, the target completion count), activePods
         (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across
         the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative).
-        It also reports per-group pod counts bucketed by each pod''s latest k8s.pod.phase
-        value (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount,
-        unknownPodCount); note failedPodCount (current pod-phase) is distinct from
-        failedPods (cumulative job kube-state-metric). Each job includes metadata
-        attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name). The response
-        type is ''list'' for the default k8s.job.name grouping or ''grouped_list''
+        It also reports per-group podCountsByPhase ({ pending, running, succeeded,
+        failed, unknown } from each pod''s latest k8s.pod.phase value); note podCountsByPhase.failed
+        (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric).
+        Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.job.name grouping or ''grouped_list''
         for custom groupBy keys; in both modes every row aggregates pods owned by
         jobs in the group. Supports filtering via a filter expression, custom groupBy,
         ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
@@ -12207,17 +12700,16 @@ paths:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes namespaces with key aggregated
         pod metrics: CPU usage and memory working set (summed across pods in the group),
-        plus per-group pod counts bucketed by each pod''s latest k8s.pod.phase value
-        in the window (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount,
-        unknownPodCount). Each namespace includes metadata attributes (k8s.namespace.name,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.namespace.name
-        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates pods in the group. Supports filtering via a filter expression,
-        custom groupBy, ordering by cpu / memory, and pagination via offset/limit.
-        Also reports missing required metrics and whether the requested time range
-        falls before the data retention boundary. Numeric metric fields (namespaceCPU,
-        namespaceMemory) return -1 as a sentinel when no data is available for that
-        field.'
+        plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown
+        } from each pod''s latest k8s.pod.phase value in the window). Each namespace
+        includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response
+        type is ''list'' for the default k8s.namespace.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods in the group.
+        Supports filtering via a filter expression, custom groupBy, ordering by cpu
+        / memory, and pagination via offset/limit. Also reports missing required metrics
+        and whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel
+        when no data is available for that field.'
       operationId: ListNamespaces
       requestBody:
         content:
@@ -12275,14 +12767,15 @@ paths:
     post:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes nodes with key metrics:
-        CPU usage, CPU allocatable, memory working set, memory allocatable, and per-group
-        readyNodesCount / notReadyNodesCount derived from each node''s latest k8s.node.condition_ready
-        value in the window. Each node includes metadata attributes (k8s.node.uid,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.node.name
-        grouping (each row is one node with its current condition string: ready /
-        not_ready / '''') or ''grouped_list'' for custom groupBy keys (each row aggregates
-        nodes in the group with readyNodesCount and notReadyNodesCount; condition
-        stays empty). Supports filtering via a filter expression, custom groupBy,
+        CPU usage, CPU allocatable, memory working set, memory allocatable, per-group
+        nodeCountsByReadiness ({ ready, notReady } from each node''s latest k8s.node.condition_ready
+        in the window) and per-group podCountsByPhase ({ pending, running, succeeded,
+        failed, unknown } for pods scheduled on the listed nodes). Each node includes
+        metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is
+        ''list'' for the default k8s.node.name grouping (each row is one node with
+        its current condition string: ready / not_ready / no_data) or ''grouped_list''
+        for custom groupBy keys (each row aggregates nodes in the group; condition
+        stays no_data). Supports filtering via a filter expression, custom groupBy,
         ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
         via offset/limit. Also reports missing required metrics and whether the requested
         time range falls before the data retention boundary. Numeric metric fields
@@ -12346,7 +12839,7 @@ paths:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes pods with key metrics:
         CPU usage, CPU request/limit utilization, memory working set, memory request/limit
-        utilization, current pod phase (pending/running/succeeded/failed/unknown),
+        utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data),
         and pod age (ms since start time). Each pod includes metadata attributes (namespace,
         node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
         cluster). Supports filtering via a filter expression, custom groupBy to aggregate
@@ -12354,13 +12847,13 @@ paths:
         cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
         The response type is ''list'' for the default k8s.pod.uid grouping (each row
         is one pod with its current phase) or ''grouped_list'' for custom groupBy
-        keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
-        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived
-        from each pod''s latest phase in the window). Also reports missing required
-        metrics and whether the requested time range falls before the data retention
-        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
-        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
-        data is available for that field.'
+        keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase:
+        { pending, running, succeeded, failed, unknown } derived from each pod''s
+        latest phase in the window). Also reports missing required metrics and whether
+        the requested time range falls before the data retention boundary. Numeric
+        metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest,
+        podMemoryLimit, podAge) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListPods
       requestBody:
         content:
@@ -12494,20 +12987,19 @@ paths:
         statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.statefulset.desired_pods)
         and availablePods (k8s.statefulset.current_pods) replica counts and per-group
-        pod counts bucketed by each pod''s latest k8s.pod.phase value (pendingPodCount,
-        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount). Each
-        statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.statefulset.name
-        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
-        row aggregates pods owned by statefulsets in the group. Supports filtering
-        via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
-        / memory / memory_request / memory_limit / desired_pods / available_pods,
-        and pagination via offset/limit. Also reports missing required metrics and
-        whether the requested time range falls before the data retention boundary.
-        Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit,
-        statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods,
-        availablePods) return -1 as a sentinel when no data is available for that
-        field.'
+        podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each
+        pod''s latest k8s.pod.phase value). Each statefulset includes metadata attributes
+        (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response
+        type is ''list'' for the default k8s.statefulset.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods owned by
+        statefulsets in the group. Supports filtering via a filter expression, custom
+        groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        / memory_limit / desired_pods / available_pods, and pagination via offset/limit.
+        Also reports missing required metrics and whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (statefulSetCPU,
+        statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest,
+        statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel
+        when no data is available for that field.'
       operationId: ListStatefulSets
       requestBody:
         content:
@@ -18297,9 +18789,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - VIEWER
       - tokenizer:
-        - ADMIN
+        - VIEWER
       summary: Get host info from Zeus.
       tags:
       - zeus

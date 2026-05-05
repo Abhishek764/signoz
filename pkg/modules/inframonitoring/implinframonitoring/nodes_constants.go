@@ -21,15 +21,14 @@ var nodeNameGroupByKey = qbtypes.GroupByKey{
 }
 
 // nodesTableMetricNamesList drives the existence/retention check.
-// Includes condition_ready so the response short-circuits cleanly when a
-// cluster doesn't ship the metric — even though condition_ready isn't part
-// of the QB composite query (it's queried separately via getPerGroupNodeConditionCounts).
+// Includes condition_ready and pod.phase also.
 var nodesTableMetricNamesList = []string{
 	"k8s.node.cpu.usage",
 	"k8s.node.allocatable_cpu",
 	"k8s.node.memory.working_set",
 	"k8s.node.allocatable_memory",
 	"k8s.node.condition_ready",
+	"k8s.pod.phase",
 }
 
 var nodeAttrKeysForMetadata = []string{

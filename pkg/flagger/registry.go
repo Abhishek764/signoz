@@ -9,6 +9,7 @@ var (
 	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
 	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
 	FeatureUseJSONBody       = featuretypes.MustNewName("use_json_body")
+	FeatureUseScalarCache    = featuretypes.MustNewName("use_scalar_cache")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -58,6 +59,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether body JSON querying is enabled",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureUseScalarCache,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether caching for scalar requests is enabled",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},

@@ -314,13 +314,25 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return nil, err
 	}
 
-	conditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req, pageGroups)
+	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
+	// Start/End/Filter/GroupBy from PostablePods.
+	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
+		Start:   req.Start,
+		End:     req.End,
+		Filter:  req.Filter,
+		GroupBy: req.GroupBy,
+	}, pageGroups)
 	if err != nil {
 		return nil, err
 	}
 
 	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, nodeNameAttrKey)
-	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, conditionCounts)
+	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts)
 	resp.Warning = queryResp.Warning
 
 	return resp, nil
@@ -542,6 +554,12 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
 
+	// Bake the volume base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(volumesBaseFilterExpr, req.Filter.Expression)
+
 	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, volumesTableMetricNamesList)
 	if err != nil {
 		return nil, err
@@ -618,6 +636,12 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 	} else {
 		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
 	}
+
+	// Bake the deployments base filter into req.Filter so all downstream helpers pick it up.
+	if req.Filter == nil {
+		req.Filter = &qbtypes.Filter{}
+	}
+	req.Filter.Expression = mergeFilterExpressions(deploymentsBaseFilterExpr, req.Filter.Expression)
 
 	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, deploymentsTableMetricNamesList)
 	if err != nil {

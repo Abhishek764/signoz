@@ -2,7 +2,7 @@ import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
 import { ChevronRight, Plus } from '@signozhq/icons';
-import { Button, Space, Typography } from 'antd';
+import { Button, Flex, Space, Typography } from 'antd';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -107,8 +107,10 @@ function AllTags({
 			</CurrentTagsContainer>
 
 			<Space wrap direction="horizontal">
-				<Button type="primary" onClick={onTagAddHandler} icon={<Plus />}>
-					Add Tags Filter
+				<Button type="primary" onClick={onTagAddHandler} >
+					 <Flex gap={4} align="center">
+				      <Plus size="md" />Add Tags Filter
+					</Flex>
 				</Button>
 
 				<Text ellipsis>
@@ -122,9 +124,11 @@ function AllTags({
 					<Button
 						type="primary"
 						onClick={onRunQueryHandler}
-						icon={<ChevronRight />}
-					>
-						Run Query
+					> 
+					<Flex gap={4} align="center">
+					    <ChevronRight size="md" />
+						 Run Query
+					</Flex>
 					</Button>
 				</Space>
 			</ButtonContainer>

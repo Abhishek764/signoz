@@ -54,6 +54,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -171,9 +172,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			}
 			return factories
 		},
-		func(ctx context.Context, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
+		func(ctx context.Context, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			factories := signoz.NewMeterReporterProviderFactories()
-			if err := factories.Add(httpmeterreporter.NewFactory(newMeterCollectors(licensing, telemetryStore, sqlStore), licensing, telemetryStore, orgGetter, zeus)); err != nil {
+			if err := factories.Add(httpmeterreporter.NewFactory(newMeterCollectors(licensing, telemetryStore, retentionGetter), licensing, telemetryStore, orgGetter, zeus)); err != nil {
 				panic(err)
 			}
 
@@ -244,14 +245,14 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	return nil
 }
 
-func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore) map[zeustypes.MeterName]metercollector.MeterCollector {
+func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter) map[zeustypes.MeterName]metercollector.MeterCollector {
 	return map[zeustypes.MeterName]metercollector.MeterCollector{
 		baseplatformfeemetercollector.MeterName: baseplatformfeemetercollector.New(licensing),
-		logcountmetercollector.MeterName:        logcountmetercollector.New(telemetryStore, sqlStore),
-		logsizemetercollector.MeterName:         logsizemetercollector.New(telemetryStore, sqlStore),
-		datapointcountmetercollector.MeterName:  datapointcountmetercollector.New(telemetryStore, sqlStore),
-		datapointsizemetercollector.MeterName:   datapointsizemetercollector.New(telemetryStore, sqlStore),
-		spancountmetercollector.MeterName:       spancountmetercollector.New(telemetryStore, sqlStore),
-		spansizemetercollector.MeterName:        spansizemetercollector.New(telemetryStore, sqlStore),
+		logcountmetercollector.MeterName:        logcountmetercollector.New(telemetryStore, retentionGetter),
+		logsizemetercollector.MeterName:         logsizemetercollector.New(telemetryStore, retentionGetter),
+		datapointcountmetercollector.MeterName:  datapointcountmetercollector.New(telemetryStore, retentionGetter),
+		datapointsizemetercollector.MeterName:   datapointsizemetercollector.New(telemetryStore, retentionGetter),
+		spancountmetercollector.MeterName:       spancountmetercollector.New(telemetryStore, retentionGetter),
+		spansizemetercollector.MeterName:        spansizemetercollector.New(telemetryStore, retentionGetter),
 	}
 }

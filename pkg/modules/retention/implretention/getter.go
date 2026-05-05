@@ -1,6 +1,4 @@
-// Package retention builds retention slices and SQL expressions for meters.
-// Collectors still own their table names, defaults, and aggregation queries.
-package retention
+package implretention
 
 import (
 	"context"
@@ -9,10 +7,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,27 +17,37 @@ import (
 
 const secondsPerDay = 24 * 60 * 60
 
-// These values are inlined into SQL, so keep the allowlist strict.
 var (
 	labelKeyPattern   = regexp.MustCompile(`^[A-Za-z0-9_.\-]+$`)
 	labelValuePattern = regexp.MustCompile(`^[A-Za-z0-9_.\-:]+$`)
 )
 
-// LoadActiveSlices returns TTL slices covering [startMs, endMs).
-// tableName must be fully qualified, for example "signoz_logs.logs_v2".
-func LoadActiveSlices(
+type getter struct {
+	store retentiontypes.Store
+}
+
+// NewGetter creates a retention getter backed by the retention store.
+func NewGetter(store retentiontypes.Store) retention.Getter {
+	return &getter{
+		store: store,
+	}
+}
+
+// ActiveSlices loads successful TTL changes and converts them into meter windows.
+func (getter *getter) ActiveSlices(
 	ctx context.Context,
-	sqlstore sqlstore.SQLStore,
 	orgID valuer.UUID,
+	dbName string,
 	tableName string,
 	fallbackDefaultDays int,
-	startMs, endMs int64,
+	startMs int64,
+	endMs int64,
 ) ([]retentiontypes.Slice, error) {
 	if startMs >= endMs {
 		return nil, nil
 	}
-	if sqlstore == nil {
-		return nil, errors.New(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "sqlstore is nil")
+	if dbName == "" {
+		return nil, errors.New(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "dbName is empty")
 	}
 	if tableName == "" {
 		return nil, errors.New(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "tableName is empty")
@@ -49,19 +56,9 @@ func LoadActiveSlices(
 		return nil, errors.Newf(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "non-positive fallbackDefaultDays %d", fallbackDefaultDays)
 	}
 
-	rows := []*retentiontypes.TTLSetting{}
-	err := sqlstore.
-		BunDB().
-		NewSelect().
-		Model(&rows).
-		Where("table_name = ?", tableName).
-		Where("org_id = ?", orgID.StringValue()).
-		Where("status = ?", retentiontypes.TTLSettingStatusSuccess).
-		Where("created_at < ?", time.UnixMilli(endMs).UTC()).
-		OrderExpr("created_at ASC").
-		Scan(ctx)
+	rows, err := getter.store.ListTTLSettings(ctx, orgID, dbName+"."+tableName, endMs)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "load ttl_setting rows for org %q table %q", orgID.StringValue(), tableName)
+		return nil, err
 	}
 
 	return buildSlicesFromRows(rows, fallbackDefaultDays, startMs, endMs)
@@ -72,7 +69,6 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 		return nil, nil
 	}
 
-	// The latest row before the window is active at the window start.
 	var activeAtStart *retentiontypes.TTLSetting
 	inWindow := make([]*retentiontypes.TTLSetting, 0, len(rows))
 	for _, row := range rows {
@@ -97,7 +93,6 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 	for _, row := range inWindow {
 		rowMs := row.CreatedAt.UnixMilli()
 		if rowMs <= cursor {
-			// Same-ms updates collapse: replace active config, no empty slice.
 			activeRules, activeDefault, err = parseTTLSetting(row, fallbackDefaultDays)
 			if err != nil {
 				return nil, err
@@ -129,7 +124,6 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 	return slices, nil
 }
 
-// parseTTLSetting returns rules and default days for one ttl_setting row.
 func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([]retentiontypes.CustomRetentionRule, int, error) {
 	if row == nil {
 		return nil, fallbackDefaultDays, nil
@@ -137,7 +131,6 @@ func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([
 
 	defaultDays := row.TTL
 	if row.Condition == "" {
-		// V1 stores seconds; round up to days.
 		defaultDays = (row.TTL + secondsPerDay - 1) / secondsPerDay
 	}
 	if defaultDays <= 0 {
@@ -156,8 +149,8 @@ func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([
 	return rules, defaultDays, nil
 }
 
-// BuildMultiIfSQL renders the retention-days expression for one slice.
-func BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
+// BuildMultiIfSQL builds the retention-days expression used in collector queries.
+func (getter *getter) BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
 		return "", errors.Newf(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "non-positive default retention %d", defaultDays)
 	}
@@ -184,8 +177,8 @@ func BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int
 	return "toInt32(multiIf(" + strings.Join(arms, ", ") + "))", nil
 }
 
-// BuildRuleIndexSQL renders the matched rule index, or -1 for fallback.
-func BuildRuleIndexSQL(rules []retentiontypes.CustomRetentionRule) (string, error) {
+// BuildRuleIndexSQL builds the matched-rule expression, using -1 for fallback.
+func (getter *getter) BuildRuleIndexSQL(rules []retentiontypes.CustomRetentionRule) (string, error) {
 	if len(rules) == 0 {
 		return "toInt32(-1)", nil
 	}
@@ -233,8 +226,8 @@ func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRul
 	return strings.Join(filterExprs, " AND "), nil
 }
 
-// RuleDimensionKeys returns unique label keys referenced by retention rules.
-func RuleDimensionKeys(rules []retentiontypes.CustomRetentionRule) ([]string, error) {
+// RuleDimensionKeys lists labels needed to report custom-retention dimensions.
+func (getter *getter) RuleDimensionKeys(rules []retentiontypes.CustomRetentionRule) ([]string, error) {
 	keys := make([]string, 0)
 	seen := make(map[string]struct{})
 

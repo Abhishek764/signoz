@@ -1,11 +1,13 @@
-package retention
+package implretention
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -87,6 +89,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 }
 
 func TestRetentionSQL(t *testing.T) {
+	retentionGetter := NewGetter(noopStore{})
 	rules := []retentiontypes.CustomRetentionRule{{
 		Filters: []retentiontypes.FilterCondition{{
 			Key:    "service.name",
@@ -95,11 +98,11 @@ func TestRetentionSQL(t *testing.T) {
 		TTLDays: 7,
 	}}
 
-	retentionSQL, err := BuildMultiIfSQL(rules, 30)
+	retentionSQL, err := retentionGetter.BuildMultiIfSQL(rules, 30)
 	require.NoError(t, err)
 	require.Equal(t, "toInt32(multiIf(JSONExtractString(labels, 'service.name') IN ('api', 'worker'), 7, 30))", retentionSQL)
 
-	ruleIndexSQL, err := BuildRuleIndexSQL(rules)
+	ruleIndexSQL, err := retentionGetter.BuildRuleIndexSQL(rules)
 	require.NoError(t, err)
 	require.Equal(t, "toInt32(multiIf(JSONExtractString(labels, 'service.name') IN ('api', 'worker'), 0, -1))", ruleIndexSQL)
 
@@ -111,15 +114,17 @@ func TestRetentionSQL(t *testing.T) {
 		TTLDays: 7,
 	}}
 
-	_, err = BuildMultiIfSQL(invalidRules, 30)
+	_, err = retentionGetter.BuildMultiIfSQL(invalidRules, 30)
 	require.Error(t, err)
 
-	_, err = BuildRuleIndexSQL(invalidRules)
+	_, err = retentionGetter.BuildRuleIndexSQL(invalidRules)
 	require.Error(t, err)
 }
 
 func TestRuleDimensionKeysDedupes(t *testing.T) {
-	keys, err := RuleDimensionKeys([]retentiontypes.CustomRetentionRule{
+	retentionGetter := NewGetter(noopStore{})
+
+	keys, err := retentionGetter.RuleDimensionKeys([]retentiontypes.CustomRetentionRule{
 		{
 			Filters: []retentiontypes.FilterCondition{
 				{Key: "service.name", Values: []string{"api"}},
@@ -150,4 +155,10 @@ func ttlSetting(t *testing.T, createdAt time.Time, ttlDays int, rules []retentio
 		TTL:       ttlDays,
 		Condition: string(condition),
 	}
+}
+
+type noopStore struct{}
+
+func (noopStore) ListTTLSettings(context.Context, valuer.UUID, string, int64) ([]*retentiontypes.TTLSetting, error) {
+	return nil, nil
 }

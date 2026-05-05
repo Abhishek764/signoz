@@ -11,10 +11,9 @@ import (
 
 	"github.com/huandu/go-sqlbuilder"
 
-	"github.com/SigNoz/signoz/ee/metercollector/retention"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/metercollector"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -34,14 +33,14 @@ var _ metercollector.MeterCollector = (*Provider)(nil)
 
 // Provider collects log count meters.
 type Provider struct {
-	telemetryStore telemetrystore.TelemetryStore
-	sqlStore       sqlstore.SQLStore
+	telemetryStore  telemetrystore.TelemetryStore
+	retentionGetter retention.Getter
 }
 
-func New(telemetryStore telemetrystore.TelemetryStore, sqlStore sqlstore.SQLStore) *Provider {
+func New(telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter) *Provider {
 	return &Provider{
-		telemetryStore: telemetryStore,
-		sqlStore:       sqlStore,
+		telemetryStore:  telemetryStore,
+		retentionGetter: retentionGetter,
 	}
 }
 
@@ -55,13 +54,14 @@ func (p *Provider) Aggregation() zeustypes.MeterAggregation {
 func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	meterName := MeterName.String()
 
-	slices, err := retention.LoadActiveSlices(
+	slices, err := p.retentionGetter.ActiveSlices(
 		ctx,
-		p.sqlStore,
 		orgID,
-		telemetrylogs.DBName+"."+telemetrylogs.LogsV2LocalTableName,
+		telemetrylogs.DBName,
+		telemetrylogs.LogsV2LocalTableName,
 		retentiontypes.DefaultLogsRetentionDays,
-		window.StartUnixMilli, window.EndUnixMilli,
+		window.StartUnixMilli,
+		window.EndUnixMilli,
 	)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "load retention slices for meter %q", meterName)
@@ -74,7 +74,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 	accumulator := make(map[string]*bucket)
 
 	for _, slice := range slices {
-		query, args, dimensionColumns, err := buildQuery(meterName, slice)
+		query, args, dimensionColumns, err := buildQuery(meterName, slice, p.retentionGetter)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "build retention query for meter %q", meterName)
 		}
@@ -141,16 +141,16 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 }
 
 // buildQuery stays local because each meter owns its billing query.
-func buildQuery(meterName string, slice retentiontypes.Slice) (string, []any, []dimensionColumn, error) {
-	retentionExpr, err := retention.BuildMultiIfSQL(slice.Rules, slice.DefaultDays)
+func buildQuery(meterName string, slice retentiontypes.Slice, retentionGetter retention.Getter) (string, []any, []dimensionColumn, error) {
+	retentionExpr, err := retentionGetter.BuildMultiIfSQL(slice.Rules, slice.DefaultDays)
 	if err != nil {
 		return "", nil, nil, err
 	}
-	retentionRuleIndexExpr, err := retention.BuildRuleIndexSQL(slice.Rules)
+	retentionRuleIndexExpr, err := retentionGetter.BuildRuleIndexSQL(slice.Rules)
 	if err != nil {
 		return "", nil, nil, err
 	}
-	columns, err := dimensionColumnsFor(slice.Rules)
+	columns, err := dimensionColumnsFor(retentionGetter, slice.Rules)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -186,8 +186,8 @@ type dimensionColumn struct {
 	alias string
 }
 
-func dimensionColumnsFor(rules []retentiontypes.CustomRetentionRule) ([]dimensionColumn, error) {
-	dimensionKeys, err := retention.RuleDimensionKeys(rules)
+func dimensionColumnsFor(retentionGetter retention.Getter, rules []retentiontypes.CustomRetentionRule) ([]dimensionColumn, error) {
+	dimensionKeys, err := retentionGetter.RuleDimensionKeys(rules)
 	if err != nil {
 		return nil, err
 	}

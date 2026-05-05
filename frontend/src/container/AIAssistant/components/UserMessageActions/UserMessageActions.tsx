@@ -36,6 +36,7 @@ export default function UserMessageActions({
 					className={styles.btn}
 					size="icon"
 					variant="ghost"
+					color="secondary"
 					onClick={handleCopy}
 				>
 					{copied ? <Check size={12} /> : <Copy size={12} />}

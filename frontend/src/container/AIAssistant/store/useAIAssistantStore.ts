@@ -490,6 +490,7 @@ export interface AIAssistantStore {
 	submitMessageFeedback: (
 		messageId: string,
 		rating: 'positive' | 'negative',
+		comment?: string,
 	) => Promise<void>;
 }
 
@@ -551,6 +552,16 @@ function stripPageContextPrefix(content: string): string {
 	return content.replace(PAGE_CONTEXT_PREFIX_RE, '');
 }
 
+/**
+ * Parse a backend ISO timestamp into ms epoch, falling back to `now()` when the
+ * value is missing or unparseable. Without this guard, a null/invalid date from
+ * the API turns into NaN and surfaces in the UI as "Invalid Date".
+ */
+function toMs(value: string | null | undefined): number {
+	const t = value ? new Date(value).getTime() : NaN;
+	return Number.isFinite(t) ? t : Date.now();
+}
+
 function toMessage(m: MessageSummary): Message {
 	const rawContent = m.content ?? '';
 	const content =
@@ -562,7 +573,7 @@ function toMessage(m: MessageSummary): Message {
 		blocks: toBlocks(m.blocks),
 		actions: m.actions ?? undefined,
 		feedbackRating: m.feedbackRating ?? undefined,
-		createdAt: new Date(m.createdAt).getTime(),
+		createdAt: toMs(m.createdAt),
 	};
 }
 
@@ -683,8 +694,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 								threadId: thread.threadId,
 								title: thread.title ?? undefined,
 								messages: existingEntry?.[1].messages ?? [],
-								createdAt: new Date(thread.createdAt).getTime(),
-								updatedAt: new Date(thread.updatedAt).getTime(),
+								createdAt: toMs(thread.createdAt),
+								updatedAt: toMs(thread.updatedAt),
 								archived: thread.archived,
 							};
 
@@ -721,8 +732,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							messages: (detail.messages ?? [])
 								.filter((m) => m.content != null && m.content.trim() !== '')
 								.map(toMessage),
-							createdAt: new Date(detail.createdAt).getTime(),
-							updatedAt: new Date(detail.updatedAt).getTime(),
+							createdAt: toMs(detail.createdAt),
+							updatedAt: toMs(detail.updatedAt),
 							archived: detail.archived,
 						};
 						if (detail.pendingApproval || detail.pendingClarification) {
@@ -1101,6 +1112,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			submitMessageFeedback: async (
 				messageId: string,
 				rating: 'positive' | 'negative',
+				comment?: string,
 			): Promise<void> => {
 				const { activeConversationId } = get();
 				if (!activeConversationId) {
@@ -1119,7 +1131,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 
 				try {
-					await submitFeedback(messageId, rating);
+					await submitFeedback(messageId, rating, comment);
 				} catch (err) {
 					console.error('[AIAssistant] submitMessageFeedback failed:', err);
 				}

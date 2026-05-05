@@ -53,3 +53,37 @@
 	padding-left: 2px;
 	border-left: 1px solid var(--l2-border);
 }
+
+.feedbackTextarea {
+	width: 100%;
+	min-height: 96px;
+	padding: 10px 12px;
+	resize: vertical;
+	font: inherit;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--l1-foreground);
+	background: var(--l2-background, transparent);
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	outline: none;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
+	box-sizing: border-box;
+
+	&::placeholder {
+		color: var(--l3-foreground, #6b7280);
+	}
+
+	&:focus {
+		border-color: var(--primary, var(--bg-robin-500));
+		box-shadow: 0 0 0 1px var(--primary, var(--bg-robin-500));
+	}
+}
+
+.feedbackDialogFooter {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

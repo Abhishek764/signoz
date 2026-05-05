@@ -27,6 +27,9 @@ interface ConversationItemProps {
 }
 
 function formatRelativeTime(ts: number): string {
+	if (!Number.isFinite(ts)) {
+		return '';
+	}
 	const diff = Date.now() - ts;
 	const mins = Math.floor(diff / 60_000);
 	if (mins < 1) {

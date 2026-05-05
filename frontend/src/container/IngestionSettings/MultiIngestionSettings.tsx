@@ -53,22 +53,7 @@ import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, isNil, isUndefined } from 'lodash-es';
-import {
-	ArrowUpRight,
-	BellPlus,
-	CalendarClock,
-	Check,
-	Copy,
-	Infinity,
-	Minus,
-	PenLine,
-	Plus,
-	PlusIcon,
-	Search,
-	Trash2,
-	TriangleAlert,
-	X,
-} from 'lucide-react';
+import { ArrowUpRight, BellPlus, CalendarClock, Check, Copy, Infinity, Minus, PenLine, Plus, Search, Trash2, TriangleAlert, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -1113,7 +1098,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		className="periscope-btn"
 																		size="small"
 																		shape="round"
-																		icon={<PlusIcon size={14} />}
+																		icon={<Plus size={14} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
 																	>

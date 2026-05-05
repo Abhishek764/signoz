@@ -6,7 +6,7 @@ import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schem
 import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, Loader, Send, X } from 'lucide-react';
+import { Check, Loader, Send, X } from '@signozhq/icons';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';

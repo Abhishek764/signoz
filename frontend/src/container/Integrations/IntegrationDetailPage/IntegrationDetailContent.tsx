@@ -1,6 +1,6 @@
 import { Button, Tabs, TabsProps, Typography } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import { CableCar, Group } from 'lucide-react';
+import { CableCar, Group } from '@signozhq/icons';
 import { IntegrationDetailedProps } from 'types/api/integrations/types';
 
 import Configure from './IntegrationDetailContentTabs/Configure';

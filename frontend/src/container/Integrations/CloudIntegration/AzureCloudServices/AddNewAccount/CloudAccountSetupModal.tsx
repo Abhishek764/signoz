@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, LoaderCircle, SquareArrowOutUpRight } from '@signozhq/icons';
 import { Button, Callout, DrawerWrapper, Tabs } from '@signozhq/ui';
 import { Form, Select, Spin } from 'antd';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
@@ -14,7 +14,6 @@ import {
 	IntegrationModalProps,
 	ModalStateEnum,
 } from 'container/Integrations/HeroSection/types';
-import { LoaderCircle, SquareArrowOutUpRight } from 'lucide-react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { useIntegrationModal } from '../../../../../hooks/integration/azure/useIntegrationModal';

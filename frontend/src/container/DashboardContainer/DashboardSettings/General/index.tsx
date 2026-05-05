@@ -4,7 +4,7 @@ import { Col, Input, Select, Space, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { isEqual } from 'lodash-es';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 
 import { Button } from './styles';

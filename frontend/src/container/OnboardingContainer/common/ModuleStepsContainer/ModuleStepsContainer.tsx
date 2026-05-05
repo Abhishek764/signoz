@@ -1,5 +1,5 @@
 import React, { SetStateAction, useState } from 'react';
-import { ArrowLeft, ArrowRight, CircleArrowLeft } from '@signozhq/icons';
+import { ArrowLeft, ArrowRight, CircleArrowLeft, UserPlus } from '@signozhq/icons';
 import { Button, Space, Steps, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -10,7 +10,6 @@ import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/D
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty, isNull } from 'lodash-es';
-import { UserPlus } from 'lucide-react';
 import { isModifierKeyPressed } from 'utils/app';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';

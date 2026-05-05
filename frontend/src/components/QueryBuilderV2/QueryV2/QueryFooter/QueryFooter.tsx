@@ -3,7 +3,7 @@ import { Button, Tooltip, Typography } from 'antd';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { DraftingCompass, Plus, Sigma } from 'lucide-react';
+import { DraftingCompass, Plus, Sigma } from '@signozhq/icons';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
 
 import './QueryFooter.styles.scss';

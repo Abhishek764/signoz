@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { LoaderCircle } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, LoaderCircle } from '@signozhq/icons';
 import {
 	Button,
 	Spin,
@@ -13,7 +13,6 @@ import {
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
 import {

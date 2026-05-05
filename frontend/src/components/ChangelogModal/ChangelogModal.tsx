@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Check, X } from '@signozhq/icons';
+import { Check, ChevronsDown, ScrollText, X } from '@signozhq/icons';
 import { Button, Modal } from 'antd';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { ChevronsDown, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { UserPreference } from 'types/api/preferences/preference';

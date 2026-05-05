@@ -5,15 +5,7 @@ import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import {
-	Check,
-	ChevronLeft,
-	ChevronRight,
-	Minus,
-	Plus,
-	Sliders,
-	X,
-} from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Minus, Plus, SlidersHorizontal, X } from '@signozhq/icons';
 
 import './LogsFormatOptionsMenu.styles.scss';
 
@@ -472,7 +464,7 @@ function LogsFormatOptionsMenu({
 			<Tooltip title="Options">
 				<Button
 					className="periscope-btn ghost"
-					icon={<Sliders size={14} />}
+					icon={<SlidersHorizontal size={14} />}
 					data-testid="periscope-btn-format-options"
 				/>
 			</Tooltip>

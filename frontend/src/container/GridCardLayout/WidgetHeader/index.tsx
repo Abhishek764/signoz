@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Bell, CloudDownload, Copy, EllipsisVertical, Fullscreen, Info, Pencil, Search, Trash2 } from '@signozhq/icons';
+import { Bell, CircleX, CloudDownload, Copy, EllipsisVertical, Fullscreen, Info, Pencil, Search, SquareArrowOutUpRight, Trash2, X } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
@@ -16,7 +16,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponse, Warning } from 'types/api';

@@ -8,7 +8,7 @@ import {
 } from '@signozhq/ui';
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import '../OnboardingQuestionaire.styles.scss';
 

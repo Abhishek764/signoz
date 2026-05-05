@@ -3,7 +3,7 @@ import { Button, Typography } from 'antd';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 import { IEditCustomScheduleProps } from 'container/CreateAlertV2/EvaluationSettings/types';
-import { Calendar1, Edit, Trash } from 'lucide-react';
+import { Calendar , Pencil, Trash } from '@signozhq/icons';
 
 function EditCustomSchedule({
 	setIsEvaluationCadenceDetailsVisible,
@@ -81,11 +81,11 @@ function EditCustomSchedule({
 			<div className="button-row">
 				<Button.Group>
 					<Button type="default" onClick={handleEdit}>
-						<Edit size={12} />
-						<Typography.Text>Edit custom schedule</Typography.Text>
+						<Pencil size={12} />
+						<Typography.Text>Pencil custom schedule</Typography.Text>
 					</Button>
 					<Button type="default" onClick={handlePreview}>
-						<Calendar1 size={12} />
+						<Calendar size={12} />
 						<Typography.Text>Preview</Typography.Text>
 					</Button>
 					<Button

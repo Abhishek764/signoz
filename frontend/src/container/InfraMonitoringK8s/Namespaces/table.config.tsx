@@ -1,5 +1,5 @@
 import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
+import { Group } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { K8sRenderedRowData } from '../Base/types';

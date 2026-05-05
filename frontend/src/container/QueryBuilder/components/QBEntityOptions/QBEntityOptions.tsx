@@ -5,14 +5,7 @@ import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction } from 'lodash-es';
 import noop from 'lodash-es/noop';
-import {
-	ChevronDown,
-	ChevronRight,
-	Copy,
-	Eye,
-	EyeOff,
-	Trash2,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Eye, EyeOff, Trash2 } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';

@@ -1,8 +1,7 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import { Plus } from '@signozhq/icons';
+import { Check, Plus, X } from '@signozhq/icons';
 import { Button, Tag } from 'antd';
 import Input from 'components/Input';
-import { Check, X } from 'lucide-react';
 
 import './Tags.styles.scss';
 

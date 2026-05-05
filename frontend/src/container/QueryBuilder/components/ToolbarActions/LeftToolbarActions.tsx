@@ -1,7 +1,7 @@
-import { ArrowUpToLine, Filter } from '@signozhq/icons';
+import { Binoculars } from 'lucide-react';
+import { ArrowUpToLine, Atom, Filter, SquareMousePointer, Terminal } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
-import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import './ToolbarActions.styles.scss';

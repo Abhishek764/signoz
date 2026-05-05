@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { Compass, LoaderCircle, ScrollText } from '@signozhq/icons';
+import { BarChart, Compass, LoaderCircle, ScrollText } from '@signozhq/icons';
 import { Button } from '@signozhq/ui';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
@@ -16,7 +16,6 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
-import { BarChart2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -458,7 +457,7 @@ function GeneralSettings({
 		{
 			name: 'Metrics',
 			type: 'metrics',
-			icon: <BarChart2 size={14} />,
+			icon: <BarChart size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),

@@ -9,7 +9,7 @@ import {
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Info } from '@signozhq/icons';
+import { Check, ConciergeBell, Disc3, Info, PanelBottomClose, Plus, X } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -56,14 +56,6 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { cloneDeep, isEqual, omit } from 'lodash-es';
-import {
-	Check,
-	ConciergeBell,
-	Disc3,
-	PanelBottomClose,
-	Plus,
-	X,
-} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
 import { Dashboard } from 'types/api/dashboard/getAll';

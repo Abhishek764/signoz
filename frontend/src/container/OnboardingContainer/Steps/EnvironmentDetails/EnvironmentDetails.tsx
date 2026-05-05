@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoaderCircle } from '@signozhq/icons';
+import { Check, LoaderCircle, Server } from '@signozhq/icons';
 import { Button, Card, Form, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, Server } from 'lucide-react';
 
 interface SupportedEnvironmentsProps {
 	name: string;

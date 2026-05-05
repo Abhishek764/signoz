@@ -1,12 +1,6 @@
 import { Button } from '@signozhq/ui';
 import cx from 'classnames';
-import {
-	ChevronUp,
-	Command,
-	CornerDownLeft,
-	Loader2,
-	Play,
-} from 'lucide-react';
+import { ChevronUp, Command, CornerDownLeft, LoaderCircle, Play } from '@signozhq/icons';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import './RunQueryBtn.scss';
@@ -43,7 +37,7 @@ function RunQueryBtn({
 		<Button
 			color="destructive"
 			type="button"
-			prefix={<Loader2 size={14} className="loading-icon animate-spin" />}
+			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
 			className={cx('cancel-query-btn', className)}
 			onClick={handleCancelQuery}
 		>

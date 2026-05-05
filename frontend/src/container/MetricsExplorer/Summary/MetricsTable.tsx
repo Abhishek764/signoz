@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { LoaderCircle } from '@signozhq/icons';
+import { Info, LoaderCircle } from '@signozhq/icons';
 import {
 	Spin,
 	Table,
@@ -11,7 +11,6 @@ import {
 import type { SorterResult } from 'antd/es/table/interface';
 import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { Info } from 'lucide-react';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 

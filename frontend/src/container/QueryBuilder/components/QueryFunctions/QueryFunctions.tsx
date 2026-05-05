@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { cloneDeep, pullAt } from 'lodash-es';
-import { Plus } from 'lucide-react';
+import { Plus } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Checkbox, Input } from '@signozhq/ui';
 import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 

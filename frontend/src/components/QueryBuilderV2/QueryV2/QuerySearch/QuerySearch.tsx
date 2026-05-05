@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CircleCheck } from '@signozhq/icons';
+import { CircleCheck, Info, TriangleAlert } from '@signozhq/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -30,7 +30,6 @@ import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariabl
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { Info, TriangleAlert } from 'lucide-react';
 import {
 	IDetailedError,
 	IQueryContext,

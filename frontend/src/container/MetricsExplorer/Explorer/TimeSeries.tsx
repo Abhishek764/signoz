@@ -22,7 +22,7 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { AlertTriangle } from 'lucide-react';
+import { TriangleAlert } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';
@@ -296,7 +296,7 @@ function TimeSeries({
 											</Typography.Text>
 										}
 									>
-										<AlertTriangle
+										<TriangleAlert
 											size={16}
 											color={Color.BG_AMBER_400}
 											role="img"

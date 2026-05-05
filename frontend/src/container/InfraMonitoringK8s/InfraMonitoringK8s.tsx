@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpToLine } from '@signozhq/icons';
+import { ArrowUpDown, ArrowUpToLine, Bolt, Boxes, Computer, Container, FilePenLine, Filter, Group, HardDrive, Workflow } from '@signozhq/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
@@ -9,18 +9,6 @@ import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import {
-	ArrowUpDown,
-	Bolt,
-	Boxes,
-	Computer,
-	Container,
-	FilePenLine,
-	Filter,
-	Group,
-	HardDrive,
-	Workflow,
-} from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

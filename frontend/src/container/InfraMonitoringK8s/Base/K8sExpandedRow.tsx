@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { LoaderCircle } from '@signozhq/icons';
+import { CornerDownRight, LoaderCircle } from '@signozhq/icons';
 import {
 	Button,
 	Spin,
@@ -9,7 +9,6 @@ import {
 	TableColumnType as ColumnType,
 	Typography,
 } from 'antd';
-import { CornerDownRight } from 'lucide-react';
 import { useGlobalTimeStore } from 'store/globalTime';
 import {
 	getAutoRefreshQueryKey,

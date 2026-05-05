@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Input, Menu, Popover, Tooltip, Typography } from 'antd';
-import { Check, Copy, Search, SquareArrowOutUpRight } from 'lucide-react';
+import { Check, Copy, Search, SquareArrowOutUpRight } from '@signozhq/icons';
 
 import MetricDetailsErrorState from './MetricDetailsErrorState';
 import { AllAttributesEmptyTextProps, AllAttributesValueProps } from './types';

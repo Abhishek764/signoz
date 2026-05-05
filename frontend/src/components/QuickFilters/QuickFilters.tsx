@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowUpToLine, Filter, RefreshCw } from '@signozhq/icons';
+import { ArrowUpToLine, Filter, Frown, RefreshCw,  Settings2 as SettingsIcon } from '@signozhq/icons';
 import {
 	Combobox,
 	ComboboxCommand,
@@ -19,7 +19,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
-import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';

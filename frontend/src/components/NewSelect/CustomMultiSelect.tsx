@@ -7,7 +7,7 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { ChevronDown, LoaderCircle, RefreshCw } from '@signozhq/icons';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, Info, LoaderCircle, RefreshCw } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
@@ -15,7 +15,6 @@ import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -1727,7 +1726,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="navigation-icons">
 									{/* //TODO: check this. */}
 									<RefreshCw
-										twoToneColor={Color.BG_CHERRY_400}
+										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();
 											onRetry();

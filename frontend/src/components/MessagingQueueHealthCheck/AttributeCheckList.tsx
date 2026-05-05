@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { ChevronDown, LoaderCircle } from '@signozhq/icons';
+import { Bolt, Check, ChevronDown, LoaderCircle, OctagonAlert, X } from '@signozhq/icons';
 import {
 	Modal,
 	Select,
@@ -15,7 +15,6 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { History } from 'history';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Bolt, Check, OctagonAlert, X } from 'lucide-react';
 import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,

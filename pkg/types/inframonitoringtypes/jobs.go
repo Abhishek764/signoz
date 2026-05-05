@@ -18,23 +18,19 @@ type Jobs struct {
 }
 
 type JobRecord struct {
-	JobName               string         `json:"jobName" required:"true"`
-	JobCPU                float64        `json:"jobCPU" required:"true"`
-	JobCPURequest         float64        `json:"jobCPURequest" required:"true"`
-	JobCPULimit           float64        `json:"jobCPULimit" required:"true"`
-	JobMemory             float64        `json:"jobMemory" required:"true"`
-	JobMemoryRequest      float64        `json:"jobMemoryRequest" required:"true"`
-	JobMemoryLimit        float64        `json:"jobMemoryLimit" required:"true"`
-	DesiredSuccessfulPods int            `json:"desiredSuccessfulPods" required:"true"`
-	ActivePods            int            `json:"activePods" required:"true"`
-	FailedPods            int            `json:"failedPods" required:"true"`
-	SuccessfulPods        int            `json:"successfulPods" required:"true"`
-	PendingPodCount       int            `json:"pendingPodCount" required:"true"`
-	RunningPodCount       int            `json:"runningPodCount" required:"true"`
-	SucceededPodCount     int            `json:"succeededPodCount" required:"true"`
-	FailedPodCount        int            `json:"failedPodCount" required:"true"`
-	UnknownPodCount       int            `json:"unknownPodCount" required:"true"`
-	Meta                  map[string]any `json:"meta" required:"true"`
+	JobName               string           `json:"jobName" required:"true"`
+	JobCPU                float64          `json:"jobCPU" required:"true"`
+	JobCPURequest         float64          `json:"jobCPURequest" required:"true"`
+	JobCPULimit           float64          `json:"jobCPULimit" required:"true"`
+	JobMemory             float64          `json:"jobMemory" required:"true"`
+	JobMemoryRequest      float64          `json:"jobMemoryRequest" required:"true"`
+	JobMemoryLimit        float64          `json:"jobMemoryLimit" required:"true"`
+	DesiredSuccessfulPods int              `json:"desiredSuccessfulPods" required:"true"`
+	ActivePods            int              `json:"activePods" required:"true"`
+	FailedPods            int              `json:"failedPods" required:"true"`
+	SuccessfulPods        int              `json:"successfulPods" required:"true"`
+	PodCountsByPhase      PodCountsByPhase `json:"podCountsByPhase" required:"true"`
+	Meta                  map[string]any   `json:"meta" required:"true"`
 }
 
 // PostableJobs is the request body for the v2 jobs list API.

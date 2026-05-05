@@ -4819,10 +4819,6 @@ export interface InframonitoringtypesJobRecordDTO {
 	/**
 	 * @type integer
 	 */
-	failedPodCount: number;
-	/**
-	 * @type integer
-	 */
 	failedPods: number;
 	/**
 	 * @type number
@@ -4863,26 +4859,11 @@ export interface InframonitoringtypesJobRecordDTO {
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesJobRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	/**
 	 * @type integer
 	 */
 	successfulPods: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesJobsDTO {

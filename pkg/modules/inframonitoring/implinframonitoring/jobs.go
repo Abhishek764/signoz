@@ -76,11 +76,13 @@ func buildJobRecords(
 		}
 
 		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PendingPodCount = phaseCountsForGroup.Pending
-			record.RunningPodCount = phaseCountsForGroup.Running
-			record.SucceededPodCount = phaseCountsForGroup.Succeeded
-			record.FailedPodCount = phaseCountsForGroup.Failed
-			record.UnknownPodCount = phaseCountsForGroup.Unknown
+			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
+				Pending:   phaseCountsForGroup.Pending,
+				Running:   phaseCountsForGroup.Running,
+				Succeeded: phaseCountsForGroup.Succeeded,
+				Failed:    phaseCountsForGroup.Failed,
+				Unknown:   phaseCountsForGroup.Unknown,
+			}
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {

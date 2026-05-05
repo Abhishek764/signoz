@@ -15,7 +15,6 @@ import type {
 	InframonitoringtypesPostableClustersDTO,
 	InframonitoringtypesPostableDeploymentsDTO,
 	InframonitoringtypesPostableHostsDTO,
-	InframonitoringtypesPostableJobsDTO,
 	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
@@ -24,7 +23,6 @@ import type {
 	ListClusters200,
 	ListDeployments200,
 	ListHosts200,
-	ListJobs200,
 	ListNamespaces200,
 	ListNodes200,
 	ListPods200,
@@ -37,7 +35,7 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
- * Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group node counts bucketed by each node's latest k8s.node.condition_ready value (readyNodesCount, notReadyNodesCount) and per-group pod counts bucketed by each pod's latest k8s.pod.phase value (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount, unknownPodCount). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
+ * Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
  * @summary List Clusters for Infra Monitoring
  */
 export const listClusters = (
@@ -121,7 +119,7 @@ export const useListClusters = <
 	return useMutation(mutationOptions);
 };
 /**
- * Returns a paginated list of Kubernetes Deployments with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest, deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each row also reports the latest known desiredPods (k8s.deployment.desired) and availablePods (k8s.deployment.available) replica counts and per-group pod counts bucketed by each pod's latest k8s.pod.phase value (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount, unknownPodCount). Each deployment includes metadata attributes (k8s.deployment.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.deployment.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by deployments in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.
+ * Returns a paginated list of Kubernetes Deployments with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest, deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each row also reports the latest known desiredPods (k8s.deployment.desired) and availablePods (k8s.deployment.available) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each deployment includes metadata attributes (k8s.deployment.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.deployment.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by deployments in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.
  * @summary List Deployments for Infra Monitoring
  */
 export const listDeployments = (
@@ -289,91 +287,7 @@ export const useListHosts = <
 	return useMutation(mutationOptions);
 };
 /**
- * Returns a paginated list of Kubernetes Jobs with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the job, plus average CPU/memory request and limit utilization (jobCPURequest, jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the latest known job-level counters from kube-state-metrics: desiredSuccessfulPods (k8s.job.desired_successful_pods, the target completion count), activePods (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative). It also reports per-group pod counts bucketed by each pod's latest k8s.pod.phase value (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount, unknownPodCount); note failedPodCount (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric). Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.job.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by jobs in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_successful_pods / active_pods / failed_pods / successful_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest, jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods) return -1 as a sentinel when no data is available for that field.
- * @summary List Jobs for Infra Monitoring
- */
-export const listJobs = (
-	inframonitoringtypesPostableJobsDTO: BodyType<InframonitoringtypesPostableJobsDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<ListJobs200>({
-		url: `/api/v2/infra_monitoring/jobs`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: inframonitoringtypesPostableJobsDTO,
-		signal,
-	});
-};
-
-export const getListJobsMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof listJobs>>,
-		TError,
-		{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof listJobs>>,
-	TError,
-	{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
-	TContext
-> => {
-	const mutationKey = ['listJobs'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof listJobs>>,
-		{ data: BodyType<InframonitoringtypesPostableJobsDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return listJobs(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type ListJobsMutationResult = NonNullable<
-	Awaited<ReturnType<typeof listJobs>>
->;
-export type ListJobsMutationBody =
-	BodyType<InframonitoringtypesPostableJobsDTO>;
-export type ListJobsMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary List Jobs for Infra Monitoring
- */
-export const useListJobs = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof listJobs>>,
-		TError,
-		{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof listJobs>>,
-	TError,
-	{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
-	TContext
-> => {
-	const mutationOptions = getListJobsMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group pod counts bucketed by each pod's latest k8s.pod.phase value in the window (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount, unknownPodCount). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.
+ * Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value in the window). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.
  * @summary List Namespaces for Infra Monitoring
  */
 export const listNamespaces = (
@@ -457,7 +371,7 @@ export const useListNamespaces = <
 	return useMutation(mutationOptions);
 };
 /**
- * Returns a paginated list of Kubernetes nodes with key metrics: CPU usage, CPU allocatable, memory working set, memory allocatable, and per-group readyNodesCount / notReadyNodesCount derived from each node's latest k8s.node.condition_ready value in the window. Each node includes metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is 'list' for the default k8s.node.name grouping (each row is one node with its current condition string: ready / not_ready / '') or 'grouped_list' for custom groupBy keys (each row aggregates nodes in the group with readyNodesCount and notReadyNodesCount; condition stays empty). Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
+ * Returns a paginated list of Kubernetes nodes with key metrics: CPU usage, CPU allocatable, memory working set, memory allocatable, per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready in the window) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } for pods scheduled on the listed nodes). Each node includes metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is 'list' for the default k8s.node.name grouping (each row is one node with its current condition string: ready / not_ready / no_data) or 'grouped_list' for custom groupBy keys (each row aggregates nodes in the group; condition stays no_data). Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
  * @summary List Nodes for Infra Monitoring
  */
 export const listNodes = (
@@ -541,7 +455,7 @@ export const useListNodes = <
 	return useMutation(mutationOptions);
 };
 /**
- * Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod phase (pending/running/succeeded/failed/unknown), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping (each row is one pod with its current phase) or 'grouped_list' for custom groupBy keys (each row aggregates pods in the group with per-phase counts: pendingPodCount, runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived from each pod's latest phase in the window). Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no data is available for that field.
+ * Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping (each row is one pod with its current phase) or 'grouped_list' for custom groupBy keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase: { pending, running, succeeded, failed, unknown } derived from each pod's latest phase in the window). Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no data is available for that field.
  * @summary List Pods for Infra Monitoring
  */
 export const listPods = (
@@ -709,7 +623,7 @@ export const useListVolumes = <
 	return useMutation(mutationOptions);
 };
 /**
- * Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and availablePods (k8s.statefulset.current_pods) replica counts and per-group pod counts bucketed by each pod's latest k8s.pod.phase value (pendingPodCount, runningPodCount, succeededPodCount, failedPodCount, unknownPodCount). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.
+ * Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and availablePods (k8s.statefulset.current_pods) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.
  * @summary List StatefulSets for Infra Monitoring
  */
 export const listStatefulSets = (

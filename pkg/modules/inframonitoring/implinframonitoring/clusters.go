@@ -53,16 +53,20 @@ func buildClusterRecords(
 		}
 
 		if conditionCountsForGroup, ok := nodeConditionCountsMap[compositeKey]; ok {
-			record.ReadyNodesCount = conditionCountsForGroup.Ready
-			record.NotReadyNodesCount = conditionCountsForGroup.NotReady
+			record.NodeCountsByReadiness = inframonitoringtypes.NodeCountsByReadiness{
+				Ready:    conditionCountsForGroup.Ready,
+				NotReady: conditionCountsForGroup.NotReady,
+			}
 		}
 
 		if phaseCountsForGroup, ok := podPhaseCountsMap[compositeKey]; ok {
-			record.PendingPodCount = phaseCountsForGroup.Pending
-			record.RunningPodCount = phaseCountsForGroup.Running
-			record.SucceededPodCount = phaseCountsForGroup.Succeeded
-			record.FailedPodCount = phaseCountsForGroup.Failed
-			record.UnknownPodCount = phaseCountsForGroup.Unknown
+			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
+				Pending:   phaseCountsForGroup.Pending,
+				Running:   phaseCountsForGroup.Running,
+				Succeeded: phaseCountsForGroup.Succeeded,
+				Failed:    phaseCountsForGroup.Failed,
+				Unknown:   phaseCountsForGroup.Unknown,
+			}
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {

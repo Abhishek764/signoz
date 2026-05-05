@@ -7,7 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const deploymentNameAttrKey = "k8s.deployment.name"
+const (
+	deploymentNameAttrKey     = "k8s.deployment.name"
+	deploymentsBaseFilterExpr = "k8s.deployment.name != ''"
+)
 
 var deploymentNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -81,7 +84,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -102,7 +105,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -123,7 +126,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -144,7 +147,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -165,7 +168,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -186,7 +189,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -209,7 +212,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,
@@ -230,7 +233,7 @@ func (m *module) newDeploymentsTableListQuery() *qbtypes.QueryRangeRequest {
 					},
 				},
 				Filter: &qbtypes.Filter{
-					Expression: "k8s.deployment.name != ''",
+					Expression: deploymentsBaseFilterExpr,
 				},
 				GroupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey},
 				Disabled: false,

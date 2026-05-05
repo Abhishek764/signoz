@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
+import { getBaseUrl } from 'utils/basePath';
 
 import {
 	interceptorRejected,
@@ -9,6 +10,23 @@ import {
 
 /** Path-only base for the AI Assistant API. */
 export const AI_API_PATH = '/api/v1/assistant';
+
+/** Header that tells the AI backend which SigNoz instance to query against. */
+export const SIGNOZ_URL_HEADER = 'X-SigNoz-URL';
+
+/**
+ * Sets `X-SigNoz-URL` on every outgoing AI Assistant request. The backend
+ * needs the originating SigNoz instance URL for multi-tenant deployments;
+ * when omitted it falls back to its `SIGNOZ_API_URL` env var.
+ */
+export const interceptorsRequestSigNozUrl = (
+	value: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig => {
+	if (value.headers) {
+		value.headers[SIGNOZ_URL_HEADER] = getBaseUrl();
+	}
+	return value;
+};
 
 /**
  * AI backend URL — sourced from the global config's `ai_assistant_url` field
@@ -52,6 +70,7 @@ export const AIAssistantInstance = axios.create({});
 
 AIAssistantInstance.interceptors.request.use(interceptorsRequestResponse);
 AIAssistantInstance.interceptors.request.use(interceptorsRequestBasePath);
+AIAssistantInstance.interceptors.request.use(interceptorsRequestSigNozUrl);
 AIAssistantInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejected,

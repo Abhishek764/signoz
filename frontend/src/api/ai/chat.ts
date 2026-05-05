@@ -59,8 +59,13 @@ import type {
 	ToolResultEventDTO,
 } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { getBaseUrl } from 'utils/basePath';
 
-import { AIAssistantInstance, getAIBaseUrl } from './instance';
+import {
+	AIAssistantInstance,
+	getAIBaseUrl,
+	SIGNOZ_URL_HEADER,
+} from './instance';
 
 // ---------------------------------------------------------------------------
 // SSE-only auth wrapper.
@@ -106,11 +111,15 @@ async function fetchSSEWithAuth(
 	url: string,
 	signal?: AbortSignal,
 ): Promise<Response> {
-	const send = async (token: string | null): Promise<Response> =>
-		fetch(url, {
-			headers: token ? { Authorization: `Bearer ${token}` } : {},
-			signal,
-		});
+	const send = async (token: string | null): Promise<Response> => {
+		const headers: Record<string, string> = {
+			[SIGNOZ_URL_HEADER]: getBaseUrl(),
+		};
+		if (token) {
+			headers.Authorization = `Bearer ${token}`;
+		}
+		return fetch(url, { headers, signal });
+	};
 
 	const initialToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
 	const res = await send(initialToken);

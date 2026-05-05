@@ -19,6 +19,7 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { isArray } from 'lodash-es';
+import { getBodyDisplayString } from 'container/LogDetailedView/utils';
 import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -173,7 +174,7 @@ export default function Events({
 				(event): EventDataType => ({
 					timestamp: event.timestamp,
 					severity: event.data.severity_text,
-					body: event.data.body,
+					body: getBodyDisplayString(event.data.body),
 					id: event.data.id,
 					key: event.data.id,
 					resources_string: event.data.resources_string,

@@ -24,7 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard/dashboardpurger"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
@@ -144,9 +143,6 @@ type Config struct {
 
 	// Authz config
 	Authz authz.Config `mapstructure:"authz"`
-
-	// DashboardPurger config (hard-deletes soft-deleted dashboards after a TTL).
-	DashboardPurger dashboardpurger.Config `mapstructure:"dashboardpurger"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -172,7 +168,6 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		statsreporter.NewConfigFactory(),
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
-		dashboardpurger.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
 		inframonitoring.NewConfigFactory(),
 		flagger.NewConfigFactory(),

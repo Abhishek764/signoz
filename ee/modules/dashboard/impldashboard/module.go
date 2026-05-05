@@ -241,10 +241,6 @@ func (module *module) CreatePublicV2(ctx context.Context, orgID valuer.UUID, id 
 	return existing, nil
 }
 
-func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, deletedBy string) error {
-	return module.pkgDashboardModule.DeleteV2(ctx, orgID, id, deletedBy)
-}
-
 func (module *module) UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
 	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())

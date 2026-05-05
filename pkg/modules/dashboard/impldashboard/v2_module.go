@@ -166,17 +166,6 @@ func (module *module) UpdatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, deletedBy string) error {
-	existing, err := module.GetV2(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-	if err := existing.CanDelete(); err != nil {
-		return err
-	}
-	return module.store.SoftDeleteV2(ctx, orgID, id, deletedBy)
-}
-
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	existing, err := module.GetV2(ctx, orgID, id)
 	if err != nil {

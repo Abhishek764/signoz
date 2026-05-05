@@ -2,7 +2,6 @@ package dashboardtypes
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -45,11 +44,4 @@ type Store interface {
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data StorableDashboardData) error
 
 	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error
-
-	//re-deleting a soft-deleted row returns 0 rows → NotFound.
-	SoftDeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, deletedBy string) error
-
-	ListPurgeable(ctx context.Context, retention time.Duration, limit int) ([]valuer.UUID, error)
-
-	HardDelete(ctx context.Context, ids []valuer.UUID) error
 }

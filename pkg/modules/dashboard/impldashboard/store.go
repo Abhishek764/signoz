@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -147,83 +146,6 @@ func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 	// Defends against the race where a soft-delete lands between the caller's
 	// pre-update GetV2 and this update.
-	if rows == 0 {
-		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-	return nil
-}
-
-func (store *store) ListPurgeable(ctx context.Context, retention time.Duration, limit int) ([]valuer.UUID, error) {
-	if limit <= 0 {
-		return nil, nil
-	}
-	cutoff := time.Now().Add(-retention)
-	ids := make([]valuer.UUID, 0, limit)
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Column("id").
-		Where("deleted_at IS NOT NULL").
-		Where("deleted_at < ?", cutoff).
-		Limit(limit).
-		Scan(ctx, &ids)
-	if err != nil {
-		return nil, err
-	}
-	return ids, nil
-}
-
-// HardDelete cascades to tag_relations and public_dashboard inside one
-// transaction so a partial failure leaves no orphans.
-func (store *store) HardDelete(ctx context.Context, ids []valuer.UUID) error {
-	if len(ids) == 0 {
-		return nil
-	}
-	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		if _, err := store.sqlstore.BunDBCtx(ctx).
-			NewDelete().
-			Model((*tagtypes.TagRelation)(nil)).
-			Where("entity_id IN (?)", bun.In(ids)).
-			Exec(ctx); err != nil {
-			return err
-		}
-		if _, err := store.sqlstore.BunDBCtx(ctx).
-			NewDelete().
-			Model((*dashboardtypes.StorablePublicDashboard)(nil)).
-			Where("dashboard_id IN (?)", bun.In(ids)).
-			Exec(ctx); err != nil {
-			return err
-		}
-		_, err := store.sqlstore.BunDBCtx(ctx).
-			NewDelete().
-			Model((*dashboardtypes.StorableDashboard)(nil)).
-			Where("id IN (?)", bun.In(ids)).
-			Exec(ctx)
-		return err
-	})
-}
-
-func (store *store) SoftDeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, deletedBy string) error {
-	res, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Set("deleted_at = ?", time.Now()).
-		Set("deleted_by = ?", deletedBy).
-		Where("id = ?", id).
-		Where("org_id = ?", orgID).
-		Where("deleted_at IS NULL").
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
 	if rows == 0 {
 		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
 	}

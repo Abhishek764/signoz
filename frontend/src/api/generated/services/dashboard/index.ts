@@ -27,7 +27,6 @@ import type {
 	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
-	DeleteDashboardV2PathParameters,
 	DeletePublicDashboardPathParameters,
 	GetDashboardV2200,
 	GetDashboardV2PathParameters,
@@ -732,83 +731,6 @@ export const useCreateDashboardV2 = <
 	TContext
 > => {
 	const mutationOptions = getCreateDashboardV2MutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * This endpoint soft-deletes a v2-shape dashboard. Locked dashboards are rejected. Hard deletion happens later via the purge cron.
- * @summary Delete dashboard (v2)
- */
-export const deleteDashboardV2 = ({ id }: DeleteDashboardV2PathParameters) => {
-	return GeneratedAPIInstance<string>({
-		url: `/api/v2/dashboards/${id}`,
-		method: 'DELETE',
-	});
-};
-
-export const getDeleteDashboardV2MutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteDashboardV2>>,
-		TError,
-		{ pathParams: DeleteDashboardV2PathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteDashboardV2>>,
-	TError,
-	{ pathParams: DeleteDashboardV2PathParameters },
-	TContext
-> => {
-	const mutationKey = ['deleteDashboardV2'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteDashboardV2>>,
-		{ pathParams: DeleteDashboardV2PathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return deleteDashboardV2(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteDashboardV2MutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteDashboardV2>>
->;
-
-export type DeleteDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Delete dashboard (v2)
- */
-export const useDeleteDashboardV2 = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteDashboardV2>>,
-		TError,
-		{ pathParams: DeleteDashboardV2PathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deleteDashboardV2>>,
-	TError,
-	{ pathParams: DeleteDashboardV2PathParameters },
-	TContext
-> => {
-	const mutationOptions = getDeleteDashboardV2MutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

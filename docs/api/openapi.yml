@@ -9728,9 +9728,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:update
+        - serviceaccount:create
       - tokenizer:
-        - serviceaccount:update
+        - serviceaccount:create
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -9783,9 +9783,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:update
+        - serviceaccount:delete
       - tokenizer:
-        - serviceaccount:update
+        - serviceaccount:delete
       summary: Revoke a service account key
       tags:
       - serviceaccount

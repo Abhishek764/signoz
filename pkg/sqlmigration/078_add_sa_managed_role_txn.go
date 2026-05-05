@@ -38,18 +38,13 @@ type managedRoleTuple struct {
 func (migration *addServiceAccountManagedRoleTransactions) Up(ctx context.Context, db *bun.DB) error {
 	// All tuples that need to be created for service account FGA managed role permissions.
 	tuples := []managedRoleTuple{
-		// signoz-admin: full access
+		{authtypes.SigNozAdminRoleName, "role", "role", "attach"},
+		{authtypes.SigNozAdminRoleName, "serviceaccount", "serviceaccount", "attach"},
 		{authtypes.SigNozAdminRoleName, "metaresources", "serviceaccount", "create"},
 		{authtypes.SigNozAdminRoleName, "metaresources", "serviceaccount", "list"},
 		{authtypes.SigNozAdminRoleName, "serviceaccount", "serviceaccount", "read"},
 		{authtypes.SigNozAdminRoleName, "serviceaccount", "serviceaccount", "update"},
 		{authtypes.SigNozAdminRoleName, "serviceaccount", "serviceaccount", "delete"},
-		// signoz-editor: list + read
-		{authtypes.SigNozEditorRoleName, "metaresources", "serviceaccount", "list"},
-		{authtypes.SigNozEditorRoleName, "serviceaccount", "serviceaccount", "read"},
-		// signoz-viewer: list + read
-		{authtypes.SigNozViewerRoleName, "metaresources", "serviceaccount", "list"},
-		{authtypes.SigNozViewerRoleName, "serviceaccount", "serviceaccount", "read"},
 	}
 
 	tx, err := db.BeginTx(ctx, nil)

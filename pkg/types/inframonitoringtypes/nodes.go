@@ -22,6 +22,11 @@ type NodeRecord struct {
 	Condition             NodeCondition          `json:"condition" required:"true"`
 	ReadyNodesCount       int                    `json:"readyNodesCount" required:"true"`
 	NotReadyNodesCount    int                    `json:"notReadyNodesCount" required:"true"`
+	PendingPodCount       int                    `json:"pendingPodCount" required:"true"`
+	RunningPodCount       int                    `json:"runningPodCount" required:"true"`
+	SucceededPodCount     int                    `json:"succeededPodCount" required:"true"`
+	FailedPodCount        int                    `json:"failedPodCount" required:"true"`
+	UnknownPodCount       int                    `json:"unknownPodCount" required:"true"`
 	NodeCPU               float64                `json:"nodeCPU" required:"true"`
 	NodeCPUAllocatable    float64                `json:"nodeCPUAllocatable" required:"true"`
 	NodeMemory            float64                `json:"nodeMemory" required:"true"`

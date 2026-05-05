@@ -4678,6 +4678,10 @@ export type InframonitoringtypesNodeRecordDTOMeta = {
 export interface InframonitoringtypesNodeRecordDTO {
 	condition: InframonitoringtypesNodeConditionDTO;
 	/**
+	 * @type integer
+	 */
+	failedPodCount: number;
+	/**
 	 * @type object
 	 * @nullable true
 	 */
@@ -4713,7 +4717,23 @@ export interface InframonitoringtypesNodeRecordDTO {
 	/**
 	 * @type integer
 	 */
+	pendingPodCount: number;
+	/**
+	 * @type integer
+	 */
 	readyNodesCount: number;
+	/**
+	 * @type integer
+	 */
+	runningPodCount: number;
+	/**
+	 * @type integer
+	 */
+	succeededPodCount: number;
+	/**
+	 * @type integer
+	 */
+	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesNodesDTO {

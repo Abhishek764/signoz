@@ -2605,6 +2605,8 @@ components:
       properties:
         condition:
           $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+        failedPodCount:
+          type: integer
         meta:
           additionalProperties: {}
           nullable: true
@@ -2625,13 +2627,26 @@ components:
           type: string
         notReadyNodesCount:
           type: integer
+        pendingPodCount:
+          type: integer
         readyNodesCount:
+          type: integer
+        runningPodCount:
+          type: integer
+        succeededPodCount:
+          type: integer
+        unknownPodCount:
           type: integer
       required:
       - nodeName
       - condition
       - readyNodesCount
       - notReadyNodesCount
+      - pendingPodCount
+      - runningPodCount
+      - succeededPodCount
+      - failedPodCount
+      - unknownPodCount
       - nodeCPU
       - nodeCPUAllocatable
       - nodeMemory

@@ -11996,6 +11996,50 @@ paths:
       tags:
       - dashboard
   /api/v2/dashboards/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint soft-deletes a v2-shape dashboard. Locked dashboards
+        are rejected. Hard deletion happens later via the purge cron.
+      operationId: DeleteDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete dashboard (v2)
+      tags:
+      - dashboard
     get:
       deprecated: false
       description: This endpoint returns a v2-shape dashboard with its tags and public

@@ -10015,6 +10015,9 @@ export type CreateDashboardV2201 = {
 	status: string;
 };
 
+export type DeleteDashboardV2PathParameters = {
+	id: string;
+};
 export type GetDashboardV2PathParameters = {
 	id: string;
 };

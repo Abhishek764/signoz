@@ -216,6 +216,76 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 	})
 }
 
+// AuthZCheckDef groups the parameters for a single permission check.
+type AuthZCheckDef struct {
+	Relation         authtypes.Relation
+	Resource         coretypes.Resource
+	SelectorCallback authtypes.SelectorCallbackWithClaimsFn
+	Roles            []string
+}
+
+// AuthZCheckGroup is a set of checks OR'd together.
+// At least one check in the group must pass for the group to pass.
+type AuthZCheckGroup []AuthZCheckDef
+
+// CheckAll verifies groups of permission checks.
+// Within each group, checks are OR'd (any check passing = group passes).
+// Across groups, results are AND'd (all groups must pass).
+//
+// This model expresses any combination:
+//   - Single check:          []AuthZCheckGroup{{checkA}}
+//   - Pure AND:              []AuthZCheckGroup{{checkA}, {checkB}}
+//   - Cross-resource OR:     []AuthZCheckGroup{{checkA, checkB}}
+//   - Mixed (A OR B) AND C:  []AuthZCheckGroup{{checkA, checkB}, {checkC}}
+func (middleware *AuthZ) CheckAll(next http.HandlerFunc, groups []AuthZCheckGroup) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		orgID := valuer.MustNewUUID(claims.OrgID)
+
+		for _, group := range groups {
+			groupPassed := false
+			var lastErr error
+
+			for _, check := range group {
+				selectors, err := check.SelectorCallback(req, claims)
+				if err != nil {
+					render.Error(rw, err)
+					return
+				}
+
+				roleSelectors := make([]coretypes.Selector, len(check.Roles))
+				for i, role := range check.Roles {
+					roleSelectors[i] = coretypes.TypeRole.MustSelector(role)
+				}
+
+				err = middleware.authzService.CheckWithTupleCreation(
+					ctx, claims, orgID,
+					check.Relation, check.Resource,
+					selectors, roleSelectors,
+				)
+				if err == nil {
+					groupPassed = true
+					break
+				}
+				lastErr = err
+			}
+
+			if !groupPassed {
+				render.Error(rw, lastErr)
+				return
+			}
+		}
+
+		next(rw, req)
+	})
+}
+
 func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()

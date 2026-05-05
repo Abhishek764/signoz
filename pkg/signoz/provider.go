@@ -195,6 +195,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
+		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
 	)
 }
 
@@ -277,6 +278,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
 			handlers.QuerierHandler,
+			modules.ServiceAccount,
 			handlers.ServiceAccountHandler,
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,

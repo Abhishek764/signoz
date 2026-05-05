@@ -60,6 +60,7 @@ type provider struct {
 	rawDataExportHandler    rawdataexport.Handler
 	zeusHandler             zeus.Handler
 	querierHandler          querier.Handler
+	serviceAccountModule    serviceaccount.Module
 	serviceAccountHandler   serviceaccount.Handler
 	factoryHandler          factory.Handler
 	cloudIntegrationHandler cloudintegration.Handler
@@ -92,6 +93,7 @@ func NewFactory(
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	serviceAccountModule serviceaccount.Module,
 	serviceAccountHandler serviceaccount.Handler,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
@@ -127,6 +129,7 @@ func NewFactory(
 			rawDataExportHandler,
 			zeusHandler,
 			querierHandler,
+			serviceAccountModule,
 			serviceAccountHandler,
 			factoryHandler,
 			cloudIntegrationHandler,
@@ -164,6 +167,7 @@ func newProvider(
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	serviceAccountModule serviceaccount.Module,
 	serviceAccountHandler serviceaccount.Handler,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
@@ -199,6 +203,7 @@ func newProvider(
 		rawDataExportHandler:    rawDataExportHandler,
 		zeusHandler:             zeusHandler,
 		querierHandler:          querierHandler,
+		serviceAccountModule:    serviceAccountModule,
 		serviceAccountHandler:   serviceAccountHandler,
 		factoryHandler:          factoryHandler,
 		cloudIntegrationHandler: cloudIntegrationHandler,
@@ -336,14 +341,18 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 }
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
-	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
-	}
+	return newScopedSecuritySchemes([]string{role.String()})
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
+	}
+}
+
+func newScopedSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
 	}
 }

@@ -4611,38 +4611,12 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 */
 	clusterName: string;
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesClusterRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	notReadyNodesCount: number;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	readyNodesCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
 export interface InframonitoringtypesClustersDTO {

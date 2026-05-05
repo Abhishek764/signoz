@@ -26,13 +26,8 @@ type ClusterRecord struct {
 	ClusterCPUAllocatable    float64                `json:"clusterCPUAllocatable" required:"true"`
 	ClusterMemory            float64                `json:"clusterMemory" required:"true"`
 	ClusterMemoryAllocatable float64                `json:"clusterMemoryAllocatable" required:"true"`
-	ReadyNodesCount          int                    `json:"readyNodesCount" required:"true"`
-	NotReadyNodesCount       int                    `json:"notReadyNodesCount" required:"true"`
-	PendingPodCount          int                    `json:"pendingPodCount" required:"true"`
-	RunningPodCount          int                    `json:"runningPodCount" required:"true"`
-	SucceededPodCount        int                    `json:"succeededPodCount" required:"true"`
-	FailedPodCount           int                    `json:"failedPodCount" required:"true"`
-	UnknownPodCount          int                    `json:"unknownPodCount" required:"true"`
+	NodeCountsByReadiness    NodeCountsByReadiness  `json:"nodeCountsByReadiness" required:"true"`
+	PodCountsByPhase         PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
 	Meta                     map[string]interface{} `json:"meta" required:"true"`
 }
 

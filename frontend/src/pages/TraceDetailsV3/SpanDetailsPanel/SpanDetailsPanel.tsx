@@ -30,6 +30,7 @@ import Events from 'container/SpanDetailsDrawer/Events/Events';
 import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
+import { useMigratePinnedAttributes } from 'pages/TraceDetailsV3/hooks/useMigratePinnedAttributes';
 import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
@@ -48,6 +49,7 @@ import {
 	VISIBLE_ACTIONS,
 } from './constants';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
+import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import {
 	LinkedSpansPanel,
 	LinkedSpansToggle,
@@ -81,6 +83,12 @@ function SpanDetailsContent({
 	const spanAttributeActions = useSpanAttributeActions();
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
+
+	// One-time conversion of any V2-format value still living in the
+	// `span_details_pinned_attributes` user pref into V3 nested-path format.
+	useMigratePinnedAttributes(selectedSpan);
+	const { value: pinnedFieldsValue, onChange: onPinnedFieldsChange } =
+		useTracePinnedFields();
 
 	// Map span attribute actions to PrettyView actions format.
 	// Use the last key in fieldKeyPath (the actual attribute key), not the full display path.
@@ -385,6 +393,8 @@ function SpanDetailsContent({
 									showPinned: true,
 									actions: prettyViewCustomActions,
 									visibleActions: VISIBLE_ACTIONS,
+									pinnedFieldsValue,
+									onPinnedFieldsChange,
 								}}
 							/>
 						</TabsContent>

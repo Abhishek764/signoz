@@ -60,27 +60,31 @@ func buildNodeRecords(
 			}
 		}
 
-		if conditionCountsForGroup, ok := nodeConditionCounts[compositeKey]; ok {
-			record.ReadyNodesCount = conditionCountsForGroup.Ready
-			record.NotReadyNodesCount = conditionCountsForGroup.NotReady
+		if nodeConditionCountsForGroup, ok := nodeConditionCounts[compositeKey]; ok {
+			record.NodeCountsByReadiness = inframonitoringtypes.NodeCountsByReadiness{
+				Ready:    nodeConditionCountsForGroup.Ready,
+				NotReady: nodeConditionCountsForGroup.NotReady,
+			}
 
 			// In list mode each group is one node; the count==1 bucket identifies the condition.
 			if isNodeNameInGroupBy {
 				switch {
-				case conditionCountsForGroup.Ready == 1:
+				case nodeConditionCountsForGroup.Ready == 1:
 					record.Condition = inframonitoringtypes.NodeConditionReady
-				case conditionCountsForGroup.NotReady == 1:
+				case nodeConditionCountsForGroup.NotReady == 1:
 					record.Condition = inframonitoringtypes.NodeConditionNotReady
 				}
 			}
 		}
 
-		if pc, ok := podPhaseCounts[compositeKey]; ok {
-			record.PendingPodCount = pc.Pending
-			record.RunningPodCount = pc.Running
-			record.SucceededPodCount = pc.Succeeded
-			record.FailedPodCount = pc.Failed
-			record.UnknownPodCount = pc.Unknown
+		if podPhaseCountsForGroup, ok := podPhaseCounts[compositeKey]; ok {
+			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
+				Pending:   podPhaseCountsForGroup.Pending,
+				Running:   podPhaseCountsForGroup.Running,
+				Succeeded: podPhaseCountsForGroup.Succeeded,
+				Failed:    podPhaseCountsForGroup.Failed,
+				Unknown:   podPhaseCountsForGroup.Unknown,
+			}
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {

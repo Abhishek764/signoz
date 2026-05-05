@@ -2601,12 +2601,20 @@ components:
       - not_ready
       - no_data
       type: string
+    InframonitoringtypesNodeCountsByReadiness:
+      properties:
+        notReady:
+          type: integer
+        ready:
+          type: integer
+      required:
+      - ready
+      - notReady
+      type: object
     InframonitoringtypesNodeRecord:
       properties:
         condition:
           $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
@@ -2617,6 +2625,8 @@ components:
         nodeCPUAllocatable:
           format: double
           type: number
+        nodeCountsByReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
         nodeMemory:
           format: double
           type: number
@@ -2625,28 +2635,13 @@ components:
           type: number
         nodeName:
           type: string
-        notReadyNodesCount:
-          type: integer
-        pendingPodCount:
-          type: integer
-        readyNodesCount:
-          type: integer
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
       required:
       - nodeName
       - condition
-      - readyNodesCount
-      - notReadyNodesCount
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - nodeCountsByReadiness
+      - podCountsByPhase
       - nodeCPU
       - nodeCPUAllocatable
       - nodeMemory
@@ -2677,6 +2672,25 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesPodCountsByPhase:
+      properties:
+        failed:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        succeeded:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -2688,14 +2702,10 @@ components:
       type: string
     InframonitoringtypesPodRecord:
       properties:
-        failedPodCount:
-          type: integer
         meta:
           additionalProperties: {}
           nullable: true
           type: object
-        pendingPodCount:
-          type: integer
         podAge:
           format: int64
           type: integer
@@ -2708,6 +2718,8 @@ components:
         podCPURequest:
           format: double
           type: number
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podMemory:
           format: double
           type: number
@@ -2721,12 +2733,6 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podUID:
           type: string
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
       required:
       - podUID
       - podCPU
@@ -2736,11 +2742,7 @@ components:
       - podMemoryRequest
       - podMemoryLimit
       - podPhase
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - podAge
       - meta
       type: object
@@ -11754,14 +11756,15 @@ paths:
     post:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes nodes with key metrics:
-        CPU usage, CPU allocatable, memory working set, memory allocatable, and per-group
-        readyNodesCount / notReadyNodesCount derived from each node''s latest k8s.node.condition_ready
-        value in the window. Each node includes metadata attributes (k8s.node.uid,
-        k8s.cluster.name). The response type is ''list'' for the default k8s.node.name
-        grouping (each row is one node with its current condition string: ready /
-        not_ready / '''') or ''grouped_list'' for custom groupBy keys (each row aggregates
-        nodes in the group with readyNodesCount and notReadyNodesCount; condition
-        stays empty). Supports filtering via a filter expression, custom groupBy,
+        CPU usage, CPU allocatable, memory working set, memory allocatable, per-group
+        nodeCountsByReadiness ({ ready, notReady } from each node''s latest k8s.node.condition_ready
+        in the window) and per-group podCountsByPhase ({ pending, running, succeeded,
+        failed, unknown } for pods scheduled on the listed nodes). Each node includes
+        metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is
+        ''list'' for the default k8s.node.name grouping (each row is one node with
+        its current condition string: ready / not_ready / no_data) or ''grouped_list''
+        for custom groupBy keys (each row aggregates nodes in the group; condition
+        stays no_data). Supports filtering via a filter expression, custom groupBy,
         ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
         via offset/limit. Also reports missing required metrics and whether the requested
         time range falls before the data retention boundary. Numeric metric fields
@@ -11825,7 +11828,7 @@ paths:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes pods with key metrics:
         CPU usage, CPU request/limit utilization, memory working set, memory request/limit
-        utilization, current pod phase (pending/running/succeeded/failed/unknown),
+        utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data),
         and pod age (ms since start time). Each pod includes metadata attributes (namespace,
         node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
         cluster). Supports filtering via a filter expression, custom groupBy to aggregate
@@ -11833,13 +11836,13 @@ paths:
         cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
         The response type is ''list'' for the default k8s.pod.uid grouping (each row
         is one pod with its current phase) or ''grouped_list'' for custom groupBy
-        keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
-        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived
-        from each pod''s latest phase in the window). Also reports missing required
-        metrics and whether the requested time range falls before the data retention
-        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
-        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
-        data is available for that field.'
+        keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase:
+        { pending, running, succeeded, failed, unknown } derived from each pod''s
+        latest phase in the window). Also reports missing required metrics and whether
+        the requested time range falls before the data retention boundary. Numeric
+        metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest,
+        podMemoryLimit, podAge) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListPods
       requestBody:
         content:

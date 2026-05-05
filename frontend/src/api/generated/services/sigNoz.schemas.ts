@@ -4668,6 +4668,17 @@ export enum InframonitoringtypesNodeConditionDTO {
 	not_ready = 'not_ready',
 	no_data = 'no_data',
 }
+export interface InframonitoringtypesNodeCountsByReadinessDTO {
+	/**
+	 * @type integer
+	 */
+	notReady: number;
+	/**
+	 * @type integer
+	 */
+	ready: number;
+}
+
 /**
  * @nullable
  */
@@ -4677,10 +4688,6 @@ export type InframonitoringtypesNodeRecordDTOMeta = {
 
 export interface InframonitoringtypesNodeRecordDTO {
 	condition: InframonitoringtypesNodeConditionDTO;
-	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
 	/**
 	 * @type object
 	 * @nullable true
@@ -4696,6 +4703,7 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 * @format double
 	 */
 	nodeCPUAllocatable: number;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -4710,30 +4718,7 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 * @type string
 	 */
 	nodeName: string;
-	/**
-	 * @type integer
-	 */
-	notReadyNodesCount: number;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	readyNodesCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
 export interface InframonitoringtypesNodesDTO {
@@ -4755,6 +4740,29 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesPodCountsByPhaseDTO {
+	/**
+	 * @type integer
+	 */
+	failed: number;
+	/**
+	 * @type integer
+	 */
+	pending: number;
+	/**
+	 * @type integer
+	 */
+	running: number;
+	/**
+	 * @type integer
+	 */
+	succeeded: number;
+	/**
+	 * @type integer
+	 */
+	unknown: number;
+}
+
 export enum InframonitoringtypesPodPhaseDTO {
 	pending = 'pending',
 	running = 'running',
@@ -4772,18 +4780,10 @@ export type InframonitoringtypesPodRecordDTOMeta = {
 
 export interface InframonitoringtypesPodRecordDTO {
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesPodRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
 	/**
 	 * @type integer
 	 * @format int64
@@ -4804,6 +4804,7 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podCPURequest: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -4824,18 +4825,6 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @type string
 	 */
 	podUID: string;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
 }
 
 export interface InframonitoringtypesPodsDTO {

@@ -148,8 +148,9 @@ function Hosts(): JSX.Element {
 								<Typography.Text>Filters</Typography.Text>
 								<Tooltip title="Collapse Filters">
 									<ArrowUpToLine
-										rotate={270}
+										style={{ rotate: '270deg', cursor: 'pointer' }}
 										onClick={handleFilterVisibilityChange}
+										size="md"		
 									/>
 								</Tooltip>
 							</div>

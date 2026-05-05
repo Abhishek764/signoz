@@ -278,6 +278,7 @@ func (EvaluationEnvelope) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	if schema.ExtraProperties == nil {
 		schema.ExtraProperties = map[string]any{}
 	}
+
 	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
 		"propertyName": "kind",
 		"mapping": map[string]string{
@@ -285,6 +286,7 @@ func (EvaluationEnvelope) PrepareJSONSchema(schema *jsonschema.Schema) error {
 			"cumulative": "#/components/schemas/RuletypesEvaluationCumulative",
 		},
 	}
+
 	return nil
 }
 

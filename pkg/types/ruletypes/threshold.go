@@ -60,12 +60,14 @@ func (RuleThresholdData) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	if schema.ExtraProperties == nil {
 		schema.ExtraProperties = map[string]any{}
 	}
+
 	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
 		"propertyName": "kind",
 		"mapping": map[string]string{
 			"basic": "#/components/schemas/RuletypesThresholdBasic",
 		},
 	}
+
 	return nil
 }
 

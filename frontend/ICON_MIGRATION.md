@@ -1,165 +1,277 @@
-# Icon Migration Reference: `@ant-design/icons` & `lucide-react` → `@signozhq/icons`
+# Icon Migration Reference: `@ant-design/icons` → `@signozhq/icons`
 
-This document covers all icon name changes made (or to be aware of) when migrating from `@ant-design/icons` and `lucide-react` to `@signozhq/icons`.
+This is the canonical reference for replacing Ant Design icons with `@signozhq/icons`.
+Use this list when you encounter any `*Outlined`, `*Filled`, or `*TwoTone` icon name — those are always Ant Design icons.
+
+> **How to identify AntD icons in code:** Every Ant Design icon ends in `Outlined`, `Filled`, or `TwoTone`.
+> Even after migration the source of truth is the git diff — look at removed lines (`-`) with `from '@ant-design/icons'`.
 
 ---
 
-## 1. `@ant-design/icons` → `@signozhq/icons`
+## Complete AntD → `@signozhq/icons` Mapping
 
-All of these were replaced in `chore: replace antd icons with signoz icons`.
+| `@ant-design/icons` | `@signozhq/icons` | Type | Notes |
+|---|---|---|---|
+| `AlertFilled` | `BellRing` | Lucide | |
+| `AlertOutlined` | `Bell` | Lucide | |
+| `AlignLeftOutlined` | `AlignLeft` | Lucide | |
+| `AppstoreOutlined` | `Grid2X2` | Lucide | Old Lucide name was `grid`; renamed to `Grid2X2` |
+| `ArrowDownOutlined` | `ArrowDown` | Lucide | |
+| `ArrowLeftOutlined` | `ArrowLeft` | Lucide | |
+| `ArrowRightOutlined` | `ArrowRight` | Lucide | |
+| `ArrowUpOutlined` | `ArrowUp` | Lucide | |
+| `BarChartOutlined` | `ChartBar` | Lucide | NOT `BarChart` — use `ChartBar` |
+| `BellOutlined` | `Bell` | Lucide | |
+| `CalendarOutlined` | `Calendar` | Lucide | |
+| `CameraOutlined` | `Camera` | Lucide | |
+| `CaretDownFilled` | `ChevronDown` | Lucide | |
+| `CaretDownOutlined` | `ChevronDown` | Lucide | |
+| `CaretRightFilled` | `ChevronRight` | Lucide | |
+| `CheckCircleFilled` | `CircleCheck` | Lucide | Old Lucide name was `check-circle` |
+| `CheckCircleOutlined` | `CircleCheck` | Lucide | Old Lucide name was `check-circle` |
+| `CheckOutlined` | `Check` | Lucide | |
+| `ClockCircleOutlined` | `Clock` | Lucide | |
+| `CloseCircleFilled` | `CircleX` | Lucide | Old Lucide name was `x-circle` |
+| `CloseCircleOutlined` | `CircleX` | Lucide | Old Lucide name was `x-circle` |
+| `CloseOutlined` | `X` | Lucide | |
+| `CloseSquareOutlined` | `SquareX` | Lucide | |
+| `CloudDownloadOutlined` | `CloudDownload` | Lucide | |
+| `CloudOutlined` | `Cloud` | Lucide | |
+| `CloudUploadOutlined` | `CloudUpload` | Lucide | |
+| `CopyOutlined` | `Copy` | Lucide | |
+| `CreditCardOutlined` | `CreditCard` | Lucide | |
+| `DashboardFilled` | `LayoutDashboard` | Lucide | |
+| `DashboardOutlined` | `LayoutDashboard` | Lucide | |
+| `DeleteFilled` | `Trash2` | Lucide | |
+| `DeleteOutlined` | `Trash2` | Lucide | `trash` also works |
+| `DisconnectOutlined` | `Unlink` | Lucide | |
+| `DownOutlined` | `ChevronDown` | Lucide | |
+| `DownloadOutlined` | `Download` | Lucide | |
+| `EditFilled` | `Pencil` | Lucide | Old Lucide name was `edit`; renamed to `Pencil` |
+| `EditOutlined` | `Pencil` | Lucide | Old Lucide name was `edit`; renamed to `Pencil` |
+| `EllipsisOutlined` | `Ellipsis` | Lucide | Horizontal dots |
+| `ExclamationCircleFilled` | `CircleAlert` | Lucide | Old Lucide name was `alert-circle` |
+| `ExclamationCircleOutlined` | `CircleAlert` | Lucide | Old Lucide name was `alert-circle` |
+| `ExclamationCircleTwoTone` | `CircleAlert` | Lucide | Drop `twoToneColor`; use `color` prop instead |
+| `ExpandAltOutlined` | `Expand` | Lucide | |
+| `EyeFilled` | `EyeOpen` | Custom | Custom icon in @signozhq/icons pack |
+| `EyeOutlined` | `EyeOpen` | Custom | Custom icon in @signozhq/icons pack |
+| `EyeInvisibleFilled` | `EyeClosed` | Custom | Custom icon in @signozhq/icons pack |
+| `EyeInvisibleOutlined` | `EyeClosed` | Custom | Custom icon in @signozhq/icons pack |
+| `FastBackwardOutlined` | `SkipBack` | Lucide | |
+| `FileOutlined` | `File` | Lucide | |
+| `FileSearchOutlined` | `FileSearch` | Lucide | |
+| `FilterOutlined` | `Filter` | Lucide | |
+| `FolderOpenOutlined` | `FolderOpen` | Lucide | |
+| `FolderOutlined` | `Folder` | Lucide | |
+| `FullscreenOutlined` | `Fullscreen` | Lucide | |
+| `HeartOutlined` | `Heart` | Lucide | |
+| `HolderOutlined` | `GripVertical` | Lucide | Drag handle |
+| `InfoCircleOutlined` | `SolidInfoCircle` | Custom | Custom solid icon — NOT lucide `Info` |
+| `KeyOutlined` | `Key` | Lucide | |
+| `LeftOutlined` | `ChevronLeft` | Lucide | |
+| `LinkOutlined` | `Link` | Lucide | |
+| `LoadingOutlined` | `Loader` | Lucide | Add `className="animate-spin"` — see spinner note below |
+| `LockOutlined` | `LockSolid` | Custom | Custom icon in @signozhq/icons pack |
+| `MailOutlined` | `Mailbox` | Lucide | |
+| `MenuOutlined` | `Menu` | Lucide | |
+| `MessageOutlined` | `MessageSquare` | Lucide | |
+| `MinusCircleFilled` | `CircleMinus` | Lucide | |
+| `MinusCircleOutlined` | `CircleMinus` | Lucide | |
+| `MinusOutlined` | `Minus` | Lucide | |
+| `MinusSquareOutlined` | `SquareMinus` | Lucide | |
+| `MoreOutlined` | `Ellipsis` | Lucide | Horizontal dots — NOT `EllipsisVertical` |
+| `NotificationOutlined` | `BellRing` | Lucide | |
+| `PauseCircleFilled` | `CirclePause` | Lucide | Old Lucide name was `pause-circle` |
+| `PauseCircleOutlined` | `CirclePause` | Lucide | Old Lucide name was `pause-circle` |
+| `PauseOutlined` | `Pause` | Lucide | |
+| `PlayCircleFilled` | `CirclePlay` | Lucide | Old Lucide name was `play-circle` |
+| `PlayCircleOutlined` | `CirclePlay` | Lucide | Old Lucide name was `play-circle` |
+| `PlusCircleFilled` | `CirclePlus` | Lucide | |
+| `PlusCircleOutlined` | `CirclePlus` | Lucide | |
+| `PlusOutlined` | `Plus` | Lucide | |
+| `PlusSquareOutlined` | `SquarePlus` | Lucide | |
+| `QuestionCircleOutlined` | `CircleHelp` | Lucide | Old Lucide name was `help-circle` |
+| `ReloadOutlined` | `RefreshCw` | Lucide | |
+| `RightOutlined` | `ChevronRight` | Lucide | |
+| `RocketOutlined` | `Rocket` | Lucide | |
+| `SaveOutlined` | `Save` | Lucide | |
+| `SearchOutlined` | `Search` | Lucide | |
+| `SettingFilled` | `Settings` | Lucide | Both filled and outlined → same icon |
+| `SettingOutlined` | `Settings` | Lucide | Both filled and outlined → same icon |
+| `ShoppingCartOutlined` | `ShoppingCart` | Lucide | |
+| `SoundFilled` | `Volume2` | Lucide | |
+| `StarOutlined` | `Star` | Lucide | |
+| `SyncOutlined` | `RefreshCw` | Lucide | |
+| `TeamOutlined` | `UsersRound` | Lucide | |
+| `UnlockOutlined` | `LockOpen` | Lucide | `LockSolidOpen` does not exist — use `LockOpen` |
+| `UpOutlined` | `ChevronUp` | Lucide | |
+| `UploadOutlined` | `Upload` | Lucide | |
+| `UserOutlined` | `UserRound` | Lucide | |
+| `VerticalAlignTopOutlined` | `ArrowUpToLine` | Lucide | Scroll-to-top |
+| `VideoCameraOutlined` | `Video` | Lucide | |
+| `WarningFilled` | `SolidAlertTriangle` | Custom | Custom solid icon — NOT lucide `TriangleAlert` |
+| `WarningOutlined` | `SolidAlertTriangle` | Custom | Custom solid icon — NOT lucide `TriangleAlert` |
 
-| `@ant-design/icons` | `@signozhq/icons` | Notes |
+---
+
+## Icons with NO `@signozhq/icons` Equivalent — Keep as-is
+
+| `@ant-design/icons` | File(s) | Reason |
 |---|---|---|
-| `AlertFilled` | `BellRing` | |
-| `AlertOutlined` | `Bell` | |
-| `AlignLeftOutlined` | `AlignLeft` | |
-| `ArrowLeftOutlined` | `ArrowLeft` | |
-| `ArrowRightOutlined` | `ArrowRight` | |
-| `ArrowUpOutlined` | `ArrowUp` | |
-| `BarChartOutlined` | `ChartBar` | Note: NOT `BarChart` — use `ChartBar` |
-| `CaretDownFilled` | `ChevronDown` | |
-| `CaretDownOutlined` | `ChevronDown` | |
-| `CaretRightFilled` | `ChevronRight` | |
-| `CheckCircleFilled` | `CircleCheck` | |
-| `CheckCircleOutlined` | `CircleCheck` | |
-| `CheckOutlined` | `Check` | |
-| `CloseCircleFilled` | `CircleX` | |
-| `CloseCircleOutlined` | `CircleX` | |
-| `CloseOutlined` | `X` | |
-| `CloseSquareOutlined` | `SquareX` | |
-| `CloudDownloadOutlined` | `CloudDownload` | |
-| `CopyOutlined` | `Copy` | |
-| `DashboardFilled` | `LayoutDashboard` | |
-| `DeleteFilled` | `Trash2` | |
-| `DeleteOutlined` | `Trash2` | |
-| `DownOutlined` | `ChevronDown` | |
-| `EditFilled` | `Pencil` | |
-| `EditOutlined` | `Pencil` | |
-| `EllipsisOutlined` | `Ellipsis` | Horizontal "more" |
-| `ExclamationCircleFilled` | `CircleAlert` | |
-| `ExclamationCircleOutlined` | `CircleAlert` | |
-| `ExclamationCircleTwoTone` | `CircleAlert` | |
-| `ExpandAltOutlined` | `Expand` | |
-| `EyeFilled` | `Eye` | |
-| `EyeInvisibleFilled` | `EyeOff` | |
-| `FastBackwardOutlined` | `SkipBack` | |
-| `FileSearchOutlined` | `FileSearch` | |
-| `FilterOutlined` | `Filter` | |
-| `FullscreenOutlined` | `Fullscreen` | |
-| `HolderOutlined` | `GripVertical` | Drag handle |
-| `InfoCircleOutlined` | `Info` | |
-| `KeyOutlined` | `Key` | |
-| `LeftOutlined` | `ChevronLeft` | |
-| `LinkOutlined` | `Link` | |
-| `LoadingOutlined` | `LoaderCircle` | Add `className="animate-spin"` for spin effect (see note below) |
-| `MinusCircleFilled` | `CircleMinus` | |
-| `MinusCircleOutlined` | `CircleMinus` | |
-| `MinusSquareOutlined` | `SquareMinus` | |
-| `MoreOutlined` | `EllipsisVertical` | Vertical "more" |
-| `PauseCircleFilled` | `CirclePause` | |
-| `PauseOutlined` | `Pause` | |
-| `PlayCircleFilled` | `CirclePlay` | |
-| `PlayCircleOutlined` | `Play` | |
-| `PlusCircleFilled` | `CirclePlus` | |
-| `PlusCircleOutlined` | `CirclePlus` | |
-| `PlusOutlined` | `Plus` | |
-| `PlusSquareOutlined` | `SquarePlus` | |
-| `RightOutlined` | `ChevronRight` | |
-| `RocketOutlined` | `Rocket` | |
-| `SaveOutlined` | `Save` | |
-| `SearchOutlined` | `Search` | |
-| `SettingFilled` | `Settings` | |
-| `SettingOutlined` | `Settings` | |
-| `SoundFilled` | `Volume2` | |
-| `SyncOutlined` | `RefreshCw` | |
-| `VerticalAlignTopOutlined` | `ArrowUpToLine` | Scroll-to-top |
-| `WarningFilled` | `TriangleAlert` | |
-| `WarningOutlined` | `TriangleAlert` | |
-
-### Icons kept in `@ant-design/icons` (no `@signozhq/icons` equivalent yet)
-
-| `@ant-design/icons` | Reason kept |
-|---|---|
-| `ApiFilled` | No equivalent in `@signozhq/icons` |
-| `GoogleSquareFilled` | Brand/OAuth icon — intentionally kept |
+| `ApiFilled` | `renderConfig.tsx` | No equivalent in `@signozhq/icons` |
+| `GoogleSquareFilled` | `AuthnProviderSelector.tsx` | Brand icon — no brand icons in `@signozhq/icons` |
 
 ---
 
-## 2. `lucide-react` → `@signozhq/icons` — Naming Differences to Watch For
+## Lucide-React Naming Differences
 
-`lucide-react` icons were **not replaced** in this PR, but `@signozhq/icons` is built on a subset of Lucide. Some icon names differ or simply do not exist. Use this as a reference when migrating `lucide-react` icons in the future.
+`@signozhq/icons` is built on Lucide but uses **newer Lucide names**. The reference list above uses some old Lucide kebab-case names that have since been renamed. This table covers the gaps:
 
-| `lucide-react` | `@signozhq/icons` | Status |
+| Old `lucide-react` name | `@signozhq/icons` name | Notes |
 |---|---|---|
-| `Loader2` | `LoaderCircle` | Renamed — use `LoaderCircle` |
-| `BarChart3` | `BarChart` | `BarChart3` does not exist — use `BarChart` |
-| `BarChart2` | `BarChart` | `BarChart2` does not exist — use `BarChart` |
-| `Edit2` | `PenLine` | `Edit2` does not exist — use `PenLine` (or `Pencil`) |
-| `Binoculars` | _(none)_ | Does not exist in `@signozhq/icons` — keep from `lucide-react` |
+| `alert-circle` / `AlertCircle` | `CircleAlert` | Lucide moved shape qualifier to front |
+| `alert-triangle` / `AlertTriangle` | `TriangleAlert` | Lucide renamed |
+| `BarChart2` | `BarChart` | Numbered variant removed |
+| `BarChart3` | `BarChart` | Numbered variant removed |
+| `check-circle` / `CheckCircle` | `CircleCheck` | Lucide moved shape qualifier to front |
+| `CheckCircle2` | `CircleCheckBig` | |
+| `CheckIcon` | `Check` | Icon suffix removed |
+| `DownloadIcon` | `Download` | Icon suffix removed |
+| `Edit` / `Edit2` | `PenLine` or `Pencil` | Lucide renamed `edit` → `Pencil` |
+| `Edit3Icon` | `PencilLine` | |
+| `EllipsisIcon` | `Ellipsis` | Icon suffix removed |
+| `FrownIcon` | `Frown` | Icon suffix removed |
+| `Grid` | `Grid2X2` | Renamed in Lucide |
+| `help-circle` / `HelpCircle` | `CircleHelp` | Lucide moved shape qualifier to front |
+| `InfoIcon` | `Info` | Icon suffix removed |
+| `LineChart` | `ChartLine` | Renamed in Lucide |
+| `LinkIcon` | `Link` | Icon suffix removed |
+| `Loader2` | `LoaderCircle` | Renamed — circular spinner |
+| `MailIcon` | `Mail` | Icon suffix removed |
+| `pause-circle` / `PauseCircle` | `CirclePause` | Lucide moved shape qualifier to front |
+| `play-circle` / `PlayCircle` | `CirclePlay` | Lucide moved shape qualifier to front |
+| `PlusIcon` | `Plus` | Icon suffix removed |
+| `SettingsIcon` | `Settings` | Icon suffix removed |
+| `TriangleAlertIcon` | `TriangleAlert` | Icon suffix removed |
+| `UserIcon` | `User` | Icon suffix removed |
+| `x-circle` / `XCircle` | `CircleX` | Lucide moved shape qualifier to front |
+| `XIcon` | `X` | Icon suffix removed |
 
-> **Rule of thumb:** If a numbered variant like `BarChart2`, `BarChart3`, or `Edit2` doesn't exist, try the base name (`BarChart`, `PenLine`, `Pencil`) first. If none exist, keep the `lucide-react` import.
+### Icons with NO equivalent in `@signozhq/icons` — keep from `lucide-react`
+
+| `lucide-react` | File(s) | Notes |
+|---|---|---|
+| `Binoculars` | `GraphControlsPanel.tsx`, `LeftToolbarActions.tsx` | Not in @signozhq/icons |
+| `Calendar1` | `EditCustomSchedule.tsx` | Numeric variant not available |
+| `DecimalsArrowRight` | `FunnelsList.tsx` | Niche icon not in @signozhq/icons |
 
 ---
 
-## 3. New Icons Added (no direct antd equivalent)
+## Patterns & Tips
 
-These icons were added fresh from `@signozhq/icons` as part of this migration (they did not replace a specific antd icon 1:1):
+### How to identify which library an icon came from
 
-| `@signozhq/icons` | Context |
-|---|---|
-| `CircleArrowLeft` | Module navigation (back arrow in circle) |
-| `CircleHelp` | Tooltip help icon (previously `InfoCircleOutlined` in some places) |
-| `Share2` | Share URL / copy link action |
+Since all icons now import from `@signozhq/icons`, use `git diff` to trace origins:
+
+```bash
+# Find files where a specific antd icon was replaced
+git diff main...HEAD -- '*.tsx' '*.ts' | awk '
+  /^diff --git/ { file = $3; sub(/^a\//, "", file) }
+  /^-.*InfoCircleOutlined/ { print file }
+' | sort -u
+```
+
+Removed lines (`-`) from `@ant-design/icons` = antd-originated.
+Removed lines (`-`) from `lucide-react` = lucide-originated.
 
 ---
 
-## 4. Patterns & Tips
-
-### Loading spinner pattern
-
-`LoadingOutlined` with antd's `spin` prop → `LoaderCircle` with a Tailwind class:
+### Spinner pattern (`LoadingOutlined`)
 
 ```tsx
 // Before
 <Spin indicator={<LoadingOutlined size={14} spin />} />
 
 // After
-<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
+<Spin indicator={<Loader size={14} className="animate-spin" />} />
 ```
 
-### Filled vs Outlined
+> `Loader` ≠ `LoaderCircle`. Use `Loader` for antd `LoadingOutlined` replacements.
+> Use `LoaderCircle` only when migrating lucide-react's `Loader2`.
 
-`@signozhq/icons` does not distinguish "Filled" vs "Outlined" in most names — there is generally one canonical version:
+---
 
-- `DeleteOutlined` and `DeleteFilled` → both become `Trash2`
-- `SettingOutlined` and `SettingFilled` → both become `Settings`
-- `EditFilled` and `EditOutlined` → both become `Pencil`
+### `twoToneColor` → `color`
 
-### Filter icon alias
+`@signozhq/icons` has no two-tone support. Drop `twoToneColor` and use `color`:
 
-When `Filter` conflicts with a TypeScript type called `Filter`, import with an alias:
+```tsx
+// Before
+<CheckCircleTwoTone twoToneColor="#52c41a" />
+
+// After
+<CircleCheck color="#52c41a" />
+```
+
+---
+
+### `style={{ fontSize }}` sizing
+
+`@signozhq/icons` accepts a `size` prop. Both work, but `size` is preferred:
+
+```tsx
+// Works but not preferred
+<Key style={{ fontSize: '37px' }} />
+
+// Preferred
+<Key size={37} />
+```
+
+---
+
+### Filled vs Outlined collapse
+
+`@signozhq/icons` has one canonical form — no Filled/Outlined split:
+
+```tsx
+// Both map to the same icon
+DeleteOutlined → Trash2
+DeleteFilled   → Trash2
+
+SettingOutlined → Settings
+SettingFilled   → Settings
+```
+
+---
+
+### `Filter` name conflict
+
+When `Filter` conflicts with a TypeScript type named `Filter`, use an alias:
 
 ```tsx
 import { Filter as FilterIcon } from '@signozhq/icons';
 ```
 
-### Icon that changes meaning by direction
+---
 
-Icons with `rotate` props are preserved:
+### `rotate` prop
+
+`@signozhq/icons` passes SVG props through, so `rotate` works directly:
 
 ```tsx
-// RocketOutlined rotate={45} → Rocket rotate={45}
-icon: <Rocket rotate={45} />
+// RocketOutlined rotate={45} →
+<Rocket rotate={45} />
 ```
 
 ---
 
-## 5. Import style
+## Import style
 
 ```tsx
-// Old
-import { SearchOutlined, PlusOutlined, LoadingOutlined } from '@ant-design/icons';
+// Before (antd)
+import { SearchOutlined, PlusOutlined, LoadingOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
-// New
-import { Search, Plus, LoaderCircle } from '@signozhq/icons';
+// After (@signozhq/icons)
+import { Search, Plus, Loader, SolidInfoCircle } from '@signozhq/icons';
 ```

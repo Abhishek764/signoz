@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Bolt, Check, ChevronDown, LoaderCircle, OctagonAlert, X } from '@signozhq/icons';
+import { Bolt, Check, ChevronDown, Loader, OctagonAlert, X } from '@signozhq/icons';
 import {
 	Modal,
 	Select,
@@ -228,7 +228,7 @@ function AttributeCheckList({
 		>
 			{loading ? (
 				<div className="loader-container">
-					<Spin indicator={<LoaderCircle className="animate-spin" />} size="large" />
+					<Spin indicator={<Loader className="animate-spin" />} size="large" />
 				</div>
 			) : (
 				<div className="modal-content">

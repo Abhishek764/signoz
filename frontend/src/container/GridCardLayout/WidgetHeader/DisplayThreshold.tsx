@@ -1,4 +1,4 @@
-import { Info } from '@signozhq/icons';
+import { SolidInfoCircle } from '@signozhq/icons';
 
 import {
 	DisplayThresholdContainer,
@@ -11,7 +11,7 @@ function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 	return (
 		<DisplayThresholdContainer>
 			<TypographHeading>Threshold </TypographHeading>
-			<Typography>{threshold || <Info />}</Typography>
+			<Typography>{threshold || <SolidInfoCircle />}</Typography>
 		</DisplayThresholdContainer>
 	);
 }

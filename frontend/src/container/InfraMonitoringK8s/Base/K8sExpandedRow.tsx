@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { CornerDownRight, LoaderCircle } from '@signozhq/icons';
+import { CornerDownRight, Loader } from '@signozhq/icons';
 import {
 	Button,
 	Spin,
@@ -209,7 +209,7 @@ export function K8sExpandedRow<T>({
 						showHeader={false}
 						loading={{
 							spinning: isFetching || isLoading,
-							indicator: <Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />,
+							indicator: <Spin indicator={<Loader size={14} className="animate-spin" />} />,
 						}}
 						onRow={(
 							rowRecord: K8sRenderedRowData,

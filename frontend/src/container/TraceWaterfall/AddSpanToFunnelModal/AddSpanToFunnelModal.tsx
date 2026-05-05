@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, LoaderCircle, Plus, Search } from '@signozhq/icons';
+import { ArrowLeft, Check, Loader, Plus, Search } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -214,7 +214,7 @@ function AddSpanToFunnelModal({
 					<Spin
 						className="add-span-to-funnel-modal__loading-spinner"
 						spinning={isFunnelDetailsLoading || isFunnelDetailsFetching}
-						indicator={<LoaderCircle className="animate-spin" />}
+						indicator={<Loader className="animate-spin" />}
 					>
 						{selectedFunnelId && funnelDetails?.payload && (
 							<FunnelProvider

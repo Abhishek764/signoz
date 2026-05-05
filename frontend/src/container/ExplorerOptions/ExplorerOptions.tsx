@@ -9,7 +9,7 @@ import {
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Check, ConciergeBell, Disc3, Info, PanelBottomClose, Plus, X } from '@signozhq/icons';
+import { Check, ConciergeBell, Disc3, PanelBottomClose, Plus, SolidInfoCircle, X } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -962,7 +962,7 @@ function ExplorerOptions({
 									</div>
 								}
 							>
-								<Info className="info-icon" />
+								<SolidInfoCircle className="info-icon" />
 							</Tooltip>
 						)}
 						<Tooltip title="Hide">

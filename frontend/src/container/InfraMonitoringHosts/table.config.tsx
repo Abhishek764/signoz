@@ -1,5 +1,5 @@
 import React from 'react';
-import { Group, Info } from '@signozhq/icons';
+import { Group, SolidInfoCircle } from '@signozhq/icons';
 import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import { K8sRenderedRowData } from 'container/InfraMonitoringK8s/Base/types';
@@ -106,7 +106,7 @@ export const hostColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 			<div className={styles.statusHeader}>
 				Status
 				<Tooltip title="Sent system metrics in last 10 mins">
-					<Info />
+					<SolidInfoCircle />
 				</Tooltip>
 			</div>
 		),
@@ -127,7 +127,7 @@ export const hostColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 			<div className={`${styles.columnHeaderRight} ${styles.memoryUsageHeader}`}>
 				Memory Usage
 				<Tooltip title="Excluding cache memory">
-					<Info />
+					<SolidInfoCircle />
 				</Tooltip>
 			</div>
 		),

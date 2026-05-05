@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { green } from '@ant-design/colors';
-import { Pause , Play, EllipsisVertical } from '@signozhq/icons';
+import { Pause , Play, Ellipsis } from '@signozhq/icons';
 import { Button, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
@@ -244,7 +244,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 					trigger="click"
 					content={OptionsPopOverContent}
 				>
-					<EllipsisVertical style={{ fontSize: 24 }} />
+					<Ellipsis style={{ fontSize: 24 }} />
 				</Popover>
 			</Space>
 		</TimePickerCard>

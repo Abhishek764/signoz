@@ -7,7 +7,7 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, Info, LoaderCircle, RefreshCw } from '@signozhq/icons';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, Info, Loader, RefreshCw } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
@@ -1702,7 +1702,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoaderCircle />
+								<Loader />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -1710,7 +1710,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoaderCircle />
+								<Loader />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}

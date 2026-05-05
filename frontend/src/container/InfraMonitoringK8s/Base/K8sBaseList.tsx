@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { ChevronDown, ChevronRight, LoaderCircle } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Loader } from '@signozhq/icons';
 import {
 	Button,
 	Spin,
@@ -410,7 +410,7 @@ export function K8sBaseList<T>({
 				}}
 				loading={{
 					spinning: showTableLoadingState,
-					indicator: <Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />,
+					indicator: <Spin indicator={<Loader size={14} className="animate-spin" />} />,
 				}}
 				locale={{
 					emptyText: showTableLoadingState ? null : emptyTableMessage,

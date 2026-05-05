@@ -10,7 +10,7 @@ import {
 } from 'react';
 import type { TableComponents } from 'react-virtuoso';
 import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
-import { LoaderCircle } from '@signozhq/icons';
+import { Loader } from '@signozhq/icons';
 import { DndContext, pointerWithin } from '@dnd-kit/core';
 import {
 	horizontalListSortingStrategy,
@@ -530,7 +530,7 @@ function TanStackTableInner<TData>(
 							className={viewStyles.tanstackLoadingOverlay}
 							data-testid="tanstack-infinite-loader"
 						>
-							<Spin indicator={<LoaderCircle className="animate-spin" />} tip="Loading more..." />
+							<Spin indicator={<Loader className="animate-spin" />} tip="Loading more..." />
 						</div>
 					)}
 					{showPagination && pagination && (

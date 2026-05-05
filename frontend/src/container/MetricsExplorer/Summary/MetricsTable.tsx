@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Info, LoaderCircle } from '@signozhq/icons';
+import { Info, Loader } from '@signozhq/icons';
 import {
 	Spin,
 	Table,
@@ -84,7 +84,7 @@ function MetricsTable({
 						indicator: (
 							<Spin
 								data-testid="metrics-table-loading-state"
-								indicator={<LoaderCircle size={14} className="animate-spin" />}
+								indicator={<Loader size={14} className="animate-spin" />}
 							/>
 						),
 					}}

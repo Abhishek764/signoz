@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { TriangleAlert } from '@signozhq/icons';
+import { SolidAlertTriangle } from '@signozhq/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -102,7 +102,7 @@ function ServiceMetricTable({
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
-						<TriangleAlert /> {getText('rps_over_100')}
+						<SolidAlertTriangle /> {getText('rps_over_100')}
 						<a href="mailto:cloud-support@signoz.io">email</a>
 					</Typography.Title>
 				</Flex>

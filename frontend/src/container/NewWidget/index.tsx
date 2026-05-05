@@ -5,7 +5,7 @@ import { UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { Check, TriangleAlert, X } from '@signozhq/icons';
+import { Check, SolidAlertTriangle, X } from '@signozhq/icons';
 import {
 	Button,
 	ResizableHandle,
@@ -954,7 +954,7 @@ function NewWidget({
 				title={
 					isQueryModified ? (
 						<Space>
-							<TriangleAlert style={{ fontSize: '16px', color: '#fdd600' }} />
+							<SolidAlertTriangle style={{ fontSize: '16px', color: '#fdd600' }} />
 							Unsaved Changes
 						</Space>
 					) : (
@@ -985,7 +985,7 @@ function NewWidget({
 			<Modal
 				title={
 					<Space>
-						<TriangleAlert style={{ fontSize: '16px', color: '#fdd600' }} />
+						<SolidAlertTriangle style={{ fontSize: '16px', color: '#fdd600' }} />
 						Unsaved Changes
 					</Space>
 				}

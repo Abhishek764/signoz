@@ -5,17 +5,15 @@
 	overflow: visible;
 }
 
-.box {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
 .circle {
 	border-radius: 50%;
 	border: 1px solid var(--l3-border);
 	box-sizing: border-box;
 	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--l1-foreground);
 }
 
 .handle {

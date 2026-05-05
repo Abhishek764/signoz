@@ -30,7 +30,7 @@ import {
 const nodeTypes = { service: ServiceNode };
 const edgeTypes = { flow: FlowEdge };
 
-const PARTICLE_COLOR = 'var(--accent-primary)';
+const PARTICLE_COLOR = 'var(--l1-foreground)';
 const BG_COLOR = 'var(--l2-background)';
 
 const BASE_EDGE_STYLE = {
@@ -70,7 +70,7 @@ function ServiceMap({ serviceMap }: any): JSX.Element {
 						x: center.x - NODE_DIAMETER / 2,
 						y: center.y - NODE_OUTER_HEIGHT / 2,
 					},
-					data: { label: node.id, color: node.color, width: node.width },
+					data: { label: node.id, color: node.color },
 					draggable: true,
 					selectable: false,
 				};

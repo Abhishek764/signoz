@@ -39,14 +39,13 @@ const baseNodeProps = {
 function renderNode(data: {
 	label: string;
 	color: string;
-	width: number;
 }): ReturnType<typeof render> {
 	return render(<ServiceNode {...(baseNodeProps as any)} data={data} />);
 }
 
 describe('ServiceNode', () => {
 	it('renders the label text from data', () => {
-		renderNode({ label: 'checkout-service', color: 'red', width: 15 });
+		renderNode({ label: 'checkout-service', color: 'red' });
 
 		expect(screen.getByText('checkout-service')).toBeInTheDocument();
 	});
@@ -57,7 +56,6 @@ describe('ServiceNode', () => {
 		renderNode({
 			label: 'a-very-long-service-name-that-truncates',
 			color: 'red',
-			width: 15,
 		});
 
 		const label = screen.getByText('a-very-long-service-name-that-truncates');
@@ -67,57 +65,24 @@ describe('ServiceNode', () => {
 		);
 	});
 
-	it('renders an outer box at the configured layout diameter', () => {
-		// The box is fixed-size so the dagre-laid-out (centred) coordinates stay
-		// valid regardless of the inner circle's call-rate-driven size.
+	it('applies data.color as the circle background and uses the configured diameter', () => {
+		// All nodes render at NODE_DIAMETER — there is no per-node sizing.
 		const { container } = renderNode({
 			label: 'frontend',
 			color: 'rgb(255, 0, 0)',
-			width: 15,
 		});
 
 		const wrapper = container.firstChild as HTMLElement;
-		const box = wrapper.firstChild as HTMLElement;
-		expect(box).toHaveStyle({
+		const circle = wrapper.firstChild as HTMLElement;
+		expect(circle).toHaveStyle({
+			background: 'rgb(255, 0, 0)',
 			width: `${NODE_DIAMETER}px`,
 			height: `${NODE_DIAMETER}px`,
 		});
 	});
 
-	it('sizes the inner circle to 2 * data.width and applies data.color', () => {
-		// data.width is a radius scaled from call rate; on-screen diameter is 2x.
-		const { container } = renderNode({
-			label: 'frontend',
-			color: 'rgb(255, 0, 0)',
-			width: 15,
-		});
-
-		const wrapper = container.firstChild as HTMLElement;
-		const box = wrapper.firstChild as HTMLElement;
-		const circle = box.firstChild as HTMLElement;
-		expect(circle).toHaveStyle({
-			background: 'rgb(255, 0, 0)',
-			width: '30px',
-			height: '30px',
-		});
-	});
-
-	it('renders the smallest circle when width is at the floor', () => {
-		// Source-only / low-traffic nodes hit MIN_WIDTH (22) → 44px diameter.
-		const { container } = renderNode({
-			label: 'loadgenerator',
-			color: 'green',
-			width: 22,
-		});
-
-		const wrapper = container.firstChild as HTMLElement;
-		const box = wrapper.firstChild as HTMLElement;
-		const circle = box.firstChild as HTMLElement;
-		expect(circle).toHaveStyle({ width: '44px', height: '44px' });
-	});
-
 	it('renders a target handle on the left and a source handle on the right', () => {
-		renderNode({ label: 'frontend', color: 'red', width: 15 });
+		renderNode({ label: 'frontend', color: 'red' });
 
 		const target = screen.getByTestId('handle-target');
 		const source = screen.getByTestId('handle-source');

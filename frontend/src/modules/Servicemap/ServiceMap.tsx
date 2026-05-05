@@ -30,11 +30,7 @@ interface ServiceMapProps extends RouteComponentProps<any> {
 }
 interface graphNode {
 	id: string;
-	group: number;
-	fontSize: number;
-	width: number;
 	color: string;
-	nodeVal: number;
 	name: string;
 }
 interface graphLink {

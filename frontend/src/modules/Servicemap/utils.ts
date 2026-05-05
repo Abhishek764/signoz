@@ -15,32 +15,6 @@ import {
 
 import { graphDataType } from './ServiceMap';
 
-// Radius in px. The original force-graph render implicitly applied a
-// `sqrt(nodeVal) * nodeRelSize` curve, which compressed the visible range
-// even though the underlying values spanned 10–20. We keep that compression
-// here (smaller min/max ratio than the raw spec) so low-traffic / source-only
-// nodes stay readable. The max matches NODE_DIAMETER/2 so the busiest node
-// fills the layout box.
-const MIN_WIDTH = 22;
-const MAX_WIDTH = 32;
-const DEFAULT_FONT_SIZE = 6;
-
-export const getDimensions = (
-	num: number,
-	highest: number,
-): {
-	fontSize: number;
-	width: number;
-} => {
-	const percentage = (num / highest) * 100;
-	const width = (percentage * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
-	const fontSize = DEFAULT_FONT_SIZE;
-	return {
-		fontSize,
-		width,
-	};
-};
-
 export const getGraphData = (serviceMap, _isDarkMode): graphDataType => {
 	const { items } = serviceMap;
 	const services = Object.values(groupBy(items, 'child')).map((e) => {
@@ -51,7 +25,6 @@ export const getGraphData = (serviceMap, _isDarkMode): graphDataType => {
 		};
 	});
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
-	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
 
 	const divNum = Number(
 		String(1).padEnd(highestCallCount.toString().length, '0'),
@@ -75,31 +48,15 @@ export const getGraphData = (serviceMap, _isDarkMode): graphDataType => {
 	// the consuming component can apply them directly via `style.background`.
 	const HEALTHY_COLOR = 'var(--l3-background)';
 	const ERROR_COLOR = 'var(--danger-background)';
-	const nodes = uniqNodes.map((node, i) => {
+	const nodes = uniqNodes.map((node) => {
 		const service = find(services, (service) => service.serviceName === node);
 		let color = HEALTHY_COLOR;
-		if (!service) {
-			return {
-				id: node,
-				group: i + 1,
-				fontSize: DEFAULT_FONT_SIZE,
-				width: MIN_WIDTH,
-				color,
-				nodeVal: MIN_WIDTH,
-				name: node,
-			};
-		}
-		if (service.errorRate > 0) {
+		if (service && service.errorRate > 0) {
 			color = ERROR_COLOR;
 		}
-		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {
 			id: node,
-			group: i + 1,
-			fontSize,
-			width,
 			color,
-			nodeVal: width,
 			name: node,
 		};
 	});

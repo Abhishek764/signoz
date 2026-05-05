@@ -63,11 +63,18 @@ function App(): JSX.Element {
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const { hostname, pathname } = window.location;
+	const { hostname } = window.location;
+	const [pathname, setPathname] = useState(history.location.pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
+	useEffect(() => {
+		return history.listen((location) => {
+			setPathname(location.pathname);
+		});
+	}, []);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
@@ -10,6 +10,9 @@ import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
 import styles from './AIAssistantPanel.module.scss';
+
+const AI_ASSISTANT_PANEL_OPEN_CLASS = 'ai-assistant-panel-open';
+const AI_ASSISTANT_PANEL_WIDTH_VAR = '--ai-assistant-panel-width';
 
 export default function AIAssistantPanel(): JSX.Element | null {
 	const history = useHistory();
@@ -53,6 +56,29 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const [panelWidth, setPanelWidth] = useState(380);
 	const dragStartX = useRef(0);
 	const dragStartWidth = useRef(0);
+
+	useLayoutEffect(() => {
+		const shouldOffsetChatSupport = isOpen && !isFullScreenPage;
+
+		document.body.classList.toggle(
+			AI_ASSISTANT_PANEL_OPEN_CLASS,
+			shouldOffsetChatSupport,
+		);
+
+		if (shouldOffsetChatSupport) {
+			document.body.style.setProperty(
+				AI_ASSISTANT_PANEL_WIDTH_VAR,
+				`${panelWidth}px`,
+			);
+		} else {
+			document.body.style.removeProperty(AI_ASSISTANT_PANEL_WIDTH_VAR);
+		}
+
+		return (): void => {
+			document.body.classList.remove(AI_ASSISTANT_PANEL_OPEN_CLASS);
+			document.body.style.removeProperty(AI_ASSISTANT_PANEL_WIDTH_VAR);
+		};
+	}, [isFullScreenPage, isOpen, panelWidth]);
 
 	const handleResizeMouseDown = useCallback(
 		(e: React.MouseEvent) => {

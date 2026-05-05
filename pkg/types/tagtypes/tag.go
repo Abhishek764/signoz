@@ -40,6 +40,22 @@ type PostableTag struct {
 	Name string `json:"name" required:"true"`
 }
 
+type GettableTag struct {
+	Name string `json:"name" required:"true"`
+}
+
+func NewGettableTagFromTag(tag *Tag) *GettableTag {
+	return &GettableTag{Name: tag.Name}
+}
+
+func NewGettableTagsFromTags(tags []*Tag) []*GettableTag {
+	out := make([]*GettableTag, len(tags))
+	for i, t := range tags {
+		out[i] = NewGettableTagFromTag(t)
+	}
+	return out
+}
+
 func NewTag(orgID valuer.UUID, name string, internalName string, createdBy string) *Tag {
 	now := time.Now()
 	return &Tag{

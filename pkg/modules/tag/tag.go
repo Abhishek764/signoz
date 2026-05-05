@@ -21,5 +21,8 @@ type Module interface {
 	// it can be made atomic with the entity row insert.
 	LinkToEntity(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, entityID valuer.UUID, tagIDs []valuer.UUID) error
 
+	// missing links are inserted, obsolete ones removed.
+	SyncLinksForEntity(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, entityID valuer.UUID, tagIDs []valuer.UUID) error
+
 	ListForEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error)
 }

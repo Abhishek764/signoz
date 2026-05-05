@@ -19,4 +19,6 @@ type Store interface {
 
 	// CreateRelations inserts tag-entity relations. Conflicts on the composite primary key are ignored.
 	CreateRelations(ctx context.Context, relations []*TagRelation) error
+
+	DeleteRelationsExcept(ctx context.Context, entityID valuer.UUID, keepTagIDs []valuer.UUID) error
 }

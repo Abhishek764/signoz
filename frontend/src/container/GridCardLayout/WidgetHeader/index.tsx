@@ -307,15 +307,17 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-
+   {/* // TODO: check this it does not renders */}
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
 							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+								
 								<Ellipsis
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
 										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
 									}`}
 								/>
+								
 							</Dropdown>
 						)}
 					</div>

@@ -18,21 +18,17 @@ type DaemonSets struct {
 }
 
 type DaemonSetRecord struct {
-	DaemonSetName          string         `json:"daemonSetName" required:"true"`
-	DaemonSetCPU           float64        `json:"daemonSetCPU" required:"true"`
-	DaemonSetCPURequest    float64        `json:"daemonSetCPURequest" required:"true"`
-	DaemonSetCPULimit      float64        `json:"daemonSetCPULimit" required:"true"`
-	DaemonSetMemory        float64        `json:"daemonSetMemory" required:"true"`
-	DaemonSetMemoryRequest float64        `json:"daemonSetMemoryRequest" required:"true"`
-	DaemonSetMemoryLimit   float64        `json:"daemonSetMemoryLimit" required:"true"`
-	DesiredNodes           int            `json:"desiredNodes" required:"true"`
-	AvailableNodes         int            `json:"availableNodes" required:"true"`
-	PendingPodCount        int            `json:"pendingPodCount" required:"true"`
-	RunningPodCount        int            `json:"runningPodCount" required:"true"`
-	SucceededPodCount      int            `json:"succeededPodCount" required:"true"`
-	FailedPodCount         int            `json:"failedPodCount" required:"true"`
-	UnknownPodCount        int            `json:"unknownPodCount" required:"true"`
-	Meta                   map[string]any `json:"meta" required:"true"`
+	DaemonSetName          string           `json:"daemonSetName" required:"true"`
+	DaemonSetCPU           float64          `json:"daemonSetCPU" required:"true"`
+	DaemonSetCPURequest    float64          `json:"daemonSetCPURequest" required:"true"`
+	DaemonSetCPULimit      float64          `json:"daemonSetCPULimit" required:"true"`
+	DaemonSetMemory        float64          `json:"daemonSetMemory" required:"true"`
+	DaemonSetMemoryRequest float64          `json:"daemonSetMemoryRequest" required:"true"`
+	DaemonSetMemoryLimit   float64          `json:"daemonSetMemoryLimit" required:"true"`
+	DesiredNodes           int              `json:"desiredNodes" required:"true"`
+	AvailableNodes         int              `json:"availableNodes" required:"true"`
+	PodCountsByPhase       PodCountsByPhase `json:"podCountsByPhase" required:"true"`
+	Meta                   map[string]any   `json:"meta" required:"true"`
 }
 
 // PostableDaemonSets is the request body for the v2 daemonsets list API.

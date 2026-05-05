@@ -4689,30 +4689,11 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 */
 	desiredNodes: number;
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
 	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
 export interface InframonitoringtypesDaemonSetsDTO {

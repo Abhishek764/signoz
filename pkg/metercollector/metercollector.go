@@ -15,5 +15,5 @@ type MeterCollector interface {
 	Name() metercollectortypes.Name
 	Unit() metercollectortypes.Unit
 	Aggregation() metercollectortypes.Aggregation
-	Collect(ctx context.Context, orgID valuer.UUID, window meterreportertypes.Window) ([]meterreportertypes.Meter, error)
+	Collect(ctx context.Context, orgID valuer.UUID, window *meterreportertypes.Window) ([]meterreportertypes.Meter, error)
 }

@@ -1,12 +1,10 @@
 package logcountmetercollector
 
 import (
-	"context"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/types/metercollectortypes"
-	"github.com/SigNoz/signoz/pkg/types/meterreportertypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
@@ -58,10 +56,4 @@ func TestBucketKeyIsStable(t *testing.T) {
 
 	require.Equal(t, first, second)
 	require.NotEmpty(t, first)
-}
-
-func TestCollectRejectsInvalidWindowBeforeQuerying(t *testing.T) {
-	readings, err := New(nil, nil).Collect(context.Background(), valuer.GenerateUUID(), meterreportertypes.Window{})
-	require.Error(t, err)
-	require.Nil(t, readings)
 }

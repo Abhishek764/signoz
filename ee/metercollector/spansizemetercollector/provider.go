@@ -53,11 +53,7 @@ func (p *Provider) Aggregation() metercollectortypes.Aggregation {
 }
 
 // Collect aggregates span size for the window and emits an empty-day sentinel.
-func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
-	if !window.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "invalid window [%d, %d)", window.StartUnixMilli, window.EndUnixMilli)
-	}
-
+func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
 	meterName := MeterName.String()
 
 	slices, err := retention.LoadActiveSlices(

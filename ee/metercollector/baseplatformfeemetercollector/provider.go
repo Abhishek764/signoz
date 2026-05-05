@@ -37,11 +37,7 @@ func (p *Provider) Aggregation() metercollectortypes.Aggregation {
 }
 
 // Collect emits value 1 when the org has an active license.
-func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
-	if !window.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "invalid window [%d, %d)", window.StartUnixMilli, window.EndUnixMilli)
-	}
-
+func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
 	license, err := p.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "fetch active license for base platform fee meter")

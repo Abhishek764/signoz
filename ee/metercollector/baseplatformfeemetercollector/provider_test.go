@@ -44,19 +44,9 @@ func TestProviderMetadata(t *testing.T) {
 	require.Equal(t, metercollectortypes.AggregationMax, provider.Aggregation())
 }
 
-func TestCollectRejectsInvalidWindowBeforeLicensing(t *testing.T) {
-	readings, err := New(nil).Collect(context.Background(), valuer.GenerateUUID(), meterreportertypes.Window{})
-	require.Error(t, err)
-	require.Nil(t, readings)
-}
-
-func completedWindow() meterreportertypes.Window {
+func completedWindow() *meterreportertypes.Window {
 	start := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
-	return meterreportertypes.Window{
-		StartUnixMilli: start.UnixMilli(),
-		EndUnixMilli:   start.AddDate(0, 0, 1).UnixMilli(),
-		IsCompleted:    true,
-	}
+	return meterreportertypes.MustNewWindow(start.UnixMilli(), start.AddDate(0, 0, 1).UnixMilli(), true)
 }
 
 var _ licensing.Licensing = (*fakeLicensing)(nil)

@@ -36,11 +36,7 @@ func TestDropCheckpointed(t *testing.T) {
 	meterB := metercollectortypes.MustNewName("signoz.test.b")
 	meterC := metercollectortypes.MustNewName("signoz.test.c")
 	windowDay := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
-	window := meterreportertypes.Window{
-		StartUnixMilli: windowDay.UnixMilli(),
-		EndUnixMilli:   windowDay.AddDate(0, 0, 1).UnixMilli(),
-		IsCompleted:    true,
-	}
+	window := meterreportertypes.MustNewWindow(windowDay.UnixMilli(), windowDay.AddDate(0, 0, 1).UnixMilli(), true)
 	readings := []meterreportertypes.Meter{
 		meterreportertypes.NewMeter(meterA, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
 		meterreportertypes.NewMeter(meterB, 0, metercollectortypes.UnitCount, metercollectortypes.AggregationSum, window, nil),
@@ -103,6 +99,6 @@ func (c testCollector) Aggregation() metercollectortypes.Aggregation {
 	return c.aggregation
 }
 
-func (c testCollector) Collect(context.Context, valuer.UUID, meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
+func (c testCollector) Collect(context.Context, valuer.UUID, *meterreportertypes.Window) ([]meterreportertypes.Meter, error) {
 	return nil, nil
 }

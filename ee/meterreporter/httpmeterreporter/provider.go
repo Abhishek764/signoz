@@ -320,12 +320,11 @@ func (provider *Provider) tick(ctx context.Context) error {
 		slog.Int("catchup_max_days_per_tick", provider.config.CatchupMaxDaysPerTick),
 	)
 	for day := catchupStart; !day.After(end); day = day.AddDate(0, 0, 1) {
-		window := meterreportertypes.Window{
-			StartUnixMilli: day.UnixMilli(),
-			EndUnixMilli:   day.AddDate(0, 0, 1).UnixMilli(),
-			IsCompleted:    true,
+		window, err := meterreportertypes.NewWindow(day.UnixMilli(), day.AddDate(0, 0, 1).UnixMilli(), true)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "build sealed meter window")
 		}
-		err := provider.runPhase(ctx, org.ID, license.Key, window, checkpointsByMeter)
+		err = provider.runPhase(ctx, org.ID, license.Key, window, checkpointsByMeter)
 		result := resultSuccess
 		if err != nil {
 			result = resultFailure
@@ -341,18 +340,19 @@ func (provider *Provider) tick(ctx context.Context) error {
 	}
 
 	// Today's partial window runs every tick.
-	todayWindow := meterreportertypes.Window{
-		StartUnixMilli: todayStart.UnixMilli(),
-		EndUnixMilli:   now.UnixMilli(),
-		IsCompleted:    false,
+	if now.UnixMilli() > todayStart.UnixMilli() {
+		todayWindow, err := meterreportertypes.NewWindow(todayStart.UnixMilli(), now.UnixMilli(), false)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "build current-day meter window")
+		}
+		_ = provider.runPhase(ctx, org.ID, license.Key, todayWindow, checkpointsByMeter)
 	}
-	_ = provider.runPhase(ctx, org.ID, license.Key, todayWindow, checkpointsByMeter)
 
 	return nil
 }
 
 // runPhase collects all meters for one window and ships the batch.
-func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window meterreportertypes.Window, checkpointsByMeter map[string]time.Time) error {
+func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window *meterreportertypes.Window, checkpointsByMeter map[string]time.Time) error {
 	phaseLabel := phaseToday
 	if window.IsCompleted {
 		phaseLabel = phaseSealed

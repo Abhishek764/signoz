@@ -35,7 +35,7 @@ func NewMeter(
 	value float64,
 	unit metercollectortypes.Unit,
 	aggregation metercollectortypes.Aggregation,
-	window Window,
+	window *Window,
 	dimensions map[string]string,
 ) Meter {
 	return Meter{

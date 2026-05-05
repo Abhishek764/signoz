@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { CircleX } from '@signozhq/icons';
+import { SolidXCircle  } from '@signozhq/icons';
 import { Button, Select, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,
@@ -149,7 +149,7 @@ function ResourceAttributesFilter({
 					{queries.length || staging.length || selectedQuery.length ? (
 						<Button
 							onClick={handleClearAll}
-							icon={<CircleX />}
+							icon={<SolidXCircle size="lg" />}
 							type="text"
 						/>
 					) : null}

@@ -4672,10 +4672,6 @@ export type InframonitoringtypesNamespaceRecordDTOMeta = {
 
 export interface InframonitoringtypesNamespaceRecordDTO {
 	/**
-	 * @type integer
-	 */
-	failedPodCount: number;
-	/**
 	 * @type object
 	 * @nullable true
 	 */
@@ -4694,22 +4690,7 @@ export interface InframonitoringtypesNamespaceRecordDTO {
 	 * @type string
 	 */
 	namespaceName: string;
-	/**
-	 * @type integer
-	 */
-	pendingPodCount: number;
-	/**
-	 * @type integer
-	 */
-	runningPodCount: number;
-	/**
-	 * @type integer
-	 */
-	succeededPodCount: number;
-	/**
-	 * @type integer
-	 */
-	unknownPodCount: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 }
 
 export interface InframonitoringtypesNamespacesDTO {

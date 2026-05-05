@@ -131,7 +131,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={`${styles.columnHeaderRight} ${styles.memoryUsageHeader}`}>
 				Memory Usage
 				<Tooltip title="Excluding cache memory">
-					<InfoCircleOutlined />
+					<Info />
 				</Tooltip>
 			</div>
 		),

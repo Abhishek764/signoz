@@ -60,6 +60,20 @@ var (
 	MeterAggregationMax = MeterAggregation{valuer.NewString("max")}
 )
 
+// ErrCodeMeterCollectFailed is the shared error code for collector failures.
+var ErrCodeMeterCollectFailed = errors.MustNewCode("metercollector_collect_failed")
+
+const (
+	// MeterDimensionOrganizationID identifies the organization.
+	MeterDimensionOrganizationID = "signoz.billing.organization.id"
+
+	// MeterDimensionRetentionDays identifies the retention bucket a meter belongs to.
+	MeterDimensionRetentionDays = "signoz.billing.retention.days"
+
+	// MeterDimensionWorkspaceKeyID identifies the ingestion workspace key.
+	MeterDimensionWorkspaceKeyID = "signoz.workspace.key.id"
+)
+
 // MeterWindow is the [Start, End) range a reporter tick collects.
 type MeterWindow struct {
 	StartUnixMilli int64
@@ -68,12 +82,12 @@ type MeterWindow struct {
 }
 
 // NewMeterWindow builds a validated reporting window.
-func NewMeterWindow(startUnixMilli, endUnixMilli int64, isCompleted bool) (*MeterWindow, error) {
+func NewMeterWindow(startUnixMilli, endUnixMilli int64, isCompleted bool) (MeterWindow, error) {
 	if err := validateMeterWindow(startUnixMilli, endUnixMilli); err != nil {
-		return nil, err
+		return MeterWindow{}, err
 	}
 
-	return &MeterWindow{
+	return MeterWindow{
 		StartUnixMilli: startUnixMilli,
 		EndUnixMilli:   endUnixMilli,
 		IsCompleted:    isCompleted,
@@ -81,7 +95,7 @@ func NewMeterWindow(startUnixMilli, endUnixMilli int64, isCompleted bool) (*Mete
 }
 
 // MustNewMeterWindow builds a window or panics.
-func MustNewMeterWindow(startUnixMilli, endUnixMilli int64, isCompleted bool) *MeterWindow {
+func MustNewMeterWindow(startUnixMilli, endUnixMilli int64, isCompleted bool) MeterWindow {
 	window, err := NewMeterWindow(startUnixMilli, endUnixMilli, isCompleted)
 	if err != nil {
 		panic(err)
@@ -141,7 +155,7 @@ func NewMeter(
 	value float64,
 	unit MeterUnit,
 	aggregation MeterAggregation,
-	window *MeterWindow,
+	window MeterWindow,
 	dimensions map[string]string,
 ) Meter {
 	return Meter{

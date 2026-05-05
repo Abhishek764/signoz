@@ -351,7 +351,7 @@ func (provider *Provider) tick(ctx context.Context) error {
 }
 
 // runPhase collects all meters for one window and ships the batch.
-func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window *zeustypes.MeterWindow, checkpointsByMeter map[string]time.Time) error {
+func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licenseKey string, window zeustypes.MeterWindow, checkpointsByMeter map[string]time.Time) error {
 	phaseLabel := phaseToday
 	if window.IsCompleted {
 		phaseLabel = phaseSealed

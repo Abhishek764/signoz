@@ -36,10 +36,10 @@ func (p *Provider) Aggregation() zeustypes.MeterAggregation {
 }
 
 // Collect emits value 1 when the org has an active license.
-func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
+func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	license, err := p.licensing.GetActive(ctx, orgID)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "fetch active license for base platform fee meter")
+		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "fetch active license for base platform fee meter")
 	}
 	if license == nil || license.Key == "" {
 		return nil, nil
@@ -47,7 +47,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeust
 
 	return []zeustypes.Meter{
 		zeustypes.NewMeter(MeterName, 1, meterUnit, meterAggregation, window, map[string]string{
-			metercollector.DimensionOrganizationID: orgID.StringValue(),
+			zeustypes.MeterDimensionOrganizationID: orgID.StringValue(),
 		}),
 	}, nil
 }

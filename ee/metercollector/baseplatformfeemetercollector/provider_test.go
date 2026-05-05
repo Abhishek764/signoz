@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -24,7 +23,7 @@ func TestCollectEmitsBasePlatformFeeMeterForValidLicense(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []zeustypes.Meter{
 		zeustypes.NewMeter(MeterName, 1, zeustypes.MeterUnitCount, zeustypes.MeterAggregationMax, window, map[string]string{
-			metercollector.DimensionOrganizationID: orgID.StringValue(),
+			zeustypes.MeterDimensionOrganizationID: orgID.StringValue(),
 		}),
 	}, readings)
 }
@@ -43,7 +42,7 @@ func TestProviderMetadata(t *testing.T) {
 	require.Equal(t, zeustypes.MeterAggregationMax, provider.Aggregation())
 }
 
-func completedWindow() *zeustypes.MeterWindow {
+func completedWindow() zeustypes.MeterWindow {
 	start := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
 	return zeustypes.MustNewMeterWindow(start.UnixMilli(), start.AddDate(0, 0, 1).UnixMilli(), true)
 }

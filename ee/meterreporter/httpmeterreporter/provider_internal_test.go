@@ -98,6 +98,6 @@ func (c testCollector) Aggregation() zeustypes.MeterAggregation {
 	return c.aggregation
 }
 
-func (c testCollector) Collect(context.Context, valuer.UUID, *zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
+func (c testCollector) Collect(context.Context, valuer.UUID, zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	return nil, nil
 }

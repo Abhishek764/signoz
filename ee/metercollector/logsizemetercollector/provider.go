@@ -52,7 +52,7 @@ func (p *Provider) Aggregation() zeustypes.MeterAggregation {
 }
 
 // Collect aggregates log size for the window and emits an empty-day sentinel.
-func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
+func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	meterName := MeterName.String()
 
 	slices, err := retention.LoadActiveSlices(
@@ -64,7 +64,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeust
 		window.StartUnixMilli, window.EndUnixMilli,
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "load retention slices for meter %q", meterName)
+		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "load retention slices for meter %q", meterName)
 	}
 
 	type bucket struct {
@@ -76,12 +76,12 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeust
 	for _, slice := range slices {
 		query, args, dimensionColumns, err := buildQuery(meterName, slice)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "build retention query for meter %q", meterName)
+			return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "build retention query for meter %q", meterName)
 		}
 
 		rows, err := p.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "query meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+			return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "query meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 		}
 
 		if err := func() error {
@@ -99,12 +99,12 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeust
 				scanDest = append(scanDest, &retentionDays, &retentionRuleIndex, &value)
 
 				if err := rows.Scan(scanDest...); err != nil {
-					return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+					return errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 				}
 
 				dimensions, err := buildDimensions(orgID, int(retentionDays), int(retentionRuleIndex), dimensionColumns, dimensionValues, slice.Rules)
 				if err != nil {
-					return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "build dimensions for meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+					return errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "build dimensions for meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 				}
 
 				key := bucketKey(dimensions)
@@ -116,7 +116,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeust
 				b.value += value
 			}
 			if err := rows.Err(); err != nil {
-				return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+				return errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 			}
 			return nil
 		}(); err != nil {
@@ -132,8 +132,8 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window *zeust
 	// Empty windows still emit a sentinel so checkpoints can advance.
 	if len(meters) == 0 && len(slices) > 0 {
 		meters = append(meters, zeustypes.NewMeter(MeterName, 0, meterUnit, meterAggregation, window, map[string]string{
-			metercollector.DimensionOrganizationID: orgID.StringValue(),
-			metercollector.DimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
+			zeustypes.MeterDimensionOrganizationID: orgID.StringValue(),
+			zeustypes.MeterDimensionRetentionDays:  strconv.Itoa(slices[len(slices)-1].DefaultDays),
 		}))
 	}
 
@@ -192,9 +192,9 @@ func dimensionColumnsFor(rules []retentiontypes.CustomRetentionRule) ([]dimensio
 		return nil, err
 	}
 	keys := make([]string, 0, len(dimensionKeys)+1)
-	keys = append(keys, metercollector.DimensionWorkspaceKeyID)
+	keys = append(keys, zeustypes.MeterDimensionWorkspaceKeyID)
 	for _, key := range dimensionKeys {
-		if key == metercollector.DimensionWorkspaceKeyID {
+		if key == zeustypes.MeterDimensionWorkspaceKeyID {
 			continue
 		}
 		keys = append(keys, key)
@@ -215,7 +215,7 @@ func buildDimensions(
 	rules []retentiontypes.CustomRetentionRule,
 ) (map[string]string, error) {
 	if len(columns) != len(values) {
-		return nil, errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "dimension column/value count mismatch: %d columns, %d values", len(columns), len(values))
+		return nil, errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "dimension column/value count mismatch: %d columns, %d values", len(columns), len(values))
 	}
 
 	valuesByKey := make(map[string]string, len(columns))
@@ -224,16 +224,16 @@ func buildDimensions(
 	}
 
 	dimensions := map[string]string{
-		metercollector.DimensionOrganizationID: orgID.StringValue(),
-		metercollector.DimensionRetentionDays:  strconv.Itoa(retentionDays),
+		zeustypes.MeterDimensionOrganizationID: orgID.StringValue(),
+		zeustypes.MeterDimensionRetentionDays:  strconv.Itoa(retentionDays),
 	}
-	addNonEmpty(dimensions, metercollector.DimensionWorkspaceKeyID, valuesByKey[metercollector.DimensionWorkspaceKeyID])
+	addNonEmpty(dimensions, zeustypes.MeterDimensionWorkspaceKeyID, valuesByKey[zeustypes.MeterDimensionWorkspaceKeyID])
 
 	if retentionRuleIndex < 0 {
 		return dimensions, nil
 	}
 	if retentionRuleIndex >= len(rules) {
-		return nil, errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "retention rule index %d out of range for %d rules", retentionRuleIndex, len(rules))
+		return nil, errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "retention rule index %d out of range for %d rules", retentionRuleIndex, len(rules))
 	}
 	for _, filter := range rules[retentionRuleIndex].Filters {
 		addNonEmpty(dimensions, filter.Key, valuesByKey[filter.Key])

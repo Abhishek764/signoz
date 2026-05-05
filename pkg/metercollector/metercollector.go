@@ -9,10 +9,10 @@ import (
 )
 
 // MeterCollector owns one billing meter's metadata and collection query.
-// Collect stamps DimensionOrganizationID and returns errors instead of panics.
+// Collect stamps zeustypes.MeterDimensionOrganizationID and returns errors instead of panics.
 type MeterCollector interface {
 	Name() zeustypes.MeterName
 	Unit() zeustypes.MeterUnit
 	Aggregation() zeustypes.MeterAggregation
-	Collect(ctx context.Context, orgID valuer.UUID, window *zeustypes.MeterWindow) ([]zeustypes.Meter, error)
+	Collect(ctx context.Context, orgID valuer.UUID, window zeustypes.MeterWindow) ([]zeustypes.Meter, error)
 }

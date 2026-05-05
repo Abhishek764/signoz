@@ -3,7 +3,6 @@ package datapointcountmetercollector
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,16 +19,16 @@ func TestBuildDimensions(t *testing.T) {
 		TTLDays: 7,
 	}}
 	columns := []dimensionColumn{
-		{key: metercollector.DimensionWorkspaceKeyID, alias: "dim_0"},
+		{key: zeustypes.MeterDimensionWorkspaceKeyID, alias: "dim_0"},
 		{key: "service.name", alias: "dim_1"},
 	}
 
 	dimensions, err := buildDimensions(orgID, 30, 0, columns, []string{"workspace-1", "api"}, rules)
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{
-		metercollector.DimensionOrganizationID: orgID.StringValue(),
-		metercollector.DimensionRetentionDays:  "30",
-		metercollector.DimensionWorkspaceKeyID: "workspace-1",
+		zeustypes.MeterDimensionOrganizationID: orgID.StringValue(),
+		zeustypes.MeterDimensionRetentionDays:  "30",
+		zeustypes.MeterDimensionWorkspaceKeyID: "workspace-1",
 		"service.name":                         "api",
 	}, dimensions)
 }
@@ -45,13 +44,13 @@ func TestProviderMetadata(t *testing.T) {
 func TestBucketKeyIsStable(t *testing.T) {
 	first := bucketKey(map[string]string{
 		"service.name":                         "api",
-		metercollector.DimensionRetentionDays:  "30",
-		metercollector.DimensionWorkspaceKeyID: "workspace-1",
+		zeustypes.MeterDimensionRetentionDays:  "30",
+		zeustypes.MeterDimensionWorkspaceKeyID: "workspace-1",
 	})
 	second := bucketKey(map[string]string{
-		metercollector.DimensionWorkspaceKeyID: "workspace-1",
+		zeustypes.MeterDimensionWorkspaceKeyID: "workspace-1",
 		"service.name":                         "api",
-		metercollector.DimensionRetentionDays:  "30",
+		zeustypes.MeterDimensionRetentionDays:  "30",
 	})
 
 	require.Equal(t, first, second)

@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -40,13 +40,13 @@ func LoadActiveSlices(
 		return nil, nil
 	}
 	if sqlstore == nil {
-		return nil, errors.New(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "sqlstore is nil")
+		return nil, errors.New(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "sqlstore is nil")
 	}
 	if tableName == "" {
-		return nil, errors.New(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "tableName is empty")
+		return nil, errors.New(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "tableName is empty")
 	}
 	if fallbackDefaultDays <= 0 {
-		return nil, errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "non-positive fallbackDefaultDays %d", fallbackDefaultDays)
+		return nil, errors.Newf(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "non-positive fallbackDefaultDays %d", fallbackDefaultDays)
 	}
 
 	rows := []*retentiontypes.TTLSetting{}
@@ -61,7 +61,7 @@ func LoadActiveSlices(
 		OrderExpr("created_at ASC").
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "load ttl_setting rows for org %q table %q", orgID.StringValue(), tableName)
+		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "load ttl_setting rows for org %q table %q", orgID.StringValue(), tableName)
 	}
 
 	return buildSlicesFromRows(rows, fallbackDefaultDays, startMs, endMs)
@@ -150,7 +150,7 @@ func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([
 
 	var rules []retentiontypes.CustomRetentionRule
 	if err := json.Unmarshal([]byte(row.Condition), &rules); err != nil {
-		return nil, 0, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeCollectFailed, "parse ttl_setting condition for row %q", row.ID.StringValue())
+		return nil, 0, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "parse ttl_setting condition for row %q", row.ID.StringValue())
 	}
 
 	return rules, defaultDays, nil
@@ -159,7 +159,7 @@ func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([
 // BuildMultiIfSQL renders the retention-days expression for one slice.
 func BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
-		return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeCollectFailed, "non-positive default retention %d", defaultDays)
+		return "", errors.Newf(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "non-positive default retention %d", defaultDays)
 	}
 
 	if len(rules) == 0 {
@@ -169,7 +169,7 @@ func BuildMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int
 	arms := make([]string, 0, 2*len(rules)+1)
 	for ruleIndex, rule := range rules {
 		if rule.TTLDays <= 0 {
-			return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
+			return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
 		}
 		conditionExpr, err := buildRuleConditionSQL(ruleIndex, rule)
 		if err != nil {
@@ -207,22 +207,22 @@ func BuildRuleIndexSQL(rules []retentiontypes.CustomRetentionRule) (string, erro
 
 func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRule) (string, error) {
 	if len(rule.Filters) == 0 {
-		return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "rule %d has no filters", ruleIndex)
+		return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d has no filters", ruleIndex)
 	}
 
 	filterExprs := make([]string, 0, len(rule.Filters))
 	for filterIndex, filter := range rule.Filters {
 		if !labelKeyPattern.MatchString(filter.Key) {
-			return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+			return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
 		}
 		if len(filter.Values) == 0 {
-			return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
+			return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
 		}
 
 		quoted := make([]string, len(filter.Values))
 		for valueIndex, value := range filter.Values {
 			if !labelValuePattern.MatchString(value) {
-				return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
+				return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
 			}
 			quoted[valueIndex] = "'" + value + "'"
 		}
@@ -241,7 +241,7 @@ func RuleDimensionKeys(rules []retentiontypes.CustomRetentionRule) ([]string, er
 	for ruleIndex, rule := range rules {
 		for filterIndex, filter := range rule.Filters {
 			if !labelKeyPattern.MatchString(filter.Key) {
-				return nil, errors.Newf(errors.TypeInternal, metercollector.ErrCodeCollectFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+				return nil, errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
 			}
 			if _, ok := seen[filter.Key]; ok {
 				continue

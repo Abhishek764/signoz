@@ -1641,135 +1641,31 @@ export interface AuthtypesCallbackAuthNSupportDTO {
 	url?: string;
 }
 
-export type AuthtypesGettableAuthDomainDTO =
-	| (AuthtypesSamlConfigDTO & {
-			authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			createdAt?: Date;
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			/**
-			 * @type string
-			 */
-			id: string;
-			/**
-			 * @type string
-			 */
-			name?: string;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			/**
-			 * @type string
-			 */
-			orgId?: string;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			updatedAt?: Date;
-	  })
-	| (AuthtypesGoogleConfigDTO & {
-			authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			createdAt?: Date;
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			/**
-			 * @type string
-			 */
-			id: string;
-			/**
-			 * @type string
-			 */
-			name?: string;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			/**
-			 * @type string
-			 */
-			orgId?: string;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			updatedAt?: Date;
-	  })
-	| (AuthtypesOIDCConfigDTO & {
-			authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			createdAt?: Date;
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			/**
-			 * @type string
-			 */
-			id: string;
-			/**
-			 * @type string
-			 */
-			name?: string;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			/**
-			 * @type string
-			 */
-			orgId?: string;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			updatedAt?: Date;
-	  });
-
-export interface AuthtypesGettableObjectsDTO {
-	resource: AuthtypesResourceDTO;
+export interface AuthtypesGettableAuthDomainDTO {
+	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
+	config?: AuthtypesAuthDomainConfigDTO;
 	/**
-	 * @type array
+	 * @type string
+	 * @format date-time
 	 */
-	selectors: string[];
-}
-
-/**
- * @nullable
- */
-export type AuthtypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface AuthtypesGettableResourcesDTO {
+	createdAt?: Date;
 	/**
-	 * @type object
-	 * @nullable true
+	 * @type string
 	 */
-	relations: AuthtypesGettableResourcesDTORelations;
+	id: string;
 	/**
-	 * @type array
+	 * @type string
 	 */
-	resources: AuthtypesResourceDTO[];
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -1796,11 +1692,8 @@ export interface AuthtypesGettableTransactionDTO {
 	 * @type boolean
 	 */
 	authorized: boolean;
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -1874,14 +1767,6 @@ export interface AuthtypesOIDCConfigDTO {
 	issuerAlias?: string;
 }
 
-export interface AuthtypesObjectDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type string
-	 */
-	selector: string;
-}
-
 export interface AuthtypesOrgSessionContextDTO {
 	authNSupport?: AuthtypesAuthNSupportDTO;
 	/**
@@ -1897,19 +1782,6 @@ export interface AuthtypesOrgSessionContextDTO {
 
 export interface AuthtypesPasswordAuthNSupportDTO {
 	provider?: AuthtypesAuthNProviderDTO;
-}
-
-export interface AuthtypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
 export interface AuthtypesPatchableRoleDTO {
@@ -1960,17 +1832,14 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
-export interface AuthtypesResourceDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	type: string;
+export enum AuthtypesRelationDTO {
+	create = 'create',
+	read = 'read',
+	update = 'update',
+	delete = 'delete',
+	list = 'list',
+	assignee = 'assignee',
 }
-
 export interface AuthtypesRoleDTO {
 	/**
 	 * @type string
@@ -2060,14 +1929,11 @@ export interface AuthtypesSessionContextDTO {
 }
 
 export interface AuthtypesTransactionDTO {
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
 }
 
-export interface AuthtypesUpdateableAuthDomainDTO {
+export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 }
 
@@ -4250,6 +4116,52 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
+export interface CoretypesObjectDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
+}
+
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface CoretypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: CoretypesObjectGroupDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: CoretypesObjectGroupDTO[] | null;
+}
+
+export interface CoretypesResourceRefDTO {
+	/**
+	 * @type string
+	 */
+	kind: string;
+	type: CoretypesTypeDTO;
+}
+
+export enum CoretypesTypeDTO {
+	user = 'user',
+	serviceaccount = 'serviceaccount',
+	anonymous = 'anonymous',
+	role = 'role',
+	organization = 'organization',
+	metaresource = 'metaresource',
+	metaresources = 'metaresources',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -7792,6 +7704,11 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	 */
 	sub_tree_node_count?: number;
 	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
 	 * @type string
 	 */
 	trace_id?: string;
@@ -8182,14 +8099,6 @@ export type AuthzCheck200 = {
 	status: string;
 };
 
-export type AuthzResources200 = {
-	data: AuthtypesGettableResourcesDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListChannels200 = {
 	/**
 	 * @type array
@@ -8432,8 +8341,8 @@ export type ListAuthDomains200 = {
 	status: string;
 };
 
-export type CreateAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
@@ -8815,7 +8724,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableObjectsDTO[];
+	data: CoretypesObjectGroupDTO[];
 	/**
 	 * @type string
 	 */

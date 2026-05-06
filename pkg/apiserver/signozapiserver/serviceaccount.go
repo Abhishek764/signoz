@@ -205,7 +205,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbCreate}, coretypes.ResourceMetaResourcesServiceAccount, serviceAccountCollectionSelectorCallback, []string{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
 		authtypes.SigNozAdminRoleName,
 	}), handler.OpenAPIDef{
 		ID:                  "CreateServiceAccountKey",
@@ -219,7 +219,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourcesServiceAccount.Scope(coretypes.VerbCreate)}),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbDelete}, coretypes.ResourceServiceAccount, serviceAccountCollectionSelectorCallback, []string{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
 		authtypes.SigNozAdminRoleName,
 	}), handler.OpenAPIDef{
 		ID:                  "RevokeServiceAccountKey",
@@ -276,7 +276,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbDelete)}),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

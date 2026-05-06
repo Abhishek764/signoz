@@ -73,12 +73,14 @@ function RoutingPolicies(): JSX.Element {
 					/>
 					<Tooltip title={tooltipTitle}>
 						<Button
-							icon={<Plus />}
 							type="primary"
 							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
 							disabled={disableCreateButton}
 						>
-							New routing policy
+							<Flex gap={4} align="center">
+								<Plus size={16} />
+								New routing policy
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

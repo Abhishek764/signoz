@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpDown, ArrowUpToLine, Bolt, Boxes, Computer, Container, FilePenLine, Filter, Group, HardDrive, Workflow } from '@signozhq/icons';
+import {
+	ArrowUpDown,
+	ArrowUpToLine,
+	Bolt,
+	Boxes,
+	Computer,
+	Container,
+	FilePenLine,
+	Filter,
+	Group,
+	HardDrive,
+	Workflow,
+} from '@signozhq/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
@@ -324,8 +336,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 								<Tooltip title="Collapse Filters">
 									<ArrowUpToLine
-										rotate={270}
+										style={{ transform: 'rotate(270deg)' }}
 										onClick={handleFilterVisibilityChange}
+										size="md"
 									/>
 								</Tooltip>
 							</div>

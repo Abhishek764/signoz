@@ -122,7 +122,6 @@ function PrettyView({
 								: String(context.fieldValue);
 						setCopy(text);
 						toast.success('Copied to clipboard', {
-							richColors: true,
 							position: 'top-right',
 						});
 					},
@@ -200,7 +199,7 @@ function PrettyView({
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
-					<ActionMenu items={menuItems} trigger={['click']} placement="bottomLeft">
+					<ActionMenu items={menuItems}>
 						<span
 							className="pretty-view__actions"
 							onClick={(e): void => e.stopPropagation()}

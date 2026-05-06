@@ -39,7 +39,6 @@ export const useCopySpanLink = (
 
 			setCopy(link);
 			toast.success('Copied to clipboard', {
-				richColors: true,
 				position: 'top-right',
 			});
 		},

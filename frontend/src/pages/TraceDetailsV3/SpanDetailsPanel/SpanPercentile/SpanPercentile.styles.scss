@@ -4,7 +4,7 @@
 
 	// Override key color for the percentile value (p99)
 	.key-value-label__key {
-		color: var(--text-sakura-400, #f56c87);
+		color: var(--destructive);
 	}
 
 	&__loader {
@@ -69,7 +69,7 @@
 		}
 
 		&-highlight {
-			color: var(--text-sakura-400, #f56c87);
+			color: var(--destructive);
 		}
 
 		&-loader {

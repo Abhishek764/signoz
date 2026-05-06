@@ -31,10 +31,8 @@ function DetailsHeader({
 			color="secondary"
 			onClick={onClose}
 			aria-label="Close"
-			className="details-header__icon-btn"
-		>
-			<X size={14} />
-		</Button>
+			prefix={<X size={14} />}
+		></Button>
 	);
 
 	return (

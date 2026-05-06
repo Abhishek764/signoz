@@ -19,8 +19,13 @@
 	}
 }
 
-// Flamegraph tooltip — rendered as a portal, uses same semantic tokens
+// Flamegraph tooltip — rendered as a portal, uses same semantic tokens.
+// Position is set inline on the element (left/top track the cursor); the
+// static layout/decoration lives here.
 .flamegraph-tooltip {
+	position: fixed;
+	z-index: 1000;
+	pointer-events: none;
 	background-color: var(--l1-background);
 	padding: 8px 12px;
 	border-radius: 4px;

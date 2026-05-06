@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 import { resolveTimeFromInterval } from 'components/TimelineV2/utils';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { toFixed } from 'utils/toFixed';
 
 import {
@@ -32,7 +31,6 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 	} = props;
 	const [intervals, setIntervals] = useState<Interval[]>([]);
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
-	const isDarkMode = useIsDarkMode();
 
 	const spread = endTimestamp - startTimestamp;
 
@@ -70,10 +68,10 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 			startTimestamp,
 			endTimestamp,
 		);
-		return <div />;
+		return <></>;
 	}
 
-	const strokeColor = isDarkMode ? ' rgb(192,193,195,0.8)' : 'black';
+	const strokeColor = 'var(--l3-foreground)';
 	const svgHeight = timelineHeight * 2.5;
 	const cursorX = cursorXPercent != null ? cursorXPercent * width : null;
 

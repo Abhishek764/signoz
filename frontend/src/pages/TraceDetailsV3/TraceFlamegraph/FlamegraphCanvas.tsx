@@ -16,6 +16,8 @@ import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
+import './FlamegraphCanvas.styles.scss';
+
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const {
 		layout,
@@ -194,11 +196,8 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				<div
 					className="span-hover-card-popover flamegraph-tooltip"
 					style={{
-						position: 'fixed',
 						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
 						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),
-						zIndex: 1000,
-						pointerEvents: 'none',
 					}}
 				>
 					{tooltipContent.event ? (
@@ -224,14 +223,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		: null;
 
 	return (
-		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				height: '100%',
-				padding: '0 15px',
-			}}
-		>
+		<div className="flamegraph-canvas">
 			{tooltipElement}
 			<TimelineV3
 				startTimestamp={viewStartTs}
@@ -242,11 +234,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 			/>
 			<div
 				ref={containerRef}
-				style={{
-					flex: 1,
-					overflow: 'hidden',
-					position: 'relative',
-				}}
+				className="flamegraph-canvas__viewport"
 				onMouseEnter={(): void => {
 					isOverFlamegraphRef.current = true;
 				}}
@@ -254,11 +242,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 			>
 				<canvas
 					ref={canvasRef}
-					style={{
-						display: 'block',
-						width: '100%',
-						cursor: 'grab',
-					}}
+					className="flamegraph-canvas__main"
 					onMouseDown={(e): void => {
 						handleMouseDown(e);
 						handleMouseDownForClick(e);
@@ -267,16 +251,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 					onMouseUp={handleMouseUp}
 					onClick={handleClick}
 				/>
-				<canvas
-					ref={overlayCanvasRef}
-					style={{
-						position: 'absolute',
-						top: 0,
-						left: 0,
-						width: '100%',
-						pointerEvents: 'none',
-					}}
-				/>
+				<canvas ref={overlayCanvasRef} className="flamegraph-canvas__overlay" />
 			</div>
 		</div>
 	);

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
+import { toast } from '@signozhq/ui';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
@@ -8,7 +9,6 @@ import { PANEL_TYPES, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useNotifications } from 'hooks/useNotifications';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { ArrowDownToDot, ArrowUpFromDot } from 'lucide-react';
 import {
@@ -56,7 +56,6 @@ export const SPAN_ACTION = {
 export function useSpanAttributeActions(): SpanAttributeAction[] {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const queryClient = useQueryClient();
-	const { notifications } = useNotifications();
 
 	const getAutocompleteKey = useCallback(
 		async (fieldKey: string): Promise<BaseAutocompleteData> => {
@@ -128,15 +127,10 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 					ROUTES.TRACES_EXPLORER,
 				);
 			} catch {
-				notifications.error({ message: SOMETHING_WENT_WRONG });
+				toast.error(SOMETHING_WENT_WRONG, { position: 'top-right' });
 			}
 		},
-		[
-			currentQuery,
-			getAutocompleteKey,
-			redirectWithQueryBuilderData,
-			notifications,
-		],
+		[currentQuery, getAutocompleteKey, redirectWithQueryBuilderData],
 	);
 
 	const handleFilterIn = useCallback(
@@ -176,15 +170,10 @@ export function useSpanAttributeActions(): SpanAttributeAction[] {
 					ROUTES.TRACES_EXPLORER,
 				);
 			} catch {
-				notifications.error({ message: SOMETHING_WENT_WRONG });
+				toast.error(SOMETHING_WENT_WRONG, { position: 'top-right' });
 			}
 		},
-		[
-			currentQuery,
-			getAutocompleteKey,
-			redirectWithQueryBuilderData,
-			notifications,
-		],
+		[currentQuery, getAutocompleteKey, redirectWithQueryBuilderData],
 	);
 
 	return [

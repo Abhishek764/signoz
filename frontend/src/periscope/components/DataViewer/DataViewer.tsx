@@ -33,7 +33,6 @@ function DataViewer({
 		const text = JSON.stringify(data, null, 2);
 		setCopy(text);
 		toast.success('Copied to clipboard', {
-			richColors: true,
 			position: 'top-right',
 		});
 	};

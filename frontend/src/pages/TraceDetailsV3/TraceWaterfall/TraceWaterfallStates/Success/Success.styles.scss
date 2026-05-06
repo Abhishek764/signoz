@@ -104,7 +104,7 @@
 		z-index: 2;
 		display: flex;
 		height: 25px;
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 
 		.sidebar-header {
 			flex-shrink: 0;
@@ -136,7 +136,7 @@
 		overflow-x: auto;
 		overflow-y: hidden;
 		flex-shrink: 0;
-		border-right: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--l1-border);
 
 		.resizable-box__content {
 			overflow-x: auto;
@@ -154,7 +154,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--bg-slate-400);
+			background: var(--l3-background);
 			border-radius: 4px;
 		}
 	}
@@ -310,7 +310,7 @@
 
 		.tree-line {
 			position: absolute;
-			background-color: var(--bg-slate-400);
+			background-color: var(--l2-border);
 			pointer-events: none;
 		}
 
@@ -318,8 +318,8 @@
 			position: absolute;
 			width: 11px;
 			height: 50%;
-			border-left: 1px solid var(--bg-slate-400);
-			border-bottom: 1px solid var(--bg-slate-400);
+			border-left: 1px solid var(--l2-border);
+			border-bottom: 1px solid var(--l2-border);
 			border-bottom-left-radius: 6px;
 			pointer-events: none;
 		}
@@ -332,7 +332,7 @@
 			height: 18px;
 			flex-shrink: 0;
 			cursor: pointer;
-			color: var(--bg-vanilla-400);
+			color: var(--l1-foreground);
 			border-radius: 4px;
 
 			&:hover {
@@ -367,7 +367,7 @@
 		}
 
 		.tree-label {
-			color: #fff;
+			color: var(--l1-foreground);
 			font-family: 'Inter';
 			font-size: 13px;
 			font-weight: 400;
@@ -397,7 +397,7 @@
 			padding-left: 8px;
 			flex-shrink: 0;
 			height: 100%;
-			background: linear-gradient(to left, var(--bg-ink-500) 60%, transparent);
+			background: linear-gradient(to left, var(--l1-background) 60%, transparent);
 			z-index: 2;
 			opacity: 0;
 			pointer-events: none;
@@ -410,13 +410,13 @@
 				height: 22px;
 				border-radius: 2px;
 				cursor: pointer;
-				color: var(--bg-vanilla-400);
+				color: var(--l1-foreground);
 				background: transparent;
 				border: none;
 				padding: 0;
 
 				&:hover {
-					background: var(--bg-slate-400);
+					background: var(--l3-background);
 				}
 			}
 		}
@@ -498,8 +498,8 @@
 			z-index: 1;
 
 			&.error {
-				background-color: var(--bg-cherry-500);
-				border-color: var(--bg-cherry-600);
+				background-color: var(--destructive);
+				border-color: var(--destructive);
 			}
 
 			&:hover {
@@ -562,79 +562,29 @@
 		align-items: center;
 		gap: 8px;
 		border-radius: 2px;
-		border: 1px solid var(--Slate-400, #1d212d);
-		background: var(--Slate-500, #161922);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: none;
 	}
 }
 
+// `.span-bar` text color is the one place where semantic tokens don't fit
+// cleanly: in dark mode the bar's bright `--span-color` background needs dark
+// text; in light mode `generateColor` produces darker bar fills, so the text
+// must flip to white. This is the only `.lightMode` carve-out left after the
+// migration to semantic tokens — the hover/selected rules are repeated here
+// to beat the default-state rule's specificity inside `.lightMode`.
 .lightMode {
 	.success-content {
-		.span-overview {
-			.tree-arrow {
-				color: var(--bg-ink-400);
-			}
-
-			.tree-label {
-				color: var(--bg-ink-400);
-			}
-
-			.tree-line {
-				background-color: var(--bg-vanilla-400);
-			}
-
-			.tree-connector {
-				border-color: var(--bg-vanilla-400);
-			}
-
-			.span-row-actions {
-				background: linear-gradient(
-					to left,
-					var(--bg-vanilla-100) 60%,
-					transparent
-				);
-
-				.span-action-btn {
-					color: var(--bg-ink-400);
-
-					&:hover {
-						background: var(--bg-vanilla-300);
-					}
-				}
-			}
-		}
-
-		.interested-span {
-			border-radius: 4px;
-		}
-
 		.span-duration .span-bar {
 			color: rgba(255, 255, 255, 0.9);
 		}
 
-		// Light mode hover/selected: span color must override the white default above
 		.timeline-row:hover .span-bar,
-		.timeline-row.hovered-span .span-bar {
-			color: var(--span-color);
-		}
-
+		.timeline-row.hovered-span .span-bar,
 		.interested-span .span-bar,
 		.selected-non-matching-span .span-bar {
 			color: var(--span-color);
-		}
-
-		.waterfall-sidebar {
-			border-right: 1px solid var(--bg-vanilla-300);
-		}
-
-		.waterfall-split-header {
-			background-color: var(--bg-vanilla-200) !important;
-		}
-	}
-	.span-dets {
-		.related-logs {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-300);
 		}
 	}
 }

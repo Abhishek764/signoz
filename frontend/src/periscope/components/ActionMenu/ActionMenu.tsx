@@ -1,8 +1,5 @@
 import React from 'react';
-import type { MenuProps } from 'antd';
-import { Dropdown } from 'antd';
-
-import './ActionMenu.styles.scss';
+import { Dropdown } from '@signozhq/ui';
 
 export interface ActionMenuItem {
 	key: string;
@@ -14,24 +11,11 @@ export interface ActionMenuItem {
 
 interface ActionMenuProps {
 	items: ActionMenuItem[];
-	trigger?: ('click' | 'hover' | 'contextMenu')[];
-	placement?:
-		| 'bottomLeft'
-		| 'bottomRight'
-		| 'topLeft'
-		| 'topRight'
-		| 'bottom'
-		| 'top';
 	children: React.ReactNode;
 }
 
-function ActionMenu({
-	items,
-	trigger = ['click'],
-	placement = 'bottomLeft',
-	children,
-}: ActionMenuProps): JSX.Element {
-	const menuItems: MenuProps['items'] = items.map((item) => ({
+function ActionMenu({ items, children }: ActionMenuProps): JSX.Element {
+	const menuItems = items.map((item) => ({
 		key: item.key,
 		label: item.label,
 		icon: item.icon,
@@ -43,15 +27,14 @@ function ActionMenu({
 
 	return (
 		<Dropdown
-			rootClassName="action-menu"
-			menu={{
-				items: menuItems,
-				onClick: (e): void => {
-					e.domEvent.stopPropagation();
-				},
-			}}
-			trigger={trigger}
-			placement={placement}
+			menu={{ items: menuItems }}
+			align="start"
+			style={{ zIndex: 1000 }}
+			// onClick on the dropdown content is forwarded to the underlying div via ...props
+			// but is not in the public type. Stop click bubbling so item clicks don't reach
+			// clickable ancestors of the trigger through the React tree.
+			// @ts-expect-error see comment above
+			onClick={(e: React.MouseEvent): void => e.stopPropagation()}
 		>
 			{children}
 		</Dropdown>

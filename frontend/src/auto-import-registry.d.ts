@@ -13,8 +13,4 @@
 import '@signozhq/design-tokens';
 import '@signozhq/icons';
 import '@signozhq/resizable';
-import '@signozhq/tooltip';
-import '@signozhq/tabs';
-import '@signozhq/table';
-import '@signozhq/toggle-group';
 import '@signozhq/ui';

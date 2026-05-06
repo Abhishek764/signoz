@@ -71,9 +71,9 @@ type PostableSpanMapper struct {
 // UpdatableSpanMapper is the HTTP request body for updating a span mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableSpanMapper struct {
-	FieldContext FieldContext      `json:"field_context" nullable:"false"` // since it's an enum so it cannot be nullable
-	Config       *SpanMapperConfig `json:"config" nullable:"true"`
-	Enabled      *bool             `json:"enabled" nullable:"true"`
+	FieldContext FieldContext      `json:"field_context"`
+	Config       *SpanMapperConfig `json:"config"`
+	Enabled      *bool             `json:"enabled"`
 }
 
 type GettableSpanMapper = SpanMapper
@@ -123,7 +123,7 @@ func (m *SpanMapper) Update(u *UpdatableSpanMapper, updatedBy string) {
 	m.UpdatedBy = updatedBy
 }
 
-func NewStorableSpanMapperFromMapper(m *SpanMapper) *StorableSpanMapper {
+func (m *SpanMapper) ToStorable() *StorableSpanMapper {
 	return &StorableSpanMapper{
 		Identifiable:  types.Identifiable{ID: m.ID},
 		TimeAuditable: m.TimeAuditable,
@@ -136,7 +136,7 @@ func NewStorableSpanMapperFromMapper(m *SpanMapper) *StorableSpanMapper {
 	}
 }
 
-func NewSpanMapperFromStorable(s *StorableSpanMapper) *SpanMapper {
+func (s *StorableSpanMapper) ToSpanMapper() *SpanMapper {
 	return &SpanMapper{
 		TimeAuditable: s.TimeAuditable,
 		UserAuditable: s.UserAuditable,
@@ -149,10 +149,10 @@ func NewSpanMapperFromStorable(s *StorableSpanMapper) *SpanMapper {
 	}
 }
 
-func NewSpanMappersFromStorableSpanMappers(ss []*StorableSpanMapper) []*SpanMapper {
+func NewSpanMappersFromStorable(ss []*StorableSpanMapper) []*SpanMapper {
 	mappers := make([]*SpanMapper, len(ss))
 	for i, s := range ss {
-		mappers[i] = NewSpanMapperFromStorable(s)
+		mappers[i] = s.ToSpanMapper()
 	}
 	return mappers
 }

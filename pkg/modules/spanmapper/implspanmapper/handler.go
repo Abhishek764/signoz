@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
@@ -17,12 +16,11 @@ import (
 )
 
 type handler struct {
-	module           spanmapper.Module
-	providerSettings factory.ProviderSettings
+	module spanmapper.Module
 }
 
-func NewHandler(module spanmapper.Module, providerSettings factory.ProviderSettings) spanmapper.Handler {
-	return &handler{module: module, providerSettings: providerSettings}
+func NewHandler(module spanmapper.Module) spanmapper.Handler {
+	return &handler{module: module}
 }
 
 // ListGroups handles GET /api/v1/span_mapper_groups.

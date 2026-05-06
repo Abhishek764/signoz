@@ -9,56 +9,56 @@ import (
 )
 
 type module struct {
-	store spantypes.Store
+	store spantypes.SpanMapperStore
 }
 
-func NewModule(store spantypes.Store) spanmapper.Module {
+func NewModule(store spantypes.SpanMapperStore) spanmapper.Module {
 	return &module{store: store}
 }
 
 func (module *module) ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
-	return module.store.ListSpanMapperGroups(ctx, orgID, q)
+	return module.store.ListGroups(ctx, orgID, q)
 }
 
 func (module *module) GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes.SpanMapperGroup, error) {
-	return module.store.GetSpanMapperGroup(ctx, orgID, id)
+	return module.store.GetGroup(ctx, orgID, id)
 }
 
 func (module *module) CreateGroup(ctx context.Context, orgID valuer.UUID, group *spantypes.SpanMapperGroup) error {
-	return module.store.CreateSpanMapperGroup(ctx, group)
+	return module.store.CreateGroup(ctx, group)
 }
 
 func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, group *spantypes.SpanMapperGroup) error {
-	return module.store.UpdateSpanMapperGroup(ctx, group)
+	return module.store.UpdateGroup(ctx, group)
 }
 
 func (module *module) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
-	return module.store.DeleteSpanMapperGroup(ctx, orgID, id)
+	return module.store.DeleteGroup(ctx, orgID, id)
 }
 
 func (module *module) ListMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*spantypes.SpanMapper, error) {
-	return module.store.ListSpanMappers(ctx, orgID, groupID)
+	return module.store.ListMappers(ctx, orgID, groupID)
 }
 
 func (module *module) GetMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (*spantypes.SpanMapper, error) {
-	return module.store.GetSpanMapper(ctx, orgID, groupID, id)
+	return module.store.GetMapper(ctx, orgID, groupID, id)
 }
 
 func (module *module) CreateMapper(ctx context.Context, orgID, groupID valuer.UUID, mapper *spantypes.SpanMapper) error {
 	// Ensure the group belongs to the org before inserting the child row.
-	if _, err := module.store.GetSpanMapperGroup(ctx, orgID, groupID); err != nil {
+	if _, err := module.store.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
-	return module.store.CreateSpanMapper(ctx, mapper)
+	return module.store.CreateMapper(ctx, mapper)
 }
 
 func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, mapper *spantypes.SpanMapper) error {
-	if _, err := module.store.GetSpanMapperGroup(ctx, orgID, groupID); err != nil {
+	if _, err := module.store.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
-	return module.store.UpdateSpanMapper(ctx, mapper)
+	return module.store.UpdateMapper(ctx, mapper)
 }
 
 func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
-	return module.store.DeleteSpanMapper(ctx, orgID, groupID, id)
+	return module.store.DeleteMapper(ctx, orgID, groupID, id)
 }

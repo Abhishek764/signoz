@@ -2,7 +2,6 @@ package implspanmapper
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -14,12 +13,12 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewStore(sqlstore sqlstore.SQLStore) spantypes.Store {
+func NewStore(sqlstore sqlstore.SQLStore) spantypes.SpanMapperStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (s *store) CreateSpanMapperGroup(ctx context.Context, group *spantypes.SpanMapperGroup) error {
-	storable := spantypes.NewStorableSpanMapperGroupFromGroup(group)
+func (s *store) CreateGroup(ctx context.Context, group *spantypes.SpanMapperGroup) error {
+	storable := group.ToStorable()
 	_, err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
@@ -31,7 +30,7 @@ func (s *store) CreateSpanMapperGroup(ctx context.Context, group *spantypes.Span
 	return nil
 }
 
-func (s *store) GetSpanMapperGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes.SpanMapperGroup, error) {
+func (s *store) GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes.SpanMapperGroup, error) {
 	storable := new(spantypes.StorableSpanMapperGroup)
 
 	err := s.sqlstore.
@@ -44,10 +43,10 @@ func (s *store) GetSpanMapperGroup(ctx context.Context, orgID, id valuer.UUID) (
 	if err != nil {
 		return nil, s.sqlstore.WrapNotFoundErrf(err, spantypes.ErrCodeMappingGroupNotFound, "span mapper group %s not found", id)
 	}
-	return spantypes.NewSpanMapperGroupFromStorable(storable), nil
+	return storable.ToSpanMapperGroup(), nil
 }
 
-func (s *store) ListSpanMapperGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
+func (s *store) ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
 	storables := make([]*spantypes.StorableSpanMapperGroup, 0)
 
 	sel := s.sqlstore.
@@ -65,11 +64,11 @@ func (s *store) ListSpanMapperGroups(ctx context.Context, orgID valuer.UUID, q *
 	if err := sel.Order("created_at DESC").Scan(ctx); err != nil {
 		return nil, err
 	}
-	return spantypes.NewSpanMapperGroupsFromStorableGroups(storables), nil
+	return spantypes.NewSpanMapperGroupsFromStorable(storables), nil
 }
 
-func (s *store) UpdateSpanMapperGroup(ctx context.Context, group *spantypes.SpanMapperGroup) error {
-	storable := spantypes.NewStorableSpanMapperGroupFromGroup(group)
+func (s *store) UpdateGroup(ctx context.Context, group *spantypes.SpanMapperGroup) error {
+	storable := group.ToStorable()
 	res, err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
@@ -91,7 +90,7 @@ func (s *store) UpdateSpanMapperGroup(ctx context.Context, group *spantypes.Span
 	return nil
 }
 
-func (s *store) DeleteSpanMapperGroup(ctx context.Context, orgID, id valuer.UUID) error {
+func (s *store) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
 	tx, err := s.sqlstore.BunDBCtx(ctx).BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -126,8 +125,8 @@ func (s *store) DeleteSpanMapperGroup(ctx context.Context, orgID, id valuer.UUID
 	return tx.Commit()
 }
 
-func (s *store) CreateSpanMapper(ctx context.Context, mapper *spantypes.SpanMapper) error {
-	storable := spantypes.NewStorableSpanMapperFromMapper(mapper)
+func (s *store) CreateMapper(ctx context.Context, mapper *spantypes.SpanMapper) error {
+	storable := mapper.ToStorable()
 	_, err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
@@ -139,9 +138,9 @@ func (s *store) CreateSpanMapper(ctx context.Context, mapper *spantypes.SpanMapp
 	return nil
 }
 
-func (s *store) GetSpanMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (*spantypes.SpanMapper, error) {
+func (s *store) GetMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (*spantypes.SpanMapper, error) {
 	// Ensure the group belongs to the org.
-	if _, err := s.GetSpanMapperGroup(ctx, orgID, groupID); err != nil {
+	if _, err := s.GetGroup(ctx, orgID, groupID); err != nil {
 		return nil, err
 	}
 
@@ -154,17 +153,14 @@ func (s *store) GetSpanMapper(ctx context.Context, orgID, groupID, id valuer.UUI
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, s.sqlstore.WrapNotFoundErrf(err, spantypes.ErrCodeMapperNotFound, "span mapper %s not found", id)
-		}
-		return nil, err
+		return nil, s.sqlstore.WrapNotFoundErrf(err, spantypes.ErrCodeMapperNotFound, "span mapper %s not found", id)
 	}
-	return spantypes.NewSpanMapperFromStorable(storable), nil
+	return storable.ToSpanMapper(), nil
 }
 
-func (s *store) ListSpanMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*spantypes.SpanMapper, error) {
+func (s *store) ListMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*spantypes.SpanMapper, error) {
 	// Scope by org via the parent group's org_id.
-	if _, err := s.GetSpanMapperGroup(ctx, orgID, groupID); err != nil {
+	if _, err := s.GetGroup(ctx, orgID, groupID); err != nil {
 		return nil, err
 	}
 
@@ -178,11 +174,11 @@ func (s *store) ListSpanMappers(ctx context.Context, orgID, groupID valuer.UUID)
 		Scan(ctx); err != nil {
 		return nil, err
 	}
-	return spantypes.NewSpanMappersFromStorableSpanMappers(storables), nil
+	return spantypes.NewSpanMappersFromStorable(storables), nil
 }
 
-func (s *store) UpdateSpanMapper(ctx context.Context, mapper *spantypes.SpanMapper) error {
-	storable := spantypes.NewStorableSpanMapperFromMapper(mapper)
+func (s *store) UpdateMapper(ctx context.Context, mapper *spantypes.SpanMapper) error {
+	storable := mapper.ToStorable()
 	res, err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
@@ -204,8 +200,8 @@ func (s *store) UpdateSpanMapper(ctx context.Context, mapper *spantypes.SpanMapp
 	return nil
 }
 
-func (s *store) DeleteSpanMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
-	if _, err := s.GetSpanMapperGroup(ctx, orgID, groupID); err != nil {
+func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
+	if _, err := s.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
 

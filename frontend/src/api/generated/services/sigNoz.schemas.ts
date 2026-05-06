@@ -7250,16 +7250,13 @@ export interface SpantypesSpanMapperDTO {
 	updatedBy?: string;
 }
 
-/**
- * @nullable
- */
-export type SpantypesSpanMapperConfigDTO = {
+export interface SpantypesSpanMapperConfigDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
 	sources: SpantypesSpanMapperSourceDTO[] | null;
-} | null;
+}
 
 export interface SpantypesSpanMapperGroupDTO {
 	condition: SpantypesSpanMapperGroupConditionDTO;

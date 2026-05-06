@@ -4962,7 +4962,6 @@ components:
       - enabled
       type: object
     SpantypesSpanMapperConfig:
-      nullable: true
       properties:
         sources:
           items:

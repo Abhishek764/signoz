@@ -89,7 +89,7 @@ func (g *SpanMapperGroup) Update(u *UpdatableSpanMapperGroup, updatedBy string) 
 	g.UpdatedBy = updatedBy
 }
 
-func NewStorableSpanMapperGroupFromGroup(g *SpanMapperGroup) *StorableSpanMapperGroup {
+func (g *SpanMapperGroup) ToStorable() *StorableSpanMapperGroup {
 	return &StorableSpanMapperGroup{
 		Identifiable:  types.Identifiable{ID: g.ID},
 		TimeAuditable: g.TimeAuditable,
@@ -101,7 +101,7 @@ func NewStorableSpanMapperGroupFromGroup(g *SpanMapperGroup) *StorableSpanMapper
 	}
 }
 
-func NewSpanMapperGroupFromStorable(s *StorableSpanMapperGroup) *SpanMapperGroup {
+func (s *StorableSpanMapperGroup) ToSpanMapperGroup() *SpanMapperGroup {
 	return &SpanMapperGroup{
 		TimeAuditable: s.TimeAuditable,
 		UserAuditable: s.UserAuditable,
@@ -113,10 +113,10 @@ func NewSpanMapperGroupFromStorable(s *StorableSpanMapperGroup) *SpanMapperGroup
 	}
 }
 
-func NewSpanMapperGroupsFromStorableGroups(ss []*StorableSpanMapperGroup) []*SpanMapperGroup {
+func NewSpanMapperGroupsFromStorable(ss []*StorableSpanMapperGroup) []*SpanMapperGroup {
 	groups := make([]*SpanMapperGroup, len(ss))
 	for i, s := range ss {
-		groups[i] = NewSpanMapperGroupFromStorable(s)
+		groups[i] = s.ToSpanMapperGroup()
 	}
 	return groups
 }

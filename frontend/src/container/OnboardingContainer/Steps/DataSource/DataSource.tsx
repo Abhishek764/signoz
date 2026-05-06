@@ -215,7 +215,7 @@ export default function DataSource(): JSX.Element {
 									rules={[{ required: true, message: 'Please enter service name' }]}
 									validateTrigger="onBlur"
 								>
-									<Input autoFocus />
+									<Input />
 								</Form.Item>
 
 								{enableFrameworks && (
@@ -270,7 +270,7 @@ export default function DataSource(): JSX.Element {
 										className="periscope-btn primary"
 										icon={
 											isSubmittingRequestForDataSource ? (
-												<Loader />
+												<Loader size="md" />
 											) : (
 												<Check size={12} />
 											)

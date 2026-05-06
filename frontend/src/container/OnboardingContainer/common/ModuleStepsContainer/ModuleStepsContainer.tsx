@@ -1,5 +1,10 @@
 import React, { SetStateAction, useState } from 'react';
-import { ArrowLeft, ArrowRight, CircleArrowLeft, UserPlus } from '@signozhq/icons';
+import {
+	ArrowLeft,
+	ArrowRight,
+	CircleArrowLeft,
+	UserPlus,
+} from '@signozhq/icons';
 import { Button, Space, Steps, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -387,7 +392,7 @@ export default function ModuleStepsContainer({
 						<Button
 							style={{ display: 'flex', alignItems: 'center' }}
 							type="default"
-							icon={<CircleArrowLeft />}
+							icon={<CircleArrowLeft size="md" />}
 							onClick={(e): void => onReselectModule(e)}
 						>
 							{selectedModule.title}
@@ -454,14 +459,14 @@ export default function ModuleStepsContainer({
 					<Button
 						onClick={handlePrev}
 						disabled={current === 0}
-						icon={<ArrowLeft />}
+						icon={<ArrowLeft size="md" />}
 					>
 						Back
 					</Button>
 					<Button
 						onClick={(e): void => handleNext(e)}
 						type="primary"
-						icon={<ArrowRight />}
+						icon={<ArrowRight size="md" />}
 					>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>

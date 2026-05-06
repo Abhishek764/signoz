@@ -112,7 +112,6 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			{isLoading && (
 				<div className="loading-top-level-operations">
 					<Typography.Title level={5}>
-						{/* //TODO: use className here */}
 						<RefreshCw className="animate-spin" size="sm" /> Loading ...
 					</Typography.Title>
 				</div>

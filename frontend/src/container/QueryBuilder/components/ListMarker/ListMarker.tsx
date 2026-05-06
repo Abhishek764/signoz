@@ -19,7 +19,7 @@ export const ListMarker = memo(function ListMarker({
 	const buttonProps: Partial<ButtonProps> = isAvailableToDisable
 		? {
 				type: isDisabled ? 'default' : 'primary',
-				icon: isDisabled ? <EyeClosed /> : <EyeOpen />,
+				icon: isDisabled ? <EyeClosed size="md" /> : <EyeOpen size="md" />,
 				onClick: (): void => onDisable(index),
 			}
 		: { type: 'primary' };

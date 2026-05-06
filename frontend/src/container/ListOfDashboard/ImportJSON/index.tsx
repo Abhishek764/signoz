@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { red } from '@ant-design/colors';
-import { CircleAlert, ExternalLink, Github, MonitorDot, MoveRight } from '@signozhq/icons';
+import {
+	CircleAlert,
+	ExternalLink,
+	Github,
+	MonitorDot,
+	MoveRight,
+} from '@signozhq/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -117,8 +123,7 @@ function ImportJSON({
 
 	const getErrorNode = (error: string): JSX.Element => (
 		<Space>
-			{/* //TODO: dicuss this */}
-			<CircleAlert color={red[7]} />
+			<CircleAlert size="md" color={red[7]} />
 			<Typography style={{ color: 'var(--warning-background)' }}>
 				{error}
 			</Typography>

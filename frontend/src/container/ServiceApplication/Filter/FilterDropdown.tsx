@@ -30,7 +30,7 @@ export const filterDropdown = ({
 				<Button
 					type="primary"
 					onClick={handleSearch}
-					icon={<Search />}
+					icon={<Search size="md" />}
 					size="small"
 				>
 					Search

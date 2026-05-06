@@ -25,9 +25,11 @@ function InfoLinkText({
 			}}
 			className="info-link-container"
 		>
-			{leftIconVisible && <CirclePlay />}
+			{leftIconVisible && <CirclePlay size="md" />}
 			<Typography.Text className="info-text">{infoText}</Typography.Text>
-			{rightIconVisible && <ArrowRight rotate={315} />}
+			{rightIconVisible && (
+				<ArrowRight size="md" style={{ transform: 'rotate(315deg)' }} />
+			)}
 		</Flex>
 	);
 }

@@ -261,11 +261,7 @@ function TableView({
 											onTraceHandler(record, event);
 										}}
 									>
-										<Link
-											style={{
-												width: '15px',
-											}}
-										/>
+										<Link size={15} />
 									</Button>
 								</Tooltip>
 							)}

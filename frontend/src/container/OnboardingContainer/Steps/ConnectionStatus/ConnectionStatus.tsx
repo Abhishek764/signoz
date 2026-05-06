@@ -337,13 +337,12 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{isQueryServiceLoading && <Loader />}
+						{isQueryServiceLoading && <Loader size="md" />}
 						{!isQueryServiceLoading &&
 							isReceivingData &&
 							(getStartedSource !== 'kafka' ? (
 								<>
-								//TODO: check this
-									<CircleCheck color="#52c41a" />
+									<CircleCheck size="md" color="#52c41a" />
 									<span> Success </span>
 								</>
 							) : (
@@ -355,7 +354,7 @@ export default function ConnectionStatus(): JSX.Element {
 							!isReceivingData &&
 							(getStartedSource !== 'kafka' ? (
 								<>
-									<CircleX color="#e84749" />
+									<CircleX size="md" color="#e84749" />
 									<span> Failed </span>
 								</>
 							) : (

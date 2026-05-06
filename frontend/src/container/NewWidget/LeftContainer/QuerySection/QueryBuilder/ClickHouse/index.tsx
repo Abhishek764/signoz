@@ -49,7 +49,7 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 			))}
 			<QueryButton
 				onClick={addQueryHandler}
-				icon={<Plus />}
+				icon={<Plus size="md" />}
 				style={{ margin: '0.4rem 1rem' }}
 			>
 				Query

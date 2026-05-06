@@ -241,16 +241,16 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isFetching) && <Loader />}
+						{(loading || isFetching) && <Loader size="md" />}
 						{!(loading || isFetching) && isReceivingData && (
 							<>
-								<CircleCheck color="#52c41a" />
+								<CircleCheck size="md" color="#52c41a" />
 								<span> Success </span>
 							</>
 						)}
 						{!(loading || isFetching) && !isReceivingData && (
 							<>
-								<CircleX color="#e84749" />
+								<CircleX size="md" color="#e84749" />
 								<span> Failed </span>
 							</>
 						)}

@@ -161,7 +161,7 @@ function QueryField({
 			</div>
 
 			<Button
-				icon={<X />}
+				icon={<X size="md" />}
 				type="text"
 				size="small"
 				onClick={handleClear}
@@ -247,7 +247,7 @@ function QueryBuilder({
 		<>
 			<Container isMargin={fieldsQuery.length === 0}>
 				<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
-				<SquareX onClick={onDropDownToggleHandler(false)} />
+				<SquareX onClick={onDropDownToggleHandler(false)} size="md" />
 			</Container>
 
 			<QueryWrapper key={keyPrefix}>{QueryUI(fieldsQuery)}</QueryWrapper>

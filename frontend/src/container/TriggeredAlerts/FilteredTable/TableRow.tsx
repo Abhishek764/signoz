@@ -22,7 +22,7 @@ function TableRowComponent({
 				<TableCell minWidth="90px">
 					<StatusContainer>
 						<IconContainer onClick={onClickHandler}>
-							{!isClicked ? <SquarePlus /> : <SquareMinus />}
+							{!isClicked ? <SquarePlus size="md" /> : <SquareMinus size="md" />}
 						</IconContainer>
 						<>
 							{tags.map((tag) => (

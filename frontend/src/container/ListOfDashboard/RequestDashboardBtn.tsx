@@ -77,7 +77,7 @@ export function RequestDashboardBtn(): JSX.Element {
 						className="periscope-btn primary"
 						icon={
 							isSubmittingRequestForDashboard ? (
-								<Loader />
+								<Loader size="md" />
 							) : (
 								<Check size={12} />
 							)

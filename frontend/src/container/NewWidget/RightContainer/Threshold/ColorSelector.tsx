@@ -69,7 +69,7 @@ function ColorSelector({
 			>
 				<Space className="color-selector-space">
 					<CustomColor color={thresholdColor} />
-					<ChevronDown />
+					<ChevronDown size="md" />
 				</Space>
 			</Button>
 		</Dropdown>

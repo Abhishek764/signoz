@@ -1,5 +1,11 @@
 import { Binoculars } from 'lucide-react';
-import { ArrowUpToLine, Atom, Filter, SquareMousePointer, Terminal } from '@signozhq/icons';
+import {
+	ArrowUpToLine,
+	Atom,
+	Filter,
+	SquareMousePointer,
+	Terminal,
+} from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -30,8 +36,8 @@ export default function LeftToolbarActions({
 			{!showFilter && (
 				<Tooltip title="Show Filters">
 					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<Filter />
-						<ArrowUpToLine rotate={90} />
+						<Filter size="md" />
+						<ArrowUpToLine size="md" style={{ transform: 'rotate(90deg)' }} />
 					</Button>
 				</Tooltip>
 			)}

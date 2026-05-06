@@ -1,5 +1,11 @@
 import { ReactNode, useState } from 'react';
-import { ChevronDown, ChevronRight, EyeClosed, EyeOpen, Trash2 } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	EyeClosed,
+	EyeOpen,
+	Trash2,
+} from '@signozhq/icons';
 import { Button, Row } from 'antd';
 
 import { QueryWrapper } from '../styles';
@@ -30,7 +36,7 @@ function QueryHeader({
 				<Row>
 					<Button
 						type="default"
-						icon={disabled ? <EyeClosed /> : <EyeOpen />}
+						icon={disabled ? <EyeClosed size="md" /> : <EyeOpen size="md" />}
 						onClick={onDisable}
 						className="action-btn"
 					>
@@ -38,7 +44,7 @@ function QueryHeader({
 					</Button>
 					<Button
 						type="default"
-						icon={collapse ? <ChevronRight /> : <ChevronDown />}
+						icon={collapse ? <ChevronRight size="md" /> : <ChevronDown size="md" />}
 						onClick={(): void => setCollapse(!collapse)}
 						className="action-btn"
 					/>
@@ -48,7 +54,7 @@ function QueryHeader({
 					<Button
 						type="default"
 						danger
-						icon={<Trash2 />}
+						icon={<Trash2 size="md" />}
 						onClick={onDelete}
 						className="action-btn"
 					/>

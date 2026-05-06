@@ -20,7 +20,13 @@ export default function QueryStatus(
 
 	const content = useMemo((): React.ReactElement => {
 		if (loading) {
-			return <Spin spinning size="small" indicator={<Loader className="animate-spin" />} />;
+			return (
+				<Spin
+					spinning
+					size="small"
+					indicator={<Loader className="animate-spin" size="md" />}
+				/>
+			);
 		}
 		if (error) {
 			return (

@@ -385,14 +385,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onChange={handleSearch}
 					defaultValue={searchString}
 				/>
-				<Flex gap={12}>
+				<Flex gap={12} align="center">
 					{addNewAlert && (
-						<Button
-							type="primary"
-							onClick={onClickNewAlertHandler}
-							icon={<Plus />}
-						>
-							New Alert
+						<Button type="primary" onClick={onClickNewAlertHandler}>
+							<Flex align="center" gap={4}>
+								<Plus size="md" />
+								New Alert
+							</Flex>
 						</Button>
 					)}
 					<TextToolTip

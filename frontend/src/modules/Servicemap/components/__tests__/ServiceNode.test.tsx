@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import ServiceNode from '../ServiceNode/ServiceNode';
-import { NODE_DIAMETER } from '../Map/Map.constants';
+import ServiceNode, { ServiceNodeData } from '../ServiceNode/ServiceNode';
+import { NODE_HEIGHT, NODE_WIDTH } from '../Map/Map.constants';
 
 // `Handle` requires a ReactFlowProvider to mount. We don't exercise its
 // connection logic from this component, so a stub keeps the test isolated to
@@ -36,53 +36,63 @@ const baseNodeProps = {
 	selected: false,
 } as const;
 
-function renderNode(data: {
-	label: string;
-	color: string;
-}): ReturnType<typeof render> {
+function renderNode(data: ServiceNodeData): ReturnType<typeof render> {
 	return render(<ServiceNode {...(baseNodeProps as any)} data={data} />);
 }
 
 describe('ServiceNode', () => {
-	it('renders the label text from data', () => {
-		renderNode({ label: 'checkout-service', color: 'red' });
+	it('renders the raw service id above the pill so users can map it back to backend names', () => {
+		// The above-pill text stays verbatim (no case change, no separator
+		// rewrite) because that is the canonical service identifier.
+		renderNode({ label: 'checkout-service', status: 'healthy' });
 
-		expect(screen.getByText('checkout-service')).toBeInTheDocument();
+		const id = screen.getByText('checkout-service');
+		expect(id).toBeInTheDocument();
+		expect(id).toHaveAttribute('title', 'checkout-service');
 	});
 
-	it('exposes the label as a title attribute for full-name hover-disclosure', () => {
-		// The visible label is truncated for layout, so the full service name is
-		// surfaced via title — assert the attribute round-trips data.label.
-		renderNode({
-			label: 'a-very-long-service-name-that-truncates',
-			color: 'red',
-		});
+	it('renders a title-cased display name inside the pill, splitting on hyphens and underscores', () => {
+		renderNode({ label: 'checkout-service', status: 'healthy' });
 
-		const label = screen.getByText('a-very-long-service-name-that-truncates');
-		expect(label).toHaveAttribute(
-			'title',
-			'a-very-long-service-name-that-truncates',
-		);
+		expect(screen.getByText('Checkout Service')).toBeInTheDocument();
 	});
 
-	it('applies data.color as the circle background and uses the configured diameter', () => {
-		// All nodes render at NODE_DIAMETER — there is no per-node sizing.
-		const { container } = renderNode({
-			label: 'frontend',
-			color: 'rgb(255, 0, 0)',
-		});
+	it('renders the raw label inside the pill when there are no separators to split on', () => {
+		// Single token gets a leading capital but isn't otherwise transformed —
+		// we don't try to split unknown camel/compound boundaries.
+		renderNode({ label: 'redis', status: 'healthy' });
 
-		const wrapper = container.firstChild as HTMLElement;
-		const circle = wrapper.firstChild as HTMLElement;
-		expect(circle).toHaveStyle({
-			background: 'rgb(255, 0, 0)',
-			width: `${NODE_DIAMETER}px`,
-			height: `${NODE_DIAMETER}px`,
+		expect(screen.getByText('Redis')).toBeInTheDocument();
+	});
+
+	it('shows "Healthy" inside the pill when status is healthy', () => {
+		renderNode({ label: 'frontend', status: 'healthy' });
+
+		expect(screen.getByText('Healthy')).toBeInTheDocument();
+	});
+
+	it('shows "Errors" inside the pill when status is error', () => {
+		// The non-healthy state visually flips the icon-box and body tints to
+		// the danger color via the .error class — assert via the status text
+		// since CSS module classnames are hashed and brittle to match on.
+		renderNode({ label: 'frontend', status: 'error' });
+
+		expect(screen.getByText('Errors')).toBeInTheDocument();
+	});
+
+	it('sizes the pill to NODE_WIDTH x NODE_HEIGHT', () => {
+		// All pills render at the same configured dimensions — there is no
+		// per-node sizing, so layout in dagre stays predictable.
+		renderNode({ label: 'frontend', status: 'healthy' });
+
+		expect(screen.getByTestId('service-node-pill')).toHaveStyle({
+			width: `${NODE_WIDTH}px`,
+			height: `${NODE_HEIGHT}px`,
 		});
 	});
 
 	it('renders a target handle on the left and a source handle on the right', () => {
-		renderNode({ label: 'frontend', color: 'red' });
+		renderNode({ label: 'frontend', status: 'healthy' });
 
 		const target = screen.getByTestId('handle-target');
 		const source = screen.getByTestId('handle-source');

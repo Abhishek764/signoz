@@ -1,79 +1,58 @@
 import {
-	getParticleAnimation,
-	MAX_PARTICLES,
-	PARTICLE_FAST_SECS,
-	PARTICLE_SLOW_SECS,
+	DASH_FAST_SECS,
+	DASH_SLOW_SECS,
+	getDashAnimation,
 } from '../Map/Map.constants';
 
-describe('getParticleAnimation', () => {
-	it('returns zero particles and the slow duration for non-positive call rates', () => {
-		expect(getParticleAnimation(0, 1000)).toStrictEqual({
-			particleCount: 0,
-			duration: PARTICLE_SLOW_SECS,
-		});
-		expect(getParticleAnimation(-5, 1000)).toStrictEqual({
-			particleCount: 0,
-			duration: PARTICLE_SLOW_SECS,
-		});
+describe('getDashAnimation', () => {
+	it('returns duration: 0 for non-positive call rates so the dash march is skipped', () => {
+		expect(getDashAnimation(0, 1000)).toStrictEqual({ duration: 0 });
+		expect(getDashAnimation(-5, 1000)).toStrictEqual({ duration: 0 });
 	});
 
-	it('produces at least one particle for any positive call rate', () => {
-		expect(getParticleAnimation(0.1, 1000).particleCount).toBeGreaterThanOrEqual(
-			1,
-		);
-		expect(getParticleAnimation(1, 1000).particleCount).toBeGreaterThanOrEqual(1);
-	});
-
-	it('saturates at MAX_PARTICLES and PARTICLE_FAST_SECS when callRate equals max', () => {
+	it('saturates at DASH_FAST_SECS when callRate equals max', () => {
 		// Whatever the absolute scale, the busiest edge should peg the
 		// visualisation — that's the point of the relative scaling.
 		const EPS = 1e-9;
 		[5, 50, 500, 5_000, 1_000_000].forEach((rate) => {
-			const { particleCount, duration } = getParticleAnimation(rate, rate);
-			expect(particleCount).toBe(MAX_PARTICLES);
-			expect(duration).toBeGreaterThanOrEqual(PARTICLE_FAST_SECS - EPS);
-			expect(duration).toBeLessThanOrEqual(PARTICLE_FAST_SECS + EPS);
+			const { duration } = getDashAnimation(rate, rate);
+			expect(duration).toBeGreaterThanOrEqual(DASH_FAST_SECS - EPS);
+			expect(duration).toBeLessThanOrEqual(DASH_FAST_SECS + EPS);
 		});
 	});
 
-	it('caps particleCount at MAX_PARTICLES even if max is stale or zero', () => {
+	it('clamps to DASH_FAST_SECS even if max is stale or zero', () => {
 		// Defensive: if max somehow lags behind callRate, factor still clamps to 1.
-		expect(getParticleAnimation(1000, 0).particleCount).toBe(MAX_PARTICLES);
-		expect(getParticleAnimation(1000, 100).particleCount).toBe(MAX_PARTICLES);
+		const EPS = 1e-9;
+		expect(getDashAnimation(1000, 0).duration).toBeLessThanOrEqual(
+			DASH_FAST_SECS + EPS,
+		);
+		expect(getDashAnimation(1000, 100).duration).toBeLessThanOrEqual(
+			DASH_FAST_SECS + EPS,
+		);
 	});
 
-	it('produces different particle counts for the same callRate at different scales', () => {
+	it('produces different durations for the same callRate at different scales', () => {
 		// 50 req/sec is "busy" in a 50-max graph but "trickle" in a 5k-max graph.
-		const busy = getParticleAnimation(50, 50);
-		const trickle = getParticleAnimation(50, 5000);
-		expect(busy.particleCount).toBeGreaterThan(trickle.particleCount);
+		const busy = getDashAnimation(50, 50);
+		const trickle = getDashAnimation(50, 5000);
 		expect(busy.duration).toBeLessThan(trickle.duration);
 	});
 
-	it('monotonically increases particle count as rate climbs toward max', () => {
+	it('monotonically decreases per-period duration as rate climbs toward max', () => {
 		const max = 5000;
 		const rates = [0.5, 5, 50, 500, max];
-		const counts = rates.map((r) => getParticleAnimation(r, max).particleCount);
-		for (let i = 1; i < counts.length; i += 1) {
-			expect(counts[i]).toBeGreaterThanOrEqual(counts[i - 1]);
-		}
-	});
-
-	it('monotonically decreases per-loop duration as rate climbs toward max', () => {
-		const max = 5000;
-		const rates = [0.5, 5, 50, 500, max];
-		const durations = rates.map((r) => getParticleAnimation(r, max).duration);
+		const durations = rates.map((r) => getDashAnimation(r, max).duration);
 		for (let i = 1; i < durations.length; i += 1) {
 			expect(durations[i]).toBeLessThanOrEqual(durations[i - 1]);
 		}
 	});
 
-	it('keeps duration bounded between PARTICLE_FAST_SECS and PARTICLE_SLOW_SECS', () => {
-		// At saturation the formula computes to PARTICLE_FAST_SECS up to
-		// floating-point error (~1e-16), so allow a small epsilon.
+	it('keeps positive-rate duration bounded between DASH_FAST_SECS and DASH_SLOW_SECS', () => {
+		// At saturation the formula computes to DASH_FAST_SECS up to floating
+		// point error (~1e-16), so allow a small epsilon.
 		const EPS = 1e-9;
 		const cases: Array<[number, number]> = [
-			[0, 1000],
 			[0.01, 1000],
 			[1, 1000],
 			[10, 1000],
@@ -83,9 +62,9 @@ describe('getParticleAnimation', () => {
 			[1_000_000, 1_000_000],
 		];
 		cases.forEach(([rate, max]) => {
-			const { duration } = getParticleAnimation(rate, max);
-			expect(duration).toBeGreaterThanOrEqual(PARTICLE_FAST_SECS - EPS);
-			expect(duration).toBeLessThanOrEqual(PARTICLE_SLOW_SECS + EPS);
+			const { duration } = getDashAnimation(rate, max);
+			expect(duration).toBeGreaterThanOrEqual(DASH_FAST_SECS - EPS);
+			expect(duration).toBeLessThanOrEqual(DASH_SLOW_SECS + EPS);
 		});
 	});
 });

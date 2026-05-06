@@ -1,8 +1,6 @@
 //@ts-nocheck
 
 import dagre from '@dagrejs/dagre';
-import { themeColors } from 'constants/theme';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	cloneDeep,
 	find,
@@ -44,19 +42,13 @@ export const getGraphData = (serviceMap, _isDarkMode): graphDataType => {
 	const uniqParent = uniqBy(cloneDeep(items), 'parent').map((e) => e.parent);
 	const uniqChild = uniqBy(cloneDeep(items), 'child').map((e) => e.child);
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
-	// Semantic tokens auto-flip with theme; passed as CSS variable strings so
-	// the consuming component can apply them directly via `style.background`.
-	const HEALTHY_COLOR = 'var(--l3-background)';
-	const ERROR_COLOR = 'var(--danger-background)';
 	const nodes = uniqNodes.map((node) => {
 		const service = find(services, (service) => service.serviceName === node);
-		let color = HEALTHY_COLOR;
-		if (service && service.errorRate > 0) {
-			color = ERROR_COLOR;
-		}
+		const status: 'healthy' | 'error' =
+			service && service.errorRate > 0 ? 'error' : 'healthy';
 		return {
 			id: node,
-			color,
+			status,
 			name: node,
 		};
 	});
@@ -89,12 +81,14 @@ export const getLinkTooltip = (link: {
 	errorRate: getRound2DigitsAfterDecimal(link.errorRate),
 });
 
-// Edges share a color with every other edge pointing at the same destination
-// service (mirrors the original `linkAutoColorBy={(d) => d.target}` behaviour).
-// Hashing onto the existing chart palette keeps it visually consistent with
-// the rest of the app and stable across renders for a given target id.
-export const getEdgeColor = (targetId: string): string =>
-	generateColor(targetId, themeColors.chartcolors);
+// Edges inherit the target node's health: red when the callee has errors,
+// green otherwise. Mixed with transparent so the dashed strokes read as a
+// softer accent against the busy node fills, while still letting a glance
+// at the map surface which downstream services are unhappy.
+export const getEdgeColor = (targetStatus: 'healthy' | 'error'): string =>
+	targetStatus === 'error'
+		? 'color-mix(in srgb, var(--danger-background) 65%, transparent)'
+		: 'color-mix(in srgb, var(--success-background) 65%, transparent)';
 
 export const transformLabel = (label: string, zoomLevel: number): string => {
 	//? 13 is the minimum label length. Scaling factor of 0.9 which is slightly less than 1
@@ -112,14 +106,14 @@ export const transformLabel = (label: string, zoomLevel: number): string => {
 // caller -> callee, so a left-to-right rank direction reads naturally and
 // minimises edge crossings vs. a force-directed simulation.
 //
-// `nodeBoxWidth` reserves space for the label rendered below each circle —
-// the visible label can be up to ~120px wide, so dagre needs to know that
-// horizontally adjacent ranks must keep that distance.
+// `nodeBoxWidth`/`nodeBoxHeight` reserve the pill's bounding box plus the
+// monospace service-id rendered above it, with a little breathing room so
+// adjacent ranks don't overlap.
 export const computeNodePositions = (
 	nodes: { id: string }[],
 	links: { source: string; target: string }[],
-	nodeBoxWidth = 130,
-	nodeBoxHeight = 100,
+	nodeBoxWidth = 220,
+	nodeBoxHeight = 110,
 ): Record<string, { x: number; y: number }> => {
 	const result: Record<string, { x: number; y: number }> = {};
 	if (nodes.length === 0) {

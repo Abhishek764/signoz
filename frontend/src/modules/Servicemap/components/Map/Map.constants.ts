@@ -1,29 +1,38 @@
-// Geometry of a service node as drawn on the map. The dagre layout uses a
-// taller bounding box (label + circle) than the circle itself, so the outer
-// height is exposed for the position centering calc.
-export const NODE_DIAMETER = 64;
-export const LABEL_HEIGHT = 18;
+// Geometry of a service node as drawn on the map. Pills are split into a
+// colored icon box and a tinted body; the small monospace service-id label
+// rendered above the pill is what `NODE_OUTER_HEIGHT` accounts for so dagre
+// reserves enough vertical room and `Map.tsx` can centre the visual mass on
+// the simulated coordinate.
+export const NODE_WIDTH = 184;
+export const NODE_HEIGHT = 58;
+export const LABEL_HEIGHT = 16;
 export const NODE_LABEL_GAP = 6;
-export const NODE_OUTER_HEIGHT = NODE_DIAMETER + LABEL_HEIGHT + NODE_LABEL_GAP;
+export const NODE_OUTER_HEIGHT = NODE_HEIGHT + LABEL_HEIGHT + NODE_LABEL_GAP;
 
-// Per-edge animated stream of dots. Speed and particle count scale with the
-// edge's call rate *relative to the busiest edge in the current graph*, on a
-// log10 ladder. The busiest edge always pegs the fastest/most-dense
-// visualisation; the slowest gets a single drifting particle. This keeps the
-// stream legible whether the busiest service handles 5 req/sec or 5k.
-export const PARTICLE_FAST_SECS = 0.6;
-export const PARTICLE_SLOW_SECS = 5;
-export const MAX_PARTICLES = 8;
+// Edge dash pattern. `EDGE_DASH_PERIOD` (dash + gap) is the loop distance the
+// marching-dash animation must travel for a seamless wrap; deriving it from
+// the parts keeps it locked to the dasharray.
+const EDGE_DASH_LENGTH = 5;
+const EDGE_DASH_GAP = 4;
+export const EDGE_DASH_ARRAY = `${EDGE_DASH_LENGTH} ${EDGE_DASH_GAP}`;
+export const EDGE_DASH_PERIOD = EDGE_DASH_LENGTH + EDGE_DASH_GAP;
 
-// Compute particle count + per-loop duration for an edge's call rate, scaled
-// against the max call rate observed across the graph. Pure so it can be
-// unit-tested without rendering the edge.
-export function getParticleAnimation(
+// Per-edge marching-dash speed scales with the edge's call rate *relative to
+// the busiest edge in the current graph*, on a log10 ladder. The busiest edge
+// always pegs the fastest march; the slowest gets a slow drift. This keeps
+// the visualisation legible whether the busiest service handles 5 req/sec or 5k.
+export const DASH_FAST_SECS = 0.2;
+export const DASH_SLOW_SECS = 1.1;
+
+// Compute per-period duration for an edge's call rate, scaled against the max
+// call rate observed across the graph. A duration of 0 means "no call rate,
+// don't animate". Pure so it can be unit-tested without rendering the edge.
+export function getDashAnimation(
 	callRate: number,
 	maxCallRate: number,
-): { particleCount: number; duration: number } {
+): { duration: number } {
 	if (callRate <= 0) {
-		return { particleCount: 0, duration: PARTICLE_SLOW_SECS };
+		return { duration: 0 };
 	}
 	// Defensive: if a stale/zero max sneaks in, treat this edge as the max so
 	// `factor` stays in [0, 1] rather than going to Infinity or NaN.
@@ -31,11 +40,6 @@ export function getParticleAnimation(
 	const logRate = Math.log10(callRate + 1);
 	const logMax = Math.log10(effectiveMax + 1);
 	const factor = logMax > 0 ? logRate / logMax : 1;
-	const duration =
-		PARTICLE_SLOW_SECS - factor * (PARTICLE_SLOW_SECS - PARTICLE_FAST_SECS);
-	const particleCount = Math.max(
-		1,
-		Math.min(MAX_PARTICLES, Math.ceil(factor * MAX_PARTICLES)),
-	);
-	return { particleCount, duration };
+	const duration = DASH_SLOW_SECS - factor * (DASH_SLOW_SECS - DASH_FAST_SECS);
+	return { duration };
 }

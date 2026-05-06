@@ -1,19 +1,104 @@
-.node {
+.wrap {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	overflow: visible;
+	align-items: flex-start;
 }
 
-.circle {
-	border-radius: 50%;
-	border: 1px solid var(--l3-border);
+.id {
+	// `max-width` is set inline from `NODE_WIDTH` so truncation stays in
+	// lockstep with the pill below.
+	margin-bottom: 6px;
+	padding-left: 4px;
+	font-family: "Geist Mono", "SF Mono", "Roboto Mono", monospace;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--l1-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	user-select: none;
+}
+
+.pill {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px;
 	box-sizing: border-box;
+	border-radius: 12px;
+	border-width: 1px;
+	border-style: solid;
 	position: relative;
+	color: var(--l1-foreground);
+	// Frosted glass: the .healthy/.error backgrounds are intentionally
+	// translucent (color-mix with transparent), so this blurs whatever sits
+	// behind the pill — the dotted background grid and any edges that pass
+	// through the node bounds — for a softer fill.
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+}
+
+.healthy {
+	border-color: var(--success-background);
+	background: color-mix(in srgb, var(--success-background) 32%, transparent);
+
+	.iconBox {
+		background: var(--success-background);
+		color: var(--l1-background);
+	}
+}
+
+.error {
+	border-color: var(--danger-background);
+	background: color-mix(in srgb, var(--danger-background) 32%, transparent);
+
+	.iconBox {
+		background: var(--danger-background);
+		color: var(--l1-foreground);
+	}
+}
+
+.iconBox {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: var(--l1-foreground);
+	flex-shrink: 0;
+	width: 48px;
+	height: 48px;
+	border-radius: 8px;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	flex: 1;
+	min-width: 0;
+	gap: 2px;
+	padding-right: 4px;
+}
+
+.name {
+	font-family: Inter, sans-serif;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 16px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	user-select: none;
+}
+
+.statusText {
+	font-family: Inter, sans-serif;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 14px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	user-select: none;
+	opacity: 0.85;
 }
 
 .handle {
@@ -22,18 +107,4 @@
 	height: 1px;
 	pointer-events: none;
 	border: none;
-}
-
-.label {
-	margin-top: 6px;
-	max-width: 120px;
-	font-size: 12px;
-	line-height: 14px;
-	text-align: center;
-	color: var(--l1-foreground);
-	font-family: Inter, sans-serif;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	user-select: none;
 }

@@ -1,4 +1,39 @@
-import { ArrowUpRight, BarChart, BellDot, Book, Bot, Boxes, Bug, Building2, ChartArea, Cloudy, DraftingCompass, FileKey2, Github, HardDrive, Home, Keyboard, Layers2, LayoutGrid, ListMinus, LogOut, MessageSquareText, Plus, Receipt, Rocket, Route, ScrollText, Settings, Shield, Slack, Sparkles, Unplug, User, UserPlus, Users } from '@signozhq/icons';
+import {
+	ArrowUpRight,
+	BarChart,
+	BellDot,
+	Book,
+	Bot,
+	Boxes,
+	Bug,
+	Building2,
+	ChartArea,
+	Cloudy,
+	DraftingCompass,
+	FileKey2,
+	Github,
+	HardDrive,
+	Home,
+	Keyboard,
+	Layers2,
+	LayoutGrid,
+	ListMinus,
+	LogOut,
+	MessageSquareText,
+	Plus,
+	Receipt,
+	Rocket,
+	Route,
+	ScrollText,
+	Settings,
+	Shield,
+	Slack,
+	Sparkles,
+	Unplug,
+	User,
+	UserPlus,
+	Users,
+} from '@signozhq/icons';
 import { Binoculars } from 'lucide-react';
 import { Style } from '@signozhq/design-tokens';
 import { MenuProps } from 'antd';
@@ -13,13 +48,13 @@ import {
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
 	label: 'Get Started',
-	icon: <Rocket rotate={45} />,
+	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 };
 
 export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
-	icon: <Rocket rotate={45} />,
+	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 };
 
 export const homeMenuItem = {
@@ -341,7 +376,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.INGESTION_SETTINGS,
 				label: 'Ingestion',
-				icon: <Rocket rotate={45} />,
+				icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 				isEnabled: false,
 				itemKey: 'ingestion',
 			},

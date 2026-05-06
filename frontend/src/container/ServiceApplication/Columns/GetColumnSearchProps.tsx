@@ -26,7 +26,7 @@ export const getColumnSearchProps = (
 	search: string,
 ): ColumnType<ServicesList> => ({
 	filterDropdown,
-	filterIcon: <Search />,
+	filterIcon: <Search size="md" />,
 	onFilter: (
 		value: string | number | boolean,
 		record: ServicesList,

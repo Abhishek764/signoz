@@ -197,7 +197,6 @@ function Filters({
 			)}
 		</div>
 	);
-}
 
 Filters.defaultProps = {
 	onFilteredSpansChange: undefined,

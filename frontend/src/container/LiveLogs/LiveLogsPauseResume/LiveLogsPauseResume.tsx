@@ -75,7 +75,7 @@ function LiveLogsPauseResume(): JSX.Element {
 	return (
 		<div className="live-logs-pause-resume">
 			<Button
-				icon={isPlaying ? <CirclePause /> : <CirclePlay />}
+				icon={isPlaying ? <CirclePause size="md" /> : <CirclePlay size="md" />}
 				danger={isPlaying}
 				onClick={onLiveButtonClick}
 				type="primary"

@@ -81,7 +81,7 @@ function AllErrors(): JSX.Element {
 								!showFilters ? (
 									<Tooltip title="Show Filters">
 										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-											<Filter />
+											<Filter size="md" />
 										</Button>
 									</Tooltip>
 								) : undefined

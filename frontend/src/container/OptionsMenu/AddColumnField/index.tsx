@@ -40,7 +40,7 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 					notFoundContent={config.isFetching ? <Spin size="small" /> : null}
 				/>
 				<SearchIconWrapper $isDarkMode={isDarkMode}>
-					<Search />
+					<Search size="md" />
 				</SearchIconWrapper>
 			</Input.Group>
 

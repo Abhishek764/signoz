@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CloudDownload } from '@signozhq/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { Button, Dropdown, MenuProps, Flex } from 'antd';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
@@ -74,8 +74,10 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 				size="small"
 				type="link"
 			>
-				<CloudDownload />
-				Download
+				<Flex align="center" gap={4}>
+					<CloudDownload size="md" />
+					Download
+				</Flex>
 			</Button>
 		</Dropdown>
 	);

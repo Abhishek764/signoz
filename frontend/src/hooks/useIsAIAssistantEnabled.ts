@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { setAIBackendUrl } from 'api/ai/instance';
+import { setAIBackendUrl } from 'api/AIAPIInstance';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 
 /** Returns the parsed URL string when valid, otherwise null. */

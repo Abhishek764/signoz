@@ -1,5 +1,4 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
-import { getBaseUrl } from 'utils/basePath';
 
 import {
 	interceptorRejected,
@@ -7,6 +6,7 @@ import {
 	interceptorsRequestResponse,
 	interceptorsResponse,
 } from 'api';
+import { ENVIRONMENT } from 'constants/env';
 
 /** Path-only base for the AI Assistant API. */
 export const AI_API_PATH = '/api/v1/assistant';
@@ -23,7 +23,7 @@ export const interceptorsRequestSigNozUrl = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
 	if (value.headers) {
-		value.headers[SIGNOZ_URL_HEADER] = getBaseUrl();
+		value.headers[SIGNOZ_URL_HEADER] = ENVIRONMENT.baseURL;
 	}
 	return value;
 };

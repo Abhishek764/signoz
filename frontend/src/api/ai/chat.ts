@@ -59,13 +59,13 @@ import type {
 	ToolResultEventDTO,
 } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { getBaseUrl } from 'utils/basePath';
 
 import {
 	AIAssistantInstance,
 	getAIBaseUrl,
 	SIGNOZ_URL_HEADER,
-} from './instance';
+} from '../AIAPIInstance';
+import { ENVIRONMENT } from 'constants/env';
 
 // ---------------------------------------------------------------------------
 // SSE-only auth wrapper.
@@ -113,7 +113,7 @@ async function fetchSSEWithAuth(
 ): Promise<Response> {
 	const send = async (token: string | null): Promise<Response> => {
 		const headers: Record<string, string> = {
-			[SIGNOZ_URL_HEADER]: getBaseUrl(),
+			[SIGNOZ_URL_HEADER]: ENVIRONMENT.baseURL,
 		};
 		if (token) {
 			headers.Authorization = `Bearer ${token}`;

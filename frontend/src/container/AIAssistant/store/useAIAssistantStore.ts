@@ -238,7 +238,11 @@ async function runStreamingLoop(
 						st.streamingActions = event.actions as MessageActionDTO[];
 					}
 				});
-				break;
+				// Don't break here — `message.done` marks the end of this
+				// message, not the stream. A clarification/approval event may
+				// follow in the same stream. The loop ends on the explicit
+				// `done` event type (or `approval`/`clarification`, which
+				// pause the stream).
 			}
 		} else if (event.type === 'thinking') {
 			set((s) => {

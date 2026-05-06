@@ -1,5 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from '@signozhq/ui';
+import {
+	Button,
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui';
 import {
 	Bookmark,
 	CalendarClock,
@@ -13,7 +19,7 @@ import {
 	Timer,
 } from '@signozhq/icons';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
-import { Skeleton, Tooltip } from 'antd';
+import { Skeleton } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
@@ -486,22 +492,27 @@ function SpanDetailsPanel({
 			actions.push({
 				key: 'dock-toggle',
 				component: (
-					<Tooltip
-						title={isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
-					>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={(): void =>
-								onVariantChange(
-									isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
-								)
-							}
-						>
-							{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
-						</Button>
-					</Tooltip>
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									color="secondary"
+									onClick={(): void =>
+										onVariantChange(
+											isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
+										)
+									}
+								>
+									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent style={{ zIndex: 1000 }}>
+								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
 				),
 			});
 		}

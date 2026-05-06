@@ -208,7 +208,7 @@ function PrettyView({
 					<Dropdown
 						menu={{ items: menuItems }}
 						align="start"
-						style={{ zIndex: 1000 }}
+						className="pretty-view-actions-dropdown"
 						// onClick on the dropdown content is forwarded to the underlying div via ...props
 						// but is not in the public type. Stop click bubbling so item clicks don't reach
 						// clickable ancestors of the trigger through the React tree.

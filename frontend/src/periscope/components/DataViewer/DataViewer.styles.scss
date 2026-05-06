@@ -14,13 +14,12 @@
 
 	&__mode-select {
 		min-width: 90px;
-		height: 28px !important;
+	}
 
-		.ant-select-selector {
-			border-radius: 4px !important;
-			border-color: var(--l2-border) !important;
-			font-size: 12px !important;
-		}
+	// Dropdown content is rendered in a portal; bump above FloatingPanel
+	// (z-index 999) so it stays visible when the consumer panel is floating.
+	&__mode-dropdown {
+		--dropdown-menu-content-z-index: 1000;
 	}
 
 	&__copy-btn {

@@ -6,6 +6,10 @@
 }
 
 .span-hover-card-popover {
+	// Event-dot tooltip is rendered while the SpanDetailsPanel may be docked as
+	// a FloatingPanel (z-index 999); bump above the default tooltip z-index 50.
+	--tooltip-z-index: 1000;
+
 	.ant-popover-inner {
 		background-color: var(--l1-background);
 		padding: 8px 12px;

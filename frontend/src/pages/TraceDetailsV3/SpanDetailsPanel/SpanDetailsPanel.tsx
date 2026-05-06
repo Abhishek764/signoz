@@ -511,7 +511,7 @@ function SpanDetailsPanel({
 									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent style={{ zIndex: 1000 }}>
+							<TooltipContent className="dock-toggle-tooltip">
 								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
 							</TooltipContent>
 						</Tooltip>

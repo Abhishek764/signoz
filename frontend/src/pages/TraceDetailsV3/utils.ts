@@ -38,3 +38,27 @@ export function hasInfraMetadata(span: SpanV3 | undefined): boolean {
 	}
 	return INFRA_METADATA_KEYS.some((key) => getSpanAttribute(span, key));
 }
+
+// Top-level fields that exist on the API response only to support waterfall
+// rendering. They have no value in the Span Details DataViewer. Drop the whole
+// constant + helper once the backend stops emitting them.
+const HIDDEN_SPAN_FIELDS_IN_DETAILS_VIEW: ReadonlySet<string> = new Set([
+	'sub_tree_node_count',
+	'has_children',
+	'level',
+	'service.name',
+]);
+
+/**
+ * Shallow-copies the span with waterfall-only fields stripped, for display in
+ * the Span Details DataViewer.
+ */
+export function getSpanDisplayData(span: SpanV3): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(span)) {
+		if (!HIDDEN_SPAN_FIELDS_IN_DETAILS_VIEW.has(key)) {
+			result[key] = value;
+		}
+	}
+	return result;
+}

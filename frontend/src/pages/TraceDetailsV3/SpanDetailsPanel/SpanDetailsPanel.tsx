@@ -40,7 +40,11 @@ import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
 import { useMigratePinnedAttributes } from 'pages/TraceDetailsV3/hooks/useMigratePinnedAttributes';
-import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
+import {
+	getSpanAttribute,
+	getSpanDisplayData,
+	hasInfraMetadata,
+} from 'pages/TraceDetailsV3/utils';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
@@ -98,6 +102,11 @@ function SpanDetailsContent({
 	useMigratePinnedAttributes(selectedSpan);
 	const { value: pinnedFieldsValue, onChange: onPinnedFieldsChange } =
 		useTracePinnedFields();
+
+	const spanDisplayData = useMemo(
+		() => getSpanDisplayData(selectedSpan),
+		[selectedSpan],
+	);
 
 	// Map span attribute actions to PrettyView actions format.
 	// Use the last key in fieldKeyPath (the actual attribute key), not the full display path.
@@ -396,7 +405,7 @@ function SpanDetailsContent({
 					<div className="span-details-panel__tabs-scroll">
 						<TabsContent value="overview">
 							<DataViewer
-								data={selectedSpan}
+								data={spanDisplayData}
 								drawerKey="trace-details"
 								prettyViewProps={{
 									showPinned: true,
@@ -597,6 +606,7 @@ function SpanDetailsPanel({
 				isOpen={panelState.isOpen}
 				className="span-details-panel"
 				width={PANEL_WIDTH}
+				minWidth={480}
 				height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 				defaultPosition={{
 					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,

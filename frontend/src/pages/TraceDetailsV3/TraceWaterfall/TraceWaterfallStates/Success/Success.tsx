@@ -227,7 +227,13 @@ const SpanOverview = memo(function SpanOverview({
 		isFilterActive,
 	);
 
-	const indentWidth = isRootSpan ? 0 : span.level * CONNECTOR_WIDTH;
+	// Shift leaf rows 8px to the right so their icon clears the L-connector,
+	// giving the parent/child the same visual separation as Datadog's tree.
+	// Skip for spans that have children of their own — those need to stay
+	// aligned with the L-connectors of their descendants drawn one row down.
+	const indentWidth = isRootSpan
+		? 0
+		: span.level * CONNECTOR_WIDTH + (span.has_children ? 0 : 30);
 
 	const handleFunnelClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
 		e.stopPropagation();

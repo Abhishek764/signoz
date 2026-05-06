@@ -3,6 +3,7 @@ import { Check } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
+	Flex,
 	Form,
 	FormInstance,
 	Input,
@@ -613,12 +614,14 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<Check size={16} />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
 							className="downtime-schedule-btn"
 						>
-							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							<Flex align="center" gap={4}>
+								<Check size={16} />
+								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							</Flex>
 						</Button>
 					</ModalButtonWrapper>
 				</Form.Item>

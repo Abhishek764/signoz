@@ -145,7 +145,6 @@ export function PlannedDowntime(): JSX.Element {
 						}
 					>
 						<Button
-							icon={<Plus size={16} />}
 							type="primary"
 							onClick={(): void => {
 								setInitialValues({ ...defautlInitialValues, editMode: false });
@@ -153,10 +152,12 @@ export function PlannedDowntime(): JSX.Element {
 								setEditMode(false);
 								form.resetFields();
 							}}
-							className="new-downtime-btn"
 							disabled={user?.role === USER_ROLES.VIEWER}
 						>
-							New downtime
+							<Flex align="center" gap={4}>
+								<Plus size={16} />
+								New downtime
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

@@ -219,7 +219,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 					}}
 				/>
 			</div>
-			<Tooltip title="Share this" arrow={false}>
+			<Tooltip title="Share This" arrow={false}>
 				<Button
 					className="periscope-btn copy-url-btn"
 					onClick={(): void => {

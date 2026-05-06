@@ -13,6 +13,7 @@ import { themeColors } from 'constants/theme';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useAppContext } from 'providers/App/App';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import {
 	SpanV3,
@@ -44,6 +45,14 @@ interface TraceContextValue {
 	 * aggregation `value` map has entries.
 	 */
 	availableColorByOptions: ColorByOption[];
+	/**
+	 * Per-user preview fields (selected via the floating "Preview fields"
+	 * panel). Stored in `span_details_preview_attributes` user pref. Will be
+	 * consumed by the flamegraph `selectFields` request and the waterfall +
+	 * flamegraph hover popovers in follow-up phases.
+	 */
+	previewFields: BaseAutocompleteData[];
+	setPreviewFields: (next: BaseAutocompleteData[]) => void;
 }
 
 const TraceContext = createContext<TraceContextValue | null>(null);
@@ -87,6 +96,40 @@ export function TraceProvider({
 			updateUserPreferenceMutation({
 				name: USER_PREFERENCES.SPAN_DETAILS_COLOR_BY_ATTRIBUTE,
 				value: field.name,
+			});
+		},
+		[
+			userPreferences,
+			updateUserPreferenceInContext,
+			updateUserPreferenceMutation,
+		],
+	);
+
+	const previewFields = useMemo<BaseAutocompleteData[]>(() => {
+		const pref = userPreferences?.find(
+			(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_PREVIEW_ATTRIBUTES,
+		);
+		const raw = (pref?.value as BaseAutocompleteData[] | undefined) ?? [];
+		// Defensive: keep only entries that have a string `key`.
+		return raw.filter(
+			(f): f is BaseAutocompleteData =>
+				typeof f === 'object' &&
+				f !== null &&
+				typeof (f as { key?: unknown }).key === 'string',
+		);
+	}, [userPreferences]);
+
+	const setPreviewFields = useCallback(
+		(next: BaseAutocompleteData[]): void => {
+			const existing = userPreferences?.find(
+				(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_PREVIEW_ATTRIBUTES,
+			);
+			if (existing) {
+				updateUserPreferenceInContext({ ...existing, value: next });
+			}
+			updateUserPreferenceMutation({
+				name: USER_PREFERENCES.SPAN_DETAILS_PREVIEW_ATTRIBUTES,
+				value: next,
 			});
 		},
 		[
@@ -146,8 +189,16 @@ export function TraceProvider({
 			getSpanGroupValue,
 			resolveSpanColor,
 			availableColorByOptions,
+			previewFields,
+			setPreviewFields,
 		};
-	}, [persistedColorByField, aggregations, setColorByField]);
+	}, [
+		persistedColorByField,
+		aggregations,
+		setColorByField,
+		previewFields,
+		setPreviewFields,
+	]);
 
 	if (!userPreferences) {
 		return null;

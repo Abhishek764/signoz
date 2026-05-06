@@ -10,9 +10,13 @@ import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
 import { ArrowLeft, CalendarClock, Server, Timer } from 'lucide-react';
+import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
+import { DataSource } from 'types/common/queryBuilder';
 
+import FieldsSettings from '../components/FieldsSettings/FieldsSettings';
+import { useTraceContext } from '../contexts/TraceContext';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
@@ -52,6 +56,8 @@ function TraceDetailsHeader({
 			'true',
 	);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
+	const { previewFields, setPreviewFields } = useTraceContext();
 
 	const handleSwitchToOldView = useCallback((): void => {
 		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
@@ -141,6 +147,7 @@ function TraceDetailsHeader({
 								<TraceOptionsMenu
 									showTraceDetails={showTraceDetails}
 									onToggleTraceDetails={handleToggleTraceDetails}
+									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
 								/>
 							</>
 						)}
@@ -172,7 +179,7 @@ function TraceDetailsHeader({
 				</div>
 			)}
 
-			{/* {isPreviewFieldsOpen && (
+			{isPreviewFieldsOpen && (
 				<FloatingPanel
 					isOpen
 					width={350}
@@ -191,7 +198,7 @@ function TraceDetailsHeader({
 						dataSource={DataSource.TRACES}
 					/>
 				</FloatingPanel>
-			)} */}
+			)}
 		</div>
 	);
 }

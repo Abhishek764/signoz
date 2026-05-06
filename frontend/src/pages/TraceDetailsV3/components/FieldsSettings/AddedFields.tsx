@@ -17,6 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from 'lucide-react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 function SortableField({
 	field,
@@ -24,13 +25,13 @@ function SortableField({
 	allowDrag,
 	allowRemove,
 }: {
-	field: string;
-	onRemove: (field: string) => void;
+	field: BaseAutocompleteData;
+	onRemove: (field: BaseAutocompleteData) => void;
 	allowDrag: boolean;
 	allowRemove: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: field });
+		useSortable({ id: field.key });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -45,7 +46,7 @@ function SortableField({
 		>
 			<div {...attributes} {...listeners} className="drag-handle">
 				{allowDrag && <GripVertical size={14} />}
-				<span className="fs-field-key">{field}</span>
+				<span className="fs-field-key">{field.key}</span>
 			</div>
 			{allowRemove && (
 				<Button
@@ -62,8 +63,8 @@ function SortableField({
 
 interface AddedFieldsProps {
 	inputValue: string;
-	fields: string[];
-	onFieldsChange: (fields: string[]) => void;
+	fields: BaseAutocompleteData[];
+	onFieldsChange: (fields: BaseAutocompleteData[]) => void;
 }
 
 function AddedFields({
@@ -76,20 +77,20 @@ function AddedFields({
 	const handleDragEnd = (event: DragEndEvent): void => {
 		const { active, over } = event;
 		if (over && active.id !== over.id) {
-			const oldIndex = fields.findIndex((f) => f === active.id);
-			const newIndex = fields.findIndex((f) => f === over.id);
+			const oldIndex = fields.findIndex((f) => f.key === active.id);
+			const newIndex = fields.findIndex((f) => f.key === over.id);
 			onFieldsChange(arrayMove(fields, oldIndex, newIndex));
 		}
 	};
 
 	const filteredFields = useMemo(
 		() =>
-			fields.filter((f) => f.toLowerCase().includes(inputValue.toLowerCase())),
+			fields.filter((f) => f.key.toLowerCase().includes(inputValue.toLowerCase())),
 		[fields, inputValue],
 	);
 
-	const handleRemove = (field: string): void => {
-		onFieldsChange(fields.filter((f) => f !== field));
+	const handleRemove = (field: BaseAutocompleteData): void => {
+		onFieldsChange(fields.filter((f) => f.key !== field.key));
 	};
 
 	const allowDrag = inputValue.length === 0;
@@ -108,13 +109,13 @@ function AddedFields({
 							<div className="fs-no-values">No values found</div>
 						) : (
 							<SortableContext
-								items={fields}
+								items={fields.map((f) => f.key)}
 								strategy={verticalListSortingStrategy}
 								disabled={!allowDrag}
 							>
 								{filteredFields.map((field) => (
 									<SortableField
-										key={field}
+										key={field.key}
 										field={field}
 										onRemove={handleRemove}
 										allowDrag={allowDrag}

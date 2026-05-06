@@ -3,6 +3,8 @@ import { Popover } from 'antd';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
@@ -13,12 +15,30 @@ interface ITraceMetadata {
 	endTime: number;
 }
 
+/**
+ * Span-level fields that the tooltip always shows (as the colored title or
+ * one of the status/start/duration rows). Preview rows for these keys are
+ * filtered out to avoid duplication.
+ */
+export const RESERVED_PREVIEW_KEYS: ReadonlySet<string> = new Set([
+	'name',
+	'has_error',
+	'timestamp',
+	'duration_nano',
+]);
+
+export interface SpanPreviewRow {
+	key: string;
+	value: string;
+}
+
 export interface SpanTooltipContentProps {
 	spanName: string;
 	color: string;
 	hasError: boolean;
 	relativeStartMs: number;
 	durationMs: number;
+	previewRows?: SpanPreviewRow[];
 }
 
 export function SpanTooltipContent({
@@ -27,6 +47,7 @@ export function SpanTooltipContent({
 	hasError,
 	relativeStartMs,
 	durationMs,
+	previewRows,
 }: SpanTooltipContentProps): JSX.Element {
 	const { time: formattedDuration, timeUnitName } =
 		convertTimeToRelevantUnit(durationMs);
@@ -37,14 +58,26 @@ export function SpanTooltipContent({
 				{spanName}
 			</div>
 			<div className="span-hover-card-content__row">
-				Status: {hasError ? 'error' : 'ok'}
+				status: {hasError ? 'error' : 'ok'}
 			</div>
 			<div className="span-hover-card-content__row">
-				Start: {toFixed(relativeStartMs, 2)} ms
+				start: {toFixed(relativeStartMs, 2)} ms
 			</div>
 			<div className="span-hover-card-content__row">
-				Duration: {toFixed(formattedDuration, 2)} {timeUnitName}
+				duration: {toFixed(formattedDuration, 2)} {timeUnitName}
 			</div>
+			{previewRows && previewRows.length > 0 && (
+				<div className="span-hover-card-content__preview">
+					{previewRows.map((row) => (
+						<div key={row.key} className="span-hover-card-content__row">
+							<span className="span-hover-card-content__preview-key">{row.key}:</span>{' '}
+							<span className="span-hover-card-content__preview-value">
+								{row.value}
+							</span>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }
@@ -68,6 +101,7 @@ const SpanHoverCard = memo(function SpanHoverCard({
 }: SpanHoverCardProps): JSX.Element {
 	const [showPopover, setShowPopover] = useState(false);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const { previewFields } = useTraceContext();
 
 	const handleMouseEnter = useCallback((): void => {
 		timerRef.current = setTimeout(() => {
@@ -107,6 +141,16 @@ const SpanHoverCard = memo(function SpanHoverCard({
 		color = 'var(--bg-cherry-500)';
 	}
 
+	const previewRows: SpanPreviewRow[] = previewFields
+		.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))
+		.map((field) => {
+			const value = getSpanAttribute(span, field.key);
+			return value !== undefined && value !== ''
+				? { key: field.key, value: String(value) }
+				: null;
+		})
+		.filter((r): r is SpanPreviewRow => r !== null);
+
 	return (
 		<Popover
 			open
@@ -117,6 +161,7 @@ const SpanHoverCard = memo(function SpanHoverCard({
 					hasError={span.has_error}
 					relativeStartMs={relativeStartMs}
 					durationMs={durationMs}
+					previewRows={previewRows}
 				/>
 			}
 			trigger="hover"

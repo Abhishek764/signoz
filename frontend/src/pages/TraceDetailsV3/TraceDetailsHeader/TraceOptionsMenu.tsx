@@ -8,11 +8,13 @@ import { useTraceContext } from '../contexts/TraceContext';
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
 	onToggleTraceDetails: () => void;
+	onOpenPreviewFields: () => void;
 }
 
 function TraceOptionsMenu({
 	showTraceDetails,
 	onToggleTraceDetails,
+	onOpenPreviewFields,
 }: TraceOptionsMenuProps): JSX.Element {
 	const { colorByField, setColorByField, availableColorByOptions } =
 		useTraceContext();
@@ -23,6 +25,11 @@ function TraceOptionsMenu({
 				key: 'toggle-trace-details',
 				label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
 				onClick: onToggleTraceDetails,
+			},
+			{
+				key: 'preview-fields',
+				label: 'Preview fields',
+				onClick: onOpenPreviewFields,
 			},
 		];
 
@@ -64,6 +71,7 @@ function TraceOptionsMenu({
 	}, [
 		showTraceDetails,
 		onToggleTraceDetails,
+		onOpenPreviewFields,
 		colorByField.name,
 		setColorByField,
 		availableColorByOptions,

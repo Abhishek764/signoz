@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
+import { toast } from '@signozhq/ui';
 import { Button, Input } from 'antd';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { CheckIcon, TableColumnsSplit, X, XIcon } from 'lucide-react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
@@ -13,9 +15,11 @@ const MAX_FIELDS_DEFAULT = 10;
 
 interface FieldsSettingsProps {
 	title: string;
-	// State is just string[] of keys for now. Can be extended to objects later if needed.
-	fields: string[];
-	onFieldsChange: (fields: string[]) => void;
+	// Picker's native shape (`BaseAutocompleteData`) is preserved end-to-end so
+	// downstream consumers (flamegraph `selectFields`, hover popovers) get full
+	// field metadata without a lossy conversion at add-time.
+	fields: BaseAutocompleteData[];
+	onFieldsChange: (fields: BaseAutocompleteData[]) => void;
 	onClose: () => void;
 	dataSource: DataSource;
 	maxFields?: number;
@@ -30,7 +34,7 @@ function FieldsSettings({
 	maxFields = MAX_FIELDS_DEFAULT,
 }: FieldsSettingsProps): JSX.Element {
 	// Local draft state — changes here don't persist until Save
-	const [draftFields, setDraftFields] = useState<string[]>(fields);
+	const [draftFields, setDraftFields] = useState<BaseAutocompleteData[]>(fields);
 	const [inputValue, setInputValue] = useState('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState('');
 
@@ -48,20 +52,24 @@ function FieldsSettings({
 	);
 
 	const handleAdd = useCallback(
-		(key: string): void => {
+		(field: BaseAutocompleteData): void => {
 			if (draftFields.length >= maxFields) {
 				return;
 			}
-			if (draftFields.includes(key)) {
+			if (draftFields.some((f) => f.key === field.key)) {
 				return;
 			}
-			setDraftFields((prev) => [...prev, key]);
+			setDraftFields((prev) => [...prev, field]);
 		},
 		[draftFields, maxFields],
 	);
 
 	const handleSave = useCallback((): void => {
 		onFieldsChange(draftFields);
+		toast.success('Saved successfully', {
+			richColors: false,
+			position: 'top-right',
+		});
 		onClose();
 	}, [draftFields, onFieldsChange, onClose]);
 
@@ -73,7 +81,7 @@ function FieldsSettings({
 		() =>
 			!(
 				draftFields.length === fields.length &&
-				draftFields.every((f, i) => f === fields[i])
+				draftFields.every((f, i) => f.key === fields[i]?.key)
 			),
 		[draftFields, fields],
 	);

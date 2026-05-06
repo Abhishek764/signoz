@@ -3,13 +3,14 @@ import { Button, Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 interface OtherFieldsProps {
 	dataSource: DataSource;
 	debouncedInputValue: string;
-	addedFields: string[];
-	onAdd: (key: string) => void;
+	addedFields: BaseAutocompleteData[];
+	onAdd: (field: BaseAutocompleteData) => void;
 	isAtLimit: boolean;
 }
 
@@ -42,8 +43,8 @@ function OtherFields({
 	// Filter out already-added fields, match on .key from API response objects
 	const otherFields = useMemo(() => {
 		const attributes = data?.payload?.attributeKeys || [];
-		const addedSet = new Set(addedFields);
-		return attributes.filter((attr) => !addedSet.has(attr.key));
+		const addedKeys = new Set(addedFields.map((f) => f.key));
+		return attributes.filter((attr) => !addedKeys.has(attr.key));
 	}, [data, addedFields]);
 
 	if (isFetching) {
@@ -76,7 +77,7 @@ function OtherFields({
 										<Button
 											className="add-field-btn periscope-btn"
 											size="small"
-											onClick={(): void => onAdd(attr.key)}
+											onClick={(): void => onAdd(attr)}
 										>
 											Add
 										</Button>

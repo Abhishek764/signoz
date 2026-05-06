@@ -26,7 +26,11 @@ var deploymentNameGroupByKey = qbtypes.GroupByKey{
 // response to short-circuit cleanly when the phase metric is absent.
 var deploymentsTableMetricNamesList = []string{
 	"k8s.pod.cpu.usage",
+	"k8s.pod.cpu_request_utilization",
+	"k8s.pod.cpu_limit_utilization",
 	"k8s.pod.memory.working_set",
+	"k8s.pod.memory_request_utilization",
+	"k8s.pod.memory_limit_utilization",
 	"k8s.deployment.desired",
 	"k8s.deployment.available",
 	"k8s.pod.phase",

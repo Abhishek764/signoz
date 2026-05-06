@@ -1,6 +1,14 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Bolt, Check, ChevronDown, Loader, OctagonAlert, X } from '@signozhq/icons';
+import {
+	Bolt,
+	Check,
+	ChevronDown,
+	ChevronRight,
+	Loader,
+	OctagonAlert,
+	X,
+} from '@signozhq/icons';
 import {
 	Modal,
 	Select,
@@ -140,6 +148,10 @@ function treeTitleAndKey({
 	};
 }
 
+function renderSwitcherIcon(props: { expanded: boolean }): JSX.Element {
+	return props.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
+}
+
 function generateTreeDataNodes(
 	response: OnboardingStatusResponse['data'],
 	parentTitle: string,
@@ -253,7 +265,7 @@ function AttributeCheckList({
 					/>
 					<Tree
 						showLine
-						switcherIcon={<ChevronDown />}
+						switcherIcon={renderSwitcherIcon}
 						treeData={treeData}
 						height={450}
 						className="attribute-tree"

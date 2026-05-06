@@ -48,7 +48,12 @@ def delete_custom_role(signoz: types.SigNoz, token: str, role_id: str) -> None:
 
 
 def patch_role_objects(
-    signoz: types.SigNoz, token: str, role_id: str, relation: str, additions=None, deletions=None,
+    signoz: types.SigNoz,
+    token: str,
+    role_id: str,
+    relation: str,
+    additions=None,
+    deletions=None,
 ) -> None:
     """PATCH /api/v1/roles/{id}/relations/{relation}/objects."""
     body = {}

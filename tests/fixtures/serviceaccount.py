@@ -6,23 +6,11 @@ import requests
 
 from fixtures import types
 from fixtures.logger import setup_logger
-from fixtures.role import ROLES_BASE, find_role_by_name  # re-export for existing callers
+from fixtures.role import ROLES_BASE, find_role_by_name  # noqa: F401 — re-export for existing callers
 
 logger = setup_logger(__name__)
 
 SERVICE_ACCOUNT_BASE = "/api/v1/service_accounts"
-
-# Keep these importable from here so existing tests don't break.
-__all__ = [
-    "ROLES_BASE",
-    "SERVICE_ACCOUNT_BASE",
-    "find_role_by_name",
-    "create_service_account",
-    "create_service_account_with_key",
-    "delete_service_account",
-    "get_first_key_id",
-    "find_service_account_by_name",
-]
 
 
 def create_service_account(signoz: types.SigNoz, token: str, name: str, role: str = "signoz-viewer") -> str:

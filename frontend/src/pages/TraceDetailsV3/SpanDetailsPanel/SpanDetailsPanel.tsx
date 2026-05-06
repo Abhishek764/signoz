@@ -5,6 +5,10 @@ import {
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
+	TabsContent,
+	TabsList,
+	TabsRoot,
+	TabsTrigger,
 } from '@signozhq/ui';
 import {
 	Bookmark,
@@ -18,7 +22,6 @@ import {
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
 import { Skeleton } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';

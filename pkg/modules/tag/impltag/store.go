@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -44,6 +45,46 @@ func (s *store) ListByEntity(ctx context.Context, entityID valuer.UUID) ([]*tagt
 		return nil, err
 	}
 	return tags, nil
+}
+
+func (s *store) ListByEntities(ctx context.Context, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+	if len(entityIDs) == 0 {
+		return map[valuer.UUID][]*tagtypes.Tag{}, nil
+	}
+
+	type joinedRow struct {
+		bun.BaseModel `bun:"table:tag,alias:tag"`
+
+		EntityID     valuer.UUID `bun:"entity_id"`
+		TagID        valuer.UUID `bun:"tag_id"`
+		Name         string      `bun:"name"`
+		InternalName string      `bun:"internal_name"`
+		OrgID        valuer.UUID `bun:"org_id"`
+	}
+
+	rows := make([]*joinedRow, 0)
+	err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&rows).
+		ColumnExpr("tr.entity_id, tag.id AS tag_id, tag.name, tag.internal_name, tag.org_id").
+		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
+		Where("tr.entity_id IN (?)", bun.In(entityIDs)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[valuer.UUID][]*tagtypes.Tag)
+	for _, r := range rows {
+		out[r.EntityID] = append(out[r.EntityID], &tagtypes.Tag{
+			Identifiable: types.Identifiable{ID: r.TagID},
+			Name:         r.Name,
+			InternalName: r.InternalName,
+			OrgID:        r.OrgID,
+		})
+	}
+	return out, nil
 }
 
 func (s *store) Create(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.Tag, error) {

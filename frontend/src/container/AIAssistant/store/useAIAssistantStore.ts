@@ -21,6 +21,7 @@ import {
 	regenerateMessage,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
+	SSEStreamError,
 	streamEvents,
 	submitFeedback,
 	ThreadSummary,
@@ -960,6 +961,25 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					return;
 				}
 
+				// If a previous reply is still streaming (typical when the user
+				// clicks a suggested-action button before the assistant has
+				// finished), tear it down before we queue the new one. We commit
+				// any partial text as a message so it's not lost, then await
+				// the backend cancel so `sendMessageToThread` doesn't race a
+				// 409 "thread busy" against the still-active execution.
+				const inFlight = get().streams[convId];
+				if (inFlight?.isStreaming) {
+					const existingThreadId = get().conversations[convId]?.threadId;
+					disconnectAndCommit(convId, set, get);
+					if (existingThreadId) {
+						try {
+							await cancelExecution(existingThreadId);
+						} catch (err) {
+							console.error('[AIAssistant] cancelExecution failed:', err);
+						}
+					}
+				}
+
 				const userMessage: Message = {
 					id: uuidv4(),
 					role: 'user',
@@ -1022,11 +1042,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] sendMessage failed:', err);
-					finalizeStreamingError(
-						convId,
-						'Something went wrong while fetching the response. Please try again.',
-						set,
-					);
+					const message =
+						err instanceof SSEStreamError && err.status === 429
+							? 'You sent that a bit too quickly. Please wait a moment and try again.'
+							: 'Something went wrong while fetching the response. Please try again.';
+					finalizeStreamingError(convId, message, set);
 				}
 			},
 

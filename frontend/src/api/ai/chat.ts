@@ -107,6 +107,27 @@ async function rotateAccessToken(): Promise<string | null> {
 	return pendingRotate;
 }
 
+// Backoff schedule for 429 retries on SSE open. Three attempts is enough to
+// absorb the brief window between cancel→send→stream when the backend is
+// rate-limiting the burst, without making real "you're saturated" errors
+// take forever to surface.
+const SSE_429_BACKOFF_MS = [400, 1200, 2500];
+
+function parseRetryAfterMs(value: string | null): number | null {
+	if (!value) {
+		return null;
+	}
+	const seconds = Number(value);
+	if (Number.isFinite(seconds)) {
+		return Math.max(0, seconds * 1000);
+	}
+	const date = Date.parse(value);
+	if (Number.isFinite(date)) {
+		return Math.max(0, date - Date.now());
+	}
+	return null;
+}
+
 async function fetchSSEWithAuth(
 	url: string,
 	signal?: AbortSignal,
@@ -121,18 +142,42 @@ async function fetchSSEWithAuth(
 		return fetch(url, { headers, signal });
 	};
 
-	const initialToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
-	const res = await send(initialToken);
+	const sendWithAuth = async (): Promise<Response> => {
+		const initialToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
+		const res = await send(initialToken);
+		if (res.status !== 401) {
+			return res;
+		}
+		const refreshed = await rotateAccessToken();
+		if (!refreshed) {
+			return res;
+		}
+		return send(refreshed);
+	};
 
-	if (res.status !== 401) {
-		return res;
+	let res = await sendWithAuth();
+	for (const baseDelay of SSE_429_BACKOFF_MS) {
+		if (res.status !== 429 || signal?.aborted) {
+			return res;
+		}
+		const retryAfter = parseRetryAfterMs(res.headers.get('Retry-After'));
+		const delay = retryAfter ?? baseDelay;
+		// eslint-disable-next-line no-await-in-loop
+		await new Promise<void>((resolve, reject) => {
+			const timer = setTimeout(resolve, delay);
+			signal?.addEventListener(
+				'abort',
+				() => {
+					clearTimeout(timer);
+					reject(new DOMException('SSE 429 backoff aborted', 'AbortError'));
+				},
+				{ once: true },
+			);
+		});
+		// eslint-disable-next-line no-await-in-loop
+		res = await sendWithAuth();
 	}
-
-	const refreshed = await rotateAccessToken();
-	if (!refreshed) {
-		return res;
-	}
-	return send(refreshed);
+	return res;
 }
 
 // ---------------------------------------------------------------------------
@@ -348,6 +393,21 @@ async function* readSSEReader(
 	}
 }
 
+/**
+ * Thrown by `streamEvents` when the SSE open returns a non-2xx response.
+ * Carries the HTTP status so callers can branch on rate-limit vs. other
+ * failures (e.g. show a "please wait a moment" message on 429).
+ */
+export class SSEStreamError extends Error {
+	status: number;
+
+	constructor(status: number, statusText: string) {
+		super(`SSE stream failed: ${status} ${statusText}`);
+		this.name = 'SSEStreamError';
+		this.status = status;
+	}
+}
+
 export async function* streamEvents(
 	executionId: string,
 	signal?: AbortSignal,
@@ -357,7 +417,7 @@ export async function* streamEvents(
 		signal,
 	);
 	if (!res.ok || !res.body) {
-		throw new Error(`SSE stream failed: ${res.status} ${res.statusText}`);
+		throw new SSEStreamError(res.status, res.statusText);
 	}
 	yield* readSSEReader(res.body.getReader());
 }

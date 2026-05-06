@@ -340,20 +340,6 @@ function rollbackCall(
 	}
 }
 
-/** Past-tense status label shown on a successful rollback chip. */
-function rollbackSuccessLabel(kind: MessageActionDTO['kind']): string {
-	switch (kind) {
-		case MessageActionKindDTO.undo:
-			return 'Undone';
-		case MessageActionKindDTO.revert:
-			return 'Reverted';
-		case MessageActionKindDTO.restore:
-			return 'Restored';
-		default:
-			return 'Done';
-	}
-}
-
 /**
  * Renders the actions attached to a single assistant message.
  *
@@ -436,8 +422,6 @@ export default function ActionsSection({
 	};
 
 	const handleClick = (key: string, action: MessageActionDTO): void => {
-		// eslint-disable-next-line no-console
-		console.log('[ActionsSection] chip click', { kind: action.kind, action });
 		switch (action.kind) {
 			case MessageActionKindDTO.open_docs: {
 				if (action.url) {
@@ -508,13 +492,6 @@ export default function ActionsSection({
 
 					const tooltip = isError ? result.error : (action.tooltip ?? undefined);
 
-					// Only show the suffix pill after a successful rollback ("Undone",
-					// "Reverted", "Restored"). The raw server-side `action.state` (e.g.
-					// "active") is informational and not surfaced to the user.
-					const stateLabel = isSuccess
-						? rollbackSuccessLabel(action.kind)
-						: undefined;
-
 					let icon: JSX.Element;
 					if (isLoading) {
 						icon = <LoaderCircle size={12} className={styles.spin} />;
@@ -536,11 +513,6 @@ export default function ActionsSection({
 							disabled={isDisabled}
 							aria-label={action.label}
 							prefix={icon}
-							suffix={
-								stateLabel ? (
-									<span className={styles.chipState}>{stateLabel}</span>
-								) : undefined
-							}
 						>
 							<span className={styles.chipLabel}>{action.label}</span>
 						</Button>

@@ -70,7 +70,7 @@ export function deriveResourcesForRelation(
 	return authzResources.resources
 		.filter((r) => supportedTypes.includes(r.type))
 		.map((r) => ({
-			id: r.kind,
+			id: r.type,
 			label: capitalize(r.kind).replaceAll('_', ' '),
 			options: [],
 		}));
@@ -118,7 +118,7 @@ export function buildPatchPayload({
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const resourceDef = authzRes.resources.find((r) => r.kind === res.id);
+		const resourceDef = authzRes.resources.find((r) => r.type === res.id);
 		if (!resourceDef) {
 			continue;
 		}

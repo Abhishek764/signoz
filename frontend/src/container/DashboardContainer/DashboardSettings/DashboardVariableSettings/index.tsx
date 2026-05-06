@@ -11,7 +11,16 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, RowProps, Space, Table, Typography } from 'antd';
+import {
+	Button,
+	Flex,
+	Modal,
+	Row,
+	RowProps,
+	Space,
+	Table,
+	Typography,
+} from 'antd';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
@@ -57,13 +66,12 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
-								<span
+								<GripVertical
 									ref={setActivatorNodeRef}
 									style={{ touchAction: 'none', cursor: 'move' }}
 									{...listeners}
-								>
-									<GripVertical />
-								</span>
+								/>
+
 								{child}
 							</div>
 						),
@@ -438,7 +446,9 @@ function VariablesSettings({
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<Plus /> Add Variable
+							<Flex align="center" justify="center" gap={4}>
+								<Plus size="md" /> Add Variable
+							</Flex>
 						</Button>
 					</Row>
 

@@ -3,10 +3,10 @@ import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { LoaderCircle, Search } from '@signozhq/icons';
-import { LoadingOutlined  } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
+	Flex,
 	Input,
 	InputRef,
 	Progress,
@@ -108,9 +108,11 @@ const getColumnSearchProps = (
 					type="primary"
 					size="small"
 					onClick={(): void => handleSearch(selectedKeys as string[], confirm)}
-					icon={<Search />}
 				>
-					Search
+					<Flex align="center" gap={4}>
+						<Search size="md" />
+						Search
+					</Flex>
 				</Button>
 				<Button
 					onClick={(): void => clearFilters && handleReset(clearFilters, confirm)}
@@ -132,9 +134,7 @@ const getColumnSearchProps = (
 		</div>
 	),
 	filterIcon: (filtered: boolean): JSX.Element => (
-		<Search
-			style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }}
-		/>
+		<Search style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }} />
 	),
 	onFilter: (value, record): boolean =>
 		record[dataIndex || '']
@@ -517,7 +517,9 @@ export default function CeleryOverviewTable({
 				bordered={false}
 				loading={{
 					spinning: isLoading,
-					indicator: <Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />,
+					indicator: (
+						<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
+					),
 				}}
 				locale={{
 					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,

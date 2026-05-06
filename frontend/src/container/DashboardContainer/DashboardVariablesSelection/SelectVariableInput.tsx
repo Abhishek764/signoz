@@ -138,7 +138,7 @@ function SelectVariableInput({
 			{errorMessage && (
 				<span style={errorIconStyle}>
 					<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
-						<SolidAlertTriangle style={{ color: orange[5] }} />
+						<SolidAlertTriangle style={{ color: orange[5] }} size="md" />
 					</Popover>
 				</span>
 			)}

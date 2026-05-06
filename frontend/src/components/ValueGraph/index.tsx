@@ -142,6 +142,7 @@ function ValueGraph({
 						<CircleAlert
 							className="value-graph-icon"
 							data-testid="conflicting-thresholds"
+							size="md"
 						/>
 					</Tooltip>
 				</div>

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { CircleAlert, Trash2 } from '@signozhq/icons';
-import { Modal, Tooltip, Typography } from 'antd';
+import { Flex, Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
@@ -56,7 +56,10 @@ export function DeleteButton({
 				</Typography.Title>
 			),
 			icon: (
-				<CircleAlert style={{ color: 'var(--danger-background)' , marginInlineEnd: '12px' }} size='3xl' />
+				<CircleAlert
+					style={{ color: 'var(--danger-background)', marginInlineEnd: '12px' }}
+					size="3xl"
+				/>
 			),
 			okText: 'Delete',
 			okButtonProps: {
@@ -120,7 +123,9 @@ export function DeleteButton({
 					className="delete-btn"
 					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<Trash2 size={14} /> Delete dashboard
+					<Flex align="center" justify="center" gap={4}>
+						<Trash2 size={14} /> Delete dashboard
+					</Flex>
 				</TableLinkText>
 			</Tooltip>
 

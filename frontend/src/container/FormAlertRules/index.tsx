@@ -634,7 +634,7 @@ function FormAlertRules({
 			</Typography.Text>
 		);
 		Modal.confirm({
-			icon: <CircleAlert />,
+			icon: <CircleAlert size="md" />,
 			title: t('confirm_save_title'),
 			centered: true,
 			content,
@@ -953,7 +953,7 @@ function FormAlertRules({
 							loading={loading || false}
 							type="primary"
 							onClick={onSaveHandler}
-							icon={<Save />}
+							icon={<Save size="md" />}
 							disabled={
 								isAlertNameMissing ||
 								!isChannelConfigurationValid ||

@@ -122,7 +122,7 @@ function LabelSelect({
 	const handleClearAll = (): void => {
 		Modal.confirm({
 			title: 'Confirm',
-			icon: <CircleAlert />,
+			icon: <CircleAlert size="md" />,
 			content: t('remove_label_confirm'),
 			onOk() {
 				send('RESET');
@@ -182,7 +182,7 @@ function LabelSelect({
 				{queries.length > 0 || staging.length > 0 || currentVal ? (
 					<Button
 						onClick={handleClearAll}
-						icon={<CircleX />}
+						icon={<CircleX size="md" />}
 						type="text"
 					/>
 				) : null}

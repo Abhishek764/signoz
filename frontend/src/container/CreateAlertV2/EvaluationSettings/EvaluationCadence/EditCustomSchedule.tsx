@@ -3,7 +3,7 @@ import { Button, Typography } from 'antd';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 import { IEditCustomScheduleProps } from 'container/CreateAlertV2/EvaluationSettings/types';
-import { Calendar , Pencil, Trash } from '@signozhq/icons';
+import { Calendar, Pencil, Trash } from '@signozhq/icons';
 
 function EditCustomSchedule({
 	setIsEvaluationCadenceDetailsVisible,
@@ -82,7 +82,7 @@ function EditCustomSchedule({
 				<Button.Group>
 					<Button type="default" onClick={handleEdit}>
 						<Pencil size={12} />
-						<Typography.Text>Pencil custom schedule</Typography.Text>
+						<Typography.Text>Edit custom schedule</Typography.Text>
 					</Button>
 					<Button type="default" onClick={handlePreview}>
 						<Calendar size={12} />

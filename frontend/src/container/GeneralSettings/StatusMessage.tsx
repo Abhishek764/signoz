@@ -58,7 +58,7 @@ function StatusMessage({
 				}}
 			>
 				<Col xs={1}>
-					<SolidInfoCircle style={{ fontSize: '1rem' }} />
+					<SolidInfoCircle style={{ fontSize: '1rem' }} size="md" />
 				</Col>
 
 				<Col

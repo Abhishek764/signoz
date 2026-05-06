@@ -613,9 +613,10 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<Check />}
+							icon={<Check size={16} />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
+							className="downtime-schedule-btn"
 						>
 							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
 						</Button>

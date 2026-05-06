@@ -142,7 +142,7 @@ export default function DashboardEmptyState(): JSX.Element {
 							<Button
 								className="add-panel-btn"
 								onClick={onEmptyWidgetHandler}
-								icon={<Plus />}
+								icon={<Plus size="md" />}
 								type="primary"
 								data-testid="add-panel"
 							>

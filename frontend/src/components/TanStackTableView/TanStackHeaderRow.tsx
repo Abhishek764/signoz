@@ -4,7 +4,14 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
-import { ArrowDown, ArrowUp,ArrowUpDown , Ellipsis, GripVertical, X } from '@signozhq/icons';
+import {
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	Ellipsis,
+	GripVertical,
+	X,
+} from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
@@ -212,7 +219,7 @@ function TanStackHeaderRow<TData>({
 									event.stopPropagation();
 								}}
 							>
-								<Ellipsis />
+								<Ellipsis size="md" />
 							</span>
 						</PopoverTrigger>
 						<PopoverContent
@@ -229,9 +236,7 @@ function TanStackHeaderRow<TData>({
 									onRemoveColumn?.(column.id);
 								}}
 							>
-								<X
-									className={headerStyles.tanstackRemoveColumnActionIcon}
-								/>
+								<X size="md" className={headerStyles.tanstackRemoveColumnActionIcon} />
 								Remove column
 							</button>
 						</PopoverContent>

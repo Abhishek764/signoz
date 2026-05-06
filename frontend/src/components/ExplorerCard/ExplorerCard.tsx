@@ -154,13 +154,13 @@ function ExplorerCard({
 				key: 'delete',
 				label: <Typography.Text strong>Delete</Typography.Text>,
 				onClick: onDeleteHandler,
-				icon: <Trash2 />,
+				icon: <Trash2 size="md" />,
 			},
 		],
 	};
 
 	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
-	const saveButtonIcon = isQueryUpdated ? null : <Save />;
+	const saveButtonIcon = isQueryUpdated ? null : <Save size="md" />;
 
 	const showSaveView = false;
 
@@ -210,11 +210,7 @@ function ExplorerCard({
 									</Space>
 								)}
 								{isQueryUpdated && (
-									<Button
-										type="primary"
-										icon={<Save />}
-										onClick={onUpdateQueryHandler}
-									>
+									<Button type="primary" icon={<Save />} onClick={onUpdateQueryHandler}>
 										Save changes
 									</Button>
 								)}
@@ -243,10 +239,10 @@ function ExplorerCard({
 											: SaveButtonText.SAVE_VIEW}
 									</Button>
 								</Popover>
-								<Share2 onClick={onCopyUrlHandler} />
+								<Share2 onClick={onCopyUrlHandler} size="md" />
 								{viewKey && (
 									<Dropdown trigger={['click']} menu={moreOptionMenu}>
-										<Ellipsis />
+										<Ellipsis size="md" />
 									</Dropdown>
 								)}
 							</Space>

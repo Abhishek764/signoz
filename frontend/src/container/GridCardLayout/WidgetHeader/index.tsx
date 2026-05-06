@@ -1,8 +1,21 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Bell, CircleX, CloudDownload, Copy, Ellipsis, Fullscreen, Pencil, Search, SolidInfoCircle, SquareArrowOutUpRight, Trash2, X } from '@signozhq/icons';
+import {
+	Bell,
+	CircleX,
+	CloudDownload,
+	Copy,
+	EllipsisVertical,
+	Fullscreen,
+	Pencil,
+	Search,
+	SolidInfoCircle,
+	SquareArrowOutUpRight,
+	Trash2,
+	X,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
+import { Button, Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
@@ -137,35 +150,35 @@ function WidgetHeader({
 		(): MenuItem[] => [
 			{
 				key: MenuItemKeys.View,
-				icon: <Fullscreen />,
+				icon: <Fullscreen size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
 				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
 				disabled: queryResponse.isFetching,
 			},
 			{
 				key: MenuItemKeys.Edit,
-				icon: <Pencil />,
+				icon: <Pencil size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Clone,
-				icon: <Copy />,
+				icon: <Copy size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Download,
-				icon: <CloudDownload />,
+				icon: <CloudDownload size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
 				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
 				disabled: false,
 			},
 			{
 				key: MenuItemKeys.Delete,
-				icon: <Trash2 />,
+				icon: <Trash2 size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
@@ -173,7 +186,7 @@ function WidgetHeader({
 			},
 			{
 				key: MenuItemKeys.CreateAlerts,
-				icon: <Bell />,
+				icon: <Bell size="md" />,
 				label: (
 					<span
 						style={{
@@ -235,7 +248,6 @@ function WidgetHeader({
 					placeholder="Search..."
 					bordered={false}
 					data-testid="widget-header-search-input"
-					autoFocus
 					addonAfter={
 						<X
 							size={14}
@@ -272,7 +284,7 @@ function WidgetHeader({
 								className="info-tooltip"
 								placement="right"
 							>
-								<SolidInfoCircle />
+								<SolidInfoCircle size="md" />
 							</Tooltip>
 						)}
 					</div>
@@ -307,17 +319,16 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-   {/* // TODO: check this it does not renders */}
+						{/* // TODO: check this it does not renders */}
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
 							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-								
-								<Ellipsis
+								<Button
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
 										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
 									}`}
+									icon={<EllipsisVertical size="md" />}
 								/>
-								
 							</Dropdown>
 						)}
 					</div>

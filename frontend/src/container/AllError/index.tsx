@@ -8,6 +8,7 @@ import { Search } from '@signozhq/icons';
 import {
 	Button,
 	Card,
+	Flex,
 	Input,
 	Space,
 	TableProps,
@@ -199,7 +200,7 @@ function AllErrors(): JSX.Element {
 		</Typography>
 	);
 
-	const filterIcon = useCallback(() => <Search />, []);
+	const filterIcon = useCallback(() => <Search size="md" />, []);
 
 	const handleSearch = useCallback(
 		(
@@ -275,10 +276,12 @@ function AllErrors(): JSX.Element {
 					<Button
 						type="primary"
 						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						icon={<Search />}
 						size="small"
 					>
-						Search
+						<Flex align="center" justify="center" gap={4}>
+							<Search size="md" />
+							Search
+						</Flex>
 					</Button>
 				</Space>
 			</Card>

@@ -7,7 +7,16 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, Info, Loader, RefreshCw } from '@signozhq/icons';
+import {
+	ArrowDown,
+	ArrowLeft,
+	ArrowRight,
+	ArrowUp,
+	ChevronDown,
+	Info,
+	Loader,
+	RefreshCw,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
@@ -1702,7 +1711,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<Loader />
+								<Loader size="md" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -1710,7 +1719,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<Loader />
+								<Loader size="md" />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}
@@ -1724,7 +1733,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							</div>
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
-									{/* //TODO: check this. */}
 									<RefreshCw
 										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
@@ -2011,7 +2019,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				popupMatchSelectWidth={dropdownMatchSelectWidth}
 				allowClear={allowClear}
 				getPopupContainer={getPopupContainer ?? popupContainer}
-				suffixIcon={<ChevronDown style={{ cursor: 'default' }} />}
+				suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
 				dropdownRender={customDropdownRender}
 				menuItemSelectedIcon={null}
 				popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}

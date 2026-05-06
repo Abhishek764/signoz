@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Check, Plus, X } from '@signozhq/icons';
-import { Button, Tag } from 'antd';
+import { Button, Flex, Tag } from 'antd';
 import Input from 'components/Input';
 
 import './Tags.styles.scss';
@@ -60,6 +60,7 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 				<div className="add-tag-container">
 					<Input
 						type="text"
+						// oxlint-disable-next-line jsx_a11y/no-autofocus
 						autoFocus
 						value={inputValue}
 						onChangeHandler={(event): void =>
@@ -95,10 +96,12 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 					style={{
 						fontSize: '11px',
 					}}
-					icon={<Plus />}
 					onClick={showInput}
 				>
-					New Tag
+					<Flex justify="center" align="center" gap={4}>
+						<Plus size="md" />
+						New Tag
+					</Flex>
 				</Button>
 			)}
 		</div>

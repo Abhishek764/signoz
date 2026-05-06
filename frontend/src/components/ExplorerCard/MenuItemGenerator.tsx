@@ -86,7 +86,7 @@ function MenuItemGenerator({
 				</Col>
 				<Col span={2}>
 					<Typography.Link>
-						<Trash2 onClick={onDeleteHandler} />
+						<Trash2 onClick={onDeleteHandler} size="md" />
 					</Typography.Link>
 				</Col>
 			</Row>

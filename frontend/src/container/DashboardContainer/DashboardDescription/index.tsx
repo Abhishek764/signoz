@@ -3,7 +3,19 @@ import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
-import { Check, ClipboardCopy, Ellipsis, FileJson, FolderKanban, Fullscreen, Globe, LockKeyhole, PenLine, Plus, X } from '@signozhq/icons';
+import {
+	Check,
+	ClipboardCopy,
+	Ellipsis,
+	FileJson,
+	FolderKanban,
+	Fullscreen,
+	Globe,
+	LockKeyhole,
+	PenLine,
+	Plus,
+	X,
+} from '@signozhq/icons';
 import {
 	Button,
 	Card,
@@ -490,7 +502,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						<Button
 							className="add-panel-btn"
 							onClick={onEmptyWidgetHandler}
-							icon={<Plus />}
+							icon={<Plus size="md" />}
 							type="primary"
 							data-testid="add-panel-header"
 						>

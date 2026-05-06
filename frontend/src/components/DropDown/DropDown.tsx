@@ -38,7 +38,7 @@ function DropDown({
 					setDdOpen(true);
 				}}
 			>
-				<Ellipsis className="dropdown-icon" />
+				<Ellipsis className="dropdown-icon" size={16} />
 			</Button>
 		</Dropdown>
 	);

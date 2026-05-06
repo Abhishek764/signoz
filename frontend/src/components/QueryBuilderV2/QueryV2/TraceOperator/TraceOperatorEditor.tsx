@@ -466,7 +466,7 @@ function TraceOperatorEditor({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CircleCheck />}
+									icon={<CircleCheck size="md" />}
 									className="periscope-btn ghost"
 								/>
 							) : (

@@ -6,7 +6,15 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Info, Loader, RefreshCw, X } from '@signozhq/icons';
+import {
+	ArrowDown,
+	ArrowUp,
+	ChevronDown,
+	Info,
+	Loader,
+	RefreshCw,
+	X,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import cx from 'classnames';
@@ -254,6 +262,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	const clearIcon = useCallback(
 		() => (
 			<X
+				size="md"
 				onClick={(e): void => {
 					e.stopPropagation();
 					if (onChange) {
@@ -575,7 +584,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<Loader />
+								<Loader size="md" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -583,7 +592,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<Loader />
+								<Loader size="md" />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}
@@ -598,6 +607,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<RefreshCw
+										size="md"
 										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();
@@ -724,7 +734,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			popupMatchSelectWidth={popupMatchSelectWidth}
 			allowClear={allowClear ? { clearIcon } : false}
 			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<ChevronDown style={{ cursor: 'default' }} />}
+			suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
 			dropdownRender={customDropdownRender}
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-select-dropdown-container', popupClassName)}

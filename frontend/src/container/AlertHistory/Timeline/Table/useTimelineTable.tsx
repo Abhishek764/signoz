@@ -125,7 +125,7 @@ export const timelineTableColumns = ({
 				relatedLogsLink={record.relatedLogsLink}
 			>
 				<Button type="text" ghost>
-					<Ellipsis className="dropdown-icon" />
+					<Ellipsis className="dropdown-icon" size="md" />
 				</Button>
 			</ConditionalAlertPopover>
 		),

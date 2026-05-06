@@ -15,7 +15,7 @@ import EntityGroupHeader from 'container/InfraMonitoringK8s/Base/EntityGroupHead
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
-import { Container , Info } from '@signozhq/icons';
+import { Container, Info } from '@signozhq/icons';
 
 function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	return {
@@ -82,7 +82,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={styles.statusHeader}>
 				Status
 				<Tooltip title="Sent system metrics in last 10 mins">
-					<Info />
+					<Info size="md" />
 				</Tooltip>
 			</div>
 		),
@@ -131,7 +131,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={`${styles.columnHeaderRight} ${styles.memoryUsageHeader}`}>
 				Memory Usage
 				<Tooltip title="Excluding cache memory">
-					<Info />
+					<Info size="md" />
 				</Tooltip>
 			</div>
 		),

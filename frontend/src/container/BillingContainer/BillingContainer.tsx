@@ -448,10 +448,12 @@ export default function BillingContainer(): JSX.Element {
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading || isFetchingBillingData}
 							onClick={handleCsvDownload}
-							icon={<CloudDownload />}
 							className="periscope-btn"
 						>
-							Download CSV
+							<Flex align="center" justify="center" gap={4}>
+								<CloudDownload size="md" />
+								Download CSV
+							</Flex>
 						</Button>
 						<Button
 							data-testid="header-billing-button"
@@ -553,15 +555,15 @@ export default function BillingContainer(): JSX.Element {
 					>
 						<Col span={20} className="plan-benefits">
 							<Typography.Text className="plan-benefit">
-								<CircleCheck />
+								<CircleCheck size="md" />
 								{t('upgrade_now_text')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
-								<CircleCheck />
+								<CircleCheck size="md" />
 								{t('Your billing will start only after the trial period')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
-								<CircleCheck />
+								<CircleCheck size="md" />
 								<span>
 									{t('checkout_plans')} &nbsp;
 									<a

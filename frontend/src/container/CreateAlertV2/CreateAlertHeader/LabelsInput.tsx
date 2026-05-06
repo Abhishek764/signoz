@@ -135,7 +135,7 @@ function LabelsInput({
 								className="labels-input__remove-button"
 								onClick={(): void => handleRemoveLabel(key)}
 							>
-								<X />
+								<X size="md" />
 							</button>
 						</span>
 					))}
@@ -161,7 +161,6 @@ function LabelsInput({
 						onBlur={handleBlur}
 						className="labels-input__input"
 						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
-						autoFocus
 						data-testid="alert-add-label-input"
 					/>
 				</div>

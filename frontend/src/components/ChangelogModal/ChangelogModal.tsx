@@ -118,11 +118,7 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 							<Button type="default" icon={<X />} onClick={onClose}>
 								Skip for now
 							</Button>
-							<Button
-								type="primary"
-								icon={<Check />}
-								onClick={onClickUpdateWorkspace}
-							>
+							<Button type="primary" icon={<Check />} onClick={onClickUpdateWorkspace}>
 								Update my workspace
 							</Button>
 						</div>

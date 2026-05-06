@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Plus } from '@signozhq/icons';
-import { Button, Form, Select, Switch, Tooltip } from 'antd';
+import { Button, Flex, Form, Select, Switch, Tooltip } from 'antd';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -254,11 +254,13 @@ function BasicInfo({
 					>
 						<Button
 							onClick={handleCreateNewChannels}
-							icon={<Plus />}
 							className="create-notification-btn"
 							disabled={!addNewChannelPermission}
 						>
-							Create a notification channel
+							<Flex align="center" justify="center">
+								<Plus size="md" />
+								Create a notification channel
+							</Flex>
 						</Button>
 					</Tooltip>
 				)}

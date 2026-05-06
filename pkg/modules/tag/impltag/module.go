@@ -51,3 +51,7 @@ func (m *module) SyncLinksForEntity(ctx context.Context, orgID valuer.UUID, enti
 func (m *module) ListForEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
 	return m.store.ListByEntity(ctx, entityID)
 }
+
+func (m *module) ListForEntities(ctx context.Context, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+	return m.store.ListByEntities(ctx, entityIDs)
+}

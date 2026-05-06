@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -1154,7 +1155,13 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,links as references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
+		if len(req.SelectFields) > 0 {
+			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
+		}
+		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
+
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -1191,6 +1198,10 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				References:   ref,
 				Events:       events,
 				Children:     make([]*model.FlamegraphSpan, 0),
+			}
+
+			if len(req.SelectFields) > 0 {
+				jsonItem.SetRequestedFields(item, req.SelectFields)
 			}
 
 			// metadata calculation
@@ -1415,7 +1426,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			// we will change ttl for only the new parts and not the old ones
 			query += " SETTINGS materialize_ttl_after_modify=0"
 
-			ttl := types.TTLSetting{
+			ttl := retentiontypes.TTLSetting{
 				Identifiable: types.Identifiable{
 					ID: valuer.GenerateUUID(),
 				},
@@ -1450,7 +1461,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						sqlDB.
 						BunDB().
 						NewUpdate().
-						Model(new(types.TTLSetting)).
+						Model(new(retentiontypes.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
 						Set("status = ?", constants.StatusFailed).
 						Where("id = ?", statusItem.ID.StringValue()).
@@ -1470,7 +1481,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					sqlDB.
 					BunDB().
 					NewUpdate().
-					Model(new(types.TTLSetting)).
+					Model(new(retentiontypes.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
@@ -1485,7 +1496,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				sqlDB.
 				BunDB().
 				NewUpdate().
-				Model(new(types.TTLSetting)).
+				Model(new(retentiontypes.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusSuccess).
 				Where("id = ?", statusItem.ID.StringValue()).
@@ -1553,7 +1564,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				timestamp = "end"
 			}
 
-			ttl := types.TTLSetting{
+			ttl := retentiontypes.TTLSetting{
 				Identifiable: types.Identifiable{
 					ID: valuer.GenerateUUID(),
 				},
@@ -1600,7 +1611,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 						sqlDB.
 						BunDB().
 						NewUpdate().
-						Model(new(types.TTLSetting)).
+						Model(new(retentiontypes.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
 						Set("status = ?", constants.StatusFailed).
 						Where("id = ?", statusItem.ID.StringValue()).
@@ -1621,7 +1632,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 					sqlDB.
 					BunDB().
 					NewUpdate().
-					Model(new(types.TTLSetting)).
+					Model(new(retentiontypes.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
@@ -1636,7 +1647,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				sqlDB.
 				BunDB().
 				NewUpdate().
-				Model(new(types.TTLSetting)).
+				Model(new(retentiontypes.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusSuccess).
 				Where("id = ?", statusItem.ID.StringValue()).
@@ -1828,7 +1839,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 	}
 
 	for tableName, queries := range ttlPayload {
-		customTTL := types.TTLSetting{
+		customTTL := retentiontypes.TTLSetting{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -1967,7 +1978,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		response.Version = "v2"
 
 		// Get the latest custom retention TTL setting
-		customTTL := new(types.TTLSetting)
+		customTTL := new(retentiontypes.TTLSetting)
 		err := r.sqlDB.BunDB().NewSelect().
 			Model(customTTL).
 			Where("org_id = ?", orgID).
@@ -2036,8 +2047,8 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 	return response, nil
 }
 
-func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, error) {
-	ttl := new(types.TTLSetting)
+func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context, orgID string, tableName string) (*retentiontypes.TTLSetting, error) {
+	ttl := new(retentiontypes.TTLSetting)
 	err := r.sqlDB.BunDB().NewSelect().
 		Model(ttl).
 		Where("table_name = ?", tableName).
@@ -2058,7 +2069,7 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 	statusItem, apiErr := r.checkCustomRetentionTTLStatusItem(ctx, orgID, tableName)
 	if apiErr == nil && statusItem != nil {
 		_, dbErr := r.sqlDB.BunDB().NewUpdate().
-			Model(new(types.TTLSetting)).
+			Model(new(retentiontypes.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
 			Set("status = ?", status).
 			Where("id = ?", statusItem.ID.StringValue()).
@@ -2225,7 +2236,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		}
 	}
 	metricTTL := func(tableName string) {
-		ttl := types.TTLSetting{
+		ttl := retentiontypes.TTLSetting{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -2272,7 +2283,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 					sqlDB.
 					BunDB().
 					NewUpdate().
-					Model(new(types.TTLSetting)).
+					Model(new(retentiontypes.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
 					Where("id = ?", statusItem.ID.StringValue()).
@@ -2293,7 +2304,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 				sqlDB.
 				BunDB().
 				NewUpdate().
-				Model(new(types.TTLSetting)).
+				Model(new(retentiontypes.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusFailed).
 				Where("id = ?", statusItem.ID.StringValue()).
@@ -2308,7 +2319,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			sqlDB.
 			BunDB().
 			NewUpdate().
-			Model(new(types.TTLSetting)).
+			Model(new(retentiontypes.TTLSetting)).
 			Set("updated_at = ?", time.Now()).
 			Set("status = ?", constants.StatusSuccess).
 			Where("id = ?", statusItem.ID.StringValue()).
@@ -2331,7 +2342,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		BunDB().
 		NewSelect().
 		Column("transaction_id").
-		Model(new(types.TTLSetting)).
+		Model(new(retentiontypes.TTLSetting)).
 		Where("org_id = ?", orgID).
 		Group("transaction_id").
 		OrderExpr("MAX(created_at) DESC").
@@ -2346,7 +2357,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		sqlDB.
 		BunDB().
 		NewDelete().
-		Model(new(types.TTLSetting)).
+		Model(new(retentiontypes.TTLSetting)).
 		Where("transaction_id NOT IN (?)", bun.In(limitTransactions)).
 		Exec(ctx)
 	if err != nil {
@@ -2355,9 +2366,9 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 }
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
-func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*types.TTLSetting, *model.ApiError) {
+func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string, tableName string) (*retentiontypes.TTLSetting, *model.ApiError) {
 	r.logger.Info("checkTTLStatusItem query", "tableName", tableName)
-	ttl := new(types.TTLSetting)
+	ttl := new(retentiontypes.TTLSetting)
 	err := r.
 		sqlDB.
 		BunDB().
@@ -2381,7 +2392,7 @@ func (r *ClickHouseReader) getTTLQueryStatus(ctx context.Context, orgID string, 
 	status := constants.StatusSuccess
 	for _, tableName := range tableNameArray {
 		statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
-		emptyStatusStruct := new(types.TTLSetting)
+		emptyStatusStruct := new(retentiontypes.TTLSetting)
 		if statusItem == emptyStatusStruct {
 			return "", nil
 		}

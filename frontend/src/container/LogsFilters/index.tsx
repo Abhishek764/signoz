@@ -78,7 +78,7 @@ function LogsFilters(): JSX.Element {
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<X style={ICON_STYLE.CLOSE} />}
+								buttonIcon={<X style={ICON_STYLE.CLOSE} size="md" />}
 								buttonOnClick={onHandleRemoveSelected({
 									fieldData: field,
 									fieldIndex: idx,
@@ -100,7 +100,7 @@ function LogsFilters(): JSX.Element {
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<CirclePlus style={ICON_STYLE.PLUS} />}
+								buttonIcon={<CirclePlus style={ICON_STYLE.PLUS} size="md" />}
 								buttonOnClick={onHandleAddSelectedToInteresting({
 									fieldData: field,
 									fieldIndex: idx,

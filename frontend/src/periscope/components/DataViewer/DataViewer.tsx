@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Copy } from '@signozhq/icons';
-import { toast } from '@signozhq/ui';
-// TODO: Replace antd Select with @signozhq/ui component when moving to design library
-import { Select } from 'antd';
+import { ChevronDown, Copy } from '@signozhq/icons';
+import { Button, Dropdown, toast } from '@signozhq/ui';
 import { JsonView } from 'periscope/components/JsonView';
 import { PrettyView } from 'periscope/components/PrettyView';
 import { PrettyViewProps } from 'periscope/components/PrettyView';
@@ -11,6 +9,11 @@ import { PrettyViewProps } from 'periscope/components/PrettyView';
 import './DataViewer.styles.scss';
 
 type ViewMode = 'pretty' | 'json';
+
+const VIEW_MODE_OPTIONS: { label: string; value: ViewMode }[] = [
+	{ label: 'Pretty', value: 'pretty' },
+	{ label: 'JSON', value: 'json' },
+];
 
 export interface DataViewerProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,22 +40,41 @@ function DataViewer({
 		});
 	};
 
+	const currentLabel =
+		VIEW_MODE_OPTIONS.find((opt) => opt.value === viewMode)?.label ?? 'Pretty';
+
 	return (
 		<div className="data-viewer">
 			<div className="data-viewer__toolbar">
-				<Select
-					className="data-viewer__mode-select"
-					size="small"
-					value={viewMode}
-					onChange={(value: ViewMode): void => setViewMode(value)}
-					options={[
-						{ label: 'Pretty', value: 'pretty' },
-						{ label: 'JSON', value: 'json' },
-					]}
-					getPopupContainer={(trigger): HTMLElement =>
-						trigger.parentElement || document.body
-					}
-				/>
+				<Dropdown
+					align="start"
+					className="data-viewer__mode-dropdown"
+					menu={{
+						items: [
+							{
+								type: 'radio-group',
+								value: viewMode,
+								onChange: (value): void => setViewMode(value as ViewMode),
+								children: VIEW_MODE_OPTIONS.map((opt) => ({
+									type: 'radio',
+									key: opt.value,
+									value: opt.value,
+									label: opt.label,
+								})),
+							},
+						],
+					}}
+				>
+					<Button
+						variant="outlined"
+						size="sm"
+						color="secondary"
+						className="data-viewer__mode-select"
+						suffix={<ChevronDown size={12} />}
+					>
+						{currentLabel}
+					</Button>
+				</Dropdown>
 				<button
 					type="button"
 					className="data-viewer__copy-btn"

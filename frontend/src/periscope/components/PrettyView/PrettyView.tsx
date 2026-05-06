@@ -2,10 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
-import { Input } from '@signozhq/ui';
-import { toast } from '@signozhq/ui';
+import { Dropdown, Input, toast } from '@signozhq/ui';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ActionMenu, ActionMenuItem } from 'periscope/components/ActionMenu';
 
 import { darkTheme, lightTheme, themeExtension } from './constants';
 import usePinnedFields from './hooks/usePinnedFields';
@@ -24,6 +22,14 @@ export interface FieldContext {
 	fieldKeyPath: (string | number)[];
 	fieldValue: unknown;
 	isNested: boolean;
+}
+
+interface MenuItem {
+	key: string;
+	label: React.ReactNode;
+	icon?: React.ReactNode;
+	disabled?: boolean;
+	onClick: () => void;
 }
 
 export interface PrettyViewAction {
@@ -118,8 +124,8 @@ function PrettyView({
 	);
 
 	const buildMenuItems = useCallback(
-		(context: FieldContext): ActionMenuItem[] => {
-			const items: ActionMenuItem[] = [];
+		(context: FieldContext): MenuItem[] => {
+			const items: MenuItem[] = [];
 
 			// Copy Value action
 			if (isActionVisible('copy', context.isNested)) {
@@ -211,7 +217,16 @@ function PrettyView({
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
-					<ActionMenu items={menuItems}>
+					<Dropdown
+						menu={{ items: menuItems }}
+						align="start"
+						className="pretty-view-actions-dropdown"
+						// onClick on the dropdown content is forwarded to the underlying div via ...props
+						// but is not in the public type. Stop click bubbling so item clicks don't reach
+						// clickable ancestors of the trigger through the React tree.
+						// @ts-expect-error see comment above
+						onClick={(e: React.MouseEvent): void => e.stopPropagation()}
+					>
 						<span
 							className="pretty-view__actions"
 							onClick={(e): void => e.stopPropagation()}
@@ -220,7 +235,7 @@ function PrettyView({
 						>
 							<Ellipsis size={12} />
 						</span>
-					</ActionMenu>
+					</Dropdown>
 				</span>
 			);
 		},

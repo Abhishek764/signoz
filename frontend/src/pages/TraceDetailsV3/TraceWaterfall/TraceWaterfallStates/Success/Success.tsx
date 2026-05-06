@@ -9,8 +9,14 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Badge } from '@signozhq/ui';
-import { Tooltip, TooltipProvider } from '@signozhq/ui';
+import {
+	Badge,
+	Button,
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui';
 import {
 	createColumnHelper,
 	flexRender,
@@ -18,7 +24,6 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
-import { Button, Popover, Typography } from 'antd';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
@@ -49,8 +54,8 @@ import { IInterestedSpan } from '../../TraceWaterfall';
 import './Success.styles.scss';
 
 /**
- * Lazy event dot — only mounts the antd Popover when the user hovers.
- * Avoids mounting N Popover instances per row during fast scroll.
+ * Lazy event dot — only mounts the tooltip when the user hovers.
+ * Avoids mounting N tooltip instances per row during fast scroll.
  */
 const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	event,
@@ -104,28 +109,26 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	const eventTimeMs = event.timeUnixNano / 1e6;
 
 	return (
-		<Popover
-			open
-			content={
-				<EventTooltipContent
-					eventName={event.name}
-					timeOffsetMs={eventTimeMs - spanTimestamp}
-					isError={isError}
-					attributeMap={event.attributeMap || {}}
-				/>
-			}
-			trigger="hover"
-			rootClassName="span-hover-card-popover"
-			autoAdjustOverflow
-			arrow={false}
-			onOpenChange={(open): void => {
-				if (!open) {
-					setShowPopover(false);
-				}
-			}}
-		>
-			{dot}
-		</Popover>
+		<TooltipProvider>
+			<Tooltip
+				open
+				onOpenChange={(open): void => {
+					if (!open) {
+						setShowPopover(false);
+					}
+				}}
+			>
+				<TooltipTrigger asChild>{dot}</TooltipTrigger>
+				<TooltipContent className="span-hover-card-popover">
+					<EventTooltipContent
+						eventName={event.name}
+						timeOffsetMs={eventTimeMs - spanTimestamp}
+						isError={isError}
+						attributeMap={event.attributeMap || {}}
+					/>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	);
 });
 
@@ -316,19 +319,37 @@ const SpanOverview = memo(function SpanOverview({
 				{/* Action buttons — shown on hover via CSS, right-aligned */}
 				<span className="span-row-actions">
 					<TooltipProvider delayDuration={200}>
-						<Tooltip title="Copy Span Link">
-							<button type="button" className="span-action-btn" onClick={onSpanCopy}>
-								<Link size={12} />
-							</button>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									color="secondary"
+									className="span-action-btn"
+									onClick={onSpanCopy}
+								>
+									<Link size={12} />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent className="span-action-tooltip">
+								Copy Span Link
+							</TooltipContent>
 						</Tooltip>
-						<Tooltip title="Add to Trace Funnel">
-							<button
-								type="button"
-								className="span-action-btn"
-								onClick={handleFunnelClick}
-							>
-								<ListPlus size={12} />
-							</button>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									color="secondary"
+									className="span-action-btn"
+									onClick={handleFunnelClick}
+								>
+									<ListPlus size={12} />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent className="span-action-tooltip">
+								Add to Trace Funnel
+							</TooltipContent>
 						</Tooltip>
 					</TooltipProvider>
 				</span>
@@ -755,14 +776,13 @@ function Success(props: ISuccessProps): JSX.Element {
 				<div className="missing-spans">
 					<section className="left-info">
 						<AlertCircle size={14} />
-						<Typography.Text className="text">
-							This trace has missing spans
-						</Typography.Text>
+						<span className="text">This trace has missing spans</span>
 					</section>
 					<Button
-						icon={<ArrowUpRight size={14} />}
+						variant="ghost"
+						color="secondary"
 						className="right-info"
-						type="text"
+						suffix={<ArrowUpRight size={14} />}
 						onClick={(): WindowProxy | null =>
 							window.open(
 								'https://signoz.io/docs/userguide/traces/#missing-spans',

@@ -112,7 +112,7 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: var(--bg-forest-500);
+		background: var(--success-500);
 	}
 
 	&__trace-id {
@@ -144,4 +144,11 @@
 			gap: 6px;
 		}
 	}
+}
+
+// Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a
+// FloatingPanel (z-index 999), which would otherwise sit on top of the default
+// tooltip (z-index 50). Bump the tooltip above the panel.
+.dock-toggle-tooltip {
+	--tooltip-z-index: 1000;
 }

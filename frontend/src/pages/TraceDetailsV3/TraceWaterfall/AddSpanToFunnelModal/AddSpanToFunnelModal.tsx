@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Input, Spin } from 'antd';
+import { Button } from '@signozhq/ui';
+import { Input, Spin } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SignozModal from 'components/SignozModal/SignozModal';
@@ -203,11 +204,12 @@ function AddSpanToFunnelModal({
 	const renderDetailsView = ({ span }: { span: SpanV3 }): JSX.Element => (
 		<div className="add-span-to-funnel-modal add-span-to-funnel-modal--details">
 			<Button
-				type="text"
+				variant="ghost"
+				color="secondary"
 				className="add-span-to-funnel-modal__back-button"
 				onClick={handleBack}
+				prefix={<ArrowLeft size={14} />}
 			>
-				<ArrowLeft size={14} />
 				All funnels
 			</Button>
 			<div className="traces-funnel-details">
@@ -252,7 +254,8 @@ function AddSpanToFunnelModal({
 				activeView === ModalView.DETAILS
 					? [
 							<Button
-								type="default"
+								variant="outlined"
+								color="secondary"
 								key="discard"
 								onClick={handleDiscard}
 								className="add-span-to-funnel-modal__discard-button"
@@ -262,11 +265,12 @@ function AddSpanToFunnelModal({
 							</Button>,
 							<Button
 								key="save"
-								type="primary"
+								variant="solid"
+								color="primary"
 								className="add-span-to-funnel-modal__save-button"
 								onClick={handleSaveFunnel}
 								disabled={!isUnsavedChanges}
-								icon={<Check size={14} color="var(--bg-vanilla-100)" />}
+								prefix={<Check size={14} />}
 							>
 								Save Funnel
 							</Button>,
@@ -274,10 +278,11 @@ function AddSpanToFunnelModal({
 					: [
 							<Button
 								key="create"
-								type="default"
+								variant="outlined"
+								color="secondary"
 								className="add-span-to-funnel-modal__create-button"
 								onClick={handleCreateNewClick}
-								icon={<Plus size={14} />}
+								prefix={<Plus size={14} />}
 							>
 								Create new funnel
 							</Button>,

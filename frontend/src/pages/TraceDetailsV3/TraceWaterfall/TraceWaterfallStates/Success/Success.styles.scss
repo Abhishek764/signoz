@@ -69,7 +69,6 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			flex-direction: row-reverse;
 			gap: 8px;
 			color: var(--bg-robin-400);
 			font-family: Inter;
@@ -587,4 +586,11 @@
 			color: var(--span-color);
 		}
 	}
+}
+
+// Tooltips for the row's hover-revealed action buttons (Copy / Add to Funnel).
+// Bumped above FloatingPanel (z-index 999) so they stay visible when the
+// SpanDetailsPanel is docked as a floating panel.
+.span-action-tooltip {
+	--tooltip-z-index: 1000;
 }

@@ -678,6 +678,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					]);
 					const allThreads = [...activeThreads, ...archivedThreads];
 
+					let activeThreadIdToLoad: string | null = null;
+
 					set((s) => {
 						const serverThreadIds = new Set(
 							allThreads.map((thread) => thread.threadId),
@@ -711,11 +713,48 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						}
 
 						s.isLoadingThreads = false;
+
+						// Clear the rehydrate-time hydration flag on any entries
+						// the server didn't claim — those are local-only chats
+						// the user started but never sent. Server-mapped entries
+						// were already replaced above and don't carry the flag.
+						for (const conv of Object.values(s.conversations)) {
+							if (conv.isHydrating) {
+								delete conv.isHydrating;
+							}
+						}
+
+						// If the active conversation matches a known thread but
+						// has no messages yet (typical on refresh), flip to the
+						// per-thread loading flag in the same set() so the
+						// skeleton stays visible without a flicker.
+						const id = s.activeConversationId;
+						if (id) {
+							const conv = s.conversations[id];
+							if (conv?.threadId && conv.messages.length === 0) {
+								activeThreadIdToLoad = conv.threadId;
+								s.isLoadingThread = true;
+							}
+						}
 					});
+
+					// Hydrate the active conversation's messages on reload. The
+					// rehydrate-time loadThread used to do this, but it ran at
+					// module-load — before the AI base URL was configured — so
+					// it always failed. Now that fetchThreads has populated
+					// `threadId`s, we can confidently load the right one.
+					if (activeThreadIdToLoad) {
+						void get().loadThread(activeThreadIdToLoad);
+					}
 				} catch (err) {
 					console.error('[AIAssistant] fetchThreads failed:', err);
 					set((s) => {
 						s.isLoadingThreads = false;
+						for (const conv of Object.values(s.conversations)) {
+							if (conv.isHydrating) {
+								delete conv.isHydrating;
+							}
+						}
 					});
 				}
 			},
@@ -1205,11 +1244,14 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					}
 
 					// Restored an active conversation id: prime an empty entry so
-					// the UI has something to render immediately, then fire
-					// loadThread to fetch the messages from the server. If the id
-					// is a stale local-only one (no thread on the server), the
-					// call fails silently inside loadThread and the empty entry
-					// behaves like a fresh conversation.
+					// the UI has something to render immediately, and flag the
+					// store as loading so ConversationView shows a skeleton —
+					// not an empty thread — while AppLayout's fetchThreads
+					// catches up. Without this flag the user sees a flicker of
+					// "empty conversation" before the skeleton appears.
+					//
+					// We can't call loadThread here — rehydrate fires at module
+					// load, long before useIsAIAssistantEnabled has set the URL.
 					if (state.activeConversationId) {
 						const id = state.activeConversationId;
 						if (!state.conversations[id]) {
@@ -1218,9 +1260,12 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 								messages: [],
 								createdAt: Date.now(),
 								updatedAt: Date.now(),
+								isHydrating: true,
 							};
+						} else {
+							state.conversations[id].isHydrating = true;
 						}
-						void state.loadThread(id);
+						state.isLoadingThreads = true;
 						return;
 					}
 

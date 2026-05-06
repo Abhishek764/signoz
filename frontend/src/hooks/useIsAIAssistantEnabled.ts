@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { setAIBackendUrl } from 'api/AIAPIInstance';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 
@@ -22,18 +21,18 @@ function validUrl(value: string | null | undefined): string | null {
  * page actions. Enabled iff the backend ships a URL that parses cleanly via
  * the `URL` constructor — empty/null/garbage strings disable the feature.
  *
- * Side-effect: pushes the URL into the shared AI axios instance whenever the
- * config response changes, so REST calls and the SSE stream always read the
- * same backend without any module-load env-var indirection.
+ * Side-effect: pushes the URL into the shared AI axios instance during render.
+ * Done synchronously (not in a `useEffect`) because child components dispatch
+ * AI requests in their own mount effects, which fire before parent effects in
+ * React. A `useEffect` here would set the URL too late and the first
+ * fetchThreads/loadThread on refresh would race with an empty baseURL.
  */
 export function useIsAIAssistantEnabled(): boolean {
 	const { data, isLoading, isError } = useGetGlobalConfig();
 	const url =
 		!isLoading && !isError ? validUrl(data?.data?.ai_assistant_url) : null;
 
-	useEffect(() => {
-		setAIBackendUrl(url);
-	}, [url]);
+	setAIBackendUrl(url);
 
 	return !!url;
 }

@@ -105,6 +105,15 @@ export interface Conversation {
 	title?: string;
 	/** When true, thread is hidden from the main list and shown under Archived. */
 	archived?: boolean;
+	/**
+	 * Set transiently on rehydrate when we restore an empty entry for the
+	 * persisted active conversation. Cleared once `fetchThreads` resolves —
+	 * either by the entry being overwritten with the server-mapped one, or
+	 * by an explicit cleanup pass for ids the server doesn't know. Lets the
+	 * UI distinguish "loading the previous thread" from "fresh new chat" so
+	 * the skeleton is shown only in the former case.
+	 */
+	isHydrating?: boolean;
 }
 
 // ---------------------------------------------------------------------------

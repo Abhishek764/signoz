@@ -38,6 +38,7 @@ import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
+import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
@@ -109,6 +110,17 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	} = useAppContext();
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const fetchAIThreads = useAIAssistantStore((s) => s.fetchThreads);
+
+	// Bootstrap the AI Assistant thread list once the base URL is configured.
+	// Centralizing this here (rather than per-view) means the persisted active
+	// thread's messages reload reliably on refresh — `fetchThreads` itself
+	// hydrates the active conversation's messages after populating threadIds.
+	useEffect(() => {
+		if (isAIAssistantEnabled) {
+			void fetchAIThreads();
+		}
+	}, [isAIAssistantEnabled, fetchAIThreads]);
 
 	const { notifications } = useNotifications();
 

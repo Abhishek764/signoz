@@ -106,7 +106,13 @@ export default function ConversationView({
 		[styles.compact]: isCompact,
 	});
 
-	if (isLoadingThread && messages.length === 0) {
+	// Cover the gap between rehydrate (empty primed entry) and the first
+	// loadThread response. `isHydrating` is set on the rehydrated conversation
+	// and cleared once fetchThreads resolves; `isLoadingThread` covers the
+	// per-thread fetch that follows. Together they keep the skeleton visible
+	// for persisted chats without flashing it on freshly-created ones.
+	const isHydrating = Boolean(conversation?.isHydrating);
+	if ((isLoadingThread || isHydrating) && messages.length === 0) {
 		return (
 			<div className={styles.conversation}>
 				<ConversationSkeleton />

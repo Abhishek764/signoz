@@ -1,8 +1,6 @@
 import { memo, ReactNode, useCallback, useRef, useState } from 'react';
 import { Popover } from 'antd';
-import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
@@ -101,7 +99,7 @@ const SpanHoverCard = memo(function SpanHoverCard({
 }: SpanHoverCardProps): JSX.Element {
 	const [showPopover, setShowPopover] = useState(false);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const { previewFields } = useTraceContext();
+	const { previewFields, resolveSpanColor } = useTraceContext();
 
 	const handleMouseEnter = useCallback((): void => {
 		timerRef.current = setTimeout(() => {
@@ -133,13 +131,7 @@ const SpanHoverCard = memo(function SpanHoverCard({
 	const durationMs = span.duration_nano / 1e6;
 	const relativeStartMs = span.timestamp - traceMetadata.startTime;
 
-	let color = generateColor(
-		span['service.name'],
-		themeColors.traceDetailColorsV3,
-	);
-	if (span.has_error) {
-		color = 'var(--bg-cherry-500)';
-	}
+	const color = resolveSpanColor(span);
 
 	const previewRows: SpanPreviewRow[] = previewFields
 		.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))

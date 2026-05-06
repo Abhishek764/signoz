@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { green } from '@ant-design/colors';
-import { Pause , Play, Ellipsis } from '@signozhq/icons';
-import { Button, Popover, Select, Space } from 'antd';
+import { Pause, Play, EllipsisVertical } from '@signozhq/icons';
+import { Button, Flex, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -217,8 +217,10 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 						title="Pause live tail"
 						style={{ background: green[6] }}
 					>
-						<span>Pause</span>
-						<Pause />
+						<Flex align="center" gap={4}>
+							<span>Pause</span>
+							<Pause size="md" />
+						</Flex>
 					</Button>
 				) : (
 					<Button
@@ -227,7 +229,9 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 						title="Start live tail"
 						disabled={isDisabled}
 					>
-						Go Live <Play />
+						<Flex align="center" gap={4}>
+							Go Live <Play size="md" />
+						</Flex>
 					</Button>
 				)}
 
@@ -244,7 +248,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 					trigger="click"
 					content={OptionsPopOverContent}
 				>
-					<Ellipsis style={{ fontSize: 24 }} />
+					<EllipsisVertical size="lg" />
 				</Popover>
 			</Space>
 		</TimePickerCard>

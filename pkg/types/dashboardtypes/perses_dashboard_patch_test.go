@@ -500,12 +500,39 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("removing only query rejected", func(t *testing.T) {
-		// p2 has exactly one query in the base; removing it would strand
-		// the panel queryless, which Validate now rejects.
+	t.Run("removing the only query rejected", func(t *testing.T) {
+		// Validate requires exactly one query per panel — leaving zero is rejected.
 		_, err := decode(t, `[{"op": "remove", "path": "/data/panels/p2/spec/queries/0"}]`).Apply(base)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "at least one query")
+		require.Contains(t, err.Error(), "panel must have one query")
+	})
+
+	t.Run("two direct queries rejected", func(t *testing.T) {
+		// Validate requires exactly one query per panel. To display multiple
+		// data sources in one panel, wrap them in a CompositeQuery (see the
+		// "replace query with composite" subtest below).
+		_, err := decode(t, `[{
+			"op": "replace",
+			"path": "/data/panels/p1",
+			"value": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+					"queries": [
+						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+							"name": "A", "signal": "metrics",
+							"aggregations": [{"metricName": "signoz_calls_total", "temporality": "cumulative", "timeAggregation": "rate", "spaceAggregation": "sum"}]
+						}}}},
+						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+							"name": "B", "signal": "metrics",
+							"aggregations": [{"metricName": "signoz_db_calls_total", "temporality": "cumulative", "timeAggregation": "rate", "spaceAggregation": "sum"}]
+						}}}}
+					]
+				}
+			}
+		}]`).Apply(base)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "panel must have one query")
 	})
 
 	t.Run("too many tags rejected", func(t *testing.T) {

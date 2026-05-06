@@ -588,7 +588,7 @@ func TestInvalidatePanelWithoutQueries(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel-without-queries to be rejected")
-	require.Contains(t, err.Error(), "at least one query")
+	require.Contains(t, err.Error(), "panel must have one query")
 }
 
 func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
@@ -606,7 +606,30 @@ func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel with explicit empty queries array to be rejected")
-	require.Contains(t, err.Error(), "at least one query")
+	require.Contains(t, err.Error(), "panel must have one query")
+}
+
+// Rendering multiple data sources in a single panel is supported via
+// signoz/CompositeQuery, not by listing multiple top-level queries.
+func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+					"queries": [
+						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}},
+						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "B", "signal": "metrics"}}}}
+					]
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected panel with two top-level queries to be rejected")
+	require.Contains(t, err.Error(), "panel must have one query")
 }
 
 func TestValidateRequiredFields(t *testing.T) {

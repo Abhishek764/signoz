@@ -157,8 +157,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
-				{/* //TODO: check this in stage. can't see the icon. the app breaks.  */}
-				<X />
+				<X size="md" />
 			</IconContainer>
 		</Container>
 	);

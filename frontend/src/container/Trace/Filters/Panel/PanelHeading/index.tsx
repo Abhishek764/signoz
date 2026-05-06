@@ -315,7 +315,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				>
 					<TextContainer onClick={isDefaultOpen ? onCloseHandler : onExpandHandler}>
 						<IconContainer>
-							{!IsPanelOpen ? <ChevronRight /> : <ChevronDown />}
+							{!IsPanelOpen ? <ChevronRight size="lg" /> : <ChevronDown size="lg" />}
 						</IconContainer>
 
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>

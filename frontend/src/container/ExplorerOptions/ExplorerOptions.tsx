@@ -9,7 +9,15 @@ import {
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Check, ConciergeBell, Disc3, PanelBottomClose, Plus, SolidInfoCircle, X } from '@signozhq/icons';
+import {
+	Check,
+	ConciergeBell,
+	Disc3,
+	PanelBottomClose,
+	Plus,
+	X,
+	Info,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -962,9 +970,10 @@ function ExplorerOptions({
 									</div>
 								}
 							>
-								<SolidInfoCircle className="info-icon" />
+								<Info size="md" />
 							</Tooltip>
 						)}
+
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
@@ -1001,6 +1010,7 @@ function ExplorerOptions({
 						onClick={onSaveHandler}
 						disabled={isSaveViewLoading}
 						data-testid="save-view-btn"
+						className="save-button"
 					>
 						Save this view
 					</Button>,

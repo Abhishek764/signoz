@@ -26,7 +26,6 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import {
@@ -71,6 +70,7 @@ import {
 import LoadingContainer from '../LoadingContainer';
 
 import '../EntityDetailsUtils/entityDetails.styles.scss';
+import { parseAsString, useQueryState } from 'nuqs';
 
 const TimeRangeOffset = 1000000000;
 
@@ -297,22 +297,24 @@ export default function K8sBaseDetails<T>({
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
 	const [, setEventsFiltersParam] = useInfraMonitoringEventsFilters();
-
-	const urlQuery = useUrlQuery();
+	const [userLogsExpression] = useQueryState(
+		K8S_ENTITY_LOGS_EXPRESSION_KEY,
+		parseAsString,
+	);
+	const [userTracesExpression] = useQueryState(
+		K8S_ENTITY_TRACES_EXPRESSION_KEY,
+		parseAsString,
+	);
 
 	useEffect(() => {
-		if (hideDetailViewTabs && selectedView !== VIEW_TYPES.METRICS) {
-			setSelectedView(VIEW_TYPES.METRICS);
+		if (entity) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: eventCategory,
+			});
 		}
-	}, [hideDetailViewTabs, selectedView, setSelectedView]);
-
-	useEffect(() => {
-		logEvent(InfraMonitoringEvents.PageVisited, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-		});
-	}, [eventCategory]);
+	}, [entity, eventCategory]);
 
 	useEffect(() => {
 		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
@@ -371,6 +373,8 @@ export default function K8sBaseDetails<T>({
 	);
 
 	const handleExplorePagesRedirect = (): void => {
+		const urlQuery = new URLSearchParams();
+
 		if (selectedInterval !== 'custom') {
 			urlQuery.set(QueryParams.relativeTime, selectedInterval);
 		} else {
@@ -387,10 +391,9 @@ export default function K8sBaseDetails<T>({
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
-			const userExpression = urlQuery.get(K8S_ENTITY_LOGS_EXPRESSION_KEY) || '';
 			const fullExpression = combineInitialAndUserExpression(
 				logsAndTracesInitialExpression,
-				userExpression,
+				userLogsExpression || '',
 			);
 
 			const compositeQuery = {
@@ -413,10 +416,9 @@ export default function K8sBaseDetails<T>({
 
 			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
 		} else if (selectedView === VIEW_TYPES.TRACES) {
-			const userExpression = urlQuery.get(K8S_ENTITY_TRACES_EXPRESSION_KEY) || '';
 			const fullExpression = combineInitialAndUserExpression(
 				logsAndTracesInitialExpression,
-				userExpression,
+				userTracesExpression || '',
 			);
 
 			const compositeQuery = {
@@ -614,13 +616,23 @@ export default function K8sBaseDetails<T>({
 								))}
 							</Radio.Group>
 
-							{(selectedView === VIEW_TYPES.LOGS ||
-								selectedView === VIEW_TYPES.TRACES) && (
-								<Button
-									icon={<Compass size={18} />}
-									className="compass-button"
-									onClick={handleExplorePagesRedirect}
-								/>
+							{selectedView === VIEW_TYPES.LOGS && (
+								<Tooltip title="Go to Logs Explorer" placement="left">
+									<Button
+										icon={<Compass size={18} />}
+										className="compass-button"
+										onClick={handleExplorePagesRedirect}
+									/>
+								</Tooltip>
+							)}
+							{selectedView === VIEW_TYPES.TRACES && (
+								<Tooltip title="Go to Traces Explorer" placement="left">
+									<Button
+										icon={<Compass size={18} />}
+										className="compass-button"
+										onClick={handleExplorePagesRedirect}
+									/>
+								</Tooltip>
 							)}
 						</div>
 					)}

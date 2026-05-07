@@ -2,8 +2,7 @@ import { Button, Typography } from 'antd';
 import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
 
 import './CreateEdit.styles.scss';
-import { Key } from '@signozhq/icons';
-import { GoogleSquareFilled } from '@ant-design/icons';
+import { Key, SolidGoogle } from '@signozhq/icons';
 
 interface AuthNProvider {
 	key: AuthtypesAuthNProviderDTO;
@@ -19,7 +18,7 @@ function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 			key: AuthtypesAuthNProviderDTO.google_auth,
 			title: 'Google Apps Authentication',
 			description: 'Let members sign-in with a Google workspace account',
-			icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
+			icon: <SolidGoogle size={37} />,
 			enabled: true,
 		},
 		{
@@ -27,7 +26,7 @@ function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 			title: 'SAML Authentication',
 			description:
 				'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
-			icon: <Key style={{ fontSize: '37px' }} />,
+			icon: <Key size={37} />,
 			enabled: samlEnabled,
 		},
 
@@ -36,7 +35,7 @@ function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 			title: 'OIDC Authentication',
 			description:
 				'Authenticate using OpenID Connect providers like Azure, Active Directory, Okta, or other OIDC compliant solutions',
-			icon: <Key style={{ fontSize: '37px' }} />,
+			icon: <Key size={37} />,
 			enabled: samlEnabled,
 		},
 	];

@@ -4,8 +4,7 @@ import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import { DecimalsArrowRight } from 'lucide-react';
-import { CalendarClock } from '@signozhq/icons';
+import { CalendarClock, DecimalsArrowRight } from '@signozhq/icons';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelItemPopover from './FunnelItemPopover';

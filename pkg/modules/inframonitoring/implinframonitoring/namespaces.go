@@ -30,7 +30,7 @@ func buildNamespaceRecords(
 			NamespaceName:   namespaceName,
 			NamespaceCPU:    -1,
 			NamespaceMemory: -1,
-			Meta:            map[string]any{},
+			Meta:            map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {

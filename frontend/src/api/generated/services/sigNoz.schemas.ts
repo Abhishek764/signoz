@@ -1668,33 +1668,6 @@ export interface AuthtypesGettableAuthDomainDTO {
 	updatedAt?: Date;
 }
 
-export interface AuthtypesGettableObjectsDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
-}
-
-/**
- * @nullable
- */
-export type AuthtypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface AuthtypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: AuthtypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 */
-	resources: AuthtypesResourceDTO[];
-}
-
 export interface AuthtypesGettableTokenDTO {
 	/**
 	 * @type string
@@ -1719,11 +1692,8 @@ export interface AuthtypesGettableTransactionDTO {
 	 * @type boolean
 	 */
 	authorized: boolean;
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -1797,14 +1767,6 @@ export interface AuthtypesOIDCConfigDTO {
 	issuerAlias?: string;
 }
 
-export interface AuthtypesObjectDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type string
-	 */
-	selector: string;
-}
-
 export interface AuthtypesOrgSessionContextDTO {
 	authNSupport?: AuthtypesAuthNSupportDTO;
 	/**
@@ -1820,19 +1782,6 @@ export interface AuthtypesOrgSessionContextDTO {
 
 export interface AuthtypesPasswordAuthNSupportDTO {
 	provider?: AuthtypesAuthNProviderDTO;
-}
-
-export interface AuthtypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
 export interface AuthtypesPatchableRoleDTO {
@@ -1883,17 +1832,14 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
-export interface AuthtypesResourceDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	type: string;
+export enum AuthtypesRelationDTO {
+	create = 'create',
+	read = 'read',
+	update = 'update',
+	delete = 'delete',
+	list = 'list',
+	assignee = 'assignee',
 }
-
 export interface AuthtypesRoleDTO {
 	/**
 	 * @type string
@@ -1983,11 +1929,8 @@ export interface AuthtypesSessionContextDTO {
 }
 
 export interface AuthtypesTransactionDTO {
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
 }
 
 export interface AuthtypesUpdatableAuthDomainDTO {
@@ -4173,6 +4116,52 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
+export interface CoretypesObjectDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
+}
+
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface CoretypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: CoretypesObjectGroupDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: CoretypesObjectGroupDTO[] | null;
+}
+
+export interface CoretypesResourceRefDTO {
+	/**
+	 * @type string
+	 */
+	kind: string;
+	type: CoretypesTypeDTO;
+}
+
+export enum CoretypesTypeDTO {
+	user = 'user',
+	serviceaccount = 'serviceaccount',
+	anonymous = 'anonymous',
+	role = 'role',
+	organization = 'organization',
+	metaresource = 'metaresource',
+	metaresources = 'metaresources',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -4582,7 +4571,7 @@ export interface GlobaltypesTokenizerConfigDTO {
  * @nullable
  */
 export type InframonitoringtypesClusterRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesClusterRecordDTO {
@@ -4650,7 +4639,7 @@ export interface InframonitoringtypesHostFilterDTO {
  * @nullable
  */
 export type InframonitoringtypesHostRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesHostRecordDTO {
@@ -4727,7 +4716,7 @@ export interface InframonitoringtypesHostsDTO {
  * @nullable
  */
 export type InframonitoringtypesNamespaceRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesNamespaceRecordDTO {
@@ -4792,7 +4781,7 @@ export interface InframonitoringtypesNodeCountsByReadinessDTO {
  * @nullable
  */
 export type InframonitoringtypesNodeRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesNodeRecordDTO {
@@ -4884,7 +4873,7 @@ export enum InframonitoringtypesPodPhaseDTO {
  * @nullable
  */
 export type InframonitoringtypesPodRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesPodRecordDTO {
@@ -5139,7 +5128,7 @@ export enum InframonitoringtypesResponseTypeDTO {
  * @nullable
  */
 export type InframonitoringtypesVolumeRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesVolumeRecordDTO {
@@ -8085,6 +8074,11 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	 */
 	sub_tree_node_count?: number;
 	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
 	 * @type string
 	 */
 	trace_id?: string;
@@ -8469,14 +8463,6 @@ export type AuthzCheck200 = {
 	 * @type array
 	 */
 	data: AuthtypesGettableTransactionDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type AuthzResources200 = {
-	data: AuthtypesGettableResourcesDTO;
 	/**
 	 * @type string
 	 */
@@ -9108,7 +9094,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableObjectsDTO[];
+	data: CoretypesObjectGroupDTO[];
 	/**
 	 * @type string
 	 */

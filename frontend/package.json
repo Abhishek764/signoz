@@ -23,8 +23,7 @@
     "commitlint": "commitlint --edit $1",
     "test": "jest",
     "test:changedsince": "jest --changedSince=main --coverage --silent",
-    "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh",
-    "generate:permissions-type": "node scripts/generate-permissions-type.cjs"
+    "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -240,9 +239,11 @@
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
-      "oxlint --fix",
-      "oxfmt --write",
       "sh -c tsgo --noEmit"
+    ],
+    "*.(js|jsx|ts|tsx|scss|css)": [
+      "oxlint --fix --quiet --no-error-on-unmatched-pattern",
+      "oxfmt --write"
     ],
     "*.(scss|css)": [
       "stylelint"

@@ -34,7 +34,7 @@ func buildClusterRecords(
 			ClusterCPUAllocatable:    -1,
 			ClusterMemory:            -1,
 			ClusterMemoryAllocatable: -1,
-			Meta:                     map[string]any{},
+			Meta:                     map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {

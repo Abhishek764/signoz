@@ -18,14 +18,14 @@ type Volumes struct {
 }
 
 type VolumeRecord struct {
-	PersistentVolumeClaimName string                 `json:"persistentVolumeClaimName" required:"true"`
-	VolumeAvailable           float64                `json:"volumeAvailable" required:"true"`
-	VolumeCapacity            float64                `json:"volumeCapacity" required:"true"`
-	VolumeUsage               float64                `json:"volumeUsage" required:"true"`
-	VolumeInodes              float64                `json:"volumeInodes" required:"true"`
-	VolumeInodesFree          float64                `json:"volumeInodesFree" required:"true"`
-	VolumeInodesUsed          float64                `json:"volumeInodesUsed" required:"true"`
-	Meta                      map[string]interface{} `json:"meta" required:"true"`
+	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName" required:"true"`
+	VolumeAvailable           float64           `json:"volumeAvailable" required:"true"`
+	VolumeCapacity            float64           `json:"volumeCapacity" required:"true"`
+	VolumeUsage               float64           `json:"volumeUsage" required:"true"`
+	VolumeInodes              float64           `json:"volumeInodes" required:"true"`
+	VolumeInodesFree          float64           `json:"volumeInodesFree" required:"true"`
+	VolumeInodesUsed          float64           `json:"volumeInodesUsed" required:"true"`
+	Meta                      map[string]string `json:"meta" required:"true"`
 }
 
 // PostableVolumes is the request body for the v2 volumes (PVCs) list API.

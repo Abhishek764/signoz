@@ -18,11 +18,11 @@ type Namespaces struct {
 }
 
 type NamespaceRecord struct {
-	NamespaceName    string                 `json:"namespaceName" required:"true"`
-	NamespaceCPU     float64                `json:"namespaceCPU" required:"true"`
-	NamespaceMemory  float64                `json:"namespaceMemory" required:"true"`
-	PodCountsByPhase PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
-	Meta             map[string]interface{} `json:"meta" required:"true"`
+	NamespaceName    string            `json:"namespaceName" required:"true"`
+	NamespaceCPU     float64           `json:"namespaceCPU" required:"true"`
+	NamespaceMemory  float64           `json:"namespaceMemory" required:"true"`
+	PodCountsByPhase PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	Meta             map[string]string `json:"meta" required:"true"`
 }
 
 // PostableNamespaces is the request body for the v2 namespaces list API.

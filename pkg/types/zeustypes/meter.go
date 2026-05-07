@@ -127,8 +127,8 @@ type Meter struct {
 	// MeterName is the fully-qualified meter identifier.
 	MeterName string `json:"name"`
 
-	// Value is the aggregated scalar for this meter over the reporting window.
-	Value float64 `json:"value"`
+	// Value is the aggregated integer scalar for this meter over the reporting window.
+	Value int64 `json:"value"`
 
 	// Unit is the metric unit for this meter.
 	Unit MeterUnit `json:"unit"`
@@ -152,7 +152,7 @@ type Meter struct {
 // NewMeter builds a meter from typed metadata and a reporting window.
 func NewMeter(
 	name MeterName,
-	value float64,
+	value int64,
 	unit MeterUnit,
 	aggregation MeterAggregation,
 	window MeterWindow,

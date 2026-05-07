@@ -69,7 +69,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 
 	type bucket struct {
 		dimensions map[string]string
-		value      float64
+		value      int64
 	}
 	accumulator := make(map[string]*bucket)
 
@@ -90,7 +90,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 				dimensionValues := make([]string, len(dimensionColumns))
 				var retentionDays int32
 				var retentionRuleIndex int32
-				var value float64
+				var value int64
 
 				scanDest := make([]any, 0, len(dimensionValues)+3)
 				for i := range dimensionValues {

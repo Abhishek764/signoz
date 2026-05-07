@@ -171,7 +171,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		if (data && data[0] && data[0]?.length === 0) {
 			return (
 				<div className="uplot-no-data not-found">
-					<ChartLine size={48} strokeWidth={0.5} />
+					<ChartLine size={48} style={{ strokeWidth: 0.5 }} />
 
 					<Typography>No Data</Typography>
 				</div>

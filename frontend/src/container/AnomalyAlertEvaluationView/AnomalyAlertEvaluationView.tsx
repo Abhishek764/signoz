@@ -297,7 +297,7 @@ function AnomalyAlertEvaluationView({
 					/>
 				) : (
 					<div className="anomaly-alert-evaluation-view-no-data-container">
-						<ChartLine size={48} strokeWidth={0.5} />
+						<ChartLine size={48} style={{ strokeWidth: 0.5 }} />
 
 						<Typography>No Data</Typography>
 					</div>

@@ -182,7 +182,7 @@ export default function UPlotChart({
 					height: `${height}px`,
 				}}
 			>
-				<ChartLine size={48} strokeWidth={0.5} />
+				<ChartLine size={48} style={{ strokeWidth: 0.5 }} />
 				<Typography>No Data</Typography>
 			</div>
 		);

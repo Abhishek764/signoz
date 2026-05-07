@@ -9,6 +9,12 @@ import { Span } from 'types/api/trace/getTraceV2';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
 
+// Mock delay constant for faster tests
+jest.mock('container/SpanDetailsDrawer/constants', () => ({
+	...jest.requireActual('container/SpanDetailsDrawer/constants'),
+	SPAN_PERCENTILE_INITIAL_DELAY_MS: 0,
+}));
+
 // Mock external dependencies
 const mockRedirectWithQueryBuilderData = jest.fn();
 const mockNotifications = {

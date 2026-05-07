@@ -51,7 +51,10 @@ import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 import Attributes from './Attributes/Attributes';
-import { RelatedSignalsViews } from './constants';
+import {
+	RelatedSignalsViews,
+	SPAN_PERCENTILE_INITIAL_DELAY_MS,
+} from './constants';
 import EventAttribute from './Events/components/EventAttribute';
 import Events from './Events/Events';
 import LinkedSpans from './LinkedSpans/LinkedSpans';
@@ -410,7 +413,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 		const timer = setTimeout(() => {
 			setInitialWaitCompleted(true);
-		}, 2000); // 2-second delay
+		}, SPAN_PERCENTILE_INITIAL_DELAY_MS);
 
 		return (): void => {
 			// clean the old state around span percentile data

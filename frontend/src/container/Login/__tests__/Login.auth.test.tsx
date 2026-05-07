@@ -1,20 +1,31 @@
-import ROUTES from 'constants/routes';
-import history from 'lib/history';
+/**
+ * Login - Authentication & Form Tests
+ *
+ * Split from Login.test.tsx for better parallelization.
+ * Tests password auth, callback auth, URL params, warnings, form state, and edge cases.
+ */
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { ErrorV2 } from 'types/api';
-import { Info } from 'types/api/v1/version/get';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
-import { Token } from 'types/api/v2/sessions/email_password/post';
 
 import Login from '../index';
+import {
+	CALLBACK_AUTHN_URL,
+	EMAIL_PASSWORD_ENDPOINT,
+	mockEmailPasswordResponse,
+	mockMultiOrgWithWarning,
+	mockOrgWithWarning,
+	mockSingleOrgCallbackAuth,
+	mockSingleOrgPasswordAuth,
+	mockVersionSetupCompleted,
+	PASSWORD_AUTHN_EMAIL,
+	SESSIONS_CONTEXT_ENDPOINT,
+	VERSION_ENDPOINT,
+} from './Login.test-utils';
 
-const VERSION_ENDPOINT = '*/api/v1/version';
-const SESSIONS_CONTEXT_ENDPOINT = '*/api/v2/sessions/context';
-const CALLBACK_AUTHN_ORG = 'callback_authn_org';
-const CALLBACK_AUTHN_URL = 'https://sso.example.com/auth';
-const PASSWORD_AUTHN_ORG = 'password_authn_org';
-const PASSWORD_AUTHN_EMAIL = 'jest.test@signoz.io';
+// =============================================================================
+// MOCKS
+// =============================================================================
 
 jest.mock('lib/history', () => ({
 	__esModule: true,
@@ -26,102 +37,13 @@ jest.mock('lib/history', () => ({
 	},
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+// =============================================================================
+// TESTS
+// =============================================================================
 
-// Mock data
-const mockVersionSetupCompleted: Info = {
-	setupCompleted: true,
-	ee: 'Y',
-	version: '0.25.0',
-};
-
-const mockVersionSetupIncomplete: Info = {
-	setupCompleted: false,
-	ee: 'Y',
-	version: '0.25.0',
-};
-
-const mockSingleOrgPasswordAuth: SessionsContext = {
-	exists: true,
-	orgs: [
-		{
-			id: 'org-1',
-			name: 'Test Organization',
-			authNSupport: {
-				password: [{ provider: 'email_password' }],
-				callback: [],
-			},
-		},
-	],
-};
-
-const mockSingleOrgCallbackAuth: SessionsContext = {
-	exists: true,
-	orgs: [
-		{
-			id: 'org-1',
-			name: 'Test Organization',
-			authNSupport: {
-				password: [],
-				callback: [{ provider: 'google', url: CALLBACK_AUTHN_URL }],
-			},
-		},
-	],
-};
-
-const mockMultiOrgMixedAuth: SessionsContext = {
-	exists: true,
-	orgs: [
-		{
-			id: 'org-1',
-			name: PASSWORD_AUTHN_ORG,
-			authNSupport: {
-				password: [{ provider: 'email_password' }],
-				callback: [],
-			},
-		},
-		{
-			id: 'org-2',
-			name: CALLBACK_AUTHN_ORG,
-			authNSupport: {
-				password: [],
-				callback: [{ provider: 'google', url: CALLBACK_AUTHN_URL }],
-			},
-		},
-	],
-};
-
-const mockOrgWithWarning: SessionsContext = {
-	exists: true,
-	orgs: [
-		{
-			id: 'org-1',
-			name: 'Warning Organization',
-			authNSupport: {
-				password: [{ provider: 'email_password' }],
-				callback: [],
-			},
-			warning: {
-				code: 'ORG_WARNING',
-				message: 'Organization has limited access',
-				url: 'https://example.com/warning',
-				errors: [{ message: 'Contact admin for full access' }],
-			} as ErrorV2,
-		},
-	],
-};
-
-const mockEmailPasswordResponse: Token = {
-	accessToken: 'mock-access-token',
-	refreshToken: 'mock-refresh-token',
-};
-
-describe('Login Component', () => {
+describe('Login - Authentication & Form', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-
 		server.use(
 			rest.get(VERSION_ENDPOINT, (_, res, ctx) =>
 				res(
@@ -136,269 +58,6 @@ describe('Login Component', () => {
 		server.resetHandlers();
 	});
 
-	describe('Initial Render', () => {
-		it('renders login form with email input and next button', () => {
-			const { getByTestId, getByPlaceholderText } = render(<Login />);
-
-			expect(
-				screen.getByText(/sign in to monitor, trace, and troubleshoot/i),
-			).toBeInTheDocument();
-			expect(getByTestId('email')).toBeInTheDocument();
-			expect(getByTestId('initiate_login')).toBeInTheDocument();
-			expect(getByPlaceholderText('e.g. john@signoz.io')).toBeInTheDocument();
-		});
-
-		it('shows loading state when version data is being fetched', () => {
-			server.use(
-				rest.get(VERSION_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.delay(100),
-						ctx.status(200),
-						ctx.json({ data: mockVersionSetupCompleted, status: 'success' }),
-					),
-				),
-			);
-
-			const { getByTestId } = render(<Login />);
-
-			expect(getByTestId('initiate_login')).toBeDisabled();
-		});
-	});
-
-	describe('Setup Check', () => {
-		it('redirects to signup when setup is not completed', async () => {
-			server.use(
-				rest.get(VERSION_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({ data: mockVersionSetupIncomplete, status: 'success' }),
-					),
-				),
-			);
-
-			render(<Login />);
-
-			await waitFor(() => {
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.SIGN_UP);
-			});
-		});
-
-		it('stays on login page when setup is completed', async () => {
-			render(<Login />);
-
-			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
-			});
-		});
-
-		it('handles version API error gracefully', async () => {
-			server.use(
-				rest.get(VERSION_ENDPOINT, (req, res, ctx) =>
-					res(ctx.status(500), ctx.json({ error: 'Server error' })),
-				),
-			);
-
-			render(<Login />);
-
-			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
-			});
-		});
-	});
-
-	describe('Session Context Fetching', () => {
-		it('fetches session context on next button click and enables password', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
-				),
-			);
-
-			const { getByTestId } = render(<Login />);
-
-			// Wait for version API to complete (email input becomes enabled)
-			const emailInput = await waitFor(() => {
-				const input = getByTestId('email');
-				expect(input).not.toBeDisabled();
-				return input;
-			});
-
-			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
-
-			const nextButton = await waitFor(() => {
-				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
-				return button;
-			});
-
-			await user.click(nextButton);
-
-			await waitFor(() => {
-				expect(getByTestId('password')).toBeInTheDocument();
-			});
-		});
-
-		it('handles session context API errors', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(
-						ctx.status(500),
-						ctx.json({
-							error: {
-								code: 'internal_server',
-								message: 'couldnt fetch the sessions context',
-								url: '',
-							},
-						}),
-					),
-				),
-			);
-
-			const { getByTestId, getByText } = render(<Login />);
-
-			// Wait for version API to complete (email input becomes enabled)
-			const emailInput = await waitFor(() => {
-				const input = getByTestId('email');
-				expect(input).not.toBeDisabled();
-				return input;
-			});
-
-			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
-
-			const nextButton = await waitFor(() => {
-				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
-				return button;
-			});
-
-			await user.click(nextButton);
-
-			await waitFor(() => {
-				expect(getByText('couldnt fetch the sessions context')).toBeInTheDocument();
-			});
-		});
-
-		it('auto-selects organization when only one exists', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
-					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
-				),
-			);
-
-			const { getByTestId } = render(<Login />);
-
-			// Wait for version API to complete (email input becomes enabled)
-			const emailInput = await waitFor(() => {
-				const input = getByTestId('email');
-				expect(input).not.toBeDisabled();
-				return input;
-			});
-
-			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
-
-			const nextButton = await waitFor(() => {
-				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
-				return button;
-			});
-
-			await user.click(nextButton);
-
-			await waitFor(() => {
-				// Should show password field directly (no org selection needed)
-				expect(getByTestId('password')).toBeInTheDocument();
-				expect(screen.queryByText(/organization name/i)).not.toBeInTheDocument();
-			});
-		});
-	});
-
-	describe('Organization Selection', () => {
-		it('shows organization dropdown when multiple orgs exist', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
-					res(ctx.status(200), ctx.json({ data: mockMultiOrgMixedAuth })),
-				),
-			);
-
-			const { getByTestId, getByText } = render(<Login />);
-
-			// Wait for version API to complete (email input becomes enabled)
-			const emailInput = await waitFor(() => {
-				const input = getByTestId('email');
-				expect(input).not.toBeDisabled();
-				return input;
-			});
-
-			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
-
-			const nextButton = await waitFor(() => {
-				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
-				return button;
-			});
-
-			await user.click(nextButton);
-
-			await waitFor(() => {
-				expect(getByText('Organization Name')).toBeInTheDocument();
-			});
-			await screen.findByRole('combobox');
-
-			// Click on the dropdown to reveal the options
-			await user.click(screen.getByRole('combobox'));
-
-			await waitFor(() => {
-				expect(screen.getByText(PASSWORD_AUTHN_ORG)).toBeInTheDocument();
-				expect(screen.getByText(CALLBACK_AUTHN_ORG)).toBeInTheDocument();
-			});
-		});
-
-		it('updates selected organization on dropdown change', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
-					res(ctx.status(200), ctx.json({ data: mockMultiOrgMixedAuth })),
-				),
-			);
-
-			render(<Login />);
-
-			// Wait for version API to complete (email input becomes enabled)
-			const emailInput = await waitFor(() => {
-				const input = screen.getByTestId('email');
-				expect(input).not.toBeDisabled();
-				return input;
-			});
-
-			await user.type(emailInput, PASSWORD_AUTHN_EMAIL);
-
-			const nextButton = await waitFor(() => {
-				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
-				return button;
-			});
-
-			await user.click(nextButton);
-
-			await screen.findByRole('combobox');
-
-			// Select CALLBACK_AUTHN_ORG
-			await user.click(screen.getByRole('combobox'));
-			await user.click(screen.getByText(CALLBACK_AUTHN_ORG));
-
-			await screen.findByRole('button', { name: /sign in with sso/i });
-		});
-	});
-
 	describe('Password Authentication', () => {
 		it('shows password field when password auth is supported', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -411,7 +70,6 @@ describe('Login Component', () => {
 
 			const { getByTestId, getByText } = render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -448,7 +106,6 @@ describe('Login Component', () => {
 				initialRoute: '/login?password=Y',
 			});
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -466,7 +123,6 @@ describe('Login Component', () => {
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should show password field even for SSO org due to password=Y override
 				expect(getByTestId('password')).toBeInTheDocument();
 			});
 		});
@@ -484,7 +140,6 @@ describe('Login Component', () => {
 
 			const { getByTestId, queryByTestId } = render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -510,10 +165,7 @@ describe('Login Component', () => {
 		it('redirects to callback URL on button click', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			// Mock window.location.href
-			const mockLocation = {
-				href: 'http://localhost/',
-			};
+			const mockLocation = { href: 'http://localhost/' };
 			Object.defineProperty(window, 'location', {
 				value: mockLocation,
 				writable: true,
@@ -527,7 +179,6 @@ describe('Login Component', () => {
 
 			const { getByTestId, queryByTestId } = render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -552,7 +203,6 @@ describe('Login Component', () => {
 			const callbackButton = getByTestId('callback_authn_submit');
 			await user.click(callbackButton);
 
-			// Check that window.location.href was set to the callback URL
 			await waitFor(() => {
 				expect(window.location.href).toBe(CALLBACK_AUTHN_URL);
 			});
@@ -567,7 +217,7 @@ describe('Login Component', () => {
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
-				rest.post('*/api/v2/sessions/email_password', async (_, res, ctx) =>
+				rest.post(EMAIL_PASSWORD_ENDPOINT, async (_, res, ctx) =>
 					res(
 						ctx.status(200),
 						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
@@ -577,7 +227,6 @@ describe('Login Component', () => {
 
 			const { getByTestId } = render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -604,8 +253,6 @@ describe('Login Component', () => {
 			await user.type(passwordInput, 'testpassword');
 			await user.click(loginButton);
 
-			// do not test for the request paramters here. Reference: https://mswjs.io/docs/best-practices/avoid-request-assertions
-			// rather test for the effects of the request
 			await waitFor(() => {
 				expect(localStorage.getItem('AUTH_TOKEN')).toBe('mock-access-token');
 			});
@@ -618,7 +265,7 @@ describe('Login Component', () => {
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
-				rest.post('*/api/v2/sessions/email_password', (_, res, ctx) =>
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) =>
 					res(
 						ctx.status(401),
 						ctx.json({
@@ -634,7 +281,6 @@ describe('Login Component', () => {
 
 			const { getByTestId, getByText } = render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -708,14 +354,13 @@ describe('Login Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockOrgWithWarning })),
 				),
 			);
 
 			render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = screen.getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -742,23 +387,6 @@ describe('Login Component', () => {
 		it('shows warning modal when a warning org is selected among multiple orgs', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			// Mock multiple orgs including one with a warning
-			const mockMultiOrgWithWarning = {
-				orgs: [
-					{ id: 'org1', name: 'Org 1' },
-					{
-						id: 'org2',
-						name: 'Org 2',
-						warning: {
-							code: 'ORG_WARNING',
-							message: 'Organization has limited access',
-							url: 'https://example.com/warning',
-							errors: [{ message: 'Contact admin for full access' }],
-						} as ErrorV2,
-					},
-				],
-			};
-
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockMultiOrgWithWarning })),
@@ -767,7 +395,6 @@ describe('Login Component', () => {
 
 			const { getByTestId } = render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -786,9 +413,8 @@ describe('Login Component', () => {
 
 			await screen.findByRole('combobox');
 
-			// Select the organization with a warning
 			await user.click(screen.getByRole('combobox'));
-			await user.click(screen.getByText('Org 2'));
+			await user.click(screen.getByText('Warning Organization'));
 
 			await waitFor(() => {
 				expect(
@@ -803,7 +429,7 @@ describe('Login Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(
 						ctx.delay(100),
 						ctx.status(200),
@@ -814,7 +440,6 @@ describe('Login Component', () => {
 
 			render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = screen.getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -831,7 +456,6 @@ describe('Login Component', () => {
 
 			await user.click(nextButton);
 
-			// Button should be disabled during API call
 			expect(nextButton).toBeDisabled();
 		});
 
@@ -839,17 +463,15 @@ describe('Login Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
 				),
 			);
 
 			render(<Login />);
 
-			// Initially shows "Next" button
 			expect(screen.getByTestId('initiate_login')).toBeInTheDocument();
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = screen.getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -867,7 +489,6 @@ describe('Login Component', () => {
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should show "Sign in with Password" button for password auth
 				expect(screen.getByTestId('password_authn_submit')).toBeInTheDocument();
 				expect(screen.queryByTestId('initiate_login')).not.toBeInTheDocument();
 			});
@@ -884,14 +505,13 @@ describe('Login Component', () => {
 			};
 
 			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockNoOrgs })),
 				),
 			);
 
 			render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = screen.getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -909,7 +529,6 @@ describe('Login Component', () => {
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should not show any auth method buttons
 				expect(
 					screen.queryByTestId('password_authn_submit'),
 				).not.toBeInTheDocument();
@@ -937,14 +556,13 @@ describe('Login Component', () => {
 			};
 
 			server.use(
-				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
 					res(ctx.status(200), ctx.json({ data: mockNoAuthSupport })),
 				),
 			);
 
 			render(<Login />);
 
-			// Wait for version API to complete (email input becomes enabled)
 			const emailInput = await waitFor(() => {
 				const input = screen.getByTestId('email');
 				expect(input).not.toBeDisabled();
@@ -962,7 +580,6 @@ describe('Login Component', () => {
 			await user.click(nextButton);
 
 			await waitFor(() => {
-				// Should not show any auth method buttons
 				expect(
 					screen.queryByTestId('password_authn_submit'),
 				).not.toBeInTheDocument();

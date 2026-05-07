@@ -348,6 +348,165 @@ const customRender = (
 	});
 };
 
+// =============================================================================
+// TIERED RENDER FUNCTIONS
+// =============================================================================
+// Use the lightest wrapper that meets your test's needs:
+// - renderMinimal: Router + QueryClient only (fastest, for pure components)
+// - renderMedium: + AppContext + ErrorModal (for components using app state)
+// - render: Full provider stack (for integration tests)
+// =============================================================================
+
+/**
+ * Minimal provider wrapper - Router + QueryClient only.
+ * Use for pure components that don't need app state, redux, or other contexts.
+ * ~5x faster than full render.
+ */
+function MinimalProviders({
+	children,
+	initialRoute = '/',
+}: {
+	children: React.ReactNode;
+	initialRoute?: string;
+}): ReactElement {
+	return (
+		<MemoryRouter initialEntries={[initialRoute]}>
+			<NuqsAdapter>
+				<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+			</NuqsAdapter>
+		</MemoryRouter>
+	);
+}
+
+export const renderMinimal = (
+	ui: ReactElement,
+	options?: Omit<RenderOptions, 'wrapper'> & { initialRoute?: string },
+): RenderResult => {
+	const { initialRoute, ...renderOptions } = options || {};
+	return render(ui, {
+		wrapper: ({ children }) => (
+			<MinimalProviders initialRoute={initialRoute}>{children}</MinimalProviders>
+		),
+		...renderOptions,
+	});
+};
+
+/**
+ * Medium provider wrapper - Router + QueryClient + AppContext + ErrorModal.
+ * Use for components that need app context but not Redux, Timezone, or QueryBuilder.
+ * ~2x faster than full render.
+ */
+function MediumProviders({
+	children,
+	initialRoute = '/',
+	role = 'ADMIN',
+	appContextOverrides = {},
+}: {
+	children: React.ReactNode;
+	initialRoute?: string;
+	role?: string;
+	appContextOverrides?: Partial<IAppContext>;
+}): ReactElement {
+	return (
+		<MemoryRouter initialEntries={[initialRoute]}>
+			<NuqsAdapter>
+				<QueryClientProvider client={queryClient}>
+					<AppContext.Provider value={getAppContextMock(role, appContextOverrides)}>
+						<ErrorModalProvider>{children}</ErrorModalProvider>
+					</AppContext.Provider>
+				</QueryClientProvider>
+			</NuqsAdapter>
+		</MemoryRouter>
+	);
+}
+
+interface MediumProviderProps {
+	initialRoute?: string;
+	role?: string;
+	appContextOverrides?: Partial<IAppContext>;
+}
+
+export const renderMedium = (
+	ui: ReactElement,
+	options?: Omit<RenderOptions, 'wrapper'>,
+	providerProps: MediumProviderProps = {},
+): RenderResult => {
+	const {
+		initialRoute = '/',
+		role = 'ADMIN',
+		appContextOverrides = {},
+	} = providerProps;
+	return render(ui, {
+		wrapper: ({ children }) => (
+			<MediumProviders
+				initialRoute={initialRoute}
+				role={role}
+				appContextOverrides={appContextOverrides}
+			>
+				{children}
+			</MediumProviders>
+		),
+		...options,
+	});
+};
+
+// =============================================================================
+// SIMPLIFIED CONTEXT MOCK HELPERS
+// =============================================================================
+
+/**
+ * Simplified IAppContext mock with minimal defaults.
+ * Use this when you need a lightweight mock with mostly null/false values.
+ * Pass userOverrides to customize only the user object.
+ *
+ * This consolidates the duplicate getAppContextMockState functions that existed
+ * in various test utility files.
+ */
+export function getAppContextMockMinimal(
+	userOverrides?: Partial<IAppContext['user']>,
+): IAppContext {
+	return {
+		user: {
+			accessJwt: 'some-token',
+			refreshJwt: 'some-refresh-token',
+			id: 'some-user-id',
+			email: 'user@signoz.io',
+			displayName: 'John Doe',
+			createdAt: 1732544623,
+			organization: 'Nightswatch',
+			orgId: 'does-not-matter-id',
+			role: 'ADMIN',
+			...userOverrides,
+		},
+		activeLicense: null,
+		trialInfo: null,
+		featureFlags: null,
+		orgPreferences: null,
+		userPreferences: null,
+		isLoggedIn: false,
+		org: null,
+		isFetchingUser: false,
+		isFetchingActiveLicense: false,
+		isFetchingFeatureFlags: false,
+		isFetchingOrgPreferences: false,
+		userFetchError: undefined,
+		activeLicenseFetchError: null,
+		featureFlagsFetchError: undefined,
+		orgPreferencesFetchError: undefined,
+		changelog: null,
+		showChangelogModal: false,
+		activeLicenseRefetch: jest.fn(),
+		updateUser: jest.fn(),
+		updateOrgPreferences: jest.fn(),
+		updateUserPreferenceInContext: jest.fn(),
+		updateOrg: jest.fn(),
+		updateChangelog: jest.fn(),
+		toggleChangelogModal: jest.fn(),
+		versionData: null,
+		hasEditPermission: false,
+	};
+}
+
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
 export { customRender as render };

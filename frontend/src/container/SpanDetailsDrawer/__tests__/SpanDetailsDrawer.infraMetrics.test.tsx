@@ -1,3 +1,5 @@
+import getSpanPercentiles from 'api/trace/getSpanPercentiles';
+import getUserPreference from 'api/v1/user/preferences/name/get';
 import ROUTES from 'constants/routes';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { server } from 'mocks-server/server';
@@ -6,6 +8,13 @@ import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SpanDetailsDrawer from '../SpanDetailsDrawer';
+import {
+	mockSpanPercentileResponse,
+	mockUserPreferenceResponse,
+} from './SpanDetailsDrawer.test-utils';
+
+const mockGetSpanPercentiles = jest.mocked(getSpanPercentiles);
+const mockGetUserPreference = jest.mocked(getUserPreference);
 import {
 	expectedHostOnlyMetadata,
 	expectedInfraMetadata,
@@ -22,6 +31,21 @@ import {
 } from './infraMetricsTestData';
 
 // Mock external dependencies
+jest.mock('container/SpanDetailsDrawer/constants', () => ({
+	...jest.requireActual('container/SpanDetailsDrawer/constants'),
+	SPAN_PERCENTILE_INITIAL_DELAY_MS: 0,
+}));
+
+jest.mock('api/trace/getSpanPercentiles', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
+
+jest.mock('api/v1/user/preferences/name/get', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
+
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
@@ -171,6 +195,10 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
 		mockUpdateAllQueriesOperators.mockClear();
+
+		// Setup default mocks for percentile APIs to avoid delays
+		mockGetUserPreference.mockResolvedValue(mockUserPreferenceResponse);
+		mockGetSpanPercentiles.mockResolvedValue(mockSpanPercentileResponse);
 
 		// Setup API call tracking for infra metrics
 		(GetMetricQueryRange as jest.Mock).mockImplementation((query) => {

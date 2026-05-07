@@ -1,5 +1,6 @@
 import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
-import { IAppContext, IUser } from 'providers/App/types';
+import { IAppContext } from 'providers/App/types';
+import { getAppContextMockMinimal } from 'tests/test-utils';
 import { Channels } from 'types/api/channels/getAll';
 
 import { RoutingPolicy, UseRoutingPoliciesReturn } from '../types';
@@ -78,49 +79,14 @@ export function getUseRoutingPoliciesMockData(
 	};
 }
 
+/**
+ * @deprecated Use getAppContextMockMinimal from 'tests/test-utils' directly.
+ * This is a backwards-compatible wrapper that will be removed in a future version.
+ */
 export function getAppContextMockState(
-	overrides?: Partial<IUser>,
+	overrides?: Partial<IAppContext['user']>,
 ): IAppContext {
-	return {
-		user: {
-			accessJwt: 'some-token',
-			refreshJwt: 'some-refresh-token',
-			id: 'some-user-id',
-			email: 'user@signoz.io',
-			displayName: 'John Doe',
-			createdAt: 1732544623,
-			organization: 'Nightswatch',
-			orgId: 'does-not-matter-id',
-			role: 'ADMIN',
-			...overrides,
-		},
-		activeLicense: null,
-		trialInfo: null,
-		featureFlags: null,
-		orgPreferences: null,
-		userPreferences: null,
-		isLoggedIn: false,
-		org: null,
-		isFetchingUser: false,
-		isFetchingActiveLicense: false,
-		isFetchingFeatureFlags: false,
-		isFetchingOrgPreferences: false,
-		userFetchError: undefined,
-		activeLicenseFetchError: null,
-		featureFlagsFetchError: undefined,
-		orgPreferencesFetchError: undefined,
-		changelog: null,
-		showChangelogModal: false,
-		activeLicenseRefetch: jest.fn(),
-		updateUser: jest.fn(),
-		updateOrgPreferences: jest.fn(),
-		updateUserPreferenceInContext: jest.fn(),
-		updateOrg: jest.fn(),
-		updateChangelog: jest.fn(),
-		toggleChangelogModal: jest.fn(),
-		versionData: null,
-		hasEditPermission: false,
-	};
+	return getAppContextMockMinimal(overrides);
 }
 
 export function mockLocation(pathname: string): jest.Mock {

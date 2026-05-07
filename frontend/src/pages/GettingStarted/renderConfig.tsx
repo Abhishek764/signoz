@@ -19,8 +19,8 @@ import {
 	ChartBar,
 	LayoutDashboard,
 	Volume2,
+	Unplug,
 } from '@signozhq/icons';
-import { ApiFilled } from '@ant-design/icons';
 
 export const GetStartedContent = (): TGetStartedContentSection[] => {
 	const {
@@ -122,7 +122,7 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				},
 				{
 					title: 'Existing log collectors to SigNoz',
-					icon: <ApiFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <Unplug style={{ fontSize: '3.5rem' }} />,
 					url: 'https://signoz.io/docs/userguide/fluentbit_to_signoz/',
 				},
 			],

@@ -100,25 +100,15 @@ jest.mock('hooks/dashboard/useGetResolvedText', () => {
 });
 
 jest.mock('@signozhq/icons', () => {
-	const IconMock = (props: React.SVGProps<SVGSVGElement>): JSX.Element => (
-		<svg {...props} />
-	);
-	const overrides: Record<string, unknown> = {
-		__esModule: true,
-		default: IconMock,
+	const { createIconsMock } = jest.requireActual<
+		typeof import('test-mocks/createIconsMock')
+	>('test-mocks/createIconsMock');
+	return createIconsMock({
 		CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
 		TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
 		SquareArrowOutUpRight: (): JSX.Element => (
 			<svg data-testid="lucide-square-arrow-out-up-right" />
 		),
-	};
-	return new Proxy(overrides, {
-		get(target, prop: string | symbol): unknown {
-			if (prop in target) {
-				return target[prop as string];
-			}
-			return IconMock;
-		},
 	});
 });
 jest.mock('antd', () => ({

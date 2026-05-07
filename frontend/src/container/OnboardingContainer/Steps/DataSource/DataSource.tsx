@@ -215,7 +215,10 @@ export default function DataSource(): JSX.Element {
 									rules={[{ required: true, message: 'Please enter service name' }]}
 									validateTrigger="onBlur"
 								>
-									<Input />
+									<Input
+										// oxlint-disable-next-line jsx_a11y/no-autofocus
+										autoFocus
+									/>
 								</Form.Item>
 
 								{enableFrameworks && (

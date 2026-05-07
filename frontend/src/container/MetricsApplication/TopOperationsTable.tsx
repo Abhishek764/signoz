@@ -104,7 +104,7 @@ function TopOperationsTable({
 
 	const getSearchOption = (): ColumnType<TopOperationList> => ({
 		filterDropdown,
-		filterIcon: <Search />,
+		filterIcon: <Search size="md" />,
 		onFilter: (value, record): boolean =>
 			record.name
 				.toString()

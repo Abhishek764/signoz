@@ -42,11 +42,9 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 				title={isExpandAll ? 'Collapse All' : 'Expand All'}
 			>
 				{isExpandAll ? (
-					<SquareMinus
-						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
-					/>
+					<SquareMinus size={16} style={{ color: 'var(--accent-primary)' }} />
 				) : (
-					<SquarePlus style={{ fontSize: '16px', color: 'var(--accent-primary)' }} />
+					<SquarePlus size={16} style={{ color: 'var(--accent-primary)' }} />
 				)}
 			</CollapseButton>
 			<CardWrapper>

@@ -25,6 +25,7 @@ const config: Config.InitialOptions = {
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^@signozhq/icons$': '<rootDir>/__mocks__/signozhqIconsMock.tsx',
+		'^test-mocks/(.*)$': '<rootDir>/__mocks__/$1',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
 		'^@signozhq/(?!ui$)([^/]+)$':

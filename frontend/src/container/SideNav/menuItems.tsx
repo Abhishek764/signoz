@@ -33,8 +33,8 @@ import {
 	User,
 	UserPlus,
 	Users,
+	Binoculars,
 } from '@signozhq/icons';
-import { Binoculars } from 'lucide-react';
 import { Style } from '@signozhq/design-tokens';
 import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';

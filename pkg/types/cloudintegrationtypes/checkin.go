@@ -1,6 +1,7 @@
 package cloudintegrationtypes
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -47,12 +48,8 @@ type IntegrationConfig struct {
 }
 
 type ProviderIntegrationConfig struct {
-	AWS *AWSIntegrationConfig `json:"aws" required:"true" nullable:"false"`
-}
-
-type AWSIntegrationConfig struct {
-	EnabledRegions              []string                        `json:"enabledRegions" required:"true" nullable:"false"`
-	TelemetryCollectionStrategy *AWSTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
+	AWS   *AWSIntegrationConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureIntegrationConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 // NewGettableAgentCheckIn constructs a backward-compatible response from an AgentCheckInResponse.
@@ -75,11 +72,26 @@ func NewGettableAgentCheckIn(provider CloudProviderType, resp *AgentCheckInRespo
 	return gettable
 }
 
-// Validate checks that the request uses either old fields (account_id, cloud_account_id) or
-// new fields (cloudIntegrationId, providerAccountId), never a mix of both.
-func (req *PostableAgentCheckIn) Validate() error {
-	hasOldFields := req.ID != "" || req.AccountID != ""
-	hasNewFields := !req.CloudIntegrationID.IsZero() || req.ProviderAccountID != ""
+func NewAgentCheckInResponse(providerAccountID, cloudIntegrationID string, integrationConfig *ProviderIntegrationConfig, removedAt *time.Time) *AgentCheckInResponse {
+	return &AgentCheckInResponse{
+		CloudIntegrationID: cloudIntegrationID,
+		ProviderAccountID:  providerAccountID,
+		IntegrationConfig:  integrationConfig,
+		RemovedAt:          removedAt,
+	}
+}
+
+func (postable *PostableAgentCheckIn) UnmarshalJSON(data []byte) error {
+	type Alias PostableAgentCheckIn
+
+	var temp Alias
+	err := json.Unmarshal(data, &temp)
+	if err != nil {
+		return err
+	}
+
+	hasOldFields := temp.ID != "" || temp.AccountID != ""
+	hasNewFields := !temp.CloudIntegrationID.IsZero() || temp.ProviderAccountID != ""
 
 	if hasOldFields && hasNewFields {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
@@ -89,5 +101,7 @@ func (req *PostableAgentCheckIn) Validate() error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
 			"request must provide either old fields (account_id, cloud_account_id) or new fields (cloudIntegrationId, providerAccountId)")
 	}
+
+	*postable = PostableAgentCheckIn(temp)
 	return nil
 }

@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/button';
 import { Table2, Trash2, Users } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Button, toast, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Skeleton } from 'antd';
-import { useAuthzResources } from 'api/generated/services/authz';
 import {
 	getGetObjectsQueryKey,
 	useDeleteRole,
@@ -14,6 +11,9 @@ import {
 	useGetRole,
 	usePatchObjects,
 } from 'api/generated/services/role';
+import permissionsType from 'hooks/useAuthZ/permissions.type';
+
+import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
@@ -54,10 +54,7 @@ function RoleDetailsPage(): JSX.Element {
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
 
-	const { data: authzResourcesResponse } = useAuthzResources({
-		query: { enabled: true },
-	});
-	const authzResources = authzResourcesResponse?.data ?? null;
+	const authzResources = permissionsType.data as unknown as AuthzResources;
 
 	// Extract channelId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
@@ -96,7 +93,7 @@ function RoleDetailsPage(): JSX.Element {
 
 	const initialConfig = useMemo(() => {
 		if (!objectsData?.data || !activePermission) {
-			return undefined;
+			return;
 		}
 		return objectsToPermissionConfig(
 			objectsData.data,
@@ -193,7 +190,7 @@ function RoleDetailsPage(): JSX.Element {
 				<ToggleGroup
 					type="single"
 					value={activeTab}
-					onValueChange={(val): void => {
+					onChange={(val): void => {
 						if (val) {
 							setActiveTab(val as TabKey);
 						}

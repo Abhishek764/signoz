@@ -6,10 +6,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -18,16 +18,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
@@ -71,6 +77,7 @@ type SigNoz struct {
 	Tokenizer              pkgtokenizer.Tokenizer
 	IdentNResolver         identn.IdentNResolver
 	Authz                  authz.AuthZ
+	Ruler                  ruler.Ruler
 	Modules                Modules
 	Handlers               Handlers
 	QueryParser            queryparser.QueryParser
@@ -93,11 +100,13 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
+	authzCallback func(context.Context, sqlstore.SQLStore, authz.Config, licensing.Licensing, []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
+	cloudIntegrationCallback func(sqlstore.SQLStore, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
+	rulerProviderFactories func(cache.Cache, alertmanager.Alertmanager, sqlstore.SQLStore, telemetrystore.TelemetryStore, telemetrytypes.MetadataStore, prometheus.Prometheus, organization.Getter, rulestatehistory.Module, querier.Querier, queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -316,21 +325,30 @@ func New(
 	// Initialize query parser (needed for dashboard module)
 	queryParser := queryparser.New(providerSettings)
 
-	// Initialize dashboard module (needed for authz registry)
+	// Initialize dashboard module
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
-
-	// Initialize authz
-	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, dashboard)
-	if err != nil {
-		return nil, err
-	}
-	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
-	if err != nil {
-		return nil, err
-	}
 
 	// Initialize user getter
 	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
+
+	// Initialize service account getter
+	serviceAccountGetter := implserviceaccount.NewGetter(implserviceaccount.NewStore(sqlstore))
+
+	// Build pre-delete callbacks from modules
+	onBeforeRoleDelete := []authz.OnBeforeRoleDelete{
+		userGetter.OnBeforeRoleDelete,
+		serviceAccountGetter.OnBeforeRoleDelete,
+	}
+
+	// Initialize authz
+	authzProviderFactory, err := authzCallback(ctx, sqlstore, config.Authz, licensing, onBeforeRoleDelete)
+	if err != nil {
+		return nil, err
+	}
+	authz, err := authzProviderFactory.New(ctx, providerSettings, config.Authz)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(
@@ -351,18 +369,6 @@ func New(
 		config.Alertmanager,
 		NewAlertmanagerProviderFactories(sqlstore, orgGetter, nfManager),
 		config.Alertmanager.Provider,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize ruler from the available ruler provider factories
-	ruler, err := factory.NewProviderFromNamedMap(
-		ctx,
-		providerSettings,
-		config.Ruler,
-		NewRulerProviderFactories(sqlstore, queryParser),
-		"signoz",
 	)
 	if err != nil {
 		return nil, err
@@ -413,6 +419,7 @@ func New(
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
 	)
 
 	global, err := factory.NewProviderFromNamedMap(
@@ -426,11 +433,24 @@ func New(
 		return nil, err
 	}
 
+	serviceAccount := implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, cache, analytics, providerSettings, config.ServiceAccount)
+
+	cloudIntegrationModule, err := cloudIntegrationCallback(sqlstore, global, zeus, gateway, licensing, serviceAccount, config.CloudIntegration)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, cloudIntegrationModule, flagger)
+
+	// Initialize ruler from the variant-specific provider factories
+	rulerInstance, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Ruler, rulerProviderFactories(cache, alertmanager, sqlstore, telemetrystore, telemetryMetadataStore, prometheus, orgGetter, modules.RuleStateHistory, querier, queryParser), "signoz")
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize identN resolver
-	identNFactories := NewIdentNProviderFactories(tokenizer, modules.ServiceAccount, orgGetter, userGetter, config.User)
+	identNFactories := NewIdentNProviderFactories(tokenizer, serviceAccount, orgGetter, userGetter, config.User)
 	identNResolver, err := identn.NewIdentNResolver(ctx, providerSettings, config.IdentN, identNFactories)
 	if err != nil {
 		return nil, err
@@ -444,7 +464,7 @@ func New(
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
 		alertmanager,
-		ruler,
+		rulerInstance,
 		modules.Dashboard,
 		modules.SavedView,
 		modules.UserSetter,
@@ -452,7 +472,8 @@ func New(
 		tokenizer,
 		config,
 		modules.AuthDomain,
-		modules.ServiceAccount,
+		serviceAccount,
+		cloudIntegrationModule,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
@@ -480,6 +501,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
 		factory.NewNamedService(factory.MustNewName("user"), userService, factory.MustNewName("authz")),
 		factory.NewNamedService(factory.MustNewName("auditor"), auditor),
+		factory.NewNamedService(factory.MustNewName("ruler"), rulerInstance),
 	)
 	if err != nil {
 		return nil, err
@@ -487,7 +509,7 @@ func New(
 
 	// Initialize all handlers for the modules
 	registryHandler := factory.NewHandler(registry)
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler)
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler, alertmanager, rulerInstance)
 
 	// Initialize the API server (after registry so it can access service health)
 	apiserverInstance, err := factory.NewProviderFromNamedMap(
@@ -521,6 +543,7 @@ func New(
 		Tokenizer:              tokenizer,
 		IdentNResolver:         identNResolver,
 		Authz:                  authz,
+		Ruler:                  rulerInstance,
 		Modules:                modules,
 		Handlers:               handlers,
 		QueryParser:            queryParser,

@@ -270,7 +270,7 @@ export default function DataSource(): JSX.Element {
 										className="periscope-btn primary"
 										icon={
 											isSubmittingRequestForDataSource ? (
-												<Loader size="md" />
+												<Loader size="md" className="animate-spin" />
 											) : (
 												<Check size={12} />
 											)

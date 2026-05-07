@@ -8,6 +8,7 @@ Covers:
    Guards against the ClickHouse NOT_FOUND_COLUMN_IN_BLOCK regression where
    ordering by a column absent from an outer SELECT caused a query failure.
 """
+
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -280,9 +281,5 @@ def test_trace_operator_query_order_by_field_not_in_select_fields(
     assert len(rows) == 2
 
     # Ordering: POST > GET in DESC — svc-a (POST) must come before svc-b (GET)
-    assert rows[0]["data"]["service.name"] == "svc-a", (
-        f"Expected svc-a (POST) first in http.method DESC order, got {rows[0]['data']['service.name']}"
-    )
-    assert rows[1]["data"]["service.name"] == "svc-b", (
-        f"Expected svc-b (GET) second in http.method DESC order, got {rows[1]['data']['service.name']}"
-    )
+    assert rows[0]["data"]["service.name"] == "svc-a", f"Expected svc-a (POST) first in http.method DESC order, got {rows[0]['data']['service.name']}"
+    assert rows[1]["data"]["service.name"] == "svc-b", f"Expected svc-b (GET) second in http.method DESC order, got {rows[1]['data']['service.name']}"

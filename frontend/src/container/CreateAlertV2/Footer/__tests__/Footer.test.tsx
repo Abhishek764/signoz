@@ -264,7 +264,9 @@ describe('Footer', () => {
 		render(<Footer />);
 
 		// When testing alert rule, the play icon is replaced with a loader icon
-		expect(screen.queryByTestId(TEST_NOTIFICATION_SEND_ICON)).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(TEST_NOTIFICATION_SEND_ICON),
+		).not.toBeInTheDocument();
 
 		expect(screen.getByTestId(TEST_NOTIFICATION_LOADER_ICON)).toBeInTheDocument();
 	});
@@ -277,7 +279,9 @@ describe('Footer', () => {
 		render(<Footer />);
 
 		// When updating alert rule, the check icon is replaced with a loader icon
-		expect(screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON)).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
+		).not.toBeInTheDocument();
 
 		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
 	});
@@ -290,7 +294,9 @@ describe('Footer', () => {
 		render(<Footer />);
 
 		// When creating alert rule, the check icon is replaced with a loader icon
-		expect(screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON)).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
+		).not.toBeInTheDocument();
 
 		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
 	});

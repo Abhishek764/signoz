@@ -18,13 +18,14 @@ export const METRIC_TYPE_TO_COLOR_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.exponentialhistogram]: Color.BG_AQUA_500,
 };
 
-export const METRIC_TYPE_TO_ICON_MAP: Record<MetrictypesTypeDTO, typeof Gauge> = {
-	[MetrictypesTypeDTO.gauge]: Gauge,
-	[MetrictypesTypeDTO.histogram]: Histogram,
-	[MetrictypesTypeDTO.sum]: Diff,
-	[MetrictypesTypeDTO.summary]: ChartBar,
-	[MetrictypesTypeDTO.exponentialhistogram]: BarChart,
-};
+export const METRIC_TYPE_TO_ICON_MAP: Record<MetrictypesTypeDTO, typeof Gauge> =
+	{
+		[MetrictypesTypeDTO.gauge]: Gauge,
+		[MetrictypesTypeDTO.histogram]: Histogram,
+		[MetrictypesTypeDTO.sum]: Diff,
+		[MetrictypesTypeDTO.summary]: ChartBar,
+		[MetrictypesTypeDTO.exponentialhistogram]: BarChart,
+	};
 
 export const TIME_AGGREGATION_OPTIONS: Record<TimeAggregationOptions, string> =
 	{

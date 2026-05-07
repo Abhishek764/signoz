@@ -10,8 +10,13 @@ IconMock.displayName = 'IconMock';
 const moduleExports = new Proxy(
 	{ __esModule: true, default: IconMock },
 	{
-		get(target, prop) {
-			if (prop in target) return (target as Record<string | symbol, unknown>)[prop];
+		get(
+			target: Record<string | symbol, unknown>,
+			prop: string | symbol,
+		): unknown {
+			if (prop in target) {
+				return target[prop];
+			}
 			return IconMock;
 		},
 	},

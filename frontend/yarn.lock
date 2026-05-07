@@ -5402,10 +5402,10 @@
   resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.4.tgz#f209da6fbd2ac97ab4434b71472f741009306550"
   integrity sha512-Ny7/VA5YGFFmZx58jMh7ATFyu7VePaJ4ySmj/DopP1hilmfdxQsKWnpqKaZJWRXrbNkc0gmq3cR7q7Z8nnN7ZQ==
 
-"@signozhq/icons@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/icons/-/icons-0.3.0.tgz#bdbbfedd7a907d470f46c76f14110a19a114db7e"
-  integrity sha512-ZA6kGWf2t7XzQGSaeWtSpkWAiONwKliNKUR01KHl/tuWGZmijJ89pYrEJD9S8wLn8cO2XgIkS2JaEkQfThgIqQ==
+"@signozhq/icons@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@signozhq/icons/-/icons-0.4.0.tgz#e3b6d88a1b2556d94214238eba495b4f8aeb91db"
+  integrity sha512-QctNvNPlQlsefFdIVmSy/P/7a1IcQ3IryKP0KPMqtoqew3q89FGUmFa5IfEJ7Z3CHhtG1zaXwBKqP72QkLyA3g==
 
 "@signozhq/resizable@0.0.2":
   version "0.0.2"

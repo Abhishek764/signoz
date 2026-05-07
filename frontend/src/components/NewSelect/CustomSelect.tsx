@@ -607,6 +607,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<RefreshCw
+										data-testid="retry-button"
 										size="md"
 										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {

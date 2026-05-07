@@ -290,7 +290,7 @@ function TraceDetailsV3(): JSX.Element {
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}
 					onFilteredSpansChange={handleFilteredSpansChange}
-					isDataLoaded={!isFetchingTraceData && !showNoData}
+					isDataLoaded={!!traceData?.payload?.spans?.length && !showNoData}
 					traceMetadata={traceMetadataForHeader}
 				/>
 

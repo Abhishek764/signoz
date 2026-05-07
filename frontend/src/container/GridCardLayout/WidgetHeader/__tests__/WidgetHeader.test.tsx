@@ -107,9 +107,7 @@ jest.mock('@signozhq/icons', () => {
 		__esModule: true,
 		default: IconMock,
 		CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
-		TriangleAlert: (): JSX.Element => (
-			<svg data-testid="lucide-triangle-alert" />
-		),
+		TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
 		SquareArrowOutUpRight: (): JSX.Element => (
 			<svg data-testid="lucide-square-arrow-out-up-right" />
 		),

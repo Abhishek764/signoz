@@ -38,9 +38,7 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 				<SolidCheckCircle2 size="md" data-testid="deployment-icon-deployed" />
 			);
 		case 'dirty':
-			return (
-				<SolidAlertOctagon size="md" data-testid="deployment-icon-dirty" />
-			);
+			return <SolidAlertOctagon size="md" data-testid="deployment-icon-dirty" />;
 		case 'failed':
 			return <SolidXCircle size="md" data-testid="deployment-icon-failed" />;
 		case 'unknown':

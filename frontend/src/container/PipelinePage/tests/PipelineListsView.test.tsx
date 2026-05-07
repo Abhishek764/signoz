@@ -142,7 +142,9 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(document.querySelectorAll('[data-testid="pipeline-edit-action"]')).toHaveLength(2);
+		expect(
+			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
+		).toHaveLength(2);
 		expect(getByText('add_new_pipeline')).toBeInTheDocument();
 
 		// expand action
@@ -177,7 +179,9 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(document.querySelectorAll('[data-testid="pipeline-edit-action"]')).toHaveLength(2);
+		expect(
+			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
+		).toHaveLength(2);
 
 		// expand action
 		const expandIcon = document.querySelectorAll(
@@ -217,7 +221,9 @@ describe('PipelinePage container test', () => {
 		);
 
 		expect(
-			document.querySelectorAll('.ant-table-expanded-row [data-testid="pipeline-delete-action"]'),
+			document.querySelectorAll(
+				'.ant-table-expanded-row [data-testid="pipeline-delete-action"]',
+			),
 		).toHaveLength(2);
 	});
 
@@ -245,7 +251,9 @@ describe('PipelinePage container test', () => {
 		expect(switchToggle[0]).toBeChecked();
 
 		// view pipeline
-		const viewBtn = document.querySelectorAll('[data-testid="pipeline-preview-action"]');
+		const viewBtn = document.querySelectorAll(
+			'[data-testid="pipeline-preview-action"]',
+		);
 		await fireEvent.click(viewBtn[0] as HTMLElement);
 
 		const viewPipelineModal = document.querySelector('.ant-modal-wrap');
@@ -264,7 +272,9 @@ describe('PipelinePage container test', () => {
 			) as HTMLElement,
 		);
 
-		const deleteBtns = document.querySelectorAll('[data-testid="pipeline-delete-action"]');
+		const deleteBtns = document.querySelectorAll(
+			'[data-testid="pipeline-delete-action"]',
+		);
 
 		// delete pipeline
 		await fireEvent.click(deleteBtns[0] as HTMLElement);
@@ -283,7 +293,9 @@ describe('PipelinePage container test', () => {
 			document.querySelector('.delete-pipeline-ok-text') as HTMLElement,
 		);
 
-		expect(document.querySelectorAll('[data-testid="pipeline-delete-action"]')).toHaveLength(1);
+		expect(
+			document.querySelectorAll('[data-testid="pipeline-delete-action"]'),
+		).toHaveLength(1);
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
@@ -306,7 +318,9 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(document.querySelectorAll('[data-testid="pipeline-edit-action"]')).toHaveLength(2);
+		expect(
+			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
+		).toHaveLength(2);
 
 		// expand action
 		const expandIcon = document.querySelectorAll(
@@ -315,7 +329,9 @@ describe('PipelinePage container test', () => {
 		expect(expandIcon).toHaveLength(2);
 		await fireEvent.click(expandIcon[0]);
 
-		const editBtn = document.querySelectorAll('[data-testid="pipeline-edit-action"]');
+		const editBtn = document.querySelectorAll(
+			'[data-testid="pipeline-edit-action"]',
+		);
 		// click on edit btn
 		await fireEvent.click(editBtn[0] as HTMLElement);
 

@@ -10,7 +10,12 @@ import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { BarChart, DraftingCompass, FileText, ScrollText } from '@signozhq/icons';
+import {
+	BarChart,
+	DraftingCompass,
+	FileText,
+	ScrollText,
+} from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';

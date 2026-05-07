@@ -16,7 +16,12 @@ import { MetricsType } from 'container/MetricsApplication/constant';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
-import { ArrowDownToDot, ArrowUpFromDot, Ellipsis, RefreshCw } from '@signozhq/icons';
+import {
+	ArrowDownToDot,
+	ArrowUpFromDot,
+	Ellipsis,
+	RefreshCw,
+} from '@signozhq/icons';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import {

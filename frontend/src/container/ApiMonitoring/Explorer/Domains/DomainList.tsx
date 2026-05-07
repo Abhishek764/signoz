@@ -204,7 +204,9 @@ function DomainList(): JSX.Element {
 					columns={columnsConfig}
 					loading={{
 						spinning: isFetching || isLoading,
-						indicator: <Spin indicator={<Loader size={14} className="animate-spin" />} />,
+						indicator: (
+							<Spin indicator={<Loader size={14} className="animate-spin" />} />
+						),
 					}}
 					scroll={{ x: true }}
 					tableLayout="fixed"

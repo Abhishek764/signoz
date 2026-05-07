@@ -22,7 +22,13 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { CircleAlert, CirclePlus, GripVertical, Search, Trash2 } from '@signozhq/icons';
+import {
+	CircleAlert,
+	CirclePlus,
+	GripVertical,
+	Search,
+	Trash2,
+} from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WidgetGraphProps } from '../types';

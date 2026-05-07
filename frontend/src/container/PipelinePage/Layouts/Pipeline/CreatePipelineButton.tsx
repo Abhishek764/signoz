@@ -46,10 +46,7 @@ function CreatePipelineButton({
 				url="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
 			/>
 			{isAddNewPipelineVisible && (
-				<CustomButton
-					onClick={onEnterEditMode}
-					disabled={isDisabled}
-				>
+				<CustomButton onClick={onEnterEditMode} disabled={isDisabled}>
 					<Flex align="center" gap={4}>
 						<PencilLine size="md" />
 						{t('enter_edit_mode')}
@@ -57,11 +54,7 @@ function CreatePipelineButton({
 				</CustomButton>
 			)}
 			{!isAddNewPipelineVisible && (
-				<CustomButton
-					icon={<Plus />}
-					onClick={onAddNewPipeline}
-					type="primary"
-				>
+				<CustomButton icon={<Plus />} onClick={onAddNewPipeline} type="primary">
 					{t('new_pipeline')}
 				</CustomButton>
 			)}

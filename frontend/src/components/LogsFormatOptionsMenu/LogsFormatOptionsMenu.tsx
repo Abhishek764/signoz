@@ -5,7 +5,15 @@ import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Check, ChevronLeft, ChevronRight, Minus, Plus, SlidersVertical , X } from '@signozhq/icons';
+import {
+	Check,
+	ChevronLeft,
+	ChevronRight,
+	Minus,
+	Plus,
+	SlidersVertical,
+	X,
+} from '@signozhq/icons';
 
 import './LogsFormatOptionsMenu.styles.scss';
 

@@ -150,7 +150,7 @@ function Hosts(): JSX.Element {
 									<ArrowUpToLine
 										style={{ rotate: '270deg', cursor: 'pointer' }}
 										onClick={handleFilterVisibilityChange}
-										size="md"		
+										size="md"
 									/>
 								</Tooltip>
 							</div>

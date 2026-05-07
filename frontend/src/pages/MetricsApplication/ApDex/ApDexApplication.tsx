@@ -5,7 +5,7 @@ import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 
-import { Button  , ButtonContainer} from '../styles';
+import { Button, ButtonContainer } from '../styles';
 import ApDexSettings from './ApDexSettings';
 import { Settings } from '@signozhq/icons';
 
@@ -59,11 +59,11 @@ function ApDexApplication(): JSX.Element {
 			}
 		>
 			<div className="ap-dex-settings-popover-content">
-					<Button size="middle" > 
-					   <ButtonContainer>
+				<Button size="middle">
+					<ButtonContainer>
 						<Settings size="md" /> Settings
-						</ButtonContainer>
-					</Button>
+					</ButtonContainer>
+				</Button>
 			</div>
 		</Popover>
 	);

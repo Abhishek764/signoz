@@ -33,7 +33,19 @@ import AttributeActions from 'container/SpanDetailsDrawer/Attributes/AttributeAc
 import dayjs from 'dayjs';
 import useClickOutside from 'hooks/useClickOutside';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Anvil, BarChart, Bookmark, Check, ChevronDown, ChevronUp, Link2, LoaderCircle, PanelRight, Plus, Search } from '@signozhq/icons';
+import {
+	Anvil,
+	BarChart,
+	Bookmark,
+	Check,
+	ChevronDown,
+	ChevronUp,
+	Link2,
+	LoaderCircle,
+	PanelRight,
+	Plus,
+	Search,
+} from '@signozhq/icons';
 import { AnimatePresence, motion } from 'motion/react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';

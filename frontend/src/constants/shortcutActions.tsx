@@ -2,7 +2,22 @@ import React from 'react';
 import ROUTES from 'constants/routes';
 import { GlobalShortcutsName } from 'constants/shortcuts/globalShortcuts';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
-import { BarChart, BellDot, Bug, Compass, DraftingCompass, Expand, HardDrive, Home, LayoutGrid, ListMinus, ScrollText, Settings, TowerControl, Workflow } from '@signozhq/icons';
+import {
+	BarChart,
+	BellDot,
+	Bug,
+	Compass,
+	DraftingCompass,
+	Expand,
+	HardDrive,
+	Home,
+	LayoutGrid,
+	ListMinus,
+	ScrollText,
+	Settings,
+	TowerControl,
+	Workflow,
+} from '@signozhq/icons';
 import { ROLES } from 'types/roles';
 
 export type CmdAction = {

@@ -46,9 +46,7 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
 					/>
 				) : (
-					<SquarePlus
-						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
-					/>
+					<SquarePlus style={{ fontSize: '16px', color: 'var(--accent-primary)' }} />
 				)}
 			</CollapseButton>
 			<CardWrapper>

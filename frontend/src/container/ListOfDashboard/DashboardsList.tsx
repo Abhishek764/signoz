@@ -53,7 +53,27 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { get, isEmpty, isUndefined } from 'lodash-es';
-import { ArrowDownWideNarrow, ArrowUpRight, CalendarClock, Check, Clock4, Ellipsis, EllipsisVertical, Expand, ExternalLink, FileJson, Github, HdmiPort, LayoutGrid, Link2, Plus, Radius, RotateCw, Search, SquareArrowOutUpRight } from '@signozhq/icons';
+import {
+	ArrowDownWideNarrow,
+	ArrowUpRight,
+	CalendarClock,
+	Check,
+	Clock4,
+	Ellipsis,
+	EllipsisVertical,
+	Expand,
+	ExternalLink,
+	FileJson,
+	Github,
+	HdmiPort,
+	LayoutGrid,
+	Link2,
+	Plus,
+	Radius,
+	RotateCw,
+	Search,
+	SquareArrowOutUpRight,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';

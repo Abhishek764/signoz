@@ -107,9 +107,10 @@ function AllTags({
 			</CurrentTagsContainer>
 
 			<Space wrap direction="horizontal">
-				<Button type="primary" onClick={onTagAddHandler} >
-					 <Flex gap={4} align="center">
-				      <Plus size="md" />Add Tags Filter
+				<Button type="primary" onClick={onTagAddHandler}>
+					<Flex gap={4} align="center">
+						<Plus size="md" />
+						Add Tags Filter
 					</Flex>
 				</Button>
 
@@ -121,14 +122,11 @@ function AllTags({
 			<ButtonContainer>
 				<Space align="start">
 					<Button onClick={onResetHandler}>Reset</Button>
-					<Button
-						type="primary"
-						onClick={onRunQueryHandler}
-					> 
-					<Flex gap={4} align="center">
-					    <ChevronRight size="md" />
-						 Run Query
-					</Flex>
+					<Button type="primary" onClick={onRunQueryHandler}>
+						<Flex gap={4} align="center">
+							<ChevronRight size="md" />
+							Run Query
+						</Flex>
 					</Button>
 				</Space>
 			</ButtonContainer>

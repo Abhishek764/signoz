@@ -16,7 +16,14 @@ import { USER_ROLES } from 'types/roles';
 import floppyDiscUrl from '@/assets/Icons/floppy-disc.svg';
 
 import { getItemIcon } from '../constants';
-import { ArrowRight, ArrowUpRight, BarChart, Compass, DraftingCompass, ScrollText } from '@signozhq/icons';
+import {
+	ArrowRight,
+	ArrowUpRight,
+	BarChart,
+	Compass,
+	DraftingCompass,
+	ScrollText,
+} from '@signozhq/icons';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,

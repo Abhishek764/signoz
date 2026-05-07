@@ -40,7 +40,23 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
-import { ArrowUpRight, Check, ChevronDown, ChevronsDown, ChevronUp, Cog, Ellipsis, GitCommitVertical, GripVertical, LampDesk, Logs, MousePointerClick, PackagePlus, ScrollText, X } from '@signozhq/icons';
+import {
+	ArrowUpRight,
+	Check,
+	ChevronDown,
+	ChevronsDown,
+	ChevronUp,
+	Cog,
+	Ellipsis,
+	GitCommitVertical,
+	GripVertical,
+	LampDesk,
+	Logs,
+	MousePointerClick,
+	PackagePlus,
+	ScrollText,
+	X,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';

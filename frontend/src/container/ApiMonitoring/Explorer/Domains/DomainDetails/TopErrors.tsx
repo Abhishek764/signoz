@@ -200,7 +200,9 @@ function TopErrors({
 					columns={topErrorsColumnsConfig}
 					loading={{
 						spinning: isLoading || isRefetching,
-						indicator: <Spin indicator={<Loader size={14} className="animate-spin" />} />,
+						indicator: (
+							<Spin indicator={<Loader size={14} className="animate-spin" />} />
+						),
 					}}
 					dataSource={isLoading || isRefetching ? [] : formattedTopErrorsData}
 					locale={{

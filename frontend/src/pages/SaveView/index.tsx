@@ -25,7 +25,15 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import { CalendarClock, Check, Compass, PenLine, Search, Trash2, X } from '@signozhq/icons';
+import {
+	CalendarClock,
+	Check,
+	Compass,
+	PenLine,
+	Search,
+	Trash2,
+	X,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';

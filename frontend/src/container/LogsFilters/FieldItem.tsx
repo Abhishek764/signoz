@@ -31,7 +31,13 @@ function FieldItem({
 
 	const renderContent = useMemo(() => {
 		if (isLoading) {
-			return <Spin spinning size="small" indicator={<Loader className="animate-spin" />} />;
+			return (
+				<Spin
+					spinning
+					size="small"
+					indicator={<Loader className="animate-spin" />}
+				/>
+			);
 		}
 
 		if (isHovered) {

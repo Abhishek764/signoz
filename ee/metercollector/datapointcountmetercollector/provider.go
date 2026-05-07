@@ -164,7 +164,7 @@ func buildQuery(meterName string, slice retentiontypes.Slice, retentionGetter re
 	selects = append(selects,
 		retentionExpr+" AS retention_days",
 		retentionRuleIndexExpr+" AS retention_rule_index",
-		"ifNull(sum(value), 0) AS value",
+		"toInt64(ifNull(sum(value), 0)) AS value",
 	)
 	groupBy = append(groupBy, "retention_days", "retention_rule_index")
 

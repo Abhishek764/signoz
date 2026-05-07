@@ -1,15 +1,6 @@
-import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
+import { BarChart, ChartBar, Diff, Gauge, Histogram } from '@signozhq/icons';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-//TODO: replace this
-import {
-	BarChart,
-	BarChart2,
-	BarChartHorizontal,
-	Diff,
-	Gauge,
-	LucideProps,
-} from 'lucide-react';
 
 import {
 	MetricInspectionState,
@@ -27,16 +18,11 @@ export const METRIC_TYPE_TO_COLOR_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.exponentialhistogram]: Color.BG_AQUA_500,
 };
 
-export const METRIC_TYPE_TO_ICON_MAP: Record<
-	MetrictypesTypeDTO,
-	ForwardRefExoticComponent<
-		Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>
-	>
-> = {
+export const METRIC_TYPE_TO_ICON_MAP: Record<MetrictypesTypeDTO, typeof Gauge> = {
 	[MetrictypesTypeDTO.gauge]: Gauge,
-	[MetrictypesTypeDTO.histogram]: BarChart2,
+	[MetrictypesTypeDTO.histogram]: Histogram,
 	[MetrictypesTypeDTO.sum]: Diff,
-	[MetrictypesTypeDTO.summary]: BarChartHorizontal,
+	[MetrictypesTypeDTO.summary]: ChartBar,
 	[MetrictypesTypeDTO.exponentialhistogram]: BarChart,
 };
 

@@ -148,7 +148,7 @@ function treeTitleAndKey({
 	};
 }
 
-function renderSwitcherIcon(props: { expanded: boolean }): JSX.Element {
+function renderSwitcherIcon(props: { expanded?: boolean }): JSX.Element {
 	return props.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
 }
 

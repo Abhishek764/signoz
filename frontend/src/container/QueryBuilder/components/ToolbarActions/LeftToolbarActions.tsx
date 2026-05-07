@@ -1,10 +1,10 @@
-import { Binoculars } from 'lucide-react';
 import {
 	ArrowUpToLine,
 	Atom,
 	Filter,
 	SquareMousePointer,
 	Terminal,
+	Binoculars,
 } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';

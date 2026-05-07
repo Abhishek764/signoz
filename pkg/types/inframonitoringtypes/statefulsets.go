@@ -18,17 +18,17 @@ type StatefulSets struct {
 }
 
 type StatefulSetRecord struct {
-	StatefulSetName          string           `json:"statefulSetName" required:"true"`
-	StatefulSetCPU           float64          `json:"statefulSetCPU" required:"true"`
-	StatefulSetCPURequest    float64          `json:"statefulSetCPURequest" required:"true"`
-	StatefulSetCPULimit      float64          `json:"statefulSetCPULimit" required:"true"`
-	StatefulSetMemory        float64          `json:"statefulSetMemory" required:"true"`
-	StatefulSetMemoryRequest float64          `json:"statefulSetMemoryRequest" required:"true"`
-	StatefulSetMemoryLimit   float64          `json:"statefulSetMemoryLimit" required:"true"`
-	DesiredPods              int              `json:"desiredPods" required:"true"`
-	AvailablePods            int              `json:"availablePods" required:"true"`
-	PodCountsByPhase         PodCountsByPhase `json:"podCountsByPhase" required:"true"`
-	Meta                     map[string]any   `json:"meta" required:"true"`
+	StatefulSetName          string            `json:"statefulSetName" required:"true"`
+	StatefulSetCPU           float64           `json:"statefulSetCPU" required:"true"`
+	StatefulSetCPURequest    float64           `json:"statefulSetCPURequest" required:"true"`
+	StatefulSetCPULimit      float64           `json:"statefulSetCPULimit" required:"true"`
+	StatefulSetMemory        float64           `json:"statefulSetMemory" required:"true"`
+	StatefulSetMemoryRequest float64           `json:"statefulSetMemoryRequest" required:"true"`
+	StatefulSetMemoryLimit   float64           `json:"statefulSetMemoryLimit" required:"true"`
+	DesiredPods              int               `json:"desiredPods" required:"true"`
+	AvailablePods            int               `json:"availablePods" required:"true"`
+	PodCountsByPhase         PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	Meta                     map[string]string `json:"meta" required:"true"`
 }
 
 // PostableStatefulSets is the request body for the v2 statefulsets list API.

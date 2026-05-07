@@ -18,17 +18,17 @@ type Deployments struct {
 }
 
 type DeploymentRecord struct {
-	DeploymentName          string                 `json:"deploymentName" required:"true"`
-	DeploymentCPU           float64                `json:"deploymentCPU" required:"true"`
-	DeploymentCPURequest    float64                `json:"deploymentCPURequest" required:"true"`
-	DeploymentCPULimit      float64                `json:"deploymentCPULimit" required:"true"`
-	DeploymentMemory        float64                `json:"deploymentMemory" required:"true"`
-	DeploymentMemoryRequest float64                `json:"deploymentMemoryRequest" required:"true"`
-	DeploymentMemoryLimit   float64                `json:"deploymentMemoryLimit" required:"true"`
-	DesiredPods             int                    `json:"desiredPods" required:"true"`
-	AvailablePods           int                    `json:"availablePods" required:"true"`
-	PodCountsByPhase        PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
-	Meta                    map[string]interface{} `json:"meta" required:"true"`
+	DeploymentName          string            `json:"deploymentName" required:"true"`
+	DeploymentCPU           float64           `json:"deploymentCPU" required:"true"`
+	DeploymentCPURequest    float64           `json:"deploymentCPURequest" required:"true"`
+	DeploymentCPULimit      float64           `json:"deploymentCPULimit" required:"true"`
+	DeploymentMemory        float64           `json:"deploymentMemory" required:"true"`
+	DeploymentMemoryRequest float64           `json:"deploymentMemoryRequest" required:"true"`
+	DeploymentMemoryLimit   float64           `json:"deploymentMemoryLimit" required:"true"`
+	DesiredPods             int               `json:"desiredPods" required:"true"`
+	AvailablePods           int               `json:"availablePods" required:"true"`
+	PodCountsByPhase        PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	Meta                    map[string]string `json:"meta" required:"true"`
 }
 
 // PostableDeployments is the request body for the v2 deployments list API.

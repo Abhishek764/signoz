@@ -33,7 +33,7 @@ func buildVolumeRecords(
 			VolumeInodes:              -1,
 			VolumeInodesFree:          -1,
 			VolumeInodesUsed:          -1,
-			Meta:                      map[string]any{},
+			Meta:                      map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {

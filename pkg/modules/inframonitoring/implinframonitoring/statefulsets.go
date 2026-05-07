@@ -37,7 +37,7 @@ func buildStatefulSetRecords(
 			StatefulSetMemoryLimit:   -1,
 			DesiredPods:              -1,
 			AvailablePods:            -1,
-			Meta:                     map[string]any{},
+			Meta:                     map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {

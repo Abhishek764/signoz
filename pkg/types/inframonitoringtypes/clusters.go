@@ -21,14 +21,14 @@ type ClusterRecord struct {
 	// TODO(nikhilmantri0902): once the underlying attr key is migrated to
 	// k8s.cluster.uid (see clusterNameAttrKey TODO in implinframonitoring),
 	// surface ClusterUID alongside (or replace) ClusterName.
-	ClusterName              string                 `json:"clusterName" required:"true"`
-	ClusterCPU               float64                `json:"clusterCPU" required:"true"`
-	ClusterCPUAllocatable    float64                `json:"clusterCPUAllocatable" required:"true"`
-	ClusterMemory            float64                `json:"clusterMemory" required:"true"`
-	ClusterMemoryAllocatable float64                `json:"clusterMemoryAllocatable" required:"true"`
-	NodeCountsByReadiness    NodeCountsByReadiness  `json:"nodeCountsByReadiness" required:"true"`
-	PodCountsByPhase         PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
-	Meta                     map[string]interface{} `json:"meta" required:"true"`
+	ClusterName              string                `json:"clusterName" required:"true"`
+	ClusterCPU               float64               `json:"clusterCPU" required:"true"`
+	ClusterCPUAllocatable    float64               `json:"clusterCPUAllocatable" required:"true"`
+	ClusterMemory            float64               `json:"clusterMemory" required:"true"`
+	ClusterMemoryAllocatable float64               `json:"clusterMemoryAllocatable" required:"true"`
+	NodeCountsByReadiness    NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
+	PodCountsByPhase         PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
+	Meta                     map[string]string     `json:"meta" required:"true"`
 }
 
 // PostableClusters is the request body for the v2 clusters list API.

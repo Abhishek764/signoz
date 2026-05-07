@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Switch, Tooltip, Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
+import { Switch } from '@signozhq/ui';
 import { Info } from 'lucide-react';
 
 import { IAdvancedOptionItemProps } from '../types';
@@ -48,7 +49,7 @@ function AdvancedOptionItem({
 				>
 					{input}
 				</div>
-				<Switch onChange={handleOnToggle} checked={showInput} />
+				<Switch onChange={handleOnToggle} value={showInput} />
 			</div>
 		</div>
 	);

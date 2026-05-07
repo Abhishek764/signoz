@@ -185,7 +185,7 @@ describe('PipelinePage container test', () => {
 		await fireEvent.click(expandIcon[0]);
 
 		const switchToggle = document.querySelector(
-			'.ant-table-expanded-row .ant-switch',
+			'.ant-table-expanded-row [role="switch"]',
 		);
 
 		expect(switchToggle).toBeChecked();
@@ -236,7 +236,7 @@ describe('PipelinePage container test', () => {
 		const addNewPipelineBtn = getByText('add_new_pipeline');
 		expect(addNewPipelineBtn).toBeInTheDocument();
 
-		const switchToggle = document.querySelectorAll('.ant-switch');
+		const switchToggle = document.querySelectorAll('[role="switch"]');
 
 		expect(switchToggle[0]).not.toBeChecked();
 		await fireEvent.click(switchToggle[0] as HTMLElement);

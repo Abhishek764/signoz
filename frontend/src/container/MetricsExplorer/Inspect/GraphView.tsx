@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Skeleton, Switch, Typography } from 'antd';
+import { Button, Skeleton, Typography } from 'antd';
+import { Switch } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -205,7 +206,7 @@ function GraphView({
 				</Button.Group>
 				<div className="view-toggle-button">
 					<Switch
-						checked={viewType === 'graph'}
+						value={viewType === 'graph'}
 						onChange={(checked): void => {
 							const newViewType = checked ? 'graph' : 'table';
 							setViewType(newViewType);

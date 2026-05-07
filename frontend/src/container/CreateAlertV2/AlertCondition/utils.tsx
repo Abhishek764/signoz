@@ -1,4 +1,5 @@
-import { Button, Flex, SelectProps, Switch, Typography } from 'antd';
+import { Button, Flex, SelectProps, Typography } from 'antd';
+import { Switch } from '@signozhq/ui';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -416,8 +417,8 @@ export function RoutingPolicyBanner({
 			</Typography.Text>
 			<div className="routing-policies-info-banner-right">
 				<Switch
-					checked={notificationSettings.routingPolicies}
-					data-testid="routing-policies-switch"
+					value={notificationSettings.routingPolicies}
+					testId="routing-policies-switch"
 					onChange={(value): void => {
 						setNotificationSettings({
 							type: 'SET_ROUTING_POLICIES',

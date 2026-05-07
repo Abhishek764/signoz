@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Switch, Typography } from 'antd';
+import { InputNumber, Typography } from 'antd';
+import { Switch } from '@signozhq/ui';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
@@ -60,8 +61,7 @@ export default function HistogramBucketsSection({
 						</span>
 					</Typography.Text>
 					<Switch
-						checked={combineHistogram}
-						size="small"
+						value={combineHistogram}
 						onChange={(checked): void => setCombineHistogram(checked)}
 					/>
 				</section>

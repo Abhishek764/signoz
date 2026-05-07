@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Switch, Typography } from 'antd';
+import { Typography } from 'antd';
+import { Switch } from '@signozhq/ui';
 import {
 	FillMode,
 	LineInterpolation,
@@ -72,7 +73,7 @@ export default function ChartAppearanceSection({
 							Display individual data points on the chart
 						</Typography.Text>
 					</div>
-					<Switch size="small" checked={showPoints} onChange={setShowPoints} />
+					<Switch value={showPoints} onChange={setShowPoints} />
 				</section>
 			)}
 			{allowSpanGaps && (

@@ -19,6 +19,42 @@ from fixtures.querier import (
 )
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
+# All keys returned by the trace list endpoint when selectFields is empty:
+# every intrinsic and calculated column, plus the merged `attributes` and
+# `resource` maps that wrap the contextual columns in the response layer.
+ALL_SELECT_FIELDS = [
+    # all intrinsic columns
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "trace_state",
+    "parent_span_id",
+    "flags",
+    "name",
+    "kind",
+    "kind_string",
+    "duration_nano",
+    "status_code",
+    "status_message",
+    "status_code_string",
+    "events",
+    "links",
+    # all calculated columns
+    "response_status_code",
+    "external_http_url",
+    "http_url",
+    "external_http_method",
+    "http_method",
+    "http_host",
+    "db_name",
+    "db_operation",
+    "has_error",
+    "is_remote",
+    # all contextual columns (merged in response layer)
+    "attributes",
+    "resource",
+]
+
 
 def test_traces_list(
     signoz: types.SigNoz,
@@ -473,7 +509,9 @@ def test_traces_list(
 @pytest.mark.parametrize(
     "payload,status_code,results",
     [
-        # Case 1: order by timestamp field which there in attributes as well
+        # Case 1: order by timestamp; empty selectFields returns the full
+        # response shape (all intrinsic + calculated columns plus the merged
+        # `attributes` and `resource` maps). x[3] (topic-service) is latest.
         pytest.param(
             {
                 "type": "builder_query",
@@ -481,24 +519,48 @@ def test_traces_list(
                     "name": "A",
                     "signal": "traces",
                     "disabled": False,
-                    "selectFields": [
-                        {"name": "span_id"},
-                        {"name": "span.timestamp"},
-                        {"name": "trace_id"},
-                    ],
                     "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
                     "limit": 1,
                 },
             },
             HTTPStatus.OK,
             lambda x: [
+                {
+                    **x[3].attribute_string,
+                    **x[3].attributes_number,
+                    **x[3].attributes_bool,
+                },  # attributes
+                x[3].db_name,
+                x[3].db_operation,
+                int(x[3].duration_nano),
+                x[3].events,
+                x[3].external_http_method,
+                x[3].external_http_url,
+                int(x[3].flags),
+                x[3].has_error,
+                x[3].http_host,
+                x[3].http_method,
+                x[3].http_url,
+                x[3].is_remote,
+                int(x[3].kind),
+                x[3].kind_string,
+                x[3].links,
+                x[3].name,
+                x[3].parent_span_id,
+                x[3].resources_string,
+                x[3].response_status_code,
                 x[3].span_id,
+                int(x[3].status_code),
+                x[3].status_code_string,
+                x[3].status_message,
                 format_timestamp(x[3].timestamp),
                 x[3].trace_id,
+                x[3].trace_state,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
-        # Case 2: order by attribute timestamp field which is there in attributes as well
-        # attribute.timestamp gets adjusted to span.timestamp
+        # Case 2: order by attribute.timestamp. The key resolves to the
+        # intrinsic span.timestamp column, so the latest span (x[3]) is
+        # returned with the same full response shape as Case 1.
         pytest.param(
             {
                 "type": "builder_query",
@@ -506,22 +568,43 @@ def test_traces_list(
                     "name": "A",
                     "signal": "traces",
                     "disabled": False,
-                    "selectFields": [
-                        {"name": "span_id"},
-                        {"name": "span.timestamp"},
-                        {"name": "trace_id"},
-                    ],
-                    "order": [
-                        {"key": {"name": "attribute.timestamp"}, "direction": "desc"}
-                    ],
+                    "order": [{"key": {"name": "attribute.timestamp"}, "direction": "desc"}],
                     "limit": 1,
                 },
             },
             HTTPStatus.OK,
             lambda x: [
+                {
+                    **x[3].attribute_string,
+                    **x[3].attributes_number,
+                    **x[3].attributes_bool,
+                },  # attributes
+                x[3].db_name,
+                x[3].db_operation,
+                int(x[3].duration_nano),
+                x[3].events,
+                x[3].external_http_method,
+                x[3].external_http_url,
+                int(x[3].flags),
+                x[3].has_error,
+                x[3].http_host,
+                x[3].http_method,
+                x[3].http_url,
+                x[3].is_remote,
+                int(x[3].kind),
+                x[3].kind_string,
+                x[3].links,
+                x[3].name,
+                x[3].parent_span_id,
+                x[3].resources_string,
+                x[3].response_status_code,
                 x[3].span_id,
+                int(x[3].status_code),
+                x[3].status_code_string,
+                x[3].status_message,
                 format_timestamp(x[3].timestamp),
                 x[3].trace_id,
+                x[3].trace_state,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 3: select timestamp with empty order by
@@ -705,38 +788,7 @@ def test_traces_list_with_corrupt_data(
         pytest.param(
             [],
             HTTPStatus.OK,
-            [
-                # all intrinsic column
-                "timestamp",
-                "trace_id",
-                "span_id",
-                "trace_state",
-                "parent_span_id",
-                "flags",
-                "name",
-                "kind",
-                "kind_string",
-                "duration_nano",
-                "status_code",
-                "status_message",
-                "status_code_string",
-                "events",
-                "links",
-                # all calculated columns
-                "response_status_code",
-                "external_http_url",
-                "http_url",
-                "external_http_method",
-                "http_method",
-                "http_host",
-                "db_name",
-                "db_operation",
-                "has_error",
-                "is_remote",
-                # all contextual columns (merged in response layer)
-                "attributes",
-                "resource",
-            ],
+            ALL_SELECT_FIELDS,
         ),
         pytest.param(
             [
@@ -751,10 +803,10 @@ def test_traces_list_with_select_fields(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
-    select_fields: List[dict],
+    insert_traces: Callable[[list[Traces]], None],
+    select_fields: list[dict],
     status_code: HTTPStatus,
-    expected_keys: List[str],
+    expected_keys: list[str],
 ) -> None:
     """
     Setup:
@@ -764,9 +816,7 @@ def test_traces_list_with_select_fields(
     1. Empty select fields should return all the fields.
     2. Non empty select field should return the select field along with timestamp, trace_id and span_id.
     """
-    traces = (
-        generate_traces_with_corrupt_metadata()
-    )  # using this as the data doesn't matter
+    traces = generate_traces_with_corrupt_metadata()  # using this as the data doesn't matter
 
     insert_traces(traces)
 
@@ -786,9 +836,7 @@ def test_traces_list_with_select_fields(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000
-        ),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[payload],
@@ -797,12 +845,8 @@ def test_traces_list_with_select_fields(
 
     if response.status_code == HTTPStatus.OK:
         data = response.json()
-        assert len(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == len(
-            expected_keys
-        )
-        assert set(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == set(
-            expected_keys
-        )
+        assert len(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == len(expected_keys)
+        assert set(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == set(expected_keys)
 
 
 @pytest.mark.parametrize(

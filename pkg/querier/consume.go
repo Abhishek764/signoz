@@ -434,12 +434,19 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 // mergeSpanAttributeColumns merges the typed ClickHouse span attribute columns
 // (attributes_string, attributes_number, attributes_bool, resources_string) into
 // unified "attributes" and "resource" keys, removing the raw columns.
+//
+// If none of the typed columns are present (e.g. the caller passed an explicit
+// selectFields list that didn't include any contextual attributes), we leave
+// the row untouched so the response shape mirrors what the user asked for.
 func mergeSpanAttributeColumns(data map[string]any) {
-	attrStr := data["attributes_string"]
-	attrNum := data["attributes_number"]
-	attrBool := data["attributes_bool"]
+	attrStr, hasStr := data["attributes_string"]
+	attrNum, hasNum := data["attributes_number"]
+	attrBool, hasBool := data["attributes_bool"]
 	// todo(nitya): move to resource json
-	resStr := data["resources_string"]
+	resStr, hasRes := data["resources_string"]
+	if !hasStr && !hasNum && !hasBool && !hasRes {
+		return
+	}
 
 	attributes := make(map[string]any)
 	if m, ok := attrStr.(map[string]string); ok {

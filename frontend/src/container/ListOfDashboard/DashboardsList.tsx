@@ -493,6 +493,7 @@ function DashboardsList(): JSX.Element {
 									placement="bottomRight"
 									arrow={false}
 									rootClassName="dashboard-actions"
+									trigger={['hover', 'click']}
 								>
 									<EllipsisVertical
 										className="dashboard-action-icon"

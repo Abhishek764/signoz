@@ -6,7 +6,13 @@ import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
-import { ArrowRight, CircleCheck, Plus, TriangleAlert, X } from '@signozhq/icons';
+import {
+	ArrowRight,
+	CircleCheck,
+	Plus,
+	TriangleAlert,
+	X,
+} from '@signozhq/icons';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';

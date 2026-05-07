@@ -107,7 +107,11 @@ function Search({
 					disabled={traces.filterLoading}
 					placeholder="Click to filter by tags"
 					type="search"
-					enterButton={<Flex align="center"><ChevronRight size="md" /></Flex>}
+					enterButton={
+						<Flex align="center">
+							<ChevronRight size="md" />
+						</Flex>
+					}
 					onSearch={(string): void => {
 						if (string.length === 0) {
 							updateTagVisibility(false);

@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react';
-import { ArrowUpToLine, Filter, Frown, RefreshCw,  Settings2 as SettingsIcon } from '@signozhq/icons';
+import {
+	ArrowUpToLine,
+	Filter,
+	Frown,
+	RefreshCw,
+	Settings2 as SettingsIcon,
+} from '@signozhq/icons';
 import {
 	Combobox,
 	ComboboxCommand,

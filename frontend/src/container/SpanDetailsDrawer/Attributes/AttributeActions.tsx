@@ -4,7 +4,13 @@ import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { useTraceActions } from 'hooks/trace/useTraceActions';
-import { ArrowDownToDot, ArrowUpFromDot, Copy, Ellipsis, Pin } from '@signozhq/icons';
+import {
+	ArrowDownToDot,
+	ArrowUpFromDot,
+	Copy,
+	Ellipsis,
+	Pin,
+} from '@signozhq/icons';
 
 interface AttributeRecord {
 	field: string;

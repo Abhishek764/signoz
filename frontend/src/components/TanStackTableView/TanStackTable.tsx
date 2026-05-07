@@ -583,7 +583,10 @@ function TanStackTableInner<TData>(
 							className={viewStyles.tanstackLoadingOverlay}
 							data-testid="tanstack-infinite-loader"
 						>
-							<Spin indicator={<Loader className="animate-spin" />} tip="Loading more..." />
+							<Spin
+								indicator={<Loader className="animate-spin" />}
+								tip="Loading more..."
+							/>
 						</div>
 					)}
 					{showPagination && pagination && (

@@ -6,7 +6,16 @@ import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowUpRight, Book, CreditCard, Github, LifeBuoy, MessageSquare, Slack, X } from '@signozhq/icons';
+import {
+	ArrowUpRight,
+	Book,
+	CreditCard,
+	Github,
+	LifeBuoy,
+	MessageSquare,
+	Slack,
+	X,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';

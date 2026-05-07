@@ -22,7 +22,13 @@ import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { ArrowUpRight, ChevronDown, ChevronRight, CircleAlert, Leaf } from '@signozhq/icons';
+import {
+	ArrowUpRight,
+	ChevronDown,
+	ChevronRight,
+	CircleAlert,
+	Leaf,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';

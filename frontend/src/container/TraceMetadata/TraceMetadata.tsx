@@ -5,7 +5,13 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import history from 'lib/history';
-import { ArrowLeft, BetweenHorizontalStart, CalendarClock, DraftingCompass, Timer } from '@signozhq/icons';
+import {
+	ArrowLeft,
+	BetweenHorizontalStart,
+	CalendarClock,
+	DraftingCompass,
+	Timer,
+} from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import './TraceMetadata.styles.scss';

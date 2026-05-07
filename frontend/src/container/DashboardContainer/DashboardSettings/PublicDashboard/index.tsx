@@ -9,7 +9,14 @@ import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Copy, ExternalLink, Globe, Info, LoaderCircle, Trash } from '@signozhq/icons';
+import {
+	Copy,
+	ExternalLink,
+	Globe,
+	Info,
+	LoaderCircle,
+	Trash,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';

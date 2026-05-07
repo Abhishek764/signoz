@@ -13,7 +13,13 @@ import railsPngUrl from '@/assets/Logos/rails.png';
 import rustPngUrl from '@/assets/Logos/rust.png';
 
 import { TGetStartedContentSection } from './types';
-import { AlignLeft, BellRing, ChartBar, LayoutDashboard, Volume2 } from '@signozhq/icons';
+import {
+	AlignLeft,
+	BellRing,
+	ChartBar,
+	LayoutDashboard,
+	Volume2,
+} from '@signozhq/icons';
 import { ApiFilled } from '@ant-design/icons';
 
 export const GetStartedContent = (): TGetStartedContentSection[] => {

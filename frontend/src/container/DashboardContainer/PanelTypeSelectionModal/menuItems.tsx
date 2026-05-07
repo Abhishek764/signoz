@@ -1,6 +1,13 @@
 import { Color } from '@signozhq/design-tokens';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
-import { BarChart, ChartLine, ChartPie, List, SquareSigma, Table } from '@signozhq/icons';
+import {
+	BarChart,
+	ChartLine,
+	ChartPie,
+	List,
+	SquareSigma,
+	Table,
+} from '@signozhq/icons';
 
 export const PanelTypesWithData: ItemsProps[] = [
 	{

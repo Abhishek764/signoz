@@ -478,7 +478,11 @@ function GeneralSettings({
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<Loader className="animate-spin" />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
@@ -521,7 +525,11 @@ function GeneralSettings({
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<Loader className="animate-spin" />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
@@ -563,7 +571,11 @@ function GeneralSettings({
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<Loader className="animate-spin" />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'logs' })}
 						</span>
 					) : (

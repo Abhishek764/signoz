@@ -7,7 +7,14 @@ import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce } from 'lodash-es';
-import { ArrowRight, ChevronDown, CircleAlert, LoaderCircle, Plus, Trash2 } from '@signozhq/icons';
+import {
+	ArrowRight,
+	ChevronDown,
+	CircleAlert,
+	LoaderCircle,
+	Plus,
+	Trash2,
+} from '@signozhq/icons';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';

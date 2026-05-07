@@ -23,7 +23,14 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
-import { Check, ChevronDown, ChevronUp, GripVertical, LockKeyhole, X } from '@signozhq/icons';
+import {
+	Check,
+	ChevronDown,
+	ChevronUp,
+	GripVertical,
+	LockKeyhole,
+	X,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import {
 	selectIsDashboardLocked,

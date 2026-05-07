@@ -1,6 +1,12 @@
 import { Button } from '@signozhq/ui';
 import cx from 'classnames';
-import { ChevronUp, Command, CornerDownLeft, LoaderCircle, Play } from '@signozhq/icons';
+import {
+	ChevronUp,
+	Command,
+	CornerDownLeft,
+	LoaderCircle,
+	Play,
+} from '@signozhq/icons';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import './RunQueryBtn.scss';

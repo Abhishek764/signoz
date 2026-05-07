@@ -18,6 +18,7 @@ export const METRIC_TYPE_TO_COLOR_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.exponentialhistogram]: Color.BG_AQUA_500,
 };
 
+//TODO: remove typeof Gauge when we export icons as React components instead of functions that return React components
 export const METRIC_TYPE_TO_ICON_MAP: Record<MetrictypesTypeDTO, typeof Gauge> =
 	{
 		[MetrictypesTypeDTO.gauge]: Gauge,

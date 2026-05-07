@@ -155,7 +155,6 @@ function LabelsInput({
 			) : (
 				<div className="labels-input__input-container">
 					<input
-						// oxlint-disable-next-line jsx_a11y/no-autofocus
 						autoFocus
 						type="text"
 						value={inputState.isKeyInput ? inputState.key : inputState.value}

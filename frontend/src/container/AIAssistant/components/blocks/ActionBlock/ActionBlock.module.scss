@@ -6,7 +6,7 @@
 }
 
 .zapIcon {
-	color: var(--bg-amber-400, #fbbf24);
+	color: var(--accent-amber);
 	flex-shrink: 0;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .paramKey {
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 	flex-shrink: 0;
 
 	&::after {
@@ -88,13 +88,13 @@
 	flex-shrink: 0;
 
 	&.ok {
-		color: var(--bg-forest-500, #22c55e);
+		color: var(--accent-forest);
 	}
 	&.no {
-		color: var(--l3-foreground, #6b7280);
+		color: var(--l3-foreground);
 	}
 	&.err {
-		color: var(--bg-cherry-500, #ef4444);
+		color: var(--accent-cherry);
 	}
 }
 

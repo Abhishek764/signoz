@@ -68,7 +68,7 @@ $radius: 4px;
 	font-size: 10px;
 	font-family: var(--font-mono, monospace);
 	font-weight: 500;
-	color: var(--l3-foreground, #6b7280);
+	color: var(--l3-foreground);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: $radius;
@@ -96,5 +96,5 @@ $radius: 4px;
 
 .toggleBtnActive {
 	background: var(--l2-background) !important;
-	color: var(--primary, var(--bg-robin-500)) !important;
+	color: var(--accent-primary) !important;
 }

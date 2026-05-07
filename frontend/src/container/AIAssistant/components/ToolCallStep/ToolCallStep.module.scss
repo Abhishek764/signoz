@@ -20,7 +20,7 @@ $radius: 4px;
 	background: transparent;
 	border: none;
 	cursor: pointer;
-	color: var(--l3-foreground, #6b7280);
+	color: var(--l3-foreground);
 	user-select: none;
 	transition: color 0.12s ease;
 
@@ -34,7 +34,7 @@ $radius: 4px;
 	color: inherit;
 
 	&.spin {
-		color: var(--primary, var(--bg-robin-500));
+		color: var(--accent-primary);
 		animation: spin 1s linear infinite;
 	}
 }
@@ -74,7 +74,7 @@ $radius: 4px;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	color: var(--l3-foreground, #6b7280);
+	color: var(--l3-foreground);
 }
 
 .toolName {

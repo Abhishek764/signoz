@@ -23,10 +23,10 @@
 	flex-shrink: 0;
 
 	&.ok {
-		color: var(--bg-forest-500, #22c55e);
+		color: var(--accent-forest);
 	}
 	&.no {
-		color: var(--bg-cherry-500, #ef4444);
+		color: var(--accent-cherry);
 	}
 }
 

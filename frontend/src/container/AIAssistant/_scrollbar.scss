@@ -4,7 +4,7 @@
 	transition: scrollbar-color 0.2s;
 
 	&:hover {
-		scrollbar-color: var(--bg-slate-400) transparent;
+		scrollbar-color: var(--l3-border) transparent;
 	}
 
 	&::-webkit-scrollbar {
@@ -23,10 +23,10 @@
 	}
 
 	&:hover::-webkit-scrollbar-thumb {
-		background: var(--bg-slate-400);
+		background: var(--l3-border);
 	}
 
 	&::-webkit-scrollbar-thumb:hover {
-		background: var(--bg-slate-300);
+		background: var(--l3-foreground);
 	}
 }

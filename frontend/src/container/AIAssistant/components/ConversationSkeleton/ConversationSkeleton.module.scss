@@ -46,7 +46,7 @@ $radius: 4px;
 		// message without committing to the full saturated brand color.
 		background: color-mix(
 			in srgb,
-			var(--primary, var(--bg-robin-500)) 18%,
+			var(--accent-primary) 18%,
 			transparent
 		);
 		border-bottom-right-radius: $radius;

@@ -28,7 +28,7 @@ $radius: 4px;
 
 .headerIcon {
 	flex-shrink: 0;
-	color: var(--primary, var(--bg-robin-500));
+	color: var(--accent-primary);
 }
 
 .headerLabel {
@@ -45,7 +45,7 @@ $radius: 4px;
 }
 
 .icon {
-	color: var(--bg-forest-500, #22c55e);
+	color: var(--accent-forest);
 	flex-shrink: 0;
 }
 
@@ -73,7 +73,7 @@ $radius: 4px;
 }
 
 .required {
-	color: var(--bg-cherry-500, #ef4444);
+	color: var(--accent-cherry);
 	margin-left: 2px;
 }
 
@@ -89,7 +89,7 @@ $radius: 4px;
 	transition: border-color 0.12s;
 
 	&:focus {
-		border-color: var(--primary, var(--bg-robin-500));
+		border-color: var(--accent-primary);
 	}
 }
 
@@ -124,7 +124,7 @@ $radius: 4px;
 
 .radio,
 .checkbox {
-	accent-color: var(--primary, var(--bg-robin-500));
+	accent-color: var(--accent-primary);
 	cursor: pointer;
 }
 

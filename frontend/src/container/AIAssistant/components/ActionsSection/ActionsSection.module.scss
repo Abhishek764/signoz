@@ -24,7 +24,7 @@ $radius: 4px;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 }
 
 .headingIcon {
@@ -60,7 +60,7 @@ $radius: 4px;
 
 	&:hover:not(:disabled) {
 		background: var(--l2-background);
-		border-color: var(--l3-border, var(--l2-border));
+		border-color: var(--l3-border);
 	}
 
 	&:disabled {
@@ -69,26 +69,26 @@ $radius: 4px;
 	}
 
 	&.error {
-		border-color: var(--bg-cherry-500, #ef4444);
-		color: var(--bg-cherry-500, #ef4444);
+		border-color: var(--accent-cherry);
+		color: var(--accent-cherry);
 	}
 
 	svg {
 		flex-shrink: 0;
-		color: var(--l3-foreground, var(--l2-foreground));
+		color: var(--l3-foreground);
 	}
 
 	&:hover:not(:disabled) svg {
-		color: var(--primary, var(--bg-robin-500));
+		color: var(--accent-primary);
 	}
 
 	&.error svg {
-		color: var(--bg-cherry-500, #ef4444);
+		color: var(--accent-cherry);
 	}
 }
 
 .spin {
-	color: var(--primary, var(--bg-robin-500)) !important;
+	color: var(--accent-primary) !important;
 	animation: spin 0.8s linear infinite;
 }
 
@@ -108,7 +108,7 @@ $radius: 4px;
 .chipState {
 	font-size: 10px;
 	font-weight: 500;
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	padding: 1px 5px;

@@ -42,7 +42,7 @@ $radius: 4px;
 
 .emptySubtitle {
 	font-size: 13px;
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 	margin: 0 0 12px;
 	max-width: 320px;
 	line-height: 1.45;
@@ -74,16 +74,16 @@ $radius: 4px;
 
 	&:hover {
 		background: var(--l2-background);
-		border-color: var(--l3-border, var(--l2-border));
+		border-color: var(--l3-border);
 		color: var(--l1-foreground);
 	}
 
 	svg {
 		flex-shrink: 0;
-		color: var(--l3-foreground, var(--l2-foreground));
+		color: var(--l3-foreground);
 	}
 
 	&:hover svg {
-		color: var(--primary, var(--bg-robin-500));
+		color: var(--accent-primary);
 	}
 }

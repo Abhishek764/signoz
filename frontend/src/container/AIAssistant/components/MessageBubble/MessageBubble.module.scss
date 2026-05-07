@@ -52,8 +52,8 @@ $radius: 4px;
 	max-width: 100%;
 
 	.user & {
-		background: var(--primary, var(--bg-robin-500));
-		color: #fff;
+		background: var(--accent-primary);
+		color: var(--accent-primary-foreground);
 		border-bottom-right-radius: $radius;
 	}
 
@@ -179,7 +179,7 @@ $radius: 4px;
 	}
 
 	a {
-		color: var(--primary, var(--bg-robin-500));
+		color: var(--accent-primary);
 		text-decoration: underline;
 		text-underline-offset: 2px;
 		text-decoration-thickness: 1px;

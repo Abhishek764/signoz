@@ -144,20 +144,20 @@ $radius: 4px;
 }
 
 .diffLineAdd {
-	background: rgba(34, 197, 94, 0.12);
+	background: color-mix(in srgb, var(--accent-forest), transparent 88%);
 	color: var(--l1-foreground);
 
 	.diffGutter {
-		color: var(--bg-forest-500, #22c55e);
+		color: var(--accent-forest);
 	}
 }
 
 .diffLineRemove {
-	background: rgba(239, 68, 68, 0.12);
+	background: color-mix(in srgb, var(--accent-cherry), transparent 88%);
 	color: var(--l1-foreground);
 
 	.diffGutter {
-		color: var(--bg-cherry-500, #ef4444);
+		color: var(--accent-cherry);
 	}
 }
 
@@ -165,7 +165,7 @@ $radius: 4px;
 // when one side has an added/removed line. Visible as a faint band so
 // the eye still tracks the row.
 .diffLinePlaceholder {
-	background: rgba(120, 120, 120, 0.06);
+	background: color-mix(in srgb, var(--l3-foreground), transparent 94%);
 	min-height: 18px;
 }
 
@@ -175,7 +175,7 @@ $radius: 4px;
 	text-align: center;
 	font-weight: 600;
 	user-select: none;
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 }
 
 .diffLineText {
@@ -192,10 +192,10 @@ $radius: 4px;
 	min-width: 0;
 
 	&.before .diffLabel {
-		color: var(--bg-cherry-500, #ef4444);
+		color: var(--accent-cherry);
 	}
 	&.after .diffLabel {
-		color: var(--bg-forest-500, #22c55e);
+		color: var(--accent-forest);
 	}
 }
 
@@ -271,10 +271,10 @@ $radius: 4px;
 	flex-shrink: 0;
 
 	&.ok {
-		color: var(--bg-forest-500, #22c55e);
+		color: var(--accent-forest);
 	}
 	&.no {
-		color: var(--l3-foreground, #6b7280);
+		color: var(--l3-foreground);
 	}
 }
 

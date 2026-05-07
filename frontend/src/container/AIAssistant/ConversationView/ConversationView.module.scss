@@ -12,7 +12,7 @@
 	justify-content: center;
 	gap: 8px;
 	font-size: 13px;
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 }
 
 .spinner {
@@ -44,7 +44,7 @@
 	font-size: 10px;
 	line-height: 1.4;
 	margin-top: 4px;
-	color: var(--l3-foreground, var(--l2-foreground));
+	color: var(--l3-foreground);
 	text-align: center;
 
 	&.compact {

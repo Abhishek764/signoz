@@ -30,7 +30,7 @@ import {
 	getDataTypes,
 	removeObjectFromString,
 } from './utils';
-//TODO: check this onces
+
 function BodyTitleRenderer({
 	title,
 	parentIsArray = false,

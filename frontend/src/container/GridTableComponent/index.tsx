@@ -175,7 +175,6 @@ function GridTableComponent({
 										overlayClassName: 'long-text-tooltip',
 									}}
 								/>
-								{/* //TODO: understand case for this */}
 								{hasMultipleMatches && (
 									<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
 										<CircleAlert className="value-graph-icon" />

@@ -435,7 +435,6 @@ function DashboardsList(): JSX.Element {
 
 							{action && (
 								<Popover
-									trigger="click"
 									content={
 										<div className="dashboard-action-content">
 											<section className="section-1">

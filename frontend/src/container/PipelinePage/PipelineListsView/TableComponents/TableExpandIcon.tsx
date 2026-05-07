@@ -9,21 +9,31 @@ function TableExpandIcon({
 	record,
 }: TableExpandIconProps): JSX.Element {
 	const handleOnExpand = (
-		e: React.MouseEvent<SVGSVGElement, MouseEvent>,
+		e: React.MouseEvent<HTMLElement, MouseEvent>,
 	): void => {
-		onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>);
+		onExpand(record, e);
 	};
 
 	if (expanded) {
 		return (
-			<Flex align="center" justify="center">
-				<ChevronDown size="2xl" onClick={handleOnExpand} />
+			<Flex
+				align="center"
+				justify="center"
+				data-testid="pipeline-row-collapse"
+				onClick={handleOnExpand}
+			>
+				<ChevronDown size="2xl" />
 			</Flex>
 		);
 	}
 	return (
-		<Flex align="center" justify="center">
-			<ChevronRight size="2xl" onClick={handleOnExpand} />
+		<Flex
+			align="center"
+			justify="center"
+			data-testid="pipeline-row-expand"
+			onClick={handleOnExpand}
+		>
+			<ChevronRight size="2xl" />
 		</Flex>
 	);
 }

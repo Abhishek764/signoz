@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
 
@@ -16,6 +16,13 @@ function LabelsInput({
 		isKeyInput: true,
 	});
 	const [isAdding, setIsAdding] = useState(false);
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (isAdding && inputState.isKeyInput) {
+			inputRef.current?.focus();
+		}
+	}, [inputState.isKeyInput, isAdding, labels]);
 
 	const handleAddLabelsClick = useCallback(() => {
 		setIsAdding(true);
@@ -133,6 +140,7 @@ function LabelsInput({
 							<button
 								type="button"
 								className="labels-input__remove-button"
+								aria-label={`Remove label ${key}`}
 								onClick={(): void => handleRemoveLabel(key)}
 							>
 								<X size="md" />
@@ -154,6 +162,9 @@ function LabelsInput({
 			) : (
 				<div className="labels-input__input-container">
 					<input
+						ref={inputRef}
+						// oxlint-disable-next-line jsx_a11y/no-autofocus
+						autoFocus
 						type="text"
 						value={inputState.isKeyInput ? inputState.key : inputState.value}
 						onChange={handleInputChange}

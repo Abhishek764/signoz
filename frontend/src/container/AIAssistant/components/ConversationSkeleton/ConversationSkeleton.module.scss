@@ -44,11 +44,7 @@ $radius: 4px;
 		max-width: 75%;
 		// Subtle primary tint so the right-side bubble reads as the user's
 		// message without committing to the full saturated brand color.
-		background: color-mix(
-			in srgb,
-			var(--accent-primary) 18%,
-			transparent
-		);
+		background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
 		border-bottom-right-radius: $radius;
 		color: var(--l1-foreground);
 	}

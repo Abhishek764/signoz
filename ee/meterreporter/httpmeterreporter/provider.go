@@ -402,7 +402,7 @@ func (provider *Provider) runPhase(ctx context.Context, orgID valuer.UUID, licen
 			)
 			collectSpan.End()
 			provider.metrics.collectErrors.Add(ctx, 1, phaseAttr)
-			provider.settings.Logger().WarnContext(ctx, "meter collection failed",
+			provider.settings.Logger().ErrorContext(ctx, "meter collection failed",
 				errors.Attr(err),
 				slog.String("meter", meterName),
 				slog.String("org_id", orgID.StringValue()),

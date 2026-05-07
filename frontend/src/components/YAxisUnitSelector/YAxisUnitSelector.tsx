@@ -85,11 +85,7 @@ function YAxisUnitSelector({
 				suffixIcon={
 					incompatibleUnitMessage ? (
 						<Tooltip title={incompatibleUnitMessage}>
-							<SolidAlertTriangle
-								role="img"
-								aria-label="warning"
-								size="md"
-							/>
+							<SolidAlertTriangle role="img" aria-label="warning" size="md" />
 						</Tooltip>
 					) : undefined
 				}

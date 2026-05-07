@@ -80,9 +80,7 @@ describe('HeaderRightSection', () => {
 		expect(buttons).toHaveLength(3);
 		expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
 
-		expect(
-			screen.getByRole('button', { name: /feedback/i }),
-		).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /feedback/i })).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', { name: /announcements/i }),
 		).toBeInTheDocument();
@@ -106,9 +104,7 @@ describe('HeaderRightSection', () => {
 		expect(
 			screen.queryByRole('button', { name: /announcements/i }),
 		).not.toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /feedback/i }),
-		).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /feedback/i })).toBeInTheDocument();
 	});
 
 	it('should open feedback modal and log event when feedback button is clicked', async () => {

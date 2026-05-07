@@ -87,9 +87,7 @@ describe('RunQueryBtn', () => {
 			/>,
 		);
 		expect(screen.getByTestId('cmd-hint-modifier-non-mac')).toBeInTheDocument();
-		expect(
-			screen.queryByTestId('cmd-hint-modifier-mac'),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('cmd-hint-modifier-mac')).not.toBeInTheDocument();
 		expect(screen.getByTestId('cmd-hint-enter')).toBeInTheDocument();
 	});
 

@@ -2,12 +2,14 @@ package impldashboard
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/listfilter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -122,6 +124,127 @@ func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		DashboardID:      row.ID.StringValue(),
 	}
 	return storable, public, nil
+}
+
+// ListV2 emits the joined dashboard ⨝ pinned_dashboard ⨝ public_dashboard
+// query the spec calls for. Aliases:
+//
+//	dashboard         AS d    — the visitor expects this
+//	pinned_dashboard  AS pin  — only used inside this query
+//	public_dashboard  AS pd   — the visitor expects this
+//
+// Sort is "is_pinned DESC, <sort> <order>" so pinned dashboards float to the
+// top inside the requested ordering. Title-sort goes through the same
+// JSONExtractString path the visitor uses for name/description filtering.
+func (store *store) ListV2(
+	ctx context.Context,
+	orgID valuer.UUID,
+	userID valuer.UUID,
+	params *dashboardtypes.ListDashboardsV2Params,
+) ([]*dashboardtypes.DashboardListRow, bool, error) {
+	compiled, err := listfilter.Compile(params.Query, store.sqlstore.Formatter())
+	if err != nil {
+		return nil, false, err
+	}
+	type listedRow struct {
+		bun.BaseModel `bun:"table:dashboard,alias:d"`
+
+		ID        valuer.UUID                          `bun:"id"`
+		OrgID     valuer.UUID                          `bun:"org_id"`
+		Data      dashboardtypes.StorableDashboardData `bun:"data"`
+		Locked    bool                                 `bun:"locked"`
+		CreatedAt time.Time                            `bun:"created_at"`
+		CreatedBy string                               `bun:"created_by"`
+		UpdatedAt time.Time                            `bun:"updated_at"`
+		UpdatedBy string                               `bun:"updated_by"`
+
+		IsPinned bool `bun:"is_pinned"`
+
+		PublicID               *valuer.UUID `bun:"public_id"`
+		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
+		PublicUpdatedAt        *time.Time   `bun:"public_updated_at"`
+		PublicTimeRangeEnabled *bool        `bun:"public_time_range_enabled"`
+		PublicDefaultTimeRange *string      `bun:"public_default_time_range"`
+	}
+
+	rows := make([]*listedRow, 0)
+
+	q := store.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&rows).
+		ColumnExpr("d.id, d.org_id, d.data, d.locked, d.created_at, d.created_by, d.updated_at, d.updated_by").
+		ColumnExpr("CASE WHEN pin.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_pinned").
+		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
+		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = d.id", userID).
+		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("d.deleted_at IS NULL")
+
+	if compiled != nil {
+		q = q.Where(compiled.SQL, compiled.Args...)
+	}
+
+	sortExpr, err := store.sortExprForListV2(params.Sort)
+	if err != nil {
+		return nil, false, err
+	}
+	q = q.
+		OrderExpr("is_pinned DESC").
+		OrderExpr(sortExpr + " " + strings.ToUpper(string(params.Order))).
+		Limit(params.Limit + 1).
+		Offset(params.Offset)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, false, err
+	}
+
+	hasMore := len(rows) > params.Limit
+	if hasMore {
+		rows = rows[:params.Limit]
+	}
+
+	out := make([]*dashboardtypes.DashboardListRow, len(rows))
+	for i, r := range rows {
+		row := &dashboardtypes.DashboardListRow{
+			Dashboard: &dashboardtypes.StorableDashboard{
+				Identifiable:  types.Identifiable{ID: r.ID},
+				TimeAuditable: types.TimeAuditable{CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt},
+				UserAuditable: types.UserAuditable{CreatedBy: r.CreatedBy, UpdatedBy: r.UpdatedBy},
+				OrgID:         r.OrgID,
+				Data:          r.Data,
+				Locked:        r.Locked,
+			},
+			Pinned: r.IsPinned,
+		}
+		if r.PublicID != nil {
+			row.Public = &dashboardtypes.StorablePublicDashboard{
+				Identifiable:     types.Identifiable{ID: *r.PublicID},
+				TimeAuditable:    types.TimeAuditable{CreatedAt: *r.PublicCreatedAt, UpdatedAt: *r.PublicUpdatedAt},
+				TimeRangeEnabled: *r.PublicTimeRangeEnabled,
+				DefaultTimeRange: *r.PublicDefaultTimeRange,
+				DashboardID:      r.ID.StringValue(),
+			}
+		}
+		out[i] = row
+	}
+	return out, hasMore, nil
+}
+
+// sortExprForListV2 maps a sort enum to the SQL expression to plug into
+// ORDER BY. Title-sort routes through the SQLFormatter so it stays
+// dialect-aware (matches what listfilter/visitor does for the name filter).
+func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, error) {
+	switch sort {
+	case dashboardtypes.ListSortUpdatedAt:
+		return "d.updated_at", nil
+	case dashboardtypes.ListSortCreatedAt:
+		return "d.created_at", nil
+	case dashboardtypes.ListSortName:
+		return string(store.sqlstore.Formatter().JSONExtractString("d.data", "$.data.display.name")), nil
+	}
+	return "", errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardListInvalid,
+		"unsupported sort field %q", sort)
 }
 
 func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.StorableDashboardData) error {
@@ -330,4 +453,52 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		return cb(ctx)
 	})
+}
+
+// PinForUser combines the count check, the existence check, and the upsert in
+// a single statement so the limit gate and the insert can't drift between two
+// round-trips.
+//
+//	pin exists? | count < 10? | WHERE passes?           | effect                            | rows
+//	------------|-------------|-------------------------|-----------------------------------|-----
+//	no          | yes         | yes (count branch)      | INSERT new row                    | 1
+//	no          | no          | no                      | nothing (limit hit)               | 0
+//	yes         | yes         | yes (count branch)      | INSERT → conflict → no-op UPDATE  | 1
+//	yes         | no          | yes (EXISTS OR branch)  | INSERT → conflict → no-op UPDATE  | 1
+//
+// rows = 0 is the only signal of a real limit hit.
+func (store *store) PinForUser(ctx context.Context, pd *dashboardtypes.PinnedDashboard) error {
+	res, err := store.sqlstore.BunDBCtx(ctx).NewRaw(`
+		INSERT INTO pinned_dashboard (user_id, dashboard_id, org_id, pinned_at)
+		SELECT ?, ?, ?, ?
+		WHERE (SELECT COUNT(*) FROM pinned_dashboard WHERE user_id = ?) < ?
+		   OR EXISTS (SELECT 1 FROM pinned_dashboard WHERE user_id = ? AND dashboard_id = ?)
+		ON CONFLICT (user_id, dashboard_id) DO UPDATE SET user_id = EXCLUDED.user_id
+	`,
+		pd.UserID, pd.DashboardID, pd.OrgID, pd.PinnedAt,
+		pd.UserID, dashboardtypes.MaxPinnedDashboardsPerUser,
+		pd.UserID, pd.DashboardID,
+	).Exec(ctx)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePinnedDashboardLimitHit,
+			"cannot pin more than %d dashboards", dashboardtypes.MaxPinnedDashboardsPerUser)
+	}
+	return nil
+}
+
+func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error {
+	_, err := store.sqlstore.BunDBCtx(ctx).
+		NewDelete().
+		Model((*dashboardtypes.PinnedDashboard)(nil)).
+		Where("user_id = ?", userID).
+		Where("dashboard_id = ?", dashboardID).
+		Exec(ctx)
+	return err
 }

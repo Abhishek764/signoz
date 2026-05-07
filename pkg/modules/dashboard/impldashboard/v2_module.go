@@ -2,6 +2,7 @@ package impldashboard
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -45,6 +46,27 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 
 	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
+}
+
+// ListV2 calls the store for the joined page (the store owns DSL compilation
+// and limit+1/hasMore detection), batch-fetches tags for the returned
+// dashboard ids, and hands off to the type-side constructor for assembly.
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	rows, hasMore, err := module.store.ListV2(ctx, orgID, userID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardIDs := make([]valuer.UUID, len(rows))
+	for i, r := range rows {
+		dashboardIDs[i] = r.Dashboard.ID
+	}
+	tagsByEntity, err := module.tagModule.ListForEntities(ctx, dashboardIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardV2(rows, tagsByEntity, hasMore)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
@@ -175,4 +197,20 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 		return err
 	}
 	return module.store.LockUnlockV2(ctx, orgID, id, lock, updatedBy)
+}
+
+func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	if _, err := module.GetV2(ctx, orgID, id); err != nil {
+		return err
+	}
+	return module.store.PinForUser(ctx, &dashboardtypes.PinnedDashboard{
+		UserID:      userID,
+		DashboardID: id,
+		OrgID:       orgID,
+		PinnedAt:    time.Now(),
+	})
+}
+
+func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
+	return module.store.UnpinForUser(ctx, userID, id)
 }

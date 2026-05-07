@@ -61,6 +61,8 @@ type Module interface {
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
+	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
+
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
@@ -70,6 +72,10 @@ type Module interface {
 	CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error)
 
 	UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error)
+
+	PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error
+
+	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -100,6 +106,8 @@ type Handler interface {
 
 	GetV2(http.ResponseWriter, *http.Request)
 
+	ListV2(http.ResponseWriter, *http.Request)
+
 	UpdateV2(http.ResponseWriter, *http.Request)
 
 	PatchV2(http.ResponseWriter, *http.Request)
@@ -111,4 +119,8 @@ type Handler interface {
 	CreatePublicV2(http.ResponseWriter, *http.Request)
 
 	UpdatePublicV2(http.ResponseWriter, *http.Request)
+
+	PinV2(http.ResponseWriter, *http.Request)
+
+	UnpinV2(http.ResponseWriter, *http.Request)
 }

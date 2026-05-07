@@ -19,6 +19,7 @@ export const METRIC_TYPE_TO_COLOR_MAP: Record<MetrictypesTypeDTO, string> = {
 };
 
 //TODO: remove typeof Gauge when we export icons as React components instead of functions that return React components
+// https://github.com/SigNoz/icons/issues/50
 export const METRIC_TYPE_TO_ICON_MAP: Record<MetrictypesTypeDTO, typeof Gauge> =
 	{
 		[MetrictypesTypeDTO.gauge]: Gauge,

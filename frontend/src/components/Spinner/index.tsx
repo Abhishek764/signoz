@@ -11,6 +11,7 @@ function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
 				spinning
 				size={size}
 				tip={tip}
+				aria-label="loading"
 				indicator={<Loader className="animate-spin" size="md" />}
 			/>
 		</SpinerStyle>

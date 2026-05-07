@@ -61,8 +61,17 @@ function TextToolTip({
 		[isDarkMode],
 	);
 	// Use provided icons or fallback to default icons
-	const defaultFilledIcon = <CircleHelp size="lg" style={iconStyle} />;
-	const defaultOutlinedIcon = <CircleHelp size="lg" style={iconOutlinedStyle} />;
+	const defaultFilledIcon = (
+		<CircleHelp role="img" aria-label="Help" size="lg" style={iconStyle} />
+	);
+	const defaultOutlinedIcon = (
+		<CircleHelp
+			role="img"
+			aria-label="Help"
+			size="lg"
+			style={iconOutlinedStyle}
+		/>
+	);
 
 	const renderIcon = (): ReactNode => {
 		if (useFilledIcon) {

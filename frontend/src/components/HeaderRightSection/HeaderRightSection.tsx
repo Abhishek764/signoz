@@ -105,6 +105,7 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
+						aria-label="Announcements"
 						icon={<Inbox size={14} />}
 						className="periscope-btn ghost announcements-btn"
 						onClick={(): void => {

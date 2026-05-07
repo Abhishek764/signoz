@@ -60,8 +60,12 @@ function RunQueryBtn({
 		>
 			{label || 'Run Query'}
 			<div className="cmd-hint">
-				{isMac ? <Command size={12} /> : <ChevronUp size={12} />}
-				<CornerDownLeft size={12} />
+				{isMac ? (
+					<Command size={12} data-testid="cmd-hint-modifier-mac" />
+				) : (
+					<ChevronUp size={12} data-testid="cmd-hint-modifier-non-mac" />
+				)}
+				<CornerDownLeft size={12} data-testid="cmd-hint-enter" />
 			</div>
 		</Button>
 	);

@@ -29,17 +29,22 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 		case 'in_progress':
 			return (
 				<Spin
+					data-testid="deployment-icon-in-progress"
 					indicator={<Loader style={{ fontSize: 15 }} className="animate-spin" />}
 				/>
 			);
 		case 'deployed':
-			return <SolidCheckCircle2 size="md" />;
+			return (
+				<SolidCheckCircle2 size="md" data-testid="deployment-icon-deployed" />
+			);
 		case 'dirty':
-			return <SolidAlertOctagon size="md" />;
+			return (
+				<SolidAlertOctagon size="md" data-testid="deployment-icon-dirty" />
+			);
 		case 'failed':
-			return <SolidXCircle size="md" />;
+			return <SolidXCircle size="md" data-testid="deployment-icon-failed" />;
 		case 'unknown':
-			return <CircleMinus size="md" />;
+			return <CircleMinus size="md" data-testid="deployment-icon-unknown" />;
 		default:
 			return <span />;
 	}

@@ -26,6 +26,8 @@ exports[`PipelinePage container test should render CreatePipelineButton section 
     class="c0"
   >
     <svg
+      aria-label="Help"
+      role="img"
       style="font-size: 1rem; color: rgba(255, 255, 255, 0.835);"
     />
     <button

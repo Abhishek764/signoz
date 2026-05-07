@@ -1734,6 +1734,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
 									<RefreshCw
+										data-testid="retry-button"
 										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();

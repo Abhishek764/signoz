@@ -113,14 +113,26 @@ jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	default: jest.fn(() => jest.fn()),
 }));
 
-jest.mock('@signozhq/icons', () => ({
-	...jest.requireActual('@signozhq/icons'),
-	ConciergeBell: (): JSX.Element => <svg data-testid="lucide-concierge-bell" />,
-	SquareArrowOutUpRight: (): JSX.Element => (
-		<svg data-testid="lucide-square-arrow-out-up-right" />
-	),
-	Plus: (): JSX.Element => <svg data-testid="lucide-plus" />,
-}));
+jest.mock('@signozhq/icons', () => {
+	const IconMock = (props: React.SVGProps<SVGSVGElement>): JSX.Element => (
+		<svg {...props} />
+	);
+	const overrides: Record<string, unknown> = {
+		__esModule: true,
+		default: IconMock,
+		SquareArrowOutUpRight: (): JSX.Element => (
+			<svg data-testid="lucide-square-arrow-out-up-right" />
+		),
+	};
+	return new Proxy(overrides, {
+		get(target, prop: string | symbol): unknown {
+			if (prop in target) {
+				return target[prop as string];
+			}
+			return IconMock;
+		},
+	});
+});
 
 describe('RightContainer - Alerts Section', () => {
 	const defaultProps: RightContainerProps = {

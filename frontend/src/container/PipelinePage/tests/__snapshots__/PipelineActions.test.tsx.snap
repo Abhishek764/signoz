@@ -18,12 +18,15 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
     class="c0"
   >
     <svg
+      data-testid="pipeline-preview-action"
       style="font-size: 1rem;"
     />
     <svg
+      data-testid="pipeline-edit-action"
       style="font-size: 1rem;"
     />
     <svg
+      data-testid="pipeline-delete-action"
       style="font-size: 1rem;"
     />
   </div>

@@ -28,7 +28,12 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 
 	return (
 		<>
-			<EyeOpen size="xl" style={iconStyle} onClick={onOpenPreview} />
+			<EyeOpen
+				size="xl"
+				style={iconStyle}
+				onClick={onOpenPreview}
+				data-testid="pipeline-preview-action"
+			/>
 			<Modal
 				open={isModalOpen}
 				onCancel={closeModal}

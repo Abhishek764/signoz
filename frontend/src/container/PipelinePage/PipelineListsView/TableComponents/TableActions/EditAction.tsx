@@ -6,11 +6,23 @@ function EditAction({
 	editAction,
 }: EditActionProps): JSX.Element {
 	if (isPipelineAction) {
-		return <PencilLine size="lg" style={iconStyle} onClick={editAction} />;
+		return (
+			<PencilLine
+				size="lg"
+				style={iconStyle}
+				onClick={editAction}
+				data-testid="pipeline-edit-action"
+			/>
+		);
 	}
 	return (
 		<span key="edit-action">
-			<PencilLine size="lg" style={smallIconStyle} onClick={editAction} />
+			<PencilLine
+				size="lg"
+				style={smallIconStyle}
+				onClick={editAction}
+				data-testid="pipeline-edit-action"
+			/>
 		</span>
 	);
 }

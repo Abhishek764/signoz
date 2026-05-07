@@ -99,15 +99,30 @@ jest.mock('hooks/dashboard/useGetResolvedText', () => {
 	};
 });
 
-jest.mock('@signozhq/icons', () => ({
-	...jest.requireActual('@signozhq/icons'),
-	CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
-	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
-	X: (): JSX.Element => <svg data-testid="lucide-x" />,
-	SquareArrowOutUpRight: (): JSX.Element => (
-		<svg data-testid="lucide-square-arrow-out-up-right" />
-	),
-}));
+jest.mock('@signozhq/icons', () => {
+	const IconMock = (props: React.SVGProps<SVGSVGElement>): JSX.Element => (
+		<svg {...props} />
+	);
+	const overrides: Record<string, unknown> = {
+		__esModule: true,
+		default: IconMock,
+		CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
+		TriangleAlert: (): JSX.Element => (
+			<svg data-testid="lucide-triangle-alert" />
+		),
+		SquareArrowOutUpRight: (): JSX.Element => (
+			<svg data-testid="lucide-square-arrow-out-up-right" />
+		),
+	};
+	return new Proxy(overrides, {
+		get(target, prop: string | symbol): unknown {
+			if (prop in target) {
+				return target[prop as string];
+			}
+			return IconMock;
+		},
+	});
+});
 jest.mock('antd', () => ({
 	...jest.requireActual('antd'),
 	Spin: (): JSX.Element => <div data-testid="antd-spin" />,

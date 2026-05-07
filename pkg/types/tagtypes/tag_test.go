@@ -166,6 +166,10 @@ func (f *fakeStore) ListByEntity(_ context.Context, _ valuer.UUID) ([]*Tag, erro
 	return nil, nil
 }
 
+func (f *fakeStore) ListByEntities(_ context.Context, _ []valuer.UUID) (map[valuer.UUID][]*Tag, error) {
+	return nil, nil
+}
+
 func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ valuer.UUID, _ []valuer.UUID) error {
 	return nil
 }

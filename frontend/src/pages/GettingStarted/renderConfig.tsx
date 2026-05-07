@@ -102,12 +102,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send metrics to SigNoz',
-					icon: <ChartBar style={{ fontSize: '3.5rem' }} />,
+					icon: <ChartBar size="lg" />,
 					url: 'https://signoz.io/docs/userguide/send-metrics/',
 				},
 				{
 					title: 'Create and Manage Dashboards',
-					icon: <LayoutDashboard style={{ fontSize: '3.5rem' }} />,
+					icon: <LayoutDashboard size="lg" />,
 					url: 'https://signoz.io/docs/userguide/manage-dashboards-and-panels/',
 				},
 			],
@@ -117,12 +117,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send your logs to SigNoz',
-					icon: <AlignLeft style={{ fontSize: '3.5rem' }} />,
+					icon: <AlignLeft size="lg" />,
 					url: 'https://signoz.io/docs/userguide/logs/',
 				},
 				{
 					title: 'Existing log collectors to SigNoz',
-					icon: <Unplug style={{ fontSize: '3.5rem' }} />,
+					icon: <Unplug size="lg" />,
 					url: 'https://signoz.io/docs/userguide/fluentbit_to_signoz/',
 				},
 			],
@@ -132,12 +132,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Create alert rules on metrics',
-					icon: <BellRing style={{ fontSize: '3.5rem' }} />,
+					icon: <BellRing size="lg" />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/',
 				},
 				{
 					title: 'Configure alert notification channels',
-					icon: <Volume2 style={{ fontSize: '3.5rem' }} />,
+					icon: <Volume2 size="lg" />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
 				},
 			],

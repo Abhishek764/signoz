@@ -954,7 +954,7 @@ function NewWidget({
 				title={
 					isQueryModified ? (
 						<Space>
-							<SolidAlertTriangle style={{ fontSize: '16px', color: '#fdd600' }} />
+							<SolidAlertTriangle size={16} color="#fdd600" />
 							Unsaved Changes
 						</Space>
 					) : (
@@ -985,7 +985,7 @@ function NewWidget({
 			<Modal
 				title={
 					<Space>
-						<SolidAlertTriangle style={{ fontSize: '16px', color: '#fdd600' }} />
+						<SolidAlertTriangle size={16} color="#fdd600" />
 						Unsaved Changes
 					</Space>
 				}

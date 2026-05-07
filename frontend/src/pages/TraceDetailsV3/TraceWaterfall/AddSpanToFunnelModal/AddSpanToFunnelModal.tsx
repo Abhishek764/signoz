@@ -1,6 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui';
-import { LoaderCircle } from '@signozhq/icons';
 import { Input, Spin } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -10,7 +9,7 @@ import {
 	useFunnelsList,
 } from 'hooks/TracesFunnels/useFunnels';
 import { isEqual } from 'lodash-es';
-import { ArrowLeft, Check, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Search, LoaderCircle } from '@signozhq/icons';
 import FunnelConfiguration from 'pages/TracesFunnelDetails/components/FunnelConfiguration/FunnelConfiguration';
 import { TracesFunnelsContentRenderer } from 'pages/TracesFunnels';
 import CreateFunnel from 'pages/TracesFunnels/components/CreateFunnel/CreateFunnel';

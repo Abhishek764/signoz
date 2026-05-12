@@ -3,11 +3,11 @@ import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
-import { Info } from 'lucide-react';
+import { Info } from '@signozhq/icons';
 
 import {
 	TREEMAP_HEIGHT,

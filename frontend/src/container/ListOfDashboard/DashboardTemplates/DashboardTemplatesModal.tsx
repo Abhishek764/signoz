@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { ChangeEvent, useState } from 'react';
 import { Button, Input, Modal } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import ApacheIcon from 'assets/CustomIcons/ApacheIcon';
 import DockerIcon from 'assets/CustomIcons/DockerIcon';
 import ElasticSearchIcon from 'assets/CustomIcons/ElasticSearchIcon';
@@ -13,7 +13,13 @@ import NginxIcon from 'assets/CustomIcons/NginxIcon';
 import PostgreSQLIcon from 'assets/CustomIcons/PostgreSQLIcon';
 import RedisIcon from 'assets/CustomIcons/RedisIcon';
 import cx from 'classnames';
-import { ConciergeBell, DraftingCompass, Drill, Plus, X } from 'lucide-react';
+import {
+	ConciergeBell,
+	DraftingCompass,
+	Drill,
+	Plus,
+	X,
+} from '@signozhq/icons';
 import { DashboardTemplate } from 'types/api/dashboard/getAll';
 
 import blankDashboardTemplatePreviewUrl from '@/assets/Images/blankDashboardTemplatePreview.svg';

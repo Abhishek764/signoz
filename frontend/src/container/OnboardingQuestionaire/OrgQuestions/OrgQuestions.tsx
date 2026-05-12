@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import {
-	Button,
-	Input,
 	RadioGroup,
 	RadioGroupItem,
 	RadioGroupLabel,
-} from '@signozhq/ui';
-import { Typography } from '@signozhq/ui';
+} from '@signozhq/ui/radio-group';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import '../OnboardingQuestionaire.styles.scss';
 

@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty, isObject } from 'lodash-es';
-import { Check, Zap } from 'lucide-react';
+import { Check, Zap } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { getTagToken } from '../QueryBuilderSearch/utils';

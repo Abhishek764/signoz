@@ -1,7 +1,7 @@
 import { MouseEvent, useCallback } from 'react';
-import { DeleteOutlined } from '@ant-design/icons';
+import { Trash2 } from '@signozhq/icons';
 import { Col, Row, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -32,7 +32,7 @@ function MenuItemGenerator({
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
 
-	const onDeleteHandler = (event: MouseEvent<HTMLElement>): void => {
+	const onDeleteHandler = (event: MouseEvent<SVGSVGElement>): void => {
 		event.stopPropagation();
 		deleteViewHandler({
 			deleteViewAsync,
@@ -87,7 +87,12 @@ function MenuItemGenerator({
 				</Col>
 				<Col span={2}>
 					<Typography.Link>
-						<DeleteOutlined onClick={onDeleteHandler} />
+						<Trash2
+							role="img"
+							aria-label="Delete view"
+							onClick={onDeleteHandler}
+							size="md"
+						/>
 					</Typography.Link>
 				</Col>
 			</Row>

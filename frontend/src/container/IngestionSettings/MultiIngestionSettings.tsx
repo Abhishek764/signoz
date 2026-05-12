@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Badge, Button } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import {
 	Col,
 	Collapse,
@@ -21,7 +22,7 @@ import {
 	Tag,
 	Tooltip,
 } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {
@@ -60,16 +61,15 @@ import {
 	CalendarClock,
 	Check,
 	Copy,
-	Infinity,
+	Infinity as InfinityIcon,
 	Minus,
 	PenLine,
 	Plus,
-	PlusIcon,
 	Search,
 	Trash2,
 	TriangleAlert,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -1151,7 +1151,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		variant="outlined"
 																		size="sm"
 																		color="secondary"
-																		prefix={<PlusIcon size={12} />}
+																		prefix={<Plus size={12} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
 																	>
@@ -1228,7 +1228,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1260,7 +1260,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1318,7 +1318,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1350,7 +1350,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1439,7 +1439,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 
@@ -1458,7 +1458,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 																		</div>
@@ -1505,7 +1505,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 
@@ -1524,7 +1524,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 																		</div>

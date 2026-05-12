@@ -1,9 +1,9 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { PrecisionOption } from 'components/Graph/types';
 import { PanelDisplay } from 'constants/queryBuilder';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from '@signozhq/icons';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
 import { ColumnUnitSelector } from '../../ColumnUnitSelector/ColumnUnitSelector';

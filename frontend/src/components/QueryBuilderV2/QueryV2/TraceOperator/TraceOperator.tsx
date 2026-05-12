@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { Button, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from '@signozhq/icons';
 import {
 	IBuilderQuery,
 	IBuilderTraceOperator,

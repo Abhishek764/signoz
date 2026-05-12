@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import { FeatureKeys } from 'constants/features';
@@ -16,7 +16,7 @@ import {
 	MessageSquare,
 	Slack,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';

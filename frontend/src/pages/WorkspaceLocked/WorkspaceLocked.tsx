@@ -16,7 +16,7 @@ import {
 	Space,
 	Tabs,
 } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
@@ -24,7 +24,7 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
-import { CircleArrowRight } from 'lucide-react';
+import { CircleArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';

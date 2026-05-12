@@ -1,9 +1,9 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Plus } from '@signozhq/icons';
+import { Tooltip, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
@@ -78,12 +78,10 @@ function AlertChannels(): JSX.Element {
 								: undefined
 						}
 					>
-						<Button
-							onClick={onToggleHandler}
-							icon={<PlusOutlined />}
-							disabled={!addNewChannelPermission}
-						>
-							{t('button_new_channel')}
+						<Button onClick={onToggleHandler} disabled={!addNewChannelPermission}>
+							<Flex align="center" justify="center" gap={4}>
+								<Plus size="md" /> {t('button_new_channel')}
+							</Flex>
 						</Button>
 					</Tooltip>
 				</RightActionContainer>

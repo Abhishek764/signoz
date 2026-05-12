@@ -2,7 +2,9 @@ import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
-import { Dropdown, Input, toast } from '@signozhq/ui';
+import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { darkTheme, lightTheme, themeExtension } from './constants';
@@ -54,6 +56,13 @@ export interface PrettyViewProps {
 	searchable?: boolean;
 	showPinned?: boolean;
 	drawerKey?: string;
+	/**
+	 * Controlled list of pinned key paths (each entry is `JSON.stringify(path)`).
+	 * When provided, PrettyView delegates persistence to the caller via
+	 * `onPinnedFieldsChange` and skips its own localStorage I/O.
+	 */
+	pinnedFieldsValue?: string[];
+	onPinnedFieldsChange?: (next: string[]) => void;
 }
 
 function PrettyView({
@@ -63,6 +72,8 @@ function PrettyView({
 	searchable = true,
 	showPinned = false,
 	drawerKey = 'default',
+	pinnedFieldsValue,
+	onPinnedFieldsChange,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -73,7 +84,10 @@ function PrettyView({
 		pinnedEntries,
 		pinnedData,
 		displayKeyToForwardPath,
-	} = usePinnedFields(data, drawerKey);
+	} = usePinnedFields(data, drawerKey, {
+		value: pinnedFieldsValue,
+		onChange: onPinnedFieldsChange,
+	});
 
 	const filteredPinnedData = useMemo(() => {
 		const trimmed = searchQuery.trim();

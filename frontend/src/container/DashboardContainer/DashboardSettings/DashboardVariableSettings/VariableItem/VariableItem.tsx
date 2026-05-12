@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Switch, Tag } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
@@ -30,7 +30,7 @@ import {
 	LayoutList,
 	Pyramid,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {

@@ -10,7 +10,7 @@ import {
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
@@ -24,12 +24,12 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
-	AlertCircle,
 	ArrowUpRight,
 	ChevronDown,
 	ChevronRight,
+	CircleAlert,
 	Leaf,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
@@ -538,7 +538,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			{traceMetadata.hasMissingSpans && (
 				<div className="missing-spans">
 					<section className="left-info">
-						<AlertCircle size={14} />
+						<CircleAlert size={14} />
 						<Typography.Text className="text">
 							This trace has missing spans
 						</Typography.Text>

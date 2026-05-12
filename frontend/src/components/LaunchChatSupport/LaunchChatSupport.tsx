@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { Button, Modal, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import cx from 'classnames';
@@ -10,7 +10,7 @@ import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CreditCard, HelpCircle, X } from 'lucide-react';
+import { CircleHelp, CreditCard, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
@@ -170,7 +170,7 @@ function LaunchChatSupport({
 				<Button
 					className={cx('periscope-btn', 'facing-issue-button', className)}
 					onClick={handleFacingIssuesClick}
-					icon={<HelpCircle size={14} />}
+					icon={<CircleHelp size={14} />}
 				>
 					{buttonText || 'Facing issues?'}
 				</Button>

@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
 import { Button, Checkbox, Input, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
@@ -20,7 +20,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isFunction } from 'lodash-es';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
-import { Button, Callout } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
 import { Form, Input as AntdInput } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { Logout } from 'api/utils';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
 import AuthError from 'components/AuthError/AuthError';
@@ -12,7 +13,7 @@ import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { ArrowRight, CircleAlert, KeyRound } from 'lucide-react';
+import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
 import APIError from 'types/api/error';
 

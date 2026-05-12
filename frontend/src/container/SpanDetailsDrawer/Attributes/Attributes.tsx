@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Input } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { flattenObject } from 'container/LogDetailedView/utils';
 import { usePinnedAttributes } from 'hooks/spanDetails/usePinnedAttributes';
-import { Pin } from 'lucide-react';
+import { Pin } from '@signozhq/icons';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import NoData from '../NoData/NoData';

@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -31,7 +31,7 @@ import {
 	GripVertical,
 	LockKeyhole,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import {
 	selectIsDashboardLocked,

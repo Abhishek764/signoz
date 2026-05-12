@@ -1,8 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { Zap } from 'lucide-react';
+import { Zap } from '@signozhq/icons';
 
 import { getOptionType } from './utils';
 

@@ -46,4 +46,13 @@
     </macros>
     <user_defined_executable_functions_config>*function.xml</user_defined_executable_functions_config>
     <user_scripts_path>/var/lib/clickhouse/user_scripts/</user_scripts_path>
+    <merge_tree>
+        <!--
+            ClickHouse 26.x rejects AggregatingMergeTree tables carrying non-key,
+            non-aggregate columns unless this setting is enabled. SigNoz's metrics-metadata
+            schema does exactly that (description, unit, type, is_monotonic), so the schema
+            migrator fails on 26.7+ with BAD_ARGUMENTS without it. See SigNoz/signoz#12257.
+        -->
+        <allow_dimensions_outside_sorting_key>1</allow_dimensions_outside_sorting_key>
+    </merge_tree>
 </clickhouse>
